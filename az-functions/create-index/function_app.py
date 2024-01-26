@@ -25,6 +25,7 @@ model: str = "text-embedding-ada-002"
 def build_index(req: func.HttpRequest) -> func.HttpResponse:
     """
     Implementing via this method to get started.
+    https://github.com/Azure/azure-search-vector-samples/blob/main/demo-python/code/azure-search-vector-python-llamaindex-sample.ipynb
     """
     logging.info('Python HTTP trigger function processed a request.')
 
