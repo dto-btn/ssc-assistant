@@ -4,5 +4,6 @@ resource "azurerm_search_service" "main" {
   location            = azurerm_resource_group.main.location
   sku                 = "standard"
 
-  local_authentication_enabled = false
+  local_authentication_enabled = true
+
 }
