@@ -20,8 +20,12 @@ container_name = os.getenv("BLOB_CONTAINER_NAME")
 credential = AzureKeyCredential(key)
 model: str = "text-embedding-ada-002"
 
+
 @app.route(route="build_index")
 def build_index(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    Implementing via this method to get started.
+    """
     logging.info('Python HTTP trigger function processed a request.')
 
     name = req.params.get('name')

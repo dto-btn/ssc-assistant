@@ -41,10 +41,10 @@ resource "azurerm_linux_function_app" "functions" {
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "1"
     "XDG_CACHE_HOME"                 = "/tmp/.cache"
     "AZURE_SEARCH_SERVICE_ENDPOINT"  = ""
-    "AZURE_SEARCH_INDEX_NAME"  = ""
-    "AZURE_SEARCH_ADMIN_KEY"  = ""
-    "BLOB_CONNECTION_STRING"  = ""
-    "BLOB_CONTAINER_NAME"  = ""
+    "AZURE_SEARCH_INDEX_NAME"        = ""
+    "AZURE_SEARCH_ADMIN_KEY"         = ""
+    "BLOB_CONNECTION_STRING"         = ""
+    "BLOB_CONTAINER_NAME"            = ""
   }
 
   identity {
