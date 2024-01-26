@@ -40,8 +40,11 @@ resource "azurerm_linux_function_app" "functions" {
     "ENABLE_ORYX_BUILD"              = "true"
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "1"
     "XDG_CACHE_HOME"                 = "/tmp/.cache"
-    "AzureOpenAIEndpoint"            = data.azurerm_cognitive_account.ai.endpoint
-    "AzureOpenAIKey"                 = data.azurerm_cognitive_account.ai.primary_access_key
+    "AZURE_SEARCH_SERVICE_ENDPOINT"  = ""
+    "AZURE_SEARCH_INDEX_NAME"  = ""
+    "AZURE_SEARCH_ADMIN_KEY"  = ""
+    "BLOB_CONNECTION_STRING"  = ""
+    "BLOB_CONTAINER_NAME"  = ""
   }
 
   identity {
