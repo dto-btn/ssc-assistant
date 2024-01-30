@@ -1,30 +1,19 @@
-import azure.functions as func
+import json  # bourne
 import logging
+import os
+
+import azure.functions as func
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents.indexes import SearchIndexClient
-from azure.search.documents import SearchClient
 from azure.storage.blob import BlobServiceClient
-import openai
-from dotenv import load_dotenv
-import os
-from llama_index.vector_stores.cogsearch import (
-    IndexManagement,
-    CognitiveSearchVectorStore,
-)
-from langchain.embeddings.azure_openai import AzureOpenAIEmbeddings
-from llama_index.llms import AzureOpenAI
-from llama_index import (
-    Document,
-    SimpleDirectoryReader,
-    StorageContext,
-    ServiceContext,
-    VectorStoreIndex,
-)
-from azure.search.documents.indexes.models import (   
-    HnswParameters
-)
-import json  # bourne
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
+from langchain.embeddings.azure_openai import AzureOpenAIEmbeddings
+from llama_index import (Document, ServiceContext,
+                         StorageContext, VectorStoreIndex)
+from llama_index.llms import AzureOpenAI
+from llama_index.vector_stores.cogsearch import (CognitiveSearchVectorStore,
+                                                 IndexManagement)
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
@@ -34,7 +23,6 @@ azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
 api_key                 = os.getenv("AZURE_OPENAI_API_KEY")
 api_version             = os.getenv("AZURE_OPENAI_VERSION", "2023-07-01-preview")
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
-index_name              = os.getenv("AZURE_SEARCH_INDEX_NAME")
 blob_connection_string  = os.getenv("BLOB_CONNECTION_STRING")
 container_name          = os.getenv("BLOB_CONTAINER_NAME")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
@@ -43,6 +31,7 @@ credential = AzureKeyCredential(key)
 model: str = os.getenv("OPENAI_MODEL", "gpt-4-1106")
 embedding_model: str = "text-embedding-ada-002"
 
+#TODO: Make this function a durable function instead (see sscplus-data-fetch project for examples)
 #@retry(wait=wait_random_exponential(min=1, max=20), stop=stop_after_attempt(6))
 @app.route(route="build_mysscplus_index")
 def build_mysscplus_index(req: func.HttpRequest) -> func.HttpResponse:
@@ -68,13 +57,6 @@ def build_mysscplus_index(req: func.HttpRequest) -> func.HttpResponse:
         # Create search index
         index_client = SearchIndexClient(
             endpoint=service_endpoint,
-            credential=credential,
-        )
-
-        # Use search client to demonstration using existing index
-        search_client = SearchClient(
-            endpoint=service_endpoint,
-            index_name=name,
             credential=credential,
         )
 
@@ -123,7 +105,7 @@ def build_mysscplus_index(req: func.HttpRequest) -> func.HttpResponse:
 
         # TODO: remove hardcoding here, 
         # this is just for a test of loading the data in the index and see if it yeilds good results
-        pages = _get_pages_as_json("preload", "testload")
+        pages = _get_pages_as_json("preload", "2024-01-29")
         documents = []
         for page in pages:
             # https://gpt-index.readthedocs.io/en/v0.6.34/how_to/customization/custom_documents.html
@@ -158,15 +140,7 @@ def build_mysscplus_index(req: func.HttpRequest) -> func.HttpResponse:
             documents, storage_context=storage_context, service_context=service_context
         )
 
-        query_engine = index.as_query_engine()
-        response = query_engine.query("SPC Onyx")
-
-        # hybrid_retriever = index.as_retriever(
-        #     vector_store_query_mode=VectorStoreQueryMode.SEMANTIC_HYBRID
-        # )
-        # hybrid_retriever.retrieve("What is inception about?")
-
-        return func.HttpResponse(f"Creating index: {name}. RESP: {response}, METADATA: {response.metadata}")
+        return func.HttpResponse(f"Index created: {name}.")
     else:
         return func.HttpResponse(
              "Missing index name, pass the index name in the body of the request",
