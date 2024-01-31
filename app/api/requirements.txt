@@ -1,9 +1,11 @@
 azure-identity
 azure-keyvault-secrets
 azure-storage-blob
+azure-search-documents==11.4.0b8
 Flask
 flask-cors
 gunicorn
+langchain-openai
 langchain
 llama-index
 openai
