@@ -1,4 +1,5 @@
-from dataclasses import dataclass, field
+from dataclasses import field
+from marshmallow_dataclass import dataclass
 from typing import Any, Dict, List, Optional
 
 @dataclass
@@ -22,4 +23,10 @@ class Message:
     role: str
     content: str
     #metadata: Optional[Dict[str, Dict[str, Any]]] = field(default_factory=dict)
-    nodes: Optional[List[Node]] = field(default_factory=list)  
+    nodes: Optional[List[Node]] = field(default_factory=list)
+
+@dataclass
+class MessageRequest:
+    query: Optional[str]
+    messages: Optional[List[Message]]
+    top: int = field(default=3)

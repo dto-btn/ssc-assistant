@@ -1,6 +1,7 @@
 import os
 from typing import List
-from flask import Blueprint, jsonify, Response, stream_with_context, request
+from flask import jsonify, Response, stream_with_context, request
+from apiflask import APIBlueprint
 from dotenv import load_dotenv
 from azure.search.documents import SearchClient
 from llama_index.llms import AzureOpenAI
@@ -14,81 +15,34 @@ from llama_index.vector_stores.types import VectorStoreQueryMode
 from llama_index.query_engine import RetrieverQueryEngine
 from llama_index.core.response.schema import StreamingResponse
 from llama_index import get_response_synthesizer
-from models.message import Message, Node, Metadata
+from models.message import Message, Node, Metadata, MessageRequest
 from llama_index.schema import NodeWithScore
 import json
+from utils.searchservice import get_query_engine, get_response_as_message
+import logging
 
-load_dotenv()
-azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
-api_key                 = os.getenv("AZURE_OPENAI_API_KEY")
-api_version             = os.getenv("AZURE_OPENAI_VERSION", "2023-07-01-preview")
-service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
-key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
-index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "latest")
+logger = logging.getLogger(__name__)
 
-credential = AzureKeyCredential(key)
-model: str = os.getenv("OPENAI_MODEL", "gpt-4-1106")
-embedding_model: str = "text-embedding-ada-002"
+api_v1 = APIBlueprint("api_v1", __name__)
 
-api_v1 = Blueprint("api_v1", __name__)
-
-@api_v1.route('/query', methods=["POST"])
-def query():
-    body = request.get_json(force=True)
-
-    if "query" not in body:
-        return jsonify({"error":"Request body must contain a query."}), 400
+@api_v1.post('/query/stream')
+@api_v1.doc("send a question to be processed by the gpt paired with search service, response will be streamed and multipart")
+@api_v1.input(MessageRequest.Schema, arg_name="message_request", example={
+                                                                                "messages": "",
+                                                                                "query": "What is SSC's content management system?",
+                                                                                "top": 3
+                                                                            })
+@api_v1.output(Message.Schema, content_type='application/multipart')
+def stream_query(message_request: MessageRequest):
+    if not message_request.query:
+        if not message_request.messages:
+            return jsonify({"error":"Request body must contain a query."}), 400
+        else:
+            query = "walruses"
     else:
-        query = body["query"]
+        query = message_request.query
 
-    search_client = SearchClient(
-        endpoint=service_endpoint,
-        index_name=index_name,
-        credential=credential,
-    )
-
-    vector_store = CognitiveSearchVectorStore(
-            search_or_index_client=search_client,
-            id_field_key="id",
-            chunk_field_key="content",
-            embedding_field_key="content_vector",
-            metadata_string_field_key="metadata",
-            doc_id_field_key="doc_id",)
-
-    llm = AzureOpenAI(
-        model="gpt-4",
-        azure_deployment=model,
-        api_version=api_version,
-        azure_endpoint=azure_openai_uri,
-        api_key=api_key
-    )
-
-    embed_model = AzureOpenAIEmbeddings(
-        model=embedding_model, api_key=api_key, azure_endpoint=azure_openai_uri)
-
-    storage_context = StorageContext.from_defaults(vector_store=vector_store)
-    service_context = ServiceContext.from_defaults(llm=llm, embed_model=embed_model)
-
-    index = VectorStoreIndex.from_documents(
-        [], storage_context=storage_context, service_context=service_context
-    )
-
-    #TODO: Find about the other methods and how to enable them (ex: VectorStoreQueryMode.SEMANTIC_HYBRID)
-    retriever = index.as_retriever(
-        vector_store_query_mode=VectorStoreQueryMode.HYBRID
-    )
-
-    response_synthesizer = get_response_synthesizer(streaming=True,service_context=service_context)
-
-    query_engine = RetrieverQueryEngine.from_args(
-        retriever=retriever,
-        service_context=service_context,
-        response_synthesizer=response_synthesizer,
-        verbose=True,
-        streaming=True
-    )
-
-    #TODO: Handle message history ...
+    query_engine = get_query_engine(streaming=True)
 
     @stream_with_context
     def generate():
@@ -97,15 +51,49 @@ def query():
         for text in response_stream.response_gen:
             response_txt += text
             yield text
-        source_nodes: List[NodeWithScore] = response_stream.source_nodes
-        nodes = [
-            Node(
-                id_=n.node.id_,
-                metadata=Metadata(**n.node.metadata),
-                score=n.score,
-                text=n.text
-            ) for n in source_nodes
-        ]
-        message = Message(role="assistant", content=response_txt, nodes=nodes)
-        yield json.dumps(message.__dict__, default=lambda o: o.__dict__)
+        yield json.dumps(
+            get_response_as_message(response_txt, source_nodes=response_stream.source_nodes).__dict__, 
+            default=lambda o: o.__dict__
+        )
     return Response(stream_with_context(generate()), content_type='application/x-json-stream')
+
+@api_v1.post('/query')
+@api_v1.doc("send a question to be processed by the gpt paired with search service")
+@api_v1.input(MessageRequest.Schema, arg_name="message_request", example={
+                                                                                "messages": "",
+                                                                                "query": "What is SSC's content management system?",
+                                                                                "top": 3
+                                                                            })
+@api_v1.output(Message.Schema, content_type='application/json', example={
+    "content": "Shared Services Canada (SSC) offers a range of services that include ..",
+    "nodes": [
+        {
+            "id_": "b09191cc-82d0-4b20-8483-b0c186321c83",
+            "metadata": {
+                "date": "2023-09-18",
+                "filename": "preload/2024-01-29/structured_page/en/2477.json",
+                "langcode": "en",
+                "nid": "2477",
+                "title": "Find answers to frequently asked questions",
+                "url": "https://plus.ssc-spc.gc.ca/en/page/find-answers-frequently-asked-questions"
+            },
+            "score": 0.03181818127632141,
+            "text": "Blah ..."
+        },
+    ],
+    "role": "assistant"
+})
+def query(message_request: MessageRequest):
+    if not message_request.query:
+        if not message_request.messages:
+            return jsonify({"error":"Request body must contain a query."}), 400
+        else:
+            query = "walruses"
+    else:
+        query = message_request.query
+
+    query_engine = get_query_engine(streaming=False)
+    response = query_engine.query(query)
+    logger.debug(response)
+    return jsonify(get_response_as_message(response.response_txt, source_nodes=response.source_nodes))
+
