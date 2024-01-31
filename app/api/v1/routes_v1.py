@@ -25,6 +25,8 @@ logger = logging.getLogger(__name__)
 
 api_v1 = APIBlueprint("api_v1", __name__)
 
+_boundary = "GPT-Interaction"
+
 @api_v1.post('/query/stream')
 @api_v1.doc("send a question to be processed by the gpt paired with search service, response will be streamed and multipart")
 @api_v1.input(MessageRequest.Schema, arg_name="message_request", example={
@@ -32,7 +34,7 @@ api_v1 = APIBlueprint("api_v1", __name__)
                                                                                 "query": "What is SSC's content management system?",
                                                                                 "top": 3
                                                                             })
-@api_v1.output(Message.Schema, content_type='application/multipart')
+@api_v1.output(Message.Schema, content_type=f'multipart/x-mixed-replace; boundary={_boundary}')
 def stream_query(message_request: MessageRequest):
     if not message_request.query:
         if not message_request.messages:
@@ -48,14 +50,19 @@ def stream_query(message_request: MessageRequest):
     def generate():
         response_stream = query_engine.query(query)
         response_txt = ""
+        yield f'--{_boundary}'
+        yield 'Content-Type: text/plain\r\n\r\n'
         for text in response_stream.response_gen:
             response_txt += text
             yield text
+        yield f'\r\n--{_boundary}\r\n'  
+        yield 'Content-Type: application/json\r\n\r\n'
         yield json.dumps(
             get_response_as_message(response_txt, source_nodes=response_stream.source_nodes).__dict__, 
             default=lambda o: o.__dict__
         )
-    return Response(stream_with_context(generate()), content_type='application/x-json-stream')
+        yield f'\r\n--{_boundary}--\r\n' 
+    return Response(stream_with_context(generate()), content_type='multipart/form-data')
 
 @api_v1.post('/query')
 @api_v1.doc("send a question to be processed by the gpt paired with search service")
