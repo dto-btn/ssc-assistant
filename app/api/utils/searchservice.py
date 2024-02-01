@@ -13,7 +13,6 @@ from llama_index.vector_stores.types import (VectorStoreQueryMode)
 from models.message import Message, Node, Metadata
 from llama_index.schema import NodeWithScore
 
-load_dotenv()
 azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
 api_key                 = os.getenv("AZURE_OPENAI_API_KEY")
 api_version             = os.getenv("AZURE_OPENAI_VERSION", "2023-07-01-preview")

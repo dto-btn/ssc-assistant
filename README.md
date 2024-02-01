@@ -66,3 +66,4 @@ terraform plan
 ## Documentation
 
 * [Azure Search Services](https://learn.microsoft.com/en-us/azure/search/search-get-started-portal)
+* [Use your data](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/use-your-data?tabs=ai-search)

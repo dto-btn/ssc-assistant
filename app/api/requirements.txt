@@ -12,3 +12,4 @@ openai
 python-dotenv
 bs4
 marshmallow_dataclass
+typeguard 

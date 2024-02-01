@@ -19,6 +19,8 @@ from models.message import Message, Node, Metadata, MessageRequest
 from llama_index.schema import NodeWithScore
 import json
 from utils.searchservice import get_query_engine, get_response_as_message
+from utils.openai import chat_with_data
+from openai.types.chat import ChatCompletionUserMessageParam
 import logging
 
 logger = logging.getLogger(__name__)
@@ -104,3 +106,38 @@ def query(message_request: MessageRequest):
     logger.debug(response)
     return jsonify(get_response_as_message(response.response_txt, source_nodes=response.source_nodes))
 
+@api_v1.post('/completion/myssc')
+@api_v1.doc("send a question to be processed by the gpt paired with search service")
+@api_v1.input(MessageRequest.Schema, arg_name="message_request", example={
+                                                                                "messages": "",
+                                                                                "query": "What is SSC's content management system?",
+                                                                                "top": 3
+                                                                            })
+def completion_myssc(message_request: MessageRequest):
+    if not message_request.query:
+        if not message_request.messages:
+            return jsonify({"error":"Request body must contain a query."}), 400
+        else:
+            query = "walruses"
+    else:
+        query = message_request.query
+
+    completion = chat_with_data([ChatCompletionUserMessageParam(role="user", content=query)])
+    #logger.info(completion)
+    #logger.info(f"{completion.choices[0].message.role}: {completion.choices[0].message.content}")
+
+    # `context` is in the model_extra for Azure
+    #logger.info(f"\nContext: {completion.choices[0].message.model_extra['context']['messages'][0]['content']}")
+    return jsonify(completion.choices[0].messages)
+
+
+#for streaming
+# for chunk in response:
+#     delta = chunk.choices[0].delta
+
+#     if delta.role:
+#         print("\n"+ delta.role + ": ", end="", flush=True)
+#     if delta.content:
+#         print(delta.content, end="", flush=True)
+#     if delta.model_extra.get("context"):
+#         print(f"Context: {delta.model_extra['context']}", end="", flush=True)
