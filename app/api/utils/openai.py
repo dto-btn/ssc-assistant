@@ -6,17 +6,20 @@ from enum import Enum
 from openai.types.chat import ChatCompletion, ChatCompletionMessageParam, ChatCompletionChunk
 import json
 
-__all__ = ["chat_with_data"]
+from utils.models import Completion, Message, Citation, Metadata, ToolDataContent
+
+__all__ = ["chat_with_data", "convert_chat_with_data_response"]
 
 azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
 api_key                 = os.getenv("AZURE_OPENAI_API_KEY")
-api_version             = os.getenv("AZURE_OPENAI_VERSION", "2023-07-01-preview")
+api_version             = os.getenv("AZURE_OPENAI_VERSION", "2023-12-01-preview")
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
 index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "latest")
 model: str              = os.getenv("AZURE_OPENAI_MODEL", "gpt-4-1106")
 
 client = AzureOpenAI(
+    # if we just use the azure_endpoint here it doesn't reach the extensions endpoint and thus we cannot use data sources directly
     base_url=f'{azure_openai_uri}/openai/deployments/{model}/extensions',
     api_version=api_version,
     #azure_endpoint=azure_openai_uri,
@@ -48,113 +51,68 @@ def _create_azure_cognitive_search_data_source() -> AzureCognitiveSearchDataSour
         parameters=parameters
     )
 
-def chat_with_data(messages: List[ChatCompletionMessageParam]) -> ChatCompletion:
-  """
-  Initiate a chat with via openai api using data_source (azure cognitive search)
-  """
-  data_source = _create_azure_cognitive_search_data_source()
+def chat_with_data(messages: List[ChatCompletionMessageParam], stream=False) -> Union[ChatCompletion,Stream[ChatCompletionChunk]]:
+    """
+    Initiate a chat with via openai api using data_source (azure cognitive search)
+    """
+    data_source = _create_azure_cognitive_search_data_source()
 
-  # https://github.com/openai/openai-cookbook/blob/main/examples/azure/chat_with_your_own_data.ipynb
-  return client.chat.completions.create(
-      messages=messages,
-      model=model,
-      extra_body={
-          "dataSources": [
-            {
-                "type": "AzureCognitiveSearch",
-                "parameters": {
-                    "endpoint": data_source.parameters.endpoint,
-                    "key": data_source.parameters.key,
-                    "indexName": data_source.parameters.indexName,
+    # https://github.com/openai/openai-cookbook/blob/main/examples/azure/chat_with_your_own_data.ipynb
+    return client.chat.completions.create(
+        messages=messages,
+        model=model,
+        extra_body={
+            "dataSources": [
+                {
+                    "type": data_source.type,
+                    "parameters": {
+                        "endpoint": data_source.parameters.endpoint,
+                        "key": data_source.parameters.key,
+                        "indexName": data_source.parameters.indexName,
+                    }
                 }
-            }
-        ],
-      },
-      stream=False
-  )
+            ],
+        },
+        stream=stream
+    )
 
-# openai.api_type = "azure"
-# # Azure OpenAI on your own data is only supported by the 2023-08-01-preview API version
-# openai.api_version = "2023-08-01-preview"
+def convert_chat_with_data_response(chat_completion: ChatCompletion) -> Completion:
+    """
+    Converts the OpenAI ChatCompletion response to a custom response (Completion)
+    """
+    # Here we convert the pydantic model to a dictionary since the response it holds doesn't
+    # follow their model (we have message and messages), thus we cannot access the fields otherwise
+    #chat_completion_dict = chat_completion.model_dump()
+    #print(chat_completion_dict)
+    #unparsed_messages = chat_completion_dict['choices'][0]['messages']
+    messages = []
+    # if chat_completion.choices:
+    #     for choice in chat_completion.choices:
+    #         if choice.message.role == "tool":
 
-# # Azure OpenAI setup
-# openai.api_base = "https://scsc-cio-ect-openai-oai.openai.azure.com/" # Add your endpoint here
-# openai.api_key = os.getenv("OPENAI_API_KEY") # Add your OpenAI API key here
-# deployment_id = "gpt-4-1106" # Add your deployment ID here
+    #             # Check if 'content' is a string that needs to be parsed as JSON  
+    #             if isinstance(choice.message.content, str):  
+    #                 # Parse the JSON-encoded string to get a list of dictionaries  
+    #                 citations_list = json.loads(choice.message.content)  
+    #             else:  
+    #                 # If 'content' is already a list of dictionaries, use it directly  
+    #                 citations_list = choice.message.content 
+                
+    #             # Create a list of Citation instances  
+    #             citations = [Citation(content=cit['content'],  
+    #                                 url=cit['url'],  
+    #                                 metadata=Metadata(**cit['metadata']),  
+    #                                 chunk_id=cit['chunk_id'],  
+    #                                 title=cit['title'],  
+    #                                 id=cit.get('id'),  # Using .get() for optional fields  
+    #                                 filepath=cit.get('filepath')) for cit in citations_list]
+    #             messages.append(ToolDataContent(citations=citations, intent=choice.intent))
+    #         else:
+    #             messages.append(Message(**msg))
 
-# # Azure AI Search setup
-# search_endpoint = "https://ssc-assistant-search-service.search.windows.net"; # Add your Azure AI Search endpoint here
-# search_key = os.getenv("SEARCH_KEY"); # Add your Azure AI Search admin key here
-# search_index_name = "latest"; # Add your Azure AI Search index name here
-
-# def setup_byod(deployment_id: str) -> None:
-#     """Sets up the OpenAI Python SDK to use your own data for the chat endpoint.
-
-#     :param deployment_id: The deployment ID for the model to use with your own data.
-
-#     To remove this configuration, simply set openai.requestssession to None.
-#     """
-
-#     class BringYourOwnDataAdapter(requests.adapters.HTTPAdapter):
-
-#         def send(self, request, **kwargs):
-#             request.url = f"{openai.api_base}/openai/deployments/{deployment_id}/extensions/chat/completions?api-version={openai.api_version}"
-#             return super().send(request, **kwargs)
-
-#     session = requests.Session()
-
-#     # Mount a custom adapter which will use the extensions endpoint for any call using the given `deployment_id`
-#     session.mount(
-#         prefix=f"{openai.api_base}/openai/deployments/{deployment_id}",
-#         adapter=BringYourOwnDataAdapter()
-#     )
-
-#     openai.requestssession = session
-
-# setup_byod(deployment_id)
-
-
-# message_text = [{"role": "user", "content": "What are the differences between Azure Machine Learning and Azure AI services?"}]
-
-# completion = openai.ChatCompletion.create(
-#     messages=message_text,
-#     deployment_id=deployment_id,
-#     dataSources=[  # camelCase is intentional, as this is the format the API expects
-#       {
-#   "type": "AzureCognitiveSearch",
-#   "parameters": {
-#     "endpoint": "$search_endpoint",
-#     "indexName": "$search_index",
-#     "semanticConfiguration": null,
-#     "queryType": "vectorSimpleHybrid",
-#     "fieldsMapping": {
-#       "contentFieldsSeparator": "\n",
-#       "contentFields": [
-#         "content"
-#       ],
-#       "filepathField": null,
-#       "titleField": null,
-#       "urlField": "url",
-#       "vectorFields": [
-#         "content_vector"
-#       ]
-#     },
-#     "inScope": true,
-#     "roleInformation": "You are an AI assistant that helps people find information.",
-#     "filter": null,
-#     "strictness": 3,
-#     "topNDocuments": 5,
-#     "key": "$search_key",
-#     "embeddingDeploymentName": "text-embedding-ada-002"
-#   }
-# }
-#     ],
-#     enhancements=undefined,
-#     temperature=0,
-#     top_p=1,
-#     max_tokens=800,
-#     stop=null,
-#     stream=true
-
-# )
-# print(completion)
+    # return Completion(
+    #     messages=messages,
+    #     completion_tokens=chat_completion_dict['usage']['completion_tokens'],
+    #     prompt_tokens=chat_completion_dict['usage']['prompt_tokens'],
+    #     total_tokens=chat_completion_dict['usage']['total_tokens'],
+    # )

@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import Any, List
 from flask import jsonify, Response, stream_with_context, request
 from apiflask import APIBlueprint
 from dotenv import load_dotenv
@@ -15,15 +15,19 @@ from llama_index.vector_stores.types import VectorStoreQueryMode
 from llama_index.query_engine import RetrieverQueryEngine
 from llama_index.core.response.schema import StreamingResponse
 from llama_index import get_response_synthesizer
+from openai import Stream
+from utils.models import Completion
 from models.message import Message, Node, Metadata, MessageRequest
 from llama_index.schema import NodeWithScore
 import json
 from utils.searchservice import get_query_engine, get_response_as_message
-from utils.openai import chat_with_data
+from utils.openai import chat_with_data, convert_chat_with_data_response
 from openai.types.chat import ChatCompletionUserMessageParam
 import logging
+from openai.types.chat import ChatCompletion, ChatCompletionMessageParam, ChatCompletionChunk
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 api_v1 = APIBlueprint("api_v1", __name__)
 
@@ -107,12 +111,13 @@ def query(message_request: MessageRequest):
     return jsonify(get_response_as_message(response.response_txt, source_nodes=response.source_nodes))
 
 @api_v1.post('/completion/myssc')
-@api_v1.doc("send a question to be processed by the gpt paired with search service")
+@api_v1.doc("send a question to be processed by the gpt paired with search service. Answer is accessibe via json choices[0].content")
 @api_v1.input(MessageRequest.Schema, arg_name="message_request", example={
                                                                                 "messages": "",
                                                                                 "query": "What is SSC's content management system?",
                                                                                 "top": 3
                                                                             })
+#@api_v1.output(dict[str, Any], content_type='application/json')
 def completion_myssc(message_request: MessageRequest):
     if not message_request.query:
         if not message_request.messages:
@@ -122,14 +127,57 @@ def completion_myssc(message_request: MessageRequest):
     else:
         query = message_request.query
 
-    completion = chat_with_data([ChatCompletionUserMessageParam(role="user", content=query)])
-    #logger.info(completion)
-    #logger.info(f"{completion.choices[0].message.role}: {completion.choices[0].message.content}")
+    completion: ChatCompletion = chat_with_data([ChatCompletionUserMessageParam(role="user", content=query)])
 
-    # `context` is in the model_extra for Azure
-    #logger.info(f"\nContext: {completion.choices[0].message.model_extra['context']['messages'][0]['content']}")
-    return jsonify(completion.choices[0].messages)
+    message = completion.choices[0].message.model_dump()
+    content_escaped_json = message['context']['messages'][0]['content']
+    logging.debug(content_escaped_json)
 
+    return completion.model_dump_json()
+
+@api_v1.post('/completion/myssc/stream')
+@api_v1.doc("send a question to be processed by the gpt paired with search service. Answer is accessibe via json choices[0].content")
+@api_v1.input(MessageRequest.Schema, arg_name="message_request", example={
+                                                                                "messages": "",
+                                                                                "query": "What is SSC's content management system?",
+                                                                                "top": 3
+                                                                            })
+def completion_myssc_stream(message_request: MessageRequest):
+    if not message_request.query:
+        if not message_request.messages:
+            return jsonify({"error":"Request body must contain a query."}), 400
+        else:
+            query = "walruses"
+    else:
+        query = message_request.query
+
+    completion: Stream[ChatCompletionChunk] = chat_with_data([ChatCompletionUserMessageParam(role="user", content=query)], stream=True)
+
+    for chunk in completion:
+        #print(chunk.model_dump_json(), flush=True)
+        delta = chunk.choices[0].delta
+        context = chunk.choices[0].delta.model_dump()
+        if 'context' in context:
+            context = context['context']
+            print(context, flush=True)
+        else:
+            context = None
+
+        #delta_dump = chunk.choices[0].delta.model_dump()
+        #context = delta_dump["context"]
+        #print(delta_dump)
+        if delta.role:
+            print("\n"+ delta.role + ": ", end="", flush=True)
+        if delta.content:
+            print(delta.content, end="", flush=True)
+        if context:
+            print(f"Context: {context['messages'][0]['content']}", end="", flush=True)
+
+    #message = completion.choices[0].message.model_dump()
+    #content_escaped_json = message['context']['messages'][0]['content']
+    #logging.debug(content_escaped_json)
+
+    #return completion.model_dump_json()
 
 #for streaming
 # for chunk in response:
