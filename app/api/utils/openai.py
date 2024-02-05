@@ -1,5 +1,5 @@
 import os
-from typing import List, Union
+from typing import Any, List, Union
 from openai import AzureOpenAI, Stream
 from dataclasses import dataclass, field
 from enum import Enum
@@ -9,7 +9,7 @@ import json
 
 from utils.models import AzureCognitiveSearchDataSource, AzureCognitiveSearchParameters, Completion, Message, Citation, Context, Metadata
 
-__all__ = ["chat_with_data", "convert_chat_with_data_response"]
+__all__ = ["chat_with_data", "convert_chat_with_data_response", "build_completion_response"]
 
 azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
 api_key                 = os.getenv("AZURE_OPENAI_API_KEY")
@@ -67,8 +67,30 @@ def convert_chat_with_data_response(chat_completion: ChatCompletion) -> Completi
     Converts the OpenAI ChatCompletion response to a custom response (Completion)
     """
     chat_completion_dict = chat_completion.choices[0].message.model_dump()
+    
+    if isinstance(chat_completion.usage, CompletionUsage) and chat_completion.usage is not None:
+        return build_completion_response(content=str(chat_completion.choices[0].message.content), 
+                                     chat_completion_dict=chat_completion_dict, 
+                                     role=chat_completion.choices[0].message.role,
+                                     completion_tokens=chat_completion.usage.completion_tokens,
+                                     prompt_tokens=chat_completion.usage.prompt_tokens,
+                                     total_tokens=chat_completion.usage.total_tokens)
+    else:
+        return build_completion_response(content=str(chat_completion.choices[0].message.content), 
+                                     chat_completion_dict=chat_completion_dict, 
+                                     role=chat_completion.choices[0].message.role)
+
+def build_completion_response(content: str, 
+                              chat_completion_dict: dict[str, Any] | None, 
+                              role: str = 'assistant', 
+                              completion_tokens: int = 0,
+                              prompt_tokens: int = 0,
+                              total_tokens: int = 0):
+    """
+    Builds a completion response based on the context given and the content
+    """
     context = None
-    if 'context' in chat_completion_dict:
+    if chat_completion_dict and 'context' in chat_completion_dict:
         context_dict = chat_completion_dict['context']['messages'][0]
         # the content field is serialized json containing citations.
         content_dict = json.loads(context_dict['content'])
@@ -83,15 +105,12 @@ def convert_chat_with_data_response(chat_completion: ChatCompletion) -> Completi
         context = Context(role=context_dict['role'], citations=citations, intent=json.loads(content_dict['intent'])) 
 
     message = Message(
-        role=chat_completion.choices[0].message.role,
-        content=chat_completion.choices[0].message.content,
+        role=role,
+        content=content,
         context=context
     )
 
-    if isinstance(chat_completion.usage, CompletionUsage) and chat_completion.usage is not None:
-        return Completion(completion_tokens=chat_completion.usage.completion_tokens,
-                      prompt_tokens=chat_completion.usage.prompt_tokens,
-                      total_tokens=chat_completion.usage.total_tokens,
+    return Completion(completion_tokens=completion_tokens,
+                      prompt_tokens=prompt_tokens,
+                      total_tokens=total_tokens,
                       message=message)
-
-    return Completion(message=message)
