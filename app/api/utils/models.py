@@ -1,7 +1,7 @@
 from dataclasses import field
 from enum import Enum
 from marshmallow_dataclass import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, List, Optional
 
 @dataclass
 class Metadata:
@@ -32,11 +32,11 @@ class Message:
 @dataclass
 class Completion:
     message: Message
-    completion_tokens: Optional[int] = 0
+    completion_tokens: Optional[int] = field(default=0)
     """Number of tokens in the generated completion."""
-    prompt_tokens: Optional[int] = 0 
+    prompt_tokens: Optional[int] = field(default=0)
     """Number of tokens in the prompt."""
-    total_tokens: Optional[int] = 0
+    total_tokens: Optional[int] = field(default=0)
     """Total number of tokens used in the request (prompt + completion)."""
 
 @dataclass
@@ -44,6 +44,9 @@ class MessageRequest:
     query: Optional[str]
     messages: Optional[List[Message]]
     top: int = field(default=3)
+    lang: str = field(default='en')
+    max: int = field(default=10)
+    tools: List[str] = field(default_factory=lambda: ["bits", "geds"])
 
 class QueryType(Enum):
     VECTOR_SIMPLE_HYBRID = "vectorSimpleHybrid"

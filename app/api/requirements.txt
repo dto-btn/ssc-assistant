@@ -5,9 +5,6 @@ azure-search-documents==11.4.0b8
 apiflask
 Flask
 gunicorn
-langchain-openai
-langchain
-llama-index
 openai
 python-dotenv
 bs4

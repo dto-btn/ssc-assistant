@@ -1,30 +1,14 @@
-import os
-from typing import Any, List
-from flask import jsonify, Response, stream_with_context, request
-from apiflask import APIBlueprint
-from dotenv import load_dotenv
-from azure.search.documents import SearchClient
-from llama_index.llms import AzureOpenAI
-from azure.core.credentials import AzureKeyCredential
-from langchain_openai import AzureOpenAIEmbeddings
-from llama_index import (ServiceContext,
-                         StorageContext, VectorStoreIndex)
-from llama_index.vector_stores.cogsearch import CognitiveSearchVectorStore
-from llama_index.vector_stores.types import ExactMatchFilter, MetadataFilters
-from llama_index.vector_stores.types import VectorStoreQueryMode
-from llama_index.query_engine import RetrieverQueryEngine
-from llama_index.core.response.schema import StreamingResponse
-from llama_index import get_response_synthesizer
-from openai import Stream
-from utils.models import Completion
-from models.message import Message, Node, Metadata, MessageRequest
-from llama_index.schema import NodeWithScore
 import json
-from utils.searchservice import get_query_engine, get_response_as_message
-from utils.openai import chat_with_data, convert_chat_with_data_response, build_completion_response
-from openai.types.chat import ChatCompletionUserMessageParam
 import logging
-from openai.types.chat import ChatCompletion, ChatCompletionMessageParam, ChatCompletionChunk
+
+from apiflask import APIBlueprint
+from flask import Response, jsonify, request, stream_with_context
+from openai import Stream
+from openai.types.chat import (ChatCompletion, ChatCompletionChunk)
+from utils.models import Completion, MessageRequest
+from utils.openai import (build_completion_response, chat, chat_with_data,
+                          convert_chat_with_data_response)
+from utils.prompt import load_messages
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -32,43 +16,6 @@ logger.setLevel(logging.DEBUG)
 api_v1 = APIBlueprint("api_v1", __name__)
 
 _boundary = "GPT-Interaction"
-
-# @api_v1.post('/query/stream')
-# @api_v1.doc("send a question to be processed by the gpt paired with search service, response will be streamed and multipart")
-# @api_v1.input(MessageRequest.Schema, arg_name="message_request", example={
-#                                                                                 "messages": "",
-#                                                                                 "query": "What is SSC's content management system?",
-#                                                                                 "top": 3
-#                                                                             })
-# @api_v1.output(Message.Schema, content_type=f'multipart/x-mixed-replace; boundary={_boundary}')
-# def stream_query(message_request: MessageRequest):
-#     if not message_request.query:
-#         if not message_request.messages:
-#             return jsonify({"error":"Request body must contain a query."}), 400
-#         else:
-#             query = "walruses"
-#     else:
-#         query = message_request.query
-
-#     query_engine = get_query_engine(streaming=True)
-
-#     @stream_with_context
-#     def generate():
-#         response_stream = query_engine.query(query)
-#         response_txt = ""
-#         yield f'--{_boundary}'
-#         yield 'Content-Type: text/plain\r\n\r\n'
-#         for text in response_stream.response_gen:
-#             response_txt += text
-#             yield text
-#         yield f'\r\n--{_boundary}\r\n'  
-#         yield 'Content-Type: application/json\r\n\r\n'
-#         yield json.dumps(
-#             get_response_as_message(response_txt, source_nodes=response_stream.source_nodes).__dict__, 
-#             default=lambda o: o.__dict__
-#         )
-#         yield f'\r\n--{_boundary}--\r\n' 
-#     return Response(stream_with_context(generate()), content_type='multipart/form-data')
 
 @api_v1.post('/completion/myssc')
 @api_v1.doc("send a question to be processed by the gpt paired with search service. Answer is accessibe via json choices[0].content")
@@ -104,15 +51,12 @@ _boundary = "GPT-Interaction"
     "total_tokens": 5203
 })
 def completion_myssc(message_request: MessageRequest):
-    if not message_request.query:
-        if not message_request.messages:
-            return jsonify({"error":"Request body must contain a query."}), 400
-        else:
-            query = "walruses"
-    else:
-        query = message_request.query
+    if not message_request.query and not message_request.messages:
+        return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
 
-    completion: ChatCompletion = chat_with_data([ChatCompletionUserMessageParam(role="user", content=query)])
+    messages = load_messages(message_request)
+
+    completion: ChatCompletion = chat_with_data(messages)
 
     message = completion.choices[0].message.model_dump()
     content_escaped_json = message['context']['messages'][0]['content']
@@ -129,15 +73,11 @@ def completion_myssc(message_request: MessageRequest):
                                                                             })
 @api_v1.output(Completion.Schema, content_type=f'multipart/x-mixed-replace; boundary={_boundary}')
 def completion_myssc_stream(message_request: MessageRequest):
-    if not message_request.query:
-        if not message_request.messages:
-            return jsonify({"error":"Request body must contain a query."}), 400
-        else:
-            query = "walruses"
-    else:
-        query = message_request.query
+    if not message_request.query and not message_request.messages:
+        return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
 
-    completion: Stream[ChatCompletionChunk] = chat_with_data([ChatCompletionUserMessageParam(role="user", content=query)], stream=True)
+    messages = load_messages(message_request)
+    completion: Stream[ChatCompletionChunk] = chat_with_data(messages, stream=True)
 
     def generate():
         context = None
@@ -155,12 +95,75 @@ def completion_myssc_stream(message_request: MessageRequest):
             if delta.content:
                 content_txt += delta.content
                 yield delta.content
-        
-        yield f'\r\n--{_boundary}\r\n'  
+
+        yield f'\r\n--{_boundary}\r\n'
         yield 'Content-Type: application/json\r\n\r\n'
         response = build_completion_response(content=content_txt, chat_completion_dict=context)
         yield json.dumps(
-             response.__dict__, 
+             response.__dict__,
+             default=lambda o: o.__dict__
+        )
+        yield f'\r\n--{_boundary}--\r\n'
+    return Response(stream_with_context(generate()), content_type='multipart/form-data')
+
+
+@api_v1.post('/completion/chat')
+@api_v1.doc("Send a generic question to GPT, might be using tools")
+@api_v1.input(MessageRequest.Schema, arg_name="message_request", example={
+                                                                                "messages": "",
+                                                                                "query": "What is SSC's content management system?",
+                                                                                "tools": ["geds", "bits"]
+                                                                            })
+@api_v1.output(Completion.Schema, content_type='application/json', example={
+    "completion_tokens": 241,
+    "message": {
+        "content": "Contact information for employe XYZ is as follow: ...",
+        "role": "assistant"
+    },
+    "prompt_tokens": 4962,
+    "total_tokens": 5203
+})
+def completion_chat(message_request: MessageRequest):
+    if not message_request.query and not message_request.messages:
+        return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
+
+    messages = load_messages(message_request)
+    print(messages)
+    completion: ChatCompletion = chat(messages)
+
+    return convert_chat_with_data_response(completion)
+
+@api_v1.post('/completion/chat/stream')
+@api_v1.doc("send a question to be processed by the gpt paired with search service. Answer is accessibe via json choices[0].content")
+@api_v1.input(MessageRequest.Schema, arg_name="message_request", example={
+                                                                                "messages": "",
+                                                                                "query": "What is SSC's content management system?",
+                                                                                "top": 3
+                                                                            })
+@api_v1.output(Completion.Schema, content_type=f'multipart/x-mixed-replace; boundary={_boundary}')
+def completion_chat_stream(message_request: MessageRequest):
+    if not message_request.query and not message_request.messages:
+        return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
+
+    messages = load_messages(message_request)
+    completion: Stream[ChatCompletionChunk] = chat(messages, stream=True)
+
+    def generate():
+        content_txt = ''
+        yield f'--{_boundary}\r\n'
+        yield 'Content-Type: text/plain\r\n\r\n'
+        for chunk in completion:
+            if chunk.choices and chunk.choices[0].delta:
+                delta = chunk.choices[0].delta
+                if delta.content:
+                    content_txt += str(delta.content)
+                    yield delta.content
+
+        yield f'\r\n--{_boundary}\r\n'
+        yield 'Content-Type: application/json\r\n\r\n'
+        response = build_completion_response(content=content_txt, chat_completion_dict=None)
+        yield json.dumps(
+             response.__dict__,
              default=lambda o: o.__dict__
         )
         yield f'\r\n--{_boundary}--\r\n'
