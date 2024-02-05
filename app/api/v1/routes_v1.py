@@ -117,7 +117,7 @@ def query(message_request: MessageRequest):
                                                                                 "query": "What is SSC's content management system?",
                                                                                 "top": 3
                                                                             })
-#@api_v1.output(dict[str, Any], content_type='application/json')
+@api_v1.output(Completion.Schema, content_type='application/json')
 def completion_myssc(message_request: MessageRequest):
     if not message_request.query:
         if not message_request.messages:
@@ -133,7 +133,7 @@ def completion_myssc(message_request: MessageRequest):
     content_escaped_json = message['context']['messages'][0]['content']
     logging.debug(content_escaped_json)
 
-    return completion.model_dump_json()
+    return convert_chat_with_data_response(completion)
 
 @api_v1.post('/completion/myssc/stream')
 @api_v1.doc("send a question to be processed by the gpt paired with search service. Answer is accessibe via json choices[0].content")
@@ -159,7 +159,6 @@ def completion_myssc_stream(message_request: MessageRequest):
         context = chunk.choices[0].delta.model_dump()
         if 'context' in context:
             context = context['context']
-            print(context, flush=True)
         else:
             context = None
 
@@ -185,7 +184,7 @@ def completion_myssc_stream(message_request: MessageRequest):
 
 #     if delta.role:
 #         print("\n"+ delta.role + ": ", end="", flush=True)
-#     if delta.content:
+#     if delta.content:can 
 #         print(delta.content, end="", flush=True)
 #     if delta.model_extra.get("context"):
 #         print(f"Context: {delta.model_extra['context']}", end="", flush=True)

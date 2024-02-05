@@ -4,9 +4,10 @@ from openai import AzureOpenAI, Stream
 from dataclasses import dataclass, field
 from enum import Enum
 from openai.types.chat import ChatCompletion, ChatCompletionMessageParam, ChatCompletionChunk
+from openai.types.completion_usage import CompletionUsage
 import json
 
-from utils.models import Completion, Message, Citation, Metadata, ToolDataContent
+from utils.models import AzureCognitiveSearchDataSource, AzureCognitiveSearchParameters, Completion, Message, Citation, Context, Metadata
 
 __all__ = ["chat_with_data", "convert_chat_with_data_response"]
 
@@ -25,21 +26,6 @@ client = AzureOpenAI(
     #azure_endpoint=azure_openai_uri,
     api_key=api_key
 )
-
-class QueryType(Enum):
-    VECTOR_SIMPLE_HYBRID = "vectorSimpleHybrid"
-
-@dataclass
-class AzureCognitiveSearchParameters:
-    endpoint: str
-    key: str
-    indexName: str
-    queryType: QueryType = QueryType.VECTOR_SIMPLE_HYBRID
-
-@dataclass
-class AzureCognitiveSearchDataSource:
-    type: str = field(init=False, default="AzureCognitiveSearch")
-    parameters: AzureCognitiveSearchParameters
 
 def _create_azure_cognitive_search_data_source() -> AzureCognitiveSearchDataSource:
     parameters = AzureCognitiveSearchParameters(
@@ -80,39 +66,32 @@ def convert_chat_with_data_response(chat_completion: ChatCompletion) -> Completi
     """
     Converts the OpenAI ChatCompletion response to a custom response (Completion)
     """
-    # Here we convert the pydantic model to a dictionary since the response it holds doesn't
-    # follow their model (we have message and messages), thus we cannot access the fields otherwise
-    #chat_completion_dict = chat_completion.model_dump()
-    #print(chat_completion_dict)
-    #unparsed_messages = chat_completion_dict['choices'][0]['messages']
-    messages = []
-    # if chat_completion.choices:
-    #     for choice in chat_completion.choices:
-    #         if choice.message.role == "tool":
+    chat_completion_dict = chat_completion.choices[0].message.model_dump()
+    context = None
+    if 'context' in chat_completion_dict:
+        context_dict = chat_completion_dict['context']['messages'][0]
+        # the content field is serialized json containing citations.
+        content_dict = json.loads(context_dict['content'])
+        
+        citations: List[Citation] = [Citation(
+            content=cit['content'],
+            url=cit['url'],
+            metadata=Metadata(chunking=cit['metadata']),
+            title=cit['title']
+        ) for cit in content_dict['citations']] 
 
-    #             # Check if 'content' is a string that needs to be parsed as JSON  
-    #             if isinstance(choice.message.content, str):  
-    #                 # Parse the JSON-encoded string to get a list of dictionaries  
-    #                 citations_list = json.loads(choice.message.content)  
-    #             else:  
-    #                 # If 'content' is already a list of dictionaries, use it directly  
-    #                 citations_list = choice.message.content 
-                
-    #             # Create a list of Citation instances  
-    #             citations = [Citation(content=cit['content'],  
-    #                                 url=cit['url'],  
-    #                                 metadata=Metadata(**cit['metadata']),  
-    #                                 chunk_id=cit['chunk_id'],  
-    #                                 title=cit['title'],  
-    #                                 id=cit.get('id'),  # Using .get() for optional fields  
-    #                                 filepath=cit.get('filepath')) for cit in citations_list]
-    #             messages.append(ToolDataContent(citations=citations, intent=choice.intent))
-    #         else:
-    #             messages.append(Message(**msg))
+        context = Context(role=context_dict['role'], citations=citations, intent=json.loads(content_dict['intent'])) 
 
-    # return Completion(
-    #     messages=messages,
-    #     completion_tokens=chat_completion_dict['usage']['completion_tokens'],
-    #     prompt_tokens=chat_completion_dict['usage']['prompt_tokens'],
-    #     total_tokens=chat_completion_dict['usage']['total_tokens'],
-    # )
+    message = Message(
+        role=chat_completion.choices[0].message.role,
+        content=chat_completion.choices[0].message.content,
+        context=context
+    )
+
+    if isinstance(chat_completion.usage, CompletionUsage) and chat_completion.usage is not None:
+        return Completion(completion_tokens=chat_completion.usage.completion_tokens,
+                      prompt_tokens=chat_completion.usage.prompt_tokens,
+                      total_tokens=chat_completion.usage.total_tokens,
+                      message=message)
+
+    return Completion(message=message)

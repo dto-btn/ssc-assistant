@@ -1,4 +1,5 @@
 from dataclasses import field
+from enum import Enum
 from marshmallow_dataclass import dataclass
 from typing import Any, Dict, List, Optional, Union
 
@@ -11,42 +12,50 @@ class Citation:
     content: str
     url: str
     metadata: Metadata
-    chunk_id: str
     title: str
+    chunk_id: Optional[str] = None
     id: Optional[Any] = None  # Using Any type as id is null in the provided JSON
     filepath: Optional[Any] = None  # Using Any type as filepath is null in the provided JSON
 
-
 @dataclass
-class ToolDataContent:
+class Context:
+    role: str
     citations: List[Citation]
     intent: List[str]
 
 @dataclass
 class Message:
     role: str
-    content: Union[str, ToolDataContent]
-    end_turn: Optional[bool]
-    index: Optional[int]
+    content: Optional[str] = None
+    context: Optional[Context] = None
 
 @dataclass
 class Completion:
-    completion_tokens: Optional[int]
+    message: Message
+    completion_tokens: Optional[int] = 0
     """Number of tokens in the generated completion."""
-    prompt_tokens: Optional[int]
+    prompt_tokens: Optional[int] = 0 
     """Number of tokens in the prompt."""
-    total_tokens: Optional[int]
+    total_tokens: Optional[int] = 0
     """Total number of tokens used in the request (prompt + completion)."""
-    message: Optional[Message] = None
-    messages: List[Message] = field(default_factory=list)
-
-    def __post_init__(self):
-        # Ensure that either message or messages is present, but not both or none
-        if (self.message is None and self.messages is None) or (self.message is not None and self.messages is not None):
-            raise ValueError("Either 'message' or 'messages' must be present, but not both.")
 
 @dataclass
 class MessageRequest:
     query: Optional[str]
     messages: Optional[List[Message]]
     top: int = field(default=3)
+
+class QueryType(Enum):
+    VECTOR_SIMPLE_HYBRID = "vectorSimpleHybrid"
+
+@dataclass
+class AzureCognitiveSearchParameters:
+    endpoint: str
+    key: str
+    indexName: str
+    queryType: QueryType = QueryType.VECTOR_SIMPLE_HYBRID
+
+@dataclass
+class AzureCognitiveSearchDataSource:
+    type: str = field(init=False, default="AzureCognitiveSearch")
+    parameters: AzureCognitiveSearchParameters
