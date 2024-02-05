@@ -1,0 +1,12 @@
+azure-identity
+azure-keyvault-secrets
+azure-storage-blob
+azure-search-documents==11.4.0b8
+apiflask
+Flask
+gunicorn
+openai
+python-dotenv
+bs4
+marshmallow_dataclass
+typeguard 

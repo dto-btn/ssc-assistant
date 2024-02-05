@@ -13,27 +13,27 @@ pip install -r requirements.txt
 Create a `.env` file and populate it with the necessary keys: 
 
 ```
-AZURE_SEARCH_SERVICE_ENDPOINT=
-AZURE_SEARCH_INDEX_NAME=
-AZURE_SEARCH_ADMIN_KEY=
-BLOB_CONNECTION_STRING=
-BLOB_CONTAINER_NAME=
+AZURE_SEARCH_SERVICE_ENDPOINT=https://<domain>.search.windows.net
+AZURE_SEARCH_ADMIN_KEY=<INSERT_KEY_HERE>
+BLOB_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=sscplusdatastorage;AccountKey=<INSERT_KEY_HERE>;EndpointSuffix=core.windows.net
+BLOB_CONTAINER_NAME=sscplusdata
+AZURE_OPENAI_ENDPOINT=https://<domain>.openai.azure.com/
+AZURE_OPENAI_API_KEY=<INSERT_KEY_HERE>
 ```
 
-## Documentation
-
-[How to create a search services index from scratch with vectorization via code](https://github.com/Azure/azure-search-vector-samples/blob/main/demo-python/code/azure-search-integrated-vectorization-sample.ipynb)
-
-## Troubleshooting
-
-I had an issue where the trigger wasn't detected in the V2 model. I had to modify my `local.settings.json` to include this property ([see documentation about it](https://learn.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-python?pivots=python-mode-decorators#update-app-settings)): 
+Create a `local.settings.json` and put the following content inside: 
 
 ```json
 {
   "IsEncrypted": false,
   "Values": {
-    "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
-    ...
+    "AzureWebJobsStorage": "EnableWorkerIndexing",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AzureWebJobsFeatureFlags": "EnableWorkerIndexing"
   }
 }
 ```
+
+## Documentation
+
+[How to create a search services index from scratch with vectorization via code](https://github.com/Azure/azure-search-vector-samples/blob/main/demo-python/code/azure-search-integrated-vectorization-sample.ipynb)

@@ -4,7 +4,10 @@
 
 azure-identity
 azure-functions
-azure-search-documents
+azure-search-documents==11.4.0b8
 azure-storage-blob
 openai
 python-dotenv
+llama-index
+langchain
+bs4
