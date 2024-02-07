@@ -7,7 +7,7 @@ on:
       - 3-open-api-to-the-myssc-plus-team-tf-mods
 
 jobs:
-  build-and-deploy:
+  api-build-and-deploy:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -25,11 +25,18 @@ jobs:
 
     # Add any other necessary build steps here (e.g., tests)
     #- name: Run tests
+    #     TODO
+    
+    - name: Log in with Azure
+        uses: azure/login@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
 
     - name: 'Deploy to Azure Web App'
       uses: azure/webapps-deploy@v3
       with:
         app-name: 'ssc-assistant-api'
         slot-name: 'production'
-        credentials: ${{ secrets.AZURE_CREDENTIALS }}
+        # az webapp deployment list-publishing-profiles --name ssc-assistant-api --resource-group YourResourceGroupName --xml (save as secret)
+        credentials: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         package: './app/api'
