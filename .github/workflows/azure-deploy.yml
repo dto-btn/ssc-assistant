@@ -34,6 +34,13 @@ jobs:
     - name: Log in with Azure
       uses: azure/login@v1
       with:
+        # {
+        #   "clientId": "<GUID>",
+        #   "clientSecret": "<GUID>",
+        #   "subscriptionId": "<GUID>",
+        #   "tenantId": "<GUID>",
+        #   (...)
+        # }
         creds: '${{ secrets.AZURE_CREDENTIALS }}'
         #client-id: ${{ secrets.AZURE_CLIENT_ID }}
         #tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -45,5 +52,6 @@ jobs:
         app-name: 'ssc-assistant-api'
         slot-name: 'production'
         # az webapp deployment list-publishing-profiles --name ssc-assistant-api --resource-group YourResourceGroupName --xml (save as secret)
-        credentials: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         package: './app/api'
+        startup-command: 'gunicorn --bind=0.0.0.0 --chdir app/api app:app'
