@@ -34,6 +34,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        python -m venv --copies antenv
+        source antenv/bin/activate
         pip install -r requirements.txt
 
     # Add any other necessary build steps here (e.g., tests)

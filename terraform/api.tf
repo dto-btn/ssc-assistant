@@ -22,6 +22,7 @@ resource "azurerm_linux_web_app" "api" {
 
   site_config {
     ftps_state = "FtpsOnly"
+    api_definition_url = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net/openapi.json"
 
     application_stack {
       python_version = "3.11"
@@ -29,6 +30,17 @@ resource "azurerm_linux_web_app" "api" {
     use_32_bit_worker = false
 
     #app_command_line = "gunicorn --bind=0.0.0.0 app:app"
+  }
+
+  logs {
+    detailed_error_messages = false
+    failed_request_tracing  = false
+    http_logs {
+        file_system {
+            retention_in_days = 30
+            retention_in_mb   = 35
+          }
+      }
   }
 
   app_settings = {
