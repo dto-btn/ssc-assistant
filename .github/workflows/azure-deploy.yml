@@ -31,5 +31,5 @@ jobs:
       with:
         app-name: 'ssc-assistant-api'
         slot-name: 'production'
-        publish-profile: ${{ secrets.AZURE_CREDENTIALS }}
+        credentials: ${{ secrets.AZURE_CREDENTIALS }}
         package: './app/api'
