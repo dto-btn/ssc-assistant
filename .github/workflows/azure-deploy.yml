@@ -6,6 +6,10 @@ on:
       - main
       - 3-open-api-to-the-myssc-plus-team-tf-mods
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   api-build-and-deploy:
     runs-on: ubuntu-latest
