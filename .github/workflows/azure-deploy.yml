@@ -1,0 +1,35 @@
+name: Deploy to Azure Web App
+
+on:
+  push:
+    branches:
+      - main
+      - 3-open-api-to-the-myssc-plus-team-tf-mods
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        cd ./app/api
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    # Add any other necessary build steps here (e.g., tests)
+    #- name: Run tests
+
+    - name: 'Deploy to Azure Web App'
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: 'ssc-assistant-api'
+        slot-name: 'production' # Optional: If deploying to a slot, set the slot name
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }} # Set to your publish profile secret
+        package: './app/api'
