@@ -15,6 +15,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        sparse-checkout: 'app/api'
+        sparse-checkout-cone-mode: false
+    
+    - name: Move api files to pwd
+      run: |
+        ls -la
+        mv app/api/* .
+        rm -rf app
+        ls -la
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -23,7 +33,6 @@ jobs:
 
     - name: Install dependencies
       run: |
-        cd ./app/api
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
@@ -53,4 +62,4 @@ jobs:
         slot-name: 'production'
         # az webapp deployment list-publishing-profiles --name ssc-assistant-api --resource-group YourResourceGroupName --xml (save as secret)
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-        package: './app/api'
+        package: '.'

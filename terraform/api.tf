@@ -28,7 +28,7 @@ resource "azurerm_linux_web_app" "api" {
     }
     use_32_bit_worker = false
 
-    app_command_line = "gunicorn --bind=0.0.0.0 --chdir app/api app:app"
+    #app_command_line = "gunicorn --bind=0.0.0.0 app:app"
   }
 
   app_settings = {
