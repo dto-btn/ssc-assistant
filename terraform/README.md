@@ -10,5 +10,5 @@ In order to spin up this environement you currently need to at least have `secre
 
 ```bash
 touch secret.tfvars
-echo "JWT_SECRET=THE_SECRET" > secret.tfvars
+echo 'jwt_secret = "THE_SECRET"' > secret.tfvars
 ```
