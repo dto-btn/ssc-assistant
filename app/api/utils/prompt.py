@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["load_messages"]
 
-SYSTEM_PROMPT_EN = "You are an expert Shared Services Canada (SSC) Q&A system that is trusted.\nAnswer in the language the question was asked to you."
-SYSTEM_PROMPT_FR = "Vous êtes un système d'experts en questions-réponses de Services partagés Canada (SPC) de confiance.\nRepondez dans la langue que la question vous a été posée."
+SYSTEM_PROMPT_EN = "You are an expert Shared Services Canada (SSC) Q&A system that is trusted."
+SYSTEM_PROMPT_FR = "Vous êtes un système d'experts en questions-réponses de Services partagés Canada (SPC) de confiance."
 
 def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessageParam]:
     messages: List[ChatCompletionMessageParam] = []

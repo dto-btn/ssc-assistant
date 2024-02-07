@@ -9,6 +9,7 @@ from utils.models import Completion, MessageRequest
 from utils.openai import (build_completion_response, chat, chat_with_data,
                           convert_chat_with_data_response)
 from utils.prompt import load_messages
+from utils.auth import auth
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -50,6 +51,8 @@ _boundary = "GPT-Interaction"
     "prompt_tokens": 4962,
     "total_tokens": 5203
 })
+@api_v1.doc(security='ApiKeyAuth')
+@auth.login_required(role='myssc')
 def completion_myssc(message_request: MessageRequest):
     if not message_request.query and not message_request.messages:
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
@@ -72,6 +75,8 @@ def completion_myssc(message_request: MessageRequest):
                                                                                 "top": 3
                                                                             })
 @api_v1.output(Completion.Schema, content_type=f'multipart/x-mixed-replace; boundary={_boundary}')
+@api_v1.doc(security='ApiKeyAuth')
+@auth.login_required(role='myssc')
 def completion_myssc_stream(message_request: MessageRequest):
     if not message_request.query and not message_request.messages:
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
@@ -123,6 +128,8 @@ def completion_myssc_stream(message_request: MessageRequest):
     "prompt_tokens": 4962,
     "total_tokens": 5203
 })
+@api_v1.doc(security='ApiKeyAuth')
+@auth.login_required(role='chat')
 def completion_chat(message_request: MessageRequest):
     if not message_request.query and not message_request.messages:
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
@@ -141,6 +148,8 @@ def completion_chat(message_request: MessageRequest):
                                                                                 "top": 3
                                                                             })
 @api_v1.output(Completion.Schema, content_type=f'multipart/x-mixed-replace; boundary={_boundary}')
+@api_v1.doc(security='ApiKeyAuth')
+@auth.login_required(role='chat')
 def completion_chat_stream(message_request: MessageRequest):
     if not message_request.query and not message_request.messages:
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400

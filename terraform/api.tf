@@ -48,10 +48,12 @@ resource "azurerm_linux_web_app" "api" {
     AZURE_SEARCH_ADMIN_KEY        = azurerm_search_service.main.primary_key
     AZURE_OPENAI_ENDPOINT         = data.azurerm_cognitive_account.ai.endpoint
     AZURE_OPENAI_API_KEY          = data.azurerm_cognitive_account.ai.primary_access_key
+    SERVER_URL_PROD               = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net"
+    JWT_SECRET                    = var.jwt_secret
     #PORT = 5001
   }
 
-  sticky_settings {
+  sticky_settings { # settings that are the same regardless of deployment slot..
     app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY" ]
   }
 }

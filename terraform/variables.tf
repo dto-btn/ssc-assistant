@@ -38,3 +38,9 @@ variable "dns_zone_rg" {
     type = string
     default = "ScSc-CIO_ECT_DNS-rg"
 }
+
+variable "jwt_secret" {
+    type = string
+    sensitive = true
+    description = "the jwt secret that will be used to decrypt the access key provided to the backend devs"
+}
