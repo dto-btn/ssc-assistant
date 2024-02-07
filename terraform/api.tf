@@ -28,7 +28,7 @@ resource "azurerm_linux_web_app" "api" {
     }
     use_32_bit_worker = false
 
-    #app_command_line = "NODE_ENV=production node server.js"
+    app_command_line = "gunicorn --bind=0.0.0.0 --chdir app/api app:app"
   }
 
   app_settings = {
@@ -40,6 +40,6 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   sticky_settings {
-    app_setting_names = [ "VITE_API_BACKEND", "ENABLE_ORYX_BUILD", "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET", "DB_CONN", "PORT" ]
+    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY" ]
   }
 }
