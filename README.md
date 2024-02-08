@@ -60,7 +60,7 @@ Prerequisites:
 ```bash
 cd terraform/
 terraform init
-terraform plan
+terraform plan -var-file="secret.tfvars"
 ```
 
 ## Documentation
