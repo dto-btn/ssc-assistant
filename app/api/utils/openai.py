@@ -10,6 +10,8 @@ from utils.models import (AzureCognitiveSearchDataSource,
                           AzureCognitiveSearchParameters, Citation, Completion,
                           Context, Message, Metadata)
 
+from utils.tools import load_tools, call_tools
+
 __all__ = ["chat_with_data", "convert_chat_with_data_response", "build_completion_response", "chat"]
 
 azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
@@ -44,15 +46,29 @@ def _create_azure_cognitive_search_data_source() -> AzureCognitiveSearchDataSour
         parameters=parameters
     )
 
-def chat(messages: List[ChatCompletionMessageParam], stream=False) -> Union[ChatCompletion,Stream[ChatCompletionChunk]]:
+def chat(messages: List[ChatCompletionMessageParam], stream=False, toolsUsed = ["geds","bits"], useData = True) -> Union[ChatCompletion,Stream[ChatCompletionChunk]]:
     """
     Chat with gpt directly without data, but perhaps with tools.
     """
-    return client.chat.completions.create(
+    tools = load_tools()
+
+    if toolsUsed:
+        completion = client.chat.completions.create(
+            messages=messages,
+            model=model,
+            tools=tools,
+            stream=stream
+        )
+        messages = call_tools(completion, messages)
+    
+
+    completion = client.chat.completions.create(
         messages=messages,
         model=model,
         stream=stream
     )
+
+    return completion
 
 def chat_with_data(messages: List[ChatCompletionMessageParam], stream=False) -> Union[ChatCompletion,Stream[ChatCompletionChunk]]:
     """
