@@ -25,17 +25,29 @@ client = AzureOpenAI(
     api_key=api_key
 )
 
-def load_tools():  
+def load_tools(toolsUsed: List[str]):  
     # Get the directory of the current file (tools.py)  
     current_dir = Path(__file__).parent  
     # Construct the path to 'tools.json' within the same directory  
     tools_path = current_dir / 'tools.json'  
     # Open the file using the absolute path  
     with tools_path.open('r') as f:  
-        tools = json.load(f)  
+        all_tools = json.load(f)  
+
+    tools = [tool for tool in all_tools if 'tool_type' in tool and tool['tool_type'] in toolsUsed] 
+
     return tools  
-  
-tools = load_tools()  
+
+# def load_tools():
+#     # Get the directory of the current file (tools.py)
+#     current_dir = Path(__file__).parent
+#     # Construct the path to 'tools.json' within the same directory
+#     tools_path = current_dir / 'tools.json'
+#     # Open the file using the absolute path
+#     with tools_path.open('r') as f:
+#         all_tools = json.load(f)
+
+#     return all_tools  
 
 def load_records():  
     # Get the directory of the current file (tools.py)  
@@ -183,14 +195,11 @@ def get_employee_by_phone_number(employee_phone_number: str):
     else:
         return "Didn't find any matching employee with that phone number."
     
-def call_tools(completion , messages: List[ChatCompletionMessageParam]):
+def call_tools(tool_calls , messages: List[ChatCompletionMessageParam]):
     """
     Call the tool functions and return a new completion with the results
     """
-    # Get the tool calls from the completion
-    tool_calls = completion.choices[0].message.tool_calls
-  
-    # Note: the JSON response may not always be valid; be sure to handle errors
+    # Define the available functions
     available_functions = {
         "get_records_req_impl_by_year": get_records_req_impl_by_year,
         "get_br_count_with_target_impl_date": get_br_count_with_target_impl_date,
@@ -207,22 +216,8 @@ def call_tools(completion , messages: List[ChatCompletionMessageParam]):
         function_args = json.loads(tool_call.function.arguments)
 
         # Prepare the arguments for the function call
-        prepared_args = {}
-        # Check if the function requires any arguments and add them to the prepared_args dictionary
-        if "year" in function_args:
-            prepared_args["year"] = function_args["year"]
-        if "valid" in function_args:
-            prepared_args["valid"] = function_args["valid"]
-        if "month" in function_args:
-            prepared_args["month"] = function_args["month"]
-        if "br_number" in function_args:
-            prepared_args["br_number"] = function_args["br_number"]
-        if "employee_firstname" in function_args:
-            prepared_args["employee_firstname"] = function_args["employee_firstname"]
-        if "employee_lastname" in function_args:
-            prepared_args["employee_lastname"] = function_args["employee_lastname"]
-        if "employee_phone_number" in function_args:
-            prepared_args["employee_phone_number"] = function_args["employee_phone_number"]
+        prepared_args = {arg: function_args[arg] for arg in function_args}
+
         # Call the function with the prepared arguments
         function_response = function_to_call(**prepared_args)
         assistant_info = {  
@@ -239,27 +234,20 @@ def call_tools(completion , messages: List[ChatCompletionMessageParam]):
                     }  
                 ]  
             }
-    
-        # Check if completion.choices[0].message.content is None or not a string  
-        if completion.choices[0].message.content is None:  
-            # If it's None, initialize it as an empty string  
-            completion.choices[0].message.content = ""  
-        assistant_info = json.dumps(assistant_info)
-        completion.choices[0].message.content += str(assistant_info)
+        
+        # Convert the function response to a string
         response_as_string = "\n".join(function_response) if function_response is list else str(function_response)
-            # Append a message to indicate the assistant is calling the function
         tool_info = {
                 "tool_call_id": tool_call.id,
                 "role": "tool",
                 "name": function_name,
                 "content": response_as_string,
             }
-        tool_info = json.dumps(tool_info)
-        completion.choices[0].message.content += str(tool_info)
+        
+        # Add the function response to the messages
         messages.append({
             "role": "assistant",
             
-            "content": completion.choices[0].message.content
+            "content": str(json.dumps(assistant_info)+json.dumps(tool_info))
         })
-        print(messages)
     return messages

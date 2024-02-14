@@ -46,22 +46,25 @@ def _create_azure_cognitive_search_data_source() -> AzureCognitiveSearchDataSour
         parameters=parameters
     )
 
-def chat(messages: List[ChatCompletionMessageParam], stream=False, toolsUsed = ["geds","bits"], useData = True) -> Union[ChatCompletion,Stream[ChatCompletionChunk]]:
+def chat(messages: List[ChatCompletionMessageParam], stream=False, toolsUsed: List[str]=[], useData = True) -> Union[ChatCompletion,Stream[ChatCompletionChunk]]:
     """
     Chat with gpt directly without data, but perhaps with tools.
     """
-    tools = load_tools()
-
+    # Check if tools are used and load them
     if toolsUsed:
+        print("Using tools: ")
+        tools = load_tools(toolsUsed)
+        print(tools)
+        
         completion = client.chat.completions.create(
             messages=messages,
             model=model,
             tools=tools,
             stream=stream
         )
-        messages = call_tools(completion, messages)
+        messages = call_tools(completion.choices[0].message.tool_calls, messages)
     
-
+    # Create completion
     completion = client.chat.completions.create(
         messages=messages,
         model=model,
@@ -74,7 +77,6 @@ def chat_with_data(messages: List[ChatCompletionMessageParam], stream=False) -> 
     """
     Initiate a chat with via openai api using data_source (azure cognitive search)
     """
-    data_source = _create_azure_cognitive_search_data_source()
 
     # https://github.com/openai/openai-cookbook/blob/main/examples/azure/chat_with_your_own_data.ipynb
     return client_data.chat.completions.create(

@@ -128,8 +128,9 @@ def completion_chat(message_request: MessageRequest):
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
 
     messages = load_messages(message_request)
-    print(messages)
-    completion: ChatCompletion = chat(messages)
+    # get tools list from MessageRequest
+    toolsUsed = message_request.tools
+    completion: ChatCompletion = chat(messages, toolsUsed=toolsUsed)
 
     return convert_chat_with_data_response(completion)
 

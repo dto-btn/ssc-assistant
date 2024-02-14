@@ -1,6 +1,7 @@
 [
   {
     "type": "function",
+    "tool_type": "bits",
     "function": {
       "name": "get_records_req_impl_by_year",
       "description": "Get the Business Request (BR) records that are due to be implemented by given year",
@@ -18,6 +19,7 @@
   },
   {
     "type": "function",
+    "tool_type": "bits",
     "function": {
       "name": "get_br_count_with_target_impl_date",
       "description": "Get the amount of business records (BR) that have a valid (or not) target implementation date (TID). Returns an amount of BRs that matches the criteria",
@@ -34,6 +36,7 @@
   },
   {
     "type": "function",
+    "tool_type": "bits",
     "function": {
       "name": "get_forecasted_br_for_month",
       "description": "Get the Business Request (BR) records that are forecasted for a given month (and optionally a year, else uses the current year)",
@@ -55,6 +58,7 @@
   },
   {
     "type": "function",
+    "tool_type": "bits",
     "function": {
       "name": "get_br_information",
       "description": "Gets information on a specific business request (BR) via it's BR number. It's a 5 or 6 digit number that can frequently be prepended by the letters BR, e.g. BR654321",
@@ -72,6 +76,7 @@
   },
   {
     "type": "function",
+    "tool_type": "geds",
     "function": {
       "name": "get_employee_information",
       "description": "Gets information on a specific employee by their name, it typically consists of a first name (given name) and last name (surname) of an employee, e.g. John Smith",
@@ -92,6 +97,7 @@
   },
   {
     "type": "function",
+    "tool_type": "geds",
     "function": {
       "name": "get_employee_by_phone_number",
       "description": "Gets information on a specific employee by their phone number, it typically consists of a 10 digit phone number, e.g. 123-456-7890 or 1234567890",
