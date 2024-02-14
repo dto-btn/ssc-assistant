@@ -15,8 +15,12 @@
     "@fontsource/roboto": "^5.0.8",
     "@mui/icons-material": "^5.15.10",
     "@mui/material": "^5.15.10",
+    "@types/js-cookie": "^3.0.6",
+    "i18next": "^23.8.2",
+    "js-cookie": "^3.0.5",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-i18next": "^14.0.5"
   },
   "devDependencies": {
     "@types/react": "^18.2.55",

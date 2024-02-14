@@ -1,13 +1,13 @@
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
+import IconButton from '@mui/material/IconButton';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
-import Container from '@mui/material/Container';
-import MenuItem from '@mui/material/MenuItem';
+import Link from '@mui/material/Link';
+import Cookies from "js-cookie";
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
 
 const logoStyle = {
@@ -16,7 +16,7 @@ const logoStyle = {
   cursor: 'pointer',
 };
 
-export default function TopMenu() {
+export const TopMenu = () => {
 
   const [open, setOpen] = React.useState(false);
 
@@ -36,6 +36,18 @@ export default function TopMenu() {
       });
       setOpen(false);
     }
+  };
+
+  const { t, i18n } = useTranslation();
+
+  const setTranslationCookie = () => {
+      Cookies.set("lang_setting", i18n.language, {
+          expires: 30,
+      });
+  };
+
+  const changeLanguage = (lng: string) => {
+      i18n.changeLanguage(lng);
   };
 
   return (
@@ -82,14 +94,14 @@ export default function TopMenu() {
                 alt="logo of SSC"
               />
               <Typography variant="h6" component="div" sx={{paddingLeft: "0.75em",}}>
-                SSC's Assistant
+                {t('title')}
               </Typography>
             </Box>
-            
-            <IconButton color="inherit">?</IconButton>
+            <Link href="#" onClick={() => {changeLanguage(t("langlink.shorthand")); setTranslationCookie();}} color="inherit">{t("langlink")}</Link>
+            {/* <IconButton color="inherit">?</IconButton> */}
           </Toolbar>
         </Container>
       </AppBar>
     </>
   );
-}
+};
