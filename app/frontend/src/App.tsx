@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import reactLogo from './assets/react.svg';
 import viteLogo from '/vite.svg';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
@@ -39,6 +39,7 @@ export const App = () => {
   const [errorSnackbar, setErrorSnackbar] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [completions, setCompletions] = useState<Completion[]>([welcomeMessage]);
+  const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
 
   const makeApiRequest = async (question: string) => {
     // set is loading so we disable some interactive functionality while we load the response
@@ -109,6 +110,8 @@ export const App = () => {
       document.documentElement.lang = i18n.language;
   }, [i18n.language]);
 
+  useEffect(() => chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [completions[completions.length-1].message.content]);
+
   return (
     <>
       <ThemeProvider theme={mainTheme}>
@@ -128,6 +131,7 @@ export const App = () => {
                 )}
               </Fragment>
             ))}
+            <div ref={chatMessageStreamEnd} />
           </Box>
           <Box sx={{ position: 'sticky', bottom: 0, left: 0, right: 0, zIndex: 1100, bgcolor: 'background.default', padding: '1rem' }}>
             <ChatInput
