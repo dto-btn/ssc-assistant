@@ -120,7 +120,7 @@ export const App = () => {
             {completions.map( (completion, index) => (
               <Fragment key={index}>
                 {completion.message?.role === "assistant" && (
-                  <AssistantBubble text={completion.message?.content} />
+                  <AssistantBubble text={completion.message?.content} isLoading={index == completions.length-1 && isLoading} />
                 )}
 
                 {completion.message?.role === "user" && (

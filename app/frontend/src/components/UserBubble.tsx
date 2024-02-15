@@ -11,7 +11,7 @@ export const UserBubble = ({ text }: UserChatProps) => {
         sx={{
           bgcolor: 'primary.main',
           color: 'primary.contrastText',
-          py: 1,
+          py: 2,
           px: 2,
           borderRadius: '20px',
           borderTopRightRadius: 0,
