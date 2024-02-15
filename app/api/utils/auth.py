@@ -12,6 +12,7 @@ secret = os.getenv('JWT_SECRET', 'secret')
 
 @auth.verify_token
 def verify_token(token):
+    print("Received token:", token)
     try:
         # Decode the token using the same secret key and algorithm used to encode
         data = jwt.decode(token, secret, algorithms=['HS256'])

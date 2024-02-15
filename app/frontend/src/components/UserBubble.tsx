@@ -1,7 +1,7 @@
 import { Box, Paper, Typography } from '@mui/material';
 
 interface UserChatProps {
-    text: string;
+    text: string | null | undefined;
   }
 
 export const UserBubble = ({ text }: UserChatProps) => {

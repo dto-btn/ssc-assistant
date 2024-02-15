@@ -1,7 +1,7 @@
-import { Box, Paper, Typography } from '@mui/material';
+import { Box, Paper, Typography, LinearProgress } from '@mui/material';
 
 interface AssistantBubbleProps {
-    text: string;
+    text: string | null | undefined;
   }
 
 export const AssistantBubble = ({ text }: AssistantBubbleProps) => {
@@ -18,7 +18,18 @@ export const AssistantBubble = ({ text }: AssistantBubbleProps) => {
           maxWidth: '80%',
         }}
       >
-        <Typography variant="body1">{text}</Typography>
+        {(text !== null && text !== undefined && text !== '') ?
+          (
+            <Typography variant="body1">{text}</Typography>
+          ) : (
+            <Box>
+              <LinearProgress sx={{ width: '150px', mt: 1}}/>
+              <LinearProgress sx={{ width: '100px', mt: 1}}/>
+              <LinearProgress sx={{ width: '150px', mt: 1}}/>
+              <LinearProgress sx={{ width: '75px', my: 1}}/>
+            </Box>
+          )
+        }
       </Paper>
     </Box>
   );
