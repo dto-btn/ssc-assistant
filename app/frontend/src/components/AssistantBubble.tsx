@@ -4,12 +4,13 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
-import { useEffect, useState, Fragment } from 'react';
+import { useEffect, useState, Fragment, RefObject } from 'react';
 
 interface AssistantBubbleProps {
     text: string | null | undefined;
     isLoading: boolean;
     context?: Context | null;
+    scrollRef?:  React.RefObject<HTMLDivElement>;
   }
 
 function processText(text: string, citations: Citation[]) {
@@ -38,7 +39,7 @@ function processText(text: string, citations: Citation[]) {
   return { processedText, citedCitations };
 }
 
-export const AssistantBubble = ({ text, isLoading, context }: AssistantBubbleProps) => {
+export const AssistantBubble = ({ text, isLoading, context, scrollRef }: AssistantBubbleProps) => {
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const theme = useTheme();
 
@@ -46,6 +47,7 @@ export const AssistantBubble = ({ text, isLoading, context }: AssistantBubblePro
     if (!isLoading && context && text) {
       const { processedText, citedCitations } = processText(text, context.citations);
       setProcessedContent({ processedText, citedCitations });
+      scrollRef?.current?.scrollIntoView({ behavior: "smooth" });
     } else if (!isLoading && text) {
       setProcessedContent({ processedText: text, citedCitations: [] as Citation[] });
     }

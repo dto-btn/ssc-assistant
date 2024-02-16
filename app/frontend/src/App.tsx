@@ -1,15 +1,10 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
-import reactLogo from './assets/react.svg';
-import viteLogo from '/vite.svg';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { purple, pink } from '@mui/material/colors';
-import Container from '@mui/material/Container';
+import { Alert, Box, Snackbar } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Alert, Box, Paper, Snackbar, Typography } from '@mui/material';
-import { Palette } from '@mui/icons-material';
-import { AssistantBubble, UserBubble, TopMenu, ChatInput } from './components';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { completionMySSC } from './api/api';
+import { AssistantBubble, ChatInput, TopMenu, UserBubble } from './components';
 
 const mainTheme = createTheme({
   palette: {
@@ -136,7 +131,11 @@ export const App = () => {
             {completions.map( (completion, index) => (
               <Fragment key={index}>
                 {completion.message?.role === "assistant" && (
-                  <AssistantBubble text={completion.message?.content} isLoading={index == completions.length-1 && isLoading} context={completion.message?.context} />
+                  <AssistantBubble 
+                    text={completion.message?.content} 
+                    isLoading={index == completions.length-1 && isLoading} 
+                    context={completion.message?.context}
+                    scrollRef={chatMessageStreamEnd} />
                 )}
 
                 {completion.message?.role === "user" && (
