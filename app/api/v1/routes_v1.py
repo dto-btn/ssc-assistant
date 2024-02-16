@@ -78,11 +78,6 @@ def completion_myssc(message_request: MessageRequest):
 @api_v1.doc(security='ApiKeyAuth')
 @auth.login_required(role='myssc')
 def completion_myssc_stream(message_request: MessageRequest):
-
-    logging.info("Headers received:", request.headers)  
-  
-    # Log the body if you expect a JSON payload  
-    logging.info("JSON received:", request.json) 
     if not message_request.query and not message_request.messages:
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
 

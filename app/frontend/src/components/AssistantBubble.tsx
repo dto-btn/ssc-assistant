@@ -25,7 +25,7 @@ function processText(text: string, citations: Citation[]) {
 
     if (citation) {
       //return `[${citation.title}](${citation.url})`; // Replace with Markdown link
-      return ` [Doc ${docNumber}](${citation.url})`; // Replace with Markdown link
+      return ` [${docNumber}](${citation.url})`; // Replace with Markdown link
     }
     return '';
   });
