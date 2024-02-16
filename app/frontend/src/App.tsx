@@ -130,9 +130,9 @@ export const App = () => {
           <Box sx={{ overflowY: 'hidden', padding: '2rem', alignItems: 'flex-end'}}>
             {completions.map( (completion, index) => (
               <Fragment key={index}>
-                {completion.message?.role === "assistant" && (
+                {completion.message?.role === "assistant" && completion.message?.content && (
                   <AssistantBubble 
-                    text={completion.message?.content} 
+                    text={completion.message.content} 
                     isLoading={index == completions.length-1 && isLoading} 
                     context={completion.message?.context}
                     scrollRef={chatMessageStreamEnd} />

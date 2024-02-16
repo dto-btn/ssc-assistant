@@ -7,7 +7,7 @@ import 'highlight.js/styles/github.css'
 import { useEffect, useState, Fragment, RefObject } from 'react';
 
 interface AssistantBubbleProps {
-    text: string | null | undefined;
+    text: string;
     isLoading: boolean;
     context?: Context | null;
     scrollRef?:  React.RefObject<HTMLDivElement>;
@@ -64,25 +64,13 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef }: Assista
           maxWidth: '80%',
         }}
       >
-        {(text !== null && text !== undefined && text !== '') ?
-          (
-          <Container>
-            <Markdown rehypePlugins={[rehypeHighlight]} remarkPlugins={[remarkGfm]}>{isLoading ? text.replace(/\[doc(\d+)\]/g, '') : processedContent.processedText}</Markdown>
-            {isLoading && (
-              <>
-                <LinearProgress color="inherit" sx={{ width: '70%', mt: 1, height: theme.typography.fontSize}}/>
-                <LinearProgress color="inherit" sx={{ width: '90%', mt: 1, mb: 2, height: theme.typography.fontSize}}/>
-              </>
-            )}
-          </Container>
-          ) : (
-            <Container sx={{ minWidth: theme.breakpoints.values.sm, width: '100%', py: 2 }}>
-              <LinearProgress color="inherit" sx={{ width: '100%', mt: 1, height: theme.typography.fontSize}}/>
-              <LinearProgress color="inherit" sx={{ width: '70%', mt: 1, height: theme.typography.fontSize}}/>
-              <LinearProgress color="inherit" sx={{ width: '90%', my: 1, height: theme.typography.fontSize}}/>
-            </Container>
-          )
-        }
+        <Container>
+          <Markdown 
+            rehypePlugins={[rehypeHighlight]} 
+            remarkPlugins={[remarkGfm]}>
+              {isLoading ? text.replace(/\[doc(\d+)\]/g, '') + "<span class=\"blinking-cursor\">_</span>" : processedContent.processedText}
+          </Markdown>
+        </Container>
         {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
           <>
             <Divider />
@@ -92,17 +80,19 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef }: Assista
               </Typography>
               <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                 {context?.citations.map( (citation, index) => (
-                <Fragment key={index}>
-                  <Chip
-                    label={index+1 + " - " + citation.title}
-                    component="a"
-                    href={citation.url}
-                    target='_blank'
-                    variant={processedContent.citedCitations.includes(citation) ? "filled" : "outlined"}
-                    clickable
-                    color={processedContent.citedCitations.includes(citation) ? "primary" : "default"}
-                  />
-                </Fragment>
+                  processedContent.citedCitations.includes(citation) && (
+                    <Fragment key={index}>
+                      <Chip
+                        label={index+1 + " - " + citation.title}
+                        component="a"
+                        href={citation.url}
+                        target='_blank'
+                        variant="filled"
+                        clickable
+                        color="primary"
+                      />
+                    </Fragment>
+                  )
                 ))}
               </Stack>
             </Box>
