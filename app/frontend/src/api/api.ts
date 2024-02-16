@@ -1,10 +1,12 @@
 interface CompletionProps {
   request: MessageRequest;
   updateLastMessage: (message_chunk: string) => void;
-  updateHistory: () => void;
 }
 
-export async function completionMySSC({ request, updateLastMessage }: CompletionProps): Promise<void> {
+export async function completionMySSC({ request, updateLastMessage }: CompletionProps): Promise<Completion> {
+  let completion: Completion | undefined;
+  let streamingContent = '';
+
   const response = await fetch("/api/1.0/completion/myssc/stream", {
     method: "POST",
     headers: {
@@ -22,9 +24,8 @@ export async function completionMySSC({ request, updateLastMessage }: Completion
   if (!boundaryMatch) {
     throw new Error('Boundary not found in the content type header.');
   }
-  const boundary = boundaryMatch[1];
-  console.log(boundary);
 
+  const boundary = boundaryMatch[1];
   const reader = response.body?.getReader();
   if (!reader) {
     throw new Error('Response body reader not available.');
@@ -33,10 +34,12 @@ export async function completionMySSC({ request, updateLastMessage }: Completion
   const decoder = new TextDecoder('utf-8');
   let partialData = '';
 
-  const regex = `/--${boundary}\s+Content-Type: text\/plain\s+([\s\S]+?)\s+--${boundary}\s+Content-Type: application\/json/`;
+  //const regex = `/--${boundary}\s+Content-Type: text\/plain\s+([\s\S]+?)\s+--${boundary}\s+Content-Type: application\/json/`;
   const startBoundaryRegex = /--GPT-Interaction\s+Content-Type: text\/plain\s+/;
   const endBoundaryRegex = /--GPT-Interaction\s+Content-Type: application\/json/;
+  const finalBoundaryRegex = /--GPT-Interaction--/;
   const contentRegex = new RegExp(`${startBoundaryRegex.source}([\\s\\S]+?)(${endBoundaryRegex.source}|$)`, 's');
+  const jsonRegex = new RegExp(`${endBoundaryRegex.source}([\\s\\S]+?)${finalBoundaryRegex.source}`, 's');
 
   try {
     while (true) {
@@ -44,14 +47,17 @@ export async function completionMySSC({ request, updateLastMessage }: Completion
       if (done) break;
 
       partialData += decoder.decode(value, { stream: true });
-      console.log(partialData);
-      const result = contentRegex.exec(partialData); 
+      const result = contentRegex.exec(partialData);
       if(result && result[1]) {
-        const content = result[1].trim();
+        const content = streamingContent = result[1].trim();
         updateLastMessage(content);
       }
+    }
 
-
+    //finished reading the stream, let's load the json object properly this time and populate the rest of the answer.
+    const json = jsonRegex.exec(partialData);
+    if(json && json[1]){
+      completion = JSON.parse(json[1]);
     }
   } catch (error) {
     console.error('Error while reading the stream:', error);
@@ -59,4 +65,11 @@ export async function completionMySSC({ request, updateLastMessage }: Completion
   } finally {
     reader.releaseLock();
   }
+
+  return completion ||  {
+                          message: {
+                            role:'assistant', 
+                            content: streamingContent
+                          }
+                        }
 }

@@ -67,7 +67,22 @@ export const App = () => {
     setCompletions(prevCompletions => [...prevCompletions, userCompletion, responsePlaceholder]);
 
     try{
-      await completionMySSC({request: request, updateLastMessage: updateLastMessage, updateHistory: updateHistory});
+      const completionResponse = await completionMySSC({request: request, updateLastMessage: updateLastMessage});
+
+      setCompletions((prevCompletions) => {
+        const updatedCompletions = [...prevCompletions];//making a copy
+  
+        updatedCompletions[updatedCompletions.length-1] = {
+          ...updatedCompletions[updatedCompletions.length-1],
+          message: {
+            ...updatedCompletions[updatedCompletions.length-1].message,
+            context: completionResponse.message.context
+          },
+        }
+  
+        return updatedCompletions;
+      })
+
     } catch(error) {
       setErrorSnackbar(true);
       if (error instanceof Error) {
@@ -91,12 +106,9 @@ export const App = () => {
           content: message_chunk,
         },
       }
-
       return updatedCompletions;
     })
   }
-
-  const updateHistory = () => {};
 
   const handleCloseSnackbar = (event?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
@@ -110,6 +122,7 @@ export const App = () => {
       document.documentElement.lang = i18n.language;
   }, [i18n.language]);
 
+  //everytime we update the text in the last chat bubble, we scroll into view, smooooothllyyy
   useEffect(() => chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [completions[completions.length-1].message.content]);
 
   return (
@@ -123,7 +136,7 @@ export const App = () => {
             {completions.map( (completion, index) => (
               <Fragment key={index}>
                 {completion.message?.role === "assistant" && (
-                  <AssistantBubble text={completion.message?.content} isLoading={index == completions.length-1 && isLoading} />
+                  <AssistantBubble text={completion.message?.content} isLoading={index == completions.length-1 && isLoading} context={completion.message?.context} />
                 )}
 
                 {completion.message?.role === "user" && (
