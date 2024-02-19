@@ -156,7 +156,8 @@ def completion_chat_stream(message_request: MessageRequest):
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
 
     messages = load_messages(message_request)
-    completion: Stream[ChatCompletionChunk] = chat(messages, stream=True)
+    toolsUsed = message_request.tools
+    completion: Stream[ChatCompletionChunk] = chat(messages, stream=True, toolsUsed=toolsUsed)
 
     def generate():
         content_txt = ''

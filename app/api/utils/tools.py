@@ -1,8 +1,9 @@
 import json
+import logging
 import os
 import re
 import requests
-from pathlib import Path  
+from pathlib import Path
 from typing import Any, List, Union
 
 from openai import AzureOpenAI, Stream
@@ -12,8 +13,11 @@ from openai.types.completion_usage import CompletionUsage
 from utils.models import (AzureCognitiveSearchDataSource,
                           AzureCognitiveSearchParameters, Citation, Completion,
                           Context, Message, Metadata)
-  
-_limit = 100  
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+_limit = 100
 
 azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
 api_key                 = os.getenv("AZURE_OPENAI_API_KEY")
@@ -25,42 +29,40 @@ client = AzureOpenAI(
     api_key=api_key
 )
 
-def load_tools(toolsUsed: List[str]):  
-    # Get the directory of the current file (tools.py)  
-    current_dir = Path(__file__).parent  
-    # Construct the path to 'tools.json' within the same directory  
-    tools_path = current_dir / 'tools.json'  
-    # Open the file using the absolute path  
-    with tools_path.open('r') as f:  
-        all_tools = json.load(f)  
+def load_tools(toolsUsed: List[str]):
+    # Get the directory of the current file (tools.py)
+    current_dir = Path(__file__).parent
+    # Construct the path to 'tools.json' within the same directory
+    tools_path = current_dir / 'tools.json'
+    # Open the file using the absolute path
+    with tools_path.open('r') as f:
+        all_tools = json.load(f)
 
-    tools = [tool for tool in all_tools if 'tool_type' in tool and tool['tool_type'] in toolsUsed] 
+    tools = [tool for tool in all_tools if 'tool_type' in tool and tool['tool_type'] in toolsUsed]
 
-    return tools  
+    #logger.debug(tools)
 
-# def load_tools():
-#     # Get the directory of the current file (tools.py)
-#     current_dir = Path(__file__).parent
-#     # Construct the path to 'tools.json' within the same directory
-#     tools_path = current_dir / 'tools.json'
-#     # Open the file using the absolute path
-#     with tools_path.open('r') as f:
-#         all_tools = json.load(f)
+    return tools
 
-#     return all_tools  
+def load_records():
+    '''
+    Temporary method to loads GEDS data for demo purposes..
+    '''
+    try:
+        # Get the directory of the current file (tools.py)
+        current_dir = Path(__file__).parent
+        # Construct the path to 'data/data.json' within the data directory
+        data_json_path = current_dir / 'data' / 'data.json'
+        # Open the file using the absolute path
+        with data_json_path.open('r') as file:
+            data = json.load(file)
+            records = data['results'][0]['items']
+    except: 
+        logger.error("Unable to load data.json (BITS sample data), will return an empty array instead")
+        records = []
+    return records
 
-def load_records():  
-    # Get the directory of the current file (tools.py)  
-    current_dir = Path(__file__).parent  
-    # Construct the path to 'data/data.json' within the data directory  
-    data_json_path = current_dir / 'data' / 'data.json'  
-    # Open the file using the absolute path  
-    with data_json_path.open('r') as file:  
-        data = json.load(file)  
-        records = data['results'][0]['items']  
-    return records  
-  
-records = load_records()  
+records = load_records()
 
 def pretty_print_br(json_br):
     return f"{json_br['br_number']} ({json_br['long_title']}) Required Implementation date: {json_br['req_implement_date']}, Forecasted Impl Date: {json_br['implement_target_date']}, Status: {json_br['status_name']}, Client name: {json_br['client_name']}"
@@ -72,10 +74,10 @@ def get_records_req_impl_by_year(year):
     print("calling function to get records req implementation date.")
     # Extract the last two digits of the year
     year_suffix = '-' + year[2:]
-    
+
     # Filter records that have a 'req_implement_date' ending with the specified year_suffix
     filtered_records = [record for record in records if record.get('req_implement_date', '').endswith(year_suffix)]
-    
+
     # Return the filtered records as a JSON response
     return [pretty_print_br(br) for br in filtered_records[:_limit]]
 
@@ -89,7 +91,7 @@ def get_forecasted_br_for_month(month, year: str="2024"):
     month_suffix = '-' + str.upper(month[:3])
     pattern = r"\b\d{2}"+ month_suffix + year_suffix + r"\b"
     filtered_records = [record for record in records if re.match(pattern, record['implement_target_date'])]
-    
+
     # Return the filtered records as a JSON response
     return [pretty_print_br(br) for br in filtered_records[:_limit]]
 
@@ -98,7 +100,7 @@ def get_br_count_with_target_impl_date(valid: bool=True):
     returns the BR counts of all the BRs with either a valid/invalid TID (target impl date)
     """
     print(f"checking VALID BRs ({valid}). Current total records to filter is {len(records)}")
-    # Define the regex pattern  
+    # Define the regex pattern
     pattern = r"\b\d{2}-[A-Z]{3}-\d{2}\b"
     valid_records = 0
     not_valid_records = 0
@@ -110,7 +112,7 @@ def get_br_count_with_target_impl_date(valid: bool=True):
                 not_valid_records += 1
         else:
             not_valid_records += 1
-    
+
     return valid_records if valid else not_valid_records
 
 def get_br_information(br_number: int):
@@ -145,13 +147,15 @@ def get_employee_information(employee_lastname: str = "", employee_firstname: st
     )
 
     payload = {}
-    api_token = os.getenv("API_TOKEN")
+    api_token = os.getenv("GEDS_API_TOKEN")
     headers = {
         'X-3scale-proxy-secret-token': api_token,
         'Accept': 'application/json'
     }
 
     response = requests.request("GET", url, headers=headers, data=payload)
+
+    logger.debug(response.text)
 
     # Check if the response was successful
     if response.status_code == 200:
@@ -174,14 +178,14 @@ def get_employee_by_phone_number(employee_phone_number: str):
     # if phone number doesnt contain "-", add it
     if "-" not in employee_phone_number:
         employee_phone_number = employee_phone_number[:3] + "-" + employee_phone_number[3:6] + "-" + employee_phone_number[6:]
-        
+
     url = (
         "https://api.geds-sage.gc.ca/gapi/v2/employees?"
         f"searchValue={employee_phone_number}&searchField=9&searchCriterion=2&searchScope=sub&searchFilter=2&maxEntries=5&pageNumber=1&returnOrganizationInformation=yes"
     )
 
     payload = {}
-    api_token = os.getenv("API_TOKEN")
+    api_token = os.getenv("GEDS_API_TOKEN")
     headers = {
         'X-3scale-proxy-secret-token': api_token,
         'Accept': 'application/json'
@@ -191,10 +195,12 @@ def get_employee_by_phone_number(employee_phone_number: str):
 
     # Check if the response was successful
     if response.status_code == 200:
+        logger.debug(response)
         return response.text
     else:
+        logger.debug("Unable to get any info.", response)
         return "Didn't find any matching employee with that phone number."
-    
+
 def call_tools(tool_calls , messages: List[ChatCompletionMessageParam]):
     """
     Call the tool functions and return a new completion with the results
@@ -220,21 +226,21 @@ def call_tools(tool_calls , messages: List[ChatCompletionMessageParam]):
 
         # Call the function with the prepared arguments
         function_response = function_to_call(**prepared_args)
-        assistant_info = {  
-                "role": "assistant",  
-                "content": "",  
-                "tool_calls": [  
-                    {  
-                        "id": tool_call.id,  
-                        "type": tool_call.type,  
-                        "function": {  
-                            "name": function_name,  
-                            "arguments": json.dumps(function_args)  
-                        }  
-                    }  
-                ]  
+        assistant_info = {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "id": tool_call.id,
+                        "type": tool_call.type,
+                        "function": {
+                            "name": function_name,
+                            "arguments": json.dumps(function_args)
+                        }
+                    }
+                ]
             }
-        
+
         # Convert the function response to a string
         response_as_string = "\n".join(function_response) if function_response is list else str(function_response)
         tool_info = {
@@ -243,11 +249,11 @@ def call_tools(tool_calls , messages: List[ChatCompletionMessageParam]):
                 "name": function_name,
                 "content": response_as_string,
             }
-        
+
         # Add the function response to the messages
         messages.append({
             "role": "assistant",
-            
             "content": str(json.dumps(assistant_info)+json.dumps(tool_info))
         })
+        logger.info(messages)
     return messages
