@@ -24,7 +24,7 @@ pip install -r app/api/requirements.txt --upgrade
 You should then see something like this denoting which environement you are in your shell. To leave this `.venv` simply type `deactivate`
 
 ```bash
-(.venv_api) ➜  ~/git/ssc-assistant git:(3-open-api-to-the-myssc-plus-team)
+(.venv_api) ➜  ~/git/ssc-assistant/
 ```
 
 **Now ensure that VSCode** uses the proper `.venv` folder by pressing `Ctrl + Shift + P` and then type `Python: Select Interpreter`
@@ -38,6 +38,15 @@ pip install -r az-functions/create-index/requirements.txt --upgrade
 ```
 
 (for this virtual env the `.vscode/settings.json` should already be pointing to the proper folder, else re-follow steps above to ensure VSCode uses the proper venv for that section of the project)
+
+#### Starting up projects
+
+For the `app/frontend` simply: 
+
+```bash
+npm install
+npm run dev
+```
 
 ### Infrastructure
 
@@ -60,7 +69,7 @@ Prerequisites:
 ```bash
 cd terraform/
 terraform init
-terraform plan
+terraform plan -var-file="secret.tfvars"
 ```
 
 ## Documentation

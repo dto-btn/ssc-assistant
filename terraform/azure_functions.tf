@@ -28,6 +28,7 @@ resource "azurerm_linux_function_app" "functions" {
   site_config {
     always_on = false
     vnet_route_all_enabled = true
+    application_insights_key = azurerm_application_insights.functions.instrumentation_key
     application_stack {
       python_version = "3.11"
     }
@@ -35,7 +36,6 @@ resource "azurerm_linux_function_app" "functions" {
 
   app_settings = {
     "AzureWebJobsFeatureFlags"       = "EnableWorkerIndexing"
-    "APPINSIGHTS_INSTRUMENTATIONKEY" = azurerm_application_insights.functions.instrumentation_key
     "BUILD_FLAGS"                    = "UseExpressBuild"
     "ENABLE_ORYX_BUILD"              = "true"
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "1"
