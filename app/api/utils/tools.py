@@ -2,17 +2,12 @@ import json
 import logging
 import os
 import re
-import requests
 from pathlib import Path
-from typing import Any, List, Union
+from typing import List
 
-from openai import AzureOpenAI, Stream
-from openai.types.chat import (ChatCompletion, ChatCompletionChunk,
-                               ChatCompletionMessageParam)
-from openai.types.completion_usage import CompletionUsage
-from utils.models import (AzureCognitiveSearchDataSource,
-                          AzureCognitiveSearchParameters, Citation, Completion,
-                          Context, Message, Metadata)
+import requests
+from openai import AzureOpenAI
+from openai.types.chat import (ChatCompletionMessageParam)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -52,7 +47,8 @@ def load_records():
         # Get the directory of the current file (tools.py)
         current_dir = Path(__file__).parent
         # Construct the path to 'data/data.json' within the data directory
-        data_json_path = current_dir / 'data' / 'data.json'
+        data_json_path = current_dir / '../data/data.json'
+        data_json_path = data_json_path.resolve()
         # Open the file using the absolute path
         with data_json_path.open('r') as file:
             data = json.load(file)
