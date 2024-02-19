@@ -109,7 +109,7 @@ def completion_myssc_stream(message_request: MessageRequest):
              default=lambda o: o.__dict__
         )
         yield f'\r\n--{_boundary}--\r\n'
-    return Response(stream_with_context(generate()), content_type='multipart/form-data')
+    return Response(stream_with_context(generate()), content_type=f'multipart/x-mixed-replace; boundary={_boundary}')
 
 
 @api_v1.post('/completion/chat')
@@ -176,4 +176,4 @@ def completion_chat_stream(message_request: MessageRequest):
              default=lambda o: o.__dict__
         )
         yield f'\r\n--{_boundary}--\r\n'
-    return Response(stream_with_context(generate()), content_type='multipart/form-data')
+    return Response(stream_with_context(generate()), content_type=f'multipart/x-mixed-replace; boundary={_boundary}')
