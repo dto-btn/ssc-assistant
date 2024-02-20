@@ -82,17 +82,11 @@ jobs:
         rm -rf app
         ls -la
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Set up Node
+      uses: actions/setup-node@v4
       with:
-        python-version: '3.11'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m venv --copies antenv
-        source antenv/bin/activate
-        pip install -r requirements.txt
+        node-version: '18'
+    - run: npm install
 
     # Add any other necessary build steps here (e.g., tests)
     #- name: Run tests
