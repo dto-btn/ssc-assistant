@@ -38,15 +38,15 @@ resource "azurerm_linux_web_app" "frontend" {
   }
 
   app_settings = {
-    VITE_API_BACKEND        = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net/"
-    VITE_API_KEY            = var.vite_api_key
-    ENABLE_ORYX_BUILD       = true
+    VITE_API_BACKEND         = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net/"
+    VITE_API_KEY             = var.vite_api_key
+    WEBSITE_RUN_FROM_PACKAGE = true
     MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
     PORT = 8080
   }
 
   sticky_settings {
-    app_setting_names = [ "VITE_API_BACKEND", "VITE_API_KEY", "ENABLE_ORYX_BUILD", "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET", "PORT" ]
+    app_setting_names = [ "VITE_API_BACKEND", "VITE_API_KEY", "WEBSITE_RUN_FROM_PACKAGE", "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET", "PORT" ]
   }
 
   identity {
