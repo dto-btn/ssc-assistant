@@ -115,8 +115,8 @@ jobs:
       with:
         name: node-app
 
-    - name: Unzip artifact for deployment
-      run: unzip release.zip
+    # - name: Unzip artifact for deployment
+    #   run: unzip release.zip
 
     - name: 'Deploy to Azure Web App'
       uses: azure/webapps-deploy@v3
@@ -125,4 +125,4 @@ jobs:
         slot-name: 'production'
         # az webapp deployment list-publishing-profiles --name ssc-assistant-api --resource-group YourResourceGroupName --xml (save as secret)
         publish-profile: ${{ secrets.AZURE_FRONTEND_PUBLISH_PROFILE }}
-        package: '.'
+        package: 'release.zip'
