@@ -66,8 +66,8 @@ jobs:
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         package: '.'
         startup-command: ''
-
-  frontend-build-and-deploy:
+  
+  frontend-build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -92,11 +92,30 @@ jobs:
         npm run test --if-present
       working-directory: '.'
 
+    - name: Zip artifact for deployment
+      run: zip release.zip ./* -r
+
+    - name: Upload artifact for deployment job
+      uses: actions/upload-artifact@v3
+      with:
+        name: node-app
+        path: release.zip
+
+  frontend-deploy:
+    runs-on: ubuntu-latest
+    steps:
     - name: Log in with Azure
       uses: azure/login@v1
       with:
         creds: '${{ secrets.AZURE_CREDENTIALS }}'
 
+    - name: Download artifact from build job
+      uses: actions/download-artifact@v3
+      with:
+        name: node-app
+
+    - name: Unzip artifact for deployment
+      run: unzip release.zip
 
     - name: 'Deploy to Azure Web App'
       uses: azure/webapps-deploy@v3
