@@ -3,8 +3,11 @@ import { useTheme } from '@mui/material/styles';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
+import rehyperaw from 'rehype-raw'
 import 'highlight.js/styles/github.css'
 import { useEffect, useState, Fragment, RefObject } from 'react';
+import './frontpage.css';
+
 
 interface AssistantBubbleProps {
     text: string;
@@ -64,12 +67,21 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef }: Assista
           maxWidth: '80%',
         }}
       >
-        <Container>
-          <Markdown 
-            rehypePlugins={[rehypeHighlight]} 
-            remarkPlugins={[remarkGfm]}>
-              {isLoading ? text.replace(/\[doc(\d+)\]/g, '') + "<span class=\"blinking-cursor\">_</span>" : processedContent.processedText}
-          </Markdown>
+        <Container>  
+          <Markdown     
+            rehypePlugins={[rehypeHighlight, rehyperaw]}    
+            remarkPlugins={[remarkGfm]}>    
+            {isLoading   
+              ? `${text.replace(/\[doc(\d+)\]/g, '')}<span class="blink">⚫</span><span class="blink">⚫</span><span class="blink">⚫</span>`  
+              : processedContent.processedText}    
+          </Markdown> 
+          {/* {isLoading && (
+            <span>    
+              <span className="blink">⚫</span>    
+              <span className="blink">⚫</span>    
+              <span className="blink">⚫</span>   
+            </span> 
+          )} */}
         </Container>
         {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
           <>
