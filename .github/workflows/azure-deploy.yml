@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - terraform-additions-frontend
 
 permissions:
   id-token: write
@@ -60,6 +61,62 @@ jobs:
       uses: azure/webapps-deploy@v3
       with:
         app-name: 'ssc-assistant-api'
+        slot-name: 'production'
+        # az webapp deployment list-publishing-profiles --name ssc-assistant-api --resource-group YourResourceGroupName --xml (save as secret)
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: '.'
+        startup-command: ''
+
+  frontend-build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        sparse-checkout: 'app/frontend'
+        sparse-checkout-cone-mode: false
+    
+    - name: Move api files to pwd
+      run: |
+        ls -la
+        mv app/frontend/* .
+        rm -rf app
+        ls -la
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m venv --copies antenv
+        source antenv/bin/activate
+        pip install -r requirements.txt
+
+    # Add any other necessary build steps here (e.g., tests)
+    #- name: Run tests
+    #     TODO
+
+    - name: Log in with Azure
+      uses: azure/login@v1
+      with:
+        # {
+        #   "clientId": "<GUID>",
+        #   "clientSecret": "<GUID>",
+        #   "subscriptionId": "<GUID>",
+        #   "tenantId": "<GUID>",
+        #   (...)
+        # }
+        creds: '${{ secrets.AZURE_CREDENTIALS }}'
+        #client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        #tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        #subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: 'Deploy to Azure Web App'
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: 'ssc-assistant'
         slot-name: 'production'
         # az webapp deployment list-publishing-profiles --name ssc-assistant-api --resource-group YourResourceGroupName --xml (save as secret)
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
