@@ -86,26 +86,17 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-    - run: npm install
-
-    # Add any other necessary build steps here (e.g., tests)
-    #- name: Run tests
-    #     TODO
+    - run: |
+        npm install
+        npm run build --if-present
+        npm run test --if-present
+      working-directory: '.'
 
     - name: Log in with Azure
       uses: azure/login@v1
       with:
-        # {
-        #   "clientId": "<GUID>",
-        #   "clientSecret": "<GUID>",
-        #   "subscriptionId": "<GUID>",
-        #   "tenantId": "<GUID>",
-        #   (...)
-        # }
         creds: '${{ secrets.AZURE_CREDENTIALS }}'
-        #client-id: ${{ secrets.AZURE_CLIENT_ID }}
-        #tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        #subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
 
     - name: 'Deploy to Azure Web App'
       uses: azure/webapps-deploy@v3
