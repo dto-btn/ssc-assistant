@@ -5,6 +5,7 @@ import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
 import rehyperaw from 'rehype-raw'
 import { useEffect, useState, Fragment } from 'react';
+import './AssistantBubble.module.css';
 
 interface AssistantBubbleProps {
     text: string;
@@ -31,9 +32,9 @@ function processText(text: string, citations: Citation[]) {
   });
 
   // Filter the citations array to only include the cited documents
-  const citedCitations = citations.filter((_, index) => {  
-    const docNumber = index + 1; // Convert index to docNumber  
-    return text.includes(`[doc${docNumber}]`); // Check if the citation is in the text  
+  const citedCitations = citations.filter((_, index) => {
+    const docNumber = index + 1; // Convert index to docNumber
+    return text.includes(`[doc${docNumber}]`); // Check if the citation is in the text
   });
 
   return { processedText, citedCitations };
@@ -63,20 +64,20 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef }: Assista
           maxWidth: '80%',
         }}
       >
-        <Container>  
-          <Markdown     
-            rehypePlugins={[rehypeHighlight, rehyperaw]}    
-            remarkPlugins={[remarkGfm]}>    
-            {isLoading   
-              ? `${text.replace(/\[doc(\d+)\]/g, '')}<span class="blink">⚫</span><span class="blink">⚫</span><span class="blink">⚫</span>`  
-              : processedContent.processedText}    
-          </Markdown> 
+        <Container>
+          <Markdown
+            rehypePlugins={[rehypeHighlight, rehyperaw]}
+            remarkPlugins={[remarkGfm]}>
+            {isLoading
+              ? `${text.replace(/\[doc(\d+)\]/g, '')}<span class="blink">⚫</span><span class="blink">⚫</span><span class="blink">⚫</span>`
+              : processedContent.processedText}
+          </Markdown>
           {/* {isLoading && (
-            <span>    
-              <span className="blink">⚫</span>    
-              <span className="blink">⚫</span>    
-              <span className="blink">⚫</span>   
-            </span> 
+            <span>
+              <span className="blink">⚫</span>
+              <span className="blink">⚫</span>
+              <span className="blink">⚫</span>
+            </span>
           )} */}
         </Container>
         {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
