@@ -3,7 +3,9 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
+import rehyperaw from 'rehype-raw'
 import { useEffect, useState, Fragment } from 'react';
+import './AssistantBubble.css';
 
 interface AssistantBubbleProps {
     text: string;
@@ -30,9 +32,9 @@ function processText(text: string, citations: Citation[]) {
   });
 
   // Filter the citations array to only include the cited documents
-  const citedCitations = citations.filter((_, index) => {  
-    const docNumber = index + 1; // Convert index to docNumber  
-    return text.includes(`[doc${docNumber}]`); // Check if the citation is in the text  
+  const citedCitations = citations.filter((_, index) => {
+    const docNumber = index + 1; // Convert index to docNumber
+    return text.includes(`[doc${docNumber}]`); // Check if the citation is in the text
   });
 
   return { processedText, citedCitations };
@@ -63,10 +65,12 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef }: Assista
         }}
       >
         <Container>
-          <Markdown 
-            rehypePlugins={[rehypeHighlight]} 
+          <Markdown
+            rehypePlugins={[rehypeHighlight, rehyperaw]}
             remarkPlugins={[remarkGfm]}>
-              {isLoading ? text.replace(/\[doc(\d+)\]/g, '') + "<span class=\"blinking-cursor\">_</span>" : processedContent.processedText}
+            {isLoading
+              ? `${text.replace(/\[doc(\d+)\]/g, '')}<span class="blink">⚫</span><span class="blink">⚫</span><span class="blink">⚫</span>`
+              : processedContent.processedText}
           </Markdown>
         </Container>
         {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
