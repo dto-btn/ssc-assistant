@@ -34,7 +34,7 @@ export const App = () => {
   const [errorSnackbar, setErrorSnackbar] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [completions, setCompletions] = useState<Completion[]>([welcomeMessage]);
-  const [maxMessagesSent, setMaxMessagesSent] = useState<number>(10);
+  const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
 
   const convertCompletionsToMessages = (completions: Completion[]): Message[] => {
