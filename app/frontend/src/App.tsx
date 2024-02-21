@@ -34,15 +34,21 @@ export const App = () => {
   const [errorSnackbar, setErrorSnackbar] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [completions, setCompletions] = useState<Completion[]>([welcomeMessage]);
+  const [maxMessagesSent, setMaxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
+
+  const convertCompletionsToMessages = (completions: Completion[]): Message[] => {
+    // Calculate the start index to slice from if the array length exceeds maxMessagesSent
+    const startIndex = Math.max(completions.length - maxMessagesSent, 0);
+    return completions.slice(startIndex).map(c => ({
+      role: c.message.role,
+      content: c.message.content
+    } as Message));
+  };
 
   const makeApiRequest = async (question: string) => {
     // set is loading so we disable some interactive functionality while we load the response
     setIsLoading(true);
-    // prepare request bundle
-    const request: MessageRequest = {
-      query: question
-    };
 
     const userCompletion: Completion = {
       message: {
@@ -56,6 +62,13 @@ export const App = () => {
         role: 'assistant',
         content: '',
       },
+    };
+
+    const messages = convertCompletionsToMessages([...completions, userCompletion]);
+    // prepare request bundle
+    const request: MessageRequest = {
+      messages: messages,
+      max: maxMessagesSent
     };
 
     //update current chat window with the message sent..
@@ -103,7 +116,7 @@ export const App = () => {
       }
       return updatedCompletions;
     })
-  }
+  };
 
   const handleCloseSnackbar = (_event?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
