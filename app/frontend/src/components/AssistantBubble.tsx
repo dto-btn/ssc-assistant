@@ -72,13 +72,6 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef }: Assista
               ? `${text.replace(/\[doc(\d+)\]/g, '')}<span class="blink">⚫</span><span class="blink">⚫</span><span class="blink">⚫</span>`
               : processedContent.processedText}
           </Markdown>
-          {/* {isLoading && (
-            <span>
-              <span className="blink">⚫</span>
-              <span className="blink">⚫</span>
-              <span className="blink">⚫</span>
-            </span>
-          )} */}
         </Container>
         {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
           <>
