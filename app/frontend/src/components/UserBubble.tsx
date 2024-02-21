@@ -3,15 +3,12 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
-import { useTheme } from '@mui/material/styles';
 
 interface UserChatProps {
     text: string | null | undefined;
   }
 
 export const UserBubble = ({ text }: UserChatProps) => {
-
-  const theme = useTheme();
 
   return (
     <Box sx={{ display: 'flex', justifyContent: 'flex-end', my: '2rem' }}>
