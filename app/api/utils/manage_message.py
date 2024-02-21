@@ -36,8 +36,10 @@ def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessage
     # if messages is still one, meaning we didn't add a message it means query was passed via query str
     if len(messages) == 1:
         messages.append(ChatCompletionUserMessageParam(content=message_request.query, role='user'))
-
+    
     # parameter message history via max attribute
-    if len(messages) > message_request.max:
-        messages = [messages[0]] + (messages[-(message_request.max-1):] if message_request.max > 1 else []) #else if 1 we end up with -0 wich is interpreted as 0: (whole list)
+    max = min(message_request.max, 20)
+    if len(messages) - 1 > max:
+        messages = [messages[0]] + (messages[-(max-1):] if max > 1 else []) #else if 1 we end up with -0 wich is interpreted as 0: (whole list)
+
     return messages

@@ -8,7 +8,7 @@ from openai.types.chat import (ChatCompletion, ChatCompletionChunk)
 from utils.models import Completion, MessageRequest
 from utils.openai import (build_completion_response, chat, chat_with_data,
                           convert_chat_with_data_response)
-from utils.prompt import load_messages
+from utils.manage_message import load_messages
 from utils.auth import auth
 
 logger = logging.getLogger(__name__)
