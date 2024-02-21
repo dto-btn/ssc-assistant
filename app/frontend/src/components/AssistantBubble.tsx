@@ -5,7 +5,7 @@ import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
 import rehyperaw from 'rehype-raw'
 import { useEffect, useState, Fragment } from 'react';
-import './AssistantBubble.module.css';
+import './AssistantBubble.css';
 
 interface AssistantBubbleProps {
     text: string;
