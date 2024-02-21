@@ -1,4 +1,4 @@
-import { Box, Container, TextField, Button, InputAdornment, IconButton, CircularProgress } from '@mui/material';
+import { Box, Container, TextField, InputAdornment, IconButton, CircularProgress } from '@mui/material';
 import Send from '@mui/icons-material/Send';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +10,7 @@ interface ChatInputProps {
   clearOnSend?: boolean;
 };
 
-export const ChatInput = ({onSend, disabled, placeholder, clearOnSend}: ChatInputProps) => {
+export const ChatInput = ({onSend, disabled, clearOnSend}: ChatInputProps) => {
   const [question, setQuestion] = useState<string>("");
   const { t } = useTranslation();
 

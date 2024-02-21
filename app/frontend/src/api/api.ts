@@ -25,7 +25,7 @@ export async function completionMySSC({ request, updateLastMessage }: Completion
     throw new Error('Boundary not found in the content type header.');
   }
 
-  const boundary = boundaryMatch[1];
+  //const boundary = boundaryMatch[1];
   const reader = response.body?.getReader();
   if (!reader) {
     throw new Error('Response body reader not available.');

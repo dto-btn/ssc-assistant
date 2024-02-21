@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from typing import Any, List, Union
 
@@ -10,6 +11,11 @@ from utils.models import (AzureCognitiveSearchDataSource,
                           AzureCognitiveSearchParameters, Citation, Completion,
                           Context, Message, Metadata)
 
+from utils.tools import load_tools, call_tools
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 __all__ = ["chat_with_data", "convert_chat_with_data_response", "build_completion_response", "chat"]
 
 azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
@@ -19,10 +25,11 @@ service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
 index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "latest")
 model: str              = os.getenv("AZURE_OPENAI_MODEL", "gpt-4-1106")
+model_data: str         = os.getenv("AZURE_OPENAI_MODEL_DATA", "gpt-4-32k")
 
 client_data = AzureOpenAI(
     # if we just use the azure_endpoint here it doesn't reach the extensions endpoint and thus we cannot use data sources directly
-    base_url=f'{azure_openai_uri}/openai/deployments/{model}/extensions',
+    base_url=f'{azure_openai_uri}openai/deployments/{model_data}/extensions',
     api_version=api_version,
     #azure_endpoint=azure_openai_uri,
     api_key=api_key
@@ -44,13 +51,31 @@ def _create_azure_cognitive_search_data_source() -> AzureCognitiveSearchDataSour
         parameters=parameters
     )
 
-def chat(messages: List[ChatCompletionMessageParam], stream=False) -> Union[ChatCompletion,Stream[ChatCompletionChunk]]:
+def chat(messages: List[ChatCompletionMessageParam], stream=False, toolsUsed: List[str]=[], useData = True) -> Union[ChatCompletion,Stream[ChatCompletionChunk]]:
     """
     Chat with gpt directly without data, but perhaps with tools.
     """
+    response_messages = messages
+    # Check if tools are used and load them
+    logger.info("Tools used: " + str(toolsUsed))
+    if toolsUsed:
+        tools = load_tools(toolsUsed)
+        
+        completion = client.chat.completions.create(
+            messages=response_messages,
+            model=model,
+            tools=tools,
+            stream=False
+        )
+        if completion.choices[0].message.content is not None:
+            response_messages.append({"role": "assistant", "content": completion.choices[0].message.content})
+        if completion.choices[0].message.tool_calls:
+            response_messages = call_tools(completion.choices[0].message.tool_calls, messages)
+
+    # Create completion
     return client.chat.completions.create(
-        messages=messages,
-        model=model,
+        messages=response_messages,
+        model=model_data, # NOTICE: using this model for now as this is QUITE faster!
         stream=stream
     )
 
@@ -59,11 +84,10 @@ def chat_with_data(messages: List[ChatCompletionMessageParam], stream=False) -> 
     Initiate a chat with via openai api using data_source (azure cognitive search)
     """
     data_source = _create_azure_cognitive_search_data_source()
-
     # https://github.com/openai/openai-cookbook/blob/main/examples/azure/chat_with_your_own_data.ipynb
     return client_data.chat.completions.create(
         messages=messages,
-        model=model,
+        model=model_data,
         extra_body={
             "dataSources": [
                 {

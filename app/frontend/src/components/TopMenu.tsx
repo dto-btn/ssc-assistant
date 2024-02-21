@@ -1,12 +1,10 @@
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
-import IconButton from '@mui/material/IconButton';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
 import Cookies from "js-cookie";
-import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
 
@@ -17,26 +15,6 @@ const logoStyle = {
 };
 
 export const TopMenu = () => {
-
-  const [open, setOpen] = React.useState(false);
-
-  const toggleDrawer = (newOpen: boolean) => () => {
-    setOpen(newOpen);
-  };
-
-  const scrollToSection = (sectionId: string) => {
-    const sectionElement = document.getElementById(sectionId);
-    const offset = 128;
-    if (sectionElement) {
-      const targetScroll = sectionElement.offsetTop - offset;
-      sectionElement.scrollIntoView({ behavior: 'smooth' });
-      window.scrollTo({
-        top: targetScroll,
-        behavior: 'smooth',
-      });
-      setOpen(false);
-    }
-  };
 
   const { t, i18n } = useTranslation();
 

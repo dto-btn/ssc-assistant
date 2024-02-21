@@ -1,13 +1,10 @@
-import { Box, Paper, LinearProgress, Container, Divider, Chip, Stack, Typography } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { Box, Paper, Container, Divider, Chip, Stack, Typography } from '@mui/material';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
-import rehyperaw from 'rehype-raw'
 import 'highlight.js/styles/github.css'
-import { useEffect, useState, Fragment, RefObject } from 'react';
-import './frontpage.css';
-
+import rehyperaw from 'rehype-raw'
+import { useEffect, useState, Fragment } from 'react';
 
 interface AssistantBubbleProps {
     text: string;
@@ -21,7 +18,7 @@ function processText(text: string, citations: Citation[]) {
   const citationRefRegex = /\[doc(\d+)\]/g;
 
   // Replace citation references with Markdown links
-  const processedText = text.replace(citationRefRegex, (match, docNumber) => {
+  const processedText = text.replace(citationRefRegex, (docNumber) => {
     // Convert docNumber to an array index (subtracting 1 because arrays are zero-indexed)
     const index = parseInt(docNumber, 10) - 1;
     const citation = citations[index]; // Access the citation by index
@@ -34,7 +31,7 @@ function processText(text: string, citations: Citation[]) {
   });
 
   // Filter the citations array to only include the cited documents
-  const citedCitations = citations.filter((citation, index) => {  
+  const citedCitations = citations.filter((_, index) => {  
     const docNumber = index + 1; // Convert index to docNumber  
     return text.includes(`[doc${docNumber}]`); // Check if the citation is in the text  
   });
@@ -44,7 +41,6 @@ function processText(text: string, citations: Citation[]) {
 
 export const AssistantBubble = ({ text, isLoading, context, scrollRef }: AssistantBubbleProps) => {
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
-  const theme = useTheme();
 
   useEffect(() => {
     if (!isLoading && context && text) {
