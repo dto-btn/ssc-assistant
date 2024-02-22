@@ -87,7 +87,6 @@ export const App = () => {
             context: completionResponse.message.context
           },
         }
-  
         return updatedCompletions;
       })
 
@@ -130,9 +129,7 @@ export const App = () => {
       document.documentElement.lang = i18n.language;
   }, [i18n.language]);
 
-  //everytime we update the text in the last chat bubble, we scroll into view, smooooothllyyy
   useEffect(() => chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [completions[completions.length-1].message.content]);
-
   return (
     <>
       <ThemeProvider theme={mainTheme}>
@@ -150,14 +147,13 @@ export const App = () => {
                     context={completion.message?.context}
                     scrollRef={chatMessageStreamEnd} />
                 )}
-
                 {completion.message?.role === "user" && (
                   <UserBubble text={completion.message?.content} />
                 )}
               </Fragment>
             ))}
-            <div ref={chatMessageStreamEnd} />
           </Box>
+          <div ref={chatMessageStreamEnd} />
           <Box sx={{ position: 'sticky', bottom: 0, left: 0, right: 0, zIndex: 1100, bgcolor: 'background.default', padding: '1rem' }}>
             <ChatInput
                 clearOnSend

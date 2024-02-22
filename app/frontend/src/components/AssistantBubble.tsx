@@ -14,44 +14,44 @@ interface AssistantBubbleProps {
     scrollRef?:  React.RefObject<HTMLDivElement>;
   }
 
-function processText(text: string, citations: Citation[]) {
-  // Regular expression to find all citation references like [doc1], [doc3], etc.
-  const citationRefRegex = /\[doc(\d+)\]/g;
-
-  // Replace citation references with Markdown links
-  const processedText = text.replace(citationRefRegex, (docNumber) => {
-    // Convert docNumber to an array index (subtracting 1 because arrays are zero-indexed)
-    const index = parseInt(docNumber, 10) - 1;
-    const citation = citations[index]; // Access the citation by index
-
-    if (citation) {
-      //return `[${citation.title}](${citation.url})`; // Replace with Markdown link
-      return ` [${docNumber}](${citation.url})`; // Replace with Markdown link
-    }
-    return '';
-  });
-
-  // Filter the citations array to only include the cited documents
-  const citedCitations = citations.filter((_, index) => {
-    const docNumber = index + 1; // Convert index to docNumber
-    return text.includes(`[doc${docNumber}]`); // Check if the citation is in the text
-  });
-
-  return { processedText, citedCitations };
-}
-
 export const AssistantBubble = ({ text, isLoading, context, scrollRef }: AssistantBubbleProps) => {
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
+  const [processingComplete, setProcessingComplete] = useState(false);
+
+  function processText(text: string, citations: Citation[]) {
+    // Regular expression to find all citation references like [doc1], [doc3], etc.
+    const citationRefRegex = /\[doc(\d+)\]/g;
+  
+    // Replace citation references with Markdown links
+    const processedText = text.replace(citationRefRegex, (_, docNumber) => {
+      // Convert docNumber to an array index (subtracting 1 because arrays are zero-indexed)
+      const index = parseInt(docNumber, 10) - 1;
+      const citation = citations[index]; // Access the citation by index
+      if (citation) {
+        //return `[${citation.title}](${citation.url})`; // Replace with Markdown link
+        return ` [${docNumber}](${citation.url})`; // Replace with Markdown link
+      }
+      return '';
+    });
+  
+    // Filter the citations array to only include the cited documents
+    const citedCitations = citations.filter((_, index) => {
+      const docNumber = index + 1; // Convert index to docNumber
+      return text.includes(`[doc${docNumber}]`); // Check if the citation is in the text
+    });
+  
+    return { processedText, citedCitations };
+  }
 
   useEffect(() => {
-    if (!isLoading && context && text) {
+    if(context?.citations) {
       const { processedText, citedCitations } = processText(text, context.citations);
       setProcessedContent({ processedText, citedCitations });
-      scrollRef?.current?.scrollIntoView({ behavior: "smooth" });
-    } else if (!isLoading && text) {
-      setProcessedContent({ processedText: text, citedCitations: [] as Citation[] });
+      setProcessingComplete(true);
     }
-  }, [isLoading, context, text]);
+  }, [isLoading, context, text, scrollRef]);
+
+  useEffect(() => processingComplete ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" }) : undefined, [processingComplete, scrollRef]);
 
   return (
     <Box sx={{ display: 'flex', justifyContent: 'flex-start', my: '2rem' }}>
@@ -69,14 +69,14 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef }: Assista
             rehypePlugins={[rehypeHighlight, rehyperaw]}
             remarkPlugins={[remarkGfm]}>
             {isLoading
-              ? `${text.replace(/\[doc(\d+)\]/g, '')}<span class="blink">⚫</span><span class="blink">⚫</span><span class="blink">⚫</span>`
-              : processedContent.processedText}
+              ? `${text.replace(/\[doc(\d+)\]/g, '')} <span class="blink">⚫</span><span class="blink">⚫</span><span class="blink">⚫</span>`
+              : (processedContent.processedText !== "" ? processedContent.processedText : text)}
           </Markdown>
         </Container>
         {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
           <>
             <Divider />
-            <Box sx={{ p: 2, maxWidth: '100%' }}>
+            <Box sx={{ m: 2, maxWidth: '100%' }}>
               <Typography gutterBottom variant="subtitle2">
                 Citation(s):
               </Typography>
