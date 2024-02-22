@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
 import rehyperaw from 'rehype-raw'
-import { useEffect, useState, Fragment, useLayoutEffect, useRef } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import './AssistantBubble.css';
 
 interface AssistantBubbleProps {
