@@ -4,12 +4,12 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { completionMySSC } from './api/api';
-import { AssistantBubble, ChatInput, TopMenu, UserBubble } from './components';
+import { AssistantBubble, ChatInput, TopMenu, UserBubble, Disclaimer} from './components';
 
 const mainTheme = createTheme({
   palette: {
     primary: {
-      main: "#4c3e99",
+      main: "#4b3e99", /* SSC's official colour code I found using our chatbot! XD */
     },
     secondary: {
       main: "#f33aea",
@@ -163,6 +163,7 @@ export const App = () => {
             {errorMessage}
           </Alert>
         </Snackbar>
+        <Disclaimer />
       </ThemeProvider>
     </>
   )
