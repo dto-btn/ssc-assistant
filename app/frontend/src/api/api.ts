@@ -50,7 +50,6 @@ export async function completionMySSC({ request, updateLastMessage }: Completion
       const result = contentRegex.exec(partialData);
       if(result && result[1]) {
         const content = streamingContent = result[1].trim();
-        console.log(content);
         updateLastMessage(content);
       }
     }
