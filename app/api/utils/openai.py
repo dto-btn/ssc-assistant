@@ -103,7 +103,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Union[ChatC
                         "endpoint": data_source.parameters.endpoint,
                         "key": data_source.parameters.key,
                         "indexName": data_source.parameters.indexName,
-                        "inScope": True,
+                        "inScope": True, # doesn't seem to do anything TBH...
                         "topNDocuments": message_request.top
                     }
                 }
