@@ -1,16 +1,19 @@
 import json
 import logging
+import os
 
 from apiflask import APIBlueprint
 from flask import Response, jsonify, request, stream_with_context
 from openai import Stream
-from openai.types.chat import (ChatCompletion, ChatCompletionChunk)
+from openai.types.chat import (ChatCompletion, ChatCompletionChunk, ChatCompletionMessageParam)
 from utils.models import Completion, MessageRequest
 from utils.openai import (build_completion_response, chat, chat_with_data,
-                          convert_chat_with_data_response)
+                          convert_chat_with_data_response, num_tokens_from_messages, num_tokens_from_string)
 from utils.manage_message import load_messages
 from utils.auth import auth
 
+# model: str              = os.getenv("AZURE_OPENAI_MODEL", "gpt-4-1106")
+model: str              = os.getenv("AZURE_OPENAI_MODEL", "gpt-35-turbo-16k")
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -82,11 +85,13 @@ def completion_myssc_stream(message_request: MessageRequest):
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
 
     messages = load_messages(message_request)
+    prompt_tokens = num_tokens_from_messages(messages, model=model)
     completion: Stream[ChatCompletionChunk] = chat_with_data(messages, stream=True)
 
     def generate():
         context = None
         content_txt = ''
+        completion_tokens = 0
         yield f'--{_boundary}\r\n'
         yield 'Content-Type: text/plain\r\n\r\n'
         for chunk in completion:
@@ -96,14 +101,16 @@ def completion_myssc_stream(message_request: MessageRequest):
             # but is something custom that Azure OpenAI returns ..
             if 'context' in delta_dict:
                 context = delta_dict
+                # completion_tokens += num_tokens_from_string(context, model=model)  
 
             if delta.content:
                 content_txt += delta.content
+                completion_tokens += num_tokens_from_string(delta.content, model=model)
                 yield delta.content
 
         yield f'\r\n--{_boundary}\r\n'
         yield 'Content-Type: application/json\r\n\r\n'
-        response = build_completion_response(content=content_txt, chat_completion_dict=context)
+        response = build_completion_response(content=content_txt, chat_completion_dict=context, prompt_tokens=prompt_tokens, completion_tokens=completion_tokens, total_tokens=completion_tokens + prompt_tokens)
         yield json.dumps(
              response.__dict__,
              default=lambda o: o.__dict__
@@ -156,11 +163,13 @@ def completion_chat_stream(message_request: MessageRequest):
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
 
     messages = load_messages(message_request)
+    prompt_tokens = num_tokens_from_messages(messages, model=model)
     toolsUsed = message_request.tools
     completion: Stream[ChatCompletionChunk] = chat(messages, stream=True, toolsUsed=toolsUsed)
 
     def generate():
         content_txt = ''
+        completion_tokens = 0
         yield f'--{_boundary}\r\n'
         yield 'Content-Type: text/plain\r\n\r\n'
         for chunk in completion:
@@ -168,11 +177,12 @@ def completion_chat_stream(message_request: MessageRequest):
                 delta = chunk.choices[0].delta
                 if delta.content:
                     content_txt += str(delta.content)
+                    completion_tokens += num_tokens_from_string(str(delta.content), model=model)
                     yield delta.content
 
         yield f'\r\n--{_boundary}\r\n'
         yield 'Content-Type: application/json\r\n\r\n'
-        response = build_completion_response(content=content_txt, chat_completion_dict=None)
+        response = build_completion_response(content=content_txt, chat_completion_dict=None, prompt_tokens=prompt_tokens, completion_tokens=completion_tokens, total_tokens=completion_tokens + prompt_tokens)
         yield json.dumps(
              response.__dict__,
              default=lambda o: o.__dict__
