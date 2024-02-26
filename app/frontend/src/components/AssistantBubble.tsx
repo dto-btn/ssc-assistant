@@ -3,7 +3,6 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
-import rehyperaw from 'rehype-raw'
 import { useEffect, useState, Fragment } from 'react';
 import './AssistantBubble.css';
 
@@ -19,7 +18,6 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef }: Assista
   const [processingComplete, setProcessingComplete] = useState(false);
 
   function processText(text: string, citations: Citation[]) {
-    console.log(text)
     // Regular expression to find all citation references like [doc1], [doc3], etc.
     const citationRefRegex = /\[doc(\d+)\]/g;
   
@@ -67,10 +65,10 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef }: Assista
       >
         <Container>
           <Markdown
-            rehypePlugins={[rehypeHighlight, rehyperaw]}
+            rehypePlugins={[rehypeHighlight]}
             remarkPlugins={[remarkGfm]}>
             {isLoading
-              ? `${text.replace(/\[doc(\d+)\]/g, '')} <span class="blink">⚫</span><span class="blink">⚫</span><span class="blink">⚫</span>`
+              ? `${text.replace(/\[doc(\d+)\]/g, '')}_`
               : (processedContent.processedText !== "" ? processedContent.processedText : text)}
           </Markdown>
         </Container>

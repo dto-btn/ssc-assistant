@@ -1,5 +1,4 @@
 import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -7,6 +6,7 @@ import Link from '@mui/material/Link';
 import Cookies from "js-cookie";
 import { useTranslation } from 'react-i18next';
 import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
+import { Grid } from '@mui/material';
 
 const logoStyle = {
   width: '50px',
@@ -57,26 +57,29 @@ export const TopMenu = () => {
                   : '0 0 1px rgba(2, 31, 59, 0.7), 1px 1.5px 2px -1px rgba(2, 31, 59, 0.65), 4px 4px 12px -2.5px rgba(2, 31, 59, 0.65)',
             })}
           >
-            <Box
-              sx={{
+            <Grid container alignItems="center" spacing={2}>
+              <Grid item sx={{
                 flexGrow: 1,
                 display: 'flex',
                 alignItems: 'center',
                 ml: '-18px',
-                px: 0,
-              }}
-            >
-              <img
-                src={logo}
-                style={logoStyle}
-                alt="logo of SSC"
-              />
-              <Typography variant="h6" component="div" sx={{paddingLeft: "0.75em",}}>
-                {t('title')}
-              </Typography>
-            </Box>
-            <Link href="#" onClick={() => {changeLanguage(t("langlink.shorthand")); setTranslationCookie();}} color="inherit">{t("langlink")}</Link>
-            {/* <IconButton color="inherit">?</IconButton> */}
+                pr: '18px',
+              }} xs={4} sm={1}>
+                <img
+                  src={logo}
+                  style={logoStyle}
+                  alt="logo of SSC"
+                />
+              </Grid>
+              <Grid item sx={{ display: { xs: 'none', sm: 'flex'}}} sm={10}>
+                <Typography variant="h6">
+                  {t('title')}
+                </Typography>
+              </Grid>
+              <Grid item xs={8} sm={1} justifyContent='right'>
+                <Link href="#" onClick={() => {changeLanguage(t("langlink.shorthand")); setTranslationCookie();}} color="inherit">{t("langlink")}</Link>
+              </Grid>
+            </Grid>
           </Toolbar>
         </Container>
       </AppBar>
