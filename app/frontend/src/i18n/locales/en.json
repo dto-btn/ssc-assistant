@@ -35,7 +35,7 @@
     "tellus.like": "Tell us what you liked!",
     "tellus.dislike": "Tell us what you disliked",
     "answer.given": "Given answer",
-    "send": "Submit",
+    "send": "Send question",
     "dontsend": "Don't send",
     "msg.opt": "Message (optional)",
     "question.submitted": "Submitted question",
@@ -67,5 +67,9 @@
     "footer.desc": "Useful links",
     "feedback.link.label": "Feedback form link",
     "chatbot.input.label": "Chatbot question input",
-    "ask.question": "Ask your question"
+    "ask.question": "Ask your question",
+    "default.welcome.msg": "Hello! I am your SSC Assistant how may I help you today?",
+    "chat.with.gpt": "Chat with GPT and:",
+    "chat.with.gpt.tools": "Tools (GEDS, etc.)",
+    "chat.with.gpt.data": "Data (MySSC+)"
 }
