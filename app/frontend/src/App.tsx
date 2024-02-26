@@ -53,7 +53,7 @@ export const App = () => {
     const userCompletion: Completion = {
       message: {
         role: 'user',
-        content: question,
+        content: question
       },
     };
 
@@ -68,7 +68,8 @@ export const App = () => {
     // prepare request bundle
     const request: MessageRequest = {
       messages: messages,
-      max: maxMessagesSent
+      max: maxMessagesSent,
+      top: 5
     };
 
     //update current chat window with the message sent..

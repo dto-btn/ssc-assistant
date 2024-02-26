@@ -19,6 +19,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef }: Assista
   const [processingComplete, setProcessingComplete] = useState(false);
 
   function processText(text: string, citations: Citation[]) {
+    console.log(text)
     // Regular expression to find all citation references like [doc1], [doc3], etc.
     const citationRefRegex = /\[doc(\d+)\]/g;
   

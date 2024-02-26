@@ -7,9 +7,10 @@ from openai import AzureOpenAI, Stream
 from openai.types.chat import (ChatCompletion, ChatCompletionChunk,
                                ChatCompletionMessageParam)
 from openai.types.completion_usage import CompletionUsage
+from utils.manage_message import load_messages
 from utils.models import (AzureCognitiveSearchDataSource,
                           AzureCognitiveSearchParameters, Citation, Completion,
-                          Context, Message, Metadata)
+                          Context, Message, MessageRequest, Metadata)
 
 from utils.tools import load_tools, call_tools
 
@@ -51,16 +52,27 @@ def _create_azure_cognitive_search_data_source() -> AzureCognitiveSearchDataSour
         parameters=parameters
     )
 
-def chat(messages: List[ChatCompletionMessageParam], stream=False, toolsUsed: List[str]=[], useData = True) -> Union[ChatCompletion,Stream[ChatCompletionChunk]]:
+def chat(message_request: MessageRequest, stream=False) -> Union[ChatCompletion,Stream[ChatCompletionChunk]]:
     """
     Chat with gpt directly without data, but perhaps with tools.
     """
+    response_messages = _check_tools(message_request)
+
+    # Create completion
+    return client.chat.completions.create(
+        messages=response_messages,
+        model=model_data, # NOTICE: using this model for now as this is QUITE faster!
+        stream=stream
+    )
+
+def _check_tools(message_request: MessageRequest) -> List[ChatCompletionMessageParam]:
+    messages = load_messages(message_request)
     response_messages = messages
     # Check if tools are used and load them
-    logger.info("Tools used: " + str(toolsUsed))
-    if toolsUsed:
-        tools = load_tools(toolsUsed)
-        
+    logger.info("Tools used: " + str(message_request.tools))
+    if message_request.tools:
+        tools = load_tools(message_request.tools)
+
         completion = client.chat.completions.create(
             messages=response_messages,
             model=model,
@@ -71,20 +83,34 @@ def chat(messages: List[ChatCompletionMessageParam], stream=False, toolsUsed: Li
             response_messages.append({"role": "assistant", "content": completion.choices[0].message.content})
         if completion.choices[0].message.tool_calls:
             response_messages = call_tools(completion.choices[0].message.tool_calls, messages)
+    return response_messages
 
-    # Create completion
-    return client.chat.completions.create(
-        messages=response_messages,
-        model=model_data, # NOTICE: using this model for now as this is QUITE faster!
-        stream=stream
-    )
-
-def chat_with_data(messages: List[ChatCompletionMessageParam], stream=False) -> Union[ChatCompletion,Stream[ChatCompletionChunk]]:
+def chat_with_data(message_request: MessageRequest, stream=False) -> Union[ChatCompletion,Stream[ChatCompletionChunk]]:
     """
     Initiate a chat with via openai api using data_source (azure cognitive search)
     """
+    messages = load_messages(message_request)
+    if(message_request.tools):
+        response_messages = _check_tools(message_request)
+        completion = client.chat.completions.create(
+            messages=response_messages,
+            model=model_data, # NOTICE: using this model for now as this is QUITE faster!
+            stream=False
+        )
+        if completion.choices[0].message.content is not None:
+            last_user_message_index = None
+            for i in reversed(range(len(messages))):
+                if messages[i]['role'] == 'user':
+                    last_user_message_index = i
+                    break
+            logging.info("Got answer from the TOOLS search for data: " + completion.choices[0].message.content)
+            if(last_user_message_index):
+                messages.insert(last_user_message_index, {"role": "assistant", "content": completion.choices[0].message.content})
+
     data_source = _create_azure_cognitive_search_data_source()
     # https://github.com/openai/openai-cookbook/blob/main/examples/azure/chat_with_your_own_data.ipynb
+    logging.info(messages)
+    #https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
     return client_data.chat.completions.create(
         messages=messages,
         model=model_data,
@@ -96,6 +122,8 @@ def chat_with_data(messages: List[ChatCompletionMessageParam], stream=False) -> 
                         "endpoint": data_source.parameters.endpoint,
                         "key": data_source.parameters.key,
                         "indexName": data_source.parameters.indexName,
+                        "inScope": "false",
+                        "topNDocuments": message_request.top
                     }
                 }
             ],
