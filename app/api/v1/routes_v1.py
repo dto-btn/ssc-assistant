@@ -12,8 +12,8 @@ from utils.openai import (build_completion_response, chat, chat_with_data,
 from utils.manage_message import load_messages
 from utils.auth import auth
 
-# model: str              = os.getenv("AZURE_OPENAI_MODEL", "gpt-4-1106")
-model: str              = os.getenv("AZURE_OPENAI_MODEL", "gpt-35-turbo-16k")
+model: str              = os.getenv("AZURE_OPENAI_MODEL", "gpt-4-1106")
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 

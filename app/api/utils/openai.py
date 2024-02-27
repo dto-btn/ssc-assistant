@@ -25,10 +25,8 @@ api_version             = os.getenv("AZURE_OPENAI_VERSION", "2023-12-01-preview"
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
 index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "latest")
-# model: str              = os.getenv("AZURE_OPENAI_MODEL", "gpt-4-1106")
-# model_data: str         = os.getenv("AZURE_OPENAI_MODEL_DATA", "gpt-4-32k")
-model: str              = os.getenv("AZURE_OPENAI_MODEL", "gpt-35-turbo-16k")
-model_data: str         = os.getenv("AZURE_OPENAI_MODEL_DATA", "gpt-35-turbo-16k")
+model: str              = os.getenv("AZURE_OPENAI_MODEL", "gpt-4-1106")
+model_data: str         = os.getenv("AZURE_OPENAI_MODEL_DATA", "gpt-4-32k")
 
 client_data = AzureOpenAI(
     # if we just use the azure_endpoint here it doesn't reach the extensions endpoint and thus we cannot use data sources directly
@@ -166,28 +164,12 @@ def num_tokens_from_messages(messages: List[ChatCompletionMessageParam], model=m
     # Get the encoding for the model
     encoding = tiktoken.get_encoding("cl100k_base")
     # Assign tokens per message and per name based on the model type
-    if model in {  
-        "gpt-3.5-turbo-0613",  
-        "gpt-3.5-turbo-16k-0613",  
-        "gpt-4-0314",  
-        "gpt-4-32k-0314",  
-        "gpt-4-0613",  
-        "gpt-4-32k-0613",  
-        }:  
-        tokens_per_message = 3  
-        tokens_per_name = 1  
-    elif model == "gpt-3.5-turbo-0301":  
+    if model == "gpt-3.5-turbo-0301":  
         tokens_per_message = 4  # every message follows <|im_start|>{role/name}\n{content}<|end|>\n  
         tokens_per_name = -1  # if there's a name, the role is omitted  
-    elif "gpt-3.5-turbo" in model:  
-        return num_tokens_from_messages(messages, model="gpt-3.5-turbo-0613")  
-    elif "gpt-4" in model:  
-        return num_tokens_from_messages(messages, model="gpt-4-0613")  
     else:  
-        # raise NotImplementedError(  
-        #     f"""num_tokens_from_messages() is not implemented for model {model}. See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens."""  
-        # )
-        tokens_per_message = 3  
+        tokens_per_message = 3
+        tokens_per_name = 1
     num_tokens = 0  
     # Count the tokens in each message with the given model
     for message in messages:  
@@ -211,25 +193,10 @@ def num_tokens_from_string(message, model=model):
     """  
     # Get the encoding for the model
     encoding = tiktoken.get_encoding("cl100k_base")
-    if model in {  
-        "gpt-3.5-turbo-0613",  
-        "gpt-3.5-turbo-16k-0613",  
-        "gpt-4-0314",  
-        "gpt-4-32k-0314",  
-        "gpt-4-0613",  
-        "gpt-4-32k-0613",  
-    }:  
-        tokens_per_message = 3  
-    elif model == "gpt-3.5-turbo-0301":  
+    # Assign tokens per message based on the model type
+    if model == "gpt-3.5-turbo-0301":  
         tokens_per_message = 4  # every message follows <|im_start|>{role/name}\n{content}<|end|>\n  
-    elif "gpt-3.5-turbo" in model:  
-        return num_tokens_from_string(message, model="gpt-3.5-turbo-0613")  
-    elif "gpt-4" in model:  
-        return num_tokens_from_string(message, model="gpt-4-0613")  
     else:  
-        # raise NotImplementedError(  
-        #     f"""num_tokens_from_string() is not implemented for model {model}. See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens."""  
-        # )  
         tokens_per_message = 3
     num_tokens = tokens_per_message + len(encoding.encode(message))  
     num_tokens += 3  # every reply is primed with istant<|im_sep|>  
