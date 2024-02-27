@@ -21,14 +21,14 @@ export const Disclaimer = () => {
   
     return (  
         <div>  
-            <Dialog open={!hideDialog} onClose={() => setHideDialog(true)} fullWidth>  
+            <Dialog open={!hideDialog} fullWidth>  
                 <DialogTitle>{t("disclaimer")}</DialogTitle>  
                 <DialogContent>  
                     <p>{t("disclaimer.desc")}</p>  
                     <p style={{ fontWeight: "bold" }}>{t("disclaimer.desc2")}</p>  
                 </DialogContent>  
                 <DialogActions>  
-                    <Button style={{ backgroundColor: "#4b3e99", color: "white"}}onClick={() => { setHideDialog(true); }}>{t("close")}</Button>  
+                    <Button style={{ backgroundColor: "#4b3e99", color: "white"}}onClick={() => { setHideDialog(true); }}>{t("accept")}</Button>  
                     <Button onClick={() => { changeLanguage(t("langlink.shorthand")); setTranslationCookie(); }}>{t("langlink")}</Button>  
                 </DialogActions>  
             </Dialog>  
