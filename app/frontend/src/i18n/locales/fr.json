@@ -3,7 +3,7 @@
     "langlink.shorthand": "en",
     "feedback": "Commentaire",
     "disclaimer": "AVIS DE NON-RESPONSABILITÉ",
-    "disclaimer.desc": "Ce Assistant SPC utilise les services Azure OpenAI. Les réponses peuvent être incorrectes même si elles semblent crédibles. L'IA peut faire des erreurs comme le font les humains.",
+    "disclaimer.desc": "L'Assistant SPC utilise les services Azure OpenAI. Les réponses peuvent être incorrectes même si elles semblent crédibles. L'IA peut faire des erreurs comme le font les humains.",
     "disclaimer.desc2": "N'ENVOYEZ AUCUNE INFORMATION PROTÉGÉE DANS LE CHATBOT.",
     "feedback.long": "Cliquez ici pour nous faire part de vos commentaires. Merci de nous communiquer vos remarques!",
     "githublnk": "Lien vers entrepôt Github",
