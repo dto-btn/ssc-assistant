@@ -72,3 +72,9 @@ variable "vite_api_key" {
     description = "the jwt token value used to communicate from the frontend to the ssc assistant api"
     sensitive = true
 }
+
+variable "geds_api_token" {
+    type = string
+    description = "value of the geds api token"
+    sensitive = true
+}

@@ -11,8 +11,18 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["load_messages"]
 
-SYSTEM_PROMPT_EN = "You are a Shared Services Canada (SSC) assistant that helps to find information about Business Request (BR) in the BITS system, information on employees (from the GEDS system), and any other questions users might have."
-SYSTEM_PROMPT_FR = "Vous êtes un assistant de Services partagés Canada (SSC) qui aide à trouver des informations sur les demandes commerciales (BR) dans le système BITS, des informations sur les employés (à partir du système GEDS) et toute autre question que les utilisateurs pourraient avoir."
+SYSTEM_PROMPT_EN = """You are a Shared Services Canada (SSC) assistant that helps employees with any kind of request. 
+You have access to the intranet MySSC+ website data and sometimes will be provided with contextual data from that website to help answer questions. 
+You also have access to corporate tools such as GEDS; a system that helps find information about employees.
+Sometimes you will be provided with a list of tools (functions) that were invoked along with the response from the designed system.
+You may use this information to give a better answer."""
+
+SYSTEM_PROMPT_FR = """Vous êtes un assistant de Services partagés Canada (SPC) qui aide les employés pour toute sorte de demande.
+Vous avez accès aux données du site intranet MySSC+ et parfois on vous fournira des données contextuelles de ce site pour aider à répondre aux questions.
+Vous avez également accès à des outils d'entreprise tels que GEDS ; un système qui aide à trouver des informations sur les employés.
+Parfois, on vous fournira une liste d'outils (fonctions) qui ont été invoqués avec la réponse du système conçu.
+Vous pouvez utiliser ces informations pour donner une meilleure réponse.Vous êtes un assistant de Services partagés Canada (SSC) qui aide à trouver des informations sur les demandes commerciales (BR) dans le système BITS, 
+des informations sur les employés (à partir du système GEDS) et toute autre question que les utilisateurs pourraient avoir."""
 
 def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessageParam]:
     messages: List[ChatCompletionMessageParam] = []
@@ -36,8 +46,10 @@ def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessage
     # if messages is still one, meaning we didn't add a message it means query was passed via query str
     if len(messages) == 1:
         messages.append(ChatCompletionUserMessageParam(content=message_request.query, role='user'))
-
+    
     # parameter message history via max attribute
-    if len(messages) > message_request.max:
-        messages = [messages[0]] + (messages[-(message_request.max-1):] if message_request.max > 1 else []) #else if 1 we end up with -0 wich is interpreted as 0: (whole list)
+    max = min(message_request.max, 20)
+    if len(messages) - 1 > max:
+        messages = [messages[0]] + (messages[-(max-1):] if max > 1 else []) #else if 1 we end up with -0 wich is interpreted as 0: (whole list)
+
     return messages

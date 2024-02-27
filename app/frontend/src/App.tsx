@@ -1,7 +1,7 @@
-import { Alert, Box, Snackbar } from '@mui/material';
+import { Alert, Box, FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup, Snackbar, Typography } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, Fragment, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { completionMySSC } from './api/api';
 import { AssistantBubble, ChatInput, TopMenu, UserBubble, Disclaimer} from './components';
@@ -18,36 +18,48 @@ const mainTheme = createTheme({
       default: '#f2f2f2',
     }
   },
-
 });
 
-const welcomeMessage: Completion = {
-  message: {
-    role: "assistant",
-    content: "Hello! I am your SSC Assistant how may I help you today?"
-  } as Message
-}
+export const enum ChatWith {
+  Data = "data",
+  Tools = "tools"
+};
 
 export const App = () => {
   const { t, i18n } = useTranslation();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorSnackbar, setErrorSnackbar] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [completions, setCompletions] = useState<Completion[]>([welcomeMessage]);
+  const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
+  const [chatWith, setChatWith] = useState<ChatWith>(ChatWith.Data);
+
+  const welcomeMessage: Completion = {
+    message: {
+      role: "assistant",
+      content: t('default.welcome.msg')
+    } as Message
+  }
+
+  const [completions, setCompletions] = useState<Completion[]>([welcomeMessage]);
+
+  const convertCompletionsToMessages = (completions: Completion[]): Message[] => {
+    // Calculate the start index to slice from if the array length exceeds maxMessagesSent
+    const startIndex = Math.max(completions.length - maxMessagesSent, 0);
+    return completions.slice(startIndex).map(c => ({
+      role: c.message.role,
+      content: c.message.content
+    } as Message));
+  };
 
   const makeApiRequest = async (question: string) => {
     // set is loading so we disable some interactive functionality while we load the response
     setIsLoading(true);
-    // prepare request bundle
-    const request: MessageRequest = {
-      query: question
-    };
 
     const userCompletion: Completion = {
       message: {
         role: 'user',
-        content: question,
+        content: question
       },
     };
 
@@ -58,11 +70,19 @@ export const App = () => {
       },
     };
 
+    const messages = convertCompletionsToMessages([...completions, userCompletion]);
+    // prepare request bundle
+    const request: MessageRequest = {
+      messages: messages,
+      max: maxMessagesSent,
+      top: 5
+    };
+
     //update current chat window with the message sent..
     setCompletions(prevCompletions => [...prevCompletions, userCompletion, responsePlaceholder]);
 
     try{
-      const completionResponse = await completionMySSC({request: request, updateLastMessage: updateLastMessage});
+      const completionResponse = await completionMySSC({request: request, updateLastMessage: updateLastMessage, chatWith: chatWith});
 
       setCompletions((prevCompletions) => {
         const updatedCompletions = [...prevCompletions];//making a copy
@@ -74,7 +94,6 @@ export const App = () => {
             context: completionResponse.message.context
           },
         }
-  
         return updatedCompletions;
       })
 
@@ -103,7 +122,7 @@ export const App = () => {
       }
       return updatedCompletions;
     })
-  }
+  };
 
   const handleCloseSnackbar = (_event?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
@@ -112,14 +131,16 @@ export const App = () => {
     setErrorSnackbar(false);
   };
 
+  const handleChatWithChange = (_event: ChangeEvent<HTMLInputElement>, value: string) => {
+    setChatWith(value as ChatWith);
+  };
+
   useEffect(() => {
       // Set the `lang` attribute whenever the language changes
       document.documentElement.lang = i18n.language;
   }, [i18n.language]);
 
-  //everytime we update the text in the last chat bubble, we scroll into view, smooooothllyyy
   useEffect(() => chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [completions[completions.length-1].message.content]);
-
   return (
     <>
       <ThemeProvider theme={mainTheme}>
@@ -137,15 +158,31 @@ export const App = () => {
                     context={completion.message?.context}
                     scrollRef={chatMessageStreamEnd} />
                 )}
-
                 {completion.message?.role === "user" && (
                   <UserBubble text={completion.message?.content} />
                 )}
               </Fragment>
             ))}
-            <div ref={chatMessageStreamEnd} />
           </Box>
+          <div ref={chatMessageStreamEnd} />
           <Box sx={{ position: 'sticky', bottom: 0, left: 0, right: 0, zIndex: 1100, bgcolor: 'background.default', padding: '1rem' }}>
+            <Grid container item xs={12} alignItems='center' justifyContent='center'>
+              <FormLabel id="gpt-mode">
+                <Typography variant='body1' sx={{ pr: '10px'}}>{t('chat.with.gpt')}</Typography>
+              </FormLabel>
+              <FormControl>
+                  <RadioGroup
+                    row
+                    aria-labelledby="gpt-mode"
+                    value={chatWith}
+                    onChange={handleChatWithChange}
+                    name="gpt-mode-radio-btn"
+                  >
+                    <FormControlLabel value="data" control={<Radio />} label={t('chat.with.gpt.data')} />
+                    <FormControlLabel value="tools" control={<Radio />} label={t('chat.with.gpt.tools')} />
+                  </RadioGroup>
+              </FormControl>
+            </Grid>
             <ChatInput
                 clearOnSend
                 placeholder={t("placeholder")}
