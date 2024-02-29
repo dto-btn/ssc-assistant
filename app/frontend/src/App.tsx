@@ -4,7 +4,8 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { ChangeEvent, Fragment, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { completionMySSC } from './api/api';
-import { AssistantBubble, ChatInput, TopMenu, UserBubble, Disclaimer} from './components';
+import { AssistantBubble, ChatInput, TopMenu, UserBubble, Disclaimer, Dial} from './components';
+import Cookies from 'js-cookie';  
 
 const mainTheme = createTheme({
   palette: {
@@ -79,7 +80,11 @@ export const App = () => {
     };
 
     //update current chat window with the message sent..
-    setCompletions(prevCompletions => [...prevCompletions, userCompletion, responsePlaceholder]);
+    setCompletions(prevCompletions => {  
+      const updatedCompletions = [...prevCompletions, userCompletion, responsePlaceholder];  
+      saveChatHistory(updatedCompletions); // Save chat history to cookie  
+      return updatedCompletions;  
+    });  
 
     try{
       const completionResponse = await completionMySSC({request: request, updateLastMessage: updateLastMessage, chatWith: chatWith});
@@ -94,6 +99,7 @@ export const App = () => {
             context: completionResponse.message.context
           },
         }
+        saveChatHistory(updatedCompletions); // Save chat history to cookie
         return updatedCompletions;
       })
 
@@ -141,6 +147,27 @@ export const App = () => {
   }, [i18n.language]);
 
   useEffect(() => chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [completions[completions.length-1].message.content]);
+
+  // Load chat history from cookie when app starts  
+  useEffect(() => {  
+    const savedChatHistory = Cookies.get('chatHistory');  
+    if (savedChatHistory) {  
+      setCompletions(JSON.parse(savedChatHistory));  
+    } else {  
+      setCompletions([welcomeMessage]);  
+    }  
+  }, []); 
+
+  const saveChatHistory = (chatHistory: Completion[]) => {  
+    Cookies.set('chatHistory', JSON.stringify(chatHistory), { expires: 7 });  
+  };  
+  
+  const handleClearChat = () => {  
+    setCompletions([welcomeMessage]); // This will reset the chat to the initial state.  
+    Cookies.remove('chatHistory'); // This will clear the chat history cookie.  
+  }; 
+  
+
   return (
     <>
       <ThemeProvider theme={mainTheme}>
@@ -200,6 +227,7 @@ export const App = () => {
             {errorMessage}
           </Alert>
         </Snackbar>
+        <Dial onClearChat={handleClearChat} />
         <Disclaimer />
       </ThemeProvider>
     </>
