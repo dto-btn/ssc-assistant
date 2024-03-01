@@ -7,6 +7,9 @@ import Cookies from "js-cookie";
 import { useTranslation } from 'react-i18next';
 import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { Grid } from '@mui/material';
+import { useIsAuthenticated } from "@azure/msal-react";
+import { useMsal } from "@azure/msal-react";
+import { loginRequest } from "../authConfig";
 
 const logoStyle = {
   width: '50px',
@@ -15,7 +18,8 @@ const logoStyle = {
 };
 
 export const TopMenu = () => {
-
+  const isAuthenticated = useIsAuthenticated();
+  const { instance } = useMsal();
   const { t, i18n } = useTranslation();
 
   const setTranslationCookie = () => {
@@ -26,6 +30,18 @@ export const TopMenu = () => {
 
   const changeLanguage = (lng: string) => {
       i18n.changeLanguage(lng);
+  };
+
+  const handleLogin = (loginType: string) => {
+    if (loginType === "popup") {
+      instance.loginPopup(loginRequest).catch((e) => {
+        console.log(e);
+      });
+    } else if (loginType === "redirect") {
+      instance.loginRedirect(loginRequest).catch((e) => {
+        console.log(e);
+      });
+    }
   };
 
   return (
@@ -71,12 +87,15 @@ export const TopMenu = () => {
                   alt="logo of SSC"
                 />
               </Grid>
-              <Grid item sx={{ display: { xs: 'none', sm: 'flex'}}} sm={10}>
+              <Grid item sx={{ display: { xs: 'none', sm: 'flex'}}} sm={8}>
                 <Typography variant="h6">
                   {t('title')}
                 </Typography>
               </Grid>
-              <Grid item xs={8} sm={1} justifyContent='right'>
+              <Grid item xs={6} sm={2}>
+                {isAuthenticated ? <div>Yes</div> : <Link href="#" onClick={() => {handleLogin("redirect")}} color="inherit">Login!</Link>}
+              </Grid>
+              <Grid item xs={2} sm={1} justifyContent='right'>
                 <Link href="#" onClick={() => {changeLanguage(t("langlink.shorthand")); setTranslationCookie();}} color="inherit">{t("langlink")}</Link>
               </Grid>
             </Grid>

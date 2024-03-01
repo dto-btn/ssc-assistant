@@ -34,6 +34,9 @@ export const App = () => {
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
   const [chatWith, setChatWith] = useState<ChatWith>(ChatWith.Data);
 
+  //MSAL React lib documentation:
+  //REG Howto: https://learn.microsoft.com/en-us/entra/identity-platform/scenario-spa-app-registration
+
   const welcomeMessage: Completion = {
     message: {
       role: "assistant",
@@ -141,6 +144,7 @@ export const App = () => {
   }, [i18n.language]);
 
   useEffect(() => chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [completions[completions.length-1].message.content]);
+
   return (
     <>
       <ThemeProvider theme={mainTheme}>
