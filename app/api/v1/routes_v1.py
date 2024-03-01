@@ -159,7 +159,6 @@ def completion_chat_stream(message_request: MessageRequest):
 
     messages = load_messages(message_request)
     prompt_tokens = num_tokens_from_messages(messages, model=model)
-    toolsUsed = message_request.tools
     completion: Stream[ChatCompletionChunk] = chat(message_request, stream=True) # type: ignore
 
     def generate():
