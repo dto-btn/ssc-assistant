@@ -3,7 +3,7 @@
     "langlink.shorthand": "en",
     "feedback": "Commentaire",
     "disclaimer": "AVIS DE NON-RESPONSABILITÉ",
-    "disclaimer.desc": "Ce Chatbot utilise les services Azure OpenAI. Les réponses peuvent être incorrectes même si elles semblent crédibles. L'IA peut faire des erreurs comme le font les humains.",
+    "disclaimer.desc": "L'Assistant SPC utilise les services Azure OpenAI. Les réponses peuvent être incorrectes même si elles semblent crédibles. L'IA peut faire des erreurs comme le font les humains.",
     "disclaimer.desc2": "N'ENVOYEZ AUCUNE INFORMATION PROTÉGÉE DANS LE CHATBOT.",
     "feedback.long": "Cliquez ici pour nous faire part de vos commentaires. Merci de nous communiquer vos remarques!",
     "githublnk": "Lien vers entrepôt Github",
@@ -53,5 +53,10 @@
     "footer.desc": "Liens utiles",
     "feedback.link.label": "Lien du formulaire de commentaires",
     "chatbot.input.label": "Saisie des questions du chatbot",
-    "ask.question": "Demandez une question"
+    "ask.question": "Demandez une question",
+    "send": "Soumettre la question",
+    "default.welcome.msg": "Bonjour! Je suis votre assistant SSC, comment puis-je vous aider aujourd'hui ?",
+    "chat.with.gpt": "Discutez avec GPT et :",
+    "chat.with.gpt.tools": "Outils (SAGE, etc.)",
+    "chat.with.gpt.data": "Données (MonSPC+)"
 }

@@ -1,13 +1,19 @@
+import { ChatWith } from "../App";
+
 interface CompletionProps {
   request: MessageRequest;
   updateLastMessage: (message_chunk: string) => void;
+  chatWith: ChatWith;
 }
 
-export async function completionMySSC({ request, updateLastMessage }: CompletionProps): Promise<Completion> {
+export async function completionMySSC({ request, updateLastMessage, chatWith }: CompletionProps): Promise<Completion> {
   let completion: Completion | undefined;
   let streamingContent = '';
 
-  const response = await fetch("/api/1.0/completion/myssc/stream", {
+  let url = "/api/1.0/completion/" + (chatWith == ChatWith.Data ? "myssc" : "chat") + "/stream";
+  console.log(chatWith);
+
+  const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"

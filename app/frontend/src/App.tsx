@@ -1,15 +1,15 @@
-import { Alert, Box, Snackbar } from '@mui/material';
+import { Alert, Box, FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup, Snackbar, Typography } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, Fragment, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { completionMySSC } from './api/api';
-import { AssistantBubble, ChatInput, TopMenu, UserBubble } from './components';
+import { AssistantBubble, ChatInput, TopMenu, UserBubble, Disclaimer} from './components';
 
 const mainTheme = createTheme({
   palette: {
     primary: {
-      main: "#4c3e99",
+      main: "#4b3e99", /* SSC's official colour code I found using our chatbot! XD */
     },
     secondary: {
       main: "#f33aea",
@@ -18,24 +18,30 @@ const mainTheme = createTheme({
       default: '#f2f2f2',
     }
   },
-
 });
 
-const welcomeMessage: Completion = {
-  message: {
-    role: "assistant",
-    content: "Hello! I am your SSC Assistant how may I help you today?"
-  } as Message
-}
+export const enum ChatWith {
+  Data = "data",
+  Tools = "tools"
+};
 
 export const App = () => {
   const { t, i18n } = useTranslation();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorSnackbar, setErrorSnackbar] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [completions, setCompletions] = useState<Completion[]>([welcomeMessage]);
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
+  const [chatWith, setChatWith] = useState<ChatWith>(ChatWith.Data);
+
+  const welcomeMessage: Completion = {
+    message: {
+      role: "assistant",
+      content: t('default.welcome.msg')
+    } as Message
+  }
+
+  const [completions, setCompletions] = useState<Completion[]>([welcomeMessage]);
 
   const convertCompletionsToMessages = (completions: Completion[]): Message[] => {
     // Calculate the start index to slice from if the array length exceeds maxMessagesSent
@@ -53,7 +59,7 @@ export const App = () => {
     const userCompletion: Completion = {
       message: {
         role: 'user',
-        content: question,
+        content: question
       },
     };
 
@@ -68,14 +74,15 @@ export const App = () => {
     // prepare request bundle
     const request: MessageRequest = {
       messages: messages,
-      max: maxMessagesSent
+      max: maxMessagesSent,
+      top: 5
     };
 
     //update current chat window with the message sent..
     setCompletions(prevCompletions => [...prevCompletions, userCompletion, responsePlaceholder]);
 
     try{
-      const completionResponse = await completionMySSC({request: request, updateLastMessage: updateLastMessage});
+      const completionResponse = await completionMySSC({request: request, updateLastMessage: updateLastMessage, chatWith: chatWith});
 
       setCompletions((prevCompletions) => {
         const updatedCompletions = [...prevCompletions];//making a copy
@@ -124,6 +131,10 @@ export const App = () => {
     setErrorSnackbar(false);
   };
 
+  const handleChatWithChange = (_event: ChangeEvent<HTMLInputElement>, value: string) => {
+    setChatWith(value as ChatWith);
+  };
+
   useEffect(() => {
       // Set the `lang` attribute whenever the language changes
       document.documentElement.lang = i18n.language;
@@ -155,6 +166,23 @@ export const App = () => {
           </Box>
           <div ref={chatMessageStreamEnd} />
           <Box sx={{ position: 'sticky', bottom: 0, left: 0, right: 0, zIndex: 1100, bgcolor: 'background.default', padding: '1rem' }}>
+            <Grid container item xs={12} alignItems='center' justifyContent='center'>
+              <FormLabel id="gpt-mode">
+                <Typography variant='body1' sx={{ pr: '10px'}}>{t('chat.with.gpt')}</Typography>
+              </FormLabel>
+              <FormControl>
+                  <RadioGroup
+                    row
+                    aria-labelledby="gpt-mode"
+                    value={chatWith}
+                    onChange={handleChatWithChange}
+                    name="gpt-mode-radio-btn"
+                  >
+                    <FormControlLabel value="data" control={<Radio />} label={t('chat.with.gpt.data')} />
+                    <FormControlLabel value="tools" control={<Radio />} label={t('chat.with.gpt.tools')} />
+                  </RadioGroup>
+              </FormControl>
+            </Grid>
             <ChatInput
                 clearOnSend
                 placeholder={t("placeholder")}
@@ -172,6 +200,7 @@ export const App = () => {
             {errorMessage}
           </Alert>
         </Snackbar>
+        <Disclaimer />
       </ThemeProvider>
     </>
   )

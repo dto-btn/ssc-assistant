@@ -35,8 +35,6 @@ def load_tools(toolsUsed: List[str]):
 
     tools = [tool for tool in all_tools if 'tool_type' in tool and tool['tool_type'] in toolsUsed]
 
-    #logger.debug(tools)
-
     return tools
 
 def load_records():
@@ -53,7 +51,7 @@ def load_records():
         with data_json_path.open('r') as file:
             data = json.load(file)
             records = data['results'][0]['items']
-    except: 
+    except:
         logger.error("Unable to load data.json (BITS sample data), will return an empty array instead")
         records = []
     return records
@@ -151,16 +149,20 @@ def get_employee_information(employee_lastname: str = "", employee_firstname: st
 
     response = requests.request("GET", url, headers=headers, data=payload)
 
-    logger.debug(response.text)
-
     # Check if the response was successful
     if response.status_code == 200:
         # Check if the response contains multiple employees with the same last name
         if len(json.loads(response.text)) > 1 and not employee_firstname:
-            return "Found multiple employees with that last name. Please provide the first name as well. However, here are some of the first results: " + response.text
+            response_json = json.loads(response.text)
+            # Convert the JSON to a pretty string
+            pretty_response = json.dumps(response_json, indent=4)
+            return json.dumps("Found multiple employees with that last name. Please provide the first name as well. However, here are some of the first results: " + pretty_response)
         # Check if the response contains multiple employees with the same first and last name
         elif len(json.loads(response.text)) > 1:
-            return "Found multiple employees with that name. Here are the results: " + response.text
+            response_json = json.loads(response.text)
+            # Convert the JSON to a pretty string
+            pretty_response = json.dumps(response_json, indent=4)
+            return json.dumps("Found multiple employees with that name. Here are the results: " + pretty_response)
         else:
             return response.text
     else:
@@ -192,7 +194,7 @@ def get_employee_by_phone_number(employee_phone_number: str):
     # Check if the response was successful
     if response.status_code == 200:
         logger.debug(response)
-        return response.text
+        return json.dumps(response.text)
     else:
         logger.debug("Unable to get any info.", response)
         return "Didn't find any matching employee with that phone number."
@@ -222,34 +224,25 @@ def call_tools(tool_calls , messages: List[ChatCompletionMessageParam]):
 
         # Call the function with the prepared arguments
         function_response = function_to_call(**prepared_args)
-        assistant_info = {
-                "role": "assistant",
-                "content": "",
-                "tool_calls": [
-                    {
-                        "id": tool_call.id,
-                        "type": tool_call.type,
-                        "function": {
-                            "name": function_name,
-                            "arguments": json.dumps(function_args)
-                        }
-                    }
-                ]
+        messages.append({
+            "role": "assistant",
+            "content": None,
+            "function_call": {
+                "name": function_name,
+                "arguments": json.dumps(function_args)
             }
+        })
 
         # Convert the function response to a string
         response_as_string = "\n".join(function_response) if function_response is list else str(function_response)
-        tool_info = {
-                "tool_call_id": tool_call.id,
-                "role": "tool",
-                "name": function_name,
-                "content": response_as_string,
-            }
 
         # Add the function response to the messages
         messages.append({
-            "role": "assistant",
-            "content": str(json.dumps(assistant_info)+json.dumps(tool_info))
+            "role": "function",
+            "name": function_name,
+            "content": response_as_string
         })
-        logger.info(messages)
+
+        # reworking with this example to refine a bit:
+        # https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling?tabs=python#working-with-function-calling
     return messages

@@ -64,9 +64,9 @@ export const ChatInput = ({onSend, disabled, clearOnSend}: ChatInputProps) => {
             endAdornment: <InputAdornment position="end">
                             <IconButton onClick={sendQuestion} disabled={disabled}>
                             {disabled ? (
-                              <CircularProgress size={24} />
+                              <CircularProgress size={24} aria-label={t("generating")}/>
                             ) : (
-                              <Send sx={{ color: 'primary.main' }} />
+                              <Send sx={{ color: 'primary.main' }} aria-label={t("send")}/>
                             )}
                             </IconButton>
                           </InputAdornment>,
