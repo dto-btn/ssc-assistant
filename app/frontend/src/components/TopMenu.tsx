@@ -10,6 +10,8 @@ import { Grid } from '@mui/material';
 import { useIsAuthenticated } from "@azure/msal-react";
 import { useMsal } from "@azure/msal-react";
 import { loginRequest } from "../authConfig";
+import { useEffect, useState } from 'react';
+import { callMsGraph } from '../graph';
 
 const logoStyle = {
   width: '50px',
@@ -19,7 +21,8 @@ const logoStyle = {
 
 export const TopMenu = () => {
   const isAuthenticated = useIsAuthenticated();
-  const { instance } = useMsal();
+  const { instance, accounts } = useMsal();
+  const [graphData, setGraphData] = useState(null);
   const { t, i18n } = useTranslation();
 
   const setTranslationCookie = () => {
@@ -32,17 +35,37 @@ export const TopMenu = () => {
       i18n.changeLanguage(lng);
   };
 
-  const handleLogin = (loginType: string) => {
-    if (loginType === "popup") {
-      instance.loginPopup(loginRequest).catch((e) => {
-        console.log(e);
-      });
-    } else if (loginType === "redirect") {
-      instance.loginRedirect(loginRequest).catch((e) => {
-        console.log(e);
+  const handleLogin = () => {
+    instance.loginRedirect(loginRequest).catch((e) => {
+      console.log(e);
+    });
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log("LOGGED IN OR NO?", accounts);
+      // If the user is authenticated, you might want to acquire a token silently
+      // or handle the logged-in user's information here.
+      instance.acquireTokenSilent({
+        ...loginRequest,
+        account: accounts[0],
+      }).then((response) => {
+        console.log("RESPONSE TOKEN", response);
+        callMsGraph(response.accessToken).then((response) => setGraphData(response));
+        console.log("the the graph data iss htis one ", graphData);
+      }).catch(error => {
+        // Handle error, for example, by acquiring token interactively
+        console.log("unable to get user graph information ...")
       });
     }
-  };
+  }, [isAuthenticated, instance, accounts]);
+
+  useEffect(() => {
+    if (graphData) {
+      console.log("GraphData", graphData);
+      
+    }
+  }, [graphData]);
 
   return (
     <>
@@ -54,7 +77,7 @@ export const TopMenu = () => {
                 mt: 2,
               }}>
         <Container maxWidth="lg">
-          <Toolbar 
+          <Toolbar
             variant='regular'
             sx={(theme) => ({
               display: 'flex',
@@ -92,8 +115,8 @@ export const TopMenu = () => {
                   {t('title')}
                 </Typography>
               </Grid>
-              <Grid item xs={6} sm={2}>
-                {isAuthenticated ? <div>Yes</div> : <Link href="#" onClick={() => {handleLogin("redirect")}} color="inherit">Login!</Link>}
+              <Grid container item xs={6} sm={2} justifyContent='flex-end'>
+                {graphData && isAuthenticated ? <div>Welcome <b>{accounts[0].name}</b>!</div> : <Link href="#" onClick={() => {handleLogin()}} color="inherit">Login</Link>}
               </Grid>
               <Grid item xs={2} sm={1} justifyContent='right'>
                 <Link href="#" onClick={() => {changeLanguage(t("langlink.shorthand")); setTranslationCookie();}} color="inherit">{t("langlink")}</Link>

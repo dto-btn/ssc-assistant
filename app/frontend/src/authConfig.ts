@@ -15,7 +15,7 @@ export const msalConfig = {
     auth: {
         clientId: import.meta.env.VITE_AZURE_AD_CLIENT_ID as string,
         authority: `https://login.microsoftonline.com/${import.meta.env.VITE_AZURE_AD_TENANT_ID}`,
-        redirectUri: "http://localhost:8080",
+        redirectUri: "http://localhost:8080/",
     },
     cache: {
         cacheLocation: "sessionStorage", // This configures where your cache will be stored
@@ -55,7 +55,9 @@ export const msalConfig = {
  * https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-permissions-and-consent#openid-connect-scopes
  */
 export const loginRequest = {
-    scopes: ["User.Read"]
+    //scopes: ["User.Read"]
+    scopes: ["User.Read", "email", "openid", "profile"]
+    //scopes: ["email", "openid", "profile"]
 };
 
 /**
