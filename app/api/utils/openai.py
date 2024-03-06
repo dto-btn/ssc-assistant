@@ -17,6 +17,7 @@ from utils.tools import load_tools, call_tools
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+logging.getLogger("openai._base_client").setLevel(logging.DEBUG)
 
 __all__ = ["chat_with_data", "convert_chat_with_data_response", "build_completion_response", "chat"]
 
@@ -166,47 +167,47 @@ def build_completion_response(content: str,
                       total_tokens=total_tokens,
                       message=message)
 
-def num_tokens_from_messages(messages: List[ChatCompletionMessageParam], model=model):  
-    """  
-    Get the number of tokens in a message  
-    """  
+def num_tokens_from_messages(messages: List[ChatCompletionMessageParam], model=model):
+    """
+    Get the number of tokens in a message
+    """
     # Get the encoding for the model
     encoding = tiktoken.get_encoding("cl100k_base")
+    # num_tokens = 0
+    # for message in messages:
+    #     num_tokens += len(encoding.encode(message.role + message.content.text))
     # Assign tokens per message and per name based on the model type
-    if model == "gpt-3.5-turbo-0301":  
-        tokens_per_message = 4  # every message follows <|im_start|>{role/name}\n{content}<|end|>\n  
-        tokens_per_name = -1  # if there's a name, the role is omitted  
-    else:  
-        tokens_per_message = 3
-        tokens_per_name = 1
-    num_tokens = 0  
+    num_tokens = 0
     # Count the tokens in each message with the given model
-    for message in messages:  
-        num_tokens += tokens_per_message  
-        for key, value in message.items():  
-            if isinstance(value, str):  
-                num_tokens += len(encoding.encode(value))  
-            elif isinstance(value, dict) and 'role' in value and 'content' in value:  
-                num_tokens += len(encoding.encode(value['role']))  
-                num_tokens += len(encoding.encode(value['content']))  
-            else:  
-                raise ValueError(f"Invalid message format: {message}")  
-            if key == "name":  
-                num_tokens += tokens_per_name  
-    num_tokens += 3  # every reply is primed with istant<|im_sep|>  
-    return num_tokens  
+    for message in messages:
+        # Check if 'content' is in the message and is not None
+        if 'content' in message and message['content'] is not None:
+            # If 'content' is a string, directly encode it
+            if isinstance(message['content'], str):
+                print(message['content'])
+                print(len(encoding.encode(message['content'])))
+                num_tokens += len(encoding.encode(message['content']))
+                #num_tokens += len(encoding.encode(json.dumps(message)))
+            # If 'content' is a list (of content parts), iterate and encode each part
+            elif isinstance(message['content'], list):
+                for part in message['content']:
+                    if isinstance(part, dict) and 'text' in part:
+                        print("yayaya")
+                        num_tokens += len(encoding.encode(part['text']))
 
-def num_tokens_from_string(message, model=model):  
-    """  
-    Get the number of tokens in a message given a string input  
-    """  
+            if isinstance(message['role'], str):
+                print(message['role'])
+                print(len(encoding.encode(message['role'])))
+                num_tokens += len(encoding.encode(message['role']))
+            
+
+    return num_tokens
+
+def num_tokens_from_string(message, model=model):
+    """
+    Get the number of tokens in a message given a string input
+    """
     # Get the encoding for the model
     encoding = tiktoken.get_encoding("cl100k_base")
     # Assign tokens per message based on the model type
-    if model == "gpt-3.5-turbo-0301":  
-        tokens_per_message = 4  # every message follows <|im_start|>{role/name}\n{content}<|end|>\n  
-    else:  
-        tokens_per_message = 3
-    num_tokens = tokens_per_message + len(encoding.encode(message))  
-    num_tokens += 3  # every reply is primed with istant<|im_sep|>  
-    return num_tokens 
+    return len(encoding.encode(message))

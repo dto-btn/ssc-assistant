@@ -103,12 +103,16 @@ def completion_myssc_stream(message_request: MessageRequest):
 
             if delta.content:
                 content_txt += delta.content
-                completion_tokens += num_tokens_from_string(delta.content, model=model)
                 yield delta.content
 
         yield f'\r\n--{_boundary}\r\n'
         yield 'Content-Type: application/json\r\n\r\n'
-        response = build_completion_response(content=content_txt, chat_completion_dict=context, prompt_tokens=prompt_tokens, completion_tokens=completion_tokens, total_tokens=completion_tokens + prompt_tokens)
+        completion_tokens += num_tokens_from_string(content_txt, model=model)
+        response = build_completion_response(content=content_txt, 
+                                             chat_completion_dict=context, 
+                                             prompt_tokens=prompt_tokens, 
+                                             completion_tokens=completion_tokens, 
+                                             total_tokens=completion_tokens + prompt_tokens)
         yield json.dumps(
              response.__dict__,
              default=lambda o: o.__dict__
@@ -139,7 +143,11 @@ def completion_chat(message_request: MessageRequest):
     if not message_request.query and not message_request.messages:
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
 
+    prompt_tokens = num_tokens_from_messages(load_messages(message_request), model=model)
     completion: ChatCompletion = chat(message_request) # type: ignore
+    completion_tokens = num_tokens_from_string(completion.choices[0].message.content, model=model)
+    print(completion.usage)
+    print(f"This is our calculation: comp tk: {completion_tokens}, prompt tk:{prompt_tokens} and final tk: {prompt_tokens + completion_tokens}")
 
     return convert_chat_with_data_response(completion)
 
@@ -171,12 +179,16 @@ def completion_chat_stream(message_request: MessageRequest):
                 delta = chunk.choices[0].delta
                 if delta.content:
                     content_txt += str(delta.content)
-                    completion_tokens += num_tokens_from_string(str(delta.content), model=model)
                     yield delta.content
 
         yield f'\r\n--{_boundary}\r\n'
         yield 'Content-Type: application/json\r\n\r\n'
-        response = build_completion_response(content=content_txt, chat_completion_dict=None, prompt_tokens=prompt_tokens, completion_tokens=completion_tokens, total_tokens=completion_tokens + prompt_tokens)
+        completion_tokens += num_tokens_from_string(str(content_txt), model=model)
+        response = build_completion_response(content=content_txt, 
+                                             chat_completion_dict=None, 
+                                             prompt_tokens=prompt_tokens, 
+                                             completion_tokens=completion_tokens, 
+                                             total_tokens=completion_tokens + prompt_tokens)
         yield json.dumps(
              response.__dict__,
              default=lambda o: o.__dict__
