@@ -12,6 +12,7 @@ import { useMsal } from "@azure/msal-react";
 import { loginRequest } from "../authConfig";
 import { useEffect, useState } from 'react';
 import { callMsGraph } from '../graph';
+import { UserProfilePicture } from './ProfilePicture';
 
 const logoStyle = {
   width: '50px',
@@ -24,6 +25,7 @@ export const TopMenu = () => {
   const { instance, accounts } = useMsal();
   const [graphData, setGraphData] = useState(null);
   const { t, i18n } = useTranslation();
+  const [ accessToken, setAccessToken ] = useState<string>("");
 
   const setTranslationCookie = () => {
       Cookies.set("lang_setting", i18n.language, {
@@ -51,6 +53,7 @@ export const TopMenu = () => {
         account: accounts[0],
       }).then((response) => {
         console.log("RESPONSE TOKEN", response);
+        setAccessToken(response.accessToken);
         callMsGraph(response.accessToken).then((response) => setGraphData(response));
         console.log("the the graph data iss htis one ", graphData);
       }).catch(error => {
@@ -63,7 +66,6 @@ export const TopMenu = () => {
   useEffect(() => {
     if (graphData) {
       console.log("GraphData", graphData);
-      
     }
   }, [graphData]);
 
@@ -110,13 +112,14 @@ export const TopMenu = () => {
                   alt="logo of SSC"
                 />
               </Grid>
-              <Grid item sx={{ display: { xs: 'none', sm: 'flex'}}} sm={8}>
+              <Grid item sx={{ display: { xs: 'none', sm: 'flex'}}} sm={6}>
                 <Typography variant="h6">
                   {t('title')}
                 </Typography>
               </Grid>
-              <Grid container item xs={6} sm={2} justifyContent='flex-end'>
-                {graphData && isAuthenticated ? <div>Welcome <b>{accounts[0].name}</b>!</div> : <Link href="#" onClick={() => {handleLogin()}} color="inherit">Login</Link>}
+              <Grid container item xs={6} sm={4} justifyContent='flex-end'>
+                {isAuthenticated && accessToken && <UserProfilePicture accessToken={accessToken} />}
+                {graphData && isAuthenticated ? <div>Welcome <b>{graphData['givenName']} {graphData['surname']}</b>!</div> : <Link href="#" onClick={() => {handleLogin()}} color="inherit">Login</Link>}
               </Grid>
               <Grid item xs={2} sm={1} justifyContent='right'>
                 <Link href="#" onClick={() => {changeLanguage(t("langlink.shorthand")); setTranslationCookie();}} color="inherit">{t("langlink")}</Link>
