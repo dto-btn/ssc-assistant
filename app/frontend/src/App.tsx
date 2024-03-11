@@ -5,7 +5,7 @@ import { ChangeEvent, Fragment, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { completionMySSC } from './api/api';
 import { AssistantBubble, ChatInput, TopMenu, UserBubble, Disclaimer, Dial} from './components';
-import Cookies from 'js-cookie';  
+// import { getAppStorage, setAppStorage } from './utils/appStorage';
 
 const mainTheme = createTheme({
   palette: {
@@ -54,7 +54,6 @@ export const App = () => {
   };
 
   const makeApiRequest = async (question: string) => {
-    // console.log("Making API request");
     // set is loading so we disable some interactive functionality while we load the response
     setIsLoading(true);
 
@@ -83,7 +82,7 @@ export const App = () => {
     //update current chat window with the message sent..
     setCompletions(prevCompletions => {  
       const updatedCompletions = [...prevCompletions, userCompletion, responsePlaceholder];  
-      saveChatHistory(updatedCompletions); // Save chat history to cookie  
+      saveChatHistory(updatedCompletions); // Save chat history to local storage  
       return updatedCompletions;  
     });  
 
@@ -100,8 +99,7 @@ export const App = () => {
             context: completionResponse.message.context
           },
         }
-        saveChatHistory(updatedCompletions); // Save chat history to cookie
-        // console.log(updatedCompletions);
+        saveChatHistory(updatedCompletions); // Save chat history to local storage
         return updatedCompletions;
       })
 
@@ -150,27 +148,30 @@ export const App = () => {
 
   useEffect(() => chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [completions[completions.length-1].message.content]);
 
-  // Load chat history from cookie when app starts  
+  // Load chat history from local storage
   useEffect(() => {  
-    const savedChatHistory = Cookies.get('chatHistory');  
-    if (savedChatHistory) {  
-      setCompletions(JSON.parse(savedChatHistory));  
-    } else {  
-      setCompletions([welcomeMessage]);  
-    }  
-  }, []); 
+    loadChatHistory();  
+  }, []);
 
   const saveChatHistory = (chatHistory: Completion[]) => {  
-    Cookies.set('chatHistory', JSON.stringify(chatHistory), { expires: 7 });  
+    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
     console.log("Here is the history")
-    console.log(Cookies.get('chatHistory'))
-    
-
+    console.log(localStorage.getItem('chatHistory'))
   };  
+
+  // This function will be used to load the chat history from localStorage  
+const loadChatHistory = () => {  
+  const savedChatHistory = localStorage.getItem('chatHistory');  
+  if (savedChatHistory) {  
+    setCompletions(JSON.parse(savedChatHistory));  
+  } else {  
+    setCompletions([welcomeMessage]);  
+  }  
+}; 
   
   const handleClearChat = () => {  
-    setCompletions([welcomeMessage]); // This will reset the chat to the initial state.  
-    Cookies.remove('chatHistory'); // This will clear the chat history cookie.  
+    localStorage.removeItem('chatHistory'); // Clear chat history from local storage
+    setCompletions([welcomeMessage]);
   }; 
 
   const handleCopy = () => {
