@@ -6,7 +6,12 @@ import Link from '@mui/material/Link';
 import Cookies from "js-cookie";
 import { useTranslation } from 'react-i18next';
 import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
-import { Grid } from '@mui/material';
+import { Grid, IconButton, MenuItem, Drawer, Box } from '@mui/material';  
+import MenuIcon from '@mui/icons-material/Menu'; 
+import DeleteIcon from '@mui/icons-material/Delete';
+import LanguageIcon from '@mui/icons-material/Language';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import * as React from 'react';
 
 const logoStyle = {
   width: '50px',
@@ -14,9 +19,10 @@ const logoStyle = {
   cursor: 'pointer',
 };
 
-export const TopMenu = () => {
+export const TopMenu = ({ onClearChat, onCopy }: { onClearChat: () => void, onCopy: () => void }) => {
 
   const { t, i18n } = useTranslation();
+  const [open, setOpen] = React.useState(false);
 
   const setTranslationCookie = () => {
       Cookies.set("lang_setting", i18n.language, {
@@ -28,28 +34,65 @@ export const TopMenu = () => {
       i18n.changeLanguage(lng);
   };
 
+  const toggleDrawer = (newOpen: boolean) => () => {  
+    setOpen(newOpen);  
+  };  
+  
+  const handleClearChatClick = () => {  
+    onClearChat();  
+    setOpen(false);  
+  };
+
+  const handleCopyClick = () => {
+    onCopy();
+    setOpen(false);
+  };
+
+  // Menu for mobile screens  
+  const list = () => (  
+    <Box  
+      role="presentation"  
+      onClick={toggleDrawer(false)}  
+      onKeyDown={toggleDrawer(false)}  
+    >  
+      <MenuItem onClick={() => {changeLanguage(t("langlink.shorthand")); setTranslationCookie();}} color="inherit">
+        <LanguageIcon />
+        {t("langlink")}
+      </MenuItem>  
+      <MenuItem onClick={handleClearChatClick}>  
+        <DeleteIcon />  
+        {t('clearchat')}
+      </MenuItem>  
+      <MenuItem onClick={handleCopyClick}>  
+        <ContentCopyIcon />  
+        {t('copytext')}
+      </MenuItem>
+    </Box>  
+  ); 
+
   return (
     <>
       <AppBar position="fixed"
               sx={{
-                boxShadow: 0,
                 bgcolor: 'transparent',
                 backgroundImage: 'none',
-                mt: 2,
+                boxShadow: 'none',
+                mt: { xs: 0, sm: 2},
               }}>
-        <Container maxWidth="lg">
           <Toolbar 
             variant='regular'
             sx={(theme) => ({
+              width: {xs: '100%', sm: '75%'},
+              margin: 'auto',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
+              justifyContent: 'center',
+              padding: '32px',
               flexShrink: 0,
-              borderRadius: '999px',
+              borderRadius: {xs: 0, sm: 999},
               background: `linear-gradient(45deg, black, ${theme.palette.primary.main})`,
-              backdropFilter: 'blur(24px)',
               maxHeight: 40,
-              border: '1px solid',
+              border: { xs: 'none', sm: '1px solid' },
               borderColor: 'black',
               boxShadow:
                 theme.palette.mode === 'light'
@@ -57,12 +100,12 @@ export const TopMenu = () => {
                   : '0 0 1px rgba(2, 31, 59, 0.7), 1px 1.5px 2px -1px rgba(2, 31, 59, 0.65), 4px 4px 12px -2.5px rgba(2, 31, 59, 0.65)',
             })}
           >
-            <Grid container alignItems="center" spacing={2}>
+            <Grid container alignItems="center">
               <Grid item sx={{
                 flexGrow: 1,
                 display: 'flex',
                 alignItems: 'center',
-                ml: '-18px',
+                ml: { xs: '-24px', sm: '-18px'},
                 pr: '18px',
               }} xs={4} sm={1}>
                 <img
@@ -71,18 +114,27 @@ export const TopMenu = () => {
                   alt="logo of SSC"
                 />
               </Grid>
-              <Grid item sx={{ display: { xs: 'none', sm: 'flex'}}} sm={10}>
+              <Grid item sx={{ display: 'flex'}} sm={10}>
                 <Typography variant="h6">
                   {t('title')}
                 </Typography>
               </Grid>
               <Grid item xs={8} sm={1} justifyContent='right'>
-                <Link href="#" onClick={() => {changeLanguage(t("langlink.shorthand")); setTranslationCookie();}} color="inherit">{t("langlink")}</Link>
+                <Link href="#" onClick={() => {changeLanguage(t("langlink.shorthand")); setTranslationCookie();}} color="inherit" sx={{ display: { xs: 'none', sm: 'block' } }}>{t("langlink")}</Link>
               </Grid>
+              <Grid item xs={2} sm={1} justifyContent='right'>  
+                <Box sx={{ position: 'fixed', top: {xs:12,sm:29}, right: {xs:12,sm:'14%'}}}>  
+                  <IconButton edge="start" color="inherit" onClick={toggleDrawer(true)}>  
+                    <MenuIcon />  
+                  </IconButton>  
+                </Box>
+              </Grid>  
             </Grid>
           </Toolbar>
-        </Container>
       </AppBar>
+      <Drawer anchor="right" open={open} onClose={toggleDrawer(false)}>  
+        {list()}  
+      </Drawer>  
     </>
   );
 };

@@ -54,6 +54,7 @@ export const App = () => {
   };
 
   const makeApiRequest = async (question: string) => {
+    // console.log("Making API request");
     // set is loading so we disable some interactive functionality while we load the response
     setIsLoading(true);
 
@@ -100,6 +101,7 @@ export const App = () => {
           },
         }
         saveChatHistory(updatedCompletions); // Save chat history to cookie
+        // console.log(updatedCompletions);
         return updatedCompletions;
       })
 
@@ -160,19 +162,31 @@ export const App = () => {
 
   const saveChatHistory = (chatHistory: Completion[]) => {  
     Cookies.set('chatHistory', JSON.stringify(chatHistory), { expires: 7 });  
+    console.log("Here is the history")
+    console.log(Cookies.get('chatHistory'))
+    
+
   };  
   
   const handleClearChat = () => {  
     setCompletions([welcomeMessage]); // This will reset the chat to the initial state.  
     Cookies.remove('chatHistory'); // This will clear the chat history cookie.  
   }; 
+
+  const handleCopy = () => {
+    const text = completions[completions.length-1].message.content;
+    if (text) {
+      navigator.clipboard.writeText(text);
+    }
+  };
+
   
 
   return (
     <>
       <ThemeProvider theme={mainTheme}>
         <CssBaseline />
-        <TopMenu />
+        <TopMenu onClearChat={handleClearChat} onCopy={handleCopy} />
         <Box sx={{ display: 'flex', flexFlow: 'column', minHeight: '100vh', margin: 'auto'}} maxWidth="lg">
           <Box sx={{flexGrow: 1}}></Box>
           <Box sx={{ overflowY: 'hidden', padding: '2rem', alignItems: 'flex-end'}}>
@@ -227,7 +241,7 @@ export const App = () => {
             {errorMessage}
           </Alert>
         </Snackbar>
-        <Dial onClearChat={handleClearChat} />
+        <Dial onClearChat={handleClearChat} onCopy={handleCopy}/>
         <Disclaimer />
       </ThemeProvider>
     </>

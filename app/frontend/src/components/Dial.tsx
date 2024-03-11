@@ -1,16 +1,17 @@
 import React from 'react';  
-import { SpeedDial, SpeedDialAction, SpeedDialIcon, useMediaQuery, useTheme } from '@mui/material';  
+import { useTranslation } from 'react-i18next';
+import { SpeedDial, SpeedDialAction, SpeedDialIcon, Box } from '@mui/material';  
 import DeleteIcon from '@mui/icons-material/Delete';  
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
   
 interface DialProps {  
   onClearChat: () => void;
+  onCopy: () => void;
 }  
   
-export const Dial = ({ onClearChat}: DialProps) => {  
+export const Dial = ({ onClearChat, onCopy }: DialProps) => {  
   const [open, setOpen] = React.useState(false);  
-  const theme = useTheme();
-  const matches = useMediaQuery(theme.breakpoints.up('sm')); // check if screen is small
-  
+  const { t } = useTranslation();
   const handleClose = () => {  
     setOpen(false);  
   };  
@@ -20,29 +21,29 @@ export const Dial = ({ onClearChat}: DialProps) => {
   };  
   
   const actions = [  
-    { icon: <DeleteIcon />, name: 'Clear Chat', handler: onClearChat },  
+    { icon: <DeleteIcon />, name: t('clearchat'), handler: onClearChat },  
+    { icon: <ContentCopyIcon />, name: t('copytext'), handler: onCopy },  
   ];  
   
-  return (    
-    <div style={{ position: 'fixed', bottom: matches ? '16px' : 'unset', top: matches ? 'unset' : '14px', right: '14px', zIndex: 2000 }}>    
-      <SpeedDial    
-        ariaLabel="SpeedDial"    
-        sx={{ position: 'absolute', bottom: matches ? 2 : 'unset', top: matches ? 'unset' : 2, right: 2 }}    
-        icon={<SpeedDialIcon />}    
-        onClose={handleClose}    
-        onOpen={handleOpen}    
-        open={open}    
-        direction={matches ? 'up' : 'down'}
-      >    
-        {actions.map((action) => (    
-          <SpeedDialAction    
-            key={action.name}    
-            icon={action.icon}    
-            tooltipTitle={action.name}    
-            onClick={action.handler}    
-          />    
-        ))}    
-      </SpeedDial>    
-    </div>    
-  );  
+  return (  
+    <Box style={{ position: 'fixed', bottom: '16px', right: '16px', zIndex: 2000 }} sx={{ display: { xs: 'none', sm: 'block' } }}>  
+      <SpeedDial  
+        ariaLabel="SpeedDial"  
+        sx={{ position: 'absolute', bottom: 2, right: 2 }}  
+        icon={<SpeedDialIcon />}  
+        onClose={handleClose}  
+        onOpen={handleOpen}  
+        open={open}  
+      >  
+        {actions.map((action) => (  
+          <SpeedDialAction  
+            key={action.name}  
+            icon={action.icon}  
+            tooltipTitle={action.name}  
+            onClick={action.handler}  
+          />  
+        ))}  
+      </SpeedDial>  
+    </Box>
+  );
 };  
