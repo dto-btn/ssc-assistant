@@ -1,10 +1,14 @@
-import { Box, Paper, Container, Divider, Chip, Stack, Typography } from '@mui/material';
+import { Box, Paper, Container, Divider, Chip, Stack, Typography, Toolbar } from '@mui/material';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
 import { useEffect, useState, Fragment } from 'react';
 import './AssistantBubble.css';
+import { CopyToClipboard } from 'react-copy-to-clipboard';  
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import Tooltip from '@mui/material/Tooltip';
+import CheckIcon from '@mui/icons-material/Check';
 
 interface AssistantBubbleProps {
     text: string;
@@ -16,6 +20,8 @@ interface AssistantBubbleProps {
 export const AssistantBubble = ({ text, isLoading, context, scrollRef }: AssistantBubbleProps) => {
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);  
+  const [isCopied, setIsCopied] = useState(false);  
 
   function processText(text: string, citations: Citation[]) {
     // Regular expression to find all citation references like [doc1], [doc3], etc.
@@ -52,8 +58,21 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef }: Assista
 
   useEffect(() => processingComplete ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" }) : undefined, [processingComplete, scrollRef]);
 
+  useEffect(() => {  
+    if (isCopied) {  
+        const timer = setTimeout(() => {  
+            setIsCopied(false);  
+        }, 3000);  
+        return () => clearTimeout(timer);  
+    }  
+}, [isCopied]);  
+
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'flex-start', my: '2rem' }}>
+    <Box 
+      sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}
+      onMouseEnter={() => setIsHovering(true)}  
+      onMouseLeave={() => setIsHovering(false)} 
+    >
       <Paper
         sx={{
           bgcolor: 'white',
@@ -99,6 +118,15 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef }: Assista
             </Box>
           </>
         )}
+      </Paper>
+      <Paper sx={{backgroundColor: 'transparent', boxShadow: 'none', mt: 0.5, ml:2}}>
+        <CopyToClipboard text={text} onCopy={() => setIsCopied(true)}>
+          <Tooltip title={isCopied ? "Copied!" : "Copy"} arrow>
+            <button style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none' }}>
+              {isCopied ? <CheckIcon style={{ fontSize: 20 }}/> : <ContentCopyIcon className="copy-icon" style={{ fontSize: 20, color: isHovering ? 'grey' : 'transparent' }}/>}
+            </button>
+          </Tooltip>
+        </CopyToClipboard>
       </Paper>
     </Box>
   );
