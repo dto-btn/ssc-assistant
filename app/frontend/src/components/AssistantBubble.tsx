@@ -1,10 +1,11 @@
-import { Box, Paper, Container, Divider, Chip, Stack, Typography } from '@mui/material';
+import { Box, Paper, Container, Divider, Chip, Stack, Typography, Link } from '@mui/material';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
-import { useEffect, useState, Fragment } from 'react';
+import { useEffect, useState, Fragment, ReactNode } from 'react';
 import './AssistantBubble.css';
+// import { Link as MuiLink } from '@mui/material'; 
 
 interface AssistantBubbleProps {
     text: string;
@@ -16,6 +17,9 @@ interface AssistantBubbleProps {
 export const AssistantBubble = ({ text, isLoading, context, scrollRef }: AssistantBubbleProps) => {
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
+  const components = {  
+    a: ({node, ...props}: {node: ReactNode}) => <Link target="_blank" rel="noopener noreferrer" {...props} />,  
+  };
 
   function processText(text: string, citations: Citation[]) {
     // Regular expression to find all citation references like [doc1], [doc3], etc.
@@ -65,11 +69,12 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef }: Assista
       >
         <Container>
           <Markdown
+            components={components}
             rehypePlugins={[rehypeHighlight]}
             remarkPlugins={[remarkGfm]}>
             {isLoading
               ? `${text.replace(/\[doc(\d+)\]/g, '')}_`
-              : (processedContent.processedText !== "" ? processedContent.processedText : text)}
+              : processedContent.processedText !== "" ? processedContent.processedText : text}
           </Markdown>
         </Container>
         {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
