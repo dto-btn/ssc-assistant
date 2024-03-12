@@ -6,7 +6,7 @@ import Link from '@mui/material/Link';
 import Cookies from "js-cookie";
 import { useTranslation } from 'react-i18next';
 import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
-import { Grid } from '@mui/material';
+import { Grid, Stack } from '@mui/material';
 import { useIsAuthenticated } from "@azure/msal-react";
 import { useMsal } from "@azure/msal-react";
 import { loginRequest } from "../authConfig";
@@ -45,29 +45,20 @@ export const TopMenu = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      console.log("LOGGED IN OR NO?", accounts);
       // If the user is authenticated, you might want to acquire a token silently
       // or handle the logged-in user's information here.
       instance.acquireTokenSilent({
         ...loginRequest,
         account: accounts[0],
       }).then((response) => {
-        console.log("RESPONSE TOKEN", response);
         setAccessToken(response.accessToken);
         callMsGraph(response.accessToken).then((response) => setGraphData(response));
-        console.log("the the graph data iss htis one ", graphData);
       }).catch(error => {
         // Handle error, for example, by acquiring token interactively
-        console.log("unable to get user graph information ...")
+        console.log("unable to get user graph information ...", error);
       });
     }
   }, [isAuthenticated, instance, accounts]);
-
-  useEffect(() => {
-    if (graphData) {
-      console.log("GraphData", graphData);
-    }
-  }, [graphData]);
 
   return (
     <>
@@ -118,8 +109,7 @@ export const TopMenu = () => {
                 </Typography>
               </Grid>
               <Grid container item xs={6} sm={4} justifyContent='flex-end'>
-                {isAuthenticated && accessToken && <UserProfilePicture accessToken={accessToken} />}
-                {graphData && isAuthenticated ? <div>Welcome <b>{graphData['givenName']} {graphData['surname']}</b>!</div> : <Link href="#" onClick={() => {handleLogin()}} color="inherit">Login</Link>}
+                {isAuthenticated && graphData && accessToken ? <Stack  direction="row" spacing={2}><UserProfilePicture accessToken={accessToken} username={graphData['givenName'] + " " + graphData['surname']} /><b>{graphData['givenName']} {graphData['surname']}</b></Stack> : <Link href="#" onClick={() => {handleLogin()}} color="inherit">{t("login")}</Link>}
               </Grid>
               <Grid item xs={2} sm={1} justifyContent='right'>
                 <Link href="#" onClick={() => {changeLanguage(t("langlink.shorthand")); setTranslationCookie();}} color="inherit">{t("langlink")}</Link>
