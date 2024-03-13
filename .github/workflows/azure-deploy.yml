@@ -135,7 +135,9 @@ jobs:
         package: 'release.zip'
 
   cleanup_artifacts:
-    needs: frontend-build
+    needs: 
+      - frontend-build 
+      - frontend-deploy
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
