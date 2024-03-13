@@ -1,4 +1,3 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { SpeedDial, SpeedDialAction, SpeedDialIcon, Box } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';

@@ -2,6 +2,7 @@ import LanguageIcon from "@mui/icons-material/Language";
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
   Box,
+  Divider,
   Drawer,
   List,
   ListItem,
@@ -25,25 +26,26 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
     <Box role="presentation" onClick={() => toggleDrawer(false)} sx={{ width: 250 }}>
       <List>
         <ListItem key="language" disablePadding>
-          <ListItemButton>
+          <ListItemButton onClick={() => {
+              changeLanguage(t("langlink.shorthand"));
+              setLangCookie();
+            }}>
             <ListItemIcon>
               <LanguageIcon />
             </ListItemIcon>
-            <ListItemText primary={t("langlink")} onClick={() => {
-              changeLanguage(t("langlink.shorthand"));
-              setLangCookie();
-            }} />
+            <ListItemText primary={t("langlink")} />
           </ListItemButton>
         </ListItem>
         <ListItem key="clearchat" disablePadding>
-          <ListItemButton>
+          <ListItemButton onClick={onClearChat}>
             <ListItemIcon>
               <DeleteIcon />
             </ListItemIcon>
-            <ListItemText primary={t("clearchat")}  onClick={onClearChat} />
+            <ListItemText primary={t("clearchat")} />
           </ListItemButton>
         </ListItem>
       </List>
+      <Divider />
     </Box>
   );
 

@@ -67,28 +67,15 @@ export const TopMenu = ({ toggleDrawer, setLangCookie } : TopMenuProps) => {
                 ml: { xs: "-24px", sm: "-18px" },
                 pr: "18px",
               }}
-              xs={4}
+              xs={3}
               sm={1}
             >
               <img src={logo} style={logoStyle} alt="logo of SSC" />
             </Grid>
-            <Grid item sx={{ display: "flex" }} sm={10}>
+            <Grid item sx={{ display: "flex" }} xs={6} sm={9}>
               <Typography variant="h6">{t("title")}</Typography>
             </Grid>
-            <Grid item xs={8} sm={1} justifyContent="right">
-              <Link
-                href="#"
-                onClick={() => {
-                  changeLanguage(t("langlink.shorthand"));
-                  setLangCookie();
-                }}
-                color="inherit"
-                sx={{ display: { xs: "none", sm: "block" } }}
-              >
-                {t("langlink")}
-              </Link>
-            </Grid>
-            <Grid item xs={2} sm={1} justifyContent="right">
+            <Grid item xs={3} sm={2} justifyContent="right">
               <Box
                 sx={{
                   position: "fixed",
