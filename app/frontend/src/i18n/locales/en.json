@@ -71,5 +71,7 @@
     "default.welcome.msg": "Hello! I am your SSC Assistant how may I help you today?",
     "chat.with.gpt": "Chat with GPT and:",
     "chat.with.gpt.tools": "Tools (GEDS, etc.)",
-    "chat.with.gpt.data": "Data (MySSC+)"
+    "chat.with.gpt.data": "Data (MySSC+)",
+    "clearchat": "Clear Chat",
+    "copytext": "Copy"
 }
