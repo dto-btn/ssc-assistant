@@ -204,8 +204,6 @@ export const App = () => {
 
   const saveChatHistory = (chatHistory: Completion[]) => {
     localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
-    console.log("Here is the history");
-    console.log(localStorage.getItem("chatHistory"));
   };
 
   // This function will be used to load the chat history from localStorage
