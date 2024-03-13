@@ -11,8 +11,6 @@ export async function completionMySSC({ request, updateLastMessage, chatWith }: 
   let streamingContent = '';
 
   let url = "/api/1.0/completion/" + (chatWith == ChatWith.Data ? "myssc" : "chat") + "/stream";
-  console.log(chatWith);
-
   const response = await fetch(url, {
     method: "POST",
     headers: {

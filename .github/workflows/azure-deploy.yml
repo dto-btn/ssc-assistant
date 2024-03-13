@@ -19,7 +19,7 @@ jobs:
       with:
         sparse-checkout: 'app/api'
         sparse-checkout-cone-mode: false
-    
+
     - name: Move api files to pwd
       run: |
         ls -la
@@ -67,7 +67,7 @@ jobs:
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         package: '.'
         startup-command: ''
-  
+
   frontend-build:
     runs-on: ubuntu-latest
     steps:
@@ -75,7 +75,7 @@ jobs:
       with:
         sparse-checkout: 'app/frontend'
         sparse-checkout-cone-mode: false
-    
+
     - name: Move api files to pwd
       run: |
         ls -la
@@ -93,10 +93,14 @@ jobs:
         npm run test --if-present
       working-directory: '.'
 
+    # This step will only run when the event is a push to the main branch
     - name: Zip artifact for deployment
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: zip release.zip ./* -r
 
+    # This step will only run when the event is a push to the main branch
     - name: Upload artifact for deployment job
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       uses: actions/upload-artifact@v3
       with:
         name: node-app
@@ -129,3 +133,16 @@ jobs:
         publish-profile: ${{ secrets.AZURE_FRONTEND_PUBLISH_PROFILE }}
         # very important: https://learn.microsoft.com/en-us/azure/app-service/deploy-run-package#enable-running-from-package
         package: 'release.zip'
+
+  cleanup_artifacts:
+    needs: 
+      - frontend-build 
+      - frontend-deploy
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete artifacts
+        run: |
+          # Use GitHub's REST API to delete the artifacts
+          curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ github.run_id }}"

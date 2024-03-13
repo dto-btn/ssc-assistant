@@ -3,7 +3,7 @@
     "langlink.shorthand": "fr",
     "feedback": "Feedback",
     "disclaimer": "DISCLAIMER",
-    "disclaimer.desc": "This chatbot uses Azure OpenAI services. Answers may be incorrect even when they look credible. AI can make mistakes just like humans do.",
+    "disclaimer.desc": "This SSC Assistant uses Azure OpenAI services. Answers may be incorrect even when they look credible. AI can make mistakes just like humans do.",
     "disclaimer.desc2": "DO NOT SEND ANY PROTECTED INFORMATION IN THE CHATBOT.",
     "feedback.long": "Click here to let us know your thoughts. Thank you for your feedback!",
     "githublnk": "Github repository link",
@@ -72,5 +72,7 @@
     "chat.with.gpt": "Chat with GPT and:",
     "chat.with.gpt.tools": "Tools (GEDS, etc.)",
     "chat.with.gpt.data": "Data (MySSC+)",
-    "login": "Login"
+    "login": "Login",
+    "clearchat": "Clear Chat",
+    "copytext": "Copy"
 }
