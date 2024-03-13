@@ -1,7 +1,6 @@
 import MenuIcon from "@mui/icons-material/Menu";
 import { Box, Grid, IconButton } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
-import Link from "@mui/material/Link";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
@@ -15,15 +14,10 @@ const logoStyle = {
 
 interface TopMenuProps {
   toggleDrawer: (arg: boolean) => void;
-  setLangCookie: () => void;
 }
 
-export const TopMenu = ({ toggleDrawer, setLangCookie } : TopMenuProps) => {
-  const { t, i18n } = useTranslation();
-
-  const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
-  };
+export const TopMenu = ({ toggleDrawer } : TopMenuProps) => {
+  const { t } = useTranslation();
 
   return (
     <>

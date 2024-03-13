@@ -233,7 +233,7 @@ export const App = () => {
     <>
       <ThemeProvider theme={mainTheme}>
         <CssBaseline />
-        <TopMenu toggleDrawer={setOpenDrawer} setLangCookie={setLangCookie} />
+        <TopMenu toggleDrawer={setOpenDrawer} />
         <Box
           sx={{
             display: "flex",
