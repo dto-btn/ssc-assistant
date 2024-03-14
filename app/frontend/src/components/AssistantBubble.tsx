@@ -17,9 +17,10 @@ interface AssistantBubbleProps {
 export const AssistantBubble = ({ text, isLoading, context, scrollRef }: AssistantBubbleProps) => {
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
-  const components = {  
-    a: ({node, ...props}: {node: ReactNode}) => <Link target="_blank" rel="noopener noreferrer" {...props} />,  
+  const components = {    
+    a: ({node, href, title, ...props}: {node?: ReactNode, href: string, title?: string}) => <Link href={href} title={title} target="_blank" rel="noopener noreferrer" {...props} />,    
   };
+  
 
   function processText(text: string, citations: Citation[]) {
     // Regular expression to find all citation references like [doc1], [doc3], etc.
