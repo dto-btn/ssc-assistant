@@ -22,6 +22,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef }: Assista
   const [processingComplete, setProcessingComplete] = useState(false);
   const [isHovering, setIsHovering] = useState(false);  
   const [isCopied, setIsCopied] = useState(false);  
+  const [isFocused, setIsFocused] = useState(false);
 
   function processText(text: string, citations: Citation[]) {
     // Regular expression to find all citation references like [doc1], [doc3], etc.
@@ -69,65 +70,75 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef }: Assista
 
   return (
     <Box 
-      sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}
+      sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start'}}
       onMouseEnter={() => setIsHovering(true)}  
       onMouseLeave={() => setIsHovering(false)} 
     >
-      <Paper
-        sx={{
-          bgcolor: 'white',
-          color: 'white.contrastText',
-          borderRadius: '20px',
-          borderTopLeftRadius: 0,
-          maxWidth: '80%',
-        }}
-      >
-        <Container>
-          <Markdown
-            rehypePlugins={[rehypeHighlight]}
-            remarkPlugins={[remarkGfm]}>
-            {isLoading
-              ? `${text.replace(/\[doc(\d+)\]/g, '')}_`
-              : (processedContent.processedText !== "" ? processedContent.processedText : text)}
-          </Markdown>
-        </Container>
-        {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
-          <>
-            <Divider />
-            <Box sx={{ m: 2, maxWidth: '100%' }}>
-              <Typography gutterBottom variant="subtitle2">
-                Citation(s):
-              </Typography>
-              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                {context?.citations.map( (citation, index) => (
-                  processedContent.citedCitations.includes(citation) && (
-                    <Fragment key={index}>
-                      <Chip
-                        label={index+1 + " - " + citation.title}
-                        component="a"
-                        href={citation.url}
-                        target='_blank'
-                        variant="filled"
-                        clickable
-                        color="primary"
-                      />
-                    </Fragment>
-                  )
-                ))}
-              </Stack>
-            </Box>
-          </>
-        )}
-      </Paper>
-      <Paper sx={{backgroundColor: 'transparent', boxShadow: 'none', mt: 0.5, ml:2}}>
-        <CopyToClipboard text={text} onCopy={() => setIsCopied(true)}>
-          <Tooltip title={isCopied ? "Copied!" : "Copy"} arrow>
-            <button style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none' }}>
-              {isCopied ? <CheckIcon style={{ fontSize: 20 }}/> : <ContentCopyIcon className="copy-icon" style={{ fontSize: 20, color: isHovering ? 'grey' : 'transparent' }}/>}
-            </button>
-          </Tooltip>
-        </CopyToClipboard>
-      </Paper>
+      <Box>
+        <Paper
+          sx={{
+            bgcolor: 'white',
+            color: 'white.contrastText',
+            borderRadius: '20px',
+            borderTopLeftRadius: 0,
+            display: 'inline-block',
+            maxWidth: '80%',
+            flexDirection: 'row'
+          }}
+        >
+          <Container>
+            <Markdown
+              rehypePlugins={[rehypeHighlight]}
+              remarkPlugins={[remarkGfm]}>
+              {isLoading
+                ? `${text.replace(/\[doc(\d+)\]/g, '')}_`
+                : (processedContent.processedText !== "" ? processedContent.processedText : text)}
+            </Markdown>
+          </Container>
+          {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
+            <>
+              <Divider />
+              <Box sx={{ m: 2, maxWidth: '100%' }}>
+                <Typography gutterBottom variant="subtitle2">
+                  Citation(s):
+                </Typography>
+                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                  {context?.citations.map( (citation, index) => (
+                    processedContent.citedCitations.includes(citation) && (
+                      <Fragment key={index}>
+                        <Chip
+                          label={index+1 + " - " + citation.title}
+                          component="a"
+                          href={citation.url}
+                          target='_blank'
+                          variant="filled"
+                          clickable
+                          color="primary"
+                        />
+                      </Fragment>
+                    )
+                  ))}
+                </Stack>
+              </Box>
+            </>
+          )}
+        </Paper>
+      </Box>
+      <Box>
+        <Paper sx={{backgroundColor: 'transparent', boxShadow: 'none', mt: 0.5, ml:2}}>
+          <CopyToClipboard text={text} onCopy={() => setIsCopied(true)}>
+            <Tooltip title={isCopied ? "Copied!" : "Copy"} arrow> 
+              <button 
+                style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none' }}
+                onFocus={() => setIsFocused(true)}  
+                onBlur={() => setIsFocused(false)}   
+                tabIndex={0}>
+                {isCopied ? <CheckIcon style={{ fontSize: 20 }}/> : <ContentCopyIcon className="copy-icon" style={{ fontSize: 20, color: (isHovering || isFocused) ? '#4b3e99' : 'transparent' }}/>}
+              </button>
+            </Tooltip>
+          </CopyToClipboard>
+        </Paper>
+      </Box>
     </Box>
   );
 };
