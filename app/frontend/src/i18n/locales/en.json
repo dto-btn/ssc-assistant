@@ -72,6 +72,7 @@
     "chat.with.gpt": "Chat with GPT and:",
     "chat.with.gpt.tools": "Tools (GEDS, etc.)",
     "chat.with.gpt.data": "Data (MySSC+)",
+    "login": "Login",
     "clearchat": "Clear Chat",
     "copytext": "Copy"
 }

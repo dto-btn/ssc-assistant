@@ -25,6 +25,10 @@ import {
   UserBubble,
 } from "./components";
 import { DrawerMenu } from "./components/DrawerMenu";
+import { useIsAuthenticated, useMsal } from "@azure/msal-react";
+import { loginRequest } from "./authConfig";
+import { callMsGraph } from './graph';
+import { UserContext } from './context/UserContext'
 
 const mainTheme = createTheme({
   palette: {
@@ -54,6 +58,12 @@ export const App = () => {
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
   const [chatWith, setChatWith] = useState<ChatWith>(ChatWith.Data);
   const [openDrawer, setOpenDrawer] = useState<boolean>(false);
+  const isAuthenticated = useIsAuthenticated();
+  const {instance, accounts} = useMsal();
+  const [userData, setUserData] = useState({
+    accessToken: '',
+    graphData: null
+  });
 
   const welcomeMessage: Completion = {
     message: {
@@ -197,11 +207,6 @@ export const App = () => {
     [completions[completions.length - 1].message.content]
   );
 
-  // Load chat history from local storage
-  useEffect(() => {
-    loadChatHistory();
-  }, []);
-
   const saveChatHistory = (chatHistory: Completion[]) => {
     localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
   };
@@ -227,8 +232,52 @@ export const App = () => {
     });
   };
 
+  const handleLogin = () => {
+    instance.loginRedirect(loginRequest).catch((e) => {
+      setErrorSnackbar(true);
+      if (e instanceof Error) {
+        setErrorMessage(e.message);
+      } else {
+        setErrorMessage("Unable to login.");
+      }
+    });
+  };
+
+  const handleLogout = () => {
+    setUserData({accessToken: '', graphData: null});
+    instance.logoutRedirect({
+      postLogoutRedirectUri: "/",
+    });
+  };
+
+  // Load chat history if present
+  useEffect(() => {
+    loadChatHistory();
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      // If the user is authenticated, you might want to acquire a token silently
+      // or handle the logged-in user's information here.
+      instance.acquireTokenSilent({
+        ...loginRequest,
+        account: accounts[0],
+      }).then((response) => {
+        const accessToken = response.accessToken;
+        callMsGraph(response.accessToken).then((response) => setUserData({accessToken, graphData: response}));
+      }).catch(error => {
+        setErrorSnackbar(true);
+        if (error instanceof Error) {
+          setErrorMessage(error.message);
+        } else {
+          setErrorMessage("Unable to login.");
+        }
+      });
+    }
+  }, [isAuthenticated]);
+
   return (
-    <>
+    <UserContext.Provider value={userData}>
       <ThemeProvider theme={mainTheme}>
         <CssBaseline />
         <TopMenu toggleDrawer={setOpenDrawer} />
@@ -336,8 +385,8 @@ export const App = () => {
         </Snackbar>
         <Dial drawerVisible={openDrawer} onClearChat={handleClearChat} />
         <Disclaimer />
-        <DrawerMenu openDrawer={openDrawer} toggleDrawer={setOpenDrawer} onClearChat={handleClearChat} setLangCookie={setLangCookie}/>
+        <DrawerMenu openDrawer={openDrawer} toggleDrawer={setOpenDrawer} onClearChat={handleClearChat} setLangCookie={setLangCookie} login={handleLogin} logout={handleLogout}/>
       </ThemeProvider>
-    </>
+    </UserContext.Provider>
   );
 };

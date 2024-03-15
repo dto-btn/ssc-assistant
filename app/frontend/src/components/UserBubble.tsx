@@ -5,8 +5,8 @@ import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
 
 interface UserChatProps {
-    text: string | null | undefined;
-  }
+  text: string | null | undefined;
+}
 
 export const UserBubble = ({ text }: UserChatProps) => {
 
