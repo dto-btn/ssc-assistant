@@ -3,9 +3,8 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
-import { useEffect, useState, Fragment, ReactNode } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import './AssistantBubble.css';
-// import { Link as MuiLink } from '@mui/material'; 
 
 interface AssistantBubbleProps {
     text: string;
