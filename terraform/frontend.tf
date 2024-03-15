@@ -43,6 +43,9 @@ resource "azurerm_linux_web_app" "frontend" {
     WEBSITE_RUN_FROM_PACKAGE = "1"
     MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
     PORT = 8080
+    VITE_AZURE_AD_CLIENT_ID=var.aad_client_id
+    VITE_AZURE_AD_TENANT_ID=data.azurerm_client_config.current.tenant_id
+    VITE_REDIRECT_URI="https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net/"
   }
 
   sticky_settings {

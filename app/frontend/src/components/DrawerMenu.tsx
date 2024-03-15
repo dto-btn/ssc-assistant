@@ -11,17 +11,22 @@ import {
   ListItemText
 } from "@mui/material";
 import { changeLanguage, t } from "i18next";
+import LoginIcon from '@mui/icons-material/Login';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useIsAuthenticated } from "@azure/msal-react";
 
 interface DrawerMenuProps {
   openDrawer: boolean;
   toggleDrawer: (arg: boolean) => void;
   onClearChat: () => void;
   setLangCookie: () => void;
+  login: () => void;
+  logout: () => void;
 }
 
-export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie} : DrawerMenuProps) => {
+export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie, login, logout} : DrawerMenuProps) => {
+  const isAuthenticated = useIsAuthenticated();
 
-  // Menu for mobile screens
   const list = () => (
     <Box role="presentation" onClick={() => toggleDrawer(false)} sx={{ width: 250 }}>
       <List>
@@ -46,6 +51,25 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
         </ListItem>
       </List>
       <Divider />
+      <List>
+        {!isAuthenticated ? 
+        (<ListItem key="login" disablePadding>
+          <ListItemButton onClick={login}>
+            <ListItemIcon>
+              <LoginIcon />
+            </ListItemIcon>
+            <ListItemText primary={t("login")} />
+          </ListItemButton>
+        </ListItem>) :
+        (<ListItem key="logout" disablePadding>
+          <ListItemButton onClick={logout}>
+            <ListItemIcon>
+              <LogoutIcon />
+            </ListItemIcon>
+            <ListItemText primary={t("logout")} />
+          </ListItemButton>
+        </ListItem>)}
+      </List>
     </Box>
   );
 

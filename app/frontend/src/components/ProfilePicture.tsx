@@ -3,7 +3,14 @@ import Avatar from '@mui/material/Avatar';
 
 interface UserProfileProps {
   accessToken: string | null | undefined;
-  username: string;
+  fullName: string;
+}
+
+interface AvatarData {
+  sx: {
+    bgcolor: string;
+  };
+  children: string;
 }
 
 function stringToColor(string: string) {
@@ -26,7 +33,7 @@ function stringToColor(string: string) {
   return color;
 }
 
-function stringAvatar(name: string) {
+function getLetterAvatar(name: string): AvatarData {
   return {
     sx: {
       bgcolor: stringToColor(name),
@@ -35,12 +42,12 @@ function stringAvatar(name: string) {
   };
 }
 
-export const UserProfilePicture = ({ accessToken, username } : UserProfileProps) => {
+export const UserProfilePicture = ({ accessToken, fullName } : UserProfileProps) => {
   const [profilePic, setProfilePic] = useState<string>("");
+  const [letterAvatar, setLetterAvatar] = useState<AvatarData>();
 
   useEffect(() => {
     const fetchProfilePic = async () => {
-      console.log("access token is invoked " + accessToken);
       try {
         const response = await fetch(`https://graph.microsoft.com/v1.0/me/photos/48x48/$value`, {
           method: 'GET',
@@ -57,6 +64,7 @@ export const UserProfilePicture = ({ accessToken, username } : UserProfileProps)
         } else {
           // Handle errors or the case where there is no profile photo
           console.error('Could not fetch profile picture');
+          setLetterAvatar(getLetterAvatar(fullName));
         }
       } catch (error) {
         console.error('Error fetching profile picture:', error);
@@ -69,5 +77,9 @@ export const UserProfilePicture = ({ accessToken, username } : UserProfileProps)
   }, [accessToken]);
 
   if(profilePic)
-    return <Avatar alt="Profile Picture" src={profilePic} />;
+    return <Avatar alt={fullName} src={profilePic} />;
+  else if (letterAvatar)
+    return <Avatar alt={fullName} sx={letterAvatar.sx} children={letterAvatar.children} />;
+  else
+    return null;
 };

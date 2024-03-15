@@ -5,13 +5,10 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
-import { Grid, Stack } from '@mui/material';
-import { useIsAuthenticated } from "@azure/msal-react";
-import { useMsal } from "@azure/msal-react";
-import { loginRequest } from "../authConfig";
-import { useEffect, useState } from 'react';
-import { callMsGraph } from '../graph';
 import { UserProfilePicture } from './ProfilePicture';
+import { useIsAuthenticated } from "@azure/msal-react";
+import { useContext } from "react";
+import { UserContext } from '../context/UserContext'; 
 
 const logoStyle = {
   width: "50px",
@@ -24,44 +21,13 @@ interface TopMenuProps {
 }
 
 export const TopMenu = ({ toggleDrawer } : TopMenuProps) => {
+  const { t } = useTranslation();
   const isAuthenticated = useIsAuthenticated();
-  const { instance, accounts } = useMsal();
-  const [graphData, setGraphData] = useState(null);
-  const { t, i18n } = useTranslation();
-  const [ accessToken, setAccessToken ] = useState<string>("");
+  const { accessToken, graphData } = useContext(UserContext);  
 
-  const setTranslationCookie = () => {
-      Cookies.set("lang_setting", i18n.language, {
-          expires: 30,
-      });
-  };
-
-  const changeLanguage = (lng: string) => {
-      i18n.changeLanguage(lng);
-  };
-
-  const handleLogin = () => {
-    instance.loginRedirect(loginRequest).catch((e) => {
-      console.log(e);
-    });
-  };
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      // If the user is authenticated, you might want to acquire a token silently
-      // or handle the logged-in user's information here.
-      instance.acquireTokenSilent({
-        ...loginRequest,
-        account: accounts[0],
-      }).then((response) => {
-        setAccessToken(response.accessToken);
-        callMsGraph(response.accessToken).then((response) => setGraphData(response));
-      }).catch(error => {
-        // Handle error, for example, by acquiring token interactively
-        console.log("unable to get user graph information ...", error);
-      });
-    }
-  }, [isAuthenticated, instance, accounts]);
+  console.log('isAuthenticated:', isAuthenticated);  
+  console.log('graphData:', graphData);  
+  console.log('accessToken:', accessToken);  
 
   return (
     <>
@@ -102,28 +68,26 @@ export const TopMenu = ({ toggleDrawer } : TopMenuProps) => {
                 flexGrow: 1,
                 display: "flex",
                 alignItems: "center",
-                ml: { xs: "-24px", sm: "-18px" },
-                pr: "18px",
+                ml: { xs: "-18px" },
               }}
-              xs={3}
+              xs={2}
               sm={1}
             >
               <img src={logo} style={logoStyle} alt="logo of SSC" />
             </Grid>
-            <Grid item sx={{ display: "flex" }} xs={6} sm={9}>
+            <Grid item sx={{ display: "flex", flexGrow: 1 }} xs={6} sm={6.5}>
               <Typography variant="h6">{t("title")}</Typography>
             </Grid>
-            <Grid container item xs={6} sm={4} justifyContent='flex-end'>
-              {isAuthenticated && graphData && accessToken ? <Stack  direction="row" spacing={2}><UserProfilePicture accessToken={accessToken} username={graphData['givenName'] + " " + graphData['surname']} /><b>{graphData['givenName']} {graphData['surname']}</b></Stack> : <Link href="#" onClick={() => {handleLogin()}} color="inherit">{t("login")}</Link>}
+            <Grid container item xs={3} sm={4} sx={{ display: "flex" }} justifyContent='flex-end' alignItems="center">
+              {isAuthenticated && graphData && accessToken && 
+              <>
+                <Typography variant="body1" mr={2} sx={{ display: { xs: 'none', sm: 'block' } }}>{graphData['givenName']} {graphData['surname']}</Typography>
+                <UserProfilePicture accessToken={accessToken} fullName={graphData['givenName'] + " " + graphData['surname']} />
+              </>
+             }
             </Grid>
-            <Grid item xs={3} sm={2} justifyContent="right">
-              <Box
-                sx={{
-                  position: "fixed",
-                  top: { xs: 12, sm: 29 },
-                  right: { xs: 12, sm: "14%" },
-                }}
-              >
+            <Grid container item xs={1} sm={0.5} justifyContent='flex-end' sx={{ml: { xs: "18px" }}}>
+              <Box>
                 <IconButton
                   edge="start"
                   color="inherit"
