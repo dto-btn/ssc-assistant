@@ -8,7 +8,7 @@ import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { UserProfilePicture } from './ProfilePicture';
 import { useIsAuthenticated } from "@azure/msal-react";
 import { useContext } from "react";
-import { UserContext } from '../context/UserContext'; 
+import { UserContext } from '../context/UserContext';
 
 const logoStyle = {
   width: "50px",
@@ -23,11 +23,7 @@ interface TopMenuProps {
 export const TopMenu = ({ toggleDrawer } : TopMenuProps) => {
   const { t } = useTranslation();
   const isAuthenticated = useIsAuthenticated();
-  const { accessToken, graphData } = useContext(UserContext);  
-
-  console.log('isAuthenticated:', isAuthenticated);  
-  console.log('graphData:', graphData);  
-  console.log('accessToken:', accessToken);  
+  const { accessToken, graphData } = useContext(UserContext);
 
   return (
     <>

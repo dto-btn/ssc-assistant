@@ -58,7 +58,6 @@ export const UserProfilePicture = ({ accessToken, fullName } : UserProfileProps)
 
         if (response.ok) {
           const imageBlob = await response.blob();
-          console.log("blob" + imageBlob);
           const imageUrl = URL.createObjectURL(imageBlob);
           setProfilePic(imageUrl);
         } else {
