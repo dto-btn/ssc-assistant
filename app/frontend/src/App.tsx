@@ -33,6 +33,7 @@ export const App = () => {
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
   const [chatWith, setChatWith] = useState<ChatWith>(ChatWith.Data);
+  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null); 
 
   const welcomeMessage: Completion = {
     message: {
@@ -55,6 +56,7 @@ export const App = () => {
   const makeApiRequest = async (question: string) => {
     // set is loading so we disable some interactive functionality while we load the response
     setIsLoading(true);
+    setLastUserMessage(question);
 
     const userCompletion: Completion = {
       message: {
@@ -135,6 +137,17 @@ export const App = () => {
     setChatWith(value as ChatWith);
   };
 
+  // const handleSend = (question: string) => {  
+  //   setLastUserMessage(question);  
+  //   makeApiRequest(question);  
+  // }; 
+
+  const replayChat = () => {  
+    if (lastUserMessage) {  
+        makeApiRequest(lastUserMessage);  
+    }  
+  }; 
+
   useEffect(() => {
       // Set the `lang` attribute whenever the language changes
       document.documentElement.lang = i18n.language;
@@ -156,7 +169,9 @@ export const App = () => {
                     text={completion.message.content} 
                     isLoading={index == completions.length-1 && isLoading} 
                     context={completion.message?.context}
-                    scrollRef={chatMessageStreamEnd} />
+                    scrollRef={chatMessageStreamEnd} 
+                    replayChat={replayChat}
+                    />
                 )}
                 {completion.message?.role === "user" && (
                   <UserBubble text={completion.message?.content} />

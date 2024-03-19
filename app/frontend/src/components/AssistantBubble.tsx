@@ -1,4 +1,4 @@
-import { Box, Paper, Container, Divider, Chip, Stack, Typography, Toolbar } from '@mui/material';
+import { Box, Paper, Container, Divider, Chip, Stack, Typography } from '@mui/material';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -9,20 +9,22 @@ import { CopyToClipboard } from 'react-copy-to-clipboard';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import Tooltip from '@mui/material/Tooltip';
 import CheckIcon from '@mui/icons-material/Check';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 interface AssistantBubbleProps {
     text: string;
     isLoading: boolean;
     context?: Context | null;
     scrollRef?:  React.RefObject<HTMLDivElement>;
+    replayChat: () => void;
   }
 
-export const AssistantBubble = ({ text, isLoading, context, scrollRef }: AssistantBubbleProps) => {
+export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayChat }: AssistantBubbleProps) => {
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
   const [isHovering, setIsHovering] = useState(false);  
   const [isCopied, setIsCopied] = useState(false);  
-  const [isFocused, setIsFocused] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);  
 
   function processText(text: string, citations: Citation[]) {
     // Regular expression to find all citation references like [doc1], [doc3], etc.
@@ -137,8 +139,19 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef }: Assista
               </button>
             </Tooltip>
           </CopyToClipboard>
+          <Tooltip title="Refresh" arrow>  
+            <button   
+                onClick={replayChat}
+                style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none' }}  
+                onFocus={() => setIsFocused(true)}  
+                onBlur={() => setIsFocused(false)} 
+                tabIndex={0}
+            >  
+                <RefreshIcon style={{ fontSize: 20, color: (isHovering || isFocused) ? '#4b3e99' : 'transparent' }}/>  
+            </button>
+          </Tooltip> 
         </Paper>
-      </Box>
+      </Box>  
     </Box>
   );
 };
