@@ -92,6 +92,10 @@ jobs:
         npm run build --if-present
         npm run test --if-present
       working-directory: '.'
+      env:
+        VITE_REDIRECT_URI: ${{ secrets.VITE_REDIRECT_URI }}
+        VITE_AZURE_AD_CLIENT_ID: ${{ secrets.VITE_AZURE_AD_CLIENT_ID }}
+        VITE_AZURE_AD_TENANT_ID: ${{ secrets.VITE_AZURE_AD_TENANT_ID }}
 
     # This step will only run when the event is a push to the main branch
     - name: Zip artifact for deployment
