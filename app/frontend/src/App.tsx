@@ -137,14 +137,10 @@ export const App = () => {
     setChatWith(value as ChatWith);
   };
 
-  // const handleSend = (question: string) => {  
-  //   setLastUserMessage(question);  
-  //   makeApiRequest(question);  
-  // }; 
-
   const replayChat = () => {  
     if (lastUserMessage) {  
-        makeApiRequest(lastUserMessage);  
+      setCompletions(completions => completions.slice(0, completions.length - 2)); // ensures that on chat replay the previous answer is removed and the user's input isn't printed a second time
+        makeApiRequest(lastUserMessage); 
     }  
   }; 
 
@@ -171,6 +167,8 @@ export const App = () => {
                     context={completion.message?.context}
                     scrollRef={chatMessageStreamEnd} 
                     replayChat={replayChat}
+                    index={index}
+                    total={completions.length}
                     />
                 )}
                 {completion.message?.role === "user" && (

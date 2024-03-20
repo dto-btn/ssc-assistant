@@ -17,9 +17,11 @@ interface AssistantBubbleProps {
     context?: Context | null;
     scrollRef?:  React.RefObject<HTMLDivElement>;
     replayChat: () => void;
+    index: number;
+    total: number;
   }
 
-export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayChat }: AssistantBubbleProps) => {
+export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayChat, index, total }: AssistantBubbleProps) => {
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
   const [isHovering, setIsHovering] = useState(false);  
@@ -127,7 +129,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
         </Paper>
       </Box>
       <Box>
-        <Paper sx={{backgroundColor: 'transparent', boxShadow: 'none', mt: 0.5, ml:2}}>
+        <Paper sx={{backgroundColor: 'transparent', boxShadow: 'none', mt: 1, ml:2}}>
           <CopyToClipboard text={text} onCopy={() => setIsCopied(true)}>
             <Tooltip title={isCopied ? "Copied!" : "Copy"} arrow> 
               <button 
@@ -139,10 +141,10 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
               </button>
             </Tooltip>
           </CopyToClipboard>
-          <Tooltip title="Refresh" arrow>  
+          <Tooltip title="Regenerate" arrow>  
             <button   
                 onClick={replayChat}
-                style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none' }}  
+                style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none', display: index === total - 1 ? 'inline' : 'none' }}  
                 onFocus={() => setIsFocused(true)}  
                 onBlur={() => setIsFocused(false)} 
                 tabIndex={0}
