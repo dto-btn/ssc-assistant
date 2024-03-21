@@ -57,6 +57,7 @@ export const App = () => {
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
   const [chatWith, setChatWith] = useState<ChatWith>(ChatWith.Data);
+  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null); 
   const [openDrawer, setOpenDrawer] = useState<boolean>(false);
   const isAuthenticated = useIsAuthenticated();
   const {instance, accounts} = useMsal();
@@ -93,6 +94,7 @@ export const App = () => {
   const makeApiRequest = async (question: string) => {
     // set is loading so we disable some interactive functionality while we load the response
     setIsLoading(true);
+    setLastUserMessage(question);
 
     const userCompletion: Completion = {
       message: {
@@ -193,6 +195,13 @@ export const App = () => {
   ) => {
     setChatWith(value as ChatWith);
   };
+
+  const replayChat = () => {  
+    if (lastUserMessage) {  
+      setCompletions(completions => completions.slice(0, completions.length - 2)); // ensures that on chat replay the previous answer is removed and the user's input isn't printed a second time
+        makeApiRequest(lastUserMessage); 
+    }  
+  }; 
 
   useEffect(() => {
     // Set the `lang` attribute whenever the language changes
@@ -300,15 +309,18 @@ export const App = () => {
           >
             {completions.map((completion, index) => (
               <Fragment key={index}>
-                {completion.message?.role === "assistant" &&
-                  completion.message?.content && (
-                    <AssistantBubble
-                      text={completion.message.content}
-                      isLoading={index == completions.length - 1 && isLoading}
-                      context={completion.message?.context}
-                      scrollRef={chatMessageStreamEnd}
+                {completion.message?.role === "assistant" && completion.message?.content && (
+                  <AssistantBubble 
+                    text={completion.message.content} 
+                    isLoading={index == completions.length-1 && isLoading} 
+                    context={completion.message?.context}
+                    scrollRef={chatMessageStreamEnd} 
+                    replayChat={replayChat}
+                    index={index}
+                    total={completions.length}
                     />
-                  )}
+                )}
+
                 {completion.message?.role === "user" && (
                   <UserBubble text={completion.message?.content} />
                 )}

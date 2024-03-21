@@ -61,5 +61,8 @@
     "chat.with.gpt.data": "Données (MonSPC+)",
     "login": "Me connecter",
     "clearchat": "Effacer l’historique",
-    "copytext": "Copier"
+    "copytext": "Copier",
+    "regenerate": "Régénérer",
+    "copy": "Copier",
+    "copy.success": "Copié!"
 }
