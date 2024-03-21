@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
 import { useEffect, useState, Fragment } from 'react';
+import { useTranslation } from "react-i18next";
 import './AssistantBubble.css';
 import { CopyToClipboard } from 'react-copy-to-clipboard';  
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -22,6 +23,7 @@ interface AssistantBubbleProps {
   }
 
 export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayChat, index, total }: AssistantBubbleProps) => {
+  const { t, i18n } = useTranslation();
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
   const [isHovering, setIsHovering] = useState(false);  
@@ -65,6 +67,11 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
   }, [isLoading, context, text, scrollRef]);
 
   useEffect(() => processingComplete ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" }) : undefined, [processingComplete, scrollRef]);
+  
+  useEffect(() => {
+    // Set the `lang` attribute whenever the language changes
+    document.documentElement.lang = i18n.language;
+  }, [i18n.language]);
 
   useEffect(() => {  
     if (isCopied) {  
@@ -135,7 +142,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
       <Box>
         <Paper sx={{backgroundColor: 'transparent', boxShadow: 'none', mt: 1, ml:2}}>
           <CopyToClipboard text={text} onCopy={() => setIsCopied(true)}>
-            <Tooltip title={isCopied ? "Copied!" : "Copy"} arrow> 
+            <Tooltip title={isCopied ? t("copy.success") : t("copy")} arrow> 
               <button 
                 style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none' }}
                 onFocus={() => setIsFocused(true)}  
@@ -145,7 +152,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
               </button>
             </Tooltip>
           </CopyToClipboard>
-          <Tooltip title="Regenerate" arrow>  
+          <Tooltip title={t("regenerate")} arrow>  
             <button   
                 onClick={replayChat}
                 style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none', display: index === total - 1 ? 'inline' : 'none' }}  
