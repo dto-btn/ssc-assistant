@@ -1,4 +1,4 @@
-import { Box, Paper, Container, Divider, Chip, Stack, Typography } from '@mui/material';
+import { Box, Paper, Container, Divider, Chip, Stack, Typography, Link } from '@mui/material';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -27,6 +27,9 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
   const [isHovering, setIsHovering] = useState(false);  
   const [isCopied, setIsCopied] = useState(false);  
   const [isFocused, setIsFocused] = useState(false);  
+  const components = {    
+    a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <Link target="_blank" rel="noopener noreferrer" {...props} />,    
+  }; 
 
   function processText(text: string, citations: Citation[]) {
     // Regular expression to find all citation references like [doc1], [doc3], etc.

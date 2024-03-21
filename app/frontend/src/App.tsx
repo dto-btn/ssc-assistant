@@ -1,29 +1,53 @@
-import { Alert, Box, FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup, Snackbar, Typography } from '@mui/material';
-import CssBaseline from '@mui/material/CssBaseline';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { ChangeEvent, Fragment, useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { completionMySSC } from './api/api';
-import { AssistantBubble, ChatInput, TopMenu, UserBubble, Disclaimer} from './components';
+import {
+  Alert,
+  Box,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  Grid,
+  Radio,
+  RadioGroup,
+  Snackbar,
+  Typography,
+} from "@mui/material";
+import CssBaseline from "@mui/material/CssBaseline";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import Cookies from "js-cookie";
+import { ChangeEvent, Fragment, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { completionMySSC } from "./api/api";
+import {
+  AssistantBubble,
+  ChatInput,
+  Dial,
+  Disclaimer,
+  TopMenu,
+  UserBubble,
+} from "./components";
+import { DrawerMenu } from "./components/DrawerMenu";
+import { useIsAuthenticated, useMsal } from "@azure/msal-react";
+import { loginRequest } from "./authConfig";
+import { callMsGraph } from './graph';
+import { UserContext } from './context/UserContext'
 
 const mainTheme = createTheme({
   palette: {
     primary: {
-      main: "#4b3e99", /* SSC's official colour code I found using our chatbot! XD */
+      main: "#4b3e99" /* SSC's official colour code I found using our chatbot! XD */,
     },
     secondary: {
       main: "#f33aea",
     },
     background: {
-      default: '#f2f2f2',
-    }
+      default: "#f2f2f2",
+    },
   },
 });
 
 export const enum ChatWith {
   Data = "data",
-  Tools = "tools"
-};
+  Tools = "tools",
+}
 
 export const App = () => {
   const { t, i18n } = useTranslation();
@@ -34,23 +58,37 @@ export const App = () => {
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
   const [chatWith, setChatWith] = useState<ChatWith>(ChatWith.Data);
   const [lastUserMessage, setLastUserMessage] = useState<string | null>(null); 
+  const [openDrawer, setOpenDrawer] = useState<boolean>(false);
+  const isAuthenticated = useIsAuthenticated();
+  const {instance, accounts} = useMsal();
+  const [userData, setUserData] = useState({
+    accessToken: '',
+    graphData: null
+  });
 
   const welcomeMessage: Completion = {
     message: {
       role: "assistant",
-      content: t('default.welcome.msg')
-    } as Message
-  }
+      content: t("default.welcome.msg"),
+    } as Message,
+  };
 
-  const [completions, setCompletions] = useState<Completion[]>([welcomeMessage]);
+  const [completions, setCompletions] = useState<Completion[]>([
+    welcomeMessage,
+  ]);
 
-  const convertCompletionsToMessages = (completions: Completion[]): Message[] => {
+  const convertCompletionsToMessages = (
+    completions: Completion[]
+  ): Message[] => {
     // Calculate the start index to slice from if the array length exceeds maxMessagesSent
     const startIndex = Math.max(completions.length - maxMessagesSent, 0);
-    return completions.slice(startIndex).map(c => ({
-      role: c.message.role,
-      content: c.message.content
-    } as Message));
+    return completions.slice(startIndex).map(
+      (c) =>
+        ({
+          role: c.message.role,
+          content: c.message.content,
+        } as Message)
+    );
   };
 
   const makeApiRequest = async (question: string) => {
@@ -60,51 +98,66 @@ export const App = () => {
 
     const userCompletion: Completion = {
       message: {
-        role: 'user',
-        content: question
+        role: "user",
+        content: question,
       },
     };
 
     const responsePlaceholder: Completion = {
       message: {
-        role: 'assistant',
-        content: '',
+        role: "assistant",
+        content: "",
       },
     };
 
-    const messages = convertCompletionsToMessages([...completions, userCompletion]);
+    const messages = convertCompletionsToMessages([
+      ...completions,
+      userCompletion,
+    ]);
     // prepare request bundle
     const request: MessageRequest = {
       messages: messages,
       max: maxMessagesSent,
-      top: 5
+      top: 5,
     };
 
     //update current chat window with the message sent..
-    setCompletions(prevCompletions => [...prevCompletions, userCompletion, responsePlaceholder]);
+    setCompletions((prevCompletions) => {
+      const updatedCompletions = [
+        ...prevCompletions,
+        userCompletion,
+        responsePlaceholder,
+      ];
+      saveChatHistory(updatedCompletions); // Save chat history to local storage
+      return updatedCompletions;
+    });
 
-    try{
-      const completionResponse = await completionMySSC({request: request, updateLastMessage: updateLastMessage, chatWith: chatWith});
+    try {
+      const completionResponse = await completionMySSC({
+        request: request,
+        updateLastMessage: updateLastMessage,
+        chatWith: chatWith,
+      });
 
       setCompletions((prevCompletions) => {
-        const updatedCompletions = [...prevCompletions];//making a copy
-  
-        updatedCompletions[updatedCompletions.length-1] = {
-          ...updatedCompletions[updatedCompletions.length-1],
-          message: {
-            ...updatedCompletions[updatedCompletions.length-1].message,
-            context: completionResponse.message.context
-          },
-        }
-        return updatedCompletions;
-      })
+        const updatedCompletions = [...prevCompletions]; //making a copy
 
-    } catch(error) {
+        updatedCompletions[updatedCompletions.length - 1] = {
+          ...updatedCompletions[updatedCompletions.length - 1],
+          message: {
+            ...updatedCompletions[updatedCompletions.length - 1].message,
+            context: completionResponse.message.context,
+          },
+        };
+        saveChatHistory(updatedCompletions); // Save chat history to local storage
+        return updatedCompletions;
+      });
+    } catch (error) {
       setErrorSnackbar(true);
       if (error instanceof Error) {
         setErrorMessage(error.message);
       } else {
-        setErrorMessage('An unknown error occurred');
+        setErrorMessage("An unknown error occurred");
       }
     } finally {
       setIsLoading(false);
@@ -113,27 +166,33 @@ export const App = () => {
 
   const updateLastMessage = (message_chunk: string) => {
     setCompletions((prevCompletions) => {
-      const updatedCompletions = [...prevCompletions];//making a copy
+      const updatedCompletions = [...prevCompletions]; //making a copy
 
-      updatedCompletions[updatedCompletions.length-1] = {
-        ...updatedCompletions[updatedCompletions.length-1],
+      updatedCompletions[updatedCompletions.length - 1] = {
+        ...updatedCompletions[updatedCompletions.length - 1],
         message: {
-          ...updatedCompletions[updatedCompletions.length-1].message,
+          ...updatedCompletions[updatedCompletions.length - 1].message,
           content: message_chunk,
         },
-      }
+      };
       return updatedCompletions;
-    })
+    });
   };
 
-  const handleCloseSnackbar = (_event?: React.SyntheticEvent | Event, reason?: string) => {
-    if (reason === 'clickaway') {
+  const handleCloseSnackbar = (
+    _event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
       return;
     }
     setErrorSnackbar(false);
   };
 
-  const handleChatWithChange = (_event: ChangeEvent<HTMLInputElement>, value: string) => {
+  const handleChatWithChange = (
+    _event: ChangeEvent<HTMLInputElement>,
+    value: string
+  ) => {
     setChatWith(value as ChatWith);
   };
 
@@ -145,20 +204,110 @@ export const App = () => {
   }; 
 
   useEffect(() => {
-      // Set the `lang` attribute whenever the language changes
-      document.documentElement.lang = i18n.language;
+    // Set the `lang` attribute whenever the language changes
+    document.documentElement.lang = i18n.language;
   }, [i18n.language]);
 
-  useEffect(() => chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" }), [completions[completions.length-1].message.content]);
+  useEffect(
+    () =>
+      chatMessageStreamEnd.current?.scrollIntoView({
+        behavior: "smooth",
+      }),
+    [completions[completions.length - 1].message.content]
+  );
+
+  const saveChatHistory = (chatHistory: Completion[]) => {
+    localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+  };
+
+  // This function will be used to load the chat history from localStorage
+  const loadChatHistory = () => {
+    const savedChatHistory = localStorage.getItem("chatHistory");
+    if (savedChatHistory) {
+      setCompletions(JSON.parse(savedChatHistory));
+    } else {
+      setCompletions([welcomeMessage]);
+    }
+  };
+
+  const handleClearChat = () => {
+    localStorage.removeItem("chatHistory"); // Clear chat history from local storage
+    setCompletions([welcomeMessage]);
+  };
+
+  const setLangCookie = () => {
+    Cookies.set("lang_setting", i18n.language, {
+      expires: 30,
+    });
+  };
+
+  const handleLogin = () => {
+    instance.loginRedirect(loginRequest).catch((e) => {
+      setErrorSnackbar(true);
+      if (e instanceof Error) {
+        setErrorMessage(e.message);
+      } else {
+        setErrorMessage("Unable to login.");
+      }
+    });
+  };
+
+  const handleLogout = () => {
+    setUserData({accessToken: '', graphData: null});
+    instance.logoutRedirect({
+      postLogoutRedirectUri: "/",
+    });
+  };
+
+  // Load chat history if present
+  useEffect(() => {
+    loadChatHistory();
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      // If the user is authenticated, you might want to acquire a token silently
+      // or handle the logged-in user's information here.
+      instance.acquireTokenSilent({
+        ...loginRequest,
+        account: accounts[0],
+      }).then((response) => {
+        const accessToken = response.accessToken;
+        callMsGraph(response.accessToken).then((response) => setUserData({accessToken, graphData: response}));
+      }).catch(error => {
+        setErrorSnackbar(true);
+        if (error instanceof Error) {
+          setErrorMessage(error.message);
+        } else {
+          setErrorMessage("Unable to login.");
+        }
+      });
+    }
+  }, [isAuthenticated]);
+
   return (
-    <>
+    <UserContext.Provider value={userData}>
       <ThemeProvider theme={mainTheme}>
         <CssBaseline />
-        <TopMenu />
-        <Box sx={{ display: 'flex', flexFlow: 'column', minHeight: '100vh', margin: 'auto'}} maxWidth="lg">
-          <Box sx={{flexGrow: 1}}></Box>
-          <Box sx={{ overflowY: 'hidden', padding: '2rem', alignItems: 'flex-end'}}>
-            {completions.map( (completion, index) => (
+        <TopMenu toggleDrawer={setOpenDrawer} />
+        <Box
+          sx={{
+            display: "flex",
+            flexFlow: "column",
+            minHeight: "100vh",
+            margin: "auto",
+          }}
+          maxWidth="lg"
+        >
+          <Box sx={{ flexGrow: 1 }}></Box>
+          <Box
+            sx={{
+              overflowY: "hidden",
+              padding: "2rem",
+              alignItems: "flex-end",
+            }}
+          >
+            {completions.map((completion, index) => (
               <Fragment key={index}>
                 {completion.message?.role === "assistant" && completion.message?.content && (
                   <AssistantBubble 
@@ -171,6 +320,7 @@ export const App = () => {
                     total={completions.length}
                     />
                 )}
+
                 {completion.message?.role === "user" && (
                   <UserBubble text={completion.message?.content} />
                 )}
@@ -178,43 +328,77 @@ export const App = () => {
             ))}
           </Box>
           <div ref={chatMessageStreamEnd} />
-          <Box sx={{ position: 'sticky', bottom: 0, left: 0, right: 0, zIndex: 1100, bgcolor: 'background.default', padding: '1rem' }}>
-            <Grid container item xs={12} alignItems='center' justifyContent='center'>
+          <Box
+            sx={{
+              position: "sticky",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 1100,
+              bgcolor: "background.default",
+              padding: "1rem",
+            }}
+          >
+            <Grid
+              container
+              item
+              xs={12}
+              alignItems="center"
+              justifyContent="center"
+            >
               <FormLabel id="gpt-mode">
-                <Typography variant='body1' sx={{ pr: '10px'}}>{t('chat.with.gpt')}</Typography>
+                <Typography variant="body1" sx={{ pr: "10px" }}>
+                  {t("chat.with.gpt")}
+                </Typography>
               </FormLabel>
               <FormControl>
-                  <RadioGroup
-                    row
-                    aria-labelledby="gpt-mode"
-                    value={chatWith}
-                    onChange={handleChatWithChange}
-                    name="gpt-mode-radio-btn"
-                  >
-                    <FormControlLabel value="data" control={<Radio />} label={t('chat.with.gpt.data')} />
-                    <FormControlLabel value="tools" control={<Radio />} label={t('chat.with.gpt.tools')} />
-                  </RadioGroup>
+                <RadioGroup
+                  row
+                  aria-labelledby="gpt-mode"
+                  value={chatWith}
+                  onChange={handleChatWithChange}
+                  name="gpt-mode-radio-btn"
+                >
+                  <FormControlLabel
+                    value="data"
+                    control={<Radio />}
+                    label={t("chat.with.gpt.data")}
+                  />
+                  <FormControlLabel
+                    value="tools"
+                    control={<Radio />}
+                    label={t("chat.with.gpt.tools")}
+                  />
+                </RadioGroup>
               </FormControl>
             </Grid>
             <ChatInput
-                clearOnSend
-                placeholder={t("placeholder")}
-                disabled={isLoading}
-                onSend={question => makeApiRequest(question)}/>
+              clearOnSend
+              placeholder={t("placeholder")}
+              disabled={isLoading}
+              onSend={(question) => makeApiRequest(question)}
+            />
           </Box>
         </Box>
-        <Snackbar open={errorSnackbar} autoHideDuration={6000} onClose={handleCloseSnackbar} sx={{mb: 1}}>
+        <Snackbar
+          open={errorSnackbar}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+          sx={{ mb: 1 }}
+        >
           <Alert
             onClose={handleCloseSnackbar}
             severity="error"
             variant="filled"
-            sx={{ width: '100%' }}
+            sx={{ width: "100%" }}
           >
             {errorMessage}
           </Alert>
         </Snackbar>
+        <Dial drawerVisible={openDrawer} onClearChat={handleClearChat} />
         <Disclaimer />
+        <DrawerMenu openDrawer={openDrawer} toggleDrawer={setOpenDrawer} onClearChat={handleClearChat} setLangCookie={setLangCookie} login={handleLogin} logout={handleLogout}/>
       </ThemeProvider>
-    </>
-  )
+    </UserContext.Provider>
+  );
 };

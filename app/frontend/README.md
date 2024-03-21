@@ -32,3 +32,10 @@ export default {
 ## Documentation
 
 - [Based on MUI](https://mui.com/material-ui/all-components/)
+
+### MSAL Authentication
+
+- [app registration setup](https://learn.microsoft.com/en-us/entra/identity-platform/scenario-spa-app-registration)
+- [demo with Azure AD CIAM](https://learn.microsoft.com/en-us/samples/azure-samples/ms-identity-ciam-javascript-tutorial/ms-identity-ciam-javascript-tutorial-1-sign-in-react/)
+- [react msal App reg setup](https://learn.microsoft.com/en-us/entra/identity-platform/tutorial-single-page-app-react-register-app)
+- [react msal app config](https://learn.microsoft.com/en-us/entra/identity-platform/tutorial-single-page-app-react-prepare-spa?tabs=visual-studio)
