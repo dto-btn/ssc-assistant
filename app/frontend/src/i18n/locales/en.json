@@ -74,5 +74,7 @@
     "chat.with.gpt.data": "Data (MySSC+)",
     "login": "Login",
     "clearchat": "Clear Chat",
-    "copytext": "Copy"
+    "copytext": "Copy",
+    "tools.info": "Tools (GEDS, etc.) - Experience the efficiency of ChatGPT from Azure OpenAI, designed to answer your general inquiries with generative AI technology. Enhance this functionality by integrating tools and systems like GEDS (Government of Canada electronic directory), empowering you to access a broad range of resources and information seamlessly.",
+    "data.info": "MySSC+ is your internal gateway to all things related to SSC, from organizational insights to the latest news, staffing procedures, and career opportunities. By enabling this feature, you unlock the power of generative AI, which allows you to ask questions and receive information specifically about our organization and the wealth of topics available on our intranet."
 }

@@ -61,5 +61,7 @@
     "chat.with.gpt.data": "Données (MonSPC+)",
     "login": "Me connecter",
     "clearchat": "Effacer l’historique",
-    "copytext": "Copier"
+    "copytext": "Copier",
+    "tools.info": "Outils (SAGE, etc.) - Profitez de l'efficacité de ChatGPT d'Azure OpenAI, conçu pour répondre à vos questions générales grâce à la technologie de l'IA générative. Améliorez cette fonctionnalité en intégrant des outils et des systèmes tels que SAGE (répertoire électronique du gouvernement du Canada), vous permettant d'accéder de manière fluide à une vaste gamme de ressources et d'informations.",
+    "data.info": "MonSPC+ est votre portail interne pour tout ce qui concerne le SPC, des informations organisationnelles aux dernières nouvelles, en passant par les procédures de dotation et les opportunités de carrière. En activant cette fonctionnalité, vous libérez la puissance de l'intelligence artificielle générative, ce qui vous permet de poser des questions et de recevoir des informations spécifiquement sur notre organisation et la richesse des sujets disponibles sur notre intranet"
 }

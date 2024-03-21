@@ -29,6 +29,7 @@ import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { loginRequest } from "./authConfig";
 import { callMsGraph } from './graph';
 import { UserContext } from './context/UserContext'
+import Tooltip from "@mui/material/Tooltip";
 
 const mainTheme = createTheme({
   palette: {
@@ -347,16 +348,12 @@ export const App = () => {
                   onChange={handleChatWithChange}
                   name="gpt-mode-radio-btn"
                 >
-                  <FormControlLabel
-                    value="data"
-                    control={<Radio />}
-                    label={t("chat.with.gpt.data")}
-                  />
-                  <FormControlLabel
-                    value="tools"
-                    control={<Radio />}
-                    label={t("chat.with.gpt.tools")}
-                  />
+                  <Tooltip title={<Typography sx={{ fontSize: "14px" }}>{t('data.info')}</Typography>} placement="top" arrow PopperProps={{ modifiers: [ { name: 'offset', options: { offset: [0, -15], },},],}}>  
+                      <FormControlLabel value="data" control={<Radio />} label={t('chat.with.gpt.data')} />
+                    </Tooltip> 
+                    <Tooltip title={<Typography sx={{ fontSize: "14px" }}>{t('tools.info')}</Typography>} placement="top" arrow PopperProps={{ modifiers: [ { name: 'offset', options: { offset: [0, -15], },},],}}>
+                      <FormControlLabel value="tools" control={<Radio />} label={t('chat.with.gpt.tools')} />
+                    </Tooltip>
                 </RadioGroup>
               </FormControl>
             </Grid>
