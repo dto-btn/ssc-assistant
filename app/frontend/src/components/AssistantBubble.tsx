@@ -95,6 +95,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
         >
           <Container>
             <Markdown
+              components={components}
               rehypePlugins={[rehypeHighlight]}
               remarkPlugins={[remarkGfm]}>
               {isLoading
