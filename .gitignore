@@ -36,3 +36,5 @@ terraform.rc
 **/.venv/*
 **/.venv_api/*
 **/.venv_func/*
+
+certificates/

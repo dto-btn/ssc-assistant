@@ -67,3 +67,16 @@ resource "azurerm_subnet_network_security_group_association" "api" {
   network_security_group_id  = azurerm_network_security_group.main.id
   subnet_id                  = azurerm_subnet.api.id
 }
+
+resource "azurerm_dns_zone" "main" {
+  name                = "cio-ect.ssc-spc.cloud-nuage.canada.ca"
+  resource_group_name = azurerm_resource_group.main.name
+}
+
+resource "azurerm_dns_cname_record" "assistant" {
+  name                = "assistant"
+  zone_name           = azurerm_dns_zone.main.name
+  resource_group_name = azurerm_resource_group.main.name
+  ttl                 = 3600
+  record              = azurerm_linux_web_app.frontend.default_hostname
+}

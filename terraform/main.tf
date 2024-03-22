@@ -54,6 +54,15 @@ resource "azurerm_key_vault" "main" {
     storage_permissions = [
       "Get",
     ]
+
+    certificate_permissions = [
+      "Create",
+      "Delete",
+      "Get",
+      "Import",
+      "List",
+      "Update",
+    ]
   }
 }
 
@@ -61,6 +70,22 @@ resource "azurerm_key_vault_secret" "jwtsecret" {
   name         = "jwt-secret"
   value        = var.jwt_secret
   key_vault_id = azurerm_key_vault.main.id
+}
+
+resource "azurerm_key_vault_secret" "pfxsecret" {
+  name         = "pfx-secret"
+  value        = var.pfx_secret
+  key_vault_id = azurerm_key_vault.main.id
+}
+
+resource "azurerm_key_vault_certificate" "import-cert" {
+  name         = "ssc-assistant-cert"
+  key_vault_id = azurerm_key_vault.main.id
+
+  certificate {
+    contents = filebase64("certificates/ssc-assistant.pfx")
+    password = var.pfx_secret
+  }
 }
 
 /****************************************************
