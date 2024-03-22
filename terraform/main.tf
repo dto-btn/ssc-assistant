@@ -91,15 +91,25 @@ resource "azurerm_key_vault_certificate" "import-cert" {
 /****************************************************
 *                        DNS                        *
 *****************************************************/
-data "azurerm_dns_zone" "main" {
-  name = var.dns_zone_name
-  resource_group_name = var.dns_zone_rg
+resource "azurerm_dns_zone" "main" {
+  name                = "cio-ect.ssc-spc.cloud-nuage.canada.ca"
+  resource_group_name = azurerm_resource_group.main.name
 }
 
-resource "azurerm_dns_cname_record" "data" {
-  name                = "api"
-  zone_name           = var.dns_zone_name
-  resource_group_name = var.dns_zone_rg
+resource "azurerm_dns_cname_record" "assistant" {
+  name                = "assistant"
+  zone_name           = azurerm_dns_zone.main.name
+  resource_group_name = azurerm_resource_group.main.name
+  ttl                 = 3600
+  record              = azurerm_linux_web_app.frontend.default_hostname
+}
+
+resource "azurerm_dns_txt_record" "assistant" {
+  name                = "asuid.assistant"
+  zone_name           = azurerm_dns_zone.main.name
+  resource_group_name = azurerm_resource_group.main.name
   ttl                 = 300
-  record              = azurerm_linux_web_app.api.default_hostname
+  record {
+    value = "78b0199e2df7d755f121ad995a9192f55622702ae3526f9a4bc826bac852574d"
+  }
 }
