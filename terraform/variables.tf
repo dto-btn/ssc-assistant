@@ -29,16 +29,6 @@ variable "openai_name" {
     default = "ScSc-CIO-ECT-OpenAI-oai"
 }
 
-variable "dns_zone_name" {
-    type = string
-    default = "cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"
-}
-
-variable "dns_zone_rg" {
-    type = string
-    default = "ScSc-CIO_ECT_DNS-rg"
-}
-
 variable "jwt_secret" {
     type = string
     sensitive = true

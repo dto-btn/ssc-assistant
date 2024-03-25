@@ -83,7 +83,7 @@ resource "azurerm_key_vault_certificate" "import-cert" {
   key_vault_id = azurerm_key_vault.main.id
 
   certificate {
-    contents = filebase64("certificates/ssc-assistant.pfx")
+    contents = filebase64("certificates/ssc-assistant-sandbox.pfx")
     password = var.pfx_secret
   }
 }
@@ -91,23 +91,23 @@ resource "azurerm_key_vault_certificate" "import-cert" {
 /****************************************************
 *                        DNS                        *
 *****************************************************/
-resource "azurerm_dns_zone" "main" {
-  name                = "cio-ect.ssc-spc.cloud-nuage.canada.ca"
-  resource_group_name = azurerm_resource_group.main.name
+data "azurerm_dns_zone" "main" {
+  name                = "cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"
+  resource_group_name = "ScSc-CIO_ECT_DNS-rg"
 }
 
 resource "azurerm_dns_cname_record" "assistant" {
   name                = "assistant"
-  zone_name           = azurerm_dns_zone.main.name
-  resource_group_name = azurerm_resource_group.main.name
+  zone_name           = data.azurerm_dns_zone.main.name
+  resource_group_name = data.azurerm_dns_zone.main.resource_group_name
   ttl                 = 3600
   record              = azurerm_linux_web_app.frontend.default_hostname
 }
 
 resource "azurerm_dns_txt_record" "assistant" {
   name                = "asuid.assistant"
-  zone_name           = azurerm_dns_zone.main.name
-  resource_group_name = azurerm_resource_group.main.name
+  zone_name           = data.azurerm_dns_zone.main.name
+  resource_group_name = data.azurerm_dns_zone.main.resource_group_name
   ttl                 = 300
   record {
     value = "78b0199e2df7d755f121ad995a9192f55622702ae3526f9a4bc826bac852574d"

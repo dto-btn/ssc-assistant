@@ -96,12 +96,12 @@ resource "azurerm_app_service_certificate" "frontend" {
   name                = "ssc-assistant-cert"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_service_plan.frontend.location
-  pfx_blob            = filebase64("certificates/ssc-assistant.pfx")
+  pfx_blob            = filebase64("certificates/ssc-assistant-sandbox.pfx")
   password            = var.pfx_secret
 }
 
 resource "azurerm_app_service_custom_hostname_binding" "frontend" {
-  hostname            = "assistant.cio-ect.ssc-spc.cloud-nuage.canada.ca"
+  hostname            = "assistant.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"
   app_service_name    = azurerm_linux_web_app.frontend.name
   resource_group_name = azurerm_resource_group.main.name
 }
