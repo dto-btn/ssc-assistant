@@ -31,40 +31,54 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
   const [isFocused, setIsFocused] = useState(false);  
   const components = {    
     a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <Link target="_blank" rel="noopener noreferrer" {...props} />,    
-  }; 
+  };
+  const [citationNumberMapping, setCitationNumberMapping] = useState<{ [key: number]: number }>({});  
+
 
   function processText(text: string, citations: Citation[]) {
     // Regular expression to find all citation references like [doc1], [doc3], etc.
     const citationRefRegex = /\[doc(\d+)\]/g;
   
-    // Replace citation references with Markdown links
-    const processedText = text.replace(citationRefRegex, (_, docNumber) => {
-      // Convert docNumber to an array index (subtracting 1 because arrays are zero-indexed)
-      const index = parseInt(docNumber, 10) - 1;
-      const citation = citations[index]; // Access the citation by index
-      if (citation) {
-        //return `[${citation.title}](${citation.url})`; // Replace with Markdown link
-        return ` [${docNumber}](${citation.url})`; // Replace with Markdown link
-      }
-      return '';
-    });
+    // Map to store the new citation numbers  
+    const citationNumberMapping: { [key: number]: number } = {};  
   
-    // Filter the citations array to only include the cited documents
-    const citedCitations = citations.filter((_, index) => {
-      const docNumber = index + 1; // Convert index to docNumber
-      return text.includes(`[doc${docNumber}]`); // Check if the citation is in the text
-    });
+    // Identify the cited citations and create the citationNumberMapping  
+    citations.forEach((_, index) => {  
+        const docNumber = index + 1; // Convert index to docNumber  
+        if (text.includes(`[doc${docNumber}]`)) { // Check if the citation is in the text  
+            // The new citation number is the current size of citationNumberMapping + 1  
+            citationNumberMapping[docNumber] = Object.keys(citationNumberMapping).length + 1;  
+        }  
+    });  
   
-    return { processedText, citedCitations };
+    // Filter the citations array to only include the cited documents  
+    const citedCitations = citations.filter((_, index) => {  
+        const docNumber = index + 1; // Convert index to docNumber  
+        return citationNumberMapping[docNumber]; // Check if the citation is in the citationNumberMapping  
+    });  
+  
+    // Replace citation references with Markdown links using the new citation numbers  
+    const processedText = text.replace(citationRefRegex, (_, docNumber) => {  
+        const citation = citations[parseInt(docNumber, 10) - 1]; // Access the citation by index  
+        if (citation) {  
+            const newCitationNumber = citationNumberMapping[parseInt(docNumber, 10)]; // Get the new citation number  
+            return ` [${newCitationNumber}](${citation.url})`; // Replace with Markdown link  
+        }  
+        return '';  
+    }); 
+  
+    return { processedText, citedCitations, citationNumberMapping };
   }
 
-  useEffect(() => {
-    if(context?.citations) {
-      const { processedText, citedCitations } = processText(text, context.citations);
-      setProcessedContent({ processedText, citedCitations });
-      setProcessingComplete(true);
-    }
-  }, [isLoading, context, text, scrollRef]);
+  useEffect(() => {  
+    if(context?.citations) {  
+        const { processedText, citedCitations, citationNumberMapping } = processText(text, context.citations);  
+        setProcessedContent({ processedText, citedCitations });  
+        setCitationNumberMapping(citationNumberMapping); // store the citationNumberMapping in state  
+        setProcessingComplete(true);  
+    }  
+}, [isLoading, context, text, scrollRef]);  
+
 
   useEffect(() => processingComplete ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" }) : undefined, [processingComplete, scrollRef]);
   
@@ -118,21 +132,26 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
                   Citation(s):
                 </Typography>
                 <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                  {context?.citations.map( (citation, index) => (
-                    processedContent.citedCitations.includes(citation) && (
-                      <Fragment key={index}>
-                        <Chip
-                          label={index+1 + " - " + citation.title}
-                          component="a"
-                          href={citation.url}
-                          target='_blank'
-                          variant="filled"
-                          clickable
-                          color="primary"
-                        />
-                      </Fragment>
-                    )
-                  ))}
+                {context?.citations.map( (citation, index) => {  
+                    const docNumber = index + 1; // Convert index to docNumber  
+                    const newCitationNumber = citationNumberMapping[docNumber]; // Get the new citation number  
+                    return (  
+                        processedContent.citedCitations.includes(citation) && (  
+                            <Fragment key={index}>  
+                                <Chip  
+                                    label={newCitationNumber + " - " + citation.title} // Use new citation number  
+                                    component="a"  
+                                    href={citation.url}  
+                                    target='_blank'  
+                                    variant="filled"  
+                                    clickable  
+                                    color="primary"  
+                                />  
+                            </Fragment>  
+                        )  
+                    );  
+                })}  
+
                 </Stack>
               </Box>
             </>
