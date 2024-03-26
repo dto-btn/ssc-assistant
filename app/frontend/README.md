@@ -39,3 +39,35 @@ export default {
 - [demo with Azure AD CIAM](https://learn.microsoft.com/en-us/samples/azure-samples/ms-identity-ciam-javascript-tutorial/ms-identity-ciam-javascript-tutorial-1-sign-in-react/)
 - [react msal App reg setup](https://learn.microsoft.com/en-us/entra/identity-platform/tutorial-single-page-app-react-register-app)
 - [react msal app config](https://learn.microsoft.com/en-us/entra/identity-platform/tutorial-single-page-app-react-prepare-spa?tabs=visual-studio)
+
+### Setting up custom SSL/TSL certs and bindings in Azure App Services
+
+General documentation on the subject: 
+
+* [Import cert in app service](https://learn.microsoft.com/en-us/azure/app-service/configure-ssl-certificate?tabs=apex#import-an-app-service-certificate)
+* [Secure a custom DNS name with a TLS/SSL binding in Azure App Service](https://learn.microsoft.com/en-us/azure/app-service/configure-ssl-certificate?tabs=apex#private-certificate-requirements)
+
+#### Requesting a new certificate
+
+Altought you could directly go via the Azure services to purschase a cert and greatly simplify things, we needed a `canada.ca` certificate
+and chose to go via our `SSC Enterprise Service Desk - SPC Bureau de Service d'Entreprise` service desk to request (either a Entrust or ICM cert).
+
+1. Create your private key and generate a certificate request for the domain you require `something.blah.canada.ca`. 
+  * I normally do this via `openssl` in linux but this can also be done in Windows via `Win+R` `certlm.msc` (as administrator).
+2. When you receive your certificate we will chain the intermediate with the root and the server certificate in 1 big `.pem/.cer` file as base64.
+
+```bash
+~/certs/ssc-assistant unzip ssc-assistant.entrust.zip
+Archive:  ssc-assistant.entrust.zip
+  inflating: ServerCertificate.crt
+  inflating: Root.crt
+  inflating: Intermediate.crt
+```
+and then `cat ServerCertificate.crt <(echo) Intermediate.crt <(echo) Root.crt > ssc-assistant-chain.crt`
+
+3. (optional) if you need to extract your private key out of your `.pfx` (depending on how it's currently stored) you can run the following command:
+  * `openssl pkcs12 -in privatekey.pfx -nocerts -out privatekey.pem -nodes`
+  * **IMPORTANT**: Do NOT leave that private key out there not password protected or stored securely
+4. Bundle certificate(s) along with private key into 1 `.pfx` ready to be used by our services.
+ * First concatenate all the certificate your received into 1 file `<merged-certificate-file>` and [then do this](https://learn.microsoft.com/en-us/azure/app-service/configure-ssl-certificate?tabs=apex#export-merged-private-certificate-to-pfx);
+ * `openssl pkcs12 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -macalg SHA1 -export -out myserver.pfx -inkey <private-key-file> -in <merged-certificate-file>`

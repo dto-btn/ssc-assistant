@@ -29,20 +29,16 @@ variable "openai_name" {
     default = "ScSc-CIO-ECT-OpenAI-oai"
 }
 
-variable "dns_zone_name" {
-    type = string
-    default = "cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"
-}
-
-variable "dns_zone_rg" {
-    type = string
-    default = "ScSc-CIO_ECT_DNS-rg"
-}
-
 variable "jwt_secret" {
     type = string
     sensitive = true
     description = "the jwt secret that will be used to decrypt the access key provided to the backend devs"
+}
+
+variable "pfx_secret" {
+    type = string
+    sensitive = true
+    description = "the pfx secret for the private key"
 }
 
 # those 2 must be provided, along with the secret.. (microsoft_provider_authentication_secret)
