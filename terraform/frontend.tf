@@ -43,6 +43,7 @@ resource "azurerm_linux_web_app" "frontend" {
     WEBSITE_RUN_FROM_PACKAGE = "1"
     MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
     PORT = 8080
+    WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
   }
 
   sticky_settings {
@@ -66,6 +67,7 @@ resource "azurerm_linux_web_app" "frontend" {
         client_secret_setting_name = "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET"
         tenant_auth_endpoint = var.aad_auth_endpoint
         allowed_audiences = ["api://${var.aad_client_id}"]
+        allowed_applications = [var.aad_client_id]
       }
 
       # apple_v2 {
