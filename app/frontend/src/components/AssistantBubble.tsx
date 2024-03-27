@@ -160,6 +160,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
       </Box>
       <Box>
         <Paper sx={{backgroundColor: 'transparent', boxShadow: 'none', mt: 1, ml:2}}>
+
           <CopyToClipboard text={text} onCopy={() => setIsCopied(true)}>
             <Tooltip title={isCopied ? t("copy.success") : t("copy")} arrow> 
               <button 
@@ -171,6 +172,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
               </button>
             </Tooltip>
           </CopyToClipboard>
+          {index!==0 && (  
           <Tooltip title={t("regenerate")} arrow>  
             <button   
                 onClick={replayChat}
@@ -182,6 +184,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
                 <RefreshIcon style={{ fontSize: 20, color: (isHovering || isFocused) ? '#4b3e99' : 'transparent' }}/>  
             </button>
           </Tooltip> 
+        )}
         </Paper>
       </Box>  
     </Box>
