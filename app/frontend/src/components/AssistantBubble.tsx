@@ -20,10 +20,9 @@ interface AssistantBubbleProps {
     replayChat: () => void;
     index: number;
     total: number;
-    isFirstMessage: boolean;
   }
 
-export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayChat, index, total, isFirstMessage }: AssistantBubbleProps) => {
+export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayChat, index, total }: AssistantBubbleProps) => {
   const { t, i18n } = useTranslation();
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
@@ -154,7 +153,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
               </button>
             </Tooltip>
           </CopyToClipboard>
-          {!isFirstMessage && (  
+          {index!==0 && (  
           <Tooltip title={t("regenerate")} arrow>  
             <button   
                 onClick={replayChat}

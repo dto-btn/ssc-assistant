@@ -318,7 +318,6 @@ export const App = () => {
                     replayChat={replayChat}
                     index={index}
                     total={completions.length}
-                    isFirstMessage={index === 0}
                     />
                 )}
 
