@@ -1,7 +1,7 @@
 # SSC Assistant
 Second iteration of the SSC chatbot/assistant.
 
-## Developper(s)
+## Developer(s)
 
 This section will help developper understand this project and how to set it up from the ground up and how to run it on their machine.
 
