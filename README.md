@@ -3,11 +3,11 @@ Second iteration of the SSC chatbot/assistant.
 
 ## Developer(s)
 
-This section will help developper understand this project and how to set it up from the ground up and how to run it on their machine.
+This section will help developer understand this project and how to set it up from the ground up and how to run it on their machine.
 
 ### Python setup
 
-We are developping on python 3.11+. 
+We are developing on python 3.11+. 
 
 Please setup your environement like so:
 
