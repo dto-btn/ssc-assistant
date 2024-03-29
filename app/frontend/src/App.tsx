@@ -15,7 +15,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import Cookies from "js-cookie";
 import { ChangeEvent, Fragment, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { completionMySSC } from "./api/api";
+import { completionMySSC, sendFeedback } from "./api/api";
 import {
   AssistantBubble,
   ChatInput,
@@ -164,6 +164,10 @@ export const App = () => {
     }
   };
 
+  const handleFeedbackSubmit = async (feedback: string, isGoodResponse: boolean) => {    
+    sendFeedback(feedback, isGoodResponse, completions);
+  }; 
+
   const updateLastMessage = (message_chunk: string) => {
     setCompletions((prevCompletions) => {
       const updatedCompletions = [...prevCompletions]; //making a copy
@@ -304,6 +308,7 @@ export const App = () => {
             sx={{
               overflowY: "hidden",
               padding: "2rem",
+              paddingTop: "6rem",
               alignItems: "flex-end",
             }}
           >
@@ -318,6 +323,7 @@ export const App = () => {
                     replayChat={replayChat}
                     index={index}
                     total={completions.length}
+                    handleFeedbackSubmit={handleFeedbackSubmit}
                     />
                 )}
 

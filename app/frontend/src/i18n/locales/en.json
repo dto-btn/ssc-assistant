@@ -76,5 +76,8 @@
     "copytext": "Copy",
     "regenerate": "Regenerate",
     "copy": "Copy",
-    "copy.success": "Copied!"
+    "copy.success": "Copied!",
+    "good.response": "Good response",
+    "bad.response": "Bad response",
+    "submit": "Submit"
 }
