@@ -261,7 +261,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
                       style={{ backgroundColor: "#4b3e99", color: "white"}}  
                       type="submit"   
                       onClick={(event) => {  
-                        handleFeedback(event, isGoodResponse);  
+                        handleFeedback(event);  
                         setIsThankYouVisible(true);  
                       }}  
                     >  
