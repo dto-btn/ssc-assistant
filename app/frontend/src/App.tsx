@@ -164,9 +164,10 @@ export const App = () => {
     }
   };
 
-  const handleFeedbackSubmit = async (feedback: string, isGoodResponse: boolean) => {    
-    sendFeedback(feedback, isGoodResponse, completions);
-  }; 
+  const handleFeedbackSubmit = async (feedback: string, isGoodResponse: boolean, message: Message) => {      
+    sendFeedback(feedback, isGoodResponse, completions, message);  
+};   
+ 
 
   const updateLastMessage = (message_chunk: string) => {
     setCompletions((prevCompletions) => {
@@ -323,6 +324,7 @@ export const App = () => {
                     replayChat={replayChat}
                     index={index}
                     total={completions.length}
+                    message={completion.message}
                     handleFeedbackSubmit={handleFeedbackSubmit}
                     />
                 )}

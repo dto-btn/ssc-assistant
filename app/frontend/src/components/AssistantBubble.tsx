@@ -25,10 +25,11 @@ interface AssistantBubbleProps {
     replayChat: () => void;
     index: number;
     total: number;
-    handleFeedbackSubmit: (feedback: string, isGoodResponse: boolean) => void;
+    message: Message;
+    handleFeedbackSubmit: (feedback: string, isGoodResponse: boolean, message: Message) => void;
   }
 
-export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayChat, index, total, handleFeedbackSubmit }: AssistantBubbleProps) => {
+export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayChat, index, total, handleFeedbackSubmit, message }: AssistantBubbleProps) => {
   const { t, i18n } = useTranslation();
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
@@ -37,7 +38,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
   const [isFocused, setIsFocused] = useState(false);  
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);  
   const [feedback, setFeedback] = useState('');  
-  const [isGoodResponse, setIsGoodResponse] = useState(false);  
+  const [isGoodResponse, setIsGoodResponse] = useState(false); 
   const [isThankYouVisible, setIsThankYouVisible] = useState(false);  
 
 
@@ -46,12 +47,13 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
   };
   const [citationNumberMapping, setCitationNumberMapping] = useState<{ [key: number]: number }>({});  
 
-  const handleFeedback = (event: React.FormEvent) => {    
-    event.preventDefault();    
-    handleFeedbackSubmit(feedback, isGoodResponse);  
-    setIsFeedbackVisible(false);    
-    setFeedback('');    
-  };  
+  const handleFeedback = (event: React.FormEvent) => {        
+    event.preventDefault();        
+    handleFeedbackSubmit(feedback, isGoodResponse, message);      
+    setIsFeedbackVisible(false);        
+    setFeedback('');        
+};   
+ 
   
 
   function processText(text: string, citations: Citation[]) {

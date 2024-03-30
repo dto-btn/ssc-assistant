@@ -78,23 +78,30 @@ export async function completionMySSC({ request, updateLastMessage, chatWith }: 
                         }
 }
 
-export async function sendFeedback(feedback: string, isGoodResponse: boolean, conversation: Completion[]): Promise<Response> {  
-  const url = "/api/1.0/feedback";  
-  const response = await fetch(url, {  
-    method: "POST",  
-    headers: {  
-      "Content-Type": "application/json"  
-    },  
-    body: JSON.stringify({  
-      feedback,  
-      isGoodResponse,  
-      conversation  
-    })  
-  });  
-  
-  if (!response.ok) {  
-    throw new Error('Failed to send feedback');  
-  }  
+export async function sendFeedback(feedback: string, isGoodResponse: boolean, conversation: Completion[], message: Message): Promise<Response> {    
+  const url = "/api/1.0/feedback";    
     
-  return response;  
+  // Extract just the messages from the conversation  
+  const conversationMessages: Message[] = conversation.map(completion => completion.message);  
+  
+  const feedbackObject = {  
+    feedback,  
+    conversation: conversationMessages,  
+    positive: isGoodResponse,  
+    message  
+  };  
+    
+  const response = await fetch(url, {    
+    method: "POST",    
+    headers: {    
+      "Content-Type": "application/json"    
+    },    
+    body: JSON.stringify(feedbackObject)    
+  });    
+    
+  if (!response.ok) {    
+    throw new Error('Failed to send feedback');    
+  }    
+      
+  return response;    
 }  
