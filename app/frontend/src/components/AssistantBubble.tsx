@@ -15,7 +15,6 @@ import ThumbUpAltOutlinedIcon from '@mui/icons-material/ThumbUpAltOutlined';
 import ThumbDownAltOutlinedIcon from '@mui/icons-material/ThumbDownAltOutlined';
 import TextField from '@mui/material/TextField';  
 import Button from '@mui/material/Button'; 
-import { sendFeedback } from '../api/api';
 
 interface AssistantBubbleProps {
     text: string;
