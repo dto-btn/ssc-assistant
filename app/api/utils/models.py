@@ -47,6 +47,7 @@ class MessageRequest:
     lang: str = field(default='en')
     max: int = field(default=10)
     tools: List[str] = field(default_factory=lambda: ["bits", "geds"])
+    uuid: str = field(default='')
 
 class QueryType(Enum):
     VECTOR_SIMPLE_HYBRID = "vectorSimpleHybrid"
