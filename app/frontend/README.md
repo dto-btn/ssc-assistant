@@ -71,3 +71,9 @@ and then `cat ServerCertificate.crt <(echo) Intermediate.crt <(echo) Root.crt > 
 4. Bundle certificate(s) along with private key into 1 `.pfx` ready to be used by our services.
  * First concatenate all the certificate your received into 1 file `<merged-certificate-file>` and [then do this](https://learn.microsoft.com/en-us/azure/app-service/configure-ssl-certificate?tabs=apex#export-merged-private-certificate-to-pfx);
  * `openssl pkcs12 -keypbe PBE-SHA1-3DES -certpbe PBE-SHA1-3DES -macalg SHA1 -export -out myserver.pfx -inkey <private-key-file> -in <merged-certificate-file>`
+
+#### Required configuration for Application registration
+
+Depending on how you setup the security on the application you might need to setup the Web Redirect URI(s) or Single Page Application (SPA) Redirect URI(s) *or both*:
+
+![App Registration example configuration](../../docs/appregistration.png)
