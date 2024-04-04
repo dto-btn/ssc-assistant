@@ -6,8 +6,8 @@ from apiflask import APIBlueprint
 from flask import Response, jsonify, request, stream_with_context
 from openai import Stream
 from openai.types.chat import (ChatCompletion, ChatCompletionChunk)
-from utils.db import store_conversation
-from utils.models import Completion, MessageRequest
+from utils.db import store_conversation, leave_feedback
+from utils.models import Completion, Feedback, MessageRequest
 from utils.openai import (build_completion_response, chat, chat_with_data,
                           convert_chat_with_data_response)
 from utils.auth import auth
@@ -192,3 +192,15 @@ def completion_chat_stream(message_request: MessageRequest):
         )
         yield f'\r\n--{_boundary}--\r\n'
     return Response(stream_with_context(generate()), content_type=f'multipart/x-mixed-replace; boundary={_boundary}')
+
+@api_v1.post('/feedback')
+@api_v1.doc("Send feedback to the team!")
+@api_v1.input(Feedback.Schema, arg_name="feedback", example={ # type: ignore
+                                                                                "feedback": "this question has no real good answer in the system",
+                                                                                "conversation": [{"role": "user", "content":"What is SSC's content management system?"}],
+                                                                                "positive": 0
+                                                                            })
+def feedback(feedback: Feedback):
+    convo_uuid = feedback.uuid if feedback.uuid else str(uuid.uuid4())
+    leave_feedback(feedback, convo_uuid)
+    return jsonify("Feedback saved!", 200)

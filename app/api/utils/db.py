@@ -1,21 +1,22 @@
-import asyncio
+import os
 import json
 import logging
 from azure.data.tables import TableServiceClient
 from azure.identity import DefaultAzureCredential
 import uuid
 
-from utils.models import Completion, MessageRequest
+from utils.models import Completion, Feedback, MessageRequest
 
-__all__ = ["store_conversation"]
+__all__ = ["store_conversation", "leave_feedback"]
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 # Use DefaultAzureCredential
 credential = DefaultAzureCredential()
-table_service_client = TableServiceClient(endpoint="https://sscassistantstorage.table.core.windows.net", credential=credential)
+table_service_client = TableServiceClient(endpoint=os.getenv("DATABASE_ENDPOINT") or "", credential=credential)
 chat_table_client = table_service_client.get_table_client(table_name="chat")
+feedback_table_client = table_service_client.get_table_client(table_name="feedback")
 
 def create_entity(data, partition_key: str, row_key_prefix: str):
     '''
@@ -50,5 +51,15 @@ def store_conversation(message_request: MessageRequest, completion: Completion, 
 
         chat_table_client.upsert_entity(message_request_entity)
         chat_table_client.upsert_entity(completion_entity)
+      except Exception as e:
+          logger.error(e)
+
+def leave_feedback(feedback: Feedback, conversation_uuid: str):
+      '''
+      Store the feedback in the database, we store what we received (history and question) and the completion (answer)
+      '''
+      try:
+        feedback_entity = create_entity(feedback, conversation_uuid, 'Feedback')
+        feedback_table_client.upsert_entity(feedback_entity)
       except Exception as e:
           logger.error(e)

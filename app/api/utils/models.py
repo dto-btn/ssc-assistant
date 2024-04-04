@@ -63,3 +63,11 @@ class AzureCognitiveSearchParameters:
 class AzureCognitiveSearchDataSource:
     type: str = field(init=False, default="AzureCognitiveSearch")
     parameters: AzureCognitiveSearchParameters
+
+@dataclass
+class Feedback:
+    feedback: Optional[str]
+    conversation: List[Message]
+    positive: bool
+    message: Message
+    uuid: str = field(default='')
