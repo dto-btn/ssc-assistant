@@ -39,6 +39,8 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
   const [feedback, setFeedback] = useState('');  
   const [isGoodResponse, setIsGoodResponse] = useState(false); 
   const [isThankYouVisible, setIsThankYouVisible] = useState(false);  
+  const isMostRecent = index === total - 1;  
+
 
 
   const components = {    
@@ -187,7 +189,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
                 onFocus={() => setIsFocused(true)}  
                 onBlur={() => setIsFocused(false)}   
                 tabIndex={0}>
-                {isCopied ? <CheckIcon style={{ fontSize: 20 }}/> : <ContentCopyIcon className="copy-icon" style={{ fontSize: 20, color: (isHovering || isFocused) ? '#4b3e99' : 'transparent' }}/>}
+                {isCopied ? <CheckIcon style={{ fontSize: 20 }}/> : <ContentCopyIcon className="copy-icon" style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>}
               </button>
             </Tooltip>
           </CopyToClipboard>
@@ -199,7 +201,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
                 onBlur={() => setIsFocused(false)} 
                 tabIndex={0}
             >  
-              <RefreshIcon style={{ fontSize: 20, color: (isHovering || isFocused) ? '#4b3e99' : 'transparent' }}/>  
+              <RefreshIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>  
             </button>
           </Tooltip> 
           <Tooltip title={t("good.response")} arrow>
@@ -213,7 +215,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
               onBlur={() => setIsFocused(false)} 
               tabIndex={0}
             >
-              <ThumbUpAltOutlinedIcon style={{ fontSize: 20, color: (isHovering || isFocused) ? '#4b3e99' : 'transparent' }}/>  
+              <ThumbUpAltOutlinedIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>  
             </button>
           </Tooltip>
           <Tooltip title={t("bad.response")} arrow>
@@ -227,7 +229,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
               onBlur={() => setIsFocused(false)} 
               tabIndex={0}
             >
-              <ThumbDownAltOutlinedIcon style={{ fontSize: 20, color: (isHovering || isFocused) ? '#4b3e99' : 'transparent' }}/>  
+              <ThumbDownAltOutlinedIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>  
             </button>
           </Tooltip>
           {isFeedbackVisible && (  
