@@ -33,6 +33,7 @@
     "rehype-highlight": "^7.0.0",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.0",
+    "uuid": "^9.0.1",
     "vite-express": "^0.15.0"
   },
   "devDependencies": {
