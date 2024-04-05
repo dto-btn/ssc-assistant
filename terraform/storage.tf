@@ -22,5 +22,5 @@ resource "azurerm_storage_table" "chat" {
 resource "azurerm_role_assignment" "storage_table_contributor" {
   scope                = azurerm_storage_account.main.id
   role_definition_name = "Storage Table Data Contributor"
-  principal_id         = azurerm_user_assigned_identity.api.principal_id
+  principal_id         = azurerm_linux_web_app.api.identity.0.principal_id
 }
