@@ -9,6 +9,12 @@ resource "azurerm_service_plan" "api" {
   os_type             = "Linux"
 }
 
+resource "azurerm_user_assigned_identity" "api" {
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  name                = "chatbot-backend-identity"
+}
+
 resource "azurerm_linux_web_app" "api" {
   name                = "${replace(var.project_name, "_", "-")}-api"
   resource_group_name = azurerm_resource_group.main.name
@@ -41,6 +47,11 @@ resource "azurerm_linux_web_app" "api" {
             retention_in_mb   = 35
           }
       }
+  }
+
+  identity {
+    type = "UserAssigned"
+    identity_ids = [ azurerm_user_assigned_identity.api.id ]
   }
 
   app_settings = {
