@@ -28,7 +28,8 @@ import { DrawerMenu } from "./components/DrawerMenu";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { loginRequest } from "./authConfig";
 import { callMsGraph } from './graph';
-import { UserContext } from './context/UserContext'
+import { UserContext } from './context/UserContext';
+import { v4 as uuidv4 } from 'uuid';
 
 const mainTheme = createTheme({
   palette: {
@@ -65,6 +66,8 @@ export const App = () => {
     accessToken: '',
     graphData: null
   });
+  const [uuid, setUuid] = useState<string>('');  
+
 
   const welcomeMessage: Completion = {
     message: {
@@ -119,6 +122,7 @@ export const App = () => {
       messages: messages,
       max: maxMessagesSent,
       top: 5,
+      uuid: uuid,
     };
 
     //update current chat window with the message sent..
@@ -238,6 +242,7 @@ export const App = () => {
   const handleClearChat = () => {
     localStorage.removeItem("chatHistory"); // Clear chat history from local storage
     setCompletions([welcomeMessage]);
+    setUuid('');
   };
 
   const setLangCookie = () => {
@@ -267,6 +272,7 @@ export const App = () => {
   // Load chat history if present
   useEffect(() => {
     loadChatHistory();
+    setUuid(uuidv4());
   }, []);
 
   useEffect(() => {
