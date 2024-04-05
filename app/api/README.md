@@ -24,8 +24,8 @@ JWT_SECRET=secret
 
 ```python
 import jwt
-encoded_jwt = jwt.encode({'roles': ['myssc', 'chat']}, 'secret', algorithm='HS256')
+encoded_jwt = jwt.encode({'roles': ['feedback', 'chat']}, 'secret', algorithm='HS256')
 print(encoded_jwt)
 ```
 
-Use this token for testing: `eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJyb2xlcyI6WyJteXNzYyIsImNoYXQiXX0.FVUJV6UEOD3wJa4QbAbrFIxAgtMZ-shH7W_G-_5XP_w`
+Use this token for testing: `eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJyb2xlcyI6WyJmZWVkYmFjayIsImNoYXQiXX0.d91fM8UyKsP2c_3rJQqrkESudlZPZpTRifidN8jghtI`
