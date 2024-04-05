@@ -55,7 +55,7 @@ _boundary = "GPT-Interaction"
     "total_tokens": 5203
 })
 @api_v1.doc(security='ApiKeyAuth')
-@auth.login_required(role='myssc')
+@auth.login_required(role='chat')
 def completion_myssc(message_request: MessageRequest):
     if not message_request.query and not message_request.messages:
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
@@ -82,7 +82,7 @@ def completion_myssc(message_request: MessageRequest):
                                                                             })
 @api_v1.output(Completion.Schema, content_type=f'multipart/x-mixed-replace; boundary={_boundary}') # type: ignore
 @api_v1.doc(security='ApiKeyAuth')
-@auth.login_required(role='myssc')
+@auth.login_required(role='chat')
 def completion_myssc_stream(message_request: MessageRequest):
     if not message_request.query and not message_request.messages:
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
@@ -195,6 +195,8 @@ def completion_chat_stream(message_request: MessageRequest):
 
 @api_v1.post('/feedback')
 @api_v1.doc("Send feedback to the team!")
+@api_v1.doc(security='ApiKeyAuth')
+@auth.login_required(role='feedback')
 @api_v1.input(Feedback.Schema, arg_name="feedback", example={ # type: ignore
                                                                                 "feedback": "this question has no real good answer in the system",
                                                                                 "conversation": [{"role": "user", "content":"What is SSC's content management system?"}],
