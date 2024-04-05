@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 
@@ -5,11 +6,13 @@ from apiflask import APIBlueprint
 from flask import Response, jsonify, request, stream_with_context
 from openai import Stream
 from openai.types.chat import (ChatCompletion, ChatCompletionChunk)
-from utils.models import Completion, MessageRequest
+from utils.db import store_conversation, leave_feedback
+from utils.models import Completion, Feedback, MessageRequest
 from utils.openai import (build_completion_response, chat, chat_with_data,
                           convert_chat_with_data_response)
-from utils.manage_message import load_messages
 from utils.auth import auth
+import uuid
+import threading
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -62,8 +65,13 @@ def completion_myssc(message_request: MessageRequest):
     message = completion.choices[0].message.model_dump()
     content_escaped_json = message['context']['messages'][0]['content']
     logging.debug(content_escaped_json)
+    completion_response = convert_chat_with_data_response(completion)
+    #log to database
+    convo_uuid = message_request.uuid if message_request.uuid else str(uuid.uuid4())
+    thread = threading.Thread(target=store_conversation, args=(message_request, completion_response, convo_uuid))
+    thread.start()
 
-    return convert_chat_with_data_response(completion)
+    return completion_response
 
 @api_v1.post('/completion/myssc/stream')
 @api_v1.doc("send a question to be processed by the gpt paired with search service. Answer is accessibe via json choices[0].content")
@@ -101,6 +109,10 @@ def completion_myssc_stream(message_request: MessageRequest):
         yield f'\r\n--{_boundary}\r\n'
         yield 'Content-Type: application/json\r\n\r\n'
         response = build_completion_response(content=content_txt, chat_completion_dict=context)
+        #log to database
+        convo_uuid = message_request.uuid if message_request.uuid else str(uuid.uuid4())
+        thread = threading.Thread(target=store_conversation, args=(message_request, response, convo_uuid))
+        thread.start()
         yield json.dumps(
              response.__dict__,
              default=lambda o: o.__dict__
@@ -132,8 +144,13 @@ def completion_chat(message_request: MessageRequest):
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
 
     completion: ChatCompletion = chat(message_request) # type: ignore
+    completion_response = convert_chat_with_data_response(completion)
+    #log to database
+    convo_uuid = message_request.uuid if message_request.uuid else str(uuid.uuid4())
+    thread = threading.Thread(target=store_conversation, args=(message_request, completion_response, convo_uuid))
+    thread.start()
 
-    return convert_chat_with_data_response(completion)
+    return completion_response
 
 @api_v1.post('/completion/chat/stream')
 @api_v1.doc("send a question to be processed by the gpt paired with search service. Answer is accessibe via json choices[0].content")
@@ -165,9 +182,25 @@ def completion_chat_stream(message_request: MessageRequest):
         yield f'\r\n--{_boundary}\r\n'
         yield 'Content-Type: application/json\r\n\r\n'
         response = build_completion_response(content=content_txt, chat_completion_dict=None)
+        #log to database
+        convo_uuid = message_request.uuid if message_request.uuid else str(uuid.uuid4())
+        thread = threading.Thread(target=store_conversation, args=(message_request, response, convo_uuid))
+        thread.start()
         yield json.dumps(
              response.__dict__,
              default=lambda o: o.__dict__
         )
         yield f'\r\n--{_boundary}--\r\n'
     return Response(stream_with_context(generate()), content_type=f'multipart/x-mixed-replace; boundary={_boundary}')
+
+@api_v1.post('/feedback')
+@api_v1.doc("Send feedback to the team!")
+@api_v1.input(Feedback.Schema, arg_name="feedback", example={ # type: ignore
+                                                                                "feedback": "this question has no real good answer in the system",
+                                                                                "conversation": [{"role": "user", "content":"What is SSC's content management system?"}],
+                                                                                "positive": 0
+                                                                            })
+def feedback(feedback: Feedback):
+    convo_uuid = feedback.uuid if feedback.uuid else str(uuid.uuid4())
+    leave_feedback(feedback, convo_uuid)
+    return jsonify("Feedback saved!", 200)
