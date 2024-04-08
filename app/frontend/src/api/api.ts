@@ -1,4 +1,5 @@
 import { ChatWith } from "../App";
+import { v4 as uuidv4 } from 'uuid';
 
 interface CompletionProps {
   request: MessageRequest;
@@ -88,7 +89,8 @@ export async function sendFeedback(feedback: string, isGoodResponse: boolean, co
     feedback,  
     conversation: conversationMessages,  
     positive: isGoodResponse,  
-    message  
+    message,
+    uuid: uuidv4()
   };  
     
   const response = await fetch(url, {    
