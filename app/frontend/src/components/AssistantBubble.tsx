@@ -236,18 +236,18 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
             <Dialog open={isFeedbackVisible} onClose={() => setIsFeedbackVisible(false)} fullWidth maxWidth={"sm"}>    
               {isThankYouVisible ? (  
                 <>  
-                  <DialogTitle>Thank you for your feedback!</DialogTitle>    
+                  <DialogTitle>{t("feedback.submitted")}</DialogTitle>    
                   <DialogActions>    
                     <Button onClick={() => {  
                       setIsThankYouVisible(false);  
                       setIsFeedbackVisible(false);  
-                    }}>Close</Button>    
+                    }}>{t("close")}</Button>    
                   </DialogActions>  
                 </>  
               ) : (  
                 <>  
-                  <DialogTitle>Please provide feedback on the response provided</DialogTitle>    
-                  <Typography variant="subtitle2" align="left" style={{ paddingLeft: "24px" }}>Message (optional)</Typography>     
+                  <DialogTitle>{t("provide.feedback")}</DialogTitle>    
+                  <Typography variant="subtitle2" align="left" style={{ paddingLeft: "24px" }}>{t("msg.opt")}</Typography>     
             
                   <DialogContent>    
                     <TextField    
@@ -259,7 +259,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
                     />    
                   </DialogContent>    
                   <DialogActions>    
-                    <Button onClick={() => setIsFeedbackVisible(false)}>Cancel</Button>    
+                    <Button onClick={() => setIsFeedbackVisible(false)}>{t("cancel")}</Button>    
                     <Button   
                       style={{ backgroundColor: "#4b3e99", color: "white"}}  
                       type="submit"   
@@ -278,9 +278,9 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
             
           {isThankYouVisible && (  
             <Dialog open={isThankYouVisible} onClose={() => setIsThankYouVisible(false)} fullWidth maxWidth={"sm"}>    
-              <DialogTitle>Thank you for your feedback!</DialogTitle>    
+              <DialogTitle>{t("feedback.submitted")}</DialogTitle>    
               <DialogActions>    
-                <Button onClick={() => setIsThankYouVisible(false)}>Close</Button>    
+                <Button onClick={() => setIsThankYouVisible(false)}>{t("close")}</Button>    
               </DialogActions>    
             </Dialog>    
           )}  

@@ -79,5 +79,8 @@
     "copy.success": "Copied!",
     "good.response": "Good response",
     "bad.response": "Bad response",
-    "submit": "Submit"
+    "submit": "Submit",
+    "accept": "Accept",
+    "cancel": "Cancel",
+    "provide.feedback": "Please provide feedback on the response provided"
 }
