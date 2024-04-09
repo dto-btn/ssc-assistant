@@ -24,11 +24,10 @@ interface AssistantBubbleProps {
     replayChat: () => void;
     index: number;
     total: number;
-    message: Message;
-    handleFeedbackSubmit: (feedback: string, isGoodResponse: boolean, message: Message) => void;
+    handleFeedbackSubmit: (feedback: string, isGoodResponse: boolean) => void;
   }
 
-export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayChat, index, total, handleFeedbackSubmit, message }: AssistantBubbleProps) => {
+export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayChat, index, total, handleFeedbackSubmit }: AssistantBubbleProps) => {
   const { t, i18n } = useTranslation();
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
@@ -50,7 +49,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
 
   const handleFeedback = (event: React.FormEvent) => {        
     event.preventDefault();        
-    handleFeedbackSubmit(feedback, isGoodResponse, message);      
+    handleFeedbackSubmit(feedback, isGoodResponse);      
     setIsFeedbackVisible(false);        
     setFeedback('');        
 };   

@@ -79,18 +79,13 @@ export async function completionMySSC({ request, updateLastMessage, chatWith }: 
                         }
 }
 
-export async function sendFeedback(feedback: string, isGoodResponse: boolean, conversation: Completion[], message: Message): Promise<Response> {    
+export async function sendFeedback(feedback: string, isGoodResponse: boolean, uuid: string): Promise<Response> {    
   const url = "/api/1.0/feedback";    
-    
-  // Extract just the messages from the conversation  
-  const conversationMessages: Message[] = conversation.map(completion => completion.message);  
   
   const feedbackObject = {  
     feedback,  
-    conversation: conversationMessages,  
     positive: isGoodResponse,  
-    message,
-    uuid: uuidv4()
+    uuid
   };  
     
   const response = await fetch(url, {    
