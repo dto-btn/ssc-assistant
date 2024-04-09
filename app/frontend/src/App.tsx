@@ -9,6 +9,8 @@ import {
   RadioGroup,
   Snackbar,
   Typography,
+  Modal,
+  Button,
 } from "@mui/material";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
@@ -23,6 +25,7 @@ import {
   Disclaimer,
   TopMenu,
   UserBubble,
+  LoginPage,
 } from "./components";
 import { DrawerMenu } from "./components/DrawerMenu";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
@@ -65,6 +68,8 @@ export const App = () => {
     accessToken: '',
     graphData: null
   });
+  const [open, setOpen] = useState(false);  
+
 
   const welcomeMessage: Completion = {
     message: {
@@ -285,6 +290,12 @@ export const App = () => {
     }
   }, [isAuthenticated]);
 
+  useEffect(() => {  
+    if (!isAuthenticated) {  
+      setOpen(true);  
+    }  
+  }, [isAuthenticated]);  
+
   return (
     <UserContext.Provider value={userData}>
       <ThemeProvider theme={mainTheme}>
@@ -398,6 +409,7 @@ export const App = () => {
         <Dial drawerVisible={openDrawer} onClearChat={handleClearChat} />
         <Disclaimer />
         <DrawerMenu openDrawer={openDrawer} toggleDrawer={setOpenDrawer} onClearChat={handleClearChat} setLangCookie={setLangCookie} login={handleLogin} logout={handleLogout}/>
+        {!isAuthenticated && <LoginPage open={open} setOpen={setOpen} />}  
       </ThemeProvider>
     </UserContext.Provider>
   );
