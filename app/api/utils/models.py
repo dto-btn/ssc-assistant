@@ -61,7 +61,7 @@ class AzureCognitiveSearchParameters:
 
 @dataclass
 class AzureCognitiveSearchDataSource:
-    type: str = field(init=False, default="AzureCognitiveSearch")
+    type: str = field(init=False, default="azure_search")
     parameters: AzureCognitiveSearchParameters
 
 @dataclass

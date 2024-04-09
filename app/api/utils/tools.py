@@ -14,27 +14,16 @@ logger.setLevel(logging.DEBUG)
 
 _limit = 100
 
-azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
-api_key                 = os.getenv("AZURE_OPENAI_API_KEY")
-api_version             = os.getenv("AZURE_OPENAI_VERSION", "2023-12-01-preview")
-
-client = AzureOpenAI(
-    api_version=api_version,
-    azure_endpoint=str(azure_openai_uri),
-    api_key=api_key
-)
+# Get the directory of the current file (tools.py)
+_current_dir = Path(__file__).parent
+# Construct the path to 'tools.json' within the same directory
+_tools_path = _current_dir / 'tools.json'
+# Open the file using the absolute path
+with _tools_path.open('r') as f:
+    _all_tools = json.load(f)
 
 def load_tools(toolsUsed: List[str]):
-    # Get the directory of the current file (tools.py)
-    current_dir = Path(__file__).parent
-    # Construct the path to 'tools.json' within the same directory
-    tools_path = current_dir / 'tools.json'
-    # Open the file using the absolute path
-    with tools_path.open('r') as f:
-        all_tools = json.load(f)
-
-    tools = [tool for tool in all_tools if 'tool_type' in tool and tool['tool_type'] in toolsUsed]
-
+    tools = [tool for tool in _all_tools if 'tool_type' in tool and tool['tool_type'] in toolsUsed]
     return tools
 
 def load_records():
