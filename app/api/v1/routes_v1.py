@@ -61,10 +61,6 @@ def completion_myssc(message_request: MessageRequest):
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
 
     completion: ChatCompletion = chat_with_data(message_request) # type: ignore
-
-    message = completion.choices[0].message.model_dump()
-    content_escaped_json = message['context']['messages'][0]['content']
-    logging.debug(content_escaped_json)
     completion_response = convert_chat_with_data_response(completion)
     #log to database
     convo_uuid = message_request.uuid if message_request.uuid else str(uuid.uuid4())
@@ -87,7 +83,15 @@ def completion_myssc_stream(message_request: MessageRequest):
     if not message_request.query and not message_request.messages:
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
 
-    completion: Stream[ChatCompletionChunk] = chat_with_data(message_request, stream=True) # type: ignore
+    completion: ChatCompletion | Stream[ChatCompletionChunk] = chat_with_data(message_request, stream=True)
+
+    if isinstance(completion, ChatCompletion):
+        completion_response = convert_chat_with_data_response(completion)
+        #log to database
+        convo_uuid = message_request.uuid if message_request.uuid else str(uuid.uuid4())
+        thread = threading.Thread(target=store_conversation, args=(message_request, completion_response, convo_uuid))
+        thread.start()
+        return completion_response
 
     def generate():
         context = None

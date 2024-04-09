@@ -61,22 +61,18 @@ def _create_azure_cognitive_search_data_source() -> AzureCognitiveSearchDataSour
         parameters=parameters
     )
 
-def _check_tools(message_request: MessageRequest) -> List[ChatCompletionMessageParam]:
+def chat_with_data(message_request: MessageRequest, stream=False) -> Union[ChatCompletion,Stream[ChatCompletionChunk]]:
+    """
+    Initiate a chat with via openai api using data_source (azure cognitive search)
+
+    Documentation on this method: 
+        - https://github.com/openai/openai-cookbook/blob/main/examples/azure/chat_with_your_own_data.ipynb
+        - https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
+    """
     messages = load_messages(message_request)
-    response_messages = messages
-    # Check if tools are used and load them
-    logger.info("_check_tools -> Tools used: " + str(message_request.tools))
     data_source = _create_azure_cognitive_search_data_source()
-    if message_request.tools:
-        tools = load_tools(message_request.tools)
-        logger.info("_check_tools -> using model: " + model)
-        completion = client.chat.completions.create(
-            messages=response_messages,
-            model=model,
-            #tools=tools,
-            extra_body={ #https://learn.microsoft.com/en-us/azure/ai-services/openai/references/azure-search?tabs=python
-                "data_sources": [
-                    {
+    data_sources = { #https://learn.microsoft.com/en-us/azure/ai-services/openai/references/azure-search?tabs=python
+                "data_sources": [{
                     "type": data_source.type,
                     "parameters": {
                         "endpoint": data_source.parameters.endpoint,
@@ -95,82 +91,34 @@ def _check_tools(message_request: MessageRequest) -> List[ChatCompletionMessageP
                             "type": "deployment_name",
                             "deployment_name": "text-embedding-ada-002"
                         },
-                        #"embedding_endpoint": f"{azure_openai_uri}/openai/deployments/text-embedding-ada-002/extensions/chat/completions?api-version={api_version}",
-                        #"embeddingKey": key
-                        # "embeddingDependency": {
-                        #     "type": "DeploymentName",
-                        #     "deploymentName": "text-embedding-ada-002"
-                        # },
-                        #"roleInformation": "add prompt here...",
-                        #"filter": Null
-                        }
                     }
-                ],
-            },
+                }],
+            }
+
+    if message_request.tools:
+        logger.debug(f"Using Tools: {message_request.tools}")
+        tools = load_tools(message_request.tools)
+        completion = client.chat.completions.create(
+            messages=messages,
+            model=model,
+            tools=tools,
+            extra_body=data_sources,
             stream=False
         )
-        print(completion.model_dump_json)
-        if completion.choices[0].message.content is not None:
-            response_messages.append({"role": "assistant", "content": completion.choices[0].message.content})
-            logger.info(f"_check_tools: got response from first call: {response_messages}")
-        if completion.choices[0].message.tool_calls:
-            response_messages = call_tools(completion.choices[0].message.tool_calls, messages)
-            logger.info(f"_check_tools: INVOKED TOOLS: {response_messages}")
-    return response_messages
 
-def chat_with_data(message_request: MessageRequest, stream=False) -> Union[ChatCompletion,Stream[ChatCompletionChunk]]:
-    """
-    Initiate a chat with via openai api using data_source (azure cognitive search)
-    """
-    # embeddings = client.embeddings.create(
-    #     model="text-embedding-ada-002",
-    #     input="The food was delicious and the waiter..."
-    # )
-    # print(embeddings)
-    response_messages = _check_tools(message_request)
-    logger.debug(f"THE RESPONSE MESSAGE FROM CHECK TOOLS\n\n{response_messages}")
-
-    #logger.debug(f"AND THE ONES FROM THE REQUEST\n\n{load_messages(message_request)}")
-
-    data_source = _create_azure_cognitive_search_data_source()
-    # https://github.com/openai/openai-cookbook/blob/main/examples/azure/chat_with_your_own_data.ipynb
-    #https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
-    logger.info("chat_with_data -> using model: " + model)
-
-    # Create completion
+        # check if tools were invoked, if not, we simply return the completion as is..
+        if not completion.choices[0].message.tool_calls:
+            return completion
+        
+        messages = call_tools(completion.choices[0].message.tool_calls, messages)
+        logger.debug(f"INVOKED TOOLS, here is the result: {messages}")
+            
     return client.chat.completions.create(
-        messages=response_messages,
-        model=model,
-        extra_body={ #https://learn.microsoft.com/en-us/azure/ai-services/openai/references/azure-search?tabs=python
-            "data_sources": [
-                {
-                "type": data_source.type,
-                "parameters": {
-                    "endpoint": data_source.parameters.endpoint,
-                    "key": data_source.parameters.key,
-                    "index_name": data_source.parameters.indexName,
-                    "in_scope": True,
-                    "top_n_documents": message_request.top,
-                    "semantic_configuration": "default",
-                    "query_type": "vector_simple_hybrid",
-                    "fields_mapping": {},
-                    "authentication": {
-                        "type": "api_key",
-                        "key": key
-                    },
-                    "embedding_dependency": {
-                        "type": "deployment_name",
-                        "deployment_name": "text-embedding-ada-002"
-                    },
-                    #"embedding_deployment_name": "text-embedding-ada-002"
-                    #"roleInformation": "add prompt here...",
-                    #"filter": Null
-                    }
-                }
-            ],
-        },
-        stream=stream
-    )
+            messages=messages,
+            model=model,
+            #extra_body=data_sources,
+            stream=stream
+        )
 
 def convert_chat_with_data_response(chat_completion: ChatCompletion) -> Completion:
     """
@@ -203,17 +151,13 @@ def build_completion_response(content: str,
     if chat_completion_dict and 'context' in chat_completion_dict:
         print(chat_completion_dict['context'])
         context_dict = chat_completion_dict['context']
-        # the content field is serialized json containing citations.
-        content_dict = json.loads(context_dict['content'])
-
         citations: List[Citation] = [Citation(
             content=cit['content'],
             url=cit['url'],
-            metadata=Metadata(chunking=cit['metadata']),
             title=cit['title']
-        ) for cit in content_dict['citations']]
+        ) for cit in context_dict['citations']]
 
-        context = Context(role=context_dict['role'], citations=citations, intent=json.loads(content_dict['intent']))
+        context = Context(role=role, citations=citations, intent=[json.loads(context_dict['intent'])])
 
     message = Message(
         role=role,

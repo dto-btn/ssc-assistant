@@ -11,7 +11,6 @@ class Metadata:
 class Citation:
     content: str
     url: str
-    metadata: Metadata
     title: str
     chunk_id: Optional[str] = None
     id: Optional[Any] = None  # Using Any type as id is null in the provided JSON
