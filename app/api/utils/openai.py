@@ -100,6 +100,8 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Union[ChatC
     """
     1. Check if we are to use tools
     """
+    corporate_question = False
+
     if message_request.tools:
         logger.debug(f"Using Tools: {message_request.tools}")
         tools = load_tools(message_request.tools)
@@ -116,15 +118,25 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Union[ChatC
         if completion_tools.choices[0].message.tool_calls:
             logger.debug(f"Tools were used in the request and OpenAI deemed it needed to invoke functions... gathering function data ...")
             logger.debug(f"tool_calls: {[f.function.name for f in completion_tools.choices[0].message.tool_calls]}")
+            if "corporate_question" in [f.function.name for f in completion_tools.choices[0].message.tool_calls]:
+                logger.debug("### DETECTED CORPORATE QUESTION ###")
+                corporate_question = True
             messages = call_tools(completion_tools.choices[0].message.tool_calls, messages)
             logger.debug(messages[-1])
 
-    return client.chat.completions.create(
-        messages=messages,
-        model=model,
-        extra_body=data_sources,
-        stream=stream
-    )
+    if corporate_question:
+        return client.chat.completions.create(
+            messages=messages,
+            model=model,
+            extra_body=data_sources,
+            stream=stream
+        )
+    else:
+        return client.chat.completions.create(
+            messages=messages,
+            model=model,
+            stream=stream
+        )
 
 def convert_chat_with_data_response(chat_completion: ChatCompletion) -> Completion:
     """
@@ -155,7 +167,6 @@ def build_completion_response(content: str,
     """
     context = None
     if chat_completion_dict and 'context' in chat_completion_dict:
-        print(chat_completion_dict['context'])
         context_dict = chat_completion_dict['context']
         citations: List[Citation] = [Citation(
             content=cit['content'],

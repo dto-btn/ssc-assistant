@@ -118,7 +118,7 @@ export const App = () => {
       messages: messages,
       max: maxMessagesSent,
       top: 5,
-      tools: ['geds']
+      tools: ['corporate', 'geds']
     };
 
     //update current chat window with the message sent..
