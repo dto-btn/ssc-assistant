@@ -56,7 +56,6 @@ export const App = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
-  const [chatWith, setChatWith] = useState<ChatWith>(ChatWith.Data);
   const [lastUserMessage, setLastUserMessage] = useState<string | null>(null); 
   const [openDrawer, setOpenDrawer] = useState<boolean>(false);
   const isAuthenticated = useIsAuthenticated();
@@ -135,8 +134,7 @@ export const App = () => {
     try {
       const completionResponse = await completionMySSC({
         request: request,
-        updateLastMessage: updateLastMessage,
-        chatWith: chatWith,
+        updateLastMessage: updateLastMessage
       });
 
       setCompletions((prevCompletions) => {
@@ -187,13 +185,6 @@ export const App = () => {
       return;
     }
     setErrorSnackbar(false);
-  };
-
-  const handleChatWithChange = (
-    _event: ChangeEvent<HTMLInputElement>,
-    value: string
-  ) => {
-    setChatWith(value as ChatWith);
   };
 
   const replayChat = () => {  
@@ -338,40 +329,7 @@ export const App = () => {
               bgcolor: "background.default",
               padding: "1rem",
             }}
-          >
-            <Grid
-              container
-              item
-              xs={12}
-              alignItems="center"
-              justifyContent="center"
-            >
-              <FormLabel id="gpt-mode">
-                <Typography variant="body1" sx={{ pr: "10px" }}>
-                  {t("chat.with.gpt")}
-                </Typography>
-              </FormLabel>
-              <FormControl>
-                <RadioGroup
-                  row
-                  aria-labelledby="gpt-mode"
-                  value={chatWith}
-                  onChange={handleChatWithChange}
-                  name="gpt-mode-radio-btn"
-                >
-                  <FormControlLabel
-                    value="data"
-                    control={<Radio />}
-                    label={t("chat.with.gpt.data")}
-                  />
-                  <FormControlLabel
-                    value="tools"
-                    control={<Radio />}
-                    label={t("chat.with.gpt.tools")}
-                  />
-                </RadioGroup>
-              </FormControl>
-            </Grid>
+          > 
             <ChatInput
               clearOnSend
               placeholder={t("placeholder")}

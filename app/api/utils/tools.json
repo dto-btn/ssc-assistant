@@ -1,85 +1,10 @@
 [
   {
     "type": "function",
-    "tool_type": "bits",
-    "function": {
-      "name": "get_records_req_impl_by_year",
-      "description": "Get the Business Request (BR) records that are due to be implemented by given year",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "year": {
-            "type": "string",
-            "description": "The year the Business Request (BR) was implemented in, e.g. 2024."
-          }
-        },
-        "required": ["year"]
-      }
-    }
-  },
-  {
-    "type": "function",
-    "tool_type": "bits",
-    "function": {
-      "name": "get_br_count_with_target_impl_date",
-      "description": "Get the amount of business records (BR) that have a valid (or not) target implementation date (TID). Returns an amount of BRs that matches the criteria",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "valid": {
-            "type": "boolean",
-            "description": "If we are checking for BRs with valid target implementation dates (TID) or not."
-          }
-        }
-      }
-    }
-  },
-  {
-    "type": "function",
-    "tool_type": "bits",
-    "function": {
-      "name": "get_forecasted_br_for_month",
-      "description": "Get the Business Request (BR) records that are forecasted for a given month (and optionally a year, else uses the current year)",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "month": {
-            "type": "string",
-            "description": "The month the Business Request (BR) is forecasted to be implemented in, e.g. April, March, Jun, Dec, FEB, etc."
-          },
-          "year": {
-            "type": "string",
-            "description": "The year the Business Request (BR) is forecasted to be implemented in, e.g. 2024."
-          }
-        },
-        "required": ["month"]
-      }
-    }
-  },
-  {
-    "type": "function",
-    "tool_type": "bits",
-    "function": {
-      "name": "get_br_information",
-      "description": "Gets information on a specific business request (BR) via it's BR number. It's a 5 or 6 digit number that can frequently be prepended by the letters BR, e.g. BR654321",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "br_number": {
-            "type": "integer",
-            "description": "The busines request (BR) number, it can consist of 5 or 6 digits, can sometimes be pre-pended by BR12345 for instance."
-          }
-        },
-        "required": ["br_number"]
-      }
-    }
-  },
-  {
-    "type": "function",
     "tool_type": "geds",
     "function": {
       "name": "get_employee_information",
-      "description": "Gets information on a specific employee by their name, it typically consists of a first name (given name) and last name (surname) of an employee, e.g. John Smith",
+      "description": "Gets information on Government of Canada employee(s) by their name, it typically consists of a first name (given name) and last name (surname) of an employee, e.g. John Smith. Do NOT use this method unless you have been clearly asked by a user to provide contact information for a person and been provided with a full name.",
       "parameters": {
         "type": "object",
         "properties": {
@@ -92,7 +17,8 @@
             "description": "The last name (surname) of an employee, e.g. Smith, Johnson, or Jones"
           }
         }
-      }
+      },
+      "required": ["employee_lastname", "employee_firstname"]
     }
   },
   {
@@ -100,7 +26,7 @@
     "tool_type": "geds",
     "function": {
       "name": "get_employee_by_phone_number",
-      "description": "Gets information on a specific employee by their phone number, it typically consists of a 10 digit phone number, e.g. 123-456-7890 or 1234567890",
+      "description": "Gets information on a specific Government of Canada employee by their phone number, it typically consists of a 10 digit phone number, e.g. 123-456-7890 or 1234567890. Do NOT use this method unless you have been clearly asked by a user to provide contact information for a person and been provided with a valid phone number for Canada area.",
       "parameters": {
         "type": "object",
         "properties": {

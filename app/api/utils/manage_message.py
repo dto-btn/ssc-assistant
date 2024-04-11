@@ -35,20 +35,20 @@ def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessage
         logger.info("Got no system prompt, will add one")
         messages.append(ChatCompletionSystemMessageParam(content=SYSTEM_PROMPT_EN if message_request.lang == 'en' else SYSTEM_PROMPT_FR, role="system"))
     else:
-        messages.append(ChatCompletionSystemMessageParam(content=message_request.messages[0].content, role='system'))
+        messages.append(ChatCompletionSystemMessageParam(content=str(message_request.messages[0].content), role='system'))
 
     # Convert MessageRequest messages to ChatCompletionMessageParam
     for message in message_request.messages or []:
         logging.debug(message)
         if message.role == "user":
-            messages.append(ChatCompletionUserMessageParam(content=message.content, role='user'))
+            messages.append(ChatCompletionUserMessageParam(content=str(message.content), role='user'))
         elif message.role == "assistant":
             messages.append(ChatCompletionAssistantMessageParam(content=message.content, role='assistant'))
         # Add other conditions if there are other roles like tools perhaps??
 
     # if messages is still one, meaning we didn't add a message it means query was passed via query str
     if len(messages) == 1:
-        messages.append(ChatCompletionUserMessageParam(content=message_request.query, role='user'))
+        messages.append(ChatCompletionUserMessageParam(content=str(message_request.query), role='user'))
     
     # parameter message history via max attribute
     max = min(message_request.max, 20)

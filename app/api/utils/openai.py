@@ -45,6 +45,8 @@ model: str              = os.getenv("AZURE_OPENAI_MODEL", "gpt-4-1106")
 # https://learn.microsoft.com/en-us/azure/ai-services/openai/references/on-your-data?tabs=python
 # versions capabilities
 # https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
+# example of using functions with azure search instead of the data source 
+#   https://github.com/Azure-Samples/openai/blob/main/Basic_Samples/Functions/functions_with_azure_search.ipynb
 client = AzureOpenAI(
     api_version=api_version,
     azure_endpoint=str(azure_openai_uri),
@@ -108,10 +110,11 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Union[ChatC
 
         # check if tools were invoked, if not, we simply return the completion as is..
         if not completion.choices[0].message.tool_calls:
+            logger.debug(f"Did not use tools, will simply return the completion as-is.")
             return completion
         
         messages = call_tools(completion.choices[0].message.tool_calls, messages)
-        logger.debug(f"INVOKED TOOLS, here is the result: {messages}")
+        logger.debug(f"Invoked tools, will proceed with another call to OpenAI")
             
     return client.chat.completions.create(
             messages=messages,

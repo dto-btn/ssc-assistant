@@ -1,16 +1,12 @@
-import { ChatWith } from "../App";
-
 interface CompletionProps {
   request: MessageRequest;
   updateLastMessage: (message_chunk: string) => void;
-  chatWith: ChatWith;
 }
 
-export async function completionMySSC({ request, updateLastMessage, chatWith }: CompletionProps): Promise<Completion> {
+export async function completionMySSC({ request, updateLastMessage }: CompletionProps): Promise<Completion> {
   let completion: Completion | undefined;
-  let streamingContent = '';
 
-  let url = "/api/1.0/completion/" + (chatWith == ChatWith.Data ? "myssc" : "chat") + "/stream";
+  let url = "/api/1.0/completion/chat/stream";
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -38,11 +34,10 @@ export async function completionMySSC({ request, updateLastMessage, chatWith }: 
   const decoder = new TextDecoder('utf-8');
   let partialData = '';
 
-  //const regex = `/--${boundary}\s+Content-Type: text\/plain\s+([\s\S]+?)\s+--${boundary}\s+Content-Type: application\/json/`;
   const startBoundaryRegex = /--GPT-Interaction\s+Content-Type: text\/plain\s+/;
   const endBoundaryRegex = /--GPT-Interaction\s+Content-Type: application\/json/;
   const finalBoundaryRegex = /--GPT-Interaction--/;
-  const contentRegex = new RegExp(`${startBoundaryRegex.source}([\\s\\S]+?)(${endBoundaryRegex.source}|$)`, 's');
+  const contentRegex = new RegExp(`${startBoundaryRegex.source}([\\s\\S]*?)(?=${endBoundaryRegex.source})`, 's');
   const jsonRegex = new RegExp(`${endBoundaryRegex.source}([\\s\\S]+?)${finalBoundaryRegex.source}`, 's');
 
   try {
@@ -53,7 +48,7 @@ export async function completionMySSC({ request, updateLastMessage, chatWith }: 
       partialData += decoder.decode(value, { stream: true });
       const result = contentRegex.exec(partialData);
       if(result && result[1]) {
-        const content = streamingContent = result[1].trim();
+        const content = result[1].trim();
         updateLastMessage(content);
       }
     }
@@ -63,17 +58,15 @@ export async function completionMySSC({ request, updateLastMessage, chatWith }: 
     if(json && json[1]){
       completion = JSON.parse(json[1]);
     }
+
+    if (!completion) {
+      throw new Error('Failed to obtain completion from the server response.');
+    }
   } catch (error) {
     console.error('Error while reading the stream:', error);
     throw error;
   } finally {
     reader.releaseLock();
   }
-
-  return completion ||  {
-                          message: {
-                            role:'assistant', 
-                            content: streamingContent
-                          }
-                        }
+  return completion;
 }
