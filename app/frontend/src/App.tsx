@@ -1,19 +1,12 @@
 import {
   Alert,
   Box,
-  FormControl,
-  FormControlLabel,
-  FormLabel,
-  Grid,
-  Radio,
-  RadioGroup,
   Snackbar,
-  Typography,
 } from "@mui/material";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import Cookies from "js-cookie";
-import { ChangeEvent, Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { completionMySSC } from "./api/api";
 import {
