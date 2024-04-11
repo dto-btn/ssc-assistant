@@ -16,9 +16,9 @@
             "type": "string",
             "description": "The last name (surname) of an employee, e.g. Smith, Johnson, or Jones"
           }
-        }
-      },
-      "required": ["employee_lastname", "employee_firstname"]
+        },
+        "required": ["employee_lastname", "employee_firstname"]
+      }
     }
   },
   {

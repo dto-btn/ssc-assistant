@@ -25,7 +25,7 @@ __all__ = ["chat_with_data", "convert_chat_with_data_response", "build_completio
 
 azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
 api_key                 = os.getenv("AZURE_OPENAI_API_KEY")
-api_version             = os.getenv("AZURE_OPENAI_VERSION", "2024-02-01")
+api_version             = os.getenv("AZURE_OPENAI_VERSION", "2024-03-01-preview")
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
 index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "latest")
@@ -97,31 +97,34 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Union[ChatC
                 }],
             }
 
+    """
+    1. Check if we are to use tools
+    """
     if message_request.tools:
         logger.debug(f"Using Tools: {message_request.tools}")
         tools = load_tools(message_request.tools)
-        completion = client.chat.completions.create(
+        """
+        1a. Invoke tools completion, 
+        """
+        completion_tools = client.chat.completions.create(
             messages=messages,
             model=model,
             tools=tools,
-            extra_body=data_sources,
             stream=False
         )
 
-        # check if tools were invoked, if not, we simply return the completion as is..
-        if not completion.choices[0].message.tool_calls:
-            logger.debug(f"Did not use tools, will simply return the completion as-is.")
-            return completion
-        
-        messages = call_tools(completion.choices[0].message.tool_calls, messages)
-        logger.debug(f"Invoked tools, will proceed with another call to OpenAI")
-            
+        if completion_tools.choices[0].message.tool_calls:
+            logger.debug(f"Tools were used in the request and OpenAI deemed it needed to invoke functions... gathering function data ...")
+            logger.debug(f"tool_calls: {[f.function.name for f in completion_tools.choices[0].message.tool_calls]}")
+            messages = call_tools(completion_tools.choices[0].message.tool_calls, messages)
+            logger.debug(messages[-1])
+
     return client.chat.completions.create(
-            messages=messages,
-            model=model,
-            #extra_body=data_sources,
-            stream=stream
-        )
+        messages=messages,
+        model=model,
+        extra_body=data_sources,
+        stream=stream
+    )
 
 def convert_chat_with_data_response(chat_completion: ChatCompletion) -> Completion:
     """

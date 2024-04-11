@@ -188,16 +188,12 @@ def get_employee_by_phone_number(employee_phone_number: str):
         logger.debug("Unable to get any info.", response)
         return "Didn't find any matching employee with that phone number."
 
-def call_tools(tool_calls , messages: List[ChatCompletionMessageParam]):
+def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[ChatCompletionMessageParam]:
     """
     Call the tool functions and return a new completion with the results
     """
     # Define the available functions
     available_functions = {
-        "get_records_req_impl_by_year": get_records_req_impl_by_year,
-        "get_br_count_with_target_impl_date": get_br_count_with_target_impl_date,
-        "get_forecasted_br_for_month": get_forecasted_br_for_month,
-        "get_br_information": get_br_information,
         "get_employee_information": get_employee_information,
         "get_employee_by_phone_number": get_employee_by_phone_number
     }
@@ -205,33 +201,33 @@ def call_tools(tool_calls , messages: List[ChatCompletionMessageParam]):
     # Send the info for each function call and function response to the model
     for tool_call in tool_calls:
         function_name = tool_call.function.name
-        function_to_call = available_functions[function_name]
-        function_args = json.loads(tool_call.function.arguments)
+        if function_name in available_functions:
+            function_to_call = available_functions[function_name]
+            function_args = json.loads(tool_call.function.arguments)
 
-        # Prepare the arguments for the function call
-        prepared_args = {arg: function_args[arg] for arg in function_args}
+            # Prepare the arguments for the function call
+            prepared_args = {arg: function_args[arg] for arg in function_args}
 
-        # Call the function with the prepared arguments
-        function_response = function_to_call(**prepared_args)
-        messages.append({
-            "role": "assistant",
-            "content": None,
-            "function_call": {
+            # Call the function with the prepared arguments
+            function_response = function_to_call(**prepared_args)
+            messages.append({
+                "role": "assistant",
+                "content": None,
+                "function_call": {
+                    "name": function_name,
+                    "arguments": json.dumps(function_args)
+                }
+            })
+
+            # Convert the function response to a string
+            response_as_string = "\n".join(function_response) if function_response is list else str(function_response)
+
+            # Add the function response to the messages
+            messages.append({
+                "role": "function",
                 "name": function_name,
-                "arguments": json.dumps(function_args)
-            }
-        })
-
-        # Convert the function response to a string
-        response_as_string = "\n".join(function_response) if function_response is list else str(function_response)
-
-        # Add the function response to the messages
-        messages.append({
-            "role": "function",
-            "name": function_name,
-            "content": response_as_string
-        })
-
-        # reworking with this example to refine a bit:
-        # https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling?tabs=python#working-with-function-calling
+                "content": response_as_string
+            })
+            # reworking with this example to refine a bit:
+            # https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling?tabs=python#working-with-function-calling
     return messages
