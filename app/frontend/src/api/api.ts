@@ -25,7 +25,6 @@ export async function completionMySSC({ request, updateLastMessage }: Completion
     throw new Error('Boundary not found in the content type header.');
   }
 
-  //const boundary = boundaryMatch[1];
   const reader = response.body?.getReader();
   if (!reader) {
     throw new Error('Response body reader not available.');
@@ -68,5 +67,30 @@ export async function completionMySSC({ request, updateLastMessage }: Completion
   } finally {
     reader.releaseLock();
   }
+
   return completion;
+}
+
+export async function sendFeedback(feedback: string, isGoodResponse: boolean, uuid: string): Promise<Response> {
+  const url = "/api/1.0/feedback";
+
+  const feedbackObject = {
+    feedback,
+    positive: isGoodResponse,
+    uuid
+  };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(feedbackObject)
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to send feedback');
+  }
+
+  return response;
 }

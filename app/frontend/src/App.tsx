@@ -8,7 +8,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import Cookies from "js-cookie";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { completionMySSC } from "./api/api";
+import { completionMySSC, sendFeedback } from "./api/api";
 import {
   AssistantBubble,
   ChatInput,
@@ -21,7 +21,8 @@ import { DrawerMenu } from "./components/DrawerMenu";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { loginRequest } from "./authConfig";
 import { callMsGraph } from './graph';
-import { UserContext } from './context/UserContext'
+import { UserContext } from './context/UserContext';
+import { v4 as uuidv4 } from 'uuid';
 
 const mainTheme = createTheme({
   palette: {
@@ -33,7 +34,7 @@ const mainTheme = createTheme({
     },
     background: {
       default: "#f2f2f2",
-    },
+    },  
   },
 });
 
@@ -53,6 +54,7 @@ export const App = () => {
   const [openDrawer, setOpenDrawer] = useState<boolean>(false);
   const isAuthenticated = useIsAuthenticated();
   const {instance, accounts} = useMsal();
+  const [uuid, setUuid] = useState<string>('');  
   const [userData, setUserData] = useState({
     accessToken: '',
     graphData: null
@@ -111,7 +113,8 @@ export const App = () => {
       messages: messages,
       max: maxMessagesSent,
       top: 5,
-      tools: ['corporate', 'geds']
+      tools: ['corporate', 'geds'],
+      uuid: uuid,
     };
 
     //update current chat window with the message sent..
@@ -155,6 +158,11 @@ export const App = () => {
       setIsLoading(false);
     }
   };
+
+  const handleFeedbackSubmit = async (feedback: string, isGoodResponse: boolean) => {      
+    sendFeedback(feedback, isGoodResponse, uuid);  
+};   
+ 
 
   const updateLastMessage = (message_chunk: string) => {
     setCompletions((prevCompletions) => {
@@ -201,6 +209,10 @@ export const App = () => {
     [completions[completions.length - 1].message.content]
   );
 
+  useEffect(() => {
+    setUuid(uuidv4());
+  }, []);
+
   const saveChatHistory = (chatHistory: Completion[]) => {
     localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
   };
@@ -218,6 +230,7 @@ export const App = () => {
   const handleClearChat = () => {
     localStorage.removeItem("chatHistory"); // Clear chat history from local storage
     setCompletions([welcomeMessage]);
+    setUuid(uuidv4());
   };
 
   const setLangCookie = () => {
@@ -289,6 +302,7 @@ export const App = () => {
             sx={{
               overflowY: "hidden",
               padding: "2rem",
+              paddingTop: "6rem",
               alignItems: "flex-end",
             }}
           >
@@ -303,6 +317,7 @@ export const App = () => {
                     replayChat={replayChat}
                     index={index}
                     total={completions.length}
+                    handleFeedbackSubmit={handleFeedbackSubmit}
                     />
                 )}
 

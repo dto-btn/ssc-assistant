@@ -64,5 +64,13 @@
     "copytext": "Copier",
     "regenerate": "Régénérer",
     "copy": "Copier",
-    "copy.success": "Copié!"
+    "copy.success": "Copié!",
+    "good.response": "Bonne réponse",
+    "bad.response": "Mauvaise réponse",
+    "submit": "Soumettre",
+    "accept": "Accepter",
+    "msg.opt": "Message (optionnel)",
+    "cancel": "Annuler",
+    "provide.feedback": "Veuillez donner votre avis sur la réponse fournie",
+    "feedback.submitted": "Retour soumis, merci!"
 }

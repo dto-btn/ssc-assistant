@@ -12,7 +12,7 @@ const onProxyReqMiddleware = (proxyReq, req, res) => {
     proxyReq.setHeader('X-API-Key', process.env.VITE_API_KEY);
 };
 
-app.use('/api/1.0/completion/*', createProxyMiddleware({
+app.use('/api/1.0/*', createProxyMiddleware({
     target: process.env.VITE_API_BACKEND,
     changeOrigin: true,
     onProxyReq: onProxyReqMiddleware,

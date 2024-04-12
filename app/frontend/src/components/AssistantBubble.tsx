@@ -1,4 +1,4 @@
-import { Box, Paper, Container, Divider, Chip, Stack, Typography, Link } from '@mui/material';
+import {  Dialog, DialogTitle, DialogContent, DialogActions, Box, Paper, Container, Divider, Chip, Stack, Typography, Link } from '@mui/material';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -11,6 +11,10 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import Tooltip from '@mui/material/Tooltip';
 import CheckIcon from '@mui/icons-material/Check';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import ThumbUpAltOutlinedIcon from '@mui/icons-material/ThumbUpAltOutlined';
+import ThumbDownAltOutlinedIcon from '@mui/icons-material/ThumbDownAltOutlined';
+import TextField from '@mui/material/TextField';  
+import Button from '@mui/material/Button'; 
 
 interface AssistantBubbleProps {
     text: string;
@@ -20,20 +24,37 @@ interface AssistantBubbleProps {
     replayChat: () => void;
     index: number;
     total: number;
+    handleFeedbackSubmit: (feedback: string, isGoodResponse: boolean) => void;
   }
 
-export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayChat, index, total }: AssistantBubbleProps) => {
+export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayChat, index, total, handleFeedbackSubmit }: AssistantBubbleProps) => {
   const { t, i18n } = useTranslation();
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
   const [isHovering, setIsHovering] = useState(false);  
   const [isCopied, setIsCopied] = useState(false);  
   const [isFocused, setIsFocused] = useState(false);  
+  const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);  
+  const [feedback, setFeedback] = useState('');  
+  const [isGoodResponse, setIsGoodResponse] = useState(false); 
+  const [isThankYouVisible, setIsThankYouVisible] = useState(false);  
+  const isMostRecent = index === total - 1;  
+
+
+
   const components = {    
     a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <Link target="_blank" rel="noopener noreferrer" {...props} />,    
   };
   const [citationNumberMapping, setCitationNumberMapping] = useState<{ [key: number]: number }>({});  
 
+  const handleFeedback = (event: React.FormEvent) => {        
+    event.preventDefault();        
+    handleFeedbackSubmit(feedback, isGoodResponse);      
+    setIsFeedbackVisible(false);        
+    setFeedback('');        
+};   
+ 
+  
 
   function processText(text: string, citations: Citation[]) {
     // Regular expression to find all citation references like [doc1], [doc3], etc.
@@ -160,19 +181,17 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
       </Box>
       <Box>
         <Paper sx={{backgroundColor: 'transparent', boxShadow: 'none', mt: 1, ml:2}}>
-
           <CopyToClipboard text={text} onCopy={() => setIsCopied(true)}>
-            <Tooltip title={isCopied ? t("copy.success") : t("copy")} arrow> 
+            <Tooltip title={isCopied ? t("copy.success") : t("copy")} arrow>
               <button 
                 style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none' }}
                 onFocus={() => setIsFocused(true)}  
                 onBlur={() => setIsFocused(false)}   
                 tabIndex={0}>
-                {isCopied ? <CheckIcon style={{ fontSize: 20 }}/> : <ContentCopyIcon className="copy-icon" style={{ fontSize: 20, color: (isHovering || isFocused) ? '#4b3e99' : 'transparent' }}/>}
+                {isCopied ? <CheckIcon style={{ fontSize: 20 }}/> : <ContentCopyIcon className="copy-icon" style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>}
               </button>
             </Tooltip>
           </CopyToClipboard>
-          {index!==0 && (  
           <Tooltip title={t("regenerate")} arrow>  
             <button   
                 onClick={replayChat}
@@ -181,10 +200,90 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
                 onBlur={() => setIsFocused(false)} 
                 tabIndex={0}
             >  
-                <RefreshIcon style={{ fontSize: 20, color: (isHovering || isFocused) ? '#4b3e99' : 'transparent' }}/>  
+              <RefreshIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>  
             </button>
           </Tooltip> 
-        )}
+          <Tooltip title={t("good.response")} arrow>
+            <button
+              onClick={() => {
+                setIsFeedbackVisible(true);
+                setIsGoodResponse(true);
+              }}
+              style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none' }}  
+              onFocus={() => setIsFocused(true)}  
+              onBlur={() => setIsFocused(false)} 
+              tabIndex={0}
+            >
+              <ThumbUpAltOutlinedIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>  
+            </button>
+          </Tooltip>
+          <Tooltip title={t("bad.response")} arrow>
+            <button
+              onClick={() => {
+                setIsFeedbackVisible(true);
+                setIsGoodResponse(false);
+              }}
+              style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none' }}  
+              onFocus={() => setIsFocused(true)}  
+              onBlur={() => setIsFocused(false)} 
+              tabIndex={0}
+            >
+              <ThumbDownAltOutlinedIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>  
+            </button>
+          </Tooltip>
+          {isFeedbackVisible && (  
+            <Dialog open={isFeedbackVisible} onClose={() => setIsFeedbackVisible(false)} fullWidth maxWidth={"sm"}>    
+              {isThankYouVisible ? (  
+                <>  
+                  <DialogTitle>{t("feedback.submitted")}</DialogTitle>    
+                  <DialogActions>    
+                    <Button onClick={() => {  
+                      setIsThankYouVisible(false);  
+                      setIsFeedbackVisible(false);  
+                    }}>{t("close")}</Button>    
+                  </DialogActions>  
+                </>  
+              ) : (  
+                <>  
+                  <DialogTitle>{t("provide.feedback")}</DialogTitle>    
+                  <Typography variant="subtitle2" align="left" style={{ paddingLeft: "24px" }}>{t("msg.opt")}</Typography>     
+            
+                  <DialogContent>    
+                    <TextField    
+                      multiline  
+                      rows={4}  
+                      fullWidth  
+                      value={feedback}  
+                      onChange={(e) => setFeedback(e.target.value)}    
+                    />    
+                  </DialogContent>    
+                  <DialogActions>    
+                    <Button onClick={() => setIsFeedbackVisible(false)}>{t("cancel")}</Button>    
+                    <Button   
+                      style={{ backgroundColor: "#4b3e99", color: "white"}}  
+                      type="submit"   
+                      onClick={(event) => {  
+                        handleFeedback(event);  
+                        setIsThankYouVisible(true);  
+                      }}  
+                    >  
+                      {t("submit")}  
+                    </Button>    
+                  </DialogActions>    
+                </>  
+              )}  
+            </Dialog>    
+          )}  
+            
+          {isThankYouVisible && (  
+            <Dialog open={isThankYouVisible} onClose={() => setIsThankYouVisible(false)} fullWidth maxWidth={"sm"}>    
+              <DialogTitle>{t("feedback.submitted")}</DialogTitle>    
+              <DialogActions>    
+                <Button onClick={() => setIsThankYouVisible(false)}>{t("close")}</Button>    
+              </DialogActions>    
+            </Dialog>    
+          )}  
+
         </Paper>
       </Box>  
     </Box>
