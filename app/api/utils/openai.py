@@ -11,31 +11,42 @@ from utils.manage_message import load_messages
 from utils.models import (AzureCognitiveSearchDataSource,
                           AzureCognitiveSearchParameters, Citation, Completion,
                           Context, Message, MessageRequest, Metadata)
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
 from utils.tools import load_tools, call_tools
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-__all__ = ["chat_with_data", "convert_chat_with_data_response", "build_completion_response", "chat"]
+__all__ = ["chat_with_data", "convert_chat_with_data_response", "build_completion_response"]
+
+#token_provider = get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default")
+
 
 azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
 api_key                 = os.getenv("AZURE_OPENAI_API_KEY")
-api_version             = os.getenv("AZURE_OPENAI_VERSION", "2023-12-01-preview")
+api_version             = os.getenv("AZURE_OPENAI_VERSION", "2024-03-01-preview")
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
 index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "latest")
 model: str              = os.getenv("AZURE_OPENAI_MODEL", "gpt-4-1106")
-model_data: str         = os.getenv("AZURE_OPENAI_MODEL_DATA", "gpt-4-32k")
+#model_data: str         = os.getenv("AZURE_OPENAI_MODEL_DATA", "gpt-4-32k")
 
-client_data = AzureOpenAI(
-    # if we just use the azure_endpoint here it doesn't reach the extensions endpoint and thus we cannot use data sources directly
-    base_url=f'{azure_openai_uri}openai/deployments/{model_data}/extensions',
-    api_version=api_version,
-    #azure_endpoint=azure_openai_uri,
-    api_key=api_key
-)
+# versions capabilities
+# https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
+# client_data = AzureOpenAI(
+#     # if we just use the azure_endpoint here it doesn't reach the extensions endpoint and thus we cannot use data sources directly
+#     base_url=f'{azure_openai_uri}openai/deployments/{model}/extensions',
+#     api_version=api_version,
+#     #azure_endpoint=azure_openai_uri,
+#     api_key=api_key
+# )
 
+# https://learn.microsoft.com/en-us/azure/ai-services/openai/references/on-your-data?tabs=python
+# versions capabilities
+# https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
+# example of using functions with azure search instead of the data source 
+#   https://github.com/Azure-Samples/openai/blob/main/Basic_Samples/Functions/functions_with_azure_search.ipynb
 client = AzureOpenAI(
     api_version=api_version,
     azure_endpoint=str(azure_openai_uri),
@@ -52,65 +63,80 @@ def _create_azure_cognitive_search_data_source() -> AzureCognitiveSearchDataSour
         parameters=parameters
     )
 
-def chat(message_request: MessageRequest, stream=False) -> Union[ChatCompletion,Stream[ChatCompletionChunk]]:
-    """
-    Chat with gpt directly without data, but perhaps with tools.
-    """
-    response_messages = _check_tools(message_request)
-
-    # Create completion
-    return client.chat.completions.create(
-        messages=response_messages,
-        model=model_data, # NOTICE: using this model for now as this is QUITE faster!
-        stream=stream
-    )
-
-def _check_tools(message_request: MessageRequest) -> List[ChatCompletionMessageParam]:
-    messages = load_messages(message_request)
-    response_messages = messages
-    # Check if tools are used and load them
-    logger.info("Tools used: " + str(message_request.tools))
-    if message_request.tools:
-        tools = load_tools(message_request.tools)
-
-        completion = client.chat.completions.create(
-            messages=response_messages,
-            model=model,
-            tools=tools,
-            stream=False
-        )
-        if completion.choices[0].message.content is not None:
-            response_messages.append({"role": "assistant", "content": completion.choices[0].message.content})
-        if completion.choices[0].message.tool_calls:
-            response_messages = call_tools(completion.choices[0].message.tool_calls, messages)
-    return response_messages
-
 def chat_with_data(message_request: MessageRequest, stream=False) -> Union[ChatCompletion,Stream[ChatCompletionChunk]]:
     """
     Initiate a chat with via openai api using data_source (azure cognitive search)
+
+    Documentation on this method: 
+        - https://github.com/openai/openai-cookbook/blob/main/examples/azure/chat_with_your_own_data.ipynb
+        - https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
     """
+    messages = load_messages(message_request)
     data_source = _create_azure_cognitive_search_data_source()
-    # https://github.com/openai/openai-cookbook/blob/main/examples/azure/chat_with_your_own_data.ipynb
-    #https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
-    return client_data.chat.completions.create(
-        messages=load_messages(message_request),
-        model=model_data,
-        extra_body={
-            "dataSources": [
-                {
+    data_sources = { #https://learn.microsoft.com/en-us/azure/ai-services/openai/references/azure-search?tabs=python
+                "data_sources": [{
                     "type": data_source.type,
                     "parameters": {
                         "endpoint": data_source.parameters.endpoint,
                         "key": data_source.parameters.key,
-                        "indexName": data_source.parameters.indexName,
-                        "inScope": "0", # doesn't seem to do anything TBH...
-                        "topNDocuments": message_request.top
+                        "index_name": data_source.parameters.indexName,
+                        "in_scope": True,
+                        "top_n_documents": message_request.top,
+                        "semantic_configuration": "default",
+                        "query_type": "vector_simple_hybrid",
+                        "fields_mapping": {},
+                        "authentication": {
+                            "type": "api_key",
+                            "key": key
+                        },
+                        "embedding_dependency": {
+                            "type": "deployment_name",
+                            "deployment_name": "text-embedding-ada-002"
+                        },
                     }
-                }
-            ],
-        },
-        stream=stream
-    )
+                }],
+            }
+
+    """
+    1. Check if we are to use tools
+    """
+    corporate_question = False
+
+    if message_request.tools:
+        logger.debug(f"Using Tools: {message_request.tools}")
+        tools = load_tools(message_request.tools)
+        """
+        1a. Invoke tools completion, 
+        """
+        completion_tools = client.chat.completions.create(
+            messages=messages,
+            model=model,
+            tools=tools,
+            stream=False
+        )
+
+        if completion_tools.choices[0].message.tool_calls:
+            logger.debug(f"Tools were used in the request and OpenAI deemed it needed to invoke functions... gathering function data ...")
+            logger.debug(f"tool_calls: {[f.function.name for f in completion_tools.choices[0].message.tool_calls]}")
+            if "corporate_question" in [f.function.name for f in completion_tools.choices[0].message.tool_calls]:
+                logger.debug("### DETECTED CORPORATE QUESTION ###")
+                corporate_question = True
+            messages = call_tools(completion_tools.choices[0].message.tool_calls, messages)
+            logger.debug(messages[-1])
+
+    if corporate_question:
+        return client.chat.completions.create(
+            messages=messages,
+            model=model,
+            extra_body=data_sources,
+            stream=stream
+        )
+    else:
+        return client.chat.completions.create(
+            messages=messages,
+            model=model,
+            stream=stream
+        )
 
 def convert_chat_with_data_response(chat_completion: ChatCompletion) -> Completion:
     """
@@ -141,18 +167,14 @@ def build_completion_response(content: str,
     """
     context = None
     if chat_completion_dict and 'context' in chat_completion_dict:
-        context_dict = chat_completion_dict['context']['messages'][0]
-        # the content field is serialized json containing citations.
-        content_dict = json.loads(context_dict['content'])
-
+        context_dict = chat_completion_dict['context']
         citations: List[Citation] = [Citation(
             content=cit['content'],
             url=cit['url'],
-            metadata=Metadata(chunking=cit['metadata']),
             title=cit['title']
-        ) for cit in content_dict['citations']]
+        ) for cit in context_dict['citations']]
 
-        context = Context(role=context_dict['role'], citations=citations, intent=json.loads(content_dict['intent']))
+        context = Context(role=role, citations=citations, intent=[json.loads(context_dict['intent'])])
 
     message = Message(
         role=role,
