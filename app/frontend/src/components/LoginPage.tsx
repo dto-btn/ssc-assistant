@@ -20,22 +20,27 @@ const LoginPage = ({ open, setOpen }: { open: boolean, setOpen: React.Dispatch<R
   
   return (  
     <Modal open={open}>  
-      <Box   
-        sx={{   
-          position: 'absolute',   
-          top: '50%',   
-          left: '50%',   
-          transform: 'translate(-50%, -50%)',   
-          width: 600,   
-          height: 250,
-          bgcolor: 'background.paper',   
-          boxShadow: 24,   
+      <Box  
+        sx={{  
+          position: 'absolute',  
+          top: '50%',  
+          left: '50%',  
+          transform: 'translate(-50%, -50%)',  
+          width: 600,  
+          height: 250,  
+          bgcolor: 'background.paper',  
+          boxShadow: 24,  
           p: 4,  
+          display: 'flex',  
+          flexDirection: 'column',  
+          alignItems: 'center',  
+          justifyContent: 'center',  
         }}  
       >  
-        <h2>Please login</h2>  
-        <Button onClick={handleLogin}>Login</Button>  
+        <h1>Login Required to Proceed</h1>  
+        <Button style={{ backgroundColor: "#4b3e99", color: "white", fontSize: '1rem', padding: '1rem 2rem' }} onClick={handleLogin}>Login</Button>  
       </Box>  
+  
     </Modal>  
   );  
 };  
