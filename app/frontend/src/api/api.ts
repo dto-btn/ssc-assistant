@@ -77,3 +77,27 @@ export async function completionMySSC({ request, updateLastMessage, chatWith }: 
                           }
                         }
 }
+
+export async function sendFeedback(feedback: string, isGoodResponse: boolean, uuid: string): Promise<Response> {    
+  const url = "/api/1.0/feedback";    
+  
+  const feedbackObject = {  
+    feedback,  
+    positive: isGoodResponse,  
+    uuid
+  };  
+    
+  const response = await fetch(url, {    
+    method: "POST",    
+    headers: {    
+      "Content-Type": "application/json"    
+    },    
+    body: JSON.stringify(feedbackObject)    
+  });    
+    
+  if (!response.ok) {    
+    throw new Error('Failed to send feedback');    
+  }    
+      
+  return response;    
+}  

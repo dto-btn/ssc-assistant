@@ -38,4 +38,5 @@ interface MessageRequest {
   lang?: string;
   max?: number;
   tools?: string[];
+  uuid?: string;
 }
