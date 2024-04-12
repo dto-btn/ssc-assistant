@@ -76,5 +76,7 @@
     "copytext": "Copy",
     "regenerate": "Regenerate",
     "copy": "Copy",
-    "copy.success": "Copied!"
+    "copy.success": "Copied!",
+    "welcome": "Welcome to the SSC Assistant",
+    "login.required": "Login Required to Proceed"
 }

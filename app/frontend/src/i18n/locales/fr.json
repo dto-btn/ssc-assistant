@@ -64,5 +64,7 @@
     "copytext": "Copier",
     "regenerate": "Régénérer",
     "copy": "Copier",
-    "copy.success": "Copié!"
+    "copy.success": "Copié!",
+    "welcome": "Bienvenue à l'Assistant SPC",
+    "login.required": "Connexion requise pour continuer"
 }
