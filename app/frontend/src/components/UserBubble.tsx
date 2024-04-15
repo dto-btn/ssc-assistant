@@ -20,6 +20,7 @@ export const UserBubble = ({ text }: UserChatProps) => {
           borderTopRightRadius: 0,
           maxWidth: '80%',
         }}
+        elevation={4}
       >
         <Container>
             <Markdown rehypePlugins={[rehypeHighlight]} remarkPlugins={[remarkGfm]}>{text}</Markdown>

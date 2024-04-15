@@ -25,10 +25,6 @@ def create_entity(data, partition_key: str, row_key_prefix: str):
     TODO: validate parition_key, if empty handle error.
     '''
     entity = dict()
-    entity[row_key_prefix] = json.dumps(
-             data.__dict__,
-             default=lambda o: o.__dict__
-        ) 
     entity['PartitionKey'] = partition_key
     entity['RowKey'] = f"{row_key_prefix}-{uuid.uuid4()}"
 
@@ -37,13 +33,24 @@ def create_entity(data, partition_key: str, row_key_prefix: str):
     
     if isinstance(data, MessageRequest) and data.messages:
         msg = data.messages[-1]
+        data.messages = [] #avoid saving the whole conversation (no need to)
+        logger.debug(f"question length is: {len(str(msg.content))}")
+        logger.debug(f"history length is: {len(data.messages)}")
         entity['Question'] = msg.content
+
+    entity[row_key_prefix] = json.dumps(
+            data.__dict__,
+            default=lambda o: o.__dict__
+    )
 
     return entity
 
 def store_conversation(message_request: MessageRequest, completion: Completion, conversation_uuid: str):
       '''
       Store the conversation in the database, we store what we received (history and question) and the completion (answer)
+
+      NOTE: Azure Table storage offers a limit of 32k per column for string type of characters.
+            one solution is to compress and split the data: https://github.com/mebjas/AzureStorageTableLargeDataWriter/blob/master/AzureStorageTableLargeDataWriter/StorageTableWriter.cs
       '''
       try:
         message_request_entity = create_entity(message_request, conversation_uuid, 'MessageRequest')
