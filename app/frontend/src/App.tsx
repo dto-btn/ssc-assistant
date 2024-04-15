@@ -16,6 +16,7 @@ import {
   Disclaimer,
   TopMenu,
   UserBubble,
+  LoginPage,
 } from "./components";
 import { DrawerMenu } from "./components/DrawerMenu";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
@@ -59,6 +60,7 @@ export const App = () => {
     accessToken: '',
     graphData: null
   });
+  const [open, setOpen] = useState(false);
 
   const welcomeMessage: Completion = {
     message: {
@@ -280,6 +282,12 @@ export const App = () => {
           setErrorMessage("Unable to login.");
         }
       });
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setOpen(true);
     }
   }, [isAuthenticated]);
 
