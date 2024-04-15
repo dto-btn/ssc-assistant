@@ -143,7 +143,7 @@ def completion_myssc_stream(message_request: MessageRequest):
 @auth.login_required(role='feedback')
 @api_v1.input(Feedback.Schema, arg_name="feedback", example={ # type: ignore
                                                                                 "feedback": "this question has no real good answer in the system",
-                                                                                "conversation": [{"role": "user", "content":"What is SSC's content management system?"}],
+                                                                                "uuid": "010b9643-535a-4c45-b375-b45927150a27",
                                                                                 "positive": 0
                                                                             })
 def feedback(feedback: Feedback):
