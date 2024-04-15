@@ -44,14 +44,14 @@ const LoginPage = ({ open, setOpen, setLangCookie }: { open: boolean, setOpen: R
           justifyContent: 'space-between',
         }}
       >
-        <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
           <img src={logo} style={logoStyle} alt="logo of SSC" />
           <Button onClick={() => {changeLanguage(t("langlink.shorthand")); setLangCookie();}}>{t("langlink")}</Button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <h2>{t("welcome")}</h2>
+          <h2 style={{ marginBottom: '0.5rem' }}>{t("welcome")}</h2>
           <h3>{t("login.required")}</h3>
-          <Button style={{ backgroundColor: "#4b3e99", color: "white"}} onClick={handleLogin}>Login</Button>
+          <Button size="large" style={{ backgroundColor: "#4b3e99", color: "white"}} onClick={handleLogin}>{t("login")}</Button>
         </div>
       </Box>
 

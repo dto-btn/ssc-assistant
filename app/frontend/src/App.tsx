@@ -58,7 +58,7 @@ export const App = () => {
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
   const [chatWith, setChatWith] = useState<ChatWith>(ChatWith.Data);
-  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null); 
+  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
   const [openDrawer, setOpenDrawer] = useState<boolean>(false);
   const isAuthenticated = useIsAuthenticated();
   const {instance, accounts} = useMsal();
@@ -66,7 +66,7 @@ export const App = () => {
     accessToken: '',
     graphData: null
   });
-  const [open, setOpen] = useState(false);  
+  const [open, setOpen] = useState(false);
 
 
   const welcomeMessage: Completion = {
@@ -199,12 +199,12 @@ export const App = () => {
     setChatWith(value as ChatWith);
   };
 
-  const replayChat = () => {  
-    if (lastUserMessage) {  
+  const replayChat = () => {
+    if (lastUserMessage) {
       setCompletions(completions => completions.slice(0, completions.length - 2)); // ensures that on chat replay the previous answer is removed and the user's input isn't printed a second time
-        makeApiRequest(lastUserMessage); 
-    }  
-  }; 
+        makeApiRequest(lastUserMessage);
+    }
+  };
 
   useEffect(() => {
     // Set the `lang` attribute whenever the language changes
@@ -288,11 +288,11 @@ export const App = () => {
     }
   }, [isAuthenticated]);
 
-  useEffect(() => {  
-    if (!isAuthenticated) {  
-      setOpen(true);  
-    }  
-  }, [isAuthenticated]);  
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setOpen(true);
+    }
+  }, [isAuthenticated]);
 
   return (
     <UserContext.Provider value={userData}>
@@ -319,11 +319,11 @@ export const App = () => {
             {completions.map((completion, index) => (
               <Fragment key={index}>
                 {completion.message?.role === "assistant" && completion.message?.content && (
-                  <AssistantBubble 
-                    text={completion.message.content} 
-                    isLoading={index == completions.length-1 && isLoading} 
+                  <AssistantBubble
+                    text={completion.message.content}
+                    isLoading={index == completions.length-1 && isLoading}
                     context={completion.message?.context}
-                    scrollRef={chatMessageStreamEnd} 
+                    scrollRef={chatMessageStreamEnd}
                     replayChat={replayChat}
                     index={index}
                     total={completions.length}
@@ -407,7 +407,7 @@ export const App = () => {
         <Dial drawerVisible={openDrawer} onClearChat={handleClearChat} />
         <Disclaimer />
         <DrawerMenu openDrawer={openDrawer} toggleDrawer={setOpenDrawer} onClearChat={handleClearChat} setLangCookie={setLangCookie} login={handleLogin} logout={handleLogout}/>
-        {!isAuthenticated && <LoginPage open={open} setOpen={setOpen} />}  
+        {!isAuthenticated && <LoginPage open={open} setOpen={setOpen} setLangCookie={() => {}} />}
       </ThemeProvider>
     </UserContext.Provider>
   );
