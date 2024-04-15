@@ -7,7 +7,7 @@ This section will help developer understand this project and how to set it up fr
 
 ### Python setup
 
-We are developing on python 3.11+. 
+We are developing on python 3.11+.
 
 Please setup your environement like so:
 
@@ -41,7 +41,7 @@ pip install -r az-functions/create-index/requirements.txt --upgrade
 
 #### Starting up projects
 
-For the `app/frontend` simply: 
+For the `app/frontend` simply:
 
 ```bash
 npm install
@@ -50,7 +50,7 @@ npm run dev
 
 ### Infrastructure
 
-The current infrastructure of this project is as follow: 
+The current infrastructure of this project is as follow:
 
 * Azure Sandbox Subscription
     * Azure Function to transform the raw data (SSCPlus, etc.) to a Search Service index
@@ -71,6 +71,14 @@ cd terraform/
 terraform init
 terraform plan -var-file="secret.tfvars"
 ```
+
+### 163dev Account Permissions
+
+To sign into a Microsoft account during development, a @163dev.onmicrosoft.com account must be used.
+
+The following permisions must be granted to the account through Azure:
+
+![Grant Permissions](docs/163dev.png)
 
 ## Documentation
 
