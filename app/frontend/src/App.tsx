@@ -33,7 +33,7 @@ const mainTheme = createTheme({
       main: "#f33aea",
     },
     background: {
-      default: "#f2f2f2",
+      default: "white",
     },  
   },
 });

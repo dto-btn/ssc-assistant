@@ -64,9 +64,7 @@ export const ChatInput = ({onSend, disabled, clearOnSend}: ChatInputProps) => {
           multiline={true}
           minRows={3}
           maxRows={3}
-          sx={{
-            bgcolor: 'white',
-          }}
+          variant='outlined'
           InputProps={{
             endAdornment: <InputAdornment position="end">
                             <IconButton onClick={sendQuestion} disabled={disabled}>
