@@ -10,7 +10,6 @@ import { changeLanguage, t } from "i18next";
 const logoStyle = {
   width: "50px",
   height: "auto",
-  cursor: "pointer",
 };
 
 const LoginPage = ({ open, setOpen, setLangCookie }: { open: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>>, setLangCookie: () => void }) => {
@@ -38,7 +37,7 @@ const LoginPage = ({ open, setOpen, setLangCookie }: { open: boolean, setOpen: R
           height: 280,
           bgcolor: 'background.paper',
           boxShadow: 24,
-          p: 2,
+          p: 3,
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
@@ -49,9 +48,9 @@ const LoginPage = ({ open, setOpen, setLangCookie }: { open: boolean, setOpen: R
           <Button onClick={() => {changeLanguage(t("langlink.shorthand")); setLangCookie();}}>{t("langlink")}</Button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <h2 style={{ marginBottom: '0.5rem' }}>{t("welcome")}</h2>
-          <h3>{t("login.required")}</h3>
-          <Button size="large" style={{ backgroundColor: "#4b3e99", color: "white"}} onClick={handleLogin}>{t("login")}</Button>
+          <h2 style={{ marginBottom: '1rem' }}>{t("welcome")}</h2>
+          <h3 style={{ marginTop: '1rem' }}>{t("login.required")}</h3>
+          <Button size="large" style={{ backgroundColor: "#4b3e99", color: "white" }} onClick={handleLogin}>{t("login")}</Button>
         </div>
       </Box>
 
