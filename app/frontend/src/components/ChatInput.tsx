@@ -13,6 +13,7 @@ interface ChatInputProps {
 export const ChatInput = ({onSend, disabled, clearOnSend}: ChatInputProps) => {
   const [question, setQuestion] = useState<string>("");
   const { t } = useTranslation();
+  const [error, setError] = useState(false);
 
   const sendQuestion = () => {
       if (disabled || !question.trim()) {
@@ -45,8 +46,14 @@ export const ChatInput = ({onSend, disabled, clearOnSend}: ChatInputProps) => {
         autoComplete="off"
       >
         <TextField
+          error={error}
+          helperText={error ? t("question.maxlength") : ""}
           value={question}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            if(event.target.value && event.target.value.length > 24000)
+              setError(true)
+            else
+              setError(false)
             setQuestion(event.target.value);
           }}
           onKeyDown={onEnterPress}
@@ -57,9 +64,7 @@ export const ChatInput = ({onSend, disabled, clearOnSend}: ChatInputProps) => {
           multiline={true}
           minRows={3}
           maxRows={3}
-          sx={{
-            bgcolor: 'white',
-          }}
+          variant='outlined'
           InputProps={{
             endAdornment: <InputAdornment position="end">
                             <IconButton onClick={sendQuestion} disabled={disabled}>
@@ -70,6 +75,7 @@ export const ChatInput = ({onSend, disabled, clearOnSend}: ChatInputProps) => {
                             )}
                             </IconButton>
                           </InputAdornment>,
+            //inputProps: {'maxLength': 24000}
           }}
           />
       </Box>

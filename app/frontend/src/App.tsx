@@ -1,21 +1,14 @@
 import {
   Alert,
   Box,
-  FormControl,
-  FormControlLabel,
-  FormLabel,
-  Grid,
-  Radio,
-  RadioGroup,
   Snackbar,
-  Typography,
 } from "@mui/material";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import Cookies from "js-cookie";
-import { ChangeEvent, Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { completionMySSC } from "./api/api";
+import { completionMySSC, sendFeedback } from "./api/api";
 import {
   AssistantBubble,
   ChatInput,
@@ -29,7 +22,8 @@ import { DrawerMenu } from "./components/DrawerMenu";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { loginRequest } from "./authConfig";
 import { callMsGraph } from './graph';
-import { UserContext } from './context/UserContext'
+import { UserContext } from './context/UserContext';
+import { v4 as uuidv4 } from 'uuid';
 
 const mainTheme = createTheme({
   palette: {
@@ -40,8 +34,8 @@ const mainTheme = createTheme({
       main: "#f33aea",
     },
     background: {
-      default: "#f2f2f2",
-    },
+      default: "white",
+    },  
   },
 });
 
@@ -57,17 +51,16 @@ export const App = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
-  const [chatWith, setChatWith] = useState<ChatWith>(ChatWith.Data);
-  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
+  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null); 
   const [openDrawer, setOpenDrawer] = useState<boolean>(false);
   const isAuthenticated = useIsAuthenticated();
   const {instance, accounts} = useMsal();
+  const [uuid, setUuid] = useState<string>('');  
   const [userData, setUserData] = useState({
     accessToken: '',
     graphData: null
   });
   const [open, setOpen] = useState(false);
-
 
   const welcomeMessage: Completion = {
     message: {
@@ -122,6 +115,8 @@ export const App = () => {
       messages: messages,
       max: maxMessagesSent,
       top: 5,
+      tools: ['corporate', 'geds'],
+      uuid: uuid,
     };
 
     //update current chat window with the message sent..
@@ -138,8 +133,7 @@ export const App = () => {
     try {
       const completionResponse = await completionMySSC({
         request: request,
-        updateLastMessage: updateLastMessage,
-        chatWith: chatWith,
+        updateLastMessage: updateLastMessage
       });
 
       setCompletions((prevCompletions) => {
@@ -167,6 +161,11 @@ export const App = () => {
     }
   };
 
+  const handleFeedbackSubmit = async (feedback: string, isGoodResponse: boolean) => {      
+    sendFeedback(feedback, isGoodResponse, uuid);  
+};   
+ 
+
   const updateLastMessage = (message_chunk: string) => {
     setCompletions((prevCompletions) => {
       const updatedCompletions = [...prevCompletions]; //making a copy
@@ -192,19 +191,12 @@ export const App = () => {
     setErrorSnackbar(false);
   };
 
-  const handleChatWithChange = (
-    _event: ChangeEvent<HTMLInputElement>,
-    value: string
-  ) => {
-    setChatWith(value as ChatWith);
-  };
-
-  const replayChat = () => {
-    if (lastUserMessage) {
+  const replayChat = () => {  
+    if (lastUserMessage) {  
       setCompletions(completions => completions.slice(0, completions.length - 2)); // ensures that on chat replay the previous answer is removed and the user's input isn't printed a second time
-        makeApiRequest(lastUserMessage);
-    }
-  };
+        makeApiRequest(lastUserMessage); 
+    }  
+  }; 
 
   useEffect(() => {
     // Set the `lang` attribute whenever the language changes
@@ -218,6 +210,10 @@ export const App = () => {
       }),
     [completions[completions.length - 1].message.content]
   );
+
+  useEffect(() => {
+    setUuid(uuidv4());
+  }, []);
 
   const saveChatHistory = (chatHistory: Completion[]) => {
     localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
@@ -236,6 +232,7 @@ export const App = () => {
   const handleClearChat = () => {
     localStorage.removeItem("chatHistory"); // Clear chat history from local storage
     setCompletions([welcomeMessage]);
+    setUuid(uuidv4());
   };
 
   const setLangCookie = () => {
@@ -313,20 +310,22 @@ export const App = () => {
             sx={{
               overflowY: "hidden",
               padding: "2rem",
+              paddingTop: "6rem",
               alignItems: "flex-end",
             }}
           >
             {completions.map((completion, index) => (
               <Fragment key={index}>
                 {completion.message?.role === "assistant" && completion.message?.content && (
-                  <AssistantBubble
-                    text={completion.message.content}
-                    isLoading={index == completions.length-1 && isLoading}
+                  <AssistantBubble 
+                    text={completion.message.content} 
+                    isLoading={index == completions.length-1 && isLoading} 
                     context={completion.message?.context}
-                    scrollRef={chatMessageStreamEnd}
+                    scrollRef={chatMessageStreamEnd} 
                     replayChat={replayChat}
                     index={index}
                     total={completions.length}
+                    handleFeedbackSubmit={handleFeedbackSubmit}
                     />
                 )}
 
@@ -347,40 +346,7 @@ export const App = () => {
               bgcolor: "background.default",
               padding: "1rem",
             }}
-          >
-            <Grid
-              container
-              item
-              xs={12}
-              alignItems="center"
-              justifyContent="center"
-            >
-              <FormLabel id="gpt-mode">
-                <Typography variant="body1" sx={{ pr: "10px" }}>
-                  {t("chat.with.gpt")}
-                </Typography>
-              </FormLabel>
-              <FormControl>
-                <RadioGroup
-                  row
-                  aria-labelledby="gpt-mode"
-                  value={chatWith}
-                  onChange={handleChatWithChange}
-                  name="gpt-mode-radio-btn"
-                >
-                  <FormControlLabel
-                    value="data"
-                    control={<Radio />}
-                    label={t("chat.with.gpt.data")}
-                  />
-                  <FormControlLabel
-                    value="tools"
-                    control={<Radio />}
-                    label={t("chat.with.gpt.tools")}
-                  />
-                </RadioGroup>
-              </FormControl>
-            </Grid>
+          > 
             <ChatInput
               clearOnSend
               placeholder={t("placeholder")}

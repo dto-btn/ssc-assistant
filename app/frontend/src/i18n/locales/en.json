@@ -78,5 +78,12 @@
     "copy": "Copy",
     "copy.success": "Copied!",
     "welcome": "Welcome to the SSC Assistant",
-    "login.required": "Login Required to Proceed"
+    "login.required": "Login Required to Proceed",
+    "good.response": "Good response",
+    "bad.response": "Bad response",
+    "submit": "Submit",
+    "accept": "Accept",
+    "cancel": "Cancel",
+    "provide.feedback": "Please provide feedback on the response provided",
+    "question.maxlength": "You have reached the maximum question length. Reduce question size."
 }
