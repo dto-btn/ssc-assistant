@@ -41,6 +41,7 @@ const LoginPage = ({ open, setOpen, setLangCookie }: { open: boolean, setOpen: R
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
+          outline: 'none',
         }}
       >
         <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>

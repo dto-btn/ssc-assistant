@@ -35,7 +35,7 @@ const mainTheme = createTheme({
     },
     background: {
       default: "white",
-    },  
+    },
   },
 });
 
@@ -51,11 +51,11 @@ export const App = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
-  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null); 
+  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
   const [openDrawer, setOpenDrawer] = useState<boolean>(false);
   const isAuthenticated = useIsAuthenticated();
   const {instance, accounts} = useMsal();
-  const [uuid, setUuid] = useState<string>('');  
+  const [uuid, setUuid] = useState<string>('');
   const [userData, setUserData] = useState({
     accessToken: '',
     graphData: null
@@ -161,10 +161,10 @@ export const App = () => {
     }
   };
 
-  const handleFeedbackSubmit = async (feedback: string, isGoodResponse: boolean) => {      
-    sendFeedback(feedback, isGoodResponse, uuid);  
-};   
- 
+  const handleFeedbackSubmit = async (feedback: string, isGoodResponse: boolean) => {
+    sendFeedback(feedback, isGoodResponse, uuid);
+};
+
 
   const updateLastMessage = (message_chunk: string) => {
     setCompletions((prevCompletions) => {
@@ -191,12 +191,12 @@ export const App = () => {
     setErrorSnackbar(false);
   };
 
-  const replayChat = () => {  
-    if (lastUserMessage) {  
+  const replayChat = () => {
+    if (lastUserMessage) {
       setCompletions(completions => completions.slice(0, completions.length - 2)); // ensures that on chat replay the previous answer is removed and the user's input isn't printed a second time
-        makeApiRequest(lastUserMessage); 
-    }  
-  }; 
+        makeApiRequest(lastUserMessage);
+    }
+  };
 
   useEffect(() => {
     // Set the `lang` attribute whenever the language changes
@@ -324,11 +324,11 @@ export const App = () => {
                 {completions.map((completion, index) => (
                   <Fragment key={index}>
                     {completion.message?.role === "assistant" && completion.message?.content && (
-                      <AssistantBubble 
-                        text={completion.message.content} 
-                        isLoading={index == completions.length-1 && isLoading} 
+                      <AssistantBubble
+                        text={completion.message.content}
+                        isLoading={index == completions.length-1 && isLoading}
                         context={completion.message?.context}
-                        scrollRef={chatMessageStreamEnd} 
+                        scrollRef={chatMessageStreamEnd}
                         replayChat={replayChat}
                         index={index}
                         total={completions.length}
@@ -353,7 +353,7 @@ export const App = () => {
                   bgcolor: "background.default",
                   padding: "1rem",
                 }}
-              > 
+              >
                 <ChatInput
                   clearOnSend
                   placeholder={t("placeholder")}
