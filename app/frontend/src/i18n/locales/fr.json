@@ -65,6 +65,8 @@
     "regenerate": "Régénérer",
     "copy": "Copier",
     "copy.success": "Copié!",
+    "welcome": "Bienvenue à l'Assistant SPC",
+    "login.required": "Connexion requise pour continuer",
     "good.response": "Bonne réponse",
     "bad.response": "Mauvaise réponse",
     "submit": "Soumettre",

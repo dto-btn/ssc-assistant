@@ -77,6 +77,8 @@
     "regenerate": "Regenerate",
     "copy": "Copy",
     "copy.success": "Copied!",
+    "welcome": "Welcome to the SSC Assistant",
+    "login.required": "Login Required to Proceed",
     "good.response": "Good response",
     "bad.response": "Bad response",
     "submit": "Submit",

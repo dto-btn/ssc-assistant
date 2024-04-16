@@ -16,6 +16,7 @@ import {
   Disclaimer,
   TopMenu,
   UserBubble,
+  LoginPage,
 } from "./components";
 import { DrawerMenu } from "./components/DrawerMenu";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
@@ -59,6 +60,7 @@ export const App = () => {
     accessToken: '',
     graphData: null
   });
+  const [open, setOpen] = useState(false);
 
   const welcomeMessage: Completion = {
     message: {
@@ -283,88 +285,103 @@ export const App = () => {
     }
   }, [isAuthenticated]);
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setOpen(true);
+    }
+  }, [isAuthenticated]);
+
   return (
     <UserContext.Provider value={userData}>
       <ThemeProvider theme={mainTheme}>
         <CssBaseline />
-        <TopMenu toggleDrawer={setOpenDrawer} />
-        <Box
-          sx={{
-            display: "flex",
-            flexFlow: "column",
-            minHeight: "100vh",
-            margin: "auto",
-          }}
-          maxWidth="lg"
-        >
-          <Box sx={{ flexGrow: 1 }}></Box>
-          <Box
-            sx={{
-              overflowY: "hidden",
-              padding: "2rem",
-              paddingTop: "6rem",
-              alignItems: "flex-end",
-            }}
-          >
-            {completions.map((completion, index) => (
-              <Fragment key={index}>
-                {completion.message?.role === "assistant" && completion.message?.content && (
-                  <AssistantBubble 
-                    text={completion.message.content} 
-                    isLoading={index == completions.length-1 && isLoading} 
-                    context={completion.message?.context}
-                    scrollRef={chatMessageStreamEnd} 
-                    replayChat={replayChat}
-                    index={index}
-                    total={completions.length}
-                    handleFeedbackSubmit={handleFeedbackSubmit}
-                    />
-                )}
+        {!isAuthenticated ?
+        (
+          <>
+            <LoginPage open={open} setOpen={setOpen} setLangCookie={() => {}} />
+          </>
+        ) : (
+          <>
+            <TopMenu toggleDrawer={setOpenDrawer} />
+            <Box
+              sx={{
+                display: "flex",
+                flexFlow: "column",
+                minHeight: "100vh",
+                margin: "auto",
+              }}
+              maxWidth="lg"
+            >
+              <Box sx={{ flexGrow: 1 }}></Box>
+              <Box
+                sx={{
+                  overflowY: "hidden",
+                  padding: "2rem",
+                  paddingTop: "6rem",
+                  alignItems: "flex-end",
+                }}
+              >
+                {completions.map((completion, index) => (
+                  <Fragment key={index}>
+                    {completion.message?.role === "assistant" && completion.message?.content && (
+                      <AssistantBubble 
+                        text={completion.message.content} 
+                        isLoading={index == completions.length-1 && isLoading} 
+                        context={completion.message?.context}
+                        scrollRef={chatMessageStreamEnd} 
+                        replayChat={replayChat}
+                        index={index}
+                        total={completions.length}
+                        handleFeedbackSubmit={handleFeedbackSubmit}
+                        />
+                    )}
 
-                {completion.message?.role === "user" && (
-                  <UserBubble text={completion.message?.content} />
-                )}
-              </Fragment>
-            ))}
-          </Box>
-          <div ref={chatMessageStreamEnd} />
-          <Box
-            sx={{
-              position: "sticky",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              zIndex: 1100,
-              bgcolor: "background.default",
-              padding: "1rem",
-            }}
-          > 
-            <ChatInput
-              clearOnSend
-              placeholder={t("placeholder")}
-              disabled={isLoading}
-              onSend={(question) => makeApiRequest(question)}
-            />
-          </Box>
-        </Box>
-        <Snackbar
-          open={errorSnackbar}
-          autoHideDuration={6000}
-          onClose={handleCloseSnackbar}
-          sx={{ mb: 1 }}
-        >
-          <Alert
-            onClose={handleCloseSnackbar}
-            severity="error"
-            variant="filled"
-            sx={{ width: "100%" }}
-          >
-            {errorMessage}
-          </Alert>
-        </Snackbar>
-        <Dial drawerVisible={openDrawer} onClearChat={handleClearChat} />
-        <Disclaimer />
-        <DrawerMenu openDrawer={openDrawer} toggleDrawer={setOpenDrawer} onClearChat={handleClearChat} setLangCookie={setLangCookie} login={handleLogin} logout={handleLogout}/>
+                    {completion.message?.role === "user" && (
+                      <UserBubble text={completion.message?.content} />
+                    )}
+                  </Fragment>
+                ))}
+              </Box>
+              <div ref={chatMessageStreamEnd} />
+              <Box
+                sx={{
+                  position: "sticky",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  zIndex: 1100,
+                  bgcolor: "background.default",
+                  padding: "1rem",
+                }}
+              > 
+                <ChatInput
+                  clearOnSend
+                  placeholder={t("placeholder")}
+                  disabled={isLoading}
+                  onSend={(question) => makeApiRequest(question)}
+                />
+              </Box>
+            </Box>
+            <Snackbar
+              open={errorSnackbar}
+              autoHideDuration={6000}
+              onClose={handleCloseSnackbar}
+              sx={{ mb: 1 }}
+            >
+              <Alert
+                onClose={handleCloseSnackbar}
+                severity="error"
+                variant="filled"
+                sx={{ width: "100%" }}
+              >
+                {errorMessage}
+              </Alert>
+            </Snackbar>
+            <Dial drawerVisible={openDrawer} onClearChat={handleClearChat} />
+            <Disclaimer />
+            <DrawerMenu openDrawer={openDrawer} toggleDrawer={setOpenDrawer} onClearChat={handleClearChat} setLangCookie={setLangCookie} login={handleLogin} logout={handleLogout}/>
+          </>
+        )}
       </ThemeProvider>
     </UserContext.Provider>
   );
