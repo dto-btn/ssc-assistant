@@ -38,7 +38,7 @@ const mainTheme = createTheme({
     },
     background: {
       default: "white",
-    },  
+    },
   },
 });
 
@@ -54,7 +54,7 @@ export const App = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
-  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null); 
+  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
   const [openDrawer, setOpenDrawer] = useState<boolean>(false);
   const [uuid, setUuid] = useState<string>(uuidv4());
   const {instance, inProgress} = useMsal();
@@ -164,10 +164,10 @@ export const App = () => {
     }
   };
 
-  const handleFeedbackSubmit = async (feedback: string, isGoodResponse: boolean) => {      
-    sendFeedback(feedback, isGoodResponse, uuid);  
-};   
- 
+  const handleFeedbackSubmit = async (feedback: string, isGoodResponse: boolean) => {
+    sendFeedback(feedback, isGoodResponse, uuid);
+};
+
 
   const updateLastMessage = (message_chunk: string) => {
     setCompletions((prevCompletions) => {
@@ -194,12 +194,12 @@ export const App = () => {
     setErrorSnackbar(false);
   };
 
-  const replayChat = () => {  
-    if (lastUserMessage) {  
+  const replayChat = () => {
+    if (lastUserMessage) {
       setCompletions(completions => completions.slice(0, completions.length - 2)); // ensures that on chat replay the previous answer is removed and the user's input isn't printed a second time
-        makeApiRequest(lastUserMessage); 
-    }  
-  }; 
+        makeApiRequest(lastUserMessage);
+    }
+  };
 
   useEffect(() => {
     // Set the `lang` attribute whenever the language changes
