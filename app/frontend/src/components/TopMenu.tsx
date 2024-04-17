@@ -6,7 +6,6 @@ import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { UserProfilePicture } from './ProfilePicture';
-import { useIsAuthenticated } from "@azure/msal-react";
 import { useContext } from "react";
 import { UserContext } from '../context/UserContext';
 
@@ -22,7 +21,6 @@ interface TopMenuProps {
 
 export const TopMenu = ({ toggleDrawer } : TopMenuProps) => {
   const { t } = useTranslation();
-  const isAuthenticated = useIsAuthenticated();
   const { accessToken, graphData } = useContext(UserContext);
 
   return (
@@ -75,7 +73,7 @@ export const TopMenu = ({ toggleDrawer } : TopMenuProps) => {
               <Typography variant="h6">{t("title")}</Typography>
             </Grid>
             <Grid container item xs={3} sm={4} sx={{ display: "flex" }} justifyContent='flex-end' alignItems="center">
-              {isAuthenticated && graphData && accessToken && 
+              {graphData && accessToken && 
               <>
                 <Typography variant="body1" mr={2} sx={{ display: { xs: 'none', sm: 'block' } }}>{graphData['givenName']} {graphData['surname']}</Typography>
                 <UserProfilePicture accessToken={accessToken} fullName={graphData['givenName'] + " " + graphData['surname']} />
