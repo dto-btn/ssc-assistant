@@ -1,52 +1,54 @@
-import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Typography } from '@mui/material';
+import React from 'react';
+import { useTranslation } from "react-i18next";
+import { Button, Dialog, DialogActions, DialogTitle, DialogContent, TextField, Typography } from '@mui/material';
 
 interface FeedbackFormProps {
-  isFeedbackVisible: boolean;
-  setIsFeedbackVisible: (isVisible: boolean) => void;
-  handleFeedbackSubmit: (feedback: string, isGoodResponse: boolean) => void;
-  isGoodResponse: boolean;
-  setIsThankYouVisible: (isThankYouVisible: boolean) => void;
-  t: (key: string) => string;
+  feedback: string;
+  setFeedback: React.Dispatch<React.SetStateAction<string>>;
+  open: boolean;
+  handleClose: () => void;
+  handleFeedbackSubmit: (event: React.FormEvent) => void;
+  isThankYouVisible: boolean;
 }
 
-const FeedbackForm: React.FC<FeedbackFormProps> = ({ isFeedbackVisible, setIsFeedbackVisible, handleFeedbackSubmit, isGoodResponse, setIsThankYouVisible, t }) => {
-  const [feedback, setFeedback] = useState('');
-
-  const handleFeedback = (event: React.FormEvent) => {
-    event.preventDefault();
-    handleFeedbackSubmit(feedback, isGoodResponse);
-    setIsFeedbackVisible(false);
-    setFeedback('');
-  };
+const FeedbackForm: React.FC<FeedbackFormProps> = ({ feedback, setFeedback, open, handleClose, handleFeedbackSubmit, isThankYouVisible }) => {
+  const { t } = useTranslation();
 
   return (
-    <Dialog open={isFeedbackVisible} onClose={() => setIsFeedbackVisible(false)} fullWidth maxWidth={"sm"}>
-      <DialogTitle>{t("provide.feedback")}</DialogTitle>
-      <Typography variant="subtitle2" align="left" style={{ paddingLeft: "24px" }}>{t("msg.opt")}</Typography>
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth={"sm"}>
+      {isThankYouVisible ? (
+        <>
+          <DialogTitle>{t("feedback.submitted")}</DialogTitle>
+          <DialogActions>
+            <Button onClick={handleClose}>{t("close")}</Button>
+          </DialogActions>
+        </>
+      ) : (
+        <>
+          <DialogTitle>{t("provide.feedback")}</DialogTitle>
+          <Typography variant="subtitle2" align="left" style={{ paddingLeft: "24px" }}>{t("msg.opt")}</Typography>
 
-      <DialogContent>
-        <TextField
-          multiline
-          rows={4}
-          fullWidth
-          value={feedback}
-          onChange={(e) => setFeedback(e.target.value)}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={() => setIsFeedbackVisible(false)}>{t("cancel")}</Button>
-        <Button
-          style={{ backgroundColor: "#4b3e99", color: "white"}}
-          type="submit"
-          onClick={(event) => {
-            handleFeedback(event);
-            setIsThankYouVisible(true);
-          }}
-        >
-          {t("submit")}
-        </Button>
-      </DialogActions>
+          <DialogContent>
+            <TextField
+              multiline
+              rows={4}
+              fullWidth
+              value={feedback}  
+              onChange={(e) => setFeedback(e.target.value)}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose}>{t("cancel")}</Button>
+            <Button
+              style={{ backgroundColor: "#4b3e99", color: "white"}}
+              type="submit"
+              onClick={handleFeedbackSubmit}
+            >
+              {t("submit")}
+            </Button>
+          </DialogActions>
+        </>
+      )}
     </Dialog>
   );
 };

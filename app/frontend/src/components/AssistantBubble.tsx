@@ -1,4 +1,4 @@
-import {  Dialog, DialogTitle, DialogContent, DialogActions, Box, Paper, Container, Divider, Chip, Stack, Typography, Link } from '@mui/material';
+import { Box, Paper, Container, Divider, Chip, Stack, Typography, Link } from '@mui/material';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -13,8 +13,6 @@ import CheckIcon from '@mui/icons-material/Check';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ThumbUpAltOutlinedIcon from '@mui/icons-material/ThumbUpAltOutlined';
 import ThumbDownAltOutlinedIcon from '@mui/icons-material/ThumbDownAltOutlined';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
 import FeedbackForm from './FeedbackForm';
 
 interface AssistantBubbleProps {
@@ -38,7 +36,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [isGoodResponse, setIsGoodResponse] = useState(false);
-  const [isThankYouVisible, setIsThankYouVisible] = useState(false);
+  const [isThankYouVisible] = useState(false);
   const isMostRecent = index === total - 1;
 
 
@@ -232,58 +230,14 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
               <ThumbDownAltOutlinedIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>
             </button>
           </Tooltip>
-          {isFeedbackVisible && (
-            <Dialog open={isFeedbackVisible} onClose={() => setIsFeedbackVisible(false)} fullWidth maxWidth={"sm"}>
-              {isThankYouVisible ? (
-                <>
-                  <DialogTitle>{t("feedback.submitted")}</DialogTitle>
-                  <DialogActions>
-                    <Button onClick={() => {
-                      setIsThankYouVisible(false);
-                      setIsFeedbackVisible(false);
-                    }}>{t("close")}</Button>
-                  </DialogActions>
-                </>
-              ) : (
-                <>
-                  <DialogTitle>{t("provide.feedback")}</DialogTitle>
-                  <Typography variant="subtitle2" align="left" style={{ paddingLeft: "24px" }}>{t("msg.opt")}</Typography>
-
-                  <DialogContent>
-                    <TextField
-                      multiline
-                      rows={4}
-                      fullWidth
-                      value={feedback}
-                      onChange={(e) => setFeedback(e.target.value)}
-                    />
-                  </DialogContent>
-                  <DialogActions>
-                    <Button onClick={() => setIsFeedbackVisible(false)}>{t("cancel")}</Button>
-                    <Button
-                      style={{ backgroundColor: "#4b3e99", color: "white"}}
-                      type="submit"
-                      onClick={(event) => {
-                        handleFeedback(event);
-                        setIsThankYouVisible(true);
-                      }}
-                    >
-                      {t("submit")}
-                    </Button>
-                  </DialogActions>
-                </>
-              )}
-            </Dialog>
-          )}
-
-          {isThankYouVisible && (
-            <Dialog open={isThankYouVisible} onClose={() => setIsThankYouVisible(false)} fullWidth maxWidth={"sm"}>
-              <DialogTitle>{t("feedback.submitted")}</DialogTitle>
-              <DialogActions>
-                <Button onClick={() => setIsThankYouVisible(false)}>{t("close")}</Button>
-              </DialogActions>
-            </Dialog>
-          )}
+          <FeedbackForm
+            feedback={feedback}
+            setFeedback={setFeedback}
+            open={isFeedbackVisible}
+            handleClose={() => setIsFeedbackVisible(false)}
+            handleFeedbackSubmit={handleFeedback}
+            isThankYouVisible={isThankYouVisible}
+          />
 
         </Paper>
       </Box>
