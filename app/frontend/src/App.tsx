@@ -2,6 +2,7 @@ import {
   Alert,
   Box,
   Snackbar,
+  Typography,
 } from "@mui/material";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
@@ -16,14 +17,16 @@ import {
   Disclaimer,
   TopMenu,
   UserBubble,
-  LoginPage,
 } from "./components";
 import { DrawerMenu } from "./components/DrawerMenu";
-import { useIsAuthenticated, useMsal } from "@azure/msal-react";
+//https://github.com/AzureAD/microsoft-authentication-library-for-js/tree/dev/samples/msal-react-samples/typescript-sample
 import { loginRequest } from "./authConfig";
 import { callMsGraph } from './graph';
 import { UserContext } from './context/UserContext';
 import { v4 as uuidv4 } from 'uuid';
+import { AccountInfo, InteractionRequiredAuthError, InteractionStatus } from "@azure/msal-browser";
+import { useIsAuthenticated, useMsal } from "@azure/msal-react";
+import { AuthenticatedTemplate, UnauthenticatedTemplate } from "@azure/msal-react";
 
 const mainTheme = createTheme({
   palette: {
@@ -53,14 +56,14 @@ export const App = () => {
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
   const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
   const [openDrawer, setOpenDrawer] = useState<boolean>(false);
-  const isAuthenticated = useIsAuthenticated();
-  const {instance, accounts} = useMsal();
-  const [uuid, setUuid] = useState<string>('');
+  const [uuid, setUuid] = useState<string>(uuidv4());
+  const {instance, inProgress} = useMsal();
   const [userData, setUserData] = useState({
     accessToken: '',
     graphData: null
   });
-  const [open, setOpen] = useState(false);
+  const isAuthenticated = useIsAuthenticated();
+
 
   const welcomeMessage: Completion = {
     message: {
@@ -211,10 +214,6 @@ export const App = () => {
     [completions[completions.length - 1].message.content]
   );
 
-  useEffect(() => {
-    setUuid(uuidv4());
-  }, []);
-
   const saveChatHistory = (chatHistory: Completion[]) => {
     localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
   };
@@ -253,7 +252,6 @@ export const App = () => {
   };
 
   const handleLogout = () => {
-    setUserData({accessToken: '', graphData: null});
     instance.logoutRedirect({
       postLogoutRedirectUri: "/",
     });
@@ -265,124 +263,118 @@ export const App = () => {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      // If the user is authenticated, you might want to acquire a token silently
-      // or handle the logged-in user's information here.
-      instance.acquireTokenSilent({
-        ...loginRequest,
-        account: accounts[0],
-      }).then((response) => {
-        const accessToken = response.accessToken;
-        callMsGraph(response.accessToken).then((response) => setUserData({accessToken, graphData: response}));
-      }).catch(error => {
-        setErrorSnackbar(true);
-        if (error instanceof Error) {
-          setErrorMessage(error.message);
-        } else {
-          setErrorMessage("Unable to login.");
+    if (!isAuthenticated && inProgress === InteractionStatus.None) {
+      handleLogin();
+    }
+
+    if (isAuthenticated && !userData.graphData && inProgress === InteractionStatus.None) {
+      callMsGraph().then(response => {
+        setUserData({accessToken: response.accessToken, graphData: response.graphData});
+      }).catch((e) => {
+        if (e instanceof InteractionRequiredAuthError) {
+          instance.acquireTokenRedirect({
+            ...loginRequest,
+            account: instance.getActiveAccount() as AccountInfo
+          }).catch((e) => {
+            setErrorMessage("Unable to login: " + e);
+          });
+        }else{
+          setErrorMessage("Unable to login via any methods");
         }
       });
     }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setOpen(true);
-    }
-  }, [isAuthenticated]);
+  }, [inProgress, userData, instance, isAuthenticated]);
 
   return (
     <UserContext.Provider value={userData}>
-      <ThemeProvider theme={mainTheme}>
-        <CssBaseline />
-        {!isAuthenticated ?
-        (
-          <>
-            <LoginPage open={open} setOpen={setOpen} setLangCookie={() => {}} />
-          </>
-        ) : (
-          <>
-            <TopMenu toggleDrawer={setOpenDrawer} />
+      <UnauthenticatedTemplate>
+        <Typography variant="h6" align="center">Connexion en cours...</Typography>
+        <br></br>
+        <Typography variant="h6" align="center">Signing you in ...</Typography>
+      </UnauthenticatedTemplate>
+      <AuthenticatedTemplate>
+        <ThemeProvider theme={mainTheme}>
+          <CssBaseline />
+          <TopMenu toggleDrawer={setOpenDrawer} />
+          <Box
+            sx={{
+              display: "flex",
+              flexFlow: "column",
+              minHeight: "100vh",
+              margin: "auto",
+            }}
+            maxWidth="lg"
+          >
+            <Box sx={{ flexGrow: 1 }}></Box>
             <Box
               sx={{
-                display: "flex",
-                flexFlow: "column",
-                minHeight: "100vh",
-                margin: "auto",
+                overflowY: "hidden",
+                padding: "2rem",
+                paddingTop: "6rem",
+                alignItems: "flex-end",
               }}
-              maxWidth="lg"
             >
-              <Box sx={{ flexGrow: 1 }}></Box>
-              <Box
-                sx={{
-                  overflowY: "hidden",
-                  padding: "2rem",
-                  paddingTop: "6rem",
-                  alignItems: "flex-end",
-                }}
-              >
-                {completions.map((completion, index) => (
-                  <Fragment key={index}>
-                    {completion.message?.role === "assistant" && completion.message?.content && (
-                      <AssistantBubble
-                        text={completion.message.content}
-                        isLoading={index == completions.length-1 && isLoading}
-                        context={completion.message?.context}
-                        scrollRef={chatMessageStreamEnd}
-                        replayChat={replayChat}
-                        index={index}
-                        total={completions.length}
-                        handleFeedbackSubmit={handleFeedbackSubmit}
-                        />
-                    )}
+              {completions.map((completion, index) => (
+                <Fragment key={index}>
+                  {completion.message?.role === "assistant" && completion.message?.content && (
+                    <AssistantBubble 
+                      text={completion.message.content} 
+                      isLoading={index == completions.length-1 && isLoading} 
+                      context={completion.message?.context}
+                      scrollRef={chatMessageStreamEnd} 
+                      replayChat={replayChat}
+                      index={index}
+                      total={completions.length}
+                      handleFeedbackSubmit={handleFeedbackSubmit}
+                      />
+                  )}
 
-                    {completion.message?.role === "user" && (
-                      <UserBubble text={completion.message?.content} />
-                    )}
-                  </Fragment>
-                ))}
-              </Box>
-              <div ref={chatMessageStreamEnd} />
-              <Box
-                sx={{
-                  position: "sticky",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  zIndex: 1100,
-                  bgcolor: "background.default",
-                  padding: "1rem",
-                }}
-              >
-                <ChatInput
-                  clearOnSend
-                  placeholder={t("placeholder")}
-                  disabled={isLoading}
-                  onSend={(question) => makeApiRequest(question)}
-                />
-              </Box>
+                  {completion.message?.role === "user" && (
+                    <UserBubble text={completion.message?.content} />
+                  )}
+                </Fragment>
+              ))}
             </Box>
-            <Snackbar
-              open={errorSnackbar}
-              autoHideDuration={6000}
+            <div ref={chatMessageStreamEnd} />
+            <Box
+              sx={{
+                position: "sticky",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                zIndex: 1100,
+                bgcolor: "background.default",
+                padding: "1rem",
+              }}
+            > 
+              <ChatInput
+                clearOnSend
+                placeholder={t("placeholder")}
+                disabled={isLoading}
+                onSend={(question) => makeApiRequest(question)}
+              />
+            </Box>
+          </Box>
+          <Snackbar
+            open={errorSnackbar}
+            autoHideDuration={6000}
+            onClose={handleCloseSnackbar}
+            sx={{ mb: 1 }}
+          >
+            <Alert
               onClose={handleCloseSnackbar}
-              sx={{ mb: 1 }}
+              severity="error"
+              variant="filled"
+              sx={{ width: "100%" }}
             >
-              <Alert
-                onClose={handleCloseSnackbar}
-                severity="error"
-                variant="filled"
-                sx={{ width: "100%" }}
-              >
-                {errorMessage}
-              </Alert>
-            </Snackbar>
-            <Dial drawerVisible={openDrawer} onClearChat={handleClearChat} />
-            <Disclaimer />
-            <DrawerMenu openDrawer={openDrawer} toggleDrawer={setOpenDrawer} onClearChat={handleClearChat} setLangCookie={setLangCookie} login={handleLogin} logout={handleLogout}/>
-          </>
-        )}
-      </ThemeProvider>
+              {errorMessage}
+            </Alert>
+          </Snackbar>
+          <Dial drawerVisible={openDrawer} onClearChat={handleClearChat} />
+          <Disclaimer />
+          <DrawerMenu openDrawer={openDrawer} toggleDrawer={setOpenDrawer} onClearChat={handleClearChat} setLangCookie={setLangCookie} login={handleLogin} logout={handleLogout}/>
+        </ThemeProvider>
+      </AuthenticatedTemplate>
     </UserContext.Provider>
   );
 };

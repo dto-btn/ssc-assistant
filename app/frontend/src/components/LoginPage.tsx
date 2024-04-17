@@ -60,3 +60,4 @@ const LoginPage = ({ open, setOpen, setLangCookie }: { open: boolean, setOpen: R
 };
 
 export default LoginPage;
+

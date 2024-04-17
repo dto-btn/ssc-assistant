@@ -1,10 +1,21 @@
-import { graphConfig } from "./authConfig";
+import { loginRequest, graphConfig } from "./authConfig";
+import { msalInstance } from "./index";
 
 /**
- * Attaches a given access token to a MS Graph API call. Returns information about the user
- * @param accessToken 
+ * https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/samples/msal-react-samples/typescript-sample/src/utils/MsGraphApiCall.ts
  */
-export async function callMsGraph(accessToken: any) {
+export async function callMsGraph() {
+    const account = msalInstance.getActiveAccount();
+    if (!account) {
+        throw Error("No active account! Verify a user has been signed in and setActiveAccount has been called.");
+    }
+
+    const response = await msalInstance.acquireTokenSilent({
+        ...loginRequest,
+        account: account
+    });
+
+    const accessToken = response.accessToken;
     const headers = new Headers();
     const bearer = `Bearer ${accessToken}`;
 
@@ -15,7 +26,8 @@ export async function callMsGraph(accessToken: any) {
         headers: headers
     };
 
-    return fetch(graphConfig.graphMeEndpoint, options)
-        .then(response => response.json())
-        .catch(error => console.log(error));
+    const graphResponse = await fetch(graphConfig.graphMeEndpoint, options);  
+    const graphData = await graphResponse.json();  
+
+    return {graphData, accessToken};
 }
