@@ -125,14 +125,15 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
       <Box>
         <Paper
           sx={{
-            bgcolor: 'white',
-            color: 'white.contrastText',
+            bgcolor: '#f2f2f2',
+            color: 'grey.contrastText',
+            display: 'inline-block',
             borderRadius: '20px',
             borderTopLeftRadius: 0,
-            display: 'inline-block',
             maxWidth: '80%',
             flexDirection: 'row'
           }}
+          elevation={4}
         >
           <Container>
             <Markdown

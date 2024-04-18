@@ -65,6 +65,8 @@
     "regenerate": "Régénérer",
     "copy": "Copier",
     "copy.success": "Copié!",
+    "welcome": "Bienvenue à l'Assistant SPC",
+    "login.required": "Connexion requise pour continuer",
     "good.response": "Bonne réponse",
     "bad.response": "Mauvaise réponse",
     "submit": "Soumettre",
@@ -72,5 +74,6 @@
     "msg.opt": "Message (optionnel)",
     "cancel": "Annuler",
     "provide.feedback": "Veuillez donner votre avis sur la réponse fournie",
-    "feedback.submitted": "Retour soumis, merci!"
+    "feedback.submitted": "Retour soumis, merci!",
+    "question.maxlength": "Vous avez atteint la longueur maximale de la question. Réduisez la taille de la question."
 }
