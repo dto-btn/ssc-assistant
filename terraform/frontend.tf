@@ -35,6 +35,11 @@ resource "azurerm_linux_web_app" "frontend" {
     use_32_bit_worker = false
 
     app_command_line = "NODE_ENV=production node server.js"
+
+    cors {
+      allowed_origins     = ["https://assistant.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"]
+      support_credentials = true
+    }
   }
 
   app_settings = {
