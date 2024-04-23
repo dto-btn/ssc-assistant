@@ -36,7 +36,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [isGoodResponse, setIsGoodResponse] = useState(false);
-  const [isThankYouVisible] = useState(false);
+  const [isThankYouVisible, setIsThankYouVisible] = useState(false);
   const isMostRecent = index === total - 1;
 
 
@@ -49,8 +49,8 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
   const handleFeedback = (event: React.FormEvent) => {
     event.preventDefault();
     handleFeedbackSubmit(feedback, isGoodResponse);
-    setIsFeedbackVisible(false);
     setFeedback('');
+    setIsThankYouVisible(true);
 };
 
 
@@ -115,6 +115,13 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
         return () => clearTimeout(timer);
     }
 }, [isCopied]);
+
+useEffect(() => {
+  if (isFeedbackVisible) {
+      setIsThankYouVisible(false);
+  }
+}, [isFeedbackVisible]);
+
 
   return (
     <Box
