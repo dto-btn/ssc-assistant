@@ -3,9 +3,13 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/
 import { useTranslation } from 'react-i18next';
 
 import Cookies from "js-cookie";
+import { useMsal } from '@azure/msal-react';
+import { InteractionStatus } from '@azure/msal-browser';
 
 export const Disclaimer = () => {
     const { t, i18n } = useTranslation();
+    const [hideDialog, setHideDialog] = useState(true);
+    const {inProgress} = useMsal();
 
     const setTranslationCookie = () => {
         Cookies.set("lang_setting", i18n.language, {
@@ -17,12 +21,10 @@ export const Disclaimer = () => {
         i18n.changeLanguage(lng);
     };
 
-    const [hideDialog, setHideDialog] = useState(false);
-
     useEffect(() => {
         const disclaimerAccepted = Cookies.get("disclaimer_accepted");
-        if (disclaimerAccepted === "true") {
-            setHideDialog(true);
+        if (!disclaimerAccepted && inProgress === InteractionStatus.None) {
+            setHideDialog(false);
         }
     }, []);
 
