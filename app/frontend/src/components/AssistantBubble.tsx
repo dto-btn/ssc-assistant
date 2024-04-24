@@ -5,14 +5,7 @@ import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
 import { useEffect, useState, Fragment } from 'react';
 import { useTranslation } from "react-i18next";
-import './AssistantBubble.css';
-import { CopyToClipboard } from 'react-copy-to-clipboard';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import Tooltip from '@mui/material/Tooltip';
-import CheckIcon from '@mui/icons-material/Check';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import ThumbUpAltOutlinedIcon from '@mui/icons-material/ThumbUpAltOutlined';
-import ThumbDownAltOutlinedIcon from '@mui/icons-material/ThumbDownAltOutlined';
+import { BubbleButtons } from './BubbleButtons';
 
 interface AssistantBubbleProps {
     text: string;
@@ -23,20 +16,15 @@ interface AssistantBubbleProps {
     index: number;
     total: number;
     setIsFeedbackVisible: React.Dispatch<React.SetStateAction<boolean>>;
-    setFeedback: React.Dispatch<React.SetStateAction<string>>;
     setIsGoodResponse: React.Dispatch<React.SetStateAction<boolean>>;
   }
 
 export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse }: AssistantBubbleProps) => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
   const isMostRecent = index === total - 1;
-
-
 
   const components = {
     a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <Link target="_blank" rel="noopener noreferrer" {...props} />,
@@ -97,15 +85,6 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
     document.documentElement.lang = i18n.language;
   }, [i18n.language]);
 
-  useEffect(() => {
-    if (isCopied) {
-        const timer = setTimeout(() => {
-            setIsCopied(false);
-        }, 3000);
-        return () => clearTimeout(timer);
-    }
-}, [isCopied]);
-
   return (
     <Box
       sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start'}}
@@ -162,7 +141,6 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
                         )
                     );
                 })}
-
                 </Stack>
               </Box>
             </>
@@ -171,56 +149,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
       </Box>
       <Box>
         <Paper sx={{backgroundColor: 'transparent', boxShadow: 'none', mt: 1, ml:2}}>
-          <CopyToClipboard text={text} onCopy={() => setIsCopied(true)}>
-            <Tooltip title={isCopied ? t("copy.success") : t("copy")} arrow>
-              <button
-                style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none' }}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                tabIndex={0}>
-                {isCopied ? <CheckIcon style={{ fontSize: 20 }}/> : <ContentCopyIcon className="copy-icon" style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>}
-              </button>
-            </Tooltip>
-          </CopyToClipboard>
-          <Tooltip title={t("regenerate")} arrow>
-            <button
-                onClick={replayChat}
-                style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none', display: index === total - 1 ? 'inline' : 'none' }}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                tabIndex={0}
-            >
-              <RefreshIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>
-            </button>
-          </Tooltip>
-          <Tooltip title={t("good.response")} arrow>
-            <button
-              onClick={() => {
-                setIsFeedbackVisible(true);
-                setIsGoodResponse(true);
-              }}
-              style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none' }}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              tabIndex={0}
-            >
-              <ThumbUpAltOutlinedIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>
-            </button>
-          </Tooltip>
-          <Tooltip title={t("bad.response")} arrow>
-            <button
-              onClick={() => {
-                setIsFeedbackVisible(true);
-                setIsGoodResponse(false);
-              }}
-              style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none' }}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              tabIndex={0}
-            >
-              <ThumbDownAltOutlinedIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>
-            </button>
-          </Tooltip>
+          <BubbleButtons setIsFeedbackVisible={setIsFeedbackVisible} setIsGoodResponse={setIsGoodResponse} isHovering={isHovering} isMostRecent={isMostRecent} replayChat={replayChat} text={text} />
         </Paper>
       </Box>
     </Box>

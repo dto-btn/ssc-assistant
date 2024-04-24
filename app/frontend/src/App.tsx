@@ -331,7 +331,6 @@ export const App = () => {
                       replayChat={replayChat}
                       index={index}
                       total={completions.length}
-                      setFeedback={setFeedback}
                       setIsFeedbackVisible={setIsFeedbackVisible}
                       setIsGoodResponse={setIsGoodResponse}
                       />
