@@ -115,6 +115,8 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Union[ChatC
             stream=False
         )
 
+        logger.debug(completion_tools)
+
         if completion_tools.choices[0].message.tool_calls:
             logger.debug(f"Tools were used in the request and OpenAI deemed it needed to invoke functions... gathering function data ...")
             logger.debug(f"tool_calls: {[f.function.name for f in completion_tools.choices[0].message.tool_calls]}")

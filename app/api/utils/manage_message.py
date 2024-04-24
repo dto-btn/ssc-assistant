@@ -46,6 +46,7 @@ def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessage
 
     # Convert MessageRequest messages to ChatCompletionMessageParam
     for message in message_request.messages or []:
+        print(message)
         if message.role == "user":
             messages.append(ChatCompletionUserMessageParam(content=str(message.content), role='user'))
         elif message.role == "assistant":
