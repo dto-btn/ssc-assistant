@@ -13,7 +13,6 @@ import CheckIcon from '@mui/icons-material/Check';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ThumbUpAltOutlinedIcon from '@mui/icons-material/ThumbUpAltOutlined';
 import ThumbDownAltOutlinedIcon from '@mui/icons-material/ThumbDownAltOutlined';
-import FeedbackForm from './FeedbackForm';
 
 interface AssistantBubbleProps {
     text: string;
@@ -23,20 +22,18 @@ interface AssistantBubbleProps {
     replayChat: () => void;
     index: number;
     total: number;
-    handleFeedbackSubmit: (feedback: string, isGoodResponse: boolean) => void;
+    setIsFeedbackVisible: React.Dispatch<React.SetStateAction<boolean>>;
+    setFeedback: React.Dispatch<React.SetStateAction<string>>;
+    setIsGoodResponse: React.Dispatch<React.SetStateAction<boolean>>;
   }
 
-export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayChat, index, total, handleFeedbackSubmit }: AssistantBubbleProps) => {
+export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse }: AssistantBubbleProps) => {
   const { t, i18n } = useTranslation();
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
-  const [feedback, setFeedback] = useState('');
-  const [isGoodResponse, setIsGoodResponse] = useState(false);
-  const [isThankYouVisible, setIsThankYouVisible] = useState(false);
   const isMostRecent = index === total - 1;
 
 
@@ -45,13 +42,6 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
     a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <Link target="_blank" rel="noopener noreferrer" {...props} />,
   };
   const [citationNumberMapping, setCitationNumberMapping] = useState<{ [key: number]: number }>({});
-
-  const handleFeedback = (event: React.FormEvent) => {
-    event.preventDefault();
-    handleFeedbackSubmit(feedback, isGoodResponse);
-    setFeedback('');
-    setIsThankYouVisible(true);
-};
 
 
 
@@ -115,13 +105,6 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
         return () => clearTimeout(timer);
     }
 }, [isCopied]);
-
-useEffect(() => {
-  if (isFeedbackVisible) {
-      setIsThankYouVisible(false);
-  }
-}, [isFeedbackVisible]);
-
 
   return (
     <Box
@@ -238,15 +221,6 @@ useEffect(() => {
               <ThumbDownAltOutlinedIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>
             </button>
           </Tooltip>
-          <FeedbackForm
-            feedback={feedback}
-            setFeedback={setFeedback}
-            open={isFeedbackVisible}
-            handleClose={() => setIsFeedbackVisible(false)}
-            handleFeedbackSubmit={handleFeedback}
-            isThankYouVisible={isThankYouVisible}
-          />
-
         </Paper>
       </Box>
     </Box>

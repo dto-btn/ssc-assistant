@@ -9,10 +9,18 @@ interface FeedbackFormProps {
   handleClose: () => void;
   handleFeedbackSubmit: (event: React.FormEvent) => void;
   isThankYouVisible: boolean;
+  setIsThankYouVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const FeedbackForm: React.FC<FeedbackFormProps> = ({ feedback, setFeedback, open, handleClose, handleFeedbackSubmit, isThankYouVisible }) => {
+export const FeedbackForm = ({ feedback, setFeedback, open, handleClose, handleFeedbackSubmit, isThankYouVisible, setIsThankYouVisible }: FeedbackFormProps) => {
   const { t } = useTranslation();
+
+  const handleCloseAndReset = () => {
+    handleClose();
+    setTimeout(() => {
+      setIsThankYouVisible(false);
+    }, 200); // delay of 200ms to prevent flash of dialog before closing
+  }
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth={"sm"}>
@@ -20,7 +28,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ feedback, setFeedback, open
         <>
           <DialogTitle>{t("feedback.submitted")}</DialogTitle>
           <DialogActions>
-            <Button onClick={handleClose}>{t("close")}</Button>
+            <Button onClick={handleCloseAndReset}>{t("close")}</Button>
           </DialogActions>
         </>
       ) : (
@@ -33,7 +41,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ feedback, setFeedback, open
               multiline
               rows={4}
               fullWidth
-              value={feedback}  
+              value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
             />
           </DialogContent>
@@ -52,5 +60,3 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ feedback, setFeedback, open
     </Dialog>
   );
 };
-
-export default FeedbackForm;
