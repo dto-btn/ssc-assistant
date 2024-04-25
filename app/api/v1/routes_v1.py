@@ -1,9 +1,10 @@
 import json
 import logging
 
-from apiflask import APIBlueprint
+from apiflask import APIBlueprint, abort
 from flask import Response, jsonify, request, stream_with_context
 from openai import Stream
+import openai
 from openai.types.chat import (ChatCompletion, ChatCompletionChunk)
 from utils.db import store_completion, store_request, leave_feedback
 from utils.models import Completion, Feedback, MessageRequest
@@ -88,56 +89,61 @@ def completion_chat_stream(message_request: MessageRequest):
     convo_uuid = message_request.uuid if message_request.uuid else str(uuid.uuid4())
     thread = threading.Thread(target=store_request, args=(message_request, convo_uuid))
     thread.start()
+    try:
+        completion: ChatCompletion | Stream[ChatCompletionChunk] = chat_with_data(message_request, stream=True)
 
-    completion: ChatCompletion | Stream[ChatCompletionChunk] = chat_with_data(message_request, stream=True)
+        if isinstance(completion, ChatCompletion):
+            completion_response = convert_chat_with_data_response(completion)
+            thread = threading.Thread(target=store_completion, args=(completion_response, convo_uuid))
+            thread.start()
+            def generate_single_response():
+                yield f'--{_boundary}\r\n'
+                yield 'Content-Type: text/plain\r\n\r\n'
+                yield str(completion.choices[0].message.content)
+                yield f'\r\n--{_boundary}\r\n'
+                yield 'Content-Type: application/json\r\n\r\n'
+                yield json.dumps(
+                    completion_response.__dict__,
+                    default=lambda o: o.__dict__
+                )
+                yield f'\r\n--{_boundary}--\r\n'
 
-    if isinstance(completion, ChatCompletion):
-        completion_response = convert_chat_with_data_response(completion)
-        thread = threading.Thread(target=store_completion, args=(completion_response, convo_uuid))
-        thread.start()
-        def generate_single_response():
+            return Response(stream_with_context(generate_single_response()), content_type=f'multipart/x-mixed-replace; boundary={_boundary}')
+
+        def generate():
+            context = None
+            content_txt = ''
             yield f'--{_boundary}\r\n'
             yield 'Content-Type: text/plain\r\n\r\n'
-            yield str(completion.choices[0].message.content)
+            for chunk in completion:
+                if chunk.choices and chunk.choices[0].delta:
+                    delta = chunk.choices[0].delta
+                    delta_dict = chunk.choices[0].delta.model_dump()
+                    # we have to do this here because the `context` field is not mapped in the pydantic object
+                    # but is something custom that Azure OpenAI returns ..
+                    if 'context' in delta_dict:
+                        context = delta_dict
+
+                    if delta.content:
+                        content_txt += delta.content
+                        yield delta.content
+
             yield f'\r\n--{_boundary}\r\n'
             yield 'Content-Type: application/json\r\n\r\n'
+            response = build_completion_response(content=content_txt, chat_completion_dict=context)
+            thread = threading.Thread(target=store_completion, args=(response, convo_uuid))
+            thread.start()
             yield json.dumps(
-                completion_response.__dict__,
+                response.__dict__,
                 default=lambda o: o.__dict__
             )
             yield f'\r\n--{_boundary}--\r\n'
-
-        return Response(stream_with_context(generate_single_response()), content_type=f'multipart/x-mixed-replace; boundary={_boundary}')
-
-    def generate():
-        context = None
-        content_txt = ''
-        yield f'--{_boundary}\r\n'
-        yield 'Content-Type: text/plain\r\n\r\n'
-        for chunk in completion:
-            if chunk.choices and chunk.choices[0].delta:
-                delta = chunk.choices[0].delta
-                delta_dict = chunk.choices[0].delta.model_dump()
-                # we have to do this here because the `context` field is not mapped in the pydantic object
-                # but is something custom that Azure OpenAI returns ..
-                if 'context' in delta_dict:
-                    context = delta_dict
-
-                if delta.content:
-                    content_txt += delta.content
-                    yield delta.content
-
-        yield f'\r\n--{_boundary}\r\n'
-        yield 'Content-Type: application/json\r\n\r\n'
-        response = build_completion_response(content=content_txt, chat_completion_dict=context)
-        thread = threading.Thread(target=store_completion, args=(response, convo_uuid))
-        thread.start()
-        yield json.dumps(
-             response.__dict__,
-             default=lambda o: o.__dict__
-        )
-        yield f'\r\n--{_boundary}--\r\n'
-    return Response(stream_with_context(generate()), content_type=f'multipart/x-mixed-replace; boundary={_boundary}')
+        return Response(stream_with_context(generate()), content_type=f'multipart/x-mixed-replace; boundary={_boundary}')
+    except openai.BadRequestError as e:
+        if e.code == 'content_filter':
+            # flag innapropriate
+            logger.warn(f"Innaproriate question detected for convo id {convo_uuid}")
+        abort(400, message="OpenAI request error", extra_data=e.body) # type: ignore
 
 @api_v1.post('/feedback')
 @api_v1.doc("Send feedback to the team!")

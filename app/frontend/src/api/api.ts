@@ -19,6 +19,11 @@ export async function completionMySSC({ request, updateLastMessage }: Completion
     throw new Error('Unauthorized: You are not authorized to make this request.');
   }
 
+  if (response.status === 400) {
+    const responseBody = await response.json();
+    throw new Error(responseBody.message || "BadRequestError");
+  }
+
   const contentTypeHeader = response.headers.get('Content-Type');
   const boundaryMatch = contentTypeHeader?.match(/boundary=(.*)$/);
   if (!boundaryMatch) {
