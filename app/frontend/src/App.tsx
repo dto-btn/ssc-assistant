@@ -42,11 +42,6 @@ const mainTheme = createTheme({
   },
 });
 
-export const enum ChatWith {
-  Data = "data",
-  Tools = "tools",
-}
-
 export const App = () => {
   const { t, i18n } = useTranslation();
   const [isLoading, setIsLoading] = useState<boolean>(false);
