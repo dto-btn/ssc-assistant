@@ -163,6 +163,5 @@ def completion_chat_stream(message_request: MessageRequest):
                                                                                 "positive": 0
                                                                             })
 def feedback(feedback: Feedback):
-    convo_uuid = feedback.uuid if feedback.uuid else str(uuid.uuid4())
-    leave_feedback(feedback, convo_uuid)
+    leave_feedback(feedback)
     return jsonify("Feedback saved!", 200)

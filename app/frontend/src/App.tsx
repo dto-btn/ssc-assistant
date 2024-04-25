@@ -17,6 +17,7 @@ import {
   Disclaimer,
   TopMenu,
   UserBubble,
+  FeedbackForm,
 } from "./components";
 import { DrawerMenu } from "./components/DrawerMenu";
 //https://github.com/AzureAD/microsoft-authentication-library-for-js/tree/dev/samples/msal-react-samples/typescript-sample
@@ -58,7 +59,10 @@ export const App = () => {
     graphData: null
   });
   const isAuthenticated = useIsAuthenticated();
-
+  const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const [isGoodResponse, setIsGoodResponse] = useState(false);
+  const [isThankYouVisible, setIsThankYouVisible] = useState(false);
 
   const welcomeMessage: Completion = {
     message: {
@@ -159,10 +163,12 @@ export const App = () => {
     }
   };
 
-  const handleFeedbackSubmit = async (feedback: string, isGoodResponse: boolean) => {
+  const handleFeedbackSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
     sendFeedback(feedback, isGoodResponse, uuid);
-};
-
+    setFeedback('');
+    setIsThankYouVisible(true);
+  };
 
   const updateLastMessage = (message_chunk: string) => {
     setCompletions((prevCompletions) => {
@@ -312,15 +318,16 @@ export const App = () => {
               {completions.map((completion, index) => (
                 <Fragment key={index}>
                   {completion.message?.role === "assistant" && completion.message?.content && (
-                    <AssistantBubble 
-                      text={completion.message.content} 
-                      isLoading={index == completions.length-1 && isLoading} 
+                    <AssistantBubble
+                      text={completion.message.content}
+                      isLoading={index == completions.length-1 && isLoading}
                       context={completion.message?.context}
-                      scrollRef={chatMessageStreamEnd} 
+                      scrollRef={chatMessageStreamEnd}
                       replayChat={replayChat}
                       index={index}
                       total={completions.length}
-                      handleFeedbackSubmit={handleFeedbackSubmit}
+                      setIsFeedbackVisible={setIsFeedbackVisible}
+                      setIsGoodResponse={setIsGoodResponse}
                       />
                   )}
 
@@ -341,7 +348,7 @@ export const App = () => {
                 bgcolor: "background.default",
                 padding: "1rem",
               }}
-            > 
+            >
               <ChatInput
                 clearOnSend
                 placeholder={t("placeholder")}
@@ -368,6 +375,15 @@ export const App = () => {
           <Dial drawerVisible={openDrawer} onClearChat={handleClearChat} />
           <Disclaimer />
           <DrawerMenu openDrawer={openDrawer} toggleDrawer={setOpenDrawer} onClearChat={handleClearChat} setLangCookie={setLangCookie} login={handleLogin} logout={handleLogout}/>
+          <FeedbackForm
+            feedback={feedback}
+            setFeedback={setFeedback}
+            open={isFeedbackVisible}
+            handleClose={() => setIsFeedbackVisible(false)}
+            handleFeedbackSubmit={handleFeedbackSubmit}
+            isThankYouVisible={isThankYouVisible}
+            setIsThankYouVisible={setIsThankYouVisible}
+          />
         </ThemeProvider>
       </AuthenticatedTemplate>
     </UserContext.Provider>

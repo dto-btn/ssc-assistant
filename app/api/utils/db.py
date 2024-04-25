@@ -74,12 +74,13 @@ def store_completion(completion: Completion, conversation_uuid: str):
       except Exception as e:
           logger.error(e)
 
-def leave_feedback(feedback: Feedback, conversation_uuid: str):
+def leave_feedback(feedback: Feedback):
       '''
       Store the feedback in the database, we store what we received (history and question) and the completion (answer)
       '''
       try:
-        feedback_entity = create_entity(feedback, conversation_uuid, 'Feedback')
+        convo_uuid = feedback.uuid if feedback.uuid else str(uuid.uuid4())
+        feedback_entity = create_entity(feedback, convo_uuid, 'Feedback')
         feedback_table_client.upsert_entity(feedback_entity)
       except Exception as e:
           logger.error(e)
