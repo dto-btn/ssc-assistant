@@ -8,7 +8,7 @@ import copy
 
 from utils.models import Completion, Feedback, MessageRequest
 
-__all__ = ["store_request", "store_completion", "leave_feedback"]
+__all__ = ["store_request", "store_completion", "leave_feedback", "flag_conversation"]
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -18,6 +18,7 @@ credential = DefaultAzureCredential()
 table_service_client = TableServiceClient(endpoint=os.getenv("DATABASE_ENDPOINT") or "", credential=credential)
 chat_table_client = table_service_client.get_table_client(table_name="chat")
 feedback_table_client = table_service_client.get_table_client(table_name="feedback")
+flagged_client = table_service_client.get_table_client(table_name="flagged")
 
 def create_entity(data, partition_key: str, row_key_prefix: str):
     '''
@@ -80,5 +81,15 @@ def leave_feedback(feedback: Feedback, conversation_uuid: str):
       try:
         feedback_entity = create_entity(feedback, conversation_uuid, 'Feedback')
         feedback_table_client.upsert_entity(feedback_entity)
+      except Exception as e:
+          logger.error(e)
+
+def flag_conversation(message_request: MessageRequest, conversation_uuid: str):
+      '''
+      Store the feedback in the database, we store what we received (history and question) and the completion (answer)
+      '''
+      try:
+        message_request_entity = create_entity(message_request, conversation_uuid, 'MessageRequest')
+        flagged_client.upsert_entity(message_request_entity)
       except Exception as e:
           logger.error(e)

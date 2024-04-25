@@ -6,7 +6,7 @@ from flask import Response, jsonify, request, stream_with_context
 from openai import Stream
 import openai
 from openai.types.chat import (ChatCompletion, ChatCompletionChunk)
-from utils.db import store_completion, store_request, leave_feedback
+from utils.db import store_completion, store_request, leave_feedback, flag_conversation
 from utils.models import Completion, Feedback, MessageRequest
 from utils.openai import (build_completion_response, chat_with_data,
                           convert_chat_with_data_response)
@@ -60,17 +60,24 @@ def completion_chat(message_request: MessageRequest):
     if not message_request.query and not message_request.messages:
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
 
-    convo_uuid = message_request.uuid if message_request.uuid else str(uuid.uuid4())
-    thread = threading.Thread(target=store_request, args=(message_request, convo_uuid))
-    thread.start()
+    try:
+        convo_uuid = message_request.uuid if message_request.uuid else str(uuid.uuid4())
+        thread = threading.Thread(target=store_request, args=(message_request, convo_uuid))
+        thread.start()
 
-    completion: ChatCompletion = chat_with_data(message_request) # type: ignore
-    completion_response = convert_chat_with_data_response(completion)
+        completion: ChatCompletion = chat_with_data(message_request) # type: ignore
+        completion_response = convert_chat_with_data_response(completion)
 
-    thread = threading.Thread(target=store_completion, args=(completion_response, convo_uuid))
-    thread.start()
+        thread = threading.Thread(target=store_completion, args=(completion_response, convo_uuid))
+        thread.start()
 
-    return completion_response
+        return completion_response
+    except openai.BadRequestError as e:
+        if e.code == 'content_filter':
+            # flag innapropriate
+            flag_conversation(message_request, convo_uuid)
+            logger.warn(f"Innaproriate question detected for convo id {convo_uuid}")
+        abort(400, message="OpenAI request error", extra_data=e.body) # type: ignore
 
 @api_v1.post('/completion/chat/stream')
 @api_v1.doc("send a question to be processed by the gpt paired with search service. Answer is accessibe via json choices[0].content")
@@ -142,6 +149,7 @@ def completion_chat_stream(message_request: MessageRequest):
     except openai.BadRequestError as e:
         if e.code == 'content_filter':
             # flag innapropriate
+            flag_conversation(message_request, convo_uuid)
             logger.warn(f"Innaproriate question detected for convo id {convo_uuid}")
         abort(400, message="OpenAI request error", extra_data=e.body) # type: ignore
 
