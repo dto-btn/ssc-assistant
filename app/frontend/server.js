@@ -18,4 +18,6 @@ app.use('/api/1.0/*', createProxyMiddleware({
     onProxyReq: onProxyReqMiddleware,
 }));
 
-ViteExpress.listen(app, (Number(process.env.PORT) | 8080), () => console.log("Server is listening on: http://localhost:" + (Number(process.env.PORT) | 8080)));
+ViteExpress.listen(app, (Number(process.env.PORT) || 8080), () => {
+    console.log("Server is listening on: http://localhost:" + (Number(process.env.PORT) || 8080));
+});

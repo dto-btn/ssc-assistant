@@ -72,6 +72,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Union[ChatC
         - https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
     """
     messages = load_messages(message_request)
+    corporate_question = False
     data_source = _create_azure_cognitive_search_data_source()
     data_sources = { #https://learn.microsoft.com/en-us/azure/ai-services/openai/references/azure-search?tabs=python
                 "data_sources": [{
@@ -100,7 +101,6 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Union[ChatC
     """
     1. Check if we are to use tools
     """
-    corporate_question = False
 
     if message_request.tools:
         logger.debug(f"Using Tools: {message_request.tools}")
@@ -124,19 +124,19 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Union[ChatC
             messages = call_tools(completion_tools.choices[0].message.tool_calls, messages)
             logger.debug(messages[-1])
 
-    if corporate_question:
-        return client.chat.completions.create(
-            messages=messages,
-            model=model,
-            extra_body=data_sources,
-            stream=stream
-        )
-    else:
-        return client.chat.completions.create(
-            messages=messages,
-            model=model,
-            stream=stream
-        )
+        if corporate_question:
+            return client.chat.completions.create(
+                messages=messages,
+                model=model,
+                extra_body=data_sources,
+                stream=stream
+            )
+
+    return client.chat.completions.create(
+        messages=messages,
+        model=model,
+        stream=stream
+    )
 
 def convert_chat_with_data_response(chat_completion: ChatCompletion) -> Completion:
     """

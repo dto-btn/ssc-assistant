@@ -45,7 +45,7 @@ class MessageRequest:
     top: int = field(default=3)
     lang: str = field(default='en')
     max: int = field(default=10)
-    tools: List[str] = field(default_factory=lambda: ["bits", "geds"])
+    tools: List[str] = field(default_factory=lambda: ["corporate", "geds"])
     uuid: str = field(default='')
 
 class QueryType(Enum):
