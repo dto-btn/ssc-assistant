@@ -148,9 +148,11 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
         </Paper>
       </Box>
       <Box>
+        {total > 1 && index !!!= 0  &&
         <Paper sx={{backgroundColor: 'transparent', boxShadow: 'none', mt: 1, ml:2}}>
           <BubbleButtons setIsFeedbackVisible={setIsFeedbackVisible} setIsGoodResponse={setIsGoodResponse} isHovering={isHovering} isMostRecent={isMostRecent} replayChat={replayChat} text={text} />
         </Paper>
+        }
       </Box>
     </Box>
   );

@@ -50,7 +50,6 @@ export const App = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
-  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
   const [openDrawer, setOpenDrawer] = useState<boolean>(false);
   const [uuid, setUuid] = useState<string>(uuidv4());
   const {instance, inProgress} = useMsal();
@@ -92,7 +91,6 @@ export const App = () => {
   const makeApiRequest = async (question: string) => {
     // set is loading so we disable some interactive functionality while we load the response
     setIsLoading(true);
-    setLastUserMessage(question);
 
     const userCompletion: Completion = {
       message: {
@@ -196,10 +194,10 @@ export const App = () => {
   };
 
   const replayChat = () => {
-    if (lastUserMessage) {
-      setCompletions(completions => completions.slice(0, completions.length - 2)); // ensures that on chat replay the previous answer is removed and the user's input isn't printed a second time
-        makeApiRequest(lastUserMessage);
-    }
+    const lastQuestion = completions[completions.length - 2];
+    setCompletions(completions => completions.slice(0, completions.length - 2));
+    console.log(lastQuestion);
+    makeApiRequest(lastQuestion.message.content ? lastQuestion.message.content : "");
   };
 
   useEffect(() => {
