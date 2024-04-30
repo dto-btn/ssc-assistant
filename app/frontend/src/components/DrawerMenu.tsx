@@ -11,7 +11,6 @@ import {
   ListItemText
 } from "@mui/material";
 import { changeLanguage, t } from "i18next";
-import LoginIcon from '@mui/icons-material/Login';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useIsAuthenticated } from "@azure/msal-react";
 
@@ -20,11 +19,10 @@ interface DrawerMenuProps {
   toggleDrawer: (arg: boolean) => void;
   onClearChat: () => void;
   setLangCookie: () => void;
-  login: () => void;
   logout: () => void;
 }
 
-export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie, login, logout} : DrawerMenuProps) => {
+export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie, logout} : DrawerMenuProps) => {
   const isAuthenticated = useIsAuthenticated();
 
   const list = () => (
@@ -52,15 +50,7 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
       </List>
       <Divider />
       <List>
-        {!isAuthenticated ? 
-        (<ListItem key="login" disablePadding>
-          <ListItemButton onClick={login}>
-            <ListItemIcon>
-              <LoginIcon />
-            </ListItemIcon>
-            <ListItemText primary={t("login")} />
-          </ListItemButton>
-        </ListItem>) :
+        {!isAuthenticated &&
         (<ListItem key="logout" disablePadding>
           <ListItemButton onClick={logout}>
             <ListItemIcon>
