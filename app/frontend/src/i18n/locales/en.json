@@ -85,5 +85,7 @@
     "accept": "Accept",
     "cancel": "Cancel",
     "provide.feedback": "Please provide feedback on the response provided",
-    "question.maxlength": "You have reached the maximum question length. Reduce question size."
+    "question.maxlength": "You have reached the maximum question length. Reduce question size.",
+    "welcome.prompt.system": "You are an assistant that creates greeting messages for users.",
+    "welcome.prompt.user" : "Create a greeting message for user: {{givenName}} {{surname}}. Ensure that the greeting message is personalized and mentions the name of the user somewhere."
 }

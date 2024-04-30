@@ -28,6 +28,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { AccountInfo, InteractionRequiredAuthError, InteractionStatus } from "@azure/msal-browser";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { AuthenticatedTemplate, UnauthenticatedTemplate } from "@azure/msal-react";
+import CircularProgress from '@mui/material/CircularProgress';
+import React from "react";
 
 const mainTheme = createTheme({
   palette: {
@@ -62,15 +64,7 @@ export const App = () => {
   const [feedback, setFeedback] = useState('');
   const [isGoodResponse, setIsGoodResponse] = useState(false);
   const [isThankYouVisible, setIsThankYouVisible] = useState(false);
-  
-  const welcomeMessage: Completion = {
-    message: {
-      role: "assistant",
-      content: t("default.welcome.msg"),
-    } as Message,
-  };
-
-  const [completions, setCompletions] = useState<Completion[]>([welcomeMessage]);
+  const [completions, setCompletions] = useState<Completion[]>([]);
 
   const convertCompletionsToMessages = (
     completions: Completion[]
@@ -108,6 +102,7 @@ export const App = () => {
       ...completions,
       userCompletion,
     ]);
+
     // prepare request bundle
     const request: MessageRequest = {
       messages: messages,
@@ -206,14 +201,12 @@ export const App = () => {
     const savedChatHistory = localStorage.getItem("chatHistory");
     if (savedChatHistory) {
       setCompletions(JSON.parse(savedChatHistory));
-    } else {
-      setCompletions([welcomeMessage]);
     }
   };
 
   const handleClearChat = () => {
     localStorage.removeItem("chatHistory"); // Clear chat history from local storage
-    setCompletions([welcomeMessage]);
+    setWelcomeMessage(userData.graphData);
     setUuid(uuidv4());
   };
 
@@ -229,10 +222,77 @@ export const App = () => {
     });
   };
 
-  // Load chat history if present
-  useEffect(() => {
-    loadChatHistory();
-  }, []);
+  const setWelcomeMessage = async (graphData: any) => {
+    setIsLoading(true);
+
+    const systemMessage: Completion = {
+      message: {
+        role: "system",
+        content: t("welcome.prompt.system"),
+      },
+    };
+
+    const welcomeMessageRequest: Completion = {
+      message: {
+        role: "user",
+        content: t("welcome.prompt.user", {givenName: graphData['givenName'], surname: graphData['surname']})
+      },
+    };
+
+    const messages = convertCompletionsToMessages([
+      systemMessage,
+      welcomeMessageRequest
+    ]);
+
+    const responsePlaceholder: Completion = {
+      message: {
+        role: "assistant",
+        content: "",
+      },
+    };
+
+    //update current chat window with the message sent..
+    setCompletions([responsePlaceholder]);
+
+    // prepare request bundle
+    const request: MessageRequest = {
+      messages: messages,
+      max: maxMessagesSent,
+      top: 5,
+      tools: [],
+      uuid: uuid,
+    };
+
+    try {
+      const completionResponse = await completionMySSC({
+        request: request,
+        updateLastMessage: updateLastMessage
+      });
+
+      setCompletions((prevCompletions) => {
+        const updatedCompletions = [...prevCompletions]; //making a copy
+
+        updatedCompletions[updatedCompletions.length - 1] = {
+          ...updatedCompletions[updatedCompletions.length - 1],
+          message: {
+            ...updatedCompletions[updatedCompletions.length - 1].message,
+            context: completionResponse.message.context,
+          },
+        };
+        saveChatHistory(updatedCompletions); // Save chat history to local storage
+        return updatedCompletions;
+      });
+    } catch (error) {
+      setErrorSnackbar(true);
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("An unknown error occurred");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   useEffect(() => {
     if (isAuthenticated && !userData.graphData && inProgress === InteractionStatus.None) {
@@ -250,6 +310,10 @@ export const App = () => {
           setErrorMessage("Unable to login via any methods");
         }
       });
+    } else if(isAuthenticated && userData.graphData && inProgress === InteractionStatus.None){
+      //we just logged in and we make sure if chat was empty, we load the welcome message.
+      if(completions.length === 0)
+        setWelcomeMessage(userData.graphData);
     }
   }, [inProgress, userData, instance, isAuthenticated]);
 
@@ -261,7 +325,12 @@ export const App = () => {
   //scroll's the last updated message (if its streaming, or once done) into view
   useEffect(() => {
     chatMessageStreamEnd.current?.scrollIntoView({behavior: "smooth",});
-  }, [completions[completions.length - 1].message.content]);
+  }, [completions[completions.length - 1]?.message.content]);
+
+  // Load chat history if present
+  useEffect(() => {
+    loadChatHistory();
+  }, []);
 
   return (
     <UserContext.Provider value={userData}>
@@ -292,6 +361,21 @@ export const App = () => {
                 alignItems: "flex-end",
               }}
             >
+              {completions.length === 0 && (
+                <>
+                  <svg width={0} height={0}>
+                    <defs>
+                      <linearGradient id="multicolor" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#e01cd5" />
+                        <stop offset="100%" stopColor="#1CB5E0" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', my: '2rem' }}>
+                    <CircularProgress sx={{ 'svg circle': { stroke: 'url(#multicolor)' } }} size={50} />
+                  </Box>
+                </>
+              )}
               {completions.map((completion, index) => (
                 <Fragment key={index}>
                   {completion.message?.role === "assistant" && completion.message?.content && (
