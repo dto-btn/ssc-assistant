@@ -62,7 +62,7 @@ export const App = () => {
   const [feedback, setFeedback] = useState('');
   const [isGoodResponse, setIsGoodResponse] = useState(false);
   const [isThankYouVisible, setIsThankYouVisible] = useState(false);
-
+  
   const welcomeMessage: Completion = {
     message: {
       role: "assistant",
@@ -70,9 +70,7 @@ export const App = () => {
     } as Message,
   };
 
-  const [completions, setCompletions] = useState<Completion[]>([
-    welcomeMessage,
-  ]);
+  const [completions, setCompletions] = useState<Completion[]>([welcomeMessage]);
 
   const convertCompletionsToMessages = (
     completions: Completion[]
@@ -196,22 +194,8 @@ export const App = () => {
   const replayChat = () => {
     const lastQuestion = completions[completions.length - 2];
     setCompletions(completions => completions.slice(0, completions.length - 2));
-    console.log(lastQuestion);
     makeApiRequest(lastQuestion.message.content ? lastQuestion.message.content : "");
   };
-
-  useEffect(() => {
-    // Set the `lang` attribute whenever the language changes
-    document.documentElement.lang = i18n.language;
-  }, [i18n.language]);
-
-  useEffect(
-    () =>
-      chatMessageStreamEnd.current?.scrollIntoView({
-        behavior: "smooth",
-      }),
-    [completions[completions.length - 1].message.content]
-  );
 
   const saveChatHistory = (chatHistory: Completion[]) => {
     localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
@@ -239,17 +223,6 @@ export const App = () => {
     });
   };
 
-  const handleLogin = () => {
-    instance.loginRedirect(loginRequest).catch((e) => {
-      setErrorSnackbar(true);
-      if (e instanceof Error) {
-        setErrorMessage(e.message);
-      } else {
-        setErrorMessage("Unable to login.");
-      }
-    });
-  };
-
   const handleLogout = () => {
     instance.logoutRedirect({
       postLogoutRedirectUri: "/",
@@ -262,10 +235,6 @@ export const App = () => {
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated && inProgress === InteractionStatus.None) {
-      handleLogin();
-    }
-
     if (isAuthenticated && !userData.graphData && inProgress === InteractionStatus.None) {
       callMsGraph().then(response => {
         setUserData({accessToken: response.accessToken, graphData: response.graphData});
@@ -283,6 +252,16 @@ export const App = () => {
       });
     }
   }, [inProgress, userData, instance, isAuthenticated]);
+
+  useEffect(() => {
+    // Set the `lang` attribute whenever the language changes
+    document.documentElement.lang = i18n.language;
+  }, [i18n.language]);
+
+  //scroll's the last updated message (if its streaming, or once done) into view
+  useEffect(() => {
+    chatMessageStreamEnd.current?.scrollIntoView({behavior: "smooth",});
+  }, [completions[completions.length - 1].message.content]);
 
   return (
     <UserContext.Provider value={userData}>
@@ -372,7 +351,7 @@ export const App = () => {
           </Snackbar>
           <Dial drawerVisible={openDrawer} onClearChat={handleClearChat} />
           <Disclaimer />
-          <DrawerMenu openDrawer={openDrawer} toggleDrawer={setOpenDrawer} onClearChat={handleClearChat} setLangCookie={setLangCookie} login={handleLogin} logout={handleLogout}/>
+          <DrawerMenu openDrawer={openDrawer} toggleDrawer={setOpenDrawer} onClearChat={handleClearChat} setLangCookie={setLangCookie} logout={handleLogout}/>
           <FeedbackForm
             feedback={feedback}
             setFeedback={setFeedback}

@@ -10,33 +10,42 @@ import "@fontsource/roboto/700.css";
 
 import { MsalProvider } from "@azure/msal-react";
 import { AuthenticationResult, EventMessage, EventType, PublicClientApplication } from "@azure/msal-browser";
-import { msalConfig } from './authConfig.ts';
+import { msalConfig, loginRequest } from './authConfig.ts';
 
 export const msalInstance = new PublicClientApplication(msalConfig);
 
 msalInstance.initialize().then(() => {
-  // Account selection logic is app dependent. Adjust as needed for different use cases.
-  const accounts = msalInstance.getAllAccounts();
-  if (accounts.length > 0) {
-      msalInstance.setActiveAccount(accounts[0]);
-  }
-
   msalInstance.addEventCallback((event: EventMessage) => {
-      if (event.eventType === EventType.LOGIN_SUCCESS && event.payload) {
-          const payload = event.payload as AuthenticationResult;
-          const account = payload.account;
-          msalInstance.setActiveAccount(account);
-      }
+    if (event.eventType === EventType.LOGIN_SUCCESS && event.payload) {
+        const payload = event.payload as AuthenticationResult;
+        const account = payload.account;
+        msalInstance.setActiveAccount(account);
+    }
   });
 
-  const root = ReactDOM.createRoot(
-      document.getElementById("root") as HTMLElement
-  );
-  root.render(
-    <React.StrictMode>
-      <MsalProvider instance={msalInstance}>
-        <App />
-      </MsalProvider>
-    </React.StrictMode>
-  );
+  msalInstance.handleRedirectPromise().then((response) => {
+    if (response && response.account) {
+      msalInstance.setActiveAccount(response.account);
+    } else {
+      const currentAccounts = msalInstance.getAllAccounts();
+      if (currentAccounts.length === 0) {
+        msalInstance.loginRedirect(loginRequest);
+      } else {
+        msalInstance.setActiveAccount(currentAccounts[0]);
+      }
+    }
+  }).catch((error) => {
+    console.error('Redirect error:', error);
+  });
 });
+
+const root = ReactDOM.createRoot(
+  document.getElementById("root") as HTMLElement
+);
+root.render(
+  <React.StrictMode>
+    <MsalProvider instance={msalInstance}>
+      <App />
+    </MsalProvider>
+  </React.StrictMode>
+);
