@@ -6,6 +6,7 @@ import 'highlight.js/styles/github.css'
 import { useEffect, useState, Fragment } from 'react';
 import { useTranslation } from "react-i18next";
 import { BubbleButtons } from './BubbleButtons';
+import { styled } from '@mui/system';
 
 interface AssistantBubbleProps {
     text: string;
@@ -86,74 +87,84 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
   }, [i18n.language]);
 
   return (
-    <Box
-      sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-start'}}
-      onMouseEnter={() => setIsHovering(true)}
-      onMouseLeave={() => setIsHovering(false)}
-    >
-      <Box>
-        <Paper
-          sx={{
-            bgcolor: '#f2f2f2',
-            color: 'grey.contrastText',
-            display: 'inline-block',
-            borderRadius: '20px',
-            borderTopLeftRadius: 0,
-            maxWidth: '80%',
-            flexDirection: 'row'
-          }}
-          elevation={4}
-        >
-          <Container>
-            <Markdown
-              components={components}
-              rehypePlugins={[rehypeHighlight]}
-              remarkPlugins={[remarkGfm]}>
-              {isLoading
-                ? `${text.replace(/\[doc(\d+)\]/g, '')}_`
-                : (processedContent.processedText !== "" ? processedContent.processedText : text)}
-            </Markdown>
-          </Container>
-          {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
-            <>
-              <Divider />
-              <Box sx={{ m: 2, maxWidth: '100%' }}>
-                <Typography gutterBottom variant="subtitle2">
-                  Citation(s):
-                </Typography>
-                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                {context?.citations.map( (citation, index) => {
-                    const docNumber = index + 1; // Convert index to docNumber
-                    const newCitationNumber = citationNumberMapping[docNumber]; // Get the new citation number
-                    return (
-                        processedContent.citedCitations.includes(citation) && (
-                            <Fragment key={index}>
-                                <Chip
-                                    label={newCitationNumber + " - " + citation.title} // Use new citation number
-                                    component="a"
-                                    href={citation.url}
-                                    target='_blank'
-                                    variant="filled"
-                                    clickable
-                                    color="primary"
-                                />
-                            </Fragment>
-                        )
-                    );
-                })}
-                </Stack>
-              </Box>
-            </>
-          )}
-        </Paper>
-      </Box>
-      <Box>
-        {total > 1 && index !!!= 0  &&
-        <Paper sx={{backgroundColor: 'transparent', boxShadow: 'none', mt: 1, ml:2}}>
-          <BubbleButtons setIsFeedbackVisible={setIsFeedbackVisible} setIsGoodResponse={setIsGoodResponse} isHovering={isHovering} isMostRecent={isMostRecent} replayChat={replayChat} text={text} />
-        </Paper>
-        }
-      </Box>
-    </Box>
+    <ChatBubbleWrapper>
+      <ChatBubbleView 
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
+      >
+        <Box>
+          <Paper
+            sx={{
+              bgcolor: '#f2f2f2',
+              color: 'grey.contrastText',
+              display: 'inline-block',
+              borderRadius: '20px',
+              borderTopLeftRadius: 0,
+              flexDirection: 'row'
+            }}
+            elevation={4}
+          >
+            <Container>
+              <Markdown
+                components={components}
+                rehypePlugins={[rehypeHighlight]}
+                remarkPlugins={[remarkGfm]}>
+                {isLoading
+                  ? `${text.replace(/\[doc(\d+)\]/g, '')}_`
+                  : (processedContent.processedText !== "" ? processedContent.processedText : text)}
+              </Markdown>
+            </Container>
+            {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
+              <>
+                <Divider />
+                <Box sx={{ m: 2, maxWidth: '100%' }}>
+                  <Typography gutterBottom variant="subtitle2">
+                    Citation(s):
+                  </Typography>
+                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                  {context?.citations.map( (citation, index) => {
+                      const docNumber = index + 1; // Convert index to docNumber
+                      const newCitationNumber = citationNumberMapping[docNumber]; // Get the new citation number
+                      return (
+                          processedContent.citedCitations.includes(citation) && (
+                              <Fragment key={index}>
+                                  <Chip
+                                      label={newCitationNumber + " - " + citation.title} // Use new citation number
+                                      component="a"
+                                      href={citation.url}
+                                      target='_blank'
+                                      variant="filled"
+                                      clickable
+                                      color="primary"
+                                  />
+                              </Fragment>
+                          )
+                      );
+                  })}
+                  </Stack>
+                </Box>
+              </>
+            )}
+          </Paper>
+        </Box>
+        <Box>
+          {total > 1 && index !!!= 0  &&
+          <Paper sx={{backgroundColor: 'transparent', boxShadow: 'none', mt: 1, ml:2}}>
+            <BubbleButtons setIsFeedbackVisible={setIsFeedbackVisible} setIsGoodResponse={setIsGoodResponse} isHovering={isHovering} isMostRecent={isMostRecent} replayChat={replayChat} text={text} />
+          </Paper>
+          }
+        </Box>
+      </ChatBubbleView>
+    </ChatBubbleWrapper>
   );
 };
+
+const ChatBubbleWrapper = styled(Box)`
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+`;
+
+const ChatBubbleView = styled(Box)`
+  max-width: 80%;
+`

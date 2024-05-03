@@ -26,8 +26,12 @@ import { callMsGraph } from './graph';
 import { UserContext } from './context/UserContext';
 import { v4 as uuidv4 } from 'uuid';
 import { AccountInfo, InteractionRequiredAuthError, InteractionStatus } from "@azure/msal-browser";
-import { useIsAuthenticated, useMsal } from "@azure/msal-react";
-import { AuthenticatedTemplate, UnauthenticatedTemplate } from "@azure/msal-react";
+import { 
+  useIsAuthenticated, 
+  useMsal, 
+  AuthenticatedTemplate, 
+  UnauthenticatedTemplate 
+} from "@azure/msal-react";
 import CircularProgress from '@mui/material/CircularProgress';
 import React from "react";
 
