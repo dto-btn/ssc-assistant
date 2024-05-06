@@ -89,6 +89,7 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
   return (
     <ChatBubbleWrapper>
       <ChatBubbleView 
+        className="chatBubbleView"
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
       >
@@ -161,10 +162,11 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
 
 const ChatBubbleWrapper = styled(Box)`
   display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
 `;
 
 const ChatBubbleView = styled(Box)`
   max-width: 80%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 `
