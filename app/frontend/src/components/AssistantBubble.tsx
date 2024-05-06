@@ -162,10 +162,10 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
 
 const ChatBubbleWrapper = styled(Box)`
   display: flex;
+  max-width: 80%;
 `;
 
 const ChatBubbleView = styled(Box)`
-  max-width: 80%;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
