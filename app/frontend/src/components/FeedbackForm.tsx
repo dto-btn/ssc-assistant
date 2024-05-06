@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from "react-i18next";
 import { Button, Dialog, DialogActions, DialogTitle, DialogContent, TextField, Typography } from '@mui/material';
 
@@ -8,25 +8,25 @@ interface FeedbackFormProps {
   open: boolean;
   handleClose: () => void;
   handleFeedbackSubmit: (event: React.FormEvent) => void;
-  isThankYouVisible: boolean;
-  setIsThankYouVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  feedbackResponse: string,
+  setFeedbackResponse: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export const FeedbackForm = ({ feedback, setFeedback, open, handleClose, handleFeedbackSubmit, isThankYouVisible, setIsThankYouVisible }: FeedbackFormProps) => {
+export const FeedbackForm = ({ feedback, setFeedback, open, handleClose, handleFeedbackSubmit, feedbackResponse, setFeedbackResponse }: FeedbackFormProps) => {
   const { t } = useTranslation();
 
   const handleCloseAndReset = () => {
     handleClose();
     setTimeout(() => {
-      setIsThankYouVisible(false);
+      setFeedbackResponse("");
     }, 200); // delay of 200ms to prevent flash of dialog before closing
   }
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth={"sm"}>
-      {isThankYouVisible ? (
+      {feedbackResponse ? (
         <>
-          <DialogTitle>{t("feedback.submitted")}</DialogTitle>
+          <DialogTitle>{feedbackResponse}</DialogTitle>
           <DialogActions>
             <Button onClick={handleCloseAndReset}>{t("close")}</Button>
           </DialogActions>

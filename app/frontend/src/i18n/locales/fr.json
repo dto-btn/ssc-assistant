@@ -74,7 +74,8 @@
     "msg.opt": "Message (optionnel)",
     "cancel": "Annuler",
     "provide.feedback": "Veuillez donner votre avis sur la réponse fournie",
-    "feedback.submitted": "Retour soumis, merci!",
+    "feedback.success": "Retour soumis, merci!",
+    "feedback.fail": "Erreur de soumission de retour",
     "question.maxlength": "Vous avez atteint la longueur maximale de la question. Réduisez la taille de la question.",
     "welcome.prompt.system": "Vous êtes un assistant qui crée des messages de bienvenue pour les utilisateurs.",
     "welcome.prompt.user": "Créez un message de bienvenue pour l'utilisateur : {{givenName}} {{surname}}. Assurez-vous que le message de bienvenue soit personnalisé et mentionne le nom de l'utilisateur quelque part."

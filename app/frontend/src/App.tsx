@@ -66,8 +66,8 @@ export const App = () => {
   const isAuthenticated = useIsAuthenticated();
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
   const [feedback, setFeedback] = useState('');
+  const [feedbackResponse, setFeedbackResponse] = useState<string>("");
   const [isGoodResponse, setIsGoodResponse] = useState(false);
-  const [isThankYouVisible, setIsThankYouVisible] = useState(false);
   const [completions, setCompletions] = useState<Completion[]>([]);
 
   const convertCompletionsToMessages = (
@@ -158,11 +158,15 @@ export const App = () => {
     }
   };
 
-  const handleFeedbackSubmit = (event: React.FormEvent) => {
+  const handleFeedbackSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    sendFeedback(feedback, isGoodResponse, uuid);
+    try {
+      await sendFeedback(feedback, isGoodResponse, uuid);
+      setFeedbackResponse(t("feedback.success"));
+    } catch (error) {
+      setFeedbackResponse(t("feedback.fail"))
+    }
     setFeedback('');
-    setIsThankYouVisible(true);
   };
 
   const updateLastMessage = (message_chunk: string) => {
@@ -446,8 +450,8 @@ export const App = () => {
             open={isFeedbackVisible}
             handleClose={() => setIsFeedbackVisible(false)}
             handleFeedbackSubmit={handleFeedbackSubmit}
-            isThankYouVisible={isThankYouVisible}
-            setIsThankYouVisible={setIsThankYouVisible}
+            feedbackResponse={feedbackResponse}
+            setFeedbackResponse={setFeedbackResponse}
           />
         </ThemeProvider>
       </AuthenticatedTemplate>
