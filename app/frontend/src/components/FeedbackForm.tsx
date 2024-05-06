@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { useTranslation } from "react-i18next";
 import { Button, Dialog, DialogActions, DialogTitle, DialogContent, TextField, Typography } from '@mui/material';
 
