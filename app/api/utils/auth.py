@@ -46,5 +46,4 @@ def verify_user_access_token(token):
         if user:
             return True
     except Exception as e:
-        print(e)
         return False

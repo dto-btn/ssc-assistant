@@ -13,7 +13,6 @@ class OAuth2TokenValidation:
         # those are obtained via: https://login.microsoftonline.com/{tenant_id}/v2.0/.well-known/openid-configuration
         self.jwks_url = f"https://login.microsoftonline.com/{tenant_id}/discovery/v2.0/keys"
         self.issuer_url = f"https://login.microsoftonline.com/{tenant_id}/v2.0"
-        #self.audience = f"api://{client_id}"
         self.audience = client_id
 
         self.jwks = json.loads(urlopen(self.jwks_url).read())
@@ -27,17 +26,12 @@ class OAuth2TokenValidation:
 
         try:
             unverified_header = jwt.get_unverified_header(token)
-            print(f"HEADERS: {unverified_header}")
         except Exception as e:
             raise Exception(f"Unable to decode authorization token headers: {e}")
 
         try:
             rsa_key = OAuth2TokenValidation.find_rsa_key(self.jwks, unverified_header)
-            print(rsa_key)
             public_key = OAuth2TokenValidation.rsa_pem_from_jwk(rsa_key)
-            print(public_key)
-
-            print(token)
 
             return jwt.decode(
               token,
@@ -51,7 +45,6 @@ class OAuth2TokenValidation:
         except jwt.ExpiredSignatureError:
             raise Exception("Token has expired")
         except jwt.InvalidTokenError as e:
-            print(e)
             raise Exception("Invalid token")
         except Exception as e:
             # update the public key if not fresh and try again
