@@ -39,7 +39,7 @@
     "msg.opt": "Message (optional)",
     "question.submitted": "Submitted question",
     "feedback.success": "Feedback submitted, thank you!",
-    "feedback.fail": "Error submitting feedback",
+    "feedback.fail": "Error sending feedback",
     "menu.responsemode.select": "Select mode",
     "menu.responsemode": "Response mode",
     "menu.model.select": "Select model",
@@ -88,5 +88,6 @@
     "provide.feedback": "Please provide feedback on the response provided",
     "question.maxlength": "You have reached the maximum question length. Reduce question size.",
     "welcome.prompt.system": "You are an assistant that creates greeting messages for users.",
-    "welcome.prompt.user" : "Create a greeting message for user: {{givenName}} {{surname}}. Ensure that the greeting message is personalized and mentions the name of the user somewhere."
+    "welcome.prompt.user" : "Create a greeting message for user: {{givenName}} {{surname}}. Ensure that the greeting message is personalized and mentions the name of the user somewhere.",
+    "chat.unknownError": "An unknown error occurred"
 }

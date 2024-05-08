@@ -8,55 +8,35 @@ interface FeedbackFormProps {
   open: boolean;
   handleClose: () => void;
   handleFeedbackSubmit: (event: React.FormEvent) => void;
-  feedbackResponse: string,
-  setFeedbackResponse: React.Dispatch<React.SetStateAction<string>>;
 }
 
-export const FeedbackForm = ({ feedback, setFeedback, open, handleClose, handleFeedbackSubmit, feedbackResponse, setFeedbackResponse }: FeedbackFormProps) => {
+export const FeedbackForm = ({ feedback, setFeedback, open, handleClose, handleFeedbackSubmit }: FeedbackFormProps) => {
   const { t } = useTranslation();
-
-  const handleCloseAndReset = () => {
-    handleClose();
-    setTimeout(() => {
-      setFeedbackResponse("");
-    }, 200); // delay of 200ms to prevent flash of dialog before closing
-  }
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth={"sm"}>
-      {feedbackResponse ? (
-        <>
-          <DialogTitle>{feedbackResponse}</DialogTitle>
-          <DialogActions>
-            <Button onClick={handleCloseAndReset}>{t("close")}</Button>
-          </DialogActions>
-        </>
-      ) : (
-        <>
-          <DialogTitle>{t("provide.feedback")}</DialogTitle>
-          <Typography variant="subtitle2" align="left" style={{ paddingLeft: "24px" }}>{t("msg.opt")}</Typography>
+        <DialogTitle>{t("provide.feedback")}</DialogTitle>
+        <Typography variant="subtitle2" align="left" style={{ paddingLeft: "24px" }}>{t("msg.opt")}</Typography>
 
-          <DialogContent>
-            <TextField
-              multiline
-              rows={4}
-              fullWidth
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>{t("cancel")}</Button>
-            <Button
-              style={{ backgroundColor: "#4b3e99", color: "white"}}
-              type="submit"
-              onClick={handleFeedbackSubmit}
-            >
-              {t("submit")}
-            </Button>
-          </DialogActions>
-        </>
-      )}
+        <DialogContent>
+          <TextField
+            multiline
+            rows={4}
+            fullWidth
+            value={feedback}
+            onChange={(e) => setFeedback(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>{t("cancel")}</Button>
+          <Button
+            style={{ backgroundColor: "#4b3e99", color: "white"}}
+            type="submit"
+            onClick={handleFeedbackSubmit}
+          >
+            {t("submit")}
+          </Button>
+        </DialogActions>
     </Dialog>
   );
 };
