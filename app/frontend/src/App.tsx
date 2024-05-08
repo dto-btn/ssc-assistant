@@ -1,7 +1,5 @@
 import {
-  Alert,
   Box,
-  Snackbar,
   Typography,
 } from "@mui/material";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -18,9 +16,9 @@ import {
   TopMenu,
   UserBubble,
   FeedbackForm,
-  AlertBubble
+  AlertBubble,
+  DrawerMenu
 } from "./components";
-import { DrawerMenu } from "./components/DrawerMenu";
 //https://github.com/AzureAD/microsoft-authentication-library-for-js/tree/dev/samples/msal-react-samples/typescript-sample
 import { loginRequest } from "./authConfig";
 import { callMsGraph } from './graph';
@@ -53,7 +51,6 @@ const mainTheme = createTheme({
 export const App = () => {
   const { t, i18n } = useTranslation();
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [errorSnackbar, setErrorSnackbar] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
@@ -227,16 +224,6 @@ export const App = () => {
       }
       return updatedChatHistory;
     });
-  };
-
-  const handleCloseSnackbar = (
-    _event?: React.SyntheticEvent | Event,
-    reason?: string
-  ) => {
-    if (reason === "clickaway") {
-      return;
-    }
-    setErrorSnackbar(false);
   };
 
   const replayChat = () => {
@@ -455,21 +442,6 @@ export const App = () => {
               />
             </Box>
           </Box>
-          <Snackbar
-            open={errorSnackbar}
-            autoHideDuration={6000}
-            onClose={handleCloseSnackbar}
-            sx={{ mb: 1 }}
-          >
-            <Alert
-              onClose={handleCloseSnackbar}
-              severity="error"
-              variant="filled"
-              sx={{ width: "100%" }}
-            >
-              {errorMessage}
-            </Alert>
-          </Snackbar>
           <Dial drawerVisible={openDrawer} onClearChat={handleClearChat} />
           <Disclaimer />
           <DrawerMenu openDrawer={openDrawer} toggleDrawer={setOpenDrawer} onClearChat={handleClearChat} setLangCookie={setLangCookie} logout={handleLogout}/>

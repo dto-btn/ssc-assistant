@@ -5,4 +5,5 @@ export { TopMenu } from './TopMenu';
 export { Disclaimer } from './Disclaimer';
 export { Dial } from './Dial';
 export { FeedbackForm } from './FeedbackForm';
-export { AlertBubble } from './AlertBubble'
+export { AlertBubble } from './AlertBubble';
+export { DrawerMenu } from './DrawerMenu';
