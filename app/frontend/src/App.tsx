@@ -67,7 +67,6 @@ export const App = () => {
   const isAuthenticated = useIsAuthenticated();
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
   const [feedback, setFeedback] = useState('');
-  const [feedbackResponse, setFeedbackResponse] = useState<string>("");
   const [isGoodResponse, setIsGoodResponse] = useState(false);
   const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
 
