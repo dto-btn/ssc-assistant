@@ -1,16 +1,18 @@
 interface CompletionProps {
   request: MessageRequest;
   updateLastMessage: (message_chunk: string) => void;
+  accessToken: string;
 }
 
-export async function completionMySSC({ request, updateLastMessage }: CompletionProps): Promise<Completion> {
+export async function completionMySSC({ request, updateLastMessage, accessToken }: CompletionProps): Promise<Completion> {
   let completion: Completion | undefined;
 
   let url = "/api/1.0/completion/chat/stream";
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + accessToken.trim()
     },
     body: JSON.stringify(request)
   });

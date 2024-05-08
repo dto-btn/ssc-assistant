@@ -130,7 +130,8 @@ export const App = () => {
     try {
       const completionResponse = await completionMySSC({
         request: request,
-        updateLastMessage: updateLastMessage
+        updateLastMessage: updateLastMessage,
+        accessToken: instance.getActiveAccount()?.idToken || ""
       });
 
       setCompletions((prevCompletions) => {
@@ -270,7 +271,8 @@ export const App = () => {
     try {
       const completionResponse = await completionMySSC({
         request: request,
-        updateLastMessage: updateLastMessage
+        updateLastMessage: updateLastMessage,
+        accessToken: instance.getActiveAccount()?.idToken || ""
       });
 
       setCompletions((prevCompletions) => {

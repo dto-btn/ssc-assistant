@@ -10,7 +10,7 @@ from utils.db import store_completion, store_request, leave_feedback, flag_conve
 from utils.models import Completion, Feedback, MessageRequest
 from utils.openai import (build_completion_response, chat_with_data,
                           convert_chat_with_data_response)
-from utils.auth import auth
+from utils.auth import auth, user_ad
 import uuid
 import threading
 
@@ -56,6 +56,7 @@ _boundary = "GPT-Interaction"
 })
 @api_v1.doc(security='ApiKeyAuth')
 @auth.login_required(role='chat')
+@user_ad.login_required
 def completion_chat(message_request: MessageRequest):
     if not message_request.query and not message_request.messages:
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
@@ -89,6 +90,7 @@ def completion_chat(message_request: MessageRequest):
 @api_v1.output(Completion.Schema, content_type=f'multipart/x-mixed-replace; boundary={_boundary}') # type: ignore
 @api_v1.doc(security='ApiKeyAuth')
 @auth.login_required(role='chat')
+@user_ad.login_required
 def completion_chat_stream(message_request: MessageRequest):
     if not message_request.query and not message_request.messages:
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
