@@ -51,7 +51,6 @@ const mainTheme = createTheme({
 export const App = () => {
   const { t, i18n } = useTranslation();
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string>("");
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
   const [openDrawer, setOpenDrawer] = useState<boolean>(false);
@@ -309,11 +308,7 @@ export const App = () => {
           instance.acquireTokenRedirect({
             ...loginRequest,
             account: instance.getActiveAccount() as AccountInfo
-          }).catch((e) => {
-            setErrorMessage("Unable to login: " + e);
-          });
-        }else{
-          setErrorMessage("Unable to login via any methods");
+          })
         }
       });
     } else if(isAuthenticated && userData.graphData && inProgress === InteractionStatus.None){
