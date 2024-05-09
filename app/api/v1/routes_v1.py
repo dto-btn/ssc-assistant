@@ -96,7 +96,8 @@ def completion_chat_stream(message_request: MessageRequest):
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
     
     convo_uuid = message_request.uuid if message_request.uuid else str(uuid.uuid4())
-    thread = threading.Thread(target=store_request, args=(message_request, convo_uuid))
+    user = user_ad.current_user()
+    thread = threading.Thread(target=store_request, args=(message_request, convo_uuid, user))
     thread.start()
     try:
         completion: ChatCompletion | Stream[ChatCompletionChunk] = chat_with_data(message_request, stream=True)

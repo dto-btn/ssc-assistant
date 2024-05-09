@@ -8,6 +8,9 @@ import json
 from urllib.request import urlopen
 
 class OAuth2TokenValidation:
+    """
+    Code taken from SO: https://stackoverflow.com/questions/76886257/how-to-validate-access-token-from-azuread-in-python
+    """
 
     def __init__(self, tenant_id, client_id):
         # those are obtained via: https://login.microsoftonline.com/{tenant_id}/v2.0/.well-known/openid-configuration
