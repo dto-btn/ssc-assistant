@@ -68,8 +68,8 @@ def completion_chat(message_request: MessageRequest):
 
         completion: ChatCompletion = chat_with_data(message_request) # type: ignore
         completion_response = convert_chat_with_data_response(completion)
-
-        thread = threading.Thread(target=store_completion, args=(completion_response, convo_uuid))
+        user = user_ad.current_user()
+        thread = threading.Thread(target=store_completion, args=(completion_response, convo_uuid, user))
         thread.start()
 
         return completion_response
@@ -104,7 +104,7 @@ def completion_chat_stream(message_request: MessageRequest):
 
         if isinstance(completion, ChatCompletion):
             completion_response = convert_chat_with_data_response(completion)
-            thread = threading.Thread(target=store_completion, args=(completion_response, convo_uuid))
+            thread = threading.Thread(target=store_completion, args=(completion_response, convo_uuid, user))
             thread.start()
             def generate_single_response():
                 yield f'--{_boundary}\r\n'
@@ -141,7 +141,7 @@ def completion_chat_stream(message_request: MessageRequest):
             yield f'\r\n--{_boundary}\r\n'
             yield 'Content-Type: application/json\r\n\r\n'
             response = build_completion_response(content=content_txt, chat_completion_dict=context)
-            thread = threading.Thread(target=store_completion, args=(response, convo_uuid))
+            thread = threading.Thread(target=store_completion, args=(response, convo_uuid, user))
             thread.start()
             yield json.dumps(
                 response.__dict__,

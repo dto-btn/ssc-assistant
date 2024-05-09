@@ -31,11 +31,14 @@ def create_entity(data, partition_key: str, row_key_prefix: str, user: Any):
     entity = dict()
     entity['PartitionKey'] = partition_key
     entity['RowKey'] = f"{row_key_prefix}-{uuid.uuid4()}"
-
-    if user and user['oid'] and user['sub'] and user['prefered_username']:
-        entity['oid'] = user['oid']
-        entity['sub'] = user['sub']
-        entity['prefered_username'] = user['prefered_username']
+    try:
+      #https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#payload-claims
+      if user and user['oid'] and user['sub'] and user['preferred_username']:
+          entity['oid'] = user['oid']
+          entity['sub'] = user['sub']
+          entity['preferred_username'] = user['preferred_username']
+    except Exception as e:
+        logger.error("Unable to add user information", e)
 
     if isinstance(data_copy, Completion):
         entity['Answer'] = data_copy.message.content
