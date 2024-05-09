@@ -3,7 +3,7 @@ import {
   Typography,
 } from "@mui/material";
 import CssBaseline from "@mui/material/CssBaseline";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { ThemeProvider, createTheme, styled } from "@mui/material/styles";
 import Cookies from "js-cookie";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -333,9 +333,18 @@ export const App = () => {
   return (
     <UserContext.Provider value={userData}>
       <UnauthenticatedTemplate>
-        <Typography variant="h6" align="center">Connexion en cours...</Typography>
-        <br></br>
-        <Typography variant="h6" align="center">Signing you in ...</Typography>
+        <SignInBox>
+          <SignInAlert icon={false} severity="info" variant={"outlined"}>
+            <SignInMessage variant="h6" align="left">Connexion en cours...</SignInMessage>
+            <SignInMessage variant="h6" align="left">Signing you in...</SignInMessage>
+          </SignInAlert>
+          <Box sx={{ display: 'flex', justifyContent: 'center', my: '2rem' }}>
+            <CircularProgress
+              sx={{ color: 'url(#multicolor)' }}
+              size={50}
+            />
+          </Box>       
+        </SignInBox>
       </UnauthenticatedTemplate>
       <AuthenticatedTemplate>
         <ThemeProvider theme={mainTheme}>
@@ -441,3 +450,21 @@ export const App = () => {
     </UserContext.Provider>
   );
 };
+
+const SignInBox = styled(Box)`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  height: 50vh;
+`;
+
+const SignInAlert = styled(Alert)`
+  width: 25%;
+  max-width: 300px;
+  margin: 50px 0px;
+`;
+
+const SignInMessage = styled(Typography)`
+  padding: 10px 0px;
+`
