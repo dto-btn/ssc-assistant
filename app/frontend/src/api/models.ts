@@ -40,3 +40,10 @@ interface MessageRequest {
   tools?: string[];
   uuid?: string;
 }
+
+interface ToastMessage {
+  toastMessage: string;
+  isError: boolean;
+}
+
+type ChatItem = Message | Completion | ToastMessage;

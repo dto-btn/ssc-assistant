@@ -1,13 +1,11 @@
 import {
-  Alert,
   Box,
-  Snackbar,
   Typography,
 } from "@mui/material";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import Cookies from "js-cookie";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { completionMySSC, sendFeedback } from "./api/api";
 import {
@@ -18,8 +16,10 @@ import {
   TopMenu,
   UserBubble,
   FeedbackForm,
+  AlertBubble,
+  DrawerMenu
 } from "./components";
-import { DrawerMenu } from "./components/DrawerMenu";
+import { isACompletion, isAMessage, isAToastMessage } from "./utils";
 //https://github.com/AzureAD/microsoft-authentication-library-for-js/tree/dev/samples/msal-react-samples/typescript-sample
 import { loginRequest } from "./authConfig";
 import { callMsGraph } from './graph';
@@ -52,8 +52,6 @@ const mainTheme = createTheme({
 export const App = () => {
   const { t, i18n } = useTranslation();
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [errorSnackbar, setErrorSnackbar] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string>("");
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
   const [openDrawer, setOpenDrawer] = useState<boolean>(false);
@@ -67,44 +65,89 @@ export const App = () => {
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [isGoodResponse, setIsGoodResponse] = useState(false);
-  const [isThankYouVisible, setIsThankYouVisible] = useState(false);
-  const [completions, setCompletions] = useState<Completion[]>([]);
-
-  const convertCompletionsToMessages = (
-    completions: Completion[]
-  ): Message[] => {
-    // Calculate the start index to slice from if the array length exceeds maxMessagesSent
-    const startIndex = Math.max(completions.length - maxMessagesSent, 0);
-    return completions.slice(startIndex).map(
-      (c) =>
-        ({
-          role: c.message.role,
-          content: c.message.content,
-        } as Message)
-    );
+  const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
+  
+  const convertChatHistoryToMessages = (chatHistory: ChatItem[]) : Message[] => {
+    const startIndex = Math.max(chatHistory.length - maxMessagesSent, 0);
+    return chatHistory.slice(startIndex).map(
+      (chatItem) => {
+        if (isACompletion(chatItem)) {
+          return {
+            role: chatItem.message.role,
+            content: chatItem.message.content,
+          };
+        } 
+        if (isAMessage(chatItem)) {
+          return chatItem;
+        }
+        return undefined;  
+      }).filter(message => message !== undefined) as Message[];   
   };
+
+  const sendApiRequest = async (request: MessageRequest) => {
+    try {
+      const completionResponse = await completionMySSC({
+        request: request,
+        updateLastMessage: updateLastMessage
+      });
+
+      setChatHistory((prevChatHistory) => {
+        const updatedChatHistory = [...prevChatHistory]; //making a copy
+        const lastItemIndex = updatedChatHistory.length - 1;
+        const lastItem = updatedChatHistory[lastItemIndex];
+
+        if (isACompletion(lastItem)) {
+          updatedChatHistory[lastItemIndex] = {
+            ...lastItem,
+              message: {
+                ...lastItem.message,
+                context: completionResponse.message.context
+              }
+          }
+        }
+        
+        saveChatHistory(updatedChatHistory); // Save chat history to local storage
+        return updatedChatHistory;
+      });
+
+    } catch (error) {
+      let errorMessage: string;
+      if (error instanceof Error) {
+        errorMessage = error.message;
+
+      } else {
+        errorMessage = t("chat.unknownError");
+      }
+      const toast : ToastMessage = {
+        toastMessage: errorMessage,
+        isError: true
+      }
+      setChatHistory(prevChatHistory => [...prevChatHistory, toast]);
+
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   const makeApiRequest = async (question: string) => {
     // set is loading so we disable some interactive functionality while we load the response
     setIsLoading(true);
 
-    const userCompletion: Completion = {
-      message: {
-        role: "user",
-        content: question,
-      },
+    const userMessage: Message = {
+      role: "user",
+      content: question
     };
 
     const responsePlaceholder: Completion = {
       message: {
         role: "assistant",
         content: "",
-      },
+        }
     };
 
-    const messages = convertCompletionsToMessages([
-      ...completions,
-      userCompletion,
+    const messages = convertChatHistoryToMessages([
+      ...chatHistory,
+      userMessage,
     ]);
 
     // prepare request bundle
@@ -117,94 +160,77 @@ export const App = () => {
     };
 
     //update current chat window with the message sent..
-    setCompletions((prevCompletions) => {
-      const updatedCompletions = [
-        ...prevCompletions,
-        userCompletion,
+    setChatHistory((prevChatHistory) => {
+      const updatedChatHistory = [
+        ...prevChatHistory,
+        userMessage,
         responsePlaceholder,
       ];
-      saveChatHistory(updatedCompletions); // Save chat history to local storage
-      return updatedCompletions;
+      saveChatHistory(updatedChatHistory); // Save chat history to local storage
+      return updatedChatHistory;
     });
 
-    try {
-      const completionResponse = await completionMySSC({
-        request: request,
-        updateLastMessage: updateLastMessage
-      });
-
-      setCompletions((prevCompletions) => {
-        const updatedCompletions = [...prevCompletions]; //making a copy
-
-        updatedCompletions[updatedCompletions.length - 1] = {
-          ...updatedCompletions[updatedCompletions.length - 1],
-          message: {
-            ...updatedCompletions[updatedCompletions.length - 1].message,
-            context: completionResponse.message.context,
-          },
-        };
-        saveChatHistory(updatedCompletions); // Save chat history to local storage
-        return updatedCompletions;
-      });
-    } catch (error) {
-      setErrorSnackbar(true);
-      if (error instanceof Error) {
-        setErrorMessage(error.message);
-      } else {
-        setErrorMessage("An unknown error occurred");
-      }
-    } finally {
-      setIsLoading(false);
-    }
+    sendApiRequest(request);
   };
 
-  const handleFeedbackSubmit = (event: React.FormEvent) => {
+  const handleFeedbackSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    sendFeedback(feedback, isGoodResponse, uuid);
+    setIsFeedbackVisible(false);
+    let toast: ToastMessage;
+
+    try {
+      await sendFeedback(feedback, isGoodResponse, uuid);
+      toast = {
+        toastMessage: t("feedback.success"),
+        isError: false
+      };
+    } catch (error) {
+      toast = {
+        toastMessage: t("feedback.fail"),
+        isError: true
+      };
+    }
+
+    setChatHistory(prevChatHistory => [...prevChatHistory, toast]);
     setFeedback('');
-    setIsThankYouVisible(true);
   };
 
   const updateLastMessage = (message_chunk: string) => {
-    setCompletions((prevCompletions) => {
-      const updatedCompletions = [...prevCompletions]; //making a copy
+    setChatHistory((prevChatHistory) => {
+      const updatedChatHistory = [...prevChatHistory]; //making a copy
+      const lastItemIndex = updatedChatHistory.length - 1;
+      const lastItem = updatedChatHistory[lastItemIndex];
 
-      updatedCompletions[updatedCompletions.length - 1] = {
-        ...updatedCompletions[updatedCompletions.length - 1],
-        message: {
-          ...updatedCompletions[updatedCompletions.length - 1].message,
-          content: message_chunk,
-        },
-      };
-      return updatedCompletions;
+      if (isACompletion(lastItem)) {
+        updatedChatHistory[lastItemIndex] = {
+          ...lastItem,
+          message: {
+            ...lastItem.message,
+            content: message_chunk
+          }
+        }
+      }
+      return updatedChatHistory;
     });
   };
 
-  const handleCloseSnackbar = (
-    _event?: React.SyntheticEvent | Event,
-    reason?: string
-  ) => {
-    if (reason === "clickaway") {
-      return;
-    }
-    setErrorSnackbar(false);
-  };
-
   const replayChat = () => {
-    const lastQuestion = completions[completions.length - 2];
-    setCompletions(completions => completions.slice(0, completions.length - 2));
-    makeApiRequest(lastQuestion.message.content ? lastQuestion.message.content : "");
+    const lastQuestion = chatHistory[chatHistory.length - 2];
+    setChatHistory(chatHistory => chatHistory.slice(0, chatHistory.length - 2));
+    if (isAMessage(lastQuestion)) {
+      makeApiRequest(lastQuestion.content ? lastQuestion.content : "");
+    }
   };
 
-  const saveChatHistory = (chatHistory: Completion[]) => {
-    localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+  const saveChatHistory = (chatHistory: ChatItem[]) => {
+    localStorage.setItem("chatHistory", JSON.stringify(chatHistory.filter(item => !isAToastMessage(item))));
   };
 
   // This function will be used to load the chat history from localStorage
   const loadChatHistory = () => {
     const savedChatHistory = localStorage.getItem("chatHistory");
     if (savedChatHistory) {
-      setCompletions(JSON.parse(savedChatHistory));
+      setChatHistory(JSON.parse(savedChatHistory));
     }
   };
 
@@ -229,34 +255,26 @@ export const App = () => {
   const setWelcomeMessage = async (graphData: any) => {
     setIsLoading(true);
 
-    const systemMessage: Completion = {
-      message: {
-        role: "system",
-        content: t("welcome.prompt.system"),
-      },
+    const systemMessage: Message = {
+      role: "system",
+      content: t("welcome.prompt.system")
     };
 
-    const welcomeMessageRequest: Completion = {
-      message: {
-        role: "user",
-        content: t("welcome.prompt.user", {givenName: graphData['givenName'], surname: graphData['surname']})
-      },
+    const welcomeMessageRequest: Message = {
+      role: "user",
+      content: t("welcome.prompt.user", {givenName: graphData['givenName'], surname: graphData['surname']})
     };
 
-    const messages = convertCompletionsToMessages([
-      systemMessage,
-      welcomeMessageRequest
-    ]);
-
+    const messages = [systemMessage, welcomeMessageRequest];
     const responsePlaceholder: Completion = {
-      message: {
+        message: {
         role: "assistant",
         content: "",
-      },
+        },
     };
 
     //update current chat window with the message sent..
-    setCompletions([responsePlaceholder]);
+    setChatHistory([responsePlaceholder]);
 
     // prepare request bundle
     const request: MessageRequest = {
@@ -267,35 +285,7 @@ export const App = () => {
       uuid: uuid,
     };
 
-    try {
-      const completionResponse = await completionMySSC({
-        request: request,
-        updateLastMessage: updateLastMessage
-      });
-
-      setCompletions((prevCompletions) => {
-        const updatedCompletions = [...prevCompletions]; //making a copy
-
-        updatedCompletions[updatedCompletions.length - 1] = {
-          ...updatedCompletions[updatedCompletions.length - 1],
-          message: {
-            ...updatedCompletions[updatedCompletions.length - 1].message,
-            context: completionResponse.message.context,
-          },
-        };
-        saveChatHistory(updatedCompletions); // Save chat history to local storage
-        return updatedCompletions;
-      });
-    } catch (error) {
-      setErrorSnackbar(true);
-      if (error instanceof Error) {
-        setErrorMessage(error.message);
-      } else {
-        setErrorMessage("An unknown error occurred");
-      }
-    } finally {
-      setIsLoading(false);
-    }
+    sendApiRequest(request);
   }
 
   useEffect(() => {
@@ -307,17 +297,14 @@ export const App = () => {
           instance.acquireTokenRedirect({
             ...loginRequest,
             account: instance.getActiveAccount() as AccountInfo
-          }).catch((e) => {
-            setErrorMessage("Unable to login: " + e);
-          });
-        }else{
-          setErrorMessage("Unable to login via any methods");
+          })
         }
       });
     } else if(isAuthenticated && userData.graphData && inProgress === InteractionStatus.None){
       //we just logged in and we make sure if chat was empty, we load the welcome message.
-      if(completions.length === 0)
+      if(chatHistory.length === 0) {
         setWelcomeMessage(userData.graphData);
+      }
     }
   }, [inProgress, userData, instance, isAuthenticated]);
 
@@ -326,14 +313,21 @@ export const App = () => {
     document.documentElement.lang = i18n.language;
   }, [i18n.language]);
 
-  //scroll's the last updated message (if its streaming, or once done) into view
+  // Scrolls the last updated message (if its streaming, or once done) into view
   useEffect(() => {
+    // maybe check here if its a completion before scrolling?
     chatMessageStreamEnd.current?.scrollIntoView({behavior: "smooth",});
-  }, [completions[completions.length - 1]?.message.content]);
+  }, [chatHistory[chatHistory.length - 1]]);
 
   // Load chat history if present
   useEffect(() => {
     loadChatHistory();
+  }, []);
+
+  const handleRemoveToastMessage = useCallback((indexToRemove: number) => {
+    setChatHistory(prevChatHistory => {
+      return prevChatHistory.filter((_item, index) => index !== indexToRemove);
+    });
   }, []);
 
   return (
@@ -365,7 +359,7 @@ export const App = () => {
                 alignItems: "flex-end",
               }}
             >
-              {completions.length === 0 && (
+              {chatHistory.length === 0 && (
                 <>
                   <svg width={0} height={0}>
                     <defs>
@@ -380,25 +374,35 @@ export const App = () => {
                   </Box>
                 </>
               )}
-              {completions.map((completion, index) => (
+              {chatHistory.map((chatItem, index) => (
                 <Fragment key={index}>
-                  {completion.message?.role === "assistant" && completion.message?.content && (
+
+                  {isACompletion(chatItem) && chatItem.message.content && (
                     <AssistantBubble
-                      text={completion.message.content}
-                      isLoading={index == completions.length-1 && isLoading}
-                      context={completion.message?.context}
+                      text={chatItem.message.content}
+                      isLoading={index == chatHistory.length-1 && isLoading}
+                      context={chatItem.message?.context}
                       scrollRef={chatMessageStreamEnd}
                       replayChat={replayChat}
                       index={index}
-                      total={completions.length}
+                      total={chatHistory.length}
                       setIsFeedbackVisible={setIsFeedbackVisible}
                       setIsGoodResponse={setIsGoodResponse}
                       />
                   )}
 
-                  {completion.message?.role === "user" && (
-                    <UserBubble text={completion.message?.content} />
+                  {isAMessage(chatItem) && (
+                    <UserBubble text={chatItem.content} />
                   )}
+
+                  {isAToastMessage(chatItem) && (
+                    <AlertBubble 
+                      toast={chatItem} 
+                      index={index} 
+                      removeMessageHandler={handleRemoveToastMessage}
+                    />
+                  )}
+
                 </Fragment>
               ))}
             </Box>
@@ -422,21 +426,6 @@ export const App = () => {
               />
             </Box>
           </Box>
-          <Snackbar
-            open={errorSnackbar}
-            autoHideDuration={6000}
-            onClose={handleCloseSnackbar}
-            sx={{ mb: 1 }}
-          >
-            <Alert
-              onClose={handleCloseSnackbar}
-              severity="error"
-              variant="filled"
-              sx={{ width: "100%" }}
-            >
-              {errorMessage}
-            </Alert>
-          </Snackbar>
           <Dial drawerVisible={openDrawer} onClearChat={handleClearChat} />
           <Disclaimer />
           <DrawerMenu openDrawer={openDrawer} toggleDrawer={setOpenDrawer} onClearChat={handleClearChat} setLangCookie={setLangCookie} logout={handleLogout}/>
@@ -446,8 +435,6 @@ export const App = () => {
             open={isFeedbackVisible}
             handleClose={() => setIsFeedbackVisible(false)}
             handleFeedbackSubmit={handleFeedbackSubmit}
-            isThankYouVisible={isThankYouVisible}
-            setIsThankYouVisible={setIsThankYouVisible}
           />
         </ThemeProvider>
       </AuthenticatedTemplate>
