@@ -19,6 +19,7 @@ import {
   AlertBubble,
   DrawerMenu
 } from "./components";
+import { isACompletion, isAMessage, isAToastMessage } from "./utils";
 //https://github.com/AzureAD/microsoft-authentication-library-for-js/tree/dev/samples/msal-react-samples/typescript-sample
 import { loginRequest } from "./authConfig";
 import { callMsGraph } from './graph';
@@ -65,18 +66,6 @@ export const App = () => {
   const [feedback, setFeedback] = useState('');
   const [isGoodResponse, setIsGoodResponse] = useState(false);
   const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
-
-  const isACompletion = (object: any): object is Completion => {
-    return 'message' in object;
-  } 
-
-  const isAMessage = (object: any): object is Message => {
-    return 'role' in object;
-  }
-
-  const isAToastMessage = (object: any): object is ToastMessage => {
-    return 'toastMessage' in object;
-  }
   
   const convertChatHistoryToMessages = (chatHistory: ChatItem[]) : Message[] => {
     const startIndex = Math.max(chatHistory.length - maxMessagesSent, 0);
