@@ -86,9 +86,15 @@ export const App = () => {
 
   const sendApiRequest = async (request: MessageRequest) => {
     try {
+      const accessToken = instance.getActiveAccount()?.idToken;//not an actual access token, this is an id token, *shhh*
+
+      if (!accessToken)
+        throw new Error(t("no.id.token"));
+      
       const completionResponse = await completionMySSC({
         request: request,
-        updateLastMessage: updateLastMessage
+        updateLastMessage: updateLastMessage,
+        accessToken: accessToken
       });
 
       setChatHistory((prevChatHistory) => {
@@ -114,7 +120,6 @@ export const App = () => {
       let errorMessage: string;
       if (error instanceof Error) {
         errorMessage = error.message;
-
       } else {
         errorMessage = t("chat.unknownError");
       }
