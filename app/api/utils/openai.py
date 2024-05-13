@@ -7,13 +7,12 @@ from openai import AzureOpenAI, Stream
 from openai.types.chat import (ChatCompletion, ChatCompletionChunk,
                                ChatCompletionMessageParam)
 from openai.types.completion_usage import CompletionUsage
+from utils.auth import user_ad
 from utils.manage_message import load_messages
 from utils.models import (AzureCognitiveSearchDataSource,
                           AzureCognitiveSearchParameters, Citation, Completion,
-                          Context, Message, MessageRequest, Metadata)
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
-
-from utils.tools import load_tools, call_tools
+                          Context, Message, MessageRequest)
+from utils.tools import call_tools, load_tools
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -71,7 +70,8 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Union[ChatC
         - https://github.com/openai/openai-cookbook/blob/main/examples/azure/chat_with_your_own_data.ipynb
         - https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
     """
-    messages = load_messages(message_request)
+    user = user_ad.current_user()
+    messages = load_messages(message_request, user)
     corporate_question = False
     data_source = _create_azure_cognitive_search_data_source()
     data_sources = { #https://learn.microsoft.com/en-us/azure/ai-services/openai/references/azure-search?tabs=python
