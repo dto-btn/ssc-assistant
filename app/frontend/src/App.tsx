@@ -3,7 +3,7 @@ import {
   Typography,
 } from "@mui/material";
 import CssBaseline from "@mui/material/CssBaseline";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { ThemeProvider, createTheme, styled } from "@mui/material/styles";
 import Cookies from "js-cookie";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -19,6 +19,7 @@ import {
   AlertBubble,
   DrawerMenu
 } from "./components";
+import logo from "./assets/SSC-Logo-Purple-Leaf-300x300.png"
 import { isACompletion, isAMessage, isAToastMessage } from "./utils";
 //https://github.com/AzureAD/microsoft-authentication-library-for-js/tree/dev/samples/msal-react-samples/typescript-sample
 import { loginRequest } from "./authConfig";
@@ -320,7 +321,6 @@ export const App = () => {
 
   // Scrolls the last updated message (if its streaming, or once done) into view
   useEffect(() => {
-    // maybe check here if its a completion before scrolling?
     chatMessageStreamEnd.current?.scrollIntoView({behavior: "smooth",});
   }, [chatHistory[chatHistory.length - 1]]);
 
@@ -338,9 +338,21 @@ export const App = () => {
   return (
     <UserContext.Provider value={userData}>
       <UnauthenticatedTemplate>
-        <Typography variant="h6" align="center">Connexion en cours...</Typography>
-        <br></br>
-        <Typography variant="h6" align="center">Signing you in ...</Typography>
+        <ConnectingScreen>
+          <ConnectingContainer>
+            <img src={logo} style={{width: 'auto', height: '100px'}} alt="logo of SSC" />
+            <ConnectingTextWrapper>
+              <ConnectingText variant="h6" align="left">En cours de connection...</ConnectingText>
+              <ConnectingText variant="h6" align="left">Connecting...</ConnectingText>
+            </ConnectingTextWrapper>
+          </ConnectingContainer>
+          <LoadingSpinnerView sx={{ display: 'flex', justifyContent: 'center', my: '2rem', marginTop: '100px' }}>
+            <CircularProgress
+              sx={{ color: 'url(#multicolor)' }}
+              size={50}
+            />
+          </LoadingSpinnerView>       
+        </ConnectingScreen>
       </UnauthenticatedTemplate>
       <AuthenticatedTemplate>
         <ThemeProvider theme={mainTheme}>
@@ -446,3 +458,31 @@ export const App = () => {
     </UserContext.Provider>
   );
 };
+
+const ConnectingScreen = styled(Box)`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  height: 70vh;
+`;
+
+const ConnectingContainer = styled(Box)`
+  display: flex;
+  justify-content: center;
+  width: 25%;
+  padding: 50px;
+`;
+
+const ConnectingTextWrapper = styled(Box)`
+  margin-left: 50px;
+`;
+
+const ConnectingText = styled(Typography)`
+  padding: 10px 0px;
+`;
+
+const LoadingSpinnerView = styled(Box)`
+  display: flex;
+  justify-content: center;
+`;
