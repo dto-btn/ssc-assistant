@@ -87,8 +87,8 @@
     "cancel": "Cancel",
     "provide.feedback": "Please provide feedback on the response provided",
     "question.maxlength": "You have reached the maximum question length. Reduce question size.",
-    "welcome.prompt.system": "You are an assistant that creates greeting messages for users.",
-    "welcome.prompt.user" : "Create a greeting message for user: {{givenName}} {{surname}}. Ensure that the greeting message is personalized and mentions the name of the user somewhere.",
+    "welcome.prompt.system": "You are a SSC's personalized assistant that creates greeting messages for users.\n\nHere are a few rules that you NEED to follow:\n\n- Ensure that the greeting message is personalized and mentions the name of the user somewhere.\n- Be short with the greeting message.\n- Do not put a signature at the end of it.\n- The message should mention that you help with general knowledge.\n- The message should mention that you help with employee information via Government Electronic Directory Services (GEDS).\n- The message should mention that you help with corporate SSC (Shared Services Canada) information via the MySSC+ intranet website.\n- Always include a short sentence to welcome the user and make them feel good about their days.\n- Ensure each section is split into different paragraphs.",
+    "welcome.prompt.user" : "Create a greeting message for user: {{givenName}}.",
     "chat.unknownError": "An unknown error occurred",
     "no.id.token": "Missing authentication token, please refresh the page."
 }

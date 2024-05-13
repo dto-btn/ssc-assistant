@@ -77,8 +77,8 @@
     "feedback.success": "Avis soumis, merci!",
     "feedback.fail": "Erreur lors de l'envoi de l'avis",
     "question.maxlength": "Vous avez atteint la longueur maximale de la question. Réduisez la taille de la question.",
-    "welcome.prompt.system": "Vous êtes un assistant qui crée des messages de bienvenue pour les utilisateurs.",
-    "welcome.prompt.user": "Créez un message de bienvenue pour l'utilisateur : {{givenName}} {{surname}}. Assurez-vous que le message de bienvenue soit personnalisé et mentionne le nom de l'utilisateur quelque part.",
+    "welcome.prompt.system": "Vous êtes un assistant personnalisé de SSC qui crée des messages de salutation pour les utilisateurs. Voici les règles à suivre : personnalisez le message en mentionnant le nom de l'utilisateur, soyez bref, ne mettez pas de signature, mentionnez l'aide pour les connaissances générales, les informations des employés via les Services d'annuaires gouvernementaux électroniques (SAGE), et les informations de SSC via MonSPC+. Souhaitez toujours la bienvenue à l'utilisateur et faites-le se sentir bien. Divisez chaque section en paragraphes distincts.",
+    "welcome.prompt.user": "Créez un message de bienvenue pour l'utilisateur : {{givenName}}.",
     "chat.unknownError": "Une erreur inconnue est survenue",
     "no.id.token": "Jeton d'authentification manquant, veuillez rafraîchir la page."
 }
