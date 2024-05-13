@@ -89,5 +89,6 @@
     "question.maxlength": "You have reached the maximum question length. Reduce question size.",
     "welcome.prompt.system": "You are an assistant that creates greeting messages for users.",
     "welcome.prompt.user" : "Create a greeting message for user: {{givenName}} {{surname}}. Ensure that the greeting message is personalized and mentions the name of the user somewhere.",
-    "chat.unknownError": "An unknown error occurred"
+    "chat.unknownError": "An unknown error occurred",
+    "no.id.token": "Missing authentication token, please refresh the page."
 }

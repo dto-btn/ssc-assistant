@@ -10,7 +10,7 @@ from utils.db import store_completion, store_request, leave_feedback, flag_conve
 from utils.models import Completion, Feedback, MessageRequest
 from utils.openai import (build_completion_response, chat_with_data,
                           convert_chat_with_data_response)
-from utils.auth import auth
+from utils.auth import auth, user_ad
 import uuid
 import threading
 
@@ -56,6 +56,7 @@ _boundary = "GPT-Interaction"
 })
 @api_v1.doc(security='ApiKeyAuth')
 @auth.login_required(role='chat')
+@user_ad.login_required
 def completion_chat(message_request: MessageRequest):
     if not message_request.query and not message_request.messages:
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
@@ -67,8 +68,8 @@ def completion_chat(message_request: MessageRequest):
 
         completion: ChatCompletion = chat_with_data(message_request) # type: ignore
         completion_response = convert_chat_with_data_response(completion)
-
-        thread = threading.Thread(target=store_completion, args=(completion_response, convo_uuid))
+        user = user_ad.current_user()
+        thread = threading.Thread(target=store_completion, args=(completion_response, convo_uuid, user))
         thread.start()
 
         return completion_response
@@ -89,19 +90,21 @@ def completion_chat(message_request: MessageRequest):
 @api_v1.output(Completion.Schema, content_type=f'multipart/x-mixed-replace; boundary={_boundary}') # type: ignore
 @api_v1.doc(security='ApiKeyAuth')
 @auth.login_required(role='chat')
+@user_ad.login_required
 def completion_chat_stream(message_request: MessageRequest):
     if not message_request.query and not message_request.messages:
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
     
     convo_uuid = message_request.uuid if message_request.uuid else str(uuid.uuid4())
-    thread = threading.Thread(target=store_request, args=(message_request, convo_uuid))
+    user = user_ad.current_user()
+    thread = threading.Thread(target=store_request, args=(message_request, convo_uuid, user))
     thread.start()
     try:
         completion: ChatCompletion | Stream[ChatCompletionChunk] = chat_with_data(message_request, stream=True)
 
         if isinstance(completion, ChatCompletion):
             completion_response = convert_chat_with_data_response(completion)
-            thread = threading.Thread(target=store_completion, args=(completion_response, convo_uuid))
+            thread = threading.Thread(target=store_completion, args=(completion_response, convo_uuid, user))
             thread.start()
             def generate_single_response():
                 yield f'--{_boundary}\r\n'
@@ -138,7 +141,7 @@ def completion_chat_stream(message_request: MessageRequest):
             yield f'\r\n--{_boundary}\r\n'
             yield 'Content-Type: application/json\r\n\r\n'
             response = build_completion_response(content=content_txt, chat_completion_dict=context)
-            thread = threading.Thread(target=store_completion, args=(response, convo_uuid))
+            thread = threading.Thread(target=store_completion, args=(response, convo_uuid, user))
             thread.start()
             yield json.dumps(
                 response.__dict__,
