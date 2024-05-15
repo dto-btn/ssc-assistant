@@ -28,16 +28,16 @@ export const TopMenu = ({ toggleDrawer } : TopMenuProps) => {
       <AppBar
         position="fixed"
         sx={{
-          bgcolor: "transparent",
+          bgcolor: "white",
           backgroundImage: "none",
           boxShadow: "none",
-          mt: { xs: 0, sm: 2 },
+          pt: { xs: 0, sm: 2 },
         }}
       >
         <Toolbar
           variant="regular"
           sx={(theme) => ({
-            width: { xs: "100%", sm: "75%" },
+            width: { xs: "100%", sm: "95%", xl: "75%" },
             margin: "auto",
             display: "flex",
             alignItems: "center",

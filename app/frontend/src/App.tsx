@@ -365,13 +365,13 @@ export const App = () => {
               minHeight: "100vh",
               margin: "auto",
             }}
-            maxWidth="lg"
+            maxWidth="lg" 
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <Box
               sx={{
                 overflowY: "hidden",
-                padding: "2rem",
+                padding: "3rem",
                 paddingTop: "6rem",
                 alignItems: "flex-end",
               }}
