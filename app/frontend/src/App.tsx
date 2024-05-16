@@ -268,7 +268,7 @@ export const App = () => {
 
     const welcomeMessageRequest: Message = {
       role: "user",
-      content: t("welcome.prompt.user", {givenName: graphData['givenName'], surname: graphData['surname']})
+      content: t("welcome.prompt.user", {givenName: graphData['givenName']})
     };
 
     const messages = [systemMessage, welcomeMessageRequest];
