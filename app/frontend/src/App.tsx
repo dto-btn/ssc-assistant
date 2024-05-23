@@ -8,6 +8,7 @@ import Cookies from "js-cookie";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { completionMySSC, sendFeedback } from "./api/api";
+import { checkIfTokenExpired } from "./util/token";
 import {
   AssistantBubble,
   ChatInput,
@@ -87,11 +88,18 @@ export const App = () => {
 
   const sendApiRequest = async (request: MessageRequest) => {
     try {
-      const accessToken = instance.getActiveAccount()?.idToken;//not an actual access token, this is an id token, *shhh*
+      let accessToken = instance.getActiveAccount()?.idToken;//not an actual access token, this is an id token, *shhh*
+      //TODO: temporary code until we move to use proper access token
+      const expired = checkIfTokenExpired(accessToken);
+      if(!accessToken || expired){
+        const response = await instance.acquireTokenSilent({
+          ...loginRequest,
+          account: instance.getActiveAccount() as AccountInfo,
+          forceRefresh: true
+        });
+        accessToken = response.accessToken;
+      }
 
-      if (!accessToken)
-        throw new Error(t("no.id.token"));
-      
       const completionResponse = await completionMySSC({
         request: request,
         updateLastMessage: updateLastMessage,
