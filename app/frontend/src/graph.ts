@@ -1,5 +1,4 @@
-import { loginRequest, graphConfig } from "./authConfig";
-import { msalInstance } from "./index";
+import { graphConfig } from "./authConfig";
 
 /**
  * Examples:
