@@ -6,18 +6,7 @@ import { msalInstance } from "./index";
  * https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/samples/msal-react-samples/typescript-sample/src/utils/MsGraphApiCall.ts
  * https://github.com/Azure-Samples/ms-identity-docs-code-javascript/blob/main/react-spa/src/graph.js
  */
-export async function callMsGraph() {
-    const account = msalInstance.getActiveAccount();
-    if (!account) {
-        throw Error("No active account! Verify a user has been signed in and setActiveAccount has been called.");
-    }
-
-    const response = await msalInstance.acquireTokenSilent({
-        ...loginRequest,
-        account: account
-    });
-
-    const accessToken = response.accessToken;
+export async function callMsGraph(accessToken: string) {
     const headers = new Headers();
     const bearer = `Bearer ${accessToken}`;
 

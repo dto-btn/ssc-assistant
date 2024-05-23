@@ -304,8 +304,12 @@ export const App = () => {
 
   useEffect(() => {
     if (isAuthenticated && !userData.graphData && inProgress === InteractionStatus.None) {
-      callMsGraph().then(response => {
-        setUserData({accessToken: response.accessToken, graphData: response.graphData});
+
+      instance.acquireTokenSilent({
+          ...loginRequest,
+          account: instance.getActiveAccount() as AccountInfo
+      }).then(response => {
+        setUserData({accessToken: response.accessToken, graphData: null});
       }).catch((e) => {
         if (e instanceof InteractionRequiredAuthError) {
           instance.acquireTokenRedirect({
@@ -314,6 +318,11 @@ export const App = () => {
           })
         }
       });
+
+      callMsGraph(userData.accessToken).then(response => {
+        setUserData({accessToken: userData.accessToken, graphData: response.graphData});
+      });
+
     } else if(isAuthenticated && userData.graphData && inProgress === InteractionStatus.None){
       //we just logged in and we make sure if chat was empty, we load the welcome message.
       if(chatHistory.length === 0) {
