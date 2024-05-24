@@ -9,7 +9,7 @@
       "isBackground": true,
       "dependsOn": "pip install (functions)",
       "options": {
-        "cwd": "${workspaceFolder}/az-functions/create-index"
+        "cwd": "${workspaceFolder}/az-functions/get-index-data"
       }
     },
     {
@@ -26,7 +26,7 @@
       },
       "problemMatcher": [],
       "options": {
-        "cwd": "${workspaceFolder}/az-functions/create-index"
+        "cwd": "${workspaceFolder}/az-functions/get-index-data"
       }
     }
   ]
