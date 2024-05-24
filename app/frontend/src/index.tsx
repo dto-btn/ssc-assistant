@@ -9,12 +9,20 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 
 import { MsalProvider } from "@azure/msal-react";
-import { PublicClientApplication } from "@azure/msal-browser";
+import { AuthenticationResult, EventMessage, EventType, PublicClientApplication } from "@azure/msal-browser";
 import { msalConfig, loginRequest } from './authConfig.ts';
 
 export const msalInstance = new PublicClientApplication(msalConfig);
 
 msalInstance.initialize().then(() => {
+  // msalInstance.addEventCallback((event: EventMessage) => {
+  //   if (event.eventType === EventType.LOGIN_SUCCESS && event.payload) {
+  //       const payload = event.payload as AuthenticationResult;
+  //       const account = payload.account;
+  //       msalInstance.setActiveAccount(account);
+  //   }
+  // });
+
   msalInstance.handleRedirectPromise().then((response) => {
     console.debug("index.tsx: handleRedirectPromise --> start");
     if (response && response.account) {

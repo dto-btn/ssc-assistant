@@ -1,6 +1,6 @@
 import { jwtDecode } from "jwt-decode";
 
-export function checkIfTokenExpired(token: string | undefined): boolean {
+export function isTokenExpired(token: string | undefined): boolean {
 
   if (token === undefined) {
     console.error('Token is undefined.');

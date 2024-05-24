@@ -8,7 +8,7 @@ import Cookies from "js-cookie";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { completionMySSC, sendFeedback } from "./api/api";
-import { checkIfTokenExpired } from "./util/token";
+import { isTokenExpired } from "./util/token";
 import {
   AssistantBubble,
   ChatInput,
@@ -82,28 +82,40 @@ export const App = () => {
         if (isAMessage(chatItem)) {
           return chatItem;
         }
-        return undefined;  
-      }).filter(message => message !== undefined) as Message[];   
+        return undefined;
+      }).filter(message => message !== undefined) as Message[];
   };
 
   const sendApiRequest = async (request: MessageRequest) => {
     try {
-      let accessToken = instance.getActiveAccount()?.idToken;//not an actual access token, this is an id token, *shhh*
-      //TODO: temporary code until we move to use proper access token
-      const expired = checkIfTokenExpired(accessToken);
-      if(!accessToken || expired){
+      /**
+       * TODO: API call should be made with an accessToken to respect the auth flow,
+       *       however in this case, we do not have the luxury to modify our service provider config.
+       *       We at least send the idToken to decode and validate it on our API to ensure we log
+       *       proper user.
+       */
+      let idToken = instance.getActiveAccount()?.idToken;
+      const expired = isTokenExpired(idToken);
+
+      console.debug("idtoken before refrshs:" + idToken);
+      console.debug(instance.getActiveAccount() as AccountInfo);
+      if(expired){
         const response = await instance.acquireTokenSilent({
           ...loginRequest,
           account: instance.getActiveAccount() as AccountInfo,
           forceRefresh: true
         });
-        accessToken = response.accessToken;
+        idToken = response.idToken;
+        console.debug("idtoken after refrshs:" + idToken);
       }
+
+      if (!idToken)
+        throw new Error(t("no.id.token"));
 
       const completionResponse = await completionMySSC({
         request: request,
         updateLastMessage: updateLastMessage,
-        accessToken: accessToken
+        accessToken: idToken
       });
 
       setChatHistory((prevChatHistory) => {
@@ -304,7 +316,6 @@ export const App = () => {
 
   useEffect(() => {
     if (isAuthenticated && !userData.graphData && inProgress === InteractionStatus.None) {
-
       instance.acquireTokenSilent({
           ...loginRequest,
           account: instance.getActiveAccount() as AccountInfo
@@ -318,11 +329,9 @@ export const App = () => {
           })
         }
       });
-
       callMsGraph(userData.accessToken).then(response => {
         setUserData({accessToken: userData.accessToken, graphData: response.graphData});
       });
-
     } else if(isAuthenticated && userData.graphData && inProgress === InteractionStatus.None){
       //we just logged in and we make sure if chat was empty, we load the welcome message.
       if(chatHistory.length === 0) {
