@@ -169,7 +169,7 @@ export const App = () => {
       messages: messages,
       max: maxMessagesSent,
       top: 5,
-      tools: ["bits"],
+      tools: ['bits'],
       uuid: uuid,
     };
 

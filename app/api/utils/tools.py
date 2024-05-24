@@ -194,6 +194,10 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
     """
     # Define the available functions
     available_functions = {
+        "get_records_req_impl_by_year": get_records_req_impl_by_year,
+        "get_br_count_with_target_impl_date": get_br_count_with_target_impl_date,
+        "get_forecasted_br_for_month": get_forecasted_br_for_month,
+        "get_br_information": get_br_information,
         "get_employee_information": get_employee_information,
         "get_employee_by_phone_number": get_employee_by_phone_number
     }
