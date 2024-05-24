@@ -27,12 +27,12 @@ import { loginRequest } from "./authConfig";
 import { callMsGraph } from './graph';
 import { UserContext } from './context/UserContext';
 import { v4 as uuidv4 } from 'uuid';
-import { AccountInfo, InteractionRequiredAuthError, InteractionStatus } from "@azure/msal-browser";
-import { 
-  useIsAuthenticated, 
-  useMsal, 
-  AuthenticatedTemplate, 
-  UnauthenticatedTemplate 
+import { AccountInfo, InteractionRequiredAuthError, InteractionStatus, Logger } from "@azure/msal-browser";
+import {
+  useIsAuthenticated,
+  useMsal,
+  AuthenticatedTemplate,
+  UnauthenticatedTemplate
 } from "@azure/msal-react";
 import CircularProgress from '@mui/material/CircularProgress';
 import React from "react";
@@ -68,7 +68,7 @@ export const App = () => {
   const [feedback, setFeedback] = useState('');
   const [isGoodResponse, setIsGoodResponse] = useState(false);
   const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
-  
+
   const convertChatHistoryToMessages = (chatHistory: ChatItem[]) : Message[] => {
     const startIndex = Math.max(chatHistory.length - maxMessagesSent, 0);
     return chatHistory.slice(startIndex).map(
@@ -78,13 +78,15 @@ export const App = () => {
             role: chatItem.message.role,
             content: chatItem.message.content,
           };
-        } 
+        }
         if (isAMessage(chatItem)) {
           return chatItem;
         }
         return undefined;
       }).filter(message => message !== undefined) as Message[];
   };
+
+  const [fakeExpired, setFakeExpired] = useState(2);
 
   const sendApiRequest = async (request: MessageRequest) => {
     try {
@@ -97,9 +99,9 @@ export const App = () => {
       let idToken = instance.getActiveAccount()?.idToken;
       const expired = isTokenExpired(idToken);
 
-      console.debug("idtoken before refrshs:" + idToken);
+      console.debug("idtoken before refrshs:" + idToken + " and count is " + fakeExpired);
       console.debug(instance.getActiveAccount() as AccountInfo);
-      if(expired){
+      if(expired || fakeExpired%2 == 0){
         const response = await instance.acquireTokenSilent({
           ...loginRequest,
           account: instance.getActiveAccount() as AccountInfo,
@@ -108,6 +110,8 @@ export const App = () => {
         idToken = response.idToken;
         console.debug("idtoken after refrshs:" + idToken);
       }
+
+      setFakeExpired(fakeExpired+1);
 
       if (!idToken)
         throw new Error(t("no.id.token"));
@@ -132,7 +136,7 @@ export const App = () => {
               }
           }
         }
-        
+
         saveChatHistory(updatedChatHistory); // Save chat history to local storage
         return updatedChatHistory;
       });
@@ -195,7 +199,7 @@ export const App = () => {
       saveChatHistory(updatedChatHistory); // Save chat history to local storage
       return updatedChatHistory;
     });
-    
+
     sendApiRequest(request);
   };
 
@@ -315,7 +319,9 @@ export const App = () => {
   }
 
   useEffect(() => {
+    console.debug(inProgress);
     if (isAuthenticated && !userData.graphData && inProgress === InteractionStatus.None) {
+      console.debug("Acquire silent token.");
       instance.acquireTokenSilent({
           ...loginRequest,
           account: instance.getActiveAccount() as AccountInfo
@@ -323,22 +329,31 @@ export const App = () => {
         setUserData({accessToken: response.accessToken, graphData: null});
       }).catch((e) => {
         if (e instanceof InteractionRequiredAuthError) {
+          console.warn("Unable to get token via silent method, will use redirect instead.");
           instance.acquireTokenRedirect({
             ...loginRequest,
             account: instance.getActiveAccount() as AccountInfo
           })
         }
       });
-      callMsGraph(userData.accessToken).then(response => {
-        setUserData({accessToken: userData.accessToken, graphData: response.graphData});
-      });
-    } else if(isAuthenticated && userData.graphData && inProgress === InteractionStatus.None){
-      //we just logged in and we make sure if chat was empty, we load the welcome message.
-      if(chatHistory.length === 0) {
-        setWelcomeMessage(userData.graphData);
-      }
     }
-  }, [inProgress, userData, instance, isAuthenticated]);
+  }, [inProgress, userData.graphData, isAuthenticated]);
+
+  // Effect for calling Microsoft Graph after acquiring a token
+  useEffect(() => {
+    if (userData.accessToken && !userData.graphData) {
+      callMsGraph(userData.accessToken).then(response => {
+        setUserData({ accessToken: userData.accessToken, graphData: response.graphData });
+      });
+    }
+  }, [userData.accessToken]);
+
+  // Effect for setting the welcome message
+  useEffect(() => {
+    if (isAuthenticated && userData.graphData && inProgress === InteractionStatus.None && chatHistory.length === 0) {
+      setWelcomeMessage(userData.graphData);
+    }
+  }, [isAuthenticated, userData.graphData, inProgress, chatHistory.length]);
 
   useEffect(() => {
     // Set the `lang` attribute whenever the language changes
@@ -377,7 +392,7 @@ export const App = () => {
               sx={{ color: 'url(#multicolor)' }}
               size={50}
             />
-          </LoadingSpinnerView>       
+          </LoadingSpinnerView>
         </ConnectingScreen>
       </UnauthenticatedTemplate>
       <AuthenticatedTemplate>
@@ -439,9 +454,9 @@ export const App = () => {
                   )}
 
                   {isAToastMessage(chatItem) && (
-                    <AlertBubble 
-                      toast={chatItem} 
-                      index={index} 
+                    <AlertBubble
+                      toast={chatItem}
+                      index={index}
                       removeMessageHandler={handleRemoveToastMessage}
                     />
                   )}
