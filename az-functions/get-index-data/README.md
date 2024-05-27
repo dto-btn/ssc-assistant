@@ -38,4 +38,6 @@ Create a `local.settings.json` and put the following content inside:
 Steps:
 1. Deploy the function to dev-index-mgmt Function App
 2. Trigger the function from postman with the following URL:
-    https://dev-index-mgmt.azurewebsites.net/api/orchestrators/fetch_index_data?code=<code>
+`
+"https://dev-index-mgmt.azurewebsites.net/api/orchestrators/fetch_index_data?code=<code>"
+`
