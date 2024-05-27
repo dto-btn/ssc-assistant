@@ -38,7 +38,7 @@ def fetch_index_data(context):
     for page in pages:
         get_and_save_page_tasks.append(context.call_activity("get_and_save_pages", page))
 
-    # task the function to run the get_and_save_page tasks 
+    # task the function to run the get_and_save_page tasks
     yield context.task_all(get_and_save_page_tasks)
 
     return f"Finished downloading (or trying to ..): {len(get_and_save_page_tasks)} page(s)"
@@ -69,7 +69,7 @@ def get_and_save_ids(blobPath: str):
             pages.append({"id": d["nid"], "type": d["type"], "url": f"{domain}/fr/rest/page-by-id/{d['nid']}", "blob_name": f"{blobPath}/pages/{d['type']}/fr/{d['nid']}.json"})
 
         return pages
-    
+
     except requests.exceptions.RequestException as e:
         print(f"An error occurred fetching the ids: {e}")
         return []
