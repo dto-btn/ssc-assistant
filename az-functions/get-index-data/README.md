@@ -1,12 +1,10 @@
-# Build index
-
-Build the search services index and vectorize it.
+# Fetch Search Index Data
 
 ## Developpment
 
 ```bash
 cd ssc-assitant/az-functions/get-index-data
-source .venv/bin/activate #create .venv first if missing ..
+source .venv_func/bin/activate #create .venv first if missing ..
 pip install -r requirements.txt 
 ```
 
@@ -37,4 +35,7 @@ Create a `local.settings.json` and put the following content inside:
 
 ## Documentation
 
-[How to create a search services index from scratch with vectorization via code](https://github.com/Azure/azure-search-vector-samples/blob/main/demo-python/code/azure-search-integrated-vectorization-sample.ipynb)
+Steps:
+1. Deploy the function to dev-index-mgmt Function App
+2. Trigger the function from postman with the following URL:
+    https://dev-index-mgmt.azurewebsites.net/api/orchestrators/fetch_index_data?code=<code>

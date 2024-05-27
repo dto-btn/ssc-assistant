@@ -14,12 +14,12 @@ app = df.DFApp(http_auth_level=func.AuthLevel.FUNCTION)
 load_dotenv()
 blob_connection_string  = os.getenv("BLOB_CONNECTION_STRING")
 all_ids_url = os.getenv("ALL_PAGE_IDS_ENDPOINT")
-blob_service_client = BlobServiceClient.from_connection_string(str(blob_connection_string))
-# container_name = "ssc-assistant-index-data"
-container_name = 'ssc-assistant-index-data'
 domain = str(os.getenv("DOMAIN_NAME"))
 
-# An HTTP-Triggered Function with a Durable Functions Client binding
+blob_service_client = BlobServiceClient.from_connection_string(str(blob_connection_string))
+container_name = 'ssc-assistant-index-data'
+
+# Durable function that fetches all sscplus page IDs/pages and uploads them
 @app.route(route="orchestrators/{functionName}")
 @app.durable_client_input(client_name="client")
 async def http_start(req: func.HttpRequest, client):
@@ -39,7 +39,7 @@ def fetch_index_data(context):
         get_and_save_page_tasks.append(context.call_activity("get_and_save_pages", page))
 
     # task the function to run the get_and_save_page tasks 
-    list_of_download = yield context.task_all(get_and_save_page_tasks)
+    yield context.task_all(get_and_save_page_tasks)
 
     return f"Finished downloading (or trying to ..): {len(get_and_save_page_tasks)} page(s)"
 
@@ -50,8 +50,7 @@ def get_and_save_ids(blobPath: str):
     pages = []
 
     try:
-        # url = f"{domain}/en/rest/all-ids"
-        url = "https://plus.ssc-spc.gc.ca/en/rest/all-ids"
+        url = f"{domain}/en/rest/all-ids"
         res = requests.get(url, verify=False)
         res.raise_for_status()
 
@@ -79,7 +78,6 @@ def get_and_save_ids(blobPath: str):
 # Activity
 @app.activity_trigger(input_name="page")
 def get_and_save_pages(page: dict):
-
     try:
         _get_and_save(page['url'], page['blob_name'])
         return True
@@ -89,8 +87,8 @@ def get_and_save_pages(page: dict):
         return False
 
 
-# getting loads of connection terminated by fw or lb over their aks instances
-# this helps greatly, but still need a net to catch missing ids.
+# retry needed to help with some of the connection errors we get when
+# fetching pages from the Drupal API, but still need a net to catch missing ids.
 @retry(stop=stop_after_attempt(2), wait=wait_fixed(3))
 def _get_and_save(url, blob_name):
     response = requests.get(url, verify=False)
