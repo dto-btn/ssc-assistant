@@ -89,7 +89,7 @@ def get_and_save_pages(page: dict):
 
 # retry needed to help with some of the connection errors we get when
 # fetching pages from the Drupal API, but still need a net to catch missing ids.
-@retry(stop=stop_after_attempt(2), wait=wait_fixed(3))
+@retry(stop=stop_after_attempt(5), wait=wait_fixed(3))
 def _get_and_save(url, blob_name):
     response = requests.get(url, verify=False)
     blob_client = blob_service_client.get_blob_client(container_name, blob_name)
