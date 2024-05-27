@@ -86,8 +86,6 @@ export const App = () => {
       }).filter(message => message !== undefined) as Message[];
   };
 
-  const [fakeExpired, setFakeExpired] = useState(2);
-
   const sendApiRequest = async (request: MessageRequest) => {
     try {
       /**
@@ -99,19 +97,15 @@ export const App = () => {
       let idToken = instance.getActiveAccount()?.idToken;
       const expired = isTokenExpired(idToken);
 
-      console.debug("idtoken before refrshs:" + idToken + " and count is " + fakeExpired);
       console.debug(instance.getActiveAccount() as AccountInfo);
-      if(expired || fakeExpired%2 == 0){
+      if(expired){
         const response = await instance.acquireTokenSilent({
           ...loginRequest,
           account: instance.getActiveAccount() as AccountInfo,
           forceRefresh: true
         });
         idToken = response.idToken;
-        console.debug("idtoken after refrshs:" + idToken);
       }
-
-      setFakeExpired(fakeExpired+1);
 
       if (!idToken)
         throw new Error(t("no.id.token"));
