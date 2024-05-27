@@ -27,7 +27,7 @@ import { loginRequest } from "./authConfig";
 import { callMsGraph } from './graph';
 import { UserContext } from './context/UserContext';
 import { v4 as uuidv4 } from 'uuid';
-import { AccountInfo, InteractionRequiredAuthError, InteractionStatus, Logger } from "@azure/msal-browser";
+import { AccountInfo, InteractionRequiredAuthError, InteractionStatus } from "@azure/msal-browser";
 import {
   useIsAuthenticated,
   useMsal,
