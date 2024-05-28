@@ -8,6 +8,7 @@ import Cookies from "js-cookie";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { completionMySSC, sendFeedback } from "./api/api";
+import { isTokenExpired } from "./util/token";
 import {
   AssistantBubble,
   ChatInput,
@@ -27,11 +28,11 @@ import { callMsGraph } from './graph';
 import { UserContext } from './context/UserContext';
 import { v4 as uuidv4 } from 'uuid';
 import { AccountInfo, InteractionRequiredAuthError, InteractionStatus } from "@azure/msal-browser";
-import { 
-  useIsAuthenticated, 
-  useMsal, 
-  AuthenticatedTemplate, 
-  UnauthenticatedTemplate 
+import {
+  useIsAuthenticated,
+  useMsal,
+  AuthenticatedTemplate,
+  UnauthenticatedTemplate
 } from "@azure/msal-react";
 import CircularProgress from '@mui/material/CircularProgress';
 import React from "react";
@@ -67,7 +68,7 @@ export const App = () => {
   const [feedback, setFeedback] = useState('');
   const [isGoodResponse, setIsGoodResponse] = useState(false);
   const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
-  
+
   const convertChatHistoryToMessages = (chatHistory: ChatItem[]) : Message[] => {
     const startIndex = Math.max(chatHistory.length - maxMessagesSent, 0);
     return chatHistory.slice(startIndex).map(
@@ -77,25 +78,42 @@ export const App = () => {
             role: chatItem.message.role,
             content: chatItem.message.content,
           };
-        } 
+        }
         if (isAMessage(chatItem)) {
           return chatItem;
         }
-        return undefined;  
-      }).filter(message => message !== undefined) as Message[];   
+        return undefined;
+      }).filter(message => message !== undefined) as Message[];
   };
 
   const sendApiRequest = async (request: MessageRequest) => {
     try {
-      const accessToken = instance.getActiveAccount()?.idToken;//not an actual access token, this is an id token, *shhh*
+      /**
+       * TODO: API call should be made with an accessToken to respect the auth flow,
+       *       however in this case, we do not have the luxury to modify our service provider config.
+       *       We at least send the idToken to decode and validate it on our API to ensure we log
+       *       proper user.
+       */
+      let idToken = instance.getActiveAccount()?.idToken;
+      const expired = isTokenExpired(idToken);
 
-      if (!accessToken)
+      console.debug(instance.getActiveAccount() as AccountInfo);
+      if(expired){
+        const response = await instance.acquireTokenSilent({
+          ...loginRequest,
+          account: instance.getActiveAccount() as AccountInfo,
+          forceRefresh: true
+        });
+        idToken = response.idToken;
+      }
+
+      if (!idToken)
         throw new Error(t("no.id.token"));
-      
+
       const completionResponse = await completionMySSC({
         request: request,
         updateLastMessage: updateLastMessage,
-        accessToken: accessToken
+        accessToken: idToken
       });
 
       setChatHistory((prevChatHistory) => {
@@ -112,7 +130,7 @@ export const App = () => {
               }
           }
         }
-        
+
         saveChatHistory(updatedChatHistory); // Save chat history to local storage
         return updatedChatHistory;
       });
@@ -175,7 +193,7 @@ export const App = () => {
       saveChatHistory(updatedChatHistory); // Save chat history to local storage
       return updatedChatHistory;
     });
-    
+
     sendApiRequest(request);
   };
 
@@ -295,24 +313,41 @@ export const App = () => {
   }
 
   useEffect(() => {
+    console.debug(inProgress);
     if (isAuthenticated && !userData.graphData && inProgress === InteractionStatus.None) {
-      callMsGraph().then(response => {
-        setUserData({accessToken: response.accessToken, graphData: response.graphData});
+      console.debug("Acquire silent token.");
+      instance.acquireTokenSilent({
+          ...loginRequest,
+          account: instance.getActiveAccount() as AccountInfo
+      }).then(response => {
+        setUserData({accessToken: response.accessToken, graphData: null});
       }).catch((e) => {
         if (e instanceof InteractionRequiredAuthError) {
+          console.warn("Unable to get token via silent method, will use redirect instead.");
           instance.acquireTokenRedirect({
             ...loginRequest,
             account: instance.getActiveAccount() as AccountInfo
           })
         }
       });
-    } else if(isAuthenticated && userData.graphData && inProgress === InteractionStatus.None){
-      //we just logged in and we make sure if chat was empty, we load the welcome message.
-      if(chatHistory.length === 0) {
-        setWelcomeMessage(userData.graphData);
-      }
     }
-  }, [inProgress, userData, instance, isAuthenticated]);
+  }, [inProgress, userData.graphData, isAuthenticated]);
+
+  // Effect for calling Microsoft Graph after acquiring a token
+  useEffect(() => {
+    if (userData.accessToken && !userData.graphData) {
+      callMsGraph(userData.accessToken).then(response => {
+        setUserData({ accessToken: userData.accessToken, graphData: response.graphData });
+      });
+    }
+  }, [userData.accessToken]);
+
+  // Effect for setting the welcome message
+  useEffect(() => {
+    if (isAuthenticated && userData.graphData && inProgress === InteractionStatus.None && chatHistory.length === 0) {
+      setWelcomeMessage(userData.graphData);
+    }
+  }, [isAuthenticated, userData.graphData, inProgress, chatHistory.length]);
 
   useEffect(() => {
     // Set the `lang` attribute whenever the language changes
@@ -351,7 +386,7 @@ export const App = () => {
               sx={{ color: 'url(#multicolor)' }}
               size={50}
             />
-          </LoadingSpinnerView>       
+          </LoadingSpinnerView>
         </ConnectingScreen>
       </UnauthenticatedTemplate>
       <AuthenticatedTemplate>
@@ -413,9 +448,9 @@ export const App = () => {
                   )}
 
                   {isAToastMessage(chatItem) && (
-                    <AlertBubble 
-                      toast={chatItem} 
-                      index={index} 
+                    <AlertBubble
+                      toast={chatItem}
+                      index={index}
                       removeMessageHandler={handleRemoveToastMessage}
                     />
                   )}
