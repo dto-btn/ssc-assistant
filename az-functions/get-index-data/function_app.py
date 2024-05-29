@@ -34,12 +34,33 @@ def fetch_index_data(context):
     blob_path = f"{datetime.now().strftime('%Y-%m-%d_%H:%M:%S')}"
     pages = yield context.call_activity("get_and_save_ids", blob_path)
 
-    get_and_save_page_tasks = []
-    for page in pages:
-        get_and_save_page_tasks.append(context.call_activity("get_and_save_pages", page))
+    get_and_save_page_tasks = [
+        context.call_activity("get_and_save_pages", page) 
+        for page in pages
+    ]
 
     # task the function to run the get_and_save_page tasks
-    yield context.task_all(get_and_save_page_tasks)
+    pages_not_downloaded = yield context.task_all(get_and_save_page_tasks)
+
+    # filter only for the pages not downloaded
+    pages_not_downloaded = [page for page in pages_not_downloaded if page is not None]
+
+    retry_counter = 0
+    while retry_counter < 7 and len(pages_not_downloaded) > 0:
+        logging.info(f"Retry attempt {retry_counter + 1}: {len(pages_not_downloaded)} pages not downloaded.")
+
+        retry_counter+=1
+        retry_tasks = [
+            context.call_activity("get_and_save_pages", page)
+            for page in pages_not_downloaded
+        ]
+        
+        pages_not_downloaded.clear()
+        pages_not_downloaded = yield context.task_all(retry_tasks)
+        pages_not_downloaded = [page for page in pages_not_downloaded if page is not None]
+    
+    for page in pages_not_downloaded:
+        logging.info(f"PAGE NOT DOWNLOADED: {page['blob_name']}")
 
     return f"Finished downloading (or trying to ..): {len(get_and_save_page_tasks)} page(s)"
 
@@ -65,8 +86,18 @@ def get_and_save_ids(blobPath: str):
 
         for d in data:
             # add both pages here, en/fr versions
-            pages.append({"id": d["nid"], "type": d["type"], "url": f"{domain}/en/rest/page-by-id/{d['nid']}", "blob_name": f"{blobPath}/pages/{d['type']}/en/{d['nid']}.json"})
-            pages.append({"id": d["nid"], "type": d["type"], "url": f"{domain}/fr/rest/page-by-id/{d['nid']}", "blob_name": f"{blobPath}/pages/{d['type']}/fr/{d['nid']}.json"})
+            pages.append({
+                "id": d["nid"], 
+                "type": d["type"], 
+                "url": f"{domain}/en/rest/page-by-id/{d['nid']}", 
+                "blob_name": f"{blobPath}/pages/{d['type']}/en/{d['nid']}.json"
+            })
+            pages.append({
+                "id": d["nid"], 
+                "type": d["type"], 
+                "url": f"{domain}/fr/rest/page-by-id/{d['nid']}", 
+                "blob_name": f"{blobPath}/pages/{d['type']}/fr/{d['nid']}.json"
+            })
 
         return pages
 
@@ -76,20 +107,20 @@ def get_and_save_ids(blobPath: str):
 
 
 # Activity
+@retry(stop=stop_after_attempt(5), wait=wait_fixed(3))
 @app.activity_trigger(input_name="page")
 def get_and_save_pages(page: dict):
     try:
         _get_and_save(page['url'], page['blob_name'])
-        return True
+        return None
 
     except requests.exceptions.RequestException as e:
         logging.error("Unable to download separate page file. Error:" + str(e))
-        return False
+        return page
 
 
 # retry needed to help with some of the connection errors we get when
 # fetching pages from the Drupal API, but still need a net to catch missing ids.
-@retry(stop=stop_after_attempt(5), wait=wait_fixed(3))
 def _get_and_save(url, blob_name):
     response = requests.get(url, verify=False)
     blob_client = blob_service_client.get_blob_client(container_name, blob_name)
