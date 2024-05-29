@@ -6,6 +6,7 @@ import os
 import requests
 from azure.storage.blob import BlobServiceClient
 import azure.functions as func
+from azure.functions import TimerRequest
 import azure.durable_functions as df
 from tenacity import retry, stop_after_attempt, wait_fixed
 
@@ -27,6 +28,15 @@ async def http_start(req: func.HttpRequest, client):
     instance_id = await client.start_new(function_name)
     response = client.create_check_status_response(req, instance_id)
     return response
+
+# timer triggered:
+@app.schedule(schedule="0 0 * * *", arg_name="myTimer", run_on_startup=True, use_monitor=False)
+@app.durable_client_input(client_name="client") 
+async def timer_trigger(myTimer: func.TimerRequest, client) -> None: 
+    if myTimer.past_due: 
+        logging.info("The timer is past due") 
+    instance_id = await client.start_new("fetch_index_data") 
+    logging.info("python timer trigger function executed")
 
 # Orchestrator
 @app.orchestration_trigger(context_name="context")
