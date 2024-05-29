@@ -33,6 +33,8 @@ def main():
     blob_service_client = BlobServiceClient.from_connection_string(str(blob_connection_string))
     container_name = "ssc-assistant-index-data"
     container_client = blob_service_client.get_container_client(container_name)
+
+    # Can manually put in the path here as well if not looking for the latest
     folder_base_path = get_latest_date(container_client=container_client)
 
     # number of unique IDs
@@ -42,7 +44,6 @@ def main():
     blob_json = json.loads(blob_bytes)
 
     num_ids = len(blob_json)
-    print('total unique pages :', num_ids, '\n')
 
     # get ids missing
     en_ids_uploaded = []
@@ -66,14 +67,17 @@ def main():
             if match:
                 fr_ids_uploaded.append(int(match.group(1)))
 
-    print('en pages uploaded: ', len(en_ids_uploaded))
-    en_percentage = round((len(en_ids_uploaded) / num_ids), 3) * 100
-    print('% en pages uploaded: ', en_percentage)
-    print('\n')
+    print("RESULTS\n")
 
-    print('fr pages uploaded: ', len(fr_ids_uploaded))
+    print('total unique pages :', num_ids, '\n')
+
+    print(f"total en pages uploaded: {len(en_ids_uploaded)}")
+    en_percentage = round((len(en_ids_uploaded) / num_ids), 3) * 100
+    print(f"% of en pages uploaded: {en_percentage}\n")
+
+    print(f"total fr pages uploaded: {len(fr_ids_uploaded)}")
     fr_percentage = round((len(fr_ids_uploaded) / num_ids), 3) * 100
-    print('% fr pages uploaded: ', fr_percentage)
+    print(f"% of fr pages uploaded: {fr_percentage}")
 
 
 

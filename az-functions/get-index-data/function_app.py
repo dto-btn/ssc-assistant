@@ -46,7 +46,7 @@ def fetch_index_data(context):
     pages_not_downloaded = [page for page in pages_not_downloaded if page is not None]
 
     retry_counter = 0
-    while retry_counter < 7 and len(pages_not_downloaded) > 0:
+    while retry_counter < 6 and len(pages_not_downloaded) > 0:
         logging.info(f"Retry attempt {retry_counter + 1}: {len(pages_not_downloaded)} pages not downloaded.")
 
         retry_counter+=1
