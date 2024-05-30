@@ -67,7 +67,7 @@ def main():
             if match:
                 fr_ids_uploaded.append(int(match.group(1)))
 
-    print("RESULTS\n")
+    print(f"RESULTS FOR {folder_base_path}\n")
 
     print('total unique pages :', num_ids, '\n')
 
