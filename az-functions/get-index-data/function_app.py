@@ -18,19 +18,19 @@ all_ids_url = os.getenv("ALL_PAGE_IDS_ENDPOINT")
 domain = str(os.getenv("DOMAIN_NAME"))
 
 blob_service_client = BlobServiceClient.from_connection_string(str(blob_connection_string))
-container_name = 'ssc-assistant-index-data'
+container_name = 'sscplus-index-data'
 
 # Durable function that fetches all sscplus page IDs/pages and uploads them
-@app.route(route="orchestrators/{functionName}")
-@app.durable_client_input(client_name="client")
-async def http_start(req: func.HttpRequest, client):
-    function_name = req.route_params.get('functionName')
-    instance_id = await client.start_new(function_name)
-    response = client.create_check_status_response(req, instance_id)
-    return response
+# @app.route(route="orchestrators/{functionName}")
+# @app.durable_client_input(client_name="client")
+# async def http_start(req: func.HttpRequest, client):
+#     function_name = req.route_params.get('functionName')
+#     instance_id = await client.start_new(function_name)
+#     response = client.create_check_status_response(req, instance_id)
+#     return response
 
 # timer triggered:
-@app.schedule(schedule="0 0 * * *", arg_name="myTimer", run_on_startup=True, use_monitor=False)
+@app.schedule(schedule="0 * * * *", arg_name="myTimer", run_on_startup=False, use_monitor=False)
 @app.durable_client_input(client_name="client") 
 async def timer_trigger(myTimer: func.TimerRequest, client) -> None: 
     if myTimer.past_due: 
@@ -41,8 +41,8 @@ async def timer_trigger(myTimer: func.TimerRequest, client) -> None:
 # Orchestrator
 @app.orchestration_trigger(context_name="context")
 def fetch_index_data(context):
-    blob_path = f"{datetime.now().strftime('%Y-%m-%d_%H:%M:%S')}"
-    pages = yield context.call_activity("get_and_save_ids", blob_path)
+    blobPath = f"{datetime.now().strftime('%Y-%m-%d_%H:%M:%S')}"
+    pages = yield context.call_activity("get_and_save_ids", blobPath)
 
     get_and_save_page_tasks = [
         context.call_activity("get_and_save_pages", page) 
