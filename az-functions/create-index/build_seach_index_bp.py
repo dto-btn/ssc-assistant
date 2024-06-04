@@ -34,7 +34,8 @@ blob_connection_string  = os.getenv("BLOB_CONNECTION_STRING")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
 
 credential = AzureKeyCredential(key)
-model: str = os.getenv("OPENAI_MODEL", "gpt-4-1106")
+openai_deployment_name: str = os.getenv("OPENAI_MODEL", "gpt-4-1106")
+openai_model: str = "gpt-4"
 embedding_model: str = "text-embedding-ada-002"
 blob_service_client = BlobServiceClient.from_connection_string(str(blob_connection_string))
 container_name = "sscplus-index-data"
@@ -93,8 +94,8 @@ def build_search_index(context: df.DurableOrchestrationContext):
         documents.append(document)
 
     llm = AzureOpenAI(
-            model="gpt-35-turbo",
-            azure_deployment=model,
+            model=openai_model,
+            deployment_name=openai_deployment_name,
             api_version=api_version,
             azure_endpoint=azure_openai_uri,
             api_key=api_key
