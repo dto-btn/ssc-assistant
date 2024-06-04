@@ -12,26 +12,25 @@ load_dotenv()
 blob_connection_string  = os.getenv("BLOB_CONNECTION_STRING")
 
 
-def get_latest_date(container_client):
+def get_latest_date(container_client) -> str:
     blob_list = container_client.list_blobs()
-    
     dates = set()
+    
     for blob in blob_list:
         parts = blob.name.split('/')
-        
         date = datetime.strptime(parts[0], '%Y-%m-%d_%H:%M:%S')
         dates.add(date)
-    
+
     if not dates:
         raise ValueError("No valid date folders found in the container.")
-    
+
     latest_date = max(dates)
     return latest_date.strftime('%Y-%m-%d_%H:%M:%S')
 
 
 def main():
     blob_service_client = BlobServiceClient.from_connection_string(str(blob_connection_string))
-    container_name = "ssc-assistant-index-data"
+    container_name = "sscplus-index-data"
     container_client = blob_service_client.get_container_client(container_name)
 
     # Can manually put in the path here as well if not looking for the latest
@@ -78,8 +77,6 @@ def main():
     print(f"total fr pages uploaded: {len(fr_ids_uploaded)}")
     fr_percentage = round((len(fr_ids_uploaded) / num_ids), 3) * 100
     print(f"% of fr pages uploaded: {fr_percentage}")
-
-
 
 
 if __name__ == "__main__":

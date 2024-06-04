@@ -8,6 +8,6 @@ azure-search-documents==11.4.0b8
 azure-storage-blob
 openai
 python-dotenv
-llama-index
+llama-index==0.9.39
 langchain
 bs4

@@ -1,30 +1,14 @@
-from datetime import datetime
 import logging
 import json  # bourne
 import os
-import azure.functions as func
 import azure.durable_functions as df
-
-
-# from azure.core.credentials import AzureKeyCredential
-# from azure.search.documents.indexes import SearchIndexClient
 from azure.storage.blob import BlobServiceClient
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-# from langchain.embeddings.azure_openai import AzureOpenAIEmbeddings
-# from llama_index import (Document, ServiceContext,
-#                          StorageContext, VectorStoreIndex)
-# from llama_index.llms.azure_openai import AzureOpenAI
-# from llama_index.vector_stores.cogsearch import (CognitiveSearchVectorStore,
-#                                                  IndexManagement)
-from get_download_stats import get_latest_date
-
-import sys
+from utils.get_download_stats import get_latest_date
 from azure.core.credentials import AzureKeyCredential
-from azure.search.documents import SearchClient
 from azure.search.documents.indexes import SearchIndexClient
 from llama_index.core import (
-    SimpleDirectoryReader,
     StorageContext,
     VectorStoreIndex,
 )
@@ -33,16 +17,12 @@ from llama_index.core.settings import Settings
 from llama_index.llms.azure_openai import AzureOpenAI
 from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
 from llama_index.vector_stores.azureaisearch import AzureAISearchVectorStore
-from llama_index.vector_stores.azureaisearch import (
-    IndexManagement,
-    MetadataIndexFieldType,
-)
+from llama_index.vector_stores.azureaisearch import IndexManagement
 from llama_index.core import Document
 
-
-build_index_bp = df.Blueprint()
+# Example for durable blueprint functions:
 # https://github.com/Azure/azure-functions-durable-python/blob/dev/samples-v2/blueprint/durable_blueprints.py
-
+build_index_bp = df.Blueprint()
 
 # Configure environment variables
 load_dotenv()
@@ -51,19 +31,17 @@ api_key                 = os.getenv("AZURE_OPENAI_API_KEY")
 api_version             = os.getenv("AZURE_OPENAI_VERSION", "2023-07-01-preview")
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 blob_connection_string  = os.getenv("BLOB_CONNECTION_STRING")
-container_name          = os.getenv("BLOB_CONTAINER_NAME")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
 
 credential = AzureKeyCredential(key)
 model: str = os.getenv("OPENAI_MODEL", "gpt-4-1106")
 embedding_model: str = "text-embedding-ada-002"
+blob_service_client = BlobServiceClient.from_connection_string(str(blob_connection_string))
+container_name = "sscplus-index-data"
+
 
 @build_index_bp.orchestration_trigger(context_name="context")
 def build_search_index(context: df.DurableOrchestrationContext):
-    logging.info('Python HTTP trigger function processed a request.')
-
-    blob_service_client = BlobServiceClient.from_connection_string(str(blob_connection_string))
-    container_name = 'sscplus-index-data'
     container_client = blob_service_client.get_container_client(container_name)
 
     index_client = SearchIndexClient(
@@ -78,22 +56,10 @@ def build_search_index(context: df.DurableOrchestrationContext):
                     "type" : "type",
                     "url" : "url",
                 }
-    
-    index_name = get_latest_date(container_client=container_client)
-    pages_path = f"{index_name}/pages"
 
-    # vector_store = CognitiveSearchVectorStore(
-    #         search_or_index_client=index_client,
-    #         index_name=index_name,
-    #         filterable_metadata_field_keys=metadata_fields,
-    #         index_management=IndexManagement.CREATE_IF_NOT_EXISTS,
-    #         id_field_key="id",
-    #         chunk_field_key="content",
-    #         embedding_field_key="content_vector",
-    #         metadata_string_field_key="metadata",
-    #         doc_id_field_key="doc_id",
-    #     )
-    
+    index_data_path = get_latest_date(container_client=container_client)
+    index_name = index_data_path.replace("_", "-").replace(":", "-")
+
     vector_store = AzureAISearchVectorStore(
         search_or_index_client=index_client,
         filterable_metadata_field_keys=metadata_fields,
@@ -107,7 +73,9 @@ def build_search_index(context: df.DurableOrchestrationContext):
         doc_id_field_key="doc_id",
     )
 
-    pages = yield context.call_activity("get_pages_as_json", (pages_path, container_client))
+    pages_path = f"{index_data_path}/pages"
+    pages = yield context.call_activity("get_pages_as_json", pages_path)
+
     documents = []
     for page in pages:
         # https://gpt-index.readthedocs.io/en/v0.6.34/how_to/customization/custom_documents.html
@@ -133,35 +101,32 @@ def build_search_index(context: df.DurableOrchestrationContext):
         )
 
     embed_model = AzureOpenAIEmbedding(
-        model=embedding_model, 
-        api_key=api_key, 
-        azure_endpoint=azure_openai_uri
-        )
+        model=embedding_model,
+        deployment_name=embedding_model,
+        api_key=api_key,
+        azure_endpoint=str(azure_openai_uri),
+        api_version=api_version
+    )
 
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
     Settings.llm = llm
     Settings.embed_model = embed_model
+
     index = VectorStoreIndex.from_documents(
         documents, storage_context=storage_context
     )
 
-    # storage_context = StorageContext.from_defaults(vector_store=vector_store)
-    # service_context = ServiceContext.from_defaults(llm=llm, embed_model=embed_model)
-
-    # index = VectorStoreIndex.from_documents(
-    #     documents, storage_context=storage_context, service_context=service_context
-    # )
-
-    return func.HttpResponse(f"Index created: {index_name}.")
+    return f"Index created: {index_name}."
 
 
-# Activity
-@build_index_bp.activity_trigger(input_name="params")
-def get_pages_as_json(params: tuple):
+#Activity
+@build_index_bp.activity_trigger(input_name="path")
+def get_pages_as_json(path: str):
     pages = []
-    container_client = params[1]
-    blob_list = container_client.list_blobs(name_starts_with=params[0])
+
+    container_client = blob_service_client.get_container_client(container_name)
+    blob_list = container_client.list_blobs(name_starts_with=path)
 
     ignore_selectors = ['div.comment-login-message', 'section.block-date-modified-block']
 

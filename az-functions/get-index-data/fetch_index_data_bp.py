@@ -13,7 +13,6 @@ from build_seach_index_bp import build_search_index
 
 fetch_data_bp = df.Blueprint()
 
-
 load_dotenv()
 blob_connection_string  = os.getenv("BLOB_CONNECTION_STRING")
 all_ids_url = os.getenv("ALL_PAGE_IDS_ENDPOINT")
@@ -26,16 +25,12 @@ container_name = 'sscplus-index-data'
 # Orchestrator
 @fetch_data_bp.orchestration_trigger(context_name="context")
 def fetch_index_data(context):
-    logging.info("IN FETCH INDEX")
-
     blobPath = f"{datetime.now().strftime('%Y-%m-%d_%H:%M:%S')}"
     pages = yield context.call_activity("get_and_save_ids", blobPath)
-    test_pages = pages[:100]
-
 
     get_and_save_page_tasks = [
-        context.call_activity("get_and_save_pages", page) 
-        for page in test_pages
+        context.call_activity("get_and_save_pages", page)
+        for page in pages
     ]
 
     # task the function to run the get_and_save_page tasks
@@ -53,11 +48,11 @@ def fetch_index_data(context):
             context.call_activity("get_and_save_pages", page)
             for page in pages_not_downloaded
         ]
-        
+
         pages_not_downloaded.clear()
         pages_not_downloaded = yield context.task_all(retry_tasks)
         pages_not_downloaded = [page for page in pages_not_downloaded if page is not None]
-    
+
     for page in pages_not_downloaded:
         logging.info(f"PAGE NOT DOWNLOADED: {page['blob_name']}")
 
@@ -86,15 +81,15 @@ def get_and_save_ids(blobPath: str):
         for d in data:
             # add both pages here, en/fr versions
             pages.append({
-                "id": d["nid"], 
-                "type": d["type"], 
-                "url": f"{domain}/en/rest/page-by-id/{d['nid']}", 
+                "id": d["nid"],
+                "type": d["type"],
+                "url": f"{domain}/en/rest/page-by-id/{d['nid']}",
                 "blob_name": f"{blobPath}/pages/{d['type']}/en/{d['nid']}.json"
             })
             pages.append({
-                "id": d["nid"], 
-                "type": d["type"], 
-                "url": f"{domain}/fr/rest/page-by-id/{d['nid']}", 
+                "id": d["nid"],
+                "type": d["type"],
+                "url": f"{domain}/fr/rest/page-by-id/{d['nid']}",
                 "blob_name": f"{blobPath}/pages/{d['type']}/fr/{d['nid']}.json"
             })
 

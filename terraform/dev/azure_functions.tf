@@ -40,17 +40,21 @@ resource "azurerm_linux_function_app" "functions" {
     "ENABLE_ORYX_BUILD"              = "true"
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "1"
     "XDG_CACHE_HOME"                 = "/tmp/.cache"
-    "AZURE_SEARCH_SERVICE_ENDPOINT"  = ""
+    "AZURE_SEARCH_SERVICE_ENDPOINT"  = "https://ssc-assistant-dev-search-service.search.windows.net"
     "AZURE_SEARCH_INDEX_NAME"        = ""
-    "AZURE_SEARCH_ADMIN_KEY"         = ""
+    "AZURE_OPENAI_ENDPOINT"          = "https://scsc-cio-ect-openai-oai.openai.azure.com"
     "BLOB_CONNECTION_STRING"         = azurerm_storage_account.dev.primary_connection_string
-    "BLOB_CONTAINER_NAME"            = ""
+    "BLOB_CONTAINER_NAME"            = "sscplus-index-data"
   }
 
   virtual_network_subnet_id = data.azurerm_subnet.subscription-vnet-sub.id
 
   identity {
     type = "SystemAssigned"
+  }
+
+  sticky_settings { # settings that are the same regardless of deployment slot..
+    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_OPENAI_ENDPOINT" ]
   }
 
 }
