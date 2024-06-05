@@ -1,12 +1,10 @@
-# Build index
-
-Build the search services index and vectorize it.
+# Fetch Search Index Data
 
 ## Developpment
 
 ```bash
 cd ssc-assitant/az-functions/create-index
-source .venv/bin/activate #create .venv first if missing ..
+source .venv_func/bin/activate #create .venv first if missing ..
 pip install -r requirements.txt 
 ```
 
@@ -14,11 +12,12 @@ Create a `.env` file and populate it with the necessary keys:
 
 ```
 AZURE_SEARCH_SERVICE_ENDPOINT=https://<domain>.search.windows.net
+DOMAIN_NAME=<domain>
 AZURE_SEARCH_ADMIN_KEY=<INSERT_KEY_HERE>
-BLOB_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=sscplusdatastorage;AccountKey=<INSERT_KEY_HERE>;EndpointSuffix=core.windows.net
-BLOB_CONTAINER_NAME=sscplusdata
+BLOB_CONTAINER_NAME=sscplus-index-data
 AZURE_OPENAI_ENDPOINT=https://<domain>.openai.azure.com/
 AZURE_OPENAI_API_KEY=<INSERT_KEY_HERE>
+BLOB_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=sscplusdatastorage;AccountKey=<INSERT_KEY_HERE>;EndpointSuffix=core.windows.net
 ```
 
 Create a `local.settings.json` and put the following content inside: 
@@ -36,4 +35,10 @@ Create a `local.settings.json` and put the following content inside:
 
 ## Documentation
 
-[How to create a search services index from scratch with vectorization via code](https://github.com/Azure/azure-search-vector-samples/blob/main/demo-python/code/azure-search-integrated-vectorization-sample.ipynb)
+Steps:
+1. Deploy the function to dev-index-mgmt Function App
+2. Trigger the function from postman with the following URL:
+
+`
+"https://dev-index-mgmt.azurewebsites.net/api/orchestrators/fetch_index_data?code=<code>"
+`
