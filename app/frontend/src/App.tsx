@@ -27,11 +27,11 @@ import { callMsGraph } from './graph';
 import { UserContext } from './context/UserContext';
 import { v4 as uuidv4 } from 'uuid';
 import { AccountInfo, InteractionRequiredAuthError, InteractionStatus } from "@azure/msal-browser";
-import { 
-  useIsAuthenticated, 
-  useMsal, 
-  AuthenticatedTemplate, 
-  UnauthenticatedTemplate 
+import {
+  useIsAuthenticated,
+  useMsal,
+  AuthenticatedTemplate,
+  UnauthenticatedTemplate
 } from "@azure/msal-react";
 import CircularProgress from '@mui/material/CircularProgress';
 import React from "react";
@@ -67,7 +67,7 @@ export const App = () => {
   const [feedback, setFeedback] = useState('');
   const [isGoodResponse, setIsGoodResponse] = useState(false);
   const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
-  
+
   const convertChatHistoryToMessages = (chatHistory: ChatItem[]) : Message[] => {
     const startIndex = Math.max(chatHistory.length - maxMessagesSent, 0);
     return chatHistory.slice(startIndex).map(
@@ -77,12 +77,12 @@ export const App = () => {
             role: chatItem.message.role,
             content: chatItem.message.content,
           };
-        } 
+        }
         if (isAMessage(chatItem)) {
           return chatItem;
         }
-        return undefined;  
-      }).filter(message => message !== undefined) as Message[];   
+        return undefined;
+      }).filter(message => message !== undefined) as Message[];
   };
 
   const sendApiRequest = async (request: MessageRequest) => {
@@ -91,7 +91,7 @@ export const App = () => {
 
       if (!accessToken)
         throw new Error(t("no.id.token"));
-      
+
       const completionResponse = await completionMySSC({
         request: request,
         updateLastMessage: updateLastMessage,
@@ -108,11 +108,12 @@ export const App = () => {
             ...lastItem,
               message: {
                 ...lastItem.message,
-                context: completionResponse.message.context
+                context: completionResponse.message.context,
+                tool_info: completionResponse.message.tool_info
               }
           }
         }
-        
+
         saveChatHistory(updatedChatHistory); // Save chat history to local storage
         return updatedChatHistory;
       });
@@ -175,7 +176,7 @@ export const App = () => {
       saveChatHistory(updatedChatHistory); // Save chat history to local storage
       return updatedChatHistory;
     });
-    
+
     sendApiRequest(request);
   };
 
@@ -351,7 +352,7 @@ export const App = () => {
               sx={{ color: 'url(#multicolor)' }}
               size={50}
             />
-          </LoadingSpinnerView>       
+          </LoadingSpinnerView>
         </ConnectingScreen>
       </UnauthenticatedTemplate>
       <AuthenticatedTemplate>
@@ -365,7 +366,7 @@ export const App = () => {
               minHeight: "100vh",
               margin: "auto",
             }}
-            maxWidth="lg" 
+            maxWidth="lg"
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <Box
@@ -399,6 +400,7 @@ export const App = () => {
                       text={chatItem.message.content}
                       isLoading={index == chatHistory.length-1 && isLoading}
                       context={chatItem.message?.context}
+                      toolInfo={chatItem.message.tool_info}
                       scrollRef={chatMessageStreamEnd}
                       replayChat={replayChat}
                       index={index}
@@ -413,9 +415,9 @@ export const App = () => {
                   )}
 
                   {isAToastMessage(chatItem) && (
-                    <AlertBubble 
-                      toast={chatItem} 
-                      index={index} 
+                    <AlertBubble
+                      toast={chatItem}
+                      index={index}
                       removeMessageHandler={handleRemoveToastMessage}
                     />
                   )}
@@ -423,7 +425,7 @@ export const App = () => {
                 </Fragment>
               ))}
             </Box>
-            <div ref={chatMessageStreamEnd} />
+            <div ref={chatMessageStreamEnd} style={{ height: '50px' }} />
             <Box
               sx={{
                 position: "sticky",
