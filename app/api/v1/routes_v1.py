@@ -7,7 +7,7 @@ from openai import Stream
 import openai
 from openai.types.chat import (ChatCompletion, ChatCompletionChunk)
 from utils.db import store_completion, store_request, leave_feedback, flag_conversation
-from utils.models import Completion, Feedback, MessageRequest
+from utils.models import Completion, Feedback, MessageRequest, ToolInfo
 from utils.openai import (build_completion_response, chat_with_data,
                           convert_chat_with_data_response)
 from utils.auth import auth, user_ad
@@ -94,13 +94,13 @@ def completion_chat(message_request: MessageRequest):
 def completion_chat_stream(message_request: MessageRequest):
     if not message_request.query and not message_request.messages:
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
-    
+
     convo_uuid = message_request.uuid if message_request.uuid else str(uuid.uuid4())
     user = user_ad.current_user()
     thread = threading.Thread(target=store_request, args=(message_request, convo_uuid, user))
     thread.start()
     try:
-        completion: ChatCompletion | Stream[ChatCompletionChunk] = chat_with_data(message_request, stream=True)
+        tool_info, completion = chat_with_data(message_request, stream=True)
 
         if isinstance(completion, ChatCompletion):
             completion_response = convert_chat_with_data_response(completion)
@@ -140,7 +140,7 @@ def completion_chat_stream(message_request: MessageRequest):
 
             yield f'\r\n--{_boundary}\r\n'
             yield 'Content-Type: application/json\r\n\r\n'
-            response = build_completion_response(content=content_txt, chat_completion_dict=context)
+            response = build_completion_response(content=content_txt, chat_completion_dict=context, tool_info=tool_info)
             thread = threading.Thread(target=store_completion, args=(response, convo_uuid, user))
             thread.start()
             yield json.dumps(

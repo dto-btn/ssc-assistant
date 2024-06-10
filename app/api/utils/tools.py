@@ -142,18 +142,14 @@ def get_employee_information(employee_lastname: str = "", employee_firstname: st
     if response.status_code == 200:
         # Check if the response contains multiple employees with the same last name
         if len(json.loads(response.text)) > 1 and not employee_firstname:
-            response_json = json.loads(response.text)
-            # Convert the JSON to a pretty string
-            pretty_response = json.dumps(response_json, indent=4)
-            return json.dumps("Found multiple employees with that last name. Please provide the first name as well. However, here are some of the first results: " + pretty_response)
+            return "Found multiple employees with that last name. Please provide the first name as well. However, here are some of the first results: " + response.text
+        
         # Check if the response contains multiple employees with the same first and last name
         elif len(json.loads(response.text)) > 1:
-            response_json = json.loads(response.text)
-            # Convert the JSON to a pretty string
-            pretty_response = json.dumps(response_json, indent=4)
-            return json.dumps("Found multiple employees with that name. Here are the results: " + pretty_response)
+            return "Found multiple employees with that name. Return the phone number, name, and address for each employee, if available. Here are the results: " + response.text
+
         else:
-            return response.text
+            return "Found an employee with that name. Return the phone number, name, and address for the employee, if available" + response.text
     else:
         return "Didn't find any matching employee with that name."
 
@@ -210,6 +206,7 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
 
             # Call the function with the prepared arguments
             function_response = function_to_call(**prepared_args)
+            
             messages.append({
                 "role": "assistant",
                 "content": None,

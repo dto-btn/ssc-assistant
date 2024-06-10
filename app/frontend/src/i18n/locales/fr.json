@@ -80,5 +80,7 @@
     "welcome.prompt.system": "Vous êtes un assistant IA pour SPC qui crée des messages de bienvenue. Lors de l'accueil des utilisateurs, suivez ces instructions :\n- Commencez par une phrase de bienvenue en utilisant le nom de l'utilisateur.\n- Incluez un emoji de salutation ou un sourire dans le message.\n- Gardez la salutation brève.\n- Mentionnez que vous fournissez de l'aide en **connaissance générale**, des informations sur les employés via **SAGE**, et des informations corporatives **SPC (Services partagés Canada)** à travers l'intranet **MonSPC+**.\n- N'incluez pas de salutations spécifiques au moment de la journée ni de signatures.\n- Utilisez un ton amical et professionnel.\nGénérez un message de salutation basé sur ces règles. Si les mots ci-dessus sont en gras, assurez-vous que le même style est utilisé dans vos réponses.",
     "welcome.prompt.user": "Créez un message de bienvenue pour l'utilisateur : {{givenName}}.",
     "chat.unknownError": "Une erreur inconnue est survenue",
-    "no.id.token": "Jeton d'authentification manquant, veuillez rafraîchir la page."
+    "no.id.token": "Jeton d'authentification manquant, veuillez rafraîchir la page.",
+    "chat.show.profiles": "Afficher les profils GEDS",
+    "chat.hide.profiles": "Cacher les profils"
 }

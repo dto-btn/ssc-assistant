@@ -7,24 +7,28 @@ import { useEffect, useState, Fragment } from 'react';
 import { useTranslation } from "react-i18next";
 import { BubbleButtons } from './BubbleButtons';
 import { styled } from '@mui/system';
+import ProfileCards from './ProfileCards';
 
 interface AssistantBubbleProps {
     text: string;
     isLoading: boolean;
     context?: Context | null;
+    toolInfo?: ToolInfo
     scrollRef?:  React.RefObject<HTMLDivElement>;
     replayChat: () => void;
     index: number;
     total: number;
     setIsFeedbackVisible: React.Dispatch<React.SetStateAction<boolean>>;
     setIsGoodResponse: React.Dispatch<React.SetStateAction<boolean>>;
-  }
+}
 
-export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse }: AssistantBubbleProps) => {
+export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse }: AssistantBubbleProps) => {
   const { i18n } = useTranslation();
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [profiles, setProfiles] = useState<EmployeeProfile[]>([])
+  const [profilesExpanded, setExpandProfiles] = useState(false)
   const isMostRecent = index === total - 1;
 
   const components = {
@@ -69,6 +73,15 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
     return { processedText, citedCitations, citationNumberMapping };
   }
 
+  const processProfiles = (employeeProfiles: EmployeeProfile[]) => {
+    setProfiles([]);
+    employeeProfiles.map((profile) => {
+      if (text.includes(profile.email)) {
+        return setProfiles((prevProfiles) => [...prevProfiles, profile]);
+      }
+    })
+  }
+
   useEffect(() => {
     if(context?.citations) {
         const { processedText, citedCitations, citationNumberMapping } = processText(text, context.citations);
@@ -78,6 +91,12 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
     }
 }, [isLoading, context, text, scrollRef]);
 
+  useEffect(() => {
+    if (toolInfo && toolInfo.payload?.hasOwnProperty("profiles")) {
+      processProfiles(toolInfo.payload.profiles)
+    }
+  }, [toolInfo])
+
 
   useEffect(() => processingComplete ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" }) : undefined, [processingComplete, scrollRef]);
 
@@ -86,9 +105,13 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
     document.documentElement.lang = i18n.language;
   }, [i18n.language]);
 
+  const handleToggleShowProfiles = () => {
+    setExpandProfiles(!profilesExpanded)
+  }
+
   return (
     <ChatBubbleWrapper>
-      <ChatBubbleView 
+      <ChatBubbleView
         className="chatBubbleView"
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
@@ -146,6 +169,13 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
                 </Box>
               </>
             )}
+            {!isLoading && profiles.length > 0 &&
+            <ProfileCards
+              profiles={profiles}
+              isExpanded={profilesExpanded}
+              toggleShowProfileHandler={handleToggleShowProfiles}
+            />
+            }
           </Paper>
         </Box>
         <Box>

@@ -126,7 +126,8 @@ export const App = () => {
             ...lastItem,
               message: {
                 ...lastItem.message,
-                context: completionResponse.message.context
+                context: completionResponse.message.context,
+                tool_info: completionResponse.message.tool_info
               }
           }
         }
@@ -400,7 +401,7 @@ export const App = () => {
               minHeight: "100vh",
               margin: "auto",
             }}
-            maxWidth="lg" 
+            maxWidth="lg"
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <Box
@@ -434,6 +435,7 @@ export const App = () => {
                       text={chatItem.message.content}
                       isLoading={index == chatHistory.length-1 && isLoading}
                       context={chatItem.message?.context}
+                      toolInfo={chatItem.message.tool_info}
                       scrollRef={chatMessageStreamEnd}
                       replayChat={replayChat}
                       index={index}
@@ -458,7 +460,7 @@ export const App = () => {
                 </Fragment>
               ))}
             </Box>
-            <div ref={chatMessageStreamEnd} />
+            <div ref={chatMessageStreamEnd} style={{ height: '50px' }} />
             <Box
               sx={{
                 position: "sticky",

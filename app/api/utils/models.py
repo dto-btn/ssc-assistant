@@ -1,7 +1,7 @@
 from dataclasses import field
 from enum import Enum
 from marshmallow_dataclass import dataclass
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 @dataclass
 class Metadata:
@@ -23,10 +23,17 @@ class Context:
     intent: List[str]
 
 @dataclass
+class ToolInfo:
+    tool_type: Optional[str] = None
+    function_name: Optional[str] = None
+    payload: Optional[Dict] = None
+
+@dataclass
 class Message:
     role: str
     content: Optional[str] = None
     context: Optional[Context] = None
+    tool_info: Optional[ToolInfo] = None
 
 @dataclass
 class Completion:
