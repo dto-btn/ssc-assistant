@@ -3,11 +3,11 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
-import { useEffect, useState, Fragment } from 'react';
+import { useEffect, useState, Fragment, useMemo } from 'react';
 import { useTranslation } from "react-i18next";
 import { BubbleButtons } from './BubbleButtons';
 import { styled } from '@mui/system';
-import ProfileCards from './ProfileCards';
+import ProfileCardsContainer from '../containers/ProfileCardsContainer';
 
 interface AssistantBubbleProps {
     text: string;
@@ -28,6 +28,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
   const [processingComplete, setProcessingComplete] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [profiles, setProfiles] = useState<EmployeeProfile[]>([])
+  const [extraProfiles, setExtraProfiles] = useState<EmployeeProfile[]>([])
   const [profilesExpanded, setExpandProfiles] = useState(false)
   const isMostRecent = index === total - 1;
 
@@ -73,15 +74,6 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
     return { processedText, citedCitations, citationNumberMapping };
   }
 
-  const processProfiles = (employeeProfiles: EmployeeProfile[]) => {
-    setProfiles([]);
-    employeeProfiles.map((profile) => {
-      if (text.includes(profile.email)) {
-        return setProfiles((prevProfiles) => [...prevProfiles, profile]);
-      }
-    })
-  }
-
   useEffect(() => {
     if(context?.citations) {
         const { processedText, citedCitations, citationNumberMapping } = processText(text, context.citations);
@@ -91,11 +83,30 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
     }
 }, [isLoading, context, text, scrollRef]);
 
+  const processProfiles = useMemo(() => {
+    return (employeeProfiles: EmployeeProfile[]) => {
+        const matchedProfiles: EmployeeProfile[] = [];
+        const unmatchedProfiles: EmployeeProfile[] = [];
+        
+        employeeProfiles.forEach((profile) => {
+            if (text.includes(profile.email)) {
+                matchedProfiles.push(profile);
+            } else {
+                unmatchedProfiles.push(profile);
+            }
+        });
+
+        return { matchedProfiles, unmatchedProfiles };
+    };
+}, [text]);
+
   useEffect(() => {
-    if (toolInfo && toolInfo.payload?.hasOwnProperty("profiles")) {
-      processProfiles(toolInfo.payload.profiles)
-    }
-  }, [toolInfo])
+      if (toolInfo && toolInfo.payload?.hasOwnProperty("profiles")) {
+          const { matchedProfiles, unmatchedProfiles } = processProfiles(toolInfo.payload.profiles);
+          setProfiles(matchedProfiles);
+          setExtraProfiles(unmatchedProfiles);
+      }
+  }, [toolInfo, text]);
 
 
   useEffect(() => processingComplete ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" }) : undefined, [processingComplete, scrollRef]);
@@ -170,12 +181,13 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
               </>
             )}
             {!isLoading && profiles.length > 0 &&
-            <ProfileCards
+            <ProfileCardsContainer
               profiles={profiles}
+              extraProfiles={extraProfiles}
               isExpanded={profilesExpanded}
               toggleShowProfileHandler={handleToggleShowProfiles}
             />
-            }
+            } 
           </Paper>
         </Box>
         <Box>

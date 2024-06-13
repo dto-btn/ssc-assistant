@@ -82,5 +82,6 @@
     "chat.unknownError": "Une erreur inconnue est survenue",
     "no.id.token": "Jeton d'authentification manquant, veuillez rafraîchir la page.",
     "chat.show.profiles": "Afficher les profils GEDS",
-    "chat.hide.profiles": "Cacher les profils"
+    "chat.hide.profiles": "Cacher les profils",
+    "chat.additional.profiles": "PROFILS SUPPLÉMENTAIRES"
 }

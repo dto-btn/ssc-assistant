@@ -92,5 +92,6 @@
     "chat.unknownError": "An unknown error occurred",
     "no.id.token": "Missing authentication token, please refresh the page.",
     "chat.show.profiles": "Show GEDS Profiles",
-    "chat.hide.profiles": "Hide Profiles"
+    "chat.hide.profiles": "Hide Profiles",
+    "chat.additional.profiles": "ADDITIONAL PROFILES"
 }
