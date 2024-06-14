@@ -4,6 +4,7 @@ import { styled } from '@mui/system';
 import EmailIcon from '@mui/icons-material/Email';
 import PhoneIcon from '@mui/icons-material/Phone';
 import LaunchIcon from '@mui/icons-material/Launch';
+import { useTranslation } from 'react-i18next';
 
 interface ProfileCardProps {
     profile: EmployeeProfile
@@ -11,6 +12,7 @@ interface ProfileCardProps {
 
 const ProfileCard = ({profile}: ProfileCardProps) => {
     const language = document.documentElement.lang;
+    const { t } = useTranslation();
 
     return (
         <Card sx={{ width: 400, borderRadius: 5 }}>
@@ -54,7 +56,7 @@ const ProfileCard = ({profile}: ProfileCardProps) => {
                     endIcon={<LaunchIcon />}
                     size="large"
                 >
-                    GEDS
+                    {t("chat.profile.geds")}
                 </Button>
             </CardActions>
         </Card>
