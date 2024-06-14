@@ -22,6 +22,7 @@ interface Message {
   role: string;
   content?: string | null;
   context?: Context | null;
+  tool_info?: ToolInfo
 }
 
 interface Completion {
@@ -47,3 +48,18 @@ interface ToastMessage {
 }
 
 type ChatItem = Message | Completion | ToastMessage;
+
+interface ToolInfo {
+  tool_type?: string;
+  function_name?: string;
+  payload?: Record<string, any>;
+}
+
+interface EmployeeProfile {
+  email: string;
+  name: string;
+  phone?: string;
+  url: string;
+  organization_en: string;
+  organization_fr: string;
+}

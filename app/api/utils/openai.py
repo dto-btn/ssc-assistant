@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from typing import Any, List, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from openai import AzureOpenAI, Stream
 from openai.types.chat import (ChatCompletion, ChatCompletionChunk,
@@ -10,7 +10,7 @@ from openai.types.completion_usage import CompletionUsage
 from utils.manage_message import load_messages
 from utils.models import (AzureCognitiveSearchDataSource,
                           AzureCognitiveSearchParameters, Citation, Completion,
-                          Context, Message, MessageRequest, Metadata)
+                          Context, Message, MessageRequest, Metadata, ToolInfo)
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
 from utils.tools import load_tools, call_tools
@@ -63,7 +63,7 @@ def _create_azure_cognitive_search_data_source() -> AzureCognitiveSearchDataSour
         parameters=parameters
     )
 
-def chat_with_data(message_request: MessageRequest, stream=False) -> Union[ChatCompletion,Stream[ChatCompletionChunk]]:
+def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optional['ToolInfo'], Union['ChatCompletion', 'Stream[ChatCompletionChunk]']]:
     """
     Initiate a chat with via openai api using data_source (azure cognitive search)
 
@@ -72,7 +72,6 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Union[ChatC
         - https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
     """
     messages = load_messages(message_request)
-    corporate_question = False
     data_source = _create_azure_cognitive_search_data_source()
     data_sources = { #https://learn.microsoft.com/en-us/azure/ai-services/openai/references/azure-search?tabs=python
                 "data_sources": [{
@@ -102,6 +101,8 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Union[ChatC
     1. Check if we are to use tools
     """
 
+    tool_info = None
+
     if message_request.tools:
         logger.debug(f"Using Tools: {message_request.tools}")
         tools = load_tools(message_request.tools)
@@ -116,27 +117,65 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Union[ChatC
         )
 
         if completion_tools.choices[0].message.tool_calls:
+            tool_info = ToolInfo()
             logger.debug(f"Tools were used in the request and OpenAI deemed it needed to invoke functions... gathering function data ...")
             logger.debug(f"tool_calls: {[f.function.name for f in completion_tools.choices[0].message.tool_calls]}")
+
             if "corporate_question" in [f.function.name for f in completion_tools.choices[0].message.tool_calls]:
                 logger.debug("### DETECTED CORPORATE QUESTION ###")
-                corporate_question = True
+                tool_info.tool_type = "mysscplus"
+
+                return (tool_info, client.chat.completions.create(
+                        messages=messages,
+                        model=model,
+                        extra_body=data_sources,
+                        stream=stream
+                ))
+
+
             messages = call_tools(completion_tools.choices[0].message.tool_calls, messages)
-            logger.debug(messages[-1])
+            tool_info.tool_type = "geds"
 
-        if corporate_question:
-            return client.chat.completions.create(
-                messages=messages,
-                model=model,
-                extra_body=data_sources,
-                stream=stream
-            )
+            if "name" in messages[-1] and isinstance(messages[-1]["name"], str):
+                function_name = messages[-1]["name"]
+                tool_info.function_name=function_name
 
-    return client.chat.completions.create(
+            if "content" in messages[-1] and isinstance(messages[-1]["content"], str):
+                content = messages[-1]["content"]
+                try:
+                    start_index = content.find("[") # trim the text preceeding the results
+                    if start_index != -1: 
+                         content = content[start_index:]
+
+                    data = json.loads(content)
+                    profiles = []
+                    tool_info.payload = {}
+
+                    for result in data:
+                        profile = dict()
+
+                        geds_profile_string = result["id"]
+                        profile["url"] = f"https://geds-sage.gc.ca/en/GEDS?pgid=015&dn={geds_profile_string}"     
+                        profile["name"] = result["givenName"] + " " + result["surname"]
+                        profile["email"] = result["contactInformation"]["email"]
+                        profile["organization_en"] = result["organizationInformation"]["organization"]["organizationInformation"]["organization"]["organizationInformation"]["organization"]["description"]["en"]
+                        profile["organization_fr"] = result["organizationInformation"]["organization"]["organizationInformation"]["organization"]["organizationInformation"]["organization"]["description"]["fr"]
+
+                        if "phoneNumber" in result["contactInformation"]:
+                            profile["phone"] = result["contactInformation"]["phoneNumber"]
+
+                        profiles.append(profile)
+                    
+                    tool_info.payload["profiles"]=profiles
+
+                except json.JSONDecodeError as e:
+                    logger.debug(f"error: {e}")
+
+    return (tool_info, client.chat.completions.create(
         messages=messages,
         model=model,
         stream=stream
-    )
+    ))
 
 def convert_chat_with_data_response(chat_completion: ChatCompletion) -> Completion:
     """
@@ -161,7 +200,8 @@ def build_completion_response(content: str,
                               role: str = 'assistant',
                               completion_tokens: int = 0,
                               prompt_tokens: int = 0,
-                              total_tokens: int = 0):
+                              total_tokens: int = 0,
+                              tool_info: Optional[ToolInfo] = None):
     """
     Builds a completion response based on the context given and the content
     """
@@ -179,7 +219,8 @@ def build_completion_response(content: str,
     message = Message(
         role=role,
         content=content,
-        context=context
+        context=context,
+        tool_info=tool_info
     )
 
     return Completion(completion_tokens=completion_tokens,

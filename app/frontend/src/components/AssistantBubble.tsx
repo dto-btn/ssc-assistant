@@ -3,28 +3,33 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
-import { useEffect, useState, Fragment } from 'react';
+import { useEffect, useState, Fragment, useMemo } from 'react';
 import { useTranslation } from "react-i18next";
 import { BubbleButtons } from './BubbleButtons';
 import { styled } from '@mui/system';
+import ProfileCardsContainer from '../containers/ProfileCardsContainer';
 
 interface AssistantBubbleProps {
     text: string;
     isLoading: boolean;
     context?: Context | null;
+    toolInfo?: ToolInfo
     scrollRef?:  React.RefObject<HTMLDivElement>;
     replayChat: () => void;
     index: number;
     total: number;
     setIsFeedbackVisible: React.Dispatch<React.SetStateAction<boolean>>;
     setIsGoodResponse: React.Dispatch<React.SetStateAction<boolean>>;
-  }
+}
 
-export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse }: AssistantBubbleProps) => {
+export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse }: AssistantBubbleProps) => {
   const { i18n } = useTranslation();
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [profiles, setProfiles] = useState<EmployeeProfile[]>([])
+  const [extraProfiles, setExtraProfiles] = useState<EmployeeProfile[]>([])
+  const [profilesExpanded, setExpandProfiles] = useState(false)
   const isMostRecent = index === total - 1;
 
   const components = {
@@ -78,6 +83,31 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
     }
 }, [isLoading, context, text, scrollRef]);
 
+  const processProfiles = useMemo(() => {
+    return (employeeProfiles: EmployeeProfile[]) => {
+        const matchedProfiles: EmployeeProfile[] = [];
+        const unmatchedProfiles: EmployeeProfile[] = [];
+        
+        employeeProfiles.forEach((profile) => {
+            if (text.includes(profile.email)) {
+                matchedProfiles.push(profile);
+            } else {
+                unmatchedProfiles.push(profile);
+            }
+        });
+
+        return { matchedProfiles, unmatchedProfiles };
+    };
+}, [text]);
+
+  useEffect(() => {
+      if (toolInfo && toolInfo.payload?.hasOwnProperty("profiles")) {
+          const { matchedProfiles, unmatchedProfiles } = processProfiles(toolInfo.payload.profiles);
+          setProfiles(matchedProfiles);
+          setExtraProfiles(unmatchedProfiles);
+      }
+  }, [toolInfo, text]);
+
 
   useEffect(() => processingComplete ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" }) : undefined, [processingComplete, scrollRef]);
 
@@ -86,9 +116,13 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
     document.documentElement.lang = i18n.language;
   }, [i18n.language]);
 
+  const handleToggleShowProfiles = () => {
+    setExpandProfiles(!profilesExpanded)
+  }
+
   return (
     <ChatBubbleWrapper>
-      <ChatBubbleView 
+      <ChatBubbleView
         className="chatBubbleView"
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
@@ -146,6 +180,14 @@ export const AssistantBubble = ({ text, isLoading, context, scrollRef, replayCha
                 </Box>
               </>
             )}
+            {!isLoading && profiles.length > 0 &&
+            <ProfileCardsContainer
+              profiles={profiles}
+              extraProfiles={extraProfiles}
+              isExpanded={profilesExpanded}
+              toggleShowProfileHandler={handleToggleShowProfiles}
+            />
+            } 
           </Paper>
         </Box>
         <Box>
