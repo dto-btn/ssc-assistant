@@ -62,7 +62,7 @@
     "tool_type": "archibus",
     "function": {
       "name": "book_reservation",
-      "description": "Provides access to the archibus booking system and enables you to book a workspace reservation for the user. Step 1 is to use the get_buildings method to retrieve the buildingId and then make the booking on the provided date with this id.",
+      "description": "Provides access to the archibus booking system and enables you to book a workspace reservation for the user.",
       "parameters": {
         "type": "object",
           "properties": {
@@ -75,7 +75,7 @@
                   "description": "The date of the booking, formatted like 2024-06-12."
               }
           },
-          "required": ["date", "buildingId"]
+          "required": ["date"]
       }
     }
   },

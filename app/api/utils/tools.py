@@ -220,7 +220,7 @@ def get_buildings(buildingName: str = ""):
             filtered_buildings = [building for building in response_json if building.get('name') and any(substring in building['name'].lower() for substring in filtered_substrings)]
             pretty_response = json.dumps(filtered_buildings, indent=4)
             logger.debug(pretty_response)
-            return filtered_buildings
+            return pretty_response
 
         else:
             logger.error(f"Unable to get any buildings info. Status code: {response.status_code}")
@@ -318,7 +318,7 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
             function_to_call = available_functions[function_name]
             function = tool_call.function
 
-            logger.debug(f"function: {function}")
+            #logger.debug(f"function: {function}")
 
             # function_args = function.arguments
             function_args = json.loads(function.arguments) if function.arguments else {}

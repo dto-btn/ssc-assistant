@@ -111,71 +111,60 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
         """
         1a. Invoke tools completion, 
         """
-        completion_tools = client.chat.completions.create(
-            messages=messages,
-            model=model,
-            tools=tools,
-            tool_choice='auto',
-            stream=False
-        )
+        loop_tools = True
+        while loop_tools:
+            completion_tools = client.chat.completions.create(
+                    messages=messages,
+                    model=model,
+                    tools=tools,
+                    tool_choice='auto',
+                    stream=False
+                )
 
-        if completion_tools.choices[0].message.tool_calls:
-            tool_info = ToolInfo()
-            logger.debug(f"Tools were used in the request and OpenAI deemed it needed to invoke functions... gathering function data ...")
-            logger.debug(f"TOOOOOOOOLS: {completion_tools.choices}")
-            logger.debug(f"tool_calls: {[f.function for f in completion_tools.choices[0].message.tool_calls]}")
+            if completion_tools.choices[0].message.tool_calls:
+                tool_info = ToolInfo()
+                logger.debug(f"tool_calls: {[f.function.name for f in completion_tools.choices[0].message.tool_calls]}")
 
-            if "corporate_question" in [f.function.name for f in completion_tools.choices[0].message.tool_calls]:
-                logger.debug("### DETECTED CORPORATE QUESTION ###")
-                tool_info.tool_type = "mysscplus"
-
-                return (tool_info, client.chat.completions.create(
-                        messages=messages,
-                        model=model,
-                        extra_body=data_sources,
-                        stream=stream
-                ))
-
-
-            messages = call_tools(completion_tools.choices[0].message.tool_calls, messages)
-            tool_info.tool_type = "geds"
+                messages = call_tools(completion_tools.choices[0].message.tool_calls, messages)
+            else:
+                loop_tools = False
 
             # logger.debug(f"last message: {messages[-1]}")
 
-            if "name" in messages[-1] and isinstance(messages[-1]["name"], str):
-                function_name = messages[-1]["name"]
-                tool_info.function_name=function_name
+            # if "name" in messages[-1] and isinstance(messages[-1]["name"], str):
+            #     function_name = messages[-1]["name"]
+            #     tool_info.function_name=function_name
 
-            if "content" in messages[-1] and isinstance(messages[-1]["content"], str):
-                content = messages[-1]["content"]
-                try:
-                    start_index = content.find("[") # trim the text preceeding the results
-                    if start_index != -1: 
-                         content = content[start_index:]
+            # if "content" in messages[-1] and isinstance(messages[-1]["content"], str):
+            #     content = messages[-1]["content"]
+            #     try:
+            #         start_index = content.find("[") # trim the text preceeding the results
+            #         if start_index != -1: 
+            #              content = content[start_index:]
 
-                    data = json.loads(content)
-                    profiles = []
-                    tool_info.payload = {}
+            #         data = json.loads(content)
+            #         profiles = []
+            #         tool_info.payload = {}
 
-                    for result in data:
-                        profile = dict()
+            #         for result in data:
+            #             profile = dict()
 
-                        geds_profile_string = result["id"]
-                        profile["url"] = f"https://geds-sage.gc.ca/en/GEDS?pgid=015&dn={geds_profile_string}"     
-                        profile["name"] = result["givenName"] + " " + result["surname"]
-                        profile["email"] = result["contactInformation"]["email"]
-                        profile["organization_en"] = result["organizationInformation"]["organization"]["organizationInformation"]["organization"]["organizationInformation"]["organization"]["description"]["en"]
-                        profile["organization_fr"] = result["organizationInformation"]["organization"]["organizationInformation"]["organization"]["organizationInformation"]["organization"]["description"]["fr"]
+            #             geds_profile_string = result["id"]
+            #             profile["url"] = f"https://geds-sage.gc.ca/en/GEDS?pgid=015&dn={geds_profile_string}"
+            #             profile["name"] = result["givenName"] + " " + result["surname"]
+            #             profile["email"] = result["contactInformation"]["email"]
+            #             profile["organization_en"] = result["organizationInformation"]["organization"]["organizationInformation"]["organization"]["organizationInformation"]["organization"]["description"]["en"]
+            #             profile["organization_fr"] = result["organizationInformation"]["organization"]["organizationInformation"]["organization"]["organizationInformation"]["organization"]["description"]["fr"]
 
-                        if "phoneNumber" in result["contactInformation"]:
-                            profile["phone"] = result["contactInformation"]["phoneNumber"]
+            #             if "phoneNumber" in result["contactInformation"]:
+            #                 profile["phone"] = result["contactInformation"]["phoneNumber"]
 
-                        profiles.append(profile)
+            #             profiles.append(profile)
                     
-                    tool_info.payload["profiles"]=profiles
+            #         tool_info.payload["profiles"]=profiles
 
-                except json.JSONDecodeError as e:
-                    logger.debug(f"error: {e}")
+            #     except json.JSONDecodeError as e:
+            #         logger.debug(f"error: {e}")
 
     return (tool_info, client.chat.completions.create(
         messages=messages,
