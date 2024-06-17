@@ -72,6 +72,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
         - https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
     """
     messages = load_messages(message_request)
+    logger.debug(f"MESSAGES {messages}")
     data_source = _create_azure_cognitive_search_data_source()
     data_sources = { #https://learn.microsoft.com/en-us/azure/ai-services/openai/references/azure-search?tabs=python
                 "data_sources": [{
@@ -106,6 +107,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
     if message_request.tools:
         logger.debug(f"Using Tools: {message_request.tools}")
         tools = load_tools(message_request.tools)
+        # logger.debug(f"TOOLS: {tools}")
         """
         1a. Invoke tools completion, 
         """
@@ -113,13 +115,15 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
             messages=messages,
             model=model,
             tools=tools,
+            tool_choice='auto',
             stream=False
         )
 
         if completion_tools.choices[0].message.tool_calls:
             tool_info = ToolInfo()
             logger.debug(f"Tools were used in the request and OpenAI deemed it needed to invoke functions... gathering function data ...")
-            logger.debug(f"tool_calls: {[f.function.name for f in completion_tools.choices[0].message.tool_calls]}")
+            logger.debug(f"TOOOOOOOOLS: {completion_tools.choices}")
+            logger.debug(f"tool_calls: {[f.function for f in completion_tools.choices[0].message.tool_calls]}")
 
             if "corporate_question" in [f.function.name for f in completion_tools.choices[0].message.tool_calls]:
                 logger.debug("### DETECTED CORPORATE QUESTION ###")
@@ -135,6 +139,8 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
 
             messages = call_tools(completion_tools.choices[0].message.tool_calls, messages)
             tool_info.tool_type = "geds"
+
+            # logger.debug(f"last message: {messages[-1]}")
 
             if "name" in messages[-1] and isinstance(messages[-1]["name"], str):
                 function_name = messages[-1]["name"]
@@ -197,7 +203,7 @@ def convert_chat_with_data_response(chat_completion: ChatCompletion) -> Completi
 
 def build_completion_response(content: str,
                               chat_completion_dict: dict[str, Any] | None,
-                              role: str = 'assistant',
+                              role: str = "assistant",
                               completion_tokens: int = 0,
                               prompt_tokens: int = 0,
                               total_tokens: int = 0,
@@ -206,15 +212,15 @@ def build_completion_response(content: str,
     Builds a completion response based on the context given and the content
     """
     context = None
-    if chat_completion_dict and 'context' in chat_completion_dict:
-        context_dict = chat_completion_dict['context']
+    if chat_completion_dict and "context" in chat_completion_dict:
+        context_dict = chat_completion_dict["context"]
         citations: List[Citation] = [Citation(
-            content=cit['content'],
-            url=cit['url'],
-            title=cit['title']
-        ) for cit in context_dict['citations']]
+            content=cit["content"],
+            url=cit["url"],
+            title=cit["title"]
+        ) for cit in context_dict["citations"]]
 
-        context = Context(role=role, citations=citations, intent=[json.loads(context_dict['intent'])])
+        context = Context(role=role, citations=citations, intent=[json.loads(context_dict["intent"])])
 
     message = Message(
         role=role,

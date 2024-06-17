@@ -56,5 +56,68 @@
         "required": ["query"]
       }
     }
+  },
+  {
+    "type": "function",
+    "tool_type": "archibus",
+    "function": {
+      "name": "book_reservation",
+      "description": "Provides access to the archibus booking system and enables you to book a workspace reservation for the user. Step 1 is to use the get_buildings method to retrieve the buildingId and then make the booking on the provided date with this id.",
+      "parameters": {
+        "type": "object",
+          "properties": {
+              "buildingId": {
+                  "type": "string",
+                  "description": "The unique identifier of the building where the booking takes place. In the format HQ-BAS4. Do not use the building name or address as the id"
+              },
+              "date": {
+                  "type": "string",
+                  "description": "The date of the booking, formatted like 2024-06-12."
+              }
+          },
+          "required": ["date", "buildingId"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "tool_type": "archibus",
+    "function": {
+      "name": "get_buildings",
+      "description":  "Gets information about buildings available to book a workspace through Archibus. Use this method to retrieve a matching buildingId for the provided building address or name. Returns a list of buildings with the following structure: 'buildingId: QC-BAS4', 'name: 1285 baseline road', 'firstAddress: 1285 baseline road', 'postalCode: ', 'siteId: '",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "buildingName": {
+            "type": "string",
+            "description": "The building's name or address"
+          }
+        },
+        "required": ["buildingName"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "tool_type": "archibus",
+    "function": {
+      "name": "get_user_reservations",
+      "description": "Gets a user's existing reservations in the archibus system by their first and last name. Do not use this method unless you have been asked to retrieve a user's bookings and have their first and last name",
+      "parameters": {
+        "type": "object",
+        "properties": {
+            "firstName": {
+                "type": "string",
+                "description": "A string indicating the first name of the user."
+            },
+            "lastName": {
+                "type": "string",
+                "description": "A string indicating the last name of the user."
+            }
+        },
+        "required": ["firstName", "lastName"]
+      }
+    }
   }
 ]
+

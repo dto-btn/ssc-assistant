@@ -180,7 +180,7 @@ export const App = () => {
       messages: messages,
       max: maxMessagesSent,
       top: 5,
-      tools: ['corporate', 'geds'],
+      tools: ['corporate', 'geds', 'archibus'],
       uuid: uuid,
     };
 
