@@ -13,8 +13,3 @@ resource "azurerm_search_service" "main" {
   authentication_failure_mode = "http401WithBearerChallenge"
 
 }
-
-# data "azurerm_search_service" "main" {
-#   name                = "${replace(var.project_name, "_", "-")}-search-service"
-#   resource_group_name = azurerm_resource_group.main.name
-# }

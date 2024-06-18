@@ -40,15 +40,18 @@ resource "azurerm_linux_function_app" "functions" {
     "ENABLE_ORYX_BUILD"              = "true"
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "1"
     "XDG_CACHE_HOME"                 = "/tmp/.cache"
-    "AZURE_SEARCH_SERVICE_ENDPOINT"  = ""
-    "AZURE_SEARCH_INDEX_NAME"        = ""
-    "AZURE_SEARCH_ADMIN_KEY"         = ""
-    "BLOB_CONNECTION_STRING"         = ""
-    "BLOB_CONTAINER_NAME"            = ""
+    "AZURE_SEARCH_SERVICE_ENDPOINT"  = "https://${azurerm_search_service.main.name}.search.windows.net"
+    "AZURE_OPENAI_ENDPOINT"          = data.azurerm_cognitive_account.ai.endpoint
+    "BLOB_CONNECTION_STRING"         = azurerm_storage_account.main.primary_connection_string
+    "BLOB_CONTAINER_NAME"            = azurerm_storage_container.sscplus.name
   }
 
   identity {
     type = "SystemAssigned"
+  }
+
+  sticky_settings { # settings that are the same regardless of deployment slot..
+    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_OPENAI_ENDPOINT" ]
   }
 
 }
