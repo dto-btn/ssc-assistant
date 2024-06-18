@@ -111,7 +111,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
         1a. Invoke tools completion, 
         """
         additional_tools_required = True
-        tools_used = []
+        tools_used = False
 
         while additional_tools_required:
             completion_tools = client.chat.completions.create(
@@ -123,61 +123,86 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                 )
 
             if completion_tools.choices[0].message.tool_calls:
-                logger.debug(f"tool_calls: {[f.function.name for f in completion_tools.choices[0].message.tool_calls]}")
-                tools_used.append(completion_tools.choices[0].message.tool_calls[0].function.name)
+                # logger.debug(f"tool_calls: {[f.function.name for f in completion_tools.choices[0].message.tool_calls]}")
+                if "corporate_question" in [f.function.name for f in completion_tools.choices[0].message.tool_calls]:                
+                    return tool_info, client.chat.completions.create(
+                        messages=messages,
+                        model=model,
+                        extra_body=data_sources,
+                        stream=stream
+                    )           
+                
+                tools_used = True
                 messages = call_tools(completion_tools.choices[0].message.tool_calls, messages)
-
-                logger.debug(f"last message: {messages[-1]}")
 
             else:
                 additional_tools_required = False
         
+        # add tool info for tools used
         if tools_used:
-            logger.debug(f"tools used array: {tools_used}")
-            tool_info = ToolInfo()
-
-            # logger.debug(f"last message: {messages[-1]}")
-
-            # if "name" in messages[-1] and isinstance(messages[-1]["name"], str):
-            #     function_name = messages[-1]["name"]
-            #     tool_info.function_name=function_name
-
-            # if "content" in messages[-1] and isinstance(messages[-1]["content"], str):
-            #     content = messages[-1]["content"]
-            #     try:
-            #         start_index = content.find("[") # trim the text preceeding the results
-            #         if start_index != -1: 
-            #              content = content[start_index:]
-
-            #         data = json.loads(content)
-            #         profiles = []
-            #         tool_info.payload = {}
-
-            #         for result in data:
-            #             profile = dict()
-
-            #             geds_profile_string = result["id"]
-            #             profile["url"] = f"https://geds-sage.gc.ca/en/GEDS?pgid=015&dn={geds_profile_string}"
-            #             profile["name"] = result["givenName"] + " " + result["surname"]
-            #             profile["email"] = result["contactInformation"]["email"]
-            #             profile["organization_en"] = result["organizationInformation"]["organization"]["organizationInformation"]["organization"]["organizationInformation"]["organization"]["description"]["en"]
-            #             profile["organization_fr"] = result["organizationInformation"]["organization"]["organizationInformation"]["organization"]["organizationInformation"]["organization"]["description"]["fr"]
-
-            #             if "phoneNumber" in result["contactInformation"]:
-            #                 profile["phone"] = result["contactInformation"]["phoneNumber"]
-
-            #             profiles.append(profile)
-                    
-            #         tool_info.payload["profiles"]=profiles
-
-            #     except json.JSONDecodeError as e:
-            #         logger.debug(f"error: {e}")
+            tool_info = add_tool_info_if_used(messages)
 
     return (tool_info, client.chat.completions.create(
         messages=messages,
         model=model,
         stream=stream
     ))
+
+
+def add_tool_info_if_used(messages: List[ChatCompletionMessageParam]) -> ToolInfo:
+    tool_info = ToolInfo()
+    for message in reversed(messages):
+        if "role" in message:
+            if message["role"] in ["user", "system"]:
+                break
+            if message["role"] == "function":
+                process_function_message(tool_info, message)
+        else:
+            break
+
+    return tool_info
+
+def process_function_message(tool_info: ToolInfo, message):
+    if message["name"] == "get_employee_information" and "content" in message and isinstance(message["content"], str):
+        tool_info.tool_type.append("geds")
+        tool_info.function_names.append(message["name"])
+
+        content = message["content"]
+        profiles = extract_geds_profiles(content)
+        tool_info.payload = {"profiles": profiles}
+
+    else:
+        tool_info.tool_type.append("archbibus")
+        tool_info.function_names.append(message["name"])
+
+def extract_geds_profiles(content):
+    try:
+        start_index = content.find("[") # trim the text preceeding the results
+        if start_index != -1: 
+            content = content[start_index:]
+
+        data = json.loads(content)
+        profiles = []
+
+        for result in data:
+            profile = dict()
+
+            geds_profile_string = result["id"]
+            profile["url"] = f"https://geds-sage.gc.ca/en/GEDS?pgid=015&dn={geds_profile_string}"
+            profile["name"] = result["givenName"] + " " + result["surname"]
+            profile["email"] = result["contactInformation"]["email"]
+            profile["organization_en"] = result["organizationInformation"]["organization"]["organizationInformation"]["organization"]["organizationInformation"]["organization"]["description"]["en"]
+            profile["organization_fr"] = result["organizationInformation"]["organization"]["organizationInformation"]["organization"]["organizationInformation"]["organization"]["description"]["fr"]
+
+            if "phoneNumber" in result["contactInformation"]:
+                profile["phone"] = result["contactInformation"]["phoneNumber"]
+
+            profiles.append(profile)
+        
+        return profiles
+
+    except json.JSONDecodeError as e:
+        logger.debug(f"error: {e}")
 
 def convert_chat_with_data_response(chat_completion: ChatCompletion) -> Completion:
     """

@@ -100,7 +100,7 @@ def completion_chat_stream(message_request: MessageRequest):
     thread = threading.Thread(target=store_request, args=(message_request, convo_uuid, user))
     thread.start()
     try:
-        tool_info, completion = chat_with_data(message_request, stream=False)
+        tool_info, completion = chat_with_data(message_request, stream=True)
 
         if isinstance(completion, ChatCompletion):
             completion_response = convert_chat_with_data_response(completion)
