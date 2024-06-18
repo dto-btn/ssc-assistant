@@ -107,12 +107,13 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
     if message_request.tools:
         logger.debug(f"Using Tools: {message_request.tools}")
         tools = load_tools(message_request.tools)
-        # logger.debug(f"TOOLS: {tools}")
         """
         1a. Invoke tools completion, 
         """
-        loop_tools = True
-        while loop_tools:
+        additional_tools_required = True
+        tools_used = []
+
+        while additional_tools_required:
             completion_tools = client.chat.completions.create(
                     messages=messages,
                     model=model,
@@ -122,12 +123,18 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                 )
 
             if completion_tools.choices[0].message.tool_calls:
-                tool_info = ToolInfo()
                 logger.debug(f"tool_calls: {[f.function.name for f in completion_tools.choices[0].message.tool_calls]}")
-
+                tools_used.append(completion_tools.choices[0].message.tool_calls[0].function.name)
                 messages = call_tools(completion_tools.choices[0].message.tool_calls, messages)
+
+                logger.debug(f"last message: {messages[-1]}")
+
             else:
-                loop_tools = False
+                additional_tools_required = False
+        
+        if tools_used:
+            logger.debug(f"tools used array: {tools_used}")
+            tool_info = ToolInfo()
 
             # logger.debug(f"last message: {messages[-1]}")
 

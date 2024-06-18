@@ -309,8 +309,6 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
         "get_user_reservations": get_user_reservations
     }
 
-    logger.debug(f"tool calls: {tool_calls}")
-
     # Send the info for each function call and function response to the model
     for tool_call in tool_calls:
         function_name = tool_call.function.name
