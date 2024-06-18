@@ -62,7 +62,7 @@
     "tool_type": "archibus",
     "function": {
       "name": "book_reservation",
-      "description": "Provides access to the archibus booking system and enables you to book a workspace reservation for the user.",
+      "description": "Provides access to the archibus booking system and enables you to book a workspace reservation for the user. If the user does not provide all of the arguments required for the booking, ask them for the missing information.",
       "parameters": {
         "type": "object",
           "properties": {
@@ -72,10 +72,18 @@
               },
               "date": {
                   "type": "string",
-                  "description": "The date of the booking, formatted like 2024-06-12."
+                  "description": "The month, day, and year of the booking, formatted like YYYY-MM-DD. If the user does not provide a date, ask them for it. Default year is 2024."
+              },
+              "user": {
+                "type": "string",
+                "description": "The name for whom the booking is being made for, in the format 'lastname, firstname'. If the user doesn't provide a first and last name, ask them for it."
+              }, 
+              "duration": {
+                "type": "string",
+                "description": "The duration of the booking/booking type. Options are 'FULLDAY' and 'MORNING'."
               }
           },
-          "required": ["date"]
+          "required": ["date", "buildingId", "user", "duration"]
       }
     }
   },

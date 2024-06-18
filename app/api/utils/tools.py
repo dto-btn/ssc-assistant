@@ -230,7 +230,7 @@ def get_buildings(buildingName: str = ""):
         logger.error(f"Error occurred during the GET request: {e}")
         return "An error occurred while trying to fetch buildings."
     
-def book_reservation(date: str, buildingId: str):
+def book_reservation(date: str, buildingId: str, user: str, duration: str):
     url = 'http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1/reservations/'
     username = str(os.getenv("ARCHIBUS_API_USERNAME"))
     password = str(os.getenv("ARCHIBUS_API_PASSWORD"))
@@ -245,9 +245,9 @@ def book_reservation(date: str, buildingId: str):
         "buildingId": buildingId,
         "floorId": "T404",
         "roomId": "W037",
-        "createdBy": "BAKSHI, AKASH",
-        "assignedTo": "BAKSHI, AKASH",
-        "bookingType": "FULLDAY",
+        "createdBy": user,
+        "assignedTo": user,
+        "bookingType": duration,
         "startDate": date
     }
 
