@@ -45,6 +45,7 @@ resource "azurerm_linux_function_app" "functions" {
     "BLOB_CONNECTION_STRING"         = azurerm_storage_account.main.primary_connection_string
     "BLOB_CONTAINER_NAME"            = azurerm_storage_container.sscplus.name
     "DOMAIN_NAME"                    = "https://plus.ssc-spc.gc.ca"
+    "AZURE_SEARCH_ADMIN_KEY"         = azurerm_search_service.main.primary_key
   }
 
   identity {
@@ -52,7 +53,7 @@ resource "azurerm_linux_function_app" "functions" {
   }
 
   sticky_settings { # settings that are the same regardless of deployment slot..
-    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_OPENAI_ENDPOINT", "DOMAIN_NAME" ]
+    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_OPENAI_ENDPOINT", "DOMAIN_NAME", "AZURE_SEARCH_ADMIN_KEY" ]
   }
 
   virtual_network_subnet_id = data.azurerm_subnet.subscription-vnet-sub.id
