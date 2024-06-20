@@ -20,7 +20,8 @@ async def http_start(req: func.HttpRequest, client):
     return response
 
 # timer triggered function to fetch index data, runs Sat at midnight
-@app.schedule(schedule="0 0 * * Sat", arg_name="myTimer", run_on_startup=False, use_monitor=False)
+# cron with 6 args, the first one being seconds.
+@app.schedule(schedule="0 0 4 * * Fri", arg_name="myTimer", run_on_startup=False, use_monitor=False)
 @app.durable_client_input(client_name="client")
 async def fetch_index_timer_trigger(myTimer: func.TimerRequest, client) -> None:
     if myTimer.past_due:
@@ -30,7 +31,7 @@ async def fetch_index_timer_trigger(myTimer: func.TimerRequest, client) -> None:
 
 # timer triggered function to build the search index from the index data
 # runs Sun at midnight
-@app.schedule(schedule="0 0 * * Sun", arg_name="myTimer", run_on_startup=False, use_monitor=False)
+@app.schedule(schedule="0 0 4 * * Sat", arg_name="myTimer", run_on_startup=False, use_monitor=False)
 @app.durable_client_input(client_name="client")
 async def build_index_timer_trigger(myTimer: func.TimerRequest, client) -> None:
     if myTimer.past_due:

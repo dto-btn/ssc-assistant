@@ -44,6 +44,7 @@ resource "azurerm_linux_function_app" "functions" {
     "AZURE_OPENAI_ENDPOINT"          = data.azurerm_cognitive_account.ai.endpoint
     "BLOB_CONNECTION_STRING"         = azurerm_storage_account.main.primary_connection_string
     "BLOB_CONTAINER_NAME"            = azurerm_storage_container.sscplus.name
+    "DOMAIN_NAME"                    = "https://plus.ssc-spc.gc.ca"
   }
 
   identity {
@@ -51,7 +52,9 @@ resource "azurerm_linux_function_app" "functions" {
   }
 
   sticky_settings { # settings that are the same regardless of deployment slot..
-    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_OPENAI_ENDPOINT" ]
+    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_OPENAI_ENDPOINT", "DOMAIN_NAME" ]
   }
+
+  virtual_network_subnet_id = data.azurerm_subnet.subscription-vnet-sub.id
 
 }
