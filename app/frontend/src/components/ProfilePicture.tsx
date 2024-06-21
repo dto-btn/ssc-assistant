@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import Avatar from '@mui/material/Avatar';
+import { useContext } from 'react';
+import { UserContext } from '../context/UserContext';
 
 interface UserProfileProps {
-  accessToken: string | null | undefined;
   fullName: string;
   size?: string;
 }
@@ -47,41 +48,18 @@ function getLetterAvatar(name: string, size: string = '40px'): AvatarData {
   };
 }
 
-export const UserProfilePicture = ({ accessToken, fullName, size } : UserProfileProps) => {
-  const [profilePic, setProfilePic] = useState<string>("");
+export const UserProfilePicture = ({ fullName, size } : UserProfileProps) => {
+  const { profilePictureURL } = useContext(UserContext);
   const [letterAvatar, setLetterAvatar] = useState<AvatarData>();
 
   useEffect(() => {
-    const fetchProfilePic = async () => {
-      try {
-        const response = await fetch(`https://graph.microsoft.com/v1.0/me/photos/48x48/$value`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          },
-        });
-
-        if (response.ok) {
-          const imageBlob = await response.blob();
-          const imageUrl = URL.createObjectURL(imageBlob);
-          setProfilePic(imageUrl);
-        } else {
-          // Handle errors or the case where there is no profile photo
-          console.error('Could not fetch profile picture');
-          setLetterAvatar(getLetterAvatar(fullName, size));
-        }
-      } catch (error) {
-        console.error('Error fetching profile picture:', error);
-      }
-    };
-
-    if (accessToken) {
-      fetchProfilePic();
+    if (!profilePictureURL) {
+      setLetterAvatar(getLetterAvatar(fullName, size));
     }
-  }, [accessToken]);
+  }, [profilePictureURL, fullName, size]);
 
-  if(profilePic)
-    return <Avatar alt={fullName} src={profilePic} 
+  if(profilePictureURL)
+    return <Avatar alt={fullName} src={profilePictureURL} 
   />;
   else if (letterAvatar)
     return <Avatar alt={fullName} sx={letterAvatar.sx} children={letterAvatar.children} />;

@@ -1,4 +1,4 @@
-import { Box, Paper, Container, Divider, Chip, Stack, Typography, Link } from '@mui/material';
+import { Box, Paper, Divider, Chip, Stack, Typography, Link } from '@mui/material';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -38,7 +38,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
   };
   const [citationNumberMapping, setCitationNumberMapping] = useState<{ [key: number]: number }>({});
 
-
+  
 
   function processText(text: string, citations: Citation[]) {
     // Regular expression to find all citation references like [doc1], [doc3], etc.
@@ -144,14 +144,16 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
               <IconView>
                 <SmartToyIcon sx={{color: "primary.main", fontSize: 30}} />
               </IconView>
-              <Markdown
-                components={components}
-                rehypePlugins={[rehypeHighlight]}
-                remarkPlugins={[remarkGfm]}>
-                {isLoading
-                  ? `${text.replace(/\[doc(\d+)\]/g, '')}_`
-                  : (processedContent.processedText !== "" ? processedContent.processedText : text)}
-              </Markdown>
+              <TextComponentsBox>
+                <Markdown
+                  components={components}
+                  rehypePlugins={[rehypeHighlight]}
+                  remarkPlugins={[remarkGfm]}>
+                  {isLoading
+                    ? `${text.replace(/\[doc(\d+)\]/g, '')}_`
+                    : (processedContent.processedText !== "" ? processedContent.processedText : text)}
+                </Markdown>
+              </TextComponentsBox>
             </TextAndPictureContainer>
             {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
               <>
@@ -225,3 +227,6 @@ const TextAndPictureContainer = styled(Box)`
 const IconView = styled(Box)`
   margin: 8px 10px 8px 0px;
 `
+
+const TextComponentsBox = styled(Box)`
+`;
