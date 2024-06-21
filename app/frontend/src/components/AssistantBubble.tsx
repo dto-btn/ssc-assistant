@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { BubbleButtons } from './BubbleButtons';
 import { styled } from '@mui/system';
 import ProfileCardsContainer from '../containers/ProfileCardsContainer';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
 
 interface AssistantBubbleProps {
     text: string;
@@ -139,7 +140,10 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
             }}
             elevation={4}
           >
-            <Container>
+            <TextAndPictureContainer>
+              <IconView>
+                <SmartToyIcon sx={{color: "primary.main", fontSize: 30}} />
+              </IconView>
               <Markdown
                 components={components}
                 rehypePlugins={[rehypeHighlight]}
@@ -148,7 +152,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
                   ? `${text.replace(/\[doc(\d+)\]/g, '')}_`
                   : (processedContent.processedText !== "" ? processedContent.processedText : text)}
               </Markdown>
-            </Container>
+            </TextAndPictureContainer>
             {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
               <>
                 <Divider />
@@ -211,4 +215,13 @@ const ChatBubbleView = styled(Box)`
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+`
+
+const TextAndPictureContainer = styled(Box)`
+  display: flex;
+  padding: 0px 15px;
+`
+
+const IconView = styled(Box)`
+  margin: 8px 10px 8px 0px;
 `
