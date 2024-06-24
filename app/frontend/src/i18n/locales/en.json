@@ -76,6 +76,7 @@
     "clearchat": "Clear Chat",
     "copytext": "Copy",
     "regenerate": "Regenerate",
+    "toolsUsed": "Tools used in this response: ",
     "copy": "Copy",
     "copy.success": "Copied!",
     "welcome": "Welcome to the SSC Assistant",
@@ -94,5 +95,6 @@
     "chat.show.profiles": "Show GEDS Profiles",
     "chat.hide.profiles": "Hide Profiles",
     "chat.additional.profiles": "ADDITIONAL PROFILES",
-    "chat.profile.geds": "GEDS"
+    "GEDS": "GEDS",
+    "MySSC+": "MySSC+"
 }

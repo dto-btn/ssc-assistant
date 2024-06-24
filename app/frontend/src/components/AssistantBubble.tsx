@@ -23,7 +23,7 @@ interface AssistantBubbleProps {
 }
 
 export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse }: AssistantBubbleProps) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
@@ -31,6 +31,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
   const [extraProfiles, setExtraProfiles] = useState<EmployeeProfile[]>([])
   const [profilesExpanded, setExpandProfiles] = useState(false)
   const isMostRecent = index === total - 1;
+  const toolsUsed = toolInfo && toolInfo.tool_type.length > 0
 
   const components = {
     a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <Link target="_blank" rel="noopener noreferrer" {...props} />,
@@ -149,6 +150,16 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
                   : (processedContent.processedText !== "" ? processedContent.processedText : text)}
               </Markdown>
             </Container>
+            {toolsUsed &&
+               <Typography sx={{ fontSize: '12px', padding: '0px 0px 5px 25px', color: 'primary.main' }}>
+               {t("toolsUsed")} {toolInfo.tool_type.map((tool, index) => (
+                 <span key={index}>
+                   {t(tool)}
+                   {index < toolInfo.tool_type.length - 1 && ', '}
+                 </span>
+               ))}
+             </Typography>
+            }
             {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
               <>
                 <Divider />
@@ -193,7 +204,15 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
         <Box>
           {total > 1 && index !!!= 0  &&
           <Paper sx={{backgroundColor: 'transparent', boxShadow: 'none', mt: 1, ml:2}}>
-            <BubbleButtons setIsFeedbackVisible={setIsFeedbackVisible} setIsGoodResponse={setIsGoodResponse} isHovering={isHovering} isMostRecent={isMostRecent} replayChat={replayChat} text={text} />
+            <BubbleButtons 
+              setIsFeedbackVisible={setIsFeedbackVisible} 
+              setIsGoodResponse={setIsGoodResponse} 
+              isHovering={isHovering} 
+              isMostRecent={isMostRecent} 
+              replayChat={replayChat} 
+              text={text} 
+              tools={toolInfo?.tool_type}
+            />
           </Paper>
           }
         </Box>

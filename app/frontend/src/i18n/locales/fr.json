@@ -63,6 +63,7 @@
     "clearchat": "Effacer l’historique",
     "copytext": "Copier",
     "regenerate": "Régénérer",
+    "toolsUsed": "Outils utilisés dans cette réponse: ",
     "copy": "Copier",
     "copy.success": "Copié!",
     "welcome": "Bienvenue à l'Assistant SPC",
@@ -84,5 +85,6 @@
     "chat.show.profiles": "Afficher les profils SAGE",
     "chat.hide.profiles": "Cacher les profils",
     "chat.additional.profiles": "PROFILS SUPPLÉMENTAIRES",
-    "chat.profile.geds": "SAGE"
+    "GEDS": "SAGE",
+    "MySSC+": "MonSPC+"
 }

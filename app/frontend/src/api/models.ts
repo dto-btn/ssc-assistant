@@ -50,8 +50,8 @@ interface ToastMessage {
 type ChatItem = Message | Completion | ToastMessage;
 
 interface ToolInfo {
-  tool_type?: string;
-  function_name?: string;
+  tool_type: string[];
+  function_names: string[];
   payload?: Record<string, any>;
 }
 
