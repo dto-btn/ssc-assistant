@@ -13,7 +13,7 @@ interface UserChatProps {
 
 export const UserBubble = ({ text }: UserChatProps) => {
 
-  const { accessToken, graphData } = useContext(UserContext);
+  const { graphData } = useContext(UserContext);
 
   return (
     <Box sx={{ display: 'flex', justifyContent: 'flex-end', my: '2rem' }}>
@@ -47,5 +47,5 @@ const UserBubbleContainer = styled(Box)`
 `
 
 const ProfilePictureView = styled(Box)`
-  margin: 8px 10px 8px 0px;
+  margin: 11px 12px 8px 0px;
 `

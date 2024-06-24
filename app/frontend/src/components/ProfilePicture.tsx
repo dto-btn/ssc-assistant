@@ -13,6 +13,7 @@ interface AvatarData {
     bgcolor: string;
     width?: string;
     height?: string;
+    fontSize?: string;
   };
   children: string;
 }
@@ -37,12 +38,11 @@ function stringToColor(string: string) {
   return color;
 }
 
-function getLetterAvatar(name: string, size: string = '40px'): AvatarData {
+function getLetterAvatar(name: string, size: string | undefined): AvatarData {
   return {
     sx: {
       bgcolor: stringToColor(name),
-      width: size,
-      height: size
+      ...(size && { width: size, height: size, fontSize: '16px' })
     },
     children: `${name.split(' ')[0][0]}${name.split(' ')[1][0]}`,
   };
@@ -59,7 +59,7 @@ export const UserProfilePicture = ({ fullName, size } : UserProfileProps) => {
   }, [profilePictureURL, fullName, size]);
 
   if(profilePictureURL)
-    return <Avatar alt={fullName} src={profilePictureURL} 
+    return <Avatar alt={fullName} src={profilePictureURL}  sx={size ? { width: size, height: size } : {}}  
   />;
   else if (letterAvatar)
     return <Avatar alt={fullName} sx={letterAvatar.sx} children={letterAvatar.children} />;

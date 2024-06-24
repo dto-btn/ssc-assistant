@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { BubbleButtons } from './BubbleButtons';
 import { styled } from '@mui/system';
 import ProfileCardsContainer from '../containers/ProfileCardsContainer';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
+import AutoAwesome from '@mui/icons-material/AutoAwesome';
 
 interface AssistantBubbleProps {
     text: string;
@@ -142,7 +142,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
           >
             <TextAndPictureContainer>
               <IconView>
-                <SmartToyIcon sx={{color: "primary.main", fontSize: 30}} />
+                <AutoAwesome sx={{color: "primary.main", fontSize: 30}} />
               </IconView>
               <TextComponentsBox>
                 <Markdown
@@ -155,7 +155,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
                 </Markdown>
               </TextComponentsBox>
             </TextAndPictureContainer>
-            {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
+                        {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
               <>
                 <Divider />
                 <Box sx={{ m: 2, maxWidth: '100%' }}>
@@ -225,7 +225,7 @@ const TextAndPictureContainer = styled(Box)`
 `
 
 const IconView = styled(Box)`
-  margin: 8px 10px 8px 0px;
+  margin: 11px 12px 8px 0px;
 `
 
 const TextComponentsBox = styled(Box)`
