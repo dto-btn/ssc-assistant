@@ -1,4 +1,4 @@
-import { Box, Paper, Container, Divider, Chip, Stack, Typography, Link } from '@mui/material';
+import { Box, Paper, Divider, Chip, Stack, Typography, Link } from '@mui/material';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { BubbleButtons } from './BubbleButtons';
 import { styled } from '@mui/system';
 import ProfileCardsContainer from '../containers/ProfileCardsContainer';
+import AutoAwesome from '@mui/icons-material/AutoAwesome';
 
 interface AssistantBubbleProps {
     text: string;
@@ -37,7 +38,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
   };
   const [citationNumberMapping, setCitationNumberMapping] = useState<{ [key: number]: number }>({});
 
-
+  
 
   function processText(text: string, citations: Citation[]) {
     // Regular expression to find all citation references like [doc1], [doc3], etc.
@@ -139,17 +140,22 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
             }}
             elevation={4}
           >
-            <Container>
-              <Markdown
-                components={components}
-                rehypePlugins={[rehypeHighlight]}
-                remarkPlugins={[remarkGfm]}>
-                {isLoading
-                  ? `${text.replace(/\[doc(\d+)\]/g, '')}_`
-                  : (processedContent.processedText !== "" ? processedContent.processedText : text)}
-              </Markdown>
-            </Container>
-            {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
+            <TextAndPictureContainer>
+              <IconView>
+                <AutoAwesome sx={{color: "primary.main", fontSize: 30}} />
+              </IconView>
+              <TextComponentsBox>
+                <Markdown
+                  components={components}
+                  rehypePlugins={[rehypeHighlight]}
+                  remarkPlugins={[remarkGfm]}>
+                  {isLoading
+                    ? `${text.replace(/\[doc(\d+)\]/g, '')}_`
+                    : (processedContent.processedText !== "" ? processedContent.processedText : text)}
+                </Markdown>
+              </TextComponentsBox>
+            </TextAndPictureContainer>
+                        {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
               <>
                 <Divider />
                 <Box sx={{ m: 2, maxWidth: '100%' }}>
@@ -212,3 +218,15 @@ const ChatBubbleView = styled(Box)`
   flex-direction: column;
   justify-content: flex-start;
 `
+
+const TextAndPictureContainer = styled(Box)`
+  display: flex;
+  padding: 0px 15px;
+`
+
+const IconView = styled(Box)`
+  margin: 11px 12px 8px 0px;
+`
+
+const TextComponentsBox = styled(Box)`
+`;

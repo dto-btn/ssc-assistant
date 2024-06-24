@@ -22,7 +22,7 @@ const ProfileCardsContainer = (props: ProfileCardContainerProps) => {
             <Divider />
             <Box sx={{ m: 2, maxWidth: '100%' }}>
                 <Button 
-                    sx={{marginBottom: '10px'}} 
+                    sx={{borderRadius: '10px', marginBottom: isExpanded ? '10px' : '0px'}} 
                     onClick={() => toggleShowProfileHandler()} 
                     endIcon={
                         !isExpanded 
