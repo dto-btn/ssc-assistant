@@ -45,6 +45,7 @@
     "menu.model.select": "Select model",
     "menu.model": "Model",
     "menu.responsecount": "Max response",
+    "menu.enableTools": "Enable Tools",
     "sscplus.question": "MySSC+ Content",
     "any.question": "Ask GPT-4",
     "prompt.placeholder": "You are an AI assistant.",
@@ -95,6 +96,6 @@
     "chat.show.profiles": "Show GEDS Profiles",
     "chat.hide.profiles": "Hide Profiles",
     "chat.additional.profiles": "ADDITIONAL PROFILES",
-    "GEDS": "GEDS",
-    "MySSC+": "MySSC+"
+    "geds": "GEDS",
+    "corporate": "MySSC+"
 }

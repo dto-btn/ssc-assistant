@@ -56,7 +56,7 @@ const ProfileCard = ({profile}: ProfileCardProps) => {
                     endIcon={<LaunchIcon />}
                     size="large"
                 >
-                    {t("GEDS")}
+                    {t("geds")}
                 </Button>
             </CardActions>
         </Card>

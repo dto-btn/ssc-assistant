@@ -30,6 +30,7 @@
     "menu.model.select": "Choisir le modèle",
     "menu.model": "Modèle",
     "menu.responsecount": "Réponse maximale",
+    "menu.enableTools": "Activer les outils",
     "msteams.channel": "Adopteurs précoces de SPC",
     "sscplus.question": "Question MonSPC+",
     "any.question": "Demander à GPT-4",
@@ -85,6 +86,6 @@
     "chat.show.profiles": "Afficher les profils SAGE",
     "chat.hide.profiles": "Cacher les profils",
     "chat.additional.profiles": "PROFILS SUPPLÉMENTAIRES",
-    "GEDS": "SAGE",
-    "MySSC+": "MonSPC+"
+    "geds": "SAGE",
+    "corporate": "MonSPC+"
 }
