@@ -270,12 +270,14 @@ export const App = () => {
     localStorage.removeItem("chatHistory"); // Clear chat history from local storage
     setWelcomeMessage(userData.graphData);
     setUuid(uuidv4());
+    setOpenDrawer(false);
   };
 
   const setLangCookie = () => {
     Cookies.set("lang_setting", i18n.language, {
       expires: 30,
     });
+    setOpenDrawer(false);
   };
 
   const handleLogout = () => {

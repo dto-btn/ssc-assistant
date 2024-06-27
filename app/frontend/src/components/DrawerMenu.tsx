@@ -95,7 +95,7 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
       </List>
       <Divider />
       <List>
-        {!isAuthenticated &&
+        {isAuthenticated &&
         (<ListItem key="logout" disablePadding>
           <ListItemButton onClick={logout}>
             <ListItemIcon>
