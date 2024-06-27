@@ -24,8 +24,8 @@ class Context:
 
 @dataclass
 class ToolInfo:
-    tool_type: Optional[str] = None
-    function_name: Optional[str] = None
+    tool_type: List[str] = field(default_factory=list)
+    function_names: List[str] = field(default_factory=list)
     payload: Optional[Dict] = None
 
 @dataclass
