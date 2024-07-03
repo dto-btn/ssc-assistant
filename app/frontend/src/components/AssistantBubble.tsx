@@ -3,8 +3,8 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
-import { useEffect, useState, Fragment, useMemo } from 'react';
-import { composeInitialProps, useTranslation } from "react-i18next";
+import { useEffect, useState, Fragment } from 'react';
+import { useTranslation } from "react-i18next";
 import { BubbleButtons } from './BubbleButtons';
 import { styled } from '@mui/system';
 import ProfileCardsContainer from '../containers/ProfileCardsContainer';
