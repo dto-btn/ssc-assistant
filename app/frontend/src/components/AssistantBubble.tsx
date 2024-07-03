@@ -1,13 +1,14 @@
-import { Box, Paper, Container, Divider, Chip, Stack, Typography, Link } from '@mui/material';
+import { Box, Paper, Container, Divider, Chip, Stack, Typography, Link, Tooltip } from '@mui/material';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
 import { useEffect, useState, Fragment, useMemo } from 'react';
-import { useTranslation } from "react-i18next";
+import { composeInitialProps, useTranslation } from "react-i18next";
 import { BubbleButtons } from './BubbleButtons';
 import { styled } from '@mui/system';
 import ProfileCardsContainer from '../containers/ProfileCardsContainer';
+import HandymanIcon from '@mui/icons-material/Handyman';
 
 interface AssistantBubbleProps {
     text: string;
@@ -37,8 +38,6 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
     a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <Link target="_blank" rel="noopener noreferrer" {...props} />,
   };
   const [citationNumberMapping, setCitationNumberMapping] = useState<{ [key: number]: number }>({});
-
-
 
   function processText(text: string, citations: Citation[]) {
     // Regular expression to find all citation references like [doc1], [doc3], etc.
@@ -84,30 +83,29 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
     }
 }, [isLoading, context, text, scrollRef]);
 
-  const processProfiles = useMemo(() => {
-    return (employeeProfiles: EmployeeProfile[]) => {
-        const matchedProfiles: EmployeeProfile[] = [];
-        const unmatchedProfiles: EmployeeProfile[] = [];
-        
-        employeeProfiles.forEach((profile) => {
-            if (text.includes(profile.email)) {
-                matchedProfiles.push(profile);
-            } else {
-                unmatchedProfiles.push(profile);
-            }
-        });
+  const processProfiles = (employeeProfiles: EmployeeProfile[]) => {
+    const matchedProfiles: EmployeeProfile[] = [];
+    const unmatchedProfiles: EmployeeProfile[] = [];
+    
+    employeeProfiles.forEach((profile) => {
+        if (text.includes(profile.email)) {
+            matchedProfiles.push(profile);
+        } else {
+            unmatchedProfiles.push(profile);
+        }
+    });
 
-        return { matchedProfiles, unmatchedProfiles };
-    };
-}, [text]);
+    return { matchedProfiles, unmatchedProfiles };
+  };
 
   useEffect(() => {
-      if (toolInfo && toolInfo.payload?.hasOwnProperty("profiles")) {
+      if (toolInfo && toolInfo.payload?.hasOwnProperty("profiles") && toolInfo.payload.profiles !== null) {
+        console.log("TOOL INFO: ", toolInfo)
           const { matchedProfiles, unmatchedProfiles } = processProfiles(toolInfo.payload.profiles);
           setProfiles(matchedProfiles);
           setExtraProfiles(unmatchedProfiles);
       }
-  }, [toolInfo, text]);
+  }, [toolInfo]);
 
 
   useEffect(() => processingComplete ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" }) : undefined, [processingComplete, scrollRef]);
@@ -150,16 +148,24 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
                   : (processedContent.processedText !== "" ? processedContent.processedText : text)}
               </Markdown>
             </Container>
-            {toolsUsed &&
-               <Typography sx={{ fontSize: '12px', padding: '0px 0px 5px 25px', color: 'primary.main' }}>
-               {t("toolsUsed")} {toolInfo.tool_type.map((tool, index) => (
+
+            {toolsUsed && toolInfo.tool_type && (
+            <ToolsUsedBox>
+              <Tooltip title={t("toolsUsed")} arrow>
+                <HandymanIcon style={{ fontSize: 16, margin: '0px 8px 3px 0px', color: '#4b3e99' }}/>
+              </Tooltip>
+              <Typography sx={{ fontSize: '15px', padding: '0px 22px 3px 0px', color: 'primary.main' }}>
+                {toolInfo.tool_type.map((tool, index) => (
                  <span key={index}>
                    {t(tool)}
                    {index < toolInfo.tool_type.length - 1 && ', '}
                  </span>
                ))}
-             </Typography>
-            }
+              </Typography>
+
+            </ToolsUsedBox>
+            )}
+
             {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
               <>
                 <Divider />
@@ -191,6 +197,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
                 </Box>
               </>
             )}
+
             {!isLoading && profiles.length > 0 &&
             <ProfileCardsContainer
               profiles={profiles}
@@ -211,7 +218,6 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
               isMostRecent={isMostRecent} 
               replayChat={replayChat} 
               text={text} 
-              tools={toolInfo?.tool_type}
             />
           </Paper>
           }
@@ -230,4 +236,9 @@ const ChatBubbleView = styled(Box)`
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+`
+const ToolsUsedBox = styled(Box)`
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 `

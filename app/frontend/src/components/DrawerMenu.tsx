@@ -68,7 +68,7 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
             <ListItemIcon>
               <Handyman />
             </ListItemIcon>
-            <ListItemText primary={t("menu.enableTools")}/>
+            <ListItemText primary={t("menu.chooseTools")}/>
             {toolMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           </ListItemButton>
         </ListItem>

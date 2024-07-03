@@ -5,7 +5,6 @@ import ThumbDownAltOutlinedIcon from '@mui/icons-material/ThumbDownAltOutlined';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import HandymanIcon from '@mui/icons-material/Handyman';
 import { useTranslation } from "react-i18next";
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 
@@ -16,24 +15,13 @@ interface BubbleButtonsProps {
     isMostRecent: boolean;
     replayChat: () => void;
     text: string;
-    tools?: string[];
 }
 
-export const BubbleButtons: React.FC<BubbleButtonsProps> = ({ setIsFeedbackVisible, setIsGoodResponse, isHovering, isMostRecent, replayChat, text, tools }) => {
+export const BubbleButtons: React.FC<BubbleButtonsProps> = (props: BubbleButtonsProps) => {
+  const { setIsFeedbackVisible, setIsGoodResponse, isHovering, isMostRecent, replayChat, text } = props;
   const { t } = useTranslation();
   const [isFocused, setIsFocused] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-
-  let toolsString = t("toolsUsed");
-  if (tools) {
-    tools.forEach((tool: string, index: number) => {
-      toolsString += t(tool)
-      if (index < tools.length - 1) {
-        toolsString += ", "
-      }
-      return toolsString;
-    })
-  }
 
   useEffect(() => {
     if (isCopied) {
@@ -94,16 +82,6 @@ export const BubbleButtons: React.FC<BubbleButtonsProps> = ({ setIsFeedbackVisib
           tabIndex={0}
         >
           <ThumbDownAltOutlinedIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>
-        </button>
-      </Tooltip>
-      <Tooltip title={toolsString} arrow>
-        <button
-            style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none', display: tools ? 'inline' : 'none' }}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            tabIndex={0}
-        >
-          <HandymanIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>
         </button>
       </Tooltip>
     </>

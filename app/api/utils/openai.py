@@ -122,40 +122,19 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                 )
 
             if completion_tools.choices[0].message.tool_calls:
-                tools_used = True
-
+                tools_used = True 
                 logger.debug(f"tool_calls: {[f.function.name for f in completion_tools.choices[0].message.tool_calls]}")
                 if "corporate_question" in [f.function.name for f in completion_tools.choices[0].message.tool_calls]: 
-                    try:   
-                        response = client.chat.completions.create(
-                            messages=messages,
-                            model=model,
-                            extra_body=data_sources,
-                            stream=False
-                        )
+                    tool_info = ToolInfo()
+                    tool_info.tool_type.append("MySSC+")
+                    tool_info.function_names.append("corporate_question")
 
-                        content = response.choices[0].message.content
-                        if content is None:
-                            content = ""
-
-                        messages.append({
-                            "role": "assistant",
-                            "content": None,
-                            "function_call": {
-                                "name": "corporate_question",
-                                "arguments": ""
-                            }
-                        })  
-
-                        messages.append({
-                            "role": "function",
-                            "name": "corporate_question",
-                            "content": content
-                        })    
-
-                    except AttributeError as e:
-                        logger.error(f"An error occurred while processing the myssc+ response: {e}")
-
+                    return (tool_info, client.chat.completions.create(
+                        messages=messages,
+                        model=model,
+                        extra_body=data_sources,
+                        stream=stream
+                    ))
                 
                 messages = call_tools(completion_tools.choices[0].message.tool_calls, messages)
 
@@ -180,6 +159,7 @@ def add_tool_info_if_used(messages: List[ChatCompletionMessageParam]) -> ToolInf
             if message["role"] in ["user", "system"]:
                 break
             if message["role"] == "function":
+                logger.debug(f"MESSAGE: {message}")
                 process_function_message(tool_info, message)
         else:
             break
@@ -194,11 +174,6 @@ def process_function_message(tool_info: ToolInfo, message):
         content = message["content"]
         profiles = extract_geds_profiles(content)
         tool_info.payload = {"profiles": profiles}
-    
-    if message["name"] == "corporate_question" and "content" in message and isinstance(message["content"], str):
-        tool_info.tool_type.append("MySSC+")
-        tool_info.function_names.append(message["name"])
-
 
 def extract_geds_profiles(content):
     try:
