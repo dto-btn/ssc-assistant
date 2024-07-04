@@ -161,11 +161,10 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
 
 def add_tool_info_if_used(messages: List[ChatCompletionMessageParam]) -> ToolInfo:
     tool_info = ToolInfo()
-    for message in reversed(messages):
-        if "role" in message:
-            if message["role"] == "function":
-                logger.debug(f"MESSAGE: {message}")
-                process_function_message(tool_info, message)
+    for message in messages:
+        if "role" in message and message["role"] == "function":
+            logger.debug(f"MESSAGE: {message}")
+            process_function_message(tool_info, message)
         else:
             break
 
