@@ -100,7 +100,6 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
 
   useEffect(() => {
       if (toolInfo && toolInfo.payload?.hasOwnProperty("profiles") && toolInfo.payload.profiles !== null) {
-        console.log("TOOL INFO: ", toolInfo)
           const { matchedProfiles, unmatchedProfiles } = processProfiles(toolInfo.payload.profiles);
           setProfiles(matchedProfiles);
           setExtraProfiles(unmatchedProfiles);
