@@ -26,7 +26,7 @@ resource "azurerm_linux_function_app" "functions" {
   service_plan_id            = azurerm_service_plan.functions.id
 
   site_config {
-    always_on = false
+    always_on = true
     vnet_route_all_enabled = true
     application_insights_key = azurerm_application_insights.functions.instrumentation_key
     application_stack {
@@ -53,7 +53,7 @@ resource "azurerm_linux_function_app" "functions" {
   }
 
   sticky_settings { # settings that are the same regardless of deployment slot..
-    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_OPENAI_ENDPOINT", "DOMAIN_NAME", "AZURE_SEARCH_ADMIN_KEY" ]
+    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_OPENAI_ENDPOINT", "DOMAIN_NAME", "AZURE_SEARCH_ADMIN_KEY", "BLOB_CONNECTION_STRING", "BLOB_CONTAINER_NAME" ]
   }
 
   virtual_network_subnet_id = data.azurerm_subnet.subscription-vnet-sub.id
