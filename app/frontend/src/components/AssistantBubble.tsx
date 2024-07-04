@@ -3,7 +3,7 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
-import { useEffect, useState, Fragment, useMemo } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { useTranslation } from "react-i18next";
 import { BubbleButtons } from './BubbleButtons';
 import { styled } from '@mui/system';
@@ -82,32 +82,30 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
         setCitationNumberMapping(citationNumberMapping); // store the citationNumberMapping in state
         setProcessingComplete(true);
     }
-}, [isLoading, context, text, scrollRef]);
+  }, [isLoading, context, text, scrollRef]);
 
-  const processProfiles = useMemo(() => {
-    return (employeeProfiles: EmployeeProfile[]) => {
-        const matchedProfiles: EmployeeProfile[] = [];
-        const unmatchedProfiles: EmployeeProfile[] = [];
-        
-        employeeProfiles.forEach((profile) => {
-            if (text.includes(profile.email)) {
-                matchedProfiles.push(profile);
-            } else {
-                unmatchedProfiles.push(profile);
-            }
-        });
+  const processProfiles = (employeeProfiles: EmployeeProfile[]) => {
+    const matchedProfiles: EmployeeProfile[] = [];
+    const unmatchedProfiles: EmployeeProfile[] = [];
 
-        return { matchedProfiles, unmatchedProfiles };
-    };
-}, [text]);
+    employeeProfiles.forEach((profile) => {
+        if (text.includes(profile.email)) {
+            matchedProfiles.push(profile);
+        } else {
+            unmatchedProfiles.push(profile);
+        }
+    });
+
+    return { matchedProfiles, unmatchedProfiles };
+  };
 
   useEffect(() => {
-      if (toolInfo && toolInfo.payload?.hasOwnProperty("profiles")) {
-          const { matchedProfiles, unmatchedProfiles } = processProfiles(toolInfo.payload.profiles);
+    if (toolInfo && toolInfo.payload?.hasOwnProperty("profiles") && toolInfo.payload.profiles !== null) {
+      const { matchedProfiles, unmatchedProfiles } = processProfiles(toolInfo.payload.profiles);
           setProfiles(matchedProfiles);
           setExtraProfiles(unmatchedProfiles);
       }
-  }, [toolInfo, text]);
+  }, [toolInfo]);
 
 
   useEffect(() => processingComplete ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" }) : undefined, [processingComplete, scrollRef]);
