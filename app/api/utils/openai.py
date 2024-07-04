@@ -124,7 +124,14 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
             if completion_tools.choices[0].message.tool_calls:
                 tools_used = True 
                 logger.debug(f"tool_calls: {[f.function.name for f in completion_tools.choices[0].message.tool_calls]}")
-                if "corporate_question" in [f.function.name for f in completion_tools.choices[0].message.tool_calls]: 
+                if "corporate_question" in [f.function.name for f in completion_tools.choices[0].message.tool_calls]:
+                    '''
+                    This will always end the while loop if a corporate question is detected, since the Azure OpenAI call for this currently holds the citations
+                    and we do not wish to maintain this part at this time.
+
+                    TODO: solution would be to retain citation and quote from answer and figure a way to retain them if the text match (not citations as part of msg extra content)
+                          but the actual citations within the returned text, ex; The president is John Wayne[1] and you can contact him at 888-888-8888[2]
+                    '''
                     tool_info = ToolInfo()
                     tool_info.tool_type.append("MySSC+")
                     tool_info.function_names.append("corporate_question")
