@@ -156,8 +156,6 @@ def add_tool_info_if_used(messages: List[ChatCompletionMessageParam]) -> ToolInf
     tool_info = ToolInfo()
     for message in reversed(messages):
         if "role" in message:
-            if message["role"] in ["user", "system"]:
-                break
             if message["role"] == "function":
                 logger.debug(f"MESSAGE: {message}")
                 process_function_message(tool_info, message)
