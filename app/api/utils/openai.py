@@ -150,7 +150,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
         
         # add tool info for tools used
         if tools_used:
-            tool_info = add_tool_info_if_used(messages)
+            tool_info = add_tool_info_if_used(messages, tools)
 
     return (tool_info, client.chat.completions.create(
         messages=messages,
@@ -159,25 +159,26 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
     ))
 
 
-def add_tool_info_if_used(messages: List[ChatCompletionMessageParam]) -> ToolInfo:
+def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: List[Any]) -> ToolInfo:
     tool_info = ToolInfo()
+    function_to_tool_type = {tool['function']['name']: tool['tool_type'] for tool in tools if tool.get('type') == 'function'}
+
     for message in messages:
-        if "role" in message and message["role"] == "function":
-            logger.debug(f"MESSAGE: {message}")
-            process_function_message(tool_info, message)
-        else:
-            break
+        if message["role"] == "function":
+            function_name = message["name"]
+            tool_info.function_names.append(function_name)
+
+            if function_name in function_to_tool_type:
+                tool_name = function_to_tool_type[function_name]
+                tool_info.tool_type.append(tool_name)
+
+            # extract profiles if it's a geds function
+            if tool_name == "geds":
+                content = message.get("content", "")
+                profiles = extract_geds_profiles(content)
+                tool_info.payload = {"profiles": profiles}
 
     return tool_info
-
-def process_function_message(tool_info: ToolInfo, message):
-    if message["name"] == "get_employee_information" and "content" in message and isinstance(message["content"], str):
-        tool_info.tool_type.append("GEDS")
-        tool_info.function_names.append(message["name"])
-
-        content = message["content"]
-        profiles = extract_geds_profiles(content)
-        tool_info.payload = {"profiles": profiles}
 
 def extract_geds_profiles(content):
     try:
