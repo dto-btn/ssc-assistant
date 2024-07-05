@@ -183,7 +183,9 @@ def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: Lis
 def extract_geds_profiles(content):
     try:
         start_index = content.find("[") # trim the text preceeding the results
-        if start_index != -1: 
+        if start_index == -1: 
+            return []
+        else:    
             content = content[start_index:]
 
         data = json.loads(content)
@@ -208,7 +210,7 @@ def extract_geds_profiles(content):
         
         return profiles
 
-    except json.JSONDecodeError as e:
+    except Exception as e:
         logger.debug(f"error: {e}")
 
 def convert_chat_with_data_response(chat_completion: ChatCompletion) -> Completion:
