@@ -63,6 +63,10 @@ export const App = () => {
     accessToken: '',
     graphData: null
   });
+  const [enabledTools, setEnabledTools] = useState<Record<string, boolean>>({
+    "geds": true,
+    "corporate": true,
+  })
   const isAuthenticated = useIsAuthenticated();
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
   const [feedback, setFeedback] = useState('');
@@ -97,7 +101,6 @@ export const App = () => {
       let idToken = instance.getActiveAccount()?.idToken;
       const expired = isTokenExpired(idToken);
 
-      console.debug(instance.getActiveAccount() as AccountInfo);
       if(expired){
         const response = await instance.acquireTokenSilent({
           ...loginRequest,
@@ -180,7 +183,7 @@ export const App = () => {
       messages: messages,
       max: maxMessagesSent,
       top: 5,
-      tools: ['corporate', 'geds'],
+      tools: (Object.keys(enabledTools)).filter((key) => enabledTools[key]),
       uuid: uuid,
     };
 
@@ -252,10 +255,14 @@ export const App = () => {
   };
 
   // This function will be used to load the chat history from localStorage
-  const loadChatHistory = () => {
+  const loadChatHistoryAndTools = () => {
     const savedChatHistory = localStorage.getItem("chatHistory");
+    const enabledToolHistory = localStorage.getItem("enabledTools");
     if (savedChatHistory) {
       setChatHistory(JSON.parse(savedChatHistory));
+    }
+    if (enabledToolHistory) {
+      setEnabledTools(JSON.parse(enabledToolHistory));
     }
   };
 
@@ -263,12 +270,14 @@ export const App = () => {
     localStorage.removeItem("chatHistory"); // Clear chat history from local storage
     setWelcomeMessage(userData.graphData);
     setUuid(uuidv4());
+    setOpenDrawer(false);
   };
 
   const setLangCookie = () => {
     Cookies.set("lang_setting", i18n.language, {
       expires: 30,
     });
+    setOpenDrawer(false);
   };
 
   const handleLogout = () => {
@@ -362,7 +371,7 @@ export const App = () => {
 
   // Load chat history if present
   useEffect(() => {
-    loadChatHistory();
+    loadChatHistoryAndTools();
   }, []);
 
   const handleRemoveToastMessage = useCallback((indexToRemove: number) => {
@@ -370,6 +379,22 @@ export const App = () => {
       return prevChatHistory.filter((_item, index) => index !== indexToRemove);
     });
   }, []);
+
+  const saveToolSelection = (enabledTools: Record<string, boolean>) => {
+    localStorage.setItem("enabledTools", JSON.stringify(enabledTools));
+  }
+
+  // Update localStorage with new enabledTools
+  useEffect(() => {
+    saveToolSelection(enabledTools);
+  }, [enabledTools]); 
+
+  const handleUpdateEnabledTools = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setEnabledTools({
+      ...enabledTools,
+      [event.target.name]: event.target.checked
+    });
+  }
 
   return (
     <UserContext.Provider value={userData}>
@@ -482,7 +507,15 @@ export const App = () => {
           </Box>
           <Dial drawerVisible={openDrawer} onClearChat={handleClearChat} />
           <Disclaimer />
-          <DrawerMenu openDrawer={openDrawer} toggleDrawer={setOpenDrawer} onClearChat={handleClearChat} setLangCookie={setLangCookie} logout={handleLogout}/>
+          <DrawerMenu 
+            openDrawer={openDrawer} 
+            toggleDrawer={setOpenDrawer} 
+            onClearChat={handleClearChat} 
+            setLangCookie={setLangCookie} 
+            logout={handleLogout}
+            enabledTools={enabledTools}
+            handleUpdateEnabledTools={handleUpdateEnabledTools}
+          />
           <FeedbackForm
             feedback={feedback}
             setFeedback={setFeedback}

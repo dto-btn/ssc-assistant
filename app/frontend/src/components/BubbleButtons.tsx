@@ -17,11 +17,11 @@ interface BubbleButtonsProps {
     text: string;
 }
 
-export const BubbleButtons: React.FC<BubbleButtonsProps> = ({ setIsFeedbackVisible, setIsGoodResponse, isHovering, isMostRecent, replayChat, text }) => {
+export const BubbleButtons: React.FC<BubbleButtonsProps> = (props: BubbleButtonsProps) => {
+  const { setIsFeedbackVisible, setIsGoodResponse, isHovering, isMostRecent, replayChat, text } = props;
   const { t } = useTranslation();
   const [isFocused, setIsFocused] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-
 
   useEffect(() => {
     if (isCopied) {
