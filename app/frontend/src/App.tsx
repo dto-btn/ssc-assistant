@@ -384,6 +384,11 @@ export const App = () => {
     localStorage.setItem("enabledTools", JSON.stringify(enabledTools));
   }
 
+  // Update localStorage with new enabledTools
+  useEffect(() => {
+    saveToolSelection(enabledTools);
+  }, [enabledTools]); 
+
   const handleUpdateEnabledTools = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEnabledTools({
       ...enabledTools,
