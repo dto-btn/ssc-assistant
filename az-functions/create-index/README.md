@@ -42,3 +42,7 @@ Steps:
 `
 "https://dev-index-mgmt.azurewebsites.net/api/orchestrators/fetch_index_data?code=<code>"
 `
+
+## Maintenance
+
+For the versioning in the `requirements.txt` file we use this command: `pip freeze -r requirements.txt|grep -i -f <(awk '{print $1}' requirements.txt) > requirements_with_versions.txt`

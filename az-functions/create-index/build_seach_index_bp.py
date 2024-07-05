@@ -72,6 +72,7 @@ def build_search_index(context: df.DurableOrchestrationContext):
         embedding_dimensionality=1536,
         metadata_string_field_key="metadata",
         doc_id_field_key="doc_id",
+        vector_algorithm_type="exhaustiveKnn"
     )
 
     pages_path = f"{index_data_path}/pages"
