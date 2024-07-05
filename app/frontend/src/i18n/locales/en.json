@@ -45,6 +45,7 @@
     "menu.model.select": "Select model",
     "menu.model": "Model",
     "menu.responsecount": "Max response",
+    "menu.chooseTools": "Choose Tools",
     "sscplus.question": "MySSC+ Content",
     "any.question": "Ask GPT-4",
     "prompt.placeholder": "You are an AI assistant.",
@@ -76,6 +77,7 @@
     "clearchat": "Clear Chat",
     "copytext": "Copy",
     "regenerate": "Regenerate",
+    "toolsUsed": "Tools used by the assistant in the response",
     "copy": "Copy",
     "copy.success": "Copied!",
     "welcome": "Welcome to the SSC Assistant",
@@ -94,5 +96,6 @@
     "chat.show.profiles": "Show GEDS Profiles",
     "chat.hide.profiles": "Hide Profiles",
     "chat.additional.profiles": "ADDITIONAL PROFILES",
-    "chat.profile.geds": "GEDS"
+    "geds": "GEDS",
+    "corporate": "MySSC+"
 }

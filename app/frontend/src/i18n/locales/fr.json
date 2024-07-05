@@ -30,6 +30,7 @@
     "menu.model.select": "Choisir le modèle",
     "menu.model": "Modèle",
     "menu.responsecount": "Réponse maximale",
+    "menu.chooseTools": "Choisir les outils",
     "msteams.channel": "Adopteurs précoces de SPC",
     "sscplus.question": "Question MonSPC+",
     "any.question": "Demander à GPT-4",
@@ -63,6 +64,7 @@
     "clearchat": "Effacer l’historique",
     "copytext": "Copier",
     "regenerate": "Régénérer",
+    "toolsUsed": "Outils utilisés par l'assistant dans la réponse",
     "copy": "Copier",
     "copy.success": "Copié!",
     "welcome": "Bienvenue à l'Assistant SPC",
@@ -84,5 +86,6 @@
     "chat.show.profiles": "Afficher les profils SAGE",
     "chat.hide.profiles": "Cacher les profils",
     "chat.additional.profiles": "PROFILS SUPPLÉMENTAIRES",
-    "chat.profile.geds": "SAGE"
+    "geds": "SAGE",
+    "corporate": "MonSPC+"
 }

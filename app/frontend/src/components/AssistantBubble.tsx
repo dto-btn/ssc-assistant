@@ -1,4 +1,4 @@
-import { Box, Paper, Container, Divider, Chip, Stack, Typography, Link, debounce } from '@mui/material';
+import { Box, Paper, Container, Divider, Chip, Stack, Typography, Link, debounce, Tooltip } from '@mui/material';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -8,12 +8,13 @@ import { useTranslation } from "react-i18next";
 import { BubbleButtons } from './BubbleButtons';
 import { styled } from '@mui/system';
 import ProfileCardsContainer from '../containers/ProfileCardsContainer';
+import HandymanIcon from '@mui/icons-material/Handyman';
 
 interface AssistantBubbleProps {
     text: string;
     isLoading: boolean;
     context?: Context | null;
-    toolInfo?: ToolInfo
+    toolsInfo?: ToolInfo
     scrollRef?:  React.RefObject<HTMLDivElement>;
     replayChat: () => void;
     index: number;
@@ -23,8 +24,8 @@ interface AssistantBubbleProps {
     handleTextSelected: (tooltipPosition: {x: number, y: number}, selectedText: string) => void;
 }
 
-export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse, handleTextSelected }: AssistantBubbleProps) => {
-  const { i18n } = useTranslation();
+export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse, handleTextSelected }: AssistantBubbleProps) => {
+  const { t, i18n } = useTranslation();
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
@@ -32,6 +33,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
   const [extraProfiles, setExtraProfiles] = useState<EmployeeProfile[]>([])
   const [profilesExpanded, setExpandProfiles] = useState(false)
   const isMostRecent = index === total - 1;
+  const toolsUsed = toolsInfo && toolsInfo.tool_type.length > 0
 
   // Reply tooltip
   const components = {
@@ -137,12 +139,12 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
   };
 
   useEffect(() => {
-      if (toolInfo && toolInfo.payload?.hasOwnProperty("profiles") && toolInfo.payload.profiles !== null) {
-          const { matchedProfiles, unmatchedProfiles } = processProfiles(toolInfo.payload.profiles);
+      if (toolsInfo && toolsInfo.payload?.hasOwnProperty("profiles") && toolsInfo.payload.profiles !== null) {
+          const { matchedProfiles, unmatchedProfiles } = processProfiles(toolsInfo.payload.profiles);
           setProfiles(matchedProfiles);
           setExtraProfiles(unmatchedProfiles);
       }
-  }, [toolInfo]);
+  }, [toolsInfo]);
 
 
   useEffect(() => processingComplete ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" }) : undefined, [processingComplete, scrollRef]);
@@ -185,6 +187,24 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
                   : (processedContent.processedText !== "" ? processedContent.processedText : text)}
               </Markdown>
             </Container>
+
+            {toolsUsed && toolsInfo.tool_type && (
+            <ToolsUsedBox>
+              <Tooltip title={t("toolsUsed")} arrow>
+                <HandymanIcon style={{ fontSize: 16, margin: '0px 8px 3px 0px', color: '#4b3e99' }}/>
+              </Tooltip>
+              <Typography sx={{ fontSize: '15px', padding: '0px 22px 3px 0px', color: 'primary.main' }}>
+                {toolsInfo.tool_type.map((tool, index) => (
+                 <span key={index}>
+                   {t(tool)}
+                   {index < toolsInfo.tool_type.length - 1 && ', '}
+                 </span>
+               ))}
+              </Typography>
+
+            </ToolsUsedBox>
+            )}
+
             {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
               <>
                 <Divider />
@@ -216,6 +236,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
                 </Box>
               </>
             )}
+
             {!isLoading && profiles.length > 0 &&
             <ProfileCardsContainer
               profiles={profiles}
@@ -229,7 +250,14 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
         <Box>
           {total > 1 && index !!!= 0  &&
           <Paper sx={{backgroundColor: 'transparent', boxShadow: 'none', mt: 1, ml:2}}>
-            <BubbleButtons setIsFeedbackVisible={setIsFeedbackVisible} setIsGoodResponse={setIsGoodResponse} isHovering={isHovering} isMostRecent={isMostRecent} replayChat={replayChat} text={text} />
+            <BubbleButtons 
+              setIsFeedbackVisible={setIsFeedbackVisible} 
+              setIsGoodResponse={setIsGoodResponse} 
+              isHovering={isHovering} 
+              isMostRecent={isMostRecent} 
+              replayChat={replayChat} 
+              text={text} 
+            />
           </Paper>
           }
         </Box>
@@ -247,4 +275,9 @@ const ChatBubbleView = styled(Box)`
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+`
+const ToolsUsedBox = styled(Box)`
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 `
