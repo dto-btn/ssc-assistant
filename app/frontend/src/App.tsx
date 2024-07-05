@@ -394,7 +394,6 @@ export const App = () => {
       ...enabledTools,
       [event.target.name]: event.target.checked
     });
-    saveToolSelection(enabledTools)
   }
 
   return (
