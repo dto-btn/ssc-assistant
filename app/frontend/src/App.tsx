@@ -130,7 +130,7 @@ export const App = () => {
               message: {
                 ...lastItem.message,
                 context: completionResponse.message.context,
-                tool_info: completionResponse.message.tool_info
+                tools_info: completionResponse.message.tools_info
               }
           }
         }
@@ -460,7 +460,7 @@ export const App = () => {
                       text={chatItem.message.content}
                       isLoading={index == chatHistory.length-1 && isLoading}
                       context={chatItem.message?.context}
-                      toolInfo={chatItem.message.tool_info}
+                      toolsInfo={chatItem.message.tools_info}
                       scrollRef={chatMessageStreamEnd}
                       replayChat={replayChat}
                       index={index}

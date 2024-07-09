@@ -33,7 +33,7 @@ class Message:
     role: str
     content: Optional[str] = None
     context: Optional[Context] = None
-    tool_info: Optional[ToolInfo] = None
+    tools_info: Optional[ToolInfo] = None
 
 @dataclass
 class Completion:

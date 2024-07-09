@@ -22,7 +22,7 @@ interface Message {
   role: string;
   content?: string | null;
   context?: Context | null;
-  tool_info?: ToolInfo
+  tools_info?: ToolInfo
 }
 
 interface Completion {

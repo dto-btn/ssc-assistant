@@ -101,7 +101,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
     1. Check if we are to use tools
     """
 
-    tool_info = None
+    tools_info = None
 
     if message_request.tools:
         logger.debug(f"Using Tools: {message_request.tools}")
@@ -132,11 +132,11 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                     TODO: solution would be to retain citation and quote from answer and figure a way to retain them if the text match (not citations as part of msg extra content)
                           but the actual citations within the returned text, ex; The president is John Wayne[1] and you can contact him at 888-888-8888[2]
                     '''
-                    tool_info = ToolInfo()
-                    tool_info.tool_type.append("MySSC+")
-                    tool_info.function_names.append("corporate_question")
+                    tools_info = ToolInfo()
+                    tools_info.tool_type.append("MySSC+")
+                    tools_info.function_names.append("corporate_question")
 
-                    return (tool_info, client.chat.completions.create(
+                    return (tools_info, client.chat.completions.create(
                         messages=messages,
                         model=model,
                         extra_body=data_sources,
@@ -150,9 +150,9 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
         
         # add tool info for tools used
         if tools_used:
-            tool_info = add_tool_info_if_used(messages, tools)
+            tools_info = add_tool_info_if_used(messages, tools)
 
-    return (tool_info, client.chat.completions.create(
+    return (tools_info, client.chat.completions.create(
         messages=messages,
         model=model,
         stream=stream
@@ -160,25 +160,25 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
 
 
 def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: List[Any]) -> ToolInfo:
-    tool_info = ToolInfo()
+    tools_info = ToolInfo()
     function_to_tool_type = {tool['function']['name']: tool['tool_type'] for tool in tools if tool.get('type') == 'function'}
 
     for message in messages:
         if message["role"] == "function":
             function_name = message["name"]
-            tool_info.function_names.append(function_name)
+            tools_info.function_names.append(function_name)
 
             if function_name in function_to_tool_type:
                 tool_name = function_to_tool_type[function_name]
-                tool_info.tool_type.append(tool_name)
+                tools_info.tool_type.append(tool_name)
 
             # extract profiles if it's a geds function
             if tool_name == "geds":
                 content = message.get("content", "")
                 profiles = extract_geds_profiles(content)
-                tool_info.payload = {"profiles": profiles}
+                tools_info.payload = {"profiles": profiles}
 
-    return tool_info
+    return tools_info
 
 def extract_geds_profiles(content):
     try:
@@ -237,7 +237,7 @@ def build_completion_response(content: str,
                               completion_tokens: int = 0,
                               prompt_tokens: int = 0,
                               total_tokens: int = 0,
-                              tool_info: Optional[ToolInfo] = None):
+                              tools_info: Optional[ToolInfo] = None):
     """
     Builds a completion response based on the context given and the content
     """
@@ -256,7 +256,7 @@ def build_completion_response(content: str,
         role=role,
         content=content,
         context=context,
-        tool_info=tool_info
+        tools_info=tools_info
     )
 
     return Completion(completion_tokens=completion_tokens,
