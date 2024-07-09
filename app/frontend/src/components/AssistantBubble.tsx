@@ -148,7 +148,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
               </Markdown>
             </Container>
 
-            {toolsUsed && toolInfo.tool_type && (
+            {toolsUsed && Array.isArray(toolInfo.tool_type) && (
             <ToolsUsedBox>
               <Tooltip title={t("toolsUsed")} arrow>
                 <HandymanIcon style={{ fontSize: 16, margin: '0px 8px 3px 0px', color: '#4b3e99' }}/>
