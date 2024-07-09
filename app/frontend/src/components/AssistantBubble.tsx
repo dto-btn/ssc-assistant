@@ -14,7 +14,7 @@ interface AssistantBubbleProps {
     text: string;
     isLoading: boolean;
     context?: Context | null;
-    toolInfo?: ToolInfo
+    toolsInfo?: ToolInfo
     scrollRef?:  React.RefObject<HTMLDivElement>;
     replayChat: () => void;
     index: number;
@@ -23,7 +23,7 @@ interface AssistantBubbleProps {
     setIsGoodResponse: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse }: AssistantBubbleProps) => {
+export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse }: AssistantBubbleProps) => {
   const { t, i18n } = useTranslation();
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
@@ -32,7 +32,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
   const [extraProfiles, setExtraProfiles] = useState<EmployeeProfile[]>([])
   const [profilesExpanded, setExpandProfiles] = useState(false)
   const isMostRecent = index === total - 1;
-  const toolsUsed = toolInfo && toolInfo.tool_type.length > 0
+  const toolsUsed = toolsInfo && toolsInfo.tool_type.length > 0
 
   const components = {
     a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <Link target="_blank" rel="noopener noreferrer" {...props} />,
@@ -99,12 +99,12 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
   };
 
   useEffect(() => {
-      if (toolInfo && toolInfo.payload?.hasOwnProperty("profiles") && toolInfo.payload.profiles !== null) {
-          const { matchedProfiles, unmatchedProfiles } = processProfiles(toolInfo.payload.profiles);
+      if (toolsInfo && toolsInfo.payload?.hasOwnProperty("profiles") && toolsInfo.payload.profiles !== null) {
+          const { matchedProfiles, unmatchedProfiles } = processProfiles(toolsInfo.payload.profiles);
           setProfiles(matchedProfiles);
           setExtraProfiles(unmatchedProfiles);
       }
-  }, [toolInfo]);
+  }, [toolsInfo]);
 
 
   useEffect(() => processingComplete ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" }) : undefined, [processingComplete, scrollRef]);
@@ -148,16 +148,16 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
               </Markdown>
             </Container>
 
-            {toolsUsed && toolInfo.tool_type && (
+            {toolsUsed && toolsInfo.tool_type && (
             <ToolsUsedBox>
               <Tooltip title={t("toolsUsed")} arrow>
                 <HandymanIcon style={{ fontSize: 16, margin: '0px 8px 3px 0px', color: '#4b3e99' }}/>
               </Tooltip>
               <Typography sx={{ fontSize: '15px', padding: '0px 22px 3px 0px', color: 'primary.main' }}>
-                {toolInfo.tool_type.map((tool, index) => (
+                {toolsInfo.tool_type.map((tool, index) => (
                  <span key={index}>
                    {t(tool)}
-                   {index < toolInfo.tool_type.length - 1 && ', '}
+                   {index < toolsInfo.tool_type.length - 1 && ', '}
                  </span>
                ))}
               </Typography>
