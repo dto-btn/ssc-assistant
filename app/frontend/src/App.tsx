@@ -389,6 +389,22 @@ export const App = () => {
     });
   }, []);
 
+  const saveToolSelection = (enabledTools: Record<string, boolean>) => {
+    localStorage.setItem("enabledTools", JSON.stringify(enabledTools));
+  }
+
+  // Update localStorage with new enabledTools
+  useEffect(() => {
+    saveToolSelection(enabledTools);
+  }, [enabledTools]); 
+
+  const handleUpdateEnabledTools = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setEnabledTools({
+      ...enabledTools,
+      [event.target.name]: event.target.checked
+    });
+  }
+
   const handleTextSelected = (tooltipPosition: { x: number; y: number }, selectedText: string): void => {
     if (selectedText) {
       setSelectedText(selectedText);
@@ -410,22 +426,6 @@ export const App = () => {
     setReplyTooltipVisible(false);
     setSelectedText('');
     window.getSelection()?.removeAllRanges();
-  }
-
-  const saveToolSelection = (enabledTools: Record<string, boolean>) => {
-    localStorage.setItem("enabledTools", JSON.stringify(enabledTools));
-  }
-
-  // Update localStorage with new enabledTools
-  useEffect(() => {
-    saveToolSelection(enabledTools);
-  }, [enabledTools]); 
-
-  const handleUpdateEnabledTools = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEnabledTools({
-      ...enabledTools,
-      [event.target.name]: event.target.checked
-    });
   }
 
   return (
