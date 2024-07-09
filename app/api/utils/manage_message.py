@@ -37,6 +37,11 @@ Lorsqu'une fonction ne produit pas les résultats attendus, comme lorsqu'il peut
 def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessageParam]:
     messages: List[ChatCompletionMessageParam] = []
 
+    # Check if the user quoted text in their query
+    if message_request.quotedText and message_request.messages and message_request.messages[-1].content:
+        quote_injection = f"The user quoted the following text. You should focus the answer to their query in response to this text: \"{message_request.quotedText}\". "
+        message_request.messages[-1].content = quote_injection + message_request.messages[-1].content
+
     # Check if the first message is a system prompt and add it if not
     if not message_request.messages or message_request.messages[0].role != "system":
         logger.info("Got no system prompt, will add one")

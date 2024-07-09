@@ -22,7 +22,8 @@ interface Message {
   role: string;
   content?: string | null;
   context?: Context | null;
-  tool_info?: ToolInfo
+  tool_info?: ToolInfo;
+  quotedText?: string;
 }
 
 interface Completion {
@@ -40,6 +41,7 @@ interface MessageRequest {
   max?: number;
   tools?: string[];
   uuid?: string;
+  quotedText?: string;
 }
 
 interface ToastMessage {

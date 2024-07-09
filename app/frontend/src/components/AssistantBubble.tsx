@@ -1,9 +1,9 @@
-import { Box, Paper, Container, Divider, Chip, Stack, Typography, Link } from '@mui/material';
+import { Box, Paper, Container, Divider, Chip, Stack, Typography, Link, debounce } from '@mui/material';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
-import { useEffect, useState, Fragment, useMemo } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { useTranslation } from "react-i18next";
 import { BubbleButtons } from './BubbleButtons';
 import { styled } from '@mui/system';
@@ -20,9 +20,10 @@ interface AssistantBubbleProps {
     total: number;
     setIsFeedbackVisible: React.Dispatch<React.SetStateAction<boolean>>;
     setIsGoodResponse: React.Dispatch<React.SetStateAction<boolean>>;
+    handleTextSelected: (tooltipPosition: {x: number, y: number}, selectedText: string) => void;
 }
 
-export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse }: AssistantBubbleProps) => {
+export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse, handleTextSelected }: AssistantBubbleProps) => {
   const { i18n } = useTranslation();
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
@@ -32,12 +33,11 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
   const [profilesExpanded, setExpandProfiles] = useState(false)
   const isMostRecent = index === total - 1;
 
+  // Reply tooltip
   const components = {
     a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <Link target="_blank" rel="noopener noreferrer" {...props} />,
   };
   const [citationNumberMapping, setCitationNumberMapping] = useState<{ [key: number]: number }>({});
-
-
 
   function processText(text: string, citations: Citation[]) {
     // Regular expression to find all citation references like [doc1], [doc3], etc.
@@ -75,38 +75,74 @@ export const AssistantBubble = ({ text, isLoading, context, toolInfo, scrollRef,
   }
 
   useEffect(() => {
+    const handleSelectionChange = () => {
+      console.log('handle selection change')
+      const selection = window.getSelection();
+
+      if (selection && selection.rangeCount > 0) {
+        const highlightedText = selection?.toString();
+
+        const range = selection.getRangeAt(0);
+        const rects = range.getClientRects();
+  
+        if (rects.length > 0) {
+          let topRect = rects[0];
+          for (let i = 1; i < rects.length; i++) {
+            const rect = rects[i];
+            if (rect.top < topRect.top || (rect.top === topRect.top && rect.left < topRect.left)) {
+              topRect = rect;
+            }
+          }
+  
+        const tooltipPosition = { x: topRect.left + window.scrollX, y: topRect.top + window.scrollY };
+        handleTextSelected(tooltipPosition, highlightedText);
+        } else {
+          handleTextSelected({x: 0, y: 0}, '');
+        } 
+      } else {
+        handleTextSelected({x: 0, y: 0}, '');
+      }
+    };
+    const debouncedHandleSelectionChange = debounce(handleSelectionChange, 200); // Adjust debounce delay as needed
+
+    document.addEventListener('mouseup', debouncedHandleSelectionChange);
+  
+    return () => {
+      document.removeEventListener('mouseup', debouncedHandleSelectionChange);
+    };
+  }, []);
+
+  useEffect(() => {
     if(context?.citations) {
         const { processedText, citedCitations, citationNumberMapping } = processText(text, context.citations);
         setProcessedContent({ processedText, citedCitations });
         setCitationNumberMapping(citationNumberMapping); // store the citationNumberMapping in state
         setProcessingComplete(true);
     }
-}, [isLoading, context, text, scrollRef]);
+  }, [isLoading, context, text, scrollRef]);
 
-  const processProfiles = useMemo(() => {
-    return (employeeProfiles: EmployeeProfile[]) => {
-        const matchedProfiles: EmployeeProfile[] = [];
-        const unmatchedProfiles: EmployeeProfile[] = [];
-        
-        employeeProfiles.forEach((profile) => {
-            if (text.includes(profile.email)) {
-                matchedProfiles.push(profile);
-            } else {
-                unmatchedProfiles.push(profile);
-            }
-        });
+  const processProfiles = (employeeProfiles: EmployeeProfile[]) => {
+    const matchedProfiles: EmployeeProfile[] = [];
+    const unmatchedProfiles: EmployeeProfile[] = [];
+    
+    employeeProfiles.forEach((profile) => {
+      if (text.includes(profile.email)) {
+          matchedProfiles.push(profile);
+      } else {
+          unmatchedProfiles.push(profile);
+      }
+    });
 
-        return { matchedProfiles, unmatchedProfiles };
-    };
-}, [text]);
+    return { matchedProfiles, unmatchedProfiles };
+  };
 
   useEffect(() => {
-      if (toolInfo && toolInfo.payload?.hasOwnProperty("profiles")) {
+      if (toolInfo && toolInfo.payload?.hasOwnProperty("profiles") && toolInfo.payload.profiles !== null) {
           const { matchedProfiles, unmatchedProfiles } = processProfiles(toolInfo.payload.profiles);
           setProfiles(matchedProfiles);
           setExtraProfiles(unmatchedProfiles);
       }
-  }, [toolInfo, text]);
+  }, [toolInfo]);
 
 
   useEffect(() => processingComplete ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" }) : undefined, [processingComplete, scrollRef]);
