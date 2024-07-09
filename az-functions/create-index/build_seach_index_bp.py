@@ -72,7 +72,9 @@ def build_search_index(context: df.DurableOrchestrationContext):
         embedding_dimensionality=1536,
         metadata_string_field_key="metadata",
         doc_id_field_key="doc_id",
-        vector_algorithm_type="exhaustiveKnn"
+        vector_algorithm_type="exhaustiveKnn",
+        #language_analyzer="lucene" would need to be specified on each of the fields, depending if fr or en:
+        # https://learn.microsoft.com/en-us/azure/search/index-add-language-analyzers#how-to-specify-a-language-analyzer
     )
 
     pages_path = f"{index_data_path}/pages"
@@ -84,12 +86,12 @@ def build_search_index(context: df.DurableOrchestrationContext):
         document = Document(
             text=str(page["body"]).replace("\n", " "),
             metadata={ # type: ignore
-                'filename': page["filename"],
-                'url': page["url"],
                 'title': page["title"],
+                'langcode': page["langcode"],
+                'nid': page["nid"],
                 'date': page["date"],
-                'nid': page['nid'],
-                'langcode': page['langcode']
+                'type': page['type'],
+                'url': page['url']
             }
         )
         documents.append(document)
