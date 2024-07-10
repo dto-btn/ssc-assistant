@@ -50,13 +50,14 @@ def build_search_index(context: df.DurableOrchestrationContext):
         credential=credential,
     )
 
-    metadata_fields = { "title" : "title",
-                    "langcode" : "langcode",
-                    "nid" : "nid",
-                    "date" : "date",
-                    "type" : "type",
-                    "url" : "url",
-                }
+    metadata_fields =   {
+                            "title" : "title",
+                            "langcode" : "langcode",
+                            "nid" : "nid",
+                            "date" : "date",
+                            "type" : "type",
+                            "url" : "url",
+                        }
 
     index_data_path = get_latest_date(container_client=container_client)
     index_name = index_data_path.replace("_", "-").replace(":", "-")
@@ -67,13 +68,13 @@ def build_search_index(context: df.DurableOrchestrationContext):
         index_name=index_name,
         index_management=IndexManagement.CREATE_IF_NOT_EXISTS,
         id_field_key="id",
-        chunk_field_key="content",
-        embedding_field_key="content_vector",
+        chunk_field_key="chunk",
+        embedding_field_key="embedding",
         embedding_dimensionality=1536,
         metadata_string_field_key="metadata",
         doc_id_field_key="doc_id",
         vector_algorithm_type="exhaustiveKnn",
-        #language_analyzer="lucene" would need to be specified on each of the fields, depending if fr or en:
+        language_analyzer="en.microsoft" #would need to be specified on each of the fields, depending if fr or en:
         # https://learn.microsoft.com/en-us/azure/search/index-add-language-analyzers#how-to-specify-a-language-analyzer
     )
 
@@ -97,12 +98,12 @@ def build_search_index(context: df.DurableOrchestrationContext):
         documents.append(document)
 
     llm = AzureOpenAI(
-            model=openai_model,
-            deployment_name=openai_deployment_name,
-            api_version=api_version,
-            azure_endpoint=azure_openai_uri,
-            api_key=api_key
-        )
+        model=openai_model,
+        deployment_name=openai_deployment_name,
+        api_version=api_version,
+        azure_endpoint=azure_openai_uri,
+        api_key=api_key
+    )
 
     embed_model = AzureOpenAIEmbedding(
         model=embedding_model,
@@ -153,10 +154,12 @@ def get_pages_as_json(path: str):
                 page["body"] = ' '.join(soup.stripped_strings)
                 page["title"] = str(raw["title"]).strip()
                 page["url"] = str(raw["url"]).strip()
+                # TODO: this date will sometimes comes as "date": "2021-06-14", and sometimes as "date": "<time datetime=\"2024-06-03T12:22:33+00:00\">2024-06-03</time>"
                 page["date"] = str(raw["date"]).strip()
                 page["filename"] = blob_client.blob_name
                 page["nid"] = str(raw['nid']).strip()
                 page["langcode"] = str(raw['langcode']).strip()
+                page["type"] = str(raw['type']).strip()
 
                 pages.append(page)
     return pages
