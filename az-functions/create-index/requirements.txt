@@ -9,7 +9,7 @@ llama-index==0.10.17
 llama-index-llms-azure-openai
 llama-index-embeddings-azure-openai
 llama-index-vector-stores-azureaisearch
-azure-search-documents==11.4.0
+azure-search-documents==11.6.0b4
 # llama-index-vector-stores-azureaisearch==0.1.7
 # llama-index-embeddings-azure-openai==0.1.9
 # llama-index-llms-azure-openai==0.1.8

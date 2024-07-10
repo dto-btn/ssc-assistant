@@ -53,6 +53,7 @@ resource "azurerm_linux_web_app" "api" {
     AZURE_OPENAI_ENDPOINT         = data.azurerm_cognitive_account.ai.endpoint
     AZURE_OPENAI_API_KEY          = data.azurerm_cognitive_account.ai.primary_access_key
     AZURE_OPENAI_MODEL            = "gpt-35-turbo-1106"
+    AZURE_SEARCH_INDEX_NAME       = "current"
     GEDS_API_TOKEN                = var.geds_api_token
     SERVER_URL_PROD               = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net"
     JWT_SECRET                    = var.jwt_secret
@@ -63,6 +64,6 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   sticky_settings { # settings that are the same regardless of deployment slot..
-    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DATABASE_ENDPOINT" ]
+    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DATABASE_ENDPOINT", "AZURE_SEARCH_INDEX_NAME" ]
   }
 }

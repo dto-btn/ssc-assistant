@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from utils.get_download_stats import get_latest_date
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents.indexes import SearchIndexClient
+from azure.search.documents.indexes.models import SearchAlias
 from llama_index.core import (
     StorageContext,
     VectorStoreIndex,
@@ -122,6 +123,8 @@ def build_search_index(context: df.DurableOrchestrationContext):
         documents, storage_context=storage_context
     )
 
+    result = yield context.call_activity("update_current_index_alias", index_name)
+
     return f"Index created: {index_name}."
 
 
@@ -163,3 +166,17 @@ def get_pages_as_json(path: str):
 
                 pages.append(page)
     return pages
+
+#Activity
+@build_index_bp.activity_trigger(input_name="index_name")
+def update_current_index_alias(index_name: str):
+    """ this function is used to create/update an alias that is always pointed to in the SSC-Assistant, in order
+        to allow us to update the indexes in the backend without having to update the backend API code.
+    """
+    index_client = SearchIndexClient(
+        endpoint=service_endpoint,
+        credential=credential,
+    )
+
+    alias = SearchAlias(name="current", indexes=[index_name])
+    return index_client.create_or_update_alias(alias)
