@@ -1,5 +1,6 @@
-import { Box, Paper, Container, Divider, Chip, Stack, Typography, Link, Tooltip } from '@mui/material';
-import Markdown from 'react-markdown'
+import { Box, Paper, Container, 
+          Divider, Chip, Stack, Typography, 
+          Link, Tooltip, debounce } from '@mui/material';import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
@@ -21,9 +22,12 @@ interface AssistantBubbleProps {
     total: number;
     setIsFeedbackVisible: React.Dispatch<React.SetStateAction<boolean>>;
     setIsGoodResponse: React.Dispatch<React.SetStateAction<boolean>>;
+    handleTextSelected: (tooltipPosition: {x: number, y: number}, selectedText: string) => void;
 }
 
-export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse }: AssistantBubbleProps) => {
+export const AssistantBubble = (props: AssistantBubbleProps) => {
+  const { text, isLoading, context, toolsInfo, scrollRef, replayChat, index, total, 
+    setIsFeedbackVisible, setIsGoodResponse, handleTextSelected } = props;
   const { t, i18n } = useTranslation();
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
@@ -32,7 +36,47 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
   const [extraProfiles, setExtraProfiles] = useState<EmployeeProfile[]>([])
   const [profilesExpanded, setExpandProfiles] = useState(false)
   const isMostRecent = index === total - 1;
-  const toolsUsed = toolsInfo && toolsInfo.tool_type.length > 0
+  const toolsUsed = toolsInfo && toolsInfo.tool_type.length > 0;
+
+  console.log(context)
+
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      console.log('handle selection change')
+      const selection = window.getSelection();
+
+      if (selection && selection.rangeCount > 0) {
+        const highlightedText = selection?.toString();
+
+        const range = selection.getRangeAt(0);
+        const rects = range.getClientRects();
+
+        if (rects.length > 0) {
+          let topRect = rects[0];
+          for (let i = 1; i < rects.length; i++) {
+            const rect = rects[i];
+            if (rect.top < topRect.top || (rect.top === topRect.top && rect.left < topRect.left)) {
+              topRect = rect;
+            }
+          }
+
+        const tooltipPosition = { x: topRect.left + window.scrollX, y: topRect.top + window.scrollY };
+        handleTextSelected(tooltipPosition, highlightedText);
+        } else {
+          handleTextSelected({x: 0, y: 0}, '');
+        } 
+      } else {
+        handleTextSelected({x: 0, y: 0}, '');
+      }
+    };
+    const debouncedHandleSelectionChange = debounce(handleSelectionChange, 200); // Adjust debounce delay as needed
+
+    document.addEventListener('mouseup', debouncedHandleSelectionChange);
+
+    return () => {
+      document.removeEventListener('mouseup', debouncedHandleSelectionChange);
+    };
+  }, []);
 
   const components = {
     a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <Link target="_blank" rel="noopener noreferrer" {...props} />,

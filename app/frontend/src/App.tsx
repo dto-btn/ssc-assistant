@@ -1,5 +1,7 @@
 import {
   Box,
+  IconButton,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -21,6 +23,7 @@ import {
   DrawerMenu
 } from "./components";
 import logo from "./assets/SSC-Logo-Purple-Leaf-300x300.png"
+import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
 import { isACompletion, isAMessage, isAToastMessage } from "./utils";
 //https://github.com/AzureAD/microsoft-authentication-library-for-js/tree/dev/samples/msal-react-samples/typescript-sample
 import { loginRequest } from "./authConfig";
@@ -72,6 +75,10 @@ export const App = () => {
   const [feedback, setFeedback] = useState('');
   const [isGoodResponse, setIsGoodResponse] = useState(false);
   const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
+  const [quotedText, setQuotedText] = useState('');
+  const [selectedText, setSelectedText] = useState('');
+  const [replyTooltipVisible, setReplyTooltipVisible] = useState(false);
+  const [replyTooltipPosition, setReplyTooltipPosition] = useState({ x: 0, y: 0 });
 
   const convertChatHistoryToMessages = (chatHistory: ChatItem[]) : Message[] => {
     const startIndex = Math.max(chatHistory.length - maxMessagesSent, 0);
@@ -119,6 +126,8 @@ export const App = () => {
         accessToken: idToken
       });
 
+      console.log(completionResponse)
+
       setChatHistory((prevChatHistory) => {
         const updatedChatHistory = [...prevChatHistory]; //making a copy
         const lastItemIndex = updatedChatHistory.length - 1;
@@ -160,10 +169,12 @@ export const App = () => {
   const makeApiRequest = async (question: string) => {
     // set is loading so we disable some interactive functionality while we load the response
     setIsLoading(true);
+    setQuotedText('');
 
     const userMessage: Message = {
       role: "user",
-      content: question
+      content: question,
+      quotedText: quotedText
     };
 
     const responsePlaceholder: Completion = {
@@ -185,6 +196,7 @@ export const App = () => {
       top: 5,
       tools: (Object.keys(enabledTools)).filter((key) => enabledTools[key]),
       uuid: uuid,
+      quotedText: quotedText
     };
 
     //update current chat window with the message sent..
@@ -396,6 +408,29 @@ export const App = () => {
     });
   }
 
+  const handleTextSelected = (tooltipPosition: { x: number; y: number }, selectedText: string): void => {
+    if (selectedText) {
+      setSelectedText(selectedText);
+      setReplyTooltipVisible(true)
+      setReplyTooltipPosition(tooltipPosition)
+    } else {
+      setReplyTooltipVisible(false)
+      setSelectedText('')
+    }
+  }
+
+  const handleRemoveQuote = () => {
+    setSelectedText('');
+    setQuotedText('');
+  }
+
+  const onQuoteReponseClicked = () => {
+    setQuotedText(selectedText);
+    setReplyTooltipVisible(false);
+    setSelectedText('');
+    window.getSelection()?.removeAllRanges();
+  }
+
   return (
     <UserContext.Provider value={userData}>
       <UnauthenticatedTemplate>
@@ -467,11 +502,12 @@ export const App = () => {
                       total={chatHistory.length}
                       setIsFeedbackVisible={setIsFeedbackVisible}
                       setIsGoodResponse={setIsGoodResponse}
+                      handleTextSelected={handleTextSelected}
                       />
                   )}
 
                   {isAMessage(chatItem) && (
-                    <UserBubble text={chatItem.content} />
+                    <UserBubble text={chatItem.content} quote={chatItem.quotedText}/>
                   )}
 
                   {isAToastMessage(chatItem) && (
@@ -502,6 +538,8 @@ export const App = () => {
                 placeholder={t("placeholder")}
                 disabled={isLoading}
                 onSend={(question) => makeApiRequest(question)}
+                quotedText={quotedText}
+                handleRemoveQuote={handleRemoveQuote}
               />
             </Box>
           </Box>
@@ -523,6 +561,30 @@ export const App = () => {
             handleClose={() => setIsFeedbackVisible(false)}
             handleFeedbackSubmit={handleFeedbackSubmit}
           />
+          {replyTooltipVisible &&
+          <Tooltip  title={<Typography variant="body1">Reply</Typography>}  placement='top'>
+            <IconButton 
+              onClick={() => onQuoteReponseClicked()}
+              id="replyButton"
+              sx={{
+                position: 'absolute',
+                top: replyTooltipPosition.y - 45,
+                left: replyTooltipPosition.x,
+                height: '30px',
+                width: '50px',
+                border: '1px solid',
+                fontSize: '32px',
+                backgroundColor: 'white',
+                zIndex: 1000,
+                '&:hover': {
+                  backgroundColor: 'white', 
+                  boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.3)', 
+                },
+               }}>
+              <FormatQuoteIcon sx={{color: "black"}}/>
+            </IconButton>
+          </Tooltip>
+          }
         </ThemeProvider>
       </AuthenticatedTemplate>
     </UserContext.Provider>
