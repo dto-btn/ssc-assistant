@@ -562,7 +562,7 @@ export const App = () => {
             handleFeedbackSubmit={handleFeedbackSubmit}
           />
           {replyTooltipVisible &&
-          <Tooltip  title={<Typography variant="body1">Reply</Typography>}  placement='top'>
+          <Tooltip  title={<Typography variant="body1">{t("reply")}</Typography>}  placement='top'>
             <IconButton 
               onClick={() => onQuoteReponseClicked()}
               id="replyButton"

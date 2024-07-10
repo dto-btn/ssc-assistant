@@ -23,7 +23,7 @@
     "copy": "Copy",
     "copy.success": "Copied!",
     "copytext": "Copy",
-    "corporate": "MySSC+",
+    "MySSC+": "MySSC+",
     "default.welcome.msg": "Hello! I am your SSC Assistant how may I help you today?",
     "disclaimer": "DISCLAIMER",
     "disclaimer.desc": "The SSC Assistant is in pilot phase and uses Azure OpenAI. Answers may be incorrect even if they seem reliable. Just like humans, AI can make mistakes. Your feedback is important to help us improve the tool.",
