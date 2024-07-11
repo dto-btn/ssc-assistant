@@ -30,6 +30,7 @@ load_dotenv()
 azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
 api_key                 = os.getenv("AZURE_OPENAI_API_KEY")
 api_version             = os.getenv("AZURE_OPENAI_VERSION", "2023-07-01-preview")
+api_search_version      = os.getenv("AZURE_SEARCH_VERSION", "2024-05-01-preview")
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 blob_connection_string  = os.getenv("BLOB_CONNECTION_STRING")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
@@ -49,6 +50,7 @@ def build_search_index(context: df.DurableOrchestrationContext):
     index_client = SearchIndexClient(
         endpoint=service_endpoint,
         credential=credential,
+        api_version=api_search_version
     )
 
     metadata_fields =   {
@@ -74,7 +76,7 @@ def build_search_index(context: df.DurableOrchestrationContext):
         embedding_dimensionality=1536,
         metadata_string_field_key="metadata",
         doc_id_field_key="doc_id",
-        vector_algorithm_type="exhaustiveKnn",
+        vector_algorithm_type="hnsw",
         language_analyzer="en.microsoft" #would need to be specified on each of the fields, depending if fr or en:
         # https://learn.microsoft.com/en-us/azure/search/index-add-language-analyzers#how-to-specify-a-language-analyzer
     )
@@ -176,6 +178,7 @@ def update_current_index_alias(index_name: str):
     index_client = SearchIndexClient(
         endpoint=service_endpoint,
         credential=credential,
+        api_version=api_search_version
     )
 
     alias = SearchAlias(name="current", indexes=[index_name])
