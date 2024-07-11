@@ -28,12 +28,12 @@ export const UserBubble = ({ text }: UserChatProps) => {
         elevation={4}
       >
         <UserBubbleContainer>
-          <ProfilePictureView>
-            {graphData && 
-              <UserProfilePicture size='32px' fullName={graphData['givenName'] + " " + graphData['surname']} />
-            }
-          </ProfilePictureView>
-          <Markdown rehypePlugins={[rehypeHighlight]} remarkPlugins={[remarkGfm]}>{text}</Markdown>
+            <ProfilePictureView>
+              {graphData && 
+                <UserProfilePicture size='30px' fullName={graphData['givenName'] + " " + graphData['surname']} />
+              }
+            </ProfilePictureView>
+            <Markdown rehypePlugins={[rehypeHighlight]} remarkPlugins={[remarkGfm]}>{text}</Markdown>
         </UserBubbleContainer>
       </Paper>
     </Box>

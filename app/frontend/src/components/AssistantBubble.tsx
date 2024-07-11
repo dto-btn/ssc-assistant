@@ -138,10 +138,10 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
             }}
             elevation={4}
           >
-            <TextAndPictureContainer>
-              <IconView>
-                <AutoAwesome sx={{color: "primary.main", fontSize: 30}} />
-              </IconView>
+            <MainContentWrapper>
+              <IconWrapper>
+                <AutoAwesome sx={{color: "primary.main", fontSize: 24}} />
+              </IconWrapper>
               <TextComponentsBox>
                 <Markdown
                   components={components}
@@ -152,7 +152,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
                     : (processedContent.processedText !== "" ? processedContent.processedText : text)}
                 </Markdown>
               </TextComponentsBox>
-            </TextAndPictureContainer>
+            </MainContentWrapper>
 
             {toolsUsed && toolsInfo.tool_type && (
             <ToolsUsedBox>
@@ -248,12 +248,12 @@ const ToolsUsedBox = styled(Box)`
   align-items: center;
 `
 
-const TextAndPictureContainer = styled(Box)`
+const MainContentWrapper = styled(Box)`
   display: flex;
   padding: 0px 15px;
 `
 
-const IconView = styled(Box)`
+const IconWrapper = styled(Box)`
   margin: 11px 12px 8px 0px;
 `
 
