@@ -23,7 +23,6 @@ import {
   DrawerMenu
 } from "./components";
 import logo from "./assets/SSC-Logo-Purple-Leaf-300x300.png"
-import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
 import { isACompletion, isAMessage, isAToastMessage } from "./utils";
 //https://github.com/AzureAD/microsoft-authentication-library-for-js/tree/dev/samples/msal-react-samples/typescript-sample
 import { loginRequest } from "./authConfig";
