@@ -76,8 +76,7 @@ export const TopMenu = ({ toggleDrawer } : TopMenuProps) => {
               {graphData && accessToken && 
               <>
                 <Typography variant="body1" mr={2} sx={{ display: { xs: 'none', sm: 'block' } }}>{graphData['givenName']} {graphData['surname']}</Typography>
-                <UserProfilePicture accessToken={accessToken} fullName={graphData['givenName'] + " " + graphData['surname']} />
-              </>
+                <UserProfilePicture fullName={graphData['givenName'] + " " + graphData['surname']} />              </>
              }
             </Grid>
             <Grid container item xs={1} sm={0.5} justifyContent='flex-end' sx={{ml: { xs: "18px" }}}>

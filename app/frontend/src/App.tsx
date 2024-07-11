@@ -61,7 +61,8 @@ export const App = () => {
   const {instance, inProgress} = useMsal();
   const [userData, setUserData] = useState({
     accessToken: '',
-    graphData: null
+    graphData: null,
+    profilePictureURL: ''
   });
   const [enabledTools, setEnabledTools] = useState<Record<string, boolean>>({
     "geds": true,
@@ -330,7 +331,7 @@ export const App = () => {
           ...loginRequest,
           account: instance.getActiveAccount() as AccountInfo
       }).then(response => {
-        setUserData({accessToken: response.accessToken, graphData: null});
+        setUserData({accessToken: response.accessToken, graphData: null, profilePictureURL: ''});      
       }).catch((e) => {
         if (e instanceof InteractionRequiredAuthError) {
           console.warn("Unable to get token via silent method, will use redirect instead.");
@@ -347,7 +348,11 @@ export const App = () => {
   useEffect(() => {
     if (userData.accessToken && !userData.graphData) {
       callMsGraph(userData.accessToken).then(response => {
-        setUserData({ accessToken: userData.accessToken, graphData: response.graphData });
+        setUserData({ 
+          accessToken: userData.accessToken, 
+          graphData: response.graphData,
+          profilePictureURL: response.profilePictureURL
+        });
       });
     }
   }, [userData.accessToken]);
