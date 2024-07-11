@@ -562,7 +562,7 @@ export const App = () => {
             handleFeedbackSubmit={handleFeedbackSubmit}
           />
           {replyTooltipVisible &&
-          <Tooltip  title={<Typography variant="body1">{t("reply")}</Typography>}  placement='top'>
+          <Tooltip  title={<Typography variant="body1">{t("quote.tooltip")}</Typography>}  placement='top'>
             <IconButton 
               onClick={() => onQuoteReponseClicked()}
               id="replyButton"
@@ -571,9 +571,12 @@ export const App = () => {
                 top: replyTooltipPosition.y - 45,
                 left: replyTooltipPosition.x,
                 height: '30px',
-                width: '50px',
+                width: '60px',
                 border: '1px solid',
-                fontSize: '32px',
+                borderRadius: '15px',
+                fontSize: '15px',
+                color: 'black',
+                fontWeight: '600',
                 backgroundColor: 'white',
                 zIndex: 1000,
                 '&:hover': {
@@ -581,7 +584,8 @@ export const App = () => {
                   boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.3)', 
                 },
                }}>
-              <FormatQuoteIcon sx={{color: "black"}}/>
+              {/* <FormatQuoteIcon sx={{color: "black"}}/> */}
+              {t("quote")}
             </IconButton>
           </Tooltip>
           }

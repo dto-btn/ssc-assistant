@@ -65,6 +65,7 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
                   maxWidth: 'calc(100% - 24px)',
+                  fontSize: '14px',
                   ml: '10px', 
                   mr: '5px',
                   color: 'black',

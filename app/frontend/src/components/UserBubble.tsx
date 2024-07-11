@@ -35,6 +35,7 @@ export const UserBubble = ({ text, quote }: UserChatProps) => {
                 WebkitBoxOrient: 'vertical',
                 maxWidth: 'calc(100% - 24px)',
                 pl: '10px', 
+                fontSize: '14px',
                 color: 'black',
                 flex: 1
               }}
