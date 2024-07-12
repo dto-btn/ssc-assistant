@@ -1,4 +1,4 @@
-import { Box, Paper, Container, Divider, Chip, Stack, Typography, Link, Tooltip } from '@mui/material';
+import { Box, Paper, Divider, Chip, Stack, Typography, Link, Tooltip } from '@mui/material';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -9,6 +9,7 @@ import { BubbleButtons } from './BubbleButtons';
 import { styled } from '@mui/system';
 import ProfileCardsContainer from '../containers/ProfileCardsContainer';
 import HandymanIcon from '@mui/icons-material/Handyman';
+import AutoAwesome from '@mui/icons-material/AutoAwesome';
 
 interface AssistantBubbleProps {
     text: string;
@@ -137,16 +138,21 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
             }}
             elevation={4}
           >
-            <Container>
-              <Markdown
-                components={components}
-                rehypePlugins={[rehypeHighlight]}
-                remarkPlugins={[remarkGfm]}>
-                {isLoading
-                  ? `${text.replace(/\[doc(\d+)\]/g, '')}_`
-                  : (processedContent.processedText !== "" ? processedContent.processedText : text)}
-              </Markdown>
-            </Container>
+            <MainContentWrapper>
+              <IconWrapper>
+                <AutoAwesome sx={{color: "primary.main", fontSize: 24}} />
+              </IconWrapper>
+              <TextComponentsBox>
+                <Markdown
+                  components={components}
+                  rehypePlugins={[rehypeHighlight]}
+                  remarkPlugins={[remarkGfm]}>
+                  {isLoading
+                    ? `${text.replace(/\[doc(\d+)\]/g, '')}_`
+                    : (processedContent.processedText !== "" ? processedContent.processedText : text)}
+                </Markdown>
+              </TextComponentsBox>
+            </MainContentWrapper>
 
             {toolsUsed && toolsInfo.tool_type && (
             <ToolsUsedBox>
@@ -241,3 +247,15 @@ const ToolsUsedBox = styled(Box)`
   justify-content: flex-end;
   align-items: center;
 `
+
+const MainContentWrapper = styled(Box)`
+  display: flex;
+  padding: 0px 15px;
+`
+
+const IconWrapper = styled(Box)`
+  margin: 18px 12px 8px 0px;
+`
+
+const TextComponentsBox = styled(Box)`
+`;

@@ -19,5 +19,25 @@ export async function callMsGraph(accessToken: string) {
     const graphResponse = await fetch(graphConfig.graphMeEndpoint, options);
     const graphData = await graphResponse.json();
 
-    return {graphData, accessToken};
+    let profilePictureURL = "";
+    try {
+        const profilePictureResponse = await fetch(`https://graph.microsoft.com/v1.0/me/photos/48x48/$value`, {
+            method: 'GET',
+            headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            },
+        });
+
+        if (profilePictureResponse.ok) {
+            const imageBlob = await profilePictureResponse.blob();
+            profilePictureURL = URL.createObjectURL(imageBlob);
+
+        } else {
+            console.error('Could not fetch profile picture');
+        }
+    } catch (error) {
+        console.error('Error fetching profile picture:', error);
+    }
+
+    return {graphData, accessToken, profilePictureURL};
 }

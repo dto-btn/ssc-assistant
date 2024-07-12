@@ -1,4 +1,7 @@
-import { Box, Paper, Container } from '@mui/material';
+import { Box, Paper, styled } from '@mui/material';
+import { useContext } from 'react';
+import { UserContext } from '../context/UserContext';
+import { UserProfilePicture } from './ProfilePicture';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -9,6 +12,8 @@ interface UserChatProps {
 }
 
 export const UserBubble = ({ text }: UserChatProps) => {
+
+  const { graphData } = useContext(UserContext);
 
   return (
     <Box sx={{ display: 'flex', justifyContent: 'flex-end', my: '2rem' }}>
@@ -22,10 +27,25 @@ export const UserBubble = ({ text }: UserChatProps) => {
         }}
         elevation={4}
       >
-        <Container>
-            <Markdown rehypePlugins={[rehypeHighlight]} remarkPlugins={[remarkGfm]}>{text}</Markdown>
-        </Container>
+        <UserBubbleContainer>
+          <Markdown rehypePlugins={[rehypeHighlight]} remarkPlugins={[remarkGfm]}>{text}</Markdown>
+        </UserBubbleContainer>
       </Paper>
+      <ProfilePictureView>
+        {graphData && 
+          <UserProfilePicture size='40px'  fullName={graphData['givenName'] + " " + graphData['surname']} />
+        }
+      </ProfilePictureView>
     </Box>
   );
 };
+
+const UserBubbleContainer = styled(Box)`
+  display: flex;
+  flex-direction: row;
+  padding: 0px 15px;
+`
+
+const ProfilePictureView = styled(Box)`
+  margin: 5px 0px 0px 10px;
+`
