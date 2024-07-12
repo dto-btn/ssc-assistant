@@ -76,14 +76,15 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
           <Divider />
           <FormGroup>
             {Object.keys(enabledTools).map((tool, index) => {
+              const toolName = tool === "corporate" ? "MySSC+" : tool;
               return (
                 <FormControlLabel 
-                  label={t(tool)} key={index}
+                  label={t(toolName)} key={index}
                   control={
                     <Switch 
                       checked={enabledTools[tool]}
                       onChange={handleUpdateEnabledTools} 
-                      name={tool}
+                      name={toolName}
                       sx={{marginLeft: '70px', marginRight: '10px', color: "primary.main"}}
                     />
                   }
