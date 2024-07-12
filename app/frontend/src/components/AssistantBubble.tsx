@@ -254,7 +254,7 @@ const MainContentWrapper = styled(Box)`
 `
 
 const IconWrapper = styled(Box)`
-  margin: 11px 12px 8px 0px;
+  margin: 18px 12px 8px 0px;
 `
 
 const TextComponentsBox = styled(Box)`

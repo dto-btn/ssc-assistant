@@ -75,10 +75,10 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
         <Collapse in={toolMenuOpen} timeout="auto" unmountOnExit>
           <Divider />
           <FormGroup>
-            {Object.keys(enabledTools).map((tool) => {
+            {Object.keys(enabledTools).map((tool, index) => {
               return (
                 <FormControlLabel 
-                  label={t(tool)} 
+                  label={t(tool)} key={index}
                   control={
                     <Switch 
                       checked={enabledTools[tool]}
