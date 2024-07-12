@@ -133,7 +133,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                           but the actual citations within the returned text, ex; The president is John Wayne[1] and you can contact him at 888-888-8888[2]
                     '''
                     tools_info = ToolInfo()
-                    tools_info.tool_type.append("MySSC+")
+                    tools_info.tool_type.append("corporate")
                     tools_info.function_names.append("corporate_question")
 
                     return (tools_info, client.chat.completions.create(
