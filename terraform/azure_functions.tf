@@ -26,7 +26,7 @@ resource "azurerm_linux_function_app" "functions" {
   service_plan_id            = azurerm_service_plan.functions.id
 
   site_config {
-    always_on = false
+    always_on = true
     vnet_route_all_enabled = true
     application_insights_key = azurerm_application_insights.functions.instrumentation_key
     application_stack {
@@ -40,15 +40,23 @@ resource "azurerm_linux_function_app" "functions" {
     "ENABLE_ORYX_BUILD"              = "true"
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "1"
     "XDG_CACHE_HOME"                 = "/tmp/.cache"
-    "AZURE_SEARCH_SERVICE_ENDPOINT"  = ""
-    "AZURE_SEARCH_INDEX_NAME"        = ""
-    "AZURE_SEARCH_ADMIN_KEY"         = ""
-    "BLOB_CONNECTION_STRING"         = ""
-    "BLOB_CONTAINER_NAME"            = ""
+    "BLOB_CONNECTION_STRING"         = azurerm_storage_account.main.primary_connection_string
+    "BLOB_CONTAINER_NAME"            = azurerm_storage_container.sscplus.name
+    "DOMAIN_NAME"                    = "https://plus.ssc-spc.gc.ca"
+    "AZURE_SEARCH_SERVICE_ENDPOINT"  = "https://${azurerm_search_service.main.name}.search.windows.net"
+    "AZURE_OPENAI_ENDPOINT"          = data.azurerm_cognitive_account.ai.endpoint
+    "AZURE_SEARCH_ADMIN_KEY"         = azurerm_search_service.main.primary_key
+    "AZURE_OPENAI_API_KEY"           = data.azurerm_cognitive_account.ai.primary_access_key
   }
 
   identity {
     type = "SystemAssigned"
   }
+
+  sticky_settings { # settings that are the same regardless of deployment slot..
+    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DOMAIN_NAME", "AZURE_SEARCH_ADMIN_KEY", "BLOB_CONNECTION_STRING", "BLOB_CONTAINER_NAME" ]
+  }
+
+  virtual_network_subnet_id = data.azurerm_subnet.subscription-vnet-sub.id
 
 }

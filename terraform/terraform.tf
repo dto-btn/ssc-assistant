@@ -6,6 +6,14 @@ terraform {
       version = "~> 3.90.0"
     }
   }
+
+  backend "azurerm" {
+    resource_group_name  = "ScSc-CIO_ECT_Infrastructure-rg"
+    storage_account_name = "ectinfra"
+    container_name       = "tfstate"
+    key                  = "pilot-prod.terraform.tfstate"
+  }
+
   required_version = ">= 1.1.0"
 }
 

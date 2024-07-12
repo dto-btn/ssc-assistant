@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from utils.get_download_stats import get_latest_date
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents.indexes import SearchIndexClient
+from azure.search.documents.indexes.models import SearchAlias
 from llama_index.core import (
     StorageContext,
     VectorStoreIndex,
@@ -29,6 +30,7 @@ load_dotenv()
 azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
 api_key                 = os.getenv("AZURE_OPENAI_API_KEY")
 api_version             = os.getenv("AZURE_OPENAI_VERSION", "2023-07-01-preview")
+api_search_version      = os.getenv("AZURE_SEARCH_VERSION", "2024-05-01-preview")
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 blob_connection_string  = os.getenv("BLOB_CONNECTION_STRING")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
@@ -48,15 +50,17 @@ def build_search_index(context: df.DurableOrchestrationContext):
     index_client = SearchIndexClient(
         endpoint=service_endpoint,
         credential=credential,
+        api_version=api_search_version
     )
 
-    metadata_fields = { "title" : "title",
-                    "langcode" : "langcode",
-                    "nid" : "nid",
-                    "date" : "date",
-                    "type" : "type",
-                    "url" : "url",
-                }
+    metadata_fields =   {
+                            "title" : "title",
+                            "langcode" : "langcode",
+                            "nid" : "nid",
+                            "date" : "date",
+                            "type" : "type",
+                            "url" : "url",
+                        }
 
     index_data_path = get_latest_date(container_client=container_client)
     index_name = index_data_path.replace("_", "-").replace(":", "-")
@@ -67,11 +71,14 @@ def build_search_index(context: df.DurableOrchestrationContext):
         index_name=index_name,
         index_management=IndexManagement.CREATE_IF_NOT_EXISTS,
         id_field_key="id",
-        chunk_field_key="content",
-        embedding_field_key="content_vector",
+        chunk_field_key="chunk",
+        embedding_field_key="embedding",
         embedding_dimensionality=1536,
         metadata_string_field_key="metadata",
         doc_id_field_key="doc_id",
+        vector_algorithm_type="hnsw",
+        language_analyzer="en.microsoft" #would need to be specified on each of the fields, depending if fr or en:
+        # https://learn.microsoft.com/en-us/azure/search/index-add-language-analyzers#how-to-specify-a-language-analyzer
     )
 
     pages_path = f"{index_data_path}/pages"
@@ -83,23 +90,23 @@ def build_search_index(context: df.DurableOrchestrationContext):
         document = Document(
             text=str(page["body"]).replace("\n", " "),
             metadata={ # type: ignore
-                'filename': page["filename"],
-                'url': page["url"],
                 'title': page["title"],
+                'langcode': page["langcode"],
+                'nid': page["nid"],
                 'date': page["date"],
-                'nid': page['nid'],
-                'langcode': page['langcode']
+                'type': page['type'],
+                'url': page['url']
             }
         )
         documents.append(document)
 
     llm = AzureOpenAI(
-            model=openai_model,
-            deployment_name=openai_deployment_name,
-            api_version=api_version,
-            azure_endpoint=azure_openai_uri,
-            api_key=api_key
-        )
+        model=openai_model,
+        deployment_name=openai_deployment_name,
+        api_version=api_version,
+        azure_endpoint=azure_openai_uri,
+        api_key=api_key
+    )
 
     embed_model = AzureOpenAIEmbedding(
         model=embedding_model,
@@ -117,6 +124,8 @@ def build_search_index(context: df.DurableOrchestrationContext):
     index = VectorStoreIndex.from_documents(
         documents, storage_context=storage_context
     )
+
+    result = yield context.call_activity("update_current_index_alias", index_name)
 
     return f"Index created: {index_name}."
 
@@ -150,10 +159,27 @@ def get_pages_as_json(path: str):
                 page["body"] = ' '.join(soup.stripped_strings)
                 page["title"] = str(raw["title"]).strip()
                 page["url"] = str(raw["url"]).strip()
+                # TODO: this date will sometimes comes as "date": "2021-06-14", and sometimes as "date": "<time datetime=\"2024-06-03T12:22:33+00:00\">2024-06-03</time>"
                 page["date"] = str(raw["date"]).strip()
                 page["filename"] = blob_client.blob_name
                 page["nid"] = str(raw['nid']).strip()
                 page["langcode"] = str(raw['langcode']).strip()
+                page["type"] = str(raw['type']).strip()
 
                 pages.append(page)
     return pages
+
+#Activity
+@build_index_bp.activity_trigger(input_name="index_name")
+def update_current_index_alias(index_name: str):
+    """ this function is used to create/update an alias that is always pointed to in the SSC-Assistant, in order
+        to allow us to update the indexes in the backend without having to update the backend API code.
+    """
+    index_client = SearchIndexClient(
+        endpoint=service_endpoint,
+        credential=credential,
+        api_version=api_search_version
+    )
+
+    alias = SearchAlias(name="current", indexes=[index_name])
+    return index_client.create_or_update_alias(alias)

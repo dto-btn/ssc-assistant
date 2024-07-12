@@ -15,7 +15,6 @@ fetch_data_bp = df.Blueprint()
 
 load_dotenv()
 blob_connection_string  = os.getenv("BLOB_CONNECTION_STRING")
-all_ids_url = os.getenv("ALL_PAGE_IDS_ENDPOINT")
 domain = str(os.getenv("DOMAIN_NAME"))
 
 blob_service_client = BlobServiceClient.from_connection_string(str(blob_connection_string))
