@@ -432,6 +432,8 @@ export const App = () => {
               margin: "auto",
             }}
             maxWidth="lg"
+            aria-live="polite" 
+            aria-relevant='additions'
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <Box

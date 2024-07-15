@@ -55,6 +55,7 @@ const ProfileCard = ({profile}: ProfileCardProps) => {
                     rel="noopener noreferrer"
                     endIcon={<LaunchIcon />}
                     size="large"
+                    aria-label={`${t("aria.geds.profile")}: ${profile.name}`}
                 >
                     {t("geds")}
                 </Button>

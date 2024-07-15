@@ -10,6 +10,8 @@ import { styled } from '@mui/system';
 import ProfileCardsContainer from '../containers/ProfileCardsContainer';
 import HandymanIcon from '@mui/icons-material/Handyman';
 import AutoAwesome from '@mui/icons-material/AutoAwesome';
+import { visuallyHidden } from '@mui/utils';
+
 
 interface AssistantBubbleProps {
     text: string;
@@ -120,7 +122,9 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
   }
 
   return (
-    <ChatBubbleWrapper>
+    <ChatBubbleWrapper
+      tabIndex={0}
+    >
       <ChatBubbleView
         className="chatBubbleView"
         onMouseEnter={() => setIsHovering(true)}
@@ -138,11 +142,13 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
             }}
             elevation={4}
           >
-            <MainContentWrapper>
+          <MainContentWrapper 
+          >
               <IconWrapper>
                 <AutoAwesome sx={{color: "primary.main", fontSize: 24}} />
               </IconWrapper>
-              <TextComponentsBox>
+              <TextComponentsBox >
+                <Typography sx={visuallyHidden}>{t("aria.assistant.message")} {index / 2}</Typography>
                 <Markdown
                   components={components}
                   rehypePlugins={[rehypeHighlight]}

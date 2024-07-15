@@ -70,7 +70,7 @@ export const TopMenu = ({ toggleDrawer } : TopMenuProps) => {
               <img src={logo} style={logoStyle} alt="logo of SSC" />
             </Grid>
             <Grid item sx={{ display: "flex", flexGrow: 1 }} xs={6} sm={6.5}>
-              <Typography variant="h6">{t("title")}</Typography>
+              <Typography variant="h4">{t("title")}</Typography>
             </Grid>
             <Grid container item xs={3} sm={4} sx={{ display: "flex" }} justifyContent='flex-end' alignItems="center">
               {graphData && accessToken && 
@@ -85,6 +85,7 @@ export const TopMenu = ({ toggleDrawer } : TopMenuProps) => {
                   edge="start"
                   color="inherit"
                   onClick={() => toggleDrawer(true)}
+                  aria-label={t("aria.show.menu")}
                 >
                   <MenuIcon />
                 </IconButton>

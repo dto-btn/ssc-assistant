@@ -39,6 +39,7 @@ const ProfileCardsContainer = (props: ProfileCardContainerProps) => {
                             <ProfileCard 
                                 profile={profile}
                                 key={index}
+                                aria-label={`${t("aria.geds.profile")}: ${profile.name}`}
                             />
                         )
                     })}
@@ -52,6 +53,7 @@ const ProfileCardsContainer = (props: ProfileCardContainerProps) => {
                                     <ProfileCard
                                         key={index}
                                         profile={profile}
+                                        aria-label={`${t("aria.geds.profile")}: ${profile.name}`}
                                     />
                                 )
                             })}

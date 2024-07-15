@@ -67,7 +67,14 @@ export const ChatInput = ({onSend, disabled, clearOnSend}: ChatInputProps) => {
           variant='outlined'
           InputProps={{
             endAdornment: <InputAdornment position="end">
-                            <IconButton onClick={sendQuestion} disabled={disabled}>
+                            <IconButton
+                              onClick={sendQuestion} 
+                              disabled={disabled}
+                              sx={{ '&:hover': {
+                                backgroundColor: 'rgba(0, 0, 0, 0.2)'
+                              } }}
+                              aria-label={t("send")}
+                            >
                             {disabled ? (
                               <CircularProgress size={24} aria-label={t("generating")}/>
                             ) : (
