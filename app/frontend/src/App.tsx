@@ -43,6 +43,7 @@ const mainTheme = createTheme({
   palette: {
     primary: {
       main: "#4b3e99" /* SSC's official colour code I found using our chatbot! XD */,
+      light: "rgba(75, 62, 153, 0.8)"
     },
     secondary: {
       main: "#f33aea",
@@ -561,7 +562,6 @@ export const App = () => {
             handleFeedbackSubmit={handleFeedbackSubmit}
           />
           {replyTooltipVisible &&
-          <Tooltip  title={<Typography variant="body1">{t("quote.tooltip")}</Typography>}  placement='top'>
             <IconButton 
               onClick={() => onQuoteReponseClicked()}
               id="replyButton"
@@ -569,24 +569,23 @@ export const App = () => {
                 position: 'absolute',
                 top: replyTooltipPosition.y - 45,
                 left: replyTooltipPosition.x,
-                height: '30px',
-                width: '60px',
+                height: '40px',
+                width: '90px',
                 border: '1px solid',
                 borderRadius: '15px',
-                fontSize: '15px',
-                color: 'black',
+                fontSize: '14px',
+                color: 'white',
                 fontWeight: '600',
-                backgroundColor: 'white',
+                backgroundColor: 'primary.light',
                 zIndex: 1000,
                 '&:hover': {
-                  backgroundColor: 'white', 
+                  backgroundColor: 'primary.main', 
                   boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.3)', 
                 },
                }}>
               {/* <FormatQuoteIcon sx={{color: "black"}}/> */}
               {t("quote")}
             </IconButton>
-          </Tooltip>
           }
         </ThemeProvider>
       </AuthenticatedTemplate>

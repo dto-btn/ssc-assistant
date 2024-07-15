@@ -72,7 +72,7 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
                   flex: 1
                 }}
               >
-                "{quotedText}""
+                "{quotedText}"
               </Typography>
               <IconButton 
                   onClick={handleRemoveQuote}

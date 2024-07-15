@@ -42,7 +42,6 @@ export const AssistantBubble = (props: AssistantBubbleProps) => {
 
   useEffect(() => {
     const handleSelectionChange = () => {
-      console.log('handle selection change')
       const selection = window.getSelection();
 
       if (selection && selection.rangeCount > 0) {

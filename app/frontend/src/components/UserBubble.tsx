@@ -33,14 +33,14 @@ export const UserBubble = ({ text, quote }: UserChatProps) => {
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
-                maxWidth: 'calc(100% - 24px)',
+                maxWidth: 'calc(100% - 10px)',
                 pl: '10px', 
                 fontSize: '14px',
                 color: 'black',
                 flex: 1
               }}
             >
-              "{quote}""
+              "{quote}"
             </Typography>
           </QuoteContainer>
         )}
