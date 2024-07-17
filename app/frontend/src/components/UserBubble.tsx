@@ -30,7 +30,7 @@ export const UserBubble = ({ text }: UserChatProps) => {
         elevation={4}
       >
         <UserBubbleContainer tabIndex={0}>
-          <Typography sx={visuallyHidden}>{t("aria.user.question")}</Typography>
+          <Typography sx={visuallyHidden}>{t("aria.user.question")}</Typography> {/* Hidden div for screen reader */}
           <Markdown rehypePlugins={[rehypeHighlight]} remarkPlugins={[remarkGfm]}>{text}</Markdown>
         </UserBubbleContainer>
       </Paper>

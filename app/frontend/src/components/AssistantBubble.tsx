@@ -148,9 +148,9 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
                 <AutoAwesome sx={{color: "primary.main", fontSize: 24}} />
               </IconWrapper>
               <TextComponentsBox >
-                <Typography sx={visuallyHidden}>{t("aria.assistant.message")} {index / 2}</Typography>
+                <Typography sx={visuallyHidden}>{t("aria.assistant.message")}</Typography> {/* Hidden div for screen reader */}
                 <Markdown
-                  components={components}
+                  components={components}   
                   rehypePlugins={[rehypeHighlight]}
                   remarkPlugins={[remarkGfm]}>
                   {isLoading
