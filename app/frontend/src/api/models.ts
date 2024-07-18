@@ -62,4 +62,5 @@ interface EmployeeProfile {
   url: string;
   organization_en: string;
   organization_fr: string;
+  matchedProfile?: boolean;
 }

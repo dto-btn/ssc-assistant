@@ -8,14 +8,13 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 interface ProfileCardContainerProps {
     profiles: EmployeeProfile[];
-    extraProfiles: EmployeeProfile[];
     isExpanded: boolean;
     toggleShowProfileHandler: () => void;
 }
 
 const ProfileCardsContainer = (props: ProfileCardContainerProps) => {
     const { t } = useTranslation();
-    const { profiles, extraProfiles, isExpanded, toggleShowProfileHandler } = props;
+    const { profiles, isExpanded, toggleShowProfileHandler } = props;
 
     return (
         <>
@@ -43,21 +42,6 @@ const ProfileCardsContainer = (props: ProfileCardContainerProps) => {
                             />
                         )
                     })}
-                    {extraProfiles.length > 0 &&
-                        <>
-                            <Typography sx={{padding: '10px 8px 0px 8px', fontSize: 14, color: 'primary.main', fontWeight: 500}}>
-                                {t("chat.additional.profiles")}
-                            </Typography>
-                            {extraProfiles.map((profile, index) => {
-                                return (
-                                    <ProfileCard
-                                        key={index}
-                                        profile={profile}
-                                    />
-                                )
-                            })}
-                        </>
-                    }
                 </Stack>
                 }
             </Box>

@@ -32,7 +32,6 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
   const [processingComplete, setProcessingComplete] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [profiles, setProfiles] = useState<EmployeeProfile[]>([])
-  const [extraProfiles, setExtraProfiles] = useState<EmployeeProfile[]>([])
   const [profilesExpanded, setExpandProfiles] = useState(false)
   const isMostRecent = index === total - 1;
   const toolsUsed = toolsInfo && toolsInfo.tool_type.length > 0
@@ -87,25 +86,24 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
 }, [isLoading, context, text, scrollRef]);
 
   const processProfiles = (employeeProfiles: EmployeeProfile[]) => {
-    const matchedProfiles: EmployeeProfile[] = [];
-    const unmatchedProfiles: EmployeeProfile[] = [];
+    const processedProfiles: EmployeeProfile[] = [];
     
     employeeProfiles.forEach((profile) => {
         if (text.includes(profile.email) || (profile.phone && text.includes(profile.phone))) {
-            matchedProfiles.push(profile);
+            profile.matchedProfile = true;
         } else {
-            unmatchedProfiles.push(profile);
+          profile.matchedProfile = false;
         }
+        processedProfiles.push(profile);
     });
 
-    return { matchedProfiles, unmatchedProfiles };
+    return processedProfiles;
   };
 
   useEffect(() => {
       if (toolsInfo && toolsInfo.payload?.hasOwnProperty("profiles") && toolsInfo.payload.profiles !== null) {
-          const { matchedProfiles, unmatchedProfiles } = processProfiles(toolsInfo.payload.profiles);
-          setProfiles(matchedProfiles);
-          setExtraProfiles(unmatchedProfiles);
+          const processedProfiles = processProfiles(toolsInfo.payload.profiles);
+          setProfiles(processedProfiles);
       }
   }, [toolsInfo]);
 
@@ -209,10 +207,9 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
               </>
             )}
 
-            {!isLoading && (profiles.length > 0 || extraProfiles.length > 0) &&
+            {!isLoading && profiles.length > 0 &&
             <ProfileCardsContainer
               profiles={profiles}
-              extraProfiles={extraProfiles}
               isExpanded={profilesExpanded}
               toggleShowProfileHandler={handleToggleShowProfiles}
             />
