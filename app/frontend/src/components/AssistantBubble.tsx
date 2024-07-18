@@ -91,7 +91,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
     const unmatchedProfiles: EmployeeProfile[] = [];
     
     employeeProfiles.forEach((profile) => {
-        if (text.includes(profile.email)) {
+        if (text.includes(profile.email) || (profile.phone && text.includes(profile.phone))) {
             matchedProfiles.push(profile);
         } else {
             unmatchedProfiles.push(profile);
@@ -209,7 +209,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
               </>
             )}
 
-            {!isLoading && profiles.length > 0 &&
+            {!isLoading && (profiles.length > 0 || extraProfiles.length > 0) &&
             <ProfileCardsContainer
               profiles={profiles}
               extraProfiles={extraProfiles}
