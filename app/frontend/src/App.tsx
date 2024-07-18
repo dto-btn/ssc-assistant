@@ -120,6 +120,8 @@ export const App = () => {
         accessToken: idToken
       });
 
+      console.log('completion response: ', completionResponse)
+
       setChatHistory((prevChatHistory) => {
         const updatedChatHistory = [...prevChatHistory]; //making a copy
         const lastItemIndex = updatedChatHistory.length - 1;

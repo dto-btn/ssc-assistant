@@ -86,6 +86,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
 }, [isLoading, context, text, scrollRef]);
 
   const processProfiles = (employeeProfiles: EmployeeProfile[]) => {
+    console.log('employee profiles: ', employeeProfiles)
     const processedProfiles: EmployeeProfile[] = [];
     
     employeeProfiles.forEach((profile) => {
@@ -102,6 +103,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
 
   useEffect(() => {
       if (toolsInfo && toolsInfo.payload?.hasOwnProperty("profiles") && toolsInfo.payload.profiles !== null) {
+        console.log(toolsInfo.payload.profiles)
           const processedProfiles = processProfiles(toolsInfo.payload.profiles);
           setProfiles(processedProfiles);
       }
