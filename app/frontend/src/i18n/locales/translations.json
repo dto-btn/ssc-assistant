@@ -1,7 +1,7 @@
 {
   "aria.show.menu": {
       "en": "Settings menu",
-      "fr": "MISSING"
+      "fr": "Menu des options"
   },
   "placeholder": {
       "en": "Type your question here:",
@@ -22,10 +22,6 @@
   "menu.responsecount": {
       "en": "Max response",
       "fr": "Réponse maximale"
-  },
-  "question.submitted": {
-      "en": "Submitted question",
-      "fr": "MISSING"
   },
   "chat.unknownError": {
       "en": "An unknown error occurred",
@@ -83,10 +79,6 @@
       "en": "Accept",
       "fr": "Accepter"
   },
-  "answer.given": {
-      "en": "Given answer",
-      "fr": "MISSING"
-  },
   "quote.tooltip": {
       "en": "Quote this response",
       "fr": "Citer cette réponse"
@@ -127,10 +119,6 @@
       "en": "Bad response",
       "fr": "Mauvaise réponse"
   },
-  "like": {
-      "en": "Like",
-      "fr": "MISSING"
-  },
   "gpt-ex3-s": {
       "en": "Email helper",
       "fr": "Assistant de courriel électronique"
@@ -163,13 +151,9 @@
       "en": "You are an AI assistant for SSC that creates greeting messages. When greeting users, follow these instructions:\n- Start with a welcoming sentence using the user's name.\n- Include an wave or smile emoji in the message.\n- Keep the greeting brief.\n- Mention that you provide assistance with **general knowledge**, employee information via **GEDS**, and corporate **SSC (Shared Services Canada)** information through the **MySSC+ intranet**.\n- Do not include time-specific greetings or signatures.\n- Use a friendly and professional tone.\nGenerate a greeting message based on these rules. If the words above are in bold characters, ensure the same style in applied to these words your answers.",
       "fr": "Vous êtes un assistant IA pour SPC qui crée des messages de bienvenue. Lors de l'accueil des utilisateurs, suivez ces instructions :\n- Commencez par une phrase de bienvenue en utilisant le nom de l'utilisateur.\n- Incluez un emoji de salutation ou un sourire dans le message.\n- Gardez la salutation brève.\n- Mentionnez que vous fournissez de l'aide en **connaissance générale**, des informations sur les employés via **SAGE**, et des informations corporatives **SPC (Services partagés Canada)** à travers l'intranet **MonSPC+**.\n- N'incluez pas de salutations spécifiques au moment de la journée ni de signatures.\n- Utilisez un ton amical et professionnel.\nGénérez un message de salutation basé sur ces règles. Si les mots ci-dessus sont en gras, assurez-vous que le même style est utilisé dans vos réponses."
   },
-  "dislike": {
-      "en": "Dislike",
-      "fr": "MISSING"
-  },
   "aria.alert.message": {
       "en": "Alert message: ",
-      "fr": "MISSING"
+      "fr": "Message d'alerte"
   },
   "welcome": {
       "en": "Welcome to the SSC Assistant",
@@ -226,10 +210,6 @@
   "msg.opt": {
       "en": "Message (optional)",
       "fr": "Message (optionnel)"
-  },
-  "tellus.like": {
-      "en": "Tell us what you liked!",
-      "fr": "MISSING"
   },
   "example1": {
       "en": "What records management system does SSC use?",
@@ -301,7 +281,7 @@
   },
   "aria.geds.profile": {
       "en": "GEDS profile for: ",
-      "fr": "MISSING"
+      "fr": "Profile SAGE pour:"
   },
   "prompt": {
       "en": "Prompt:",
@@ -309,7 +289,7 @@
   },
   "aria.assistant.message": {
       "en": "Assistant message: ",
-      "fr": "MISSING"
+      "fr": "Message de l'assistant: "
   },
   "copy": {
       "en": "Copy",
@@ -345,15 +325,7 @@
   },
   "aria.user.question": {
       "en": "User question: ",
-      "fr": "MISSING"
-  },
-  "sources": {
-      "en": "Source(s)",
-      "fr": "MISSING"
-  },
-  "feedback.url": {
-      "en": "https://forms.office.com/r/dPvsZykMSy",
-      "fr": "MISSING"
+      "fr": "Question de l'utilisateur: "
   },
   "use.chathistory": {
       "en": "Use chat history in queries",
@@ -407,17 +379,9 @@
       "en": "Try these examples:",
       "fr": "Essayez ces exemples :"
   },
-  "dontsend": {
-      "en": "Don't send",
-      "fr": "MISSING"
-  },
   "copytext": {
       "en": "Copy",
       "fr": "Copier"
-  },
-  "tellus.dislike": {
-      "en": "Tell us what you disliked",
-      "fr": "MISSING"
   },
   "title.short": {
       "en": "Chatbot Pilot",
