@@ -96,7 +96,6 @@ jobs:
         npm run test --if-present
       working-directory: '.'
       env:
-        VITE_REDIRECT_URI: ${{ secrets.VITE_REDIRECT_URI }}
         VITE_AZURE_AD_CLIENT_ID: ${{ secrets.VITE_AZURE_AD_CLIENT_ID }}
         VITE_AZURE_AD_TENANT_ID: ${{ secrets.VITE_AZURE_AD_TENANT_ID }}
 
