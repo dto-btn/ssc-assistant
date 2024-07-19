@@ -1,4 +1,4 @@
-import { Box, Divider, Stack, Typography, Button } from '@mui/material';
+import { Box, Divider, Stack, Button } from '@mui/material';
 import 'highlight.js/styles/github.css'
 import { useTranslation } from 'react-i18next';
 import ProfileCard from '../components/ProfileCard';
