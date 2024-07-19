@@ -1,25 +1,21 @@
-import logging
 import json  # bourne
+import logging
 import os
+
 import azure.durable_functions as df
-from azure.storage.blob import BlobServiceClient
-from bs4 import BeautifulSoup
-from dotenv import load_dotenv
-from utils.get_download_stats import get_latest_date
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.indexes.models import SearchAlias
-from llama_index.core import (
-    StorageContext,
-    VectorStoreIndex,
-)
+from azure.storage.blob import BlobServiceClient
+from bs4 import BeautifulSoup
+from dotenv import load_dotenv
+from llama_index.core import Document, StorageContext, VectorStoreIndex
 from llama_index.core.settings import Settings
-
-from llama_index.llms.azure_openai import AzureOpenAI
 from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
-from llama_index.vector_stores.azureaisearch import AzureAISearchVectorStore
-from llama_index.vector_stores.azureaisearch import IndexManagement
-from llama_index.core import Document
+from llama_index.llms.azure_openai import AzureOpenAI
+from llama_index.vector_stores.azureaisearch import (AzureAISearchVectorStore,
+                                                     IndexManagement)
+from utils.get_download_stats import get_latest_date
 
 # Example for durable blueprint functions:
 # https://github.com/Azure/azure-functions-durable-python/blob/dev/samples-v2/blueprint/durable_blueprints.py
@@ -34,6 +30,7 @@ api_search_version      = os.getenv("AZURE_SEARCH_VERSION", "2024-05-01-preview"
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 blob_connection_string  = os.getenv("BLOB_CONNECTION_STRING")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
+alias_index_name: str   = os.getenv("ALIAS_INDEX_NAME", "current")
 
 credential = AzureKeyCredential(key)
 openai_deployment_name: str = os.getenv("OPENAI_MODEL", "gpt-4-1106")
@@ -125,8 +122,6 @@ def build_search_index(context: df.DurableOrchestrationContext):
         documents, storage_context=storage_context
     )
 
-    result = yield context.call_activity("update_current_index_alias", index_name)
-
     return f"Index created: {index_name}."
 
 
@@ -169,17 +164,33 @@ def get_pages_as_json(path: str):
                 pages.append(page)
     return pages
 
-#Activity
-@build_index_bp.activity_trigger(input_name="index_name")
-def update_current_index_alias(index_name: str):
+@build_index_bp.orchestration_trigger(context_name="context")
+def update_current_index_alias(context: df.DurableOrchestrationContext):
     """ this function is used to create/update an alias that is always pointed to in the SSC-Assistant, in order
         to allow us to update the indexes in the backend without having to update the backend API code.
     """
+    container_client = blob_service_client.get_container_client(container_name)
+    index_data_path = get_latest_date(container_client=container_client)
+    index_name = index_data_path.replace("_", "-").replace(":", "-")
+
+    logging.info("Alias creation starting ...")
+    new_alias = yield context.call_activity(name="update_index_alias", input_={"index_name": index_name, "alias_name": alias_index_name})
+    logging.info("Alias creation finished ...")
+    logging.info(new_alias)
+
+#Activity
+@build_index_bp.activity_trigger(input_name="payload")
+def update_index_alias(payload):
+
     index_client = SearchIndexClient(
         endpoint=service_endpoint,
         credential=credential,
         api_version=api_search_version
     )
+    logging.info(f"Inside Update Index Alias function, payload -> {payload}")
 
-    alias = SearchAlias(name="current", indexes=[index_name])
-    return index_client.create_or_update_alias(alias)
+    alias = SearchAlias(name=payload['alias_name'], indexes=[payload['index_name']])
+    new_alias = index_client.create_or_update_alias(alias)
+    logging.info(new_alias)
+
+    return json.dumps(new_alias.as_dict())
