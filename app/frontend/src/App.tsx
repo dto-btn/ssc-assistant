@@ -120,6 +120,8 @@ export const App = () => {
         accessToken: idToken
       });
 
+      console.log('completion response: ', completionResponse)
+
       setChatHistory((prevChatHistory) => {
         const updatedChatHistory = [...prevChatHistory]; //making a copy
         const lastItemIndex = updatedChatHistory.length - 1;
@@ -432,6 +434,8 @@ export const App = () => {
               margin: "auto",
             }}
             maxWidth="lg"
+            aria-live="polite" 
+            aria-relevant='additions'
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <Box

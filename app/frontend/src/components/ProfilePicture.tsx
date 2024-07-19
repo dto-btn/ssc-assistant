@@ -58,10 +58,10 @@ export const UserProfilePicture = ({ fullName, size } : UserProfileProps) => {
   }, [profilePictureURL, fullName, size]);
 
   if(profilePictureURL)
-    return <Avatar alt={fullName} src={profilePictureURL}  sx={size ? { width: size, height: size } : {}}  
+    return <Avatar aria-hidden alt={fullName} src={profilePictureURL}  sx={size ? { width: size, height: size } : {}}  
   />;
   else if (letterAvatar)
-    return <Avatar alt={fullName} sx={letterAvatar.sx} children={letterAvatar.children} />;
+    return <Avatar aria-hidden alt={fullName} sx={letterAvatar.sx} children={letterAvatar.children} />;
   else
     return null;
 };

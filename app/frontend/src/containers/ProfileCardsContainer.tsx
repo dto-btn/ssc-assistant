@@ -1,4 +1,4 @@
-import { Box, Divider, Stack, Typography, Button } from '@mui/material';
+import { Box, Divider, Stack, Button } from '@mui/material';
 import 'highlight.js/styles/github.css'
 import { useTranslation } from 'react-i18next';
 import ProfileCard from '../components/ProfileCard';
@@ -8,14 +8,13 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 interface ProfileCardContainerProps {
     profiles: EmployeeProfile[];
-    extraProfiles: EmployeeProfile[];
     isExpanded: boolean;
     toggleShowProfileHandler: () => void;
 }
 
 const ProfileCardsContainer = (props: ProfileCardContainerProps) => {
     const { t } = useTranslation();
-    const { profiles, extraProfiles, isExpanded, toggleShowProfileHandler } = props;
+    const { profiles, isExpanded, toggleShowProfileHandler } = props;
 
     return (
         <>
@@ -26,7 +25,7 @@ const ProfileCardsContainer = (props: ProfileCardContainerProps) => {
                     onClick={() => toggleShowProfileHandler()} 
                     endIcon={
                         !isExpanded 
-                            ? <ExpandMoreIcon style={{ fontSize: 35, paddingBottom: "3px"  }} /> 
+                            ? <ExpandMoreIcon style={{ fontSize: 35, paddingBottom: "3px"  }} />
                             : <ExpandLessIcon style={{ fontSize: 35, paddingBottom: "3px" }} />
                     } 
                 > 
@@ -39,24 +38,10 @@ const ProfileCardsContainer = (props: ProfileCardContainerProps) => {
                             <ProfileCard 
                                 profile={profile}
                                 key={index}
+                                aria-label={`${t("aria.geds.profile")}: ${profile.name}`}
                             />
                         )
                     })}
-                    {extraProfiles.length > 0 &&
-                        <>
-                            <Typography sx={{padding: '10px 8px 0px 8px', fontSize: 14, color: 'primary.main', fontWeight: 500}}>
-                                {t("chat.additional.profiles")}
-                            </Typography>
-                            {extraProfiles.map((profile, index) => {
-                                return (
-                                    <ProfileCard
-                                        key={index}
-                                        profile={profile}
-                                    />
-                                )
-                            })}
-                        </>
-                    }
                 </Stack>
                 }
             </Box>
