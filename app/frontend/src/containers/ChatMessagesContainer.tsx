@@ -25,6 +25,8 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
             paddingTop: "6rem",
             alignItems: "flex-end",
             }}
+            aria-live="polite" 
+            aria-relevant='additions'
         >
             {chatHistory.length === 0 && (
             <>
@@ -60,7 +62,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                 )}
 
                 {isAMessage(chatItem) && (
-                <UserBubble text={chatItem.content} />
+                <UserBubble text={chatItem.content} quote={chatItem.quotedText} />
                 )}
 
                 {isAToastMessage(chatItem) && (

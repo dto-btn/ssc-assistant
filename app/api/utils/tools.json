@@ -23,24 +23,6 @@
   },
   {
     "type": "function",
-    "tool_type": "geds",
-    "function": {
-      "name": "get_employee_by_phone_number",
-      "description": "Gets information on a specific Government of Canada employee by their phone number, it typically consists of a 10 digit phone number, e.g. 123-456-7890 or 1234567890. Do NOT use this method unless you have been clearly asked by a user to provide contact information for a person and been provided with a valid phone number for Canada area.",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "employee_phone_number": {
-            "type": "string",
-            "description": "The phone number of an employee, e.g. 123-456-7890 or 1234567890"
-          }
-        },
-        "required": ["employee_phone_number"]
-      }
-    }
-  },
-  {
-    "type": "function",
     "tool_type": "corporate",
     "function": {
       "name": "corporate_question",

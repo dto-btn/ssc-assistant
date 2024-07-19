@@ -1,0 +1,390 @@
+{
+    "aria.show.menu": {
+        "en": "Settings menu",
+        "fr": "Menu des options"
+    },
+    "placeholder": {
+        "en": "Type your question here:",
+        "fr": "Tapez votre question ici :"
+    },
+    "chat.with.gpt": {
+        "en": "Chat with GPT and:",
+        "fr": "Discutez avec GPT et :"
+    },
+    "menu.model.select": {
+        "en": "Select model",
+        "fr": "Choisir le modèle"
+    },
+    "sscplus.question": {
+        "en": "MySSC+ Content",
+        "fr": "Question MonSPC+"
+    },
+    "menu.responsecount": {
+        "en": "Max response",
+        "fr": "Réponse maximale"
+    },
+    "chat.unknownError": {
+        "en": "An unknown error occurred",
+        "fr": "Une erreur inconnue est survenue"
+    },
+    "login.required": {
+        "en": "Login Required to Proceed",
+        "fr": "Connexion requise pour continuer"
+    },
+    "ask.btn": {
+        "en": "Ask a question button",
+        "fr": "Bouton Poser une question"
+    },
+    "chat.show.profiles": {
+        "en": "Show GEDS Profiles",
+        "fr": "Afficher les profils SAGE"
+    },
+    "chat.additional.profiles": {
+        "en": "ADDITIONAL PROFILES",
+        "fr": "PROFILS SUPPLÉMENTAIRES"
+    },
+    "regenerate": {
+        "en": "Regenerate",
+        "fr": "Régénérer"
+    },
+    "chatbot.input.label": {
+        "en": "Chatbot question input",
+        "fr": "Saisie des questions du chatbot"
+    },
+    "disclaimer": {
+        "en": "DISCLAIMER",
+        "fr": "AVIS DE NON-RESPONSABILITÉ"
+    },
+    "clearchat.button": {
+        "en": "Clear chat",
+        "fr": "Effacer l’historique des discussions"
+    },
+    "any.question": {
+        "en": "Ask GPT-4",
+        "fr": "Demander à GPT-4"
+    },
+    "cancel": {
+        "en": "Cancel",
+        "fr": "Annuler"
+    },
+    "msteams.channel": {
+        "en": "SSC Early Adopters",
+        "fr": "Adopteurs précoces de SPC"
+    },
+    "question.maxlength": {
+        "en": "You have reached the maximum question length. Reduce question size.",
+        "fr": "Vous avez atteint la longueur maximale de la question. Réduisez la taille de la question."
+    },
+    "accept": {
+        "en": "Accept",
+        "fr": "Accepter"
+    },
+    "quote.tooltip": {
+        "en": "Quote this response",
+        "fr": "Citer cette réponse"
+    },
+    "retry": {
+        "en": "Retry",
+        "fr": "Réessayer"
+    },
+    "gpt-ex1-q": {
+        "en": "When Mr. Bilbo Baggins of Bag End announced that he would shortly be celebrating his eleventy-first birthday with a party of special magnificence, there was much talk and excitement in Hobbiton. Bilbo was very rich and very peculiar, and had been the wonder of the Shire for sixty years, ever since his remarkable disappearance and unexpected return. The riches he had brought back from his travels had now become a local legend, and it was popularly believed, whatever the old folk might say, that the Hill at Bag End was full of tunnels stuffed with treasure. And if that was not enough for fame, there was also his prolonged vigour to marvel at.",
+        "fr": "Lorsque M. Bilbo Baggins de Cul-de-Sac a annoncé qu'il allait bientôt fêter son cent-onzième anniversaire avec une fête d'une magnificence particulière, il y a eu beaucoup de discussions et d'excitation à Hobbiton. Bilbo était très riche et très particulier, et avait été l'émerveillement de la Comté pendant soixante ans, depuis sa disparition remarquable et son retour inattendu. Les richesses qu'il avait rapportées de ses voyages étaient devenues une légende locale, et on croyait communément, quoique puissent dire les vieux, que la Colline à Cul-de-Sac était pleine de tunnels remplis de trésors. Et si cela ne suffisait pas pour la renommée, il y avait aussi sa vigueur prolongée à admirer."
+    },
+    "clearchat": {
+        "en": "Clear Chat",
+        "fr": "Effacer l’historique"
+    },
+    "toolsUsed": {
+        "en": "Tools used by the assistant in the response",
+        "fr": "Outils utilisés par l'assistant dans la réponse"
+    },
+    "answer.not.found": {
+        "en": "It seems we could not find an answer to your question, you can try clearing the history and asking the question again.",
+        "fr": "Il semble que nous n'ayons pas pu trouver une réponse à votre question, vous pouvez essayer d'effacer l'historique et de poser la question à nouveau."
+    },
+    "tbs.responsibleai": {
+        "en": "Guide on the use of Generative AI",
+        "fr": "Guide d'utilisation de l'IA Générative"
+    },
+    "corporate": {
+        "en": "MySSC+",
+        "fr": "MonSPC+"
+    },
+    "langlink.shorthand": {
+        "en": "fr",
+        "fr": "en"
+    },
+    "bad.response": {
+        "en": "Bad response",
+        "fr": "Mauvaise réponse"
+    },
+    "gpt-ex3-s": {
+        "en": "Email helper",
+        "fr": "Assistant de courriel électronique"
+    },
+    "answer.validate.query": {
+        "en": "I will give you a question that was asked by the user and the awnser you gave back. Were you able to successfully help the user with that answer. Uniquely answer by YES or by NO",
+        "fr": "Je vais vous donner une question qui a été posée par l'utilisateur et la réponse que vous avez donnée en retour. Avez-vous réussi à aider l'utilisateur avec cette réponse. Répondez uniquement par YES (pour oui) ou par NO (pour non)"
+    },
+    "generating": {
+        "en": "Generating answer",
+        "fr": "Génération de réponse"
+    },
+    "menu.desc": {
+        "en": "Retrieve this many documents from search:",
+        "fr": "Quantité de documents à rechercher:"
+    },
+    "disclaimer.desc2": {
+        "en": "DO NOT SEND ANY PROTECTED INFORMATION IN THE CHATBOT.",
+        "fr": "N'ENVOYEZ PAS D'INFORMATIONS CONFIDENTIELLES DANS LE CHATBOT."
+    },
+    "disclaimer.desc": {
+        "en": "The SSC Assistant is in pilot phase and uses Azure OpenAI. Answers may be incorrect even if they seem reliable. Just like humans, AI can make mistakes. Your feedback is important to help us improve the tool.",
+        "fr": "L’assistant SPC est en phase pilote et utilise l’IA d’Azure OpenAI. Les réponses peuvent être incorrectes même si elles semblent fiables. Tout comme les humains, l’IA peut commettre des erreurs. Votre avis est important pour nous aider à améliorer l’outil."
+    },
+    "supporting": {
+        "en": "Supporting content",
+        "fr": "Contenu de soutien"
+    },
+    "welcome.prompt.system": {
+        "en": "You are an AI assistant for SSC that creates greeting messages. When greeting users, follow these instructions:\n- Start with a welcoming sentence using the user's name.\n- Include an wave or smile emoji in the message.\n- Keep the greeting brief.\n- Mention that you provide assistance with **general knowledge**, employee information via **GEDS**, and corporate **SSC (Shared Services Canada)** information through the **MySSC+ intranet**.\n- Do not include time-specific greetings or signatures.\n- Use a friendly and professional tone.\nGenerate a greeting message based on these rules. If the words above are in bold characters, ensure the same style in applied to these words your answers.",
+        "fr": "Vous êtes un assistant IA pour SPC qui crée des messages de bienvenue. Lors de l'accueil des utilisateurs, suivez ces instructions :\n- Commencez par une phrase de bienvenue en utilisant le nom de l'utilisateur.\n- Incluez un emoji de salutation ou un sourire dans le message.\n- Gardez la salutation brève.\n- Mentionnez que vous fournissez de l'aide en **connaissance générale**, des informations sur les employés via **SAGE**, et des informations corporatives **SPC (Services partagés Canada)** à travers l'intranet **MonSPC+**.\n- N'incluez pas de salutations spécifiques au moment de la journée ni de signatures.\n- Utilisez un ton amical et professionnel.\nGénérez un message de salutation basé sur ces règles. Si les mots ci-dessus sont en gras, assurez-vous que le même style est utilisé dans vos réponses."
+    },
+    "aria.alert.message": {
+        "en": "Alert message: ",
+        "fr": "Message d'alerte"
+    },
+    "welcome": {
+        "en": "Welcome to the SSC Assistant",
+        "fr": "Bienvenue à l'Assistant SPC"
+    },
+    "feedback": {
+        "en": "Feedback",
+        "fr": "Commentaire"
+    },
+    "geds": {
+        "en": "GEDS",
+        "fr": "SAGE"
+    },
+    "gpt-ex3-q": {
+        "en": "I want to collaborate with the other Team A so I can intergrate my chatbot with their technology.",
+        "fr": "Je souhaite collaborer avec l'autre Équipe A afin de pouvoir intégrer mon chatbot avec leur technologie."
+    },
+    "prompt.placeholder": {
+        "en": "You are an AI assistant.",
+        "fr": "Vous êtes un assistant IA."
+    },
+    "ask.question": {
+        "en": "Ask your question",
+        "fr": "Demandez une question"
+    },
+    "feedback.link.label": {
+        "en": "Feedback form link",
+        "fr": "Lien du formulaire de commentaires"
+    },
+    "langlink": {
+        "en": "Français",
+        "fr": "English"
+    },
+    "menu.responsemode.select": {
+        "en": "Select mode",
+        "fr": "Choisir le mode"
+    },
+    "feedback.fail": {
+        "en": "Error sending feedback",
+        "fr": "Erreur lors de l'envoi de l'avis"
+    },
+    "feedback.long": {
+        "en": "Click here to let us know your thoughts. Thank you for your feedback!",
+        "fr": "Cliquez ici pour nous faire part de vos commentaires. Merci de nous communiquer vos remarques!"
+    },
+    "gpt-ex3-p": {
+        "en": "You will write an formal email for me and I will give you the subject of the email",
+        "fr": "Vous allez rédiger un e-mail formel pour moi et je vous donnerai le sujet de l'e-mail"
+    },
+    "submit": {
+        "en": "Submit",
+        "fr": "Soumettre"
+    },
+    "msg.opt": {
+        "en": "Message (optional)",
+        "fr": "Message (optionnel)"
+    },
+    "example1": {
+        "en": "What records management system does SSC use?",
+        "fr": "Quel est le système de gestion de l’information utilisé par SPC?"
+    },
+    "gpt-ex2-s": {
+        "en": "Page summarization",
+        "fr": "Résumé de la page"
+    },
+    "menu.button": {
+        "en": "Developer settings",
+        "fr": "Paramètres du développeur"
+    },
+    "example2": {
+        "en": "How can I reach the IT service desk?",
+        "fr": "Comment puis-je joindre le bureau de service de la TI?"
+    },
+    "feedback.success": {
+        "en": "Feedback submitted, thank you!",
+        "fr": "Avis soumis, merci!"
+    },
+    "welcome.prompt.user": {
+        "en": "Create a greeting message for user: {{givenName}}.",
+        "fr": "Créez un message de bienvenue pour l'utilisateur : {{givenName}}."
+    },
+    "msteams.channel.url": {
+        "en": "https://teams.microsoft.com/l/channel/19%3a814a3fed0bd7494a9be5657d247254bf%40thread.tacv2/Azure%2520OpenAI%2520Chatbot%2520Pilot?groupId=9c07bdb4-3403-464b-a1c2-91cdaf3a2496&tenantId=d05bc194-94bf-4ad6-ae2e-1db0f2e38f5e",
+        "fr": "https://teams.microsoft.com/l/channel/19%3a814a3fed0bd7494a9be5657d247254bf%40thread.tacv2/Azure%2520OpenAI%2520Chatbot%2520Pilot?groupId=9c07bdb4-3403-464b-a1c2-91cdaf3a2496&tenantId=d05bc194-94bf-4ad6-ae2e-1db0f2e38f5e"
+    },
+    "chat.hide.profiles": {
+        "en": "Hide Profiles",
+        "fr": "Cacher les profils"
+    },
+    "example3": {
+        "en": "What are the steps to hire a new employee at SSC?",
+        "fr": "Quelles sont les étapes à suivre pour embaucher un nouvel employé à SPC?"
+    },
+    "login": {
+        "en": "Login",
+        "fr": "Me connecter"
+    },
+    "menu.maxhistory": {
+        "en": "Past messages included:",
+        "fr": "Messages passés inclus:"
+    },
+    "copy.success": {
+        "en": "Copied!",
+        "fr": "Copié!"
+    },
+    "default.welcome.msg": {
+        "en": "Hello! I am your SSC Assistant how may I help you today?",
+        "fr": "Bonjour! Je suis votre assistant SSC, comment puis-je vous aider aujourd'hui ?"
+    },
+    "menu.desc2": {
+        "en": "Change Temperature value:",
+        "fr": "Modifier la valeur de température:"
+    },
+    "footer.desc": {
+        "en": "Useful links",
+        "fr": "Liens utiles"
+    },
+    "close": {
+        "en": "Close",
+        "fr": "Fermer"
+    },
+    "good.response": {
+        "en": "Good response",
+        "fr": "Bonne réponse"
+    },
+    "aria.geds.profile": {
+        "en": "GEDS profile for: ",
+        "fr": "Profile SAGE pour:"
+    },
+    "prompt": {
+        "en": "Prompt:",
+        "fr": "Instruction:"
+    },
+    "aria.assistant.message": {
+        "en": "Assistant message: ",
+        "fr": "Message de l'assistant: "
+    },
+    "copy": {
+        "en": "Copy",
+        "fr": "Copier"
+    },
+    "menu.chooseTools": {
+        "en": "Choose Tools",
+        "fr": "Choisir les outils"
+    },
+    "menu.title": {
+        "en": "Configure answer generation",
+        "fr": "Configurer la génération de réponses"
+    },
+    "provide.feedback": {
+        "en": "Please provide feedback on the response provided",
+        "fr": "Veuillez donner votre avis sur la réponse fournie"
+    },
+    "gpt-ex1-p": {
+        "en": "translate to french",
+        "fr": "traduire en français"
+    },
+    "githublnk": {
+        "en": "Github repository link",
+        "fr": "Lien vers entrepôt Github"
+    },
+    "no.id.token": {
+        "en": "Missing authentication token, please refresh the page.",
+        "fr": "Jeton d'authentification manquant, veuillez rafraîchir la page."
+    },
+    "quote": {
+        "en": "Quote",
+        "fr": "Citer"
+    },
+    "aria.user.question": {
+        "en": "User question: ",
+        "fr": "Question de l'utilisateur: "
+    },
+    "use.chathistory": {
+        "en": "Use chat history in queries",
+        "fr": "Utiliser l'historique des discussions dans les requêtes"
+    },
+    "gpt-ex2-p": {
+        "en": "I will give you a URL, open the page and summarize it for me in bullet point form.",
+        "fr": "Je vais vous donner une URL, ouvrez la page et résumez-la pour moi sous forme de points principaux."
+    },
+    "gpt-ex2-q": {
+        "en": "https://www.canada.ca/en/government/system/digital-government/digital-government-innovations/responsible-use-ai/guide-use-generative-ai.html",
+        "fr": "https://www.canada.ca/fr/gouvernement/systeme/gouvernement-numerique/innovations-gouvernement-numerique/utilisation-responsable-ai/guide-utilisation-ai-generative.html"
+    },
+    "gpt-ex1-s": {
+        "en": "Text translation",
+        "fr": "Traduction de texte"
+    },
+    "chatwith": {
+        "en": "Welcome to the AI Powered Chatbot Pilot",
+        "fr": "Bienvenue au projet pilote du Chatbot Alimenté par l'IA"
+    },
+    "tbs.responsibleai.url": {
+        "en": "https://www.canada.ca/en/government/system/digital-government/digital-government-innovations/responsible-use-ai/guide-use-generative-ai.html",
+        "fr": "https://www.canada.ca/fr/gouvernement/systeme/gouvernement-numerique/innovations-gouvernement-numerique/utilisation-responsable-ai/guide-utilisation-intelligence-artificielle-generative.html"
+    },
+    "menu.model": {
+        "en": "Model",
+        "fr": "Modèle"
+    },
+    "chat.with.gpt.data": {
+        "en": "Data (MySSC+)",
+        "fr": "Données (MonSPC+)"
+    },
+    "menu.responsemode": {
+        "en": "Response mode",
+        "fr": "Mode de réponse"
+    },
+    "title": {
+        "en": "SSC Assistant",
+        "fr": "Assistant SPC"
+    },
+    "chat.with.gpt.tools": {
+        "en": "Tools (GEDS, etc.)",
+        "fr": "Outils (SAGE, etc.)"
+    },
+    "send": {
+        "en": "Send question",
+        "fr": "Soumettre la question"
+    },
+    "chatwith.sub": {
+        "en": "Try these examples:",
+        "fr": "Essayez ces exemples :"
+    },
+    "copytext": {
+        "en": "Copy",
+        "fr": "Copier"
+    },
+    "title.short": {
+        "en": "Chatbot Pilot",
+        "fr": "Pilote Robot conversationnel"
+    }
+  }

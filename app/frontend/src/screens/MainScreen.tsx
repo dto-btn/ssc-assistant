@@ -12,6 +12,7 @@ import { loginRequest } from "../authConfig";
 import { AccountInfo, InteractionStatus } from "@azure/msal-browser";
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from 'uuid';
+import QuoteTextTooltip from "../components/QuoteTextTooltip";
 
 interface MainScreenProps {
     userData: {
@@ -37,6 +38,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
         "geds": true,
         "corporate": true,
     })
+    const [quotedText, setQuotedText] = useState<string>();
 
     const convertChatHistoryToMessages = (chatHistory: ChatItem[]) : Message[] => {
         const startIndex = Math.max(chatHistory.length - maxMessagesSent, 0);
@@ -128,7 +130,8 @@ const MainScreen = ({userData}: MainScreenProps) => {
 
         const userMessage: Message = {
             role: "user",
-            content: question
+            content: question,
+            quotedText: quotedText
         };
 
         const responsePlaceholder: Completion = {
@@ -150,7 +153,10 @@ const MainScreen = ({userData}: MainScreenProps) => {
             top: 5,
             tools: (Object.keys(enabledTools)).filter((key) => enabledTools[key]),
             uuid: uuid,
+            quotedText: quotedText
         };
+
+        setQuotedText(undefined)
 
         //update current chat window with the message sent..
         setChatHistory((prevChatHistory) => {
@@ -330,6 +336,14 @@ const MainScreen = ({userData}: MainScreenProps) => {
         [event.target.name]: event.target.checked
         });
     }
+
+    const handleAddQuotedText = (quotedText: string) => {
+        setQuotedText(quotedText);
+    }
+
+    const handleRemoveQuote = () => {
+        setQuotedText(undefined);
+    }
     
     return (
         <>
@@ -345,6 +359,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
                 maxWidth="lg"
             >
                 <Box sx={{ flexGrow: 1 }}></Box>
+                <QuoteTextTooltip addQuotedText={handleAddQuotedText}/>
                 <ChatMessagesContainer 
                     chatHistory={chatHistory}
                     isLoading={isLoading}
@@ -371,6 +386,8 @@ const MainScreen = ({userData}: MainScreenProps) => {
                         placeholder={t("placeholder")}
                         disabled={isLoading}
                         onSend={(question) => makeApiRequest(question)}
+                        quotedText={quotedText}
+                        handleRemoveQuote={handleRemoveQuote}
                     />
                 </Box>
             </Box>

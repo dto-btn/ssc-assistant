@@ -1,4 +1,4 @@
-import { Box, Paper, styled } from '@mui/material';
+import { Box, Paper, Typography, styled } from '@mui/material';
 import { useContext } from 'react';
 import { UserContext } from '../context/UserContext';
 import { UserProfilePicture } from './ProfilePicture';
@@ -6,12 +6,15 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github.css'
+import { visuallyHidden } from '@mui/utils';
+import { t } from 'i18next';
 
 interface UserChatProps {
   text: string | null | undefined;
+  quote?: string;
 }
 
-export const UserBubble = ({ text }: UserChatProps) => {
+export const UserBubble = ({ text, quote }: UserChatProps) => {
 
   const { graphData } = useContext(UserContext);
 
@@ -27,7 +30,29 @@ export const UserBubble = ({ text }: UserChatProps) => {
         }}
         elevation={4}
       >
-        <UserBubbleContainer>
+        {quote && (
+        <QuoteContainer>
+          <Typography 
+            variant="body1"
+            sx={{ 
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              maxWidth: 'calc(100% - 10px)',
+              pl: '10px', 
+              fontSize: '14px',
+              color: 'black',
+              flex: 1
+            }}
+          >
+            "{quote}"
+          </Typography>
+        </QuoteContainer>
+        )}
+        <UserBubbleContainer tabIndex={0}>
+          <Typography sx={visuallyHidden}>{t("aria.user.question")}</Typography> {/* Hidden div for screen reader */}
           <Markdown rehypePlugins={[rehypeHighlight]} remarkPlugins={[remarkGfm]}>{text}</Markdown>
         </UserBubbleContainer>
       </Paper>
@@ -48,4 +73,13 @@ const UserBubbleContainer = styled(Box)`
 
 const ProfilePictureView = styled(Box)`
   margin: 5px 0px 0px 10px;
+`
+
+const QuoteContainer = styled(Box)`
+  display: flex;
+  align-items: center;
+  height: 60px;
+  margin: 10px 10px 0px 10px;
+  background-color: white;
+  border-radius: 10px;
 `

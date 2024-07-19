@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, Typography, CardActions, Button, CardHeader, Avatar } from '@mui/material';
+import { Box, Card, CardContent, Typography, CardActions, Button, CardHeader, Avatar, useTheme } from '@mui/material';
 import 'highlight.js/styles/github.css'
 import { styled } from '@mui/system';
 import EmailIcon from '@mui/icons-material/Email';
@@ -13,9 +13,12 @@ interface ProfileCardProps {
 const ProfileCard = ({profile}: ProfileCardProps) => {
     const language = document.documentElement.lang;
     const { t } = useTranslation();
+    const theme = useTheme(); 
+
+    const borderStyle = profile.matchedProfile ? `3px solid ${theme.palette.primary.main}` : '';
 
     return (
-        <Card sx={{ width: 400, borderRadius: 5 }}>
+        <Card sx={{ width: 400, borderRadius: 5, border: borderStyle }}>
             <CardHeader
                 avatar={
                     <Avatar sx={{ bgcolor: 'primary.main' }} aria-label="recipe">
@@ -55,6 +58,7 @@ const ProfileCard = ({profile}: ProfileCardProps) => {
                     rel="noopener noreferrer"
                     endIcon={<LaunchIcon />}
                     size="large"
+                    aria-label={`${t("aria.geds.profile")}: ${profile.name}`}
                 >
                     {t("geds")}
                 </Button>
