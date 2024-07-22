@@ -386,5 +386,9 @@
     "title.short": {
         "en": "Chatbot Pilot",
         "fr": "Pilote Robot conversationnel"
+    },
+    "logout": {
+        "en": "Logout",
+        "fr": "Déconnexion"
     }
 }
