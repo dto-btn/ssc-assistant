@@ -25,7 +25,7 @@ const ProfileCardsContainer = (props: ProfileCardContainerProps) => {
                     onClick={() => toggleShowProfileHandler()} 
                     endIcon={
                         !isExpanded 
-                            ? <ExpandMoreIcon style={{ fontSize: 35, paddingBottom: "3px"  }} /> 
+                            ? <ExpandMoreIcon style={{ fontSize: 35, paddingBottom: "3px"  }} />
                             : <ExpandLessIcon style={{ fontSize: 35, paddingBottom: "3px" }} />
                     } 
                 > 

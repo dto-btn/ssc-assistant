@@ -138,7 +138,8 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
             elevation={4}
             className={"assistant-bubble-paper"}
           >
-            <MainContentWrapper>
+          <MainContentWrapper 
+          >
               <IconWrapper>
                 <AutoAwesome sx={{color: "primary.main", fontSize: 24}} />
               </IconWrapper>
