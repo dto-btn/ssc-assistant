@@ -136,6 +136,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
               flexDirection: 'row'
             }}
             elevation={4}
+            className={"assistant-bubble-paper"}
           >
             <MainContentWrapper>
               <IconWrapper>
@@ -144,6 +145,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
               <TextComponentsBox>
                 <Typography sx={visuallyHidden}>{t("aria.assistant.message")}</Typography> {/* Hidden div for screen reader */}
                 <Markdown
+                  className={'assistant-bubble-text'}
                   components={components}
                   rehypePlugins={[rehypeHighlight]}
                   remarkPlugins={[remarkGfm]}>

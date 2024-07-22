@@ -1,4 +1,3 @@
-
 import { Box } from "@mui/material";
 import { useEffect, useState } from "react"
 
@@ -13,6 +12,7 @@ const QuoteTextTooltip = ({addQuotedText}: QuoteTextTooltipProps) => {
     const onSelectStart = () => {
         setSelectedText(undefined);
     }
+
     const debounce = (func: (...args: any) => void, timeout = 300) => {
         let timer: NodeJS.Timeout;
         return (...args: any) => {
@@ -30,8 +30,12 @@ const QuoteTextTooltip = ({addQuotedText}: QuoteTextTooltipProps) => {
             return;
         }
 
+        const grandParentClass = activeSelection.anchorNode?.parentNode?.parentElement?.className;
+        const isAssistantBubbleHighlighted = grandParentClass === "assistant-bubble-text" 
+        || grandParentClass?.includes("assistant-bubble-paper")
+
         const text = activeSelection.toString().trim();
-        if (!text) {
+        if (!text || !isAssistantBubbleHighlighted) {
             setSelectedText(undefined);
             return;
         }

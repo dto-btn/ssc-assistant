@@ -124,14 +124,15 @@ const MainScreen = ({userData}: MainScreenProps) => {
         }
     }
 
-    const makeApiRequest = async (question: string) => {
+    const makeApiRequest = async (question: string, quotedTextFromRegenerate?: string) => {
         // set is loading so we disable some interactive functionality while we load the response
         setIsLoading(true);
+        const messagedQuoted = quotedTextFromRegenerate ? quotedTextFromRegenerate : quotedText;
 
         const userMessage: Message = {
             role: "user",
             content: question,
-            quotedText: quotedText
+            quotedText: messagedQuoted
         };
 
         const responsePlaceholder: Completion = {
@@ -153,10 +154,8 @@ const MainScreen = ({userData}: MainScreenProps) => {
             top: 5,
             tools: (Object.keys(enabledTools)).filter((key) => enabledTools[key]),
             uuid: uuid,
-            quotedText: quotedText
+            quotedText: messagedQuoted
         };
-
-        setQuotedText(undefined)
 
         //update current chat window with the message sent..
         setChatHistory((prevChatHistory) => {
@@ -170,6 +169,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
         });
 
         sendApiRequest(request);
+        setQuotedText(undefined)
     };
 
     const handleFeedbackSubmit = async (event: React.FormEvent) => {
@@ -217,7 +217,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
         const lastQuestion = chatHistory[chatHistory.length - 2];
         setChatHistory(chatHistory => chatHistory.slice(0, chatHistory.length - 2));
         if (isAMessage(lastQuestion)) {
-          makeApiRequest(lastQuestion.content ? lastQuestion.content : "");
+          makeApiRequest(lastQuestion.content ? lastQuestion.content : "", lastQuestion.quotedText);
         }
     };
     
