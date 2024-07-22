@@ -94,10 +94,9 @@ const QuoteTextTooltip = ({addQuotedText}: QuoteTextTooltipProps) => {
                     fontSize: '14px',
                     color: 'white',
                     fontWeight: '600',
-                    backgroundColor: 'primary.light',
+                    backgroundColor: 'primary.main',
                     zIndex: 1000,
                     '&:hover': {
-                        backgroundColor: 'primary.main',
                         boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.3)',
                     },
                 }}
