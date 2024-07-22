@@ -30,12 +30,29 @@ const QuoteTextTooltip = ({addQuotedText}: QuoteTextTooltipProps) => {
             return;
         }
 
-        const grandParentClass = activeSelection.anchorNode?.parentNode?.parentElement?.className;
-        const isAssistantBubbleHighlighted = grandParentClass === "assistant-bubble-text" 
-        || grandParentClass?.includes("assistant-bubble-paper")
+        const anchorNode = activeSelection.anchorNode;
+        if (!anchorNode) {
+            setSelectedText(undefined);
+            return;
+        }
+
+        // ensure only highlighting text from the assistant bubble triggers the tooltip
+        let anchorElement: Element | null = null;
+        if (anchorNode.nodeType === Node.ELEMENT_NODE) {
+            anchorElement = anchorNode as Element;
+        } else if (anchorNode.nodeType === Node.TEXT_NODE) {
+            anchorElement = anchorNode.parentElement;
+        }
+
+        const assistantBubble = anchorElement?.closest(".assistant-bubble-paper");
+
+        if (!assistantBubble) {
+            setSelectedText(undefined);
+            return;
+        }
 
         const text = activeSelection.toString().trim();
-        if (!text || !isAssistantBubbleHighlighted) {
+        if (!text) {
             setSelectedText(undefined);
             return;
         }
