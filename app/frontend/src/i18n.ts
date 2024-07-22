@@ -41,5 +41,7 @@ i18n.use(initReactI18next).init({
     escapeValue: false // react already safes from xss
   }
 });
+
 i18n.languages = ['en', 'fr'];
+
 export default i18n;

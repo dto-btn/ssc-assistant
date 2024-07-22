@@ -143,7 +143,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
               <IconWrapper>
                 <AutoAwesome sx={{color: "primary.main", fontSize: 24}} />
               </IconWrapper>
-              <TextComponentsBox>
+              <TextComponentsBox >
                 <Typography sx={visuallyHidden}>{t("aria.assistant.message")}</Typography> {/* Hidden div for screen reader */}
                 <Markdown
                   className={'assistant-bubble-text'}

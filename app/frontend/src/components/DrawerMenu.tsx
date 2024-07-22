@@ -64,7 +64,7 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
           </ListItemButton>
         </ListItem>
         <ListItem key="toolSettings=" disablePadding>
-        <ListItemButton onClick={toggleToolDrawerOpen} aria-expanded={toolMenuOpen}>
+          <ListItemButton onClick={toggleToolDrawerOpen} aria-expanded={toolMenuOpen}>
             <ListItemIcon>
               <Handyman />
             </ListItemIcon>
