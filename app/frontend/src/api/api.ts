@@ -43,7 +43,7 @@ export async function completionMySSC({ request, updateLastMessage, accessToken 
   const startBoundaryRegex = /--GPT-Interaction\s+Content-Type: text\/plain\s+/;
   const endBoundaryRegex = /--GPT-Interaction\s+Content-Type: application\/json/;
   const finalBoundaryRegex = /--GPT-Interaction--/;
-  const contentRegex = new RegExp(`${startBoundaryRegex.source}([\\s\\S]*?)(?=${endBoundaryRegex.source})`, 's');
+  const contentRegex = new RegExp(`${startBoundaryRegex.source}([\\s\\S]*?)(?=${endBoundaryRegex.source}|$)`, 's');
   const jsonRegex = new RegExp(`${endBoundaryRegex.source}([\\s\\S]+?)${finalBoundaryRegex.source}`, 's');
 
   try {

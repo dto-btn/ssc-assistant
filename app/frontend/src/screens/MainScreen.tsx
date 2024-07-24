@@ -199,7 +199,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
           const updatedChatHistory = [...prevChatHistory]; //making a copy
           const lastItemIndex = updatedChatHistory.length - 1;
           const lastItem = updatedChatHistory[lastItemIndex];
-    
+
           if (isACompletion(lastItem)) {
             updatedChatHistory[lastItemIndex] = {
               ...lastItem,
