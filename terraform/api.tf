@@ -52,7 +52,7 @@ resource "azurerm_linux_web_app" "api" {
     AZURE_SEARCH_ADMIN_KEY        = azurerm_search_service.main.primary_key
     AZURE_OPENAI_ENDPOINT         = data.azurerm_cognitive_account.ai.endpoint
     AZURE_OPENAI_API_KEY          = data.azurerm_cognitive_account.ai.primary_access_key
-    AZURE_OPENAI_MODEL            = "gpt-35-turbo-1106"
+    AZURE_OPENAI_MODEL            = "gpt-4o"
     AZURE_SEARCH_INDEX_NAME       = "current"
     GEDS_API_TOKEN                = var.geds_api_token
     SERVER_URL_PROD               = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net"
