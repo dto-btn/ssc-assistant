@@ -1,4 +1,4 @@
-import { Box, Container, TextField, InputAdornment, IconButton, CircularProgress, styled, Typography } from '@mui/material';
+import { Box, Container, TextField, InputAdornment, IconButton, CircularProgress, styled, Typography, useTheme } from '@mui/material';
 import Send from '@mui/icons-material/Send';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +18,7 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
   const [question, setQuestion] = useState<string>("");
   const { t } = useTranslation();
   const [error, setError] = useState(false);
+  const theme = useTheme(); 
 
   const sendQuestion = () => {
       if (disabled || !question.trim()) {
@@ -52,7 +53,8 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
         sx={{ mb: 1, position: 'sticky', bottom: 0}}
         maxWidth="md"
         >
-      <ChatInputWrapper> 
+      <Typography sx={{fontSize: '13px', ml: '10px', opacity: 0.7}}>{t("model.version.disclaimer")}</Typography>
+      <ChatInputWrapper theme={theme}> 
         {quotedText && (
             <QuoteContainer>
               <KeyboardReturnIcon sx={{ transform: 'scaleX(-1)', ml: '8px', color: 'black' }} />
@@ -117,7 +119,10 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
             minRows={3}
             maxRows={3}
             sx={{
-              padding: '20px'
+              padding: '10px 20px',
+              '& .MuiInputBase-input::placeholder': {
+                opacity: 0.7, 
+              },
             }}
             variant="standard"
             InputProps={{
@@ -146,10 +151,14 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
   );
 };
 
-const ChatInputWrapper = styled(Box)`
-    border: 3px solid #e0e0e0;
-    border-radius: 10px;
-`;
+
+const ChatInputWrapper = styled(Box)(({ theme }) => ({
+  border: '2px solid #e0e0e0',
+  borderRadius: '5px',
+  '&:focus-within': {
+    borderColor: theme.palette.primary.main,
+  }
+}));
 
 const QuoteContainer = styled(Box)`
   display: flex;

@@ -390,5 +390,9 @@
     "logout": {
         "en": "Logout",
         "fr": "Déconnexion"
+    },
+    "model.version.disclaimer": {
+        "en": "Powered by GPT-4o",
+        "fr": "Propulsé par GPT-4o"
     }
 }
