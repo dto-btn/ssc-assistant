@@ -38,5 +38,127 @@
         "required": ["query"]
       }
     }
-  }
+  },
+  {
+    "type": "function",
+    "tool_type": "archibus",
+    "function": {
+      "name": "book_reservation",
+      "description": "Creates a new workspace booking. This function should be used after all the necessary information has been acquired, including the buildingId, floorId, roomId, date, first AND last name, and duration. Use the get_buildings function to retrieve a buildingId from the building name, then use get_floors to get a list of floors for that building, and get_available_rooms to get a list of available rooms on the chosen floor. If the user does not provide the building name, booking duration, date, floor, or room, ask them for this information before attempting to make the reservation.",
+      "parameters": {
+        "type": "object",
+          "properties": {
+              "buildingId": {
+                  "type": "string",
+                  "description": "The unique identifier of the building where the booking takes place. Do not use the building name or address as the id"
+              },
+              "floorId": {
+                "type": "string",
+                "description": "The unique identifier of the floor in the building that the user would like to make a booking on. Example: T404."
+              },
+              "roomId": {
+                "type": "string",
+                "description": "The identifier of the room in the building and on the given floor that the user would like to make a booking on. Example: W037."
+              },
+              "date": {
+                  "type": "string",
+                  "description": "The month, day, and year of the booking, formatted like YYYY-MM-DD. If the user does not provide a date, ask them for it. Default year is 2024."
+              },
+              "user": {
+                "type": "string",
+                "description": "The name for whom the booking is being made for, in the format 'lastname, firstname'. If the user doesn't provide a first and last name, ask them for it."
+              }, 
+              "duration": {
+                "type": "string",
+                "description": "The duration of the booking/booking type. Options are 'FULLDAY' and 'MORNING'."
+              }
+          },
+          "required": ["date", "buildingId", "user", "duration", "floorId", "roomId"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "tool_type": "archibus",
+    "function": {
+      "name": "get_buildings",
+      "description":  "Gets information about buildings available to book a workspace through Archibus. Use this method to whenever you need to retrieve a buildingId for the provided building address or name. Return the buildingId as part of your message so you have it for context later.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "buildingName": {
+            "type": "string",
+            "description": "The building's name or address"
+          }
+        },
+        "required": ["buildingName"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "tool_type": "archibus",
+    "function": {
+      "name": "get_user_reservations",
+      "description": "Gets a user's existing reservations in the archibus system by their first and last name. Do not use this method unless you have been asked to retrieve a user's bookings and have their first and last name",
+      "parameters": {
+        "type": "object",
+        "properties": {
+            "firstName": {
+                "type": "string",
+                "description": "A string indicating the first name of the user."
+            },
+            "lastName": {
+                "type": "string",
+                "description": "A string indicating the last name of the user."
+            }
+        },
+        "required": ["firstName", "lastName"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "tool_type": "archibus",
+    "function": {
+      "name": "get_floors",
+      "description": "Gets a list of the available floors in a building where a user can make a booking. If the user is attempting to make a booking and does not specify a floor, use this method to return a list of available floors to them and ask which floor they would like to book on before proceeding to any other functions. Do not use this method unless you have a buildingId. DO NOT USE A BUILDING NAME OR ADDRESS IN PLACE OF AN ID. Return the buildingId as well when you answer so you have it for later.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+            "buildingId": {
+                "type": "string",
+                "description": "The unique identifier of the building where the booking takes place. Do not use the building name or address as the id"
+            }     
+        },
+        "required": ["buildingId"]
+      } 
+    }
+  },
+  {
+    "type": "function",
+    "tool_type": "archibus",
+    "function": {
+      "name": "get_available_rooms",
+      "description": "Gets a list of all the vacant rooms or workspaces in a specified building and floor. Use this method once you have a buildingId, floorId, and date to retrieve a list of all the vacant rooms. IF YOU DONT HAVE A BUILDINGID, USE GET_BUILDINGS FUNCTION FIRST. DO NOT USE THE BUILDING ADDRESS OR NAME AS THE BUILDINGID. You should then present this list of the first 10 rooms to the user and ask which room they would like to book before proceeding to the book_reservation function.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "buildingId": {
+            "type": "string",
+            "description": "A string indicating the ID of the building."
+          },
+          "floorId": {
+            "type": "string",
+            "description": "A string indicating the ID of the floor within the specified building."
+          },
+          "bookingDate": {
+            "type": "string",
+            "description": "A string indicating the date of the booking, including the month, day, and year, formatted like YYYY-MM-DD."
+          }
+        },
+        "required": ["buildingId", "floorId", "bookingDate"]
+      }
+    }
+  }  
 ]

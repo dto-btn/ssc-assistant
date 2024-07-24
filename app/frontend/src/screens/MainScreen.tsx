@@ -37,6 +37,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
     const [enabledTools, setEnabledTools] = useState<Record<string, boolean>>({
         "geds": true,
         "corporate": true,
+        "archibus": true
     })
     const [quotedText, setQuotedText] = useState<string>();
 
@@ -195,6 +196,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
     };
 
     const updateLastMessage = (message_chunk: string) => {
+        console.log("UPDATE LAST MESSAGE")
         setChatHistory((prevChatHistory) => {
           const updatedChatHistory = [...prevChatHistory]; //making a copy
           const lastItemIndex = updatedChatHistory.length - 1;

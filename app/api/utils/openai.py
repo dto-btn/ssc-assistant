@@ -170,7 +170,8 @@ def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: Lis
 
             if function_name in function_to_tool_type:
                 tool_name = function_to_tool_type[function_name]
-                tools_info.tool_type.append(tool_name)
+                if tool_name not in tools_info.tool_type:
+                    tools_info.tool_type.append(tool_name)
 
             # extract profiles if it's a geds function
             if tool_name == "geds":
