@@ -1,4 +1,5 @@
 import { Box } from "@mui/material";
+import { t } from "i18next";
 import { useEffect, useState } from "react"
 
 interface QuoteTextTooltipProps {
@@ -119,7 +120,7 @@ const QuoteTextTooltip = ({addQuotedText}: QuoteTextTooltipProps) => {
                 }}
                 onClick={() => handleQuoteText()}
             >
-                Quote this response
+                {t("quote.tooltip")}
             </Box>
             )}
         </div>
