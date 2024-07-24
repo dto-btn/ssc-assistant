@@ -13,7 +13,7 @@ interface ProfileCardProps {
 const ProfileCard = ({profile}: ProfileCardProps) => {
     const language = document.documentElement.lang;
     const { t } = useTranslation();
-    const theme = useTheme(); // Access current theme
+    const theme = useTheme(); 
 
     const borderStyle = profile.matchedProfile ? `3px solid ${theme.palette.primary.main}` : '';
 

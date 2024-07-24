@@ -31,6 +31,7 @@ class ToolInfo:
 @dataclass
 class Message:
     role: str
+    quotedText: Optional[str] = None
     content: Optional[str] = None
     context: Optional[Context] = None
     tools_info: Optional[ToolInfo] = None
@@ -49,6 +50,7 @@ class Completion:
 class MessageRequest:
     query: Optional[str]
     messages: Optional[List[Message]]
+    quotedText: Optional[str]
     top: int = field(default=3)
     lang: str = field(default='en')
     max: int = field(default=10)

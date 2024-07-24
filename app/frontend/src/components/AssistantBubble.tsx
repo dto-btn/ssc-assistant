@@ -12,7 +12,6 @@ import HandymanIcon from '@mui/icons-material/Handyman';
 import AutoAwesome from '@mui/icons-material/AutoAwesome';
 import { visuallyHidden } from '@mui/utils';
 
-
 interface AssistantBubbleProps {
     text: string;
     isLoading: boolean;
@@ -86,24 +85,22 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
 }, [isLoading, context, text, scrollRef]);
 
   const processProfiles = (employeeProfiles: EmployeeProfile[]) => {
-    console.log('employee profiles: ', employeeProfiles)
-    const processedProfiles: EmployeeProfile[] = [];
-    
-    employeeProfiles.forEach((profile) => {
-        if (text.includes(profile.email) || (profile.phone && text.includes(profile.phone))) {
-            profile.matchedProfile = true;
-        } else {
-          profile.matchedProfile = false;
-        }
-        processedProfiles.push(profile);
-    });
+      const processedProfiles: EmployeeProfile[] = [];
+      
+      employeeProfiles.forEach((profile) => {
+          if (text.includes(profile.email) || (profile.phone && text.includes(profile.phone))) {
+              profile.matchedProfile = true;
+          } else {
+            profile.matchedProfile = false;
+          }
+          processedProfiles.push(profile);
+      });
 
     return processedProfiles;
-  };
+};
 
   useEffect(() => {
       if (toolsInfo && toolsInfo.payload?.hasOwnProperty("profiles") && toolsInfo.payload.profiles !== null) {
-        console.log(toolsInfo.payload.profiles)
           const processedProfiles = processProfiles(toolsInfo.payload.profiles);
           setProfiles(processedProfiles);
       }
@@ -122,9 +119,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
   }
 
   return (
-    <ChatBubbleWrapper
-      tabIndex={0}
-    >
+    <ChatBubbleWrapper tabIndex={0}>
       <ChatBubbleView
         className="chatBubbleView"
         onMouseEnter={() => setIsHovering(true)}
@@ -141,6 +136,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
               flexDirection: 'row'
             }}
             elevation={4}
+            className={"assistant-bubble-paper"}
           >
           <MainContentWrapper 
           >
