@@ -12,6 +12,9 @@ resource "azuread_group" "contributors" {
   security_enabled = true
 }
 
+/**
+* We do not have control over this group.
+*/
 resource "azuread_group" "readers" {
   display_name = "ScSc-CIO_ECT_Subscription_Readers"
   security_enabled = true
