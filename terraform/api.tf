@@ -67,3 +67,18 @@ resource "azurerm_linux_web_app" "api" {
     app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DATABASE_ENDPOINT", "AZURE_SEARCH_INDEX_NAME" ]
   }
 }
+
+resource "azurerm_monitor_diagnostic_setting" "api_diagnostics" {
+  name                       = "${replace(var.project_name, "_", "-")}-api-diag"
+  target_resource_id         = azurerm_linux_web_app.api.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+
+  enabled_log {
+    category = "AppServiceConsoleLogs"
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true 
+  }
+}
