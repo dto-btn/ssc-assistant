@@ -42,6 +42,7 @@ interface MessageRequest {
   tools?: string[];
   uuid?: string;
   quotedText?: string;
+  model: string;
 }
 
 interface ToastMessage {

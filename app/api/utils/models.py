@@ -51,6 +51,7 @@ class MessageRequest:
     query: Optional[str]
     messages: Optional[List[Message]]
     quotedText: Optional[str]
+    model: str
     top: int = field(default=3)
     lang: str = field(default='en')
     max: int = field(default=10)

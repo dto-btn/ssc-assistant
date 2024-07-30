@@ -29,7 +29,7 @@ api_version             = os.getenv("AZURE_OPENAI_VERSION", "2024-04-01-preview"
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
 index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "latest")
-model: str              = os.getenv("AZURE_OPENAI_MODEL", "gpt-4-1106")
+# model: str              = os.getenv("AZURE_OPENAI_MODEL", "gpt-4-1106")
 #model_data: str         = os.getenv("AZURE_OPENAI_MODEL_DATA", "gpt-4-32k")
 
 # versions capabilities
@@ -71,6 +71,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
         - https://github.com/openai/openai-cookbook/blob/main/examples/azure/chat_with_your_own_data.ipynb
         - https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
     """
+    model = message_request.model
     messages = load_messages(message_request)
     data_source = _create_azure_cognitive_search_data_source()
     data_sources = { #https://learn.microsoft.com/en-us/azure/ai-services/openai/references/azure-search?tabs=python
