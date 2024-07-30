@@ -44,13 +44,13 @@
     "tool_type": "archibus",
     "function": {
       "name": "book_reservation",
-      "description": "Creates a new workspace booking. This function should be used after all the necessary information has been acquired, including the buildingId, floorId, roomId, date, first AND last name, and duration. Use the get_buildings function to retrieve a buildingId from the building name, then use get_floors to get a list of floors for that building, and get_available_rooms to get a list of available rooms on the chosen floor. If the user does not provide the building name, booking duration, date, floor, or room, ask them for this information before attempting to make the reservation.",
+      "description": "Creates a new workspace or meeting space booking. This function should be used after all the necessary information has been acquired, including the buildingId, floorId, roomId, date, first AND last name, and duration. ",
       "parameters": {
         "type": "object",
           "properties": {
               "buildingId": {
                   "type": "string",
-                  "description": "The unique identifier of the building where the booking takes place. Do not use the building name or address as the id"
+                  "description": "The unique identifier of the building where the booking takes place. Example: AB-BAS4. DO NOTT USE THE STREET NUMBER OR ADDRESS."
               },
               "floorId": {
                 "type": "string",
@@ -70,7 +70,7 @@
               }, 
               "duration": {
                 "type": "string",
-                "description": "The duration of the booking/booking type. Options are 'FULLDAY' and 'MORNING'."
+                "description": "The duration of the booking/booking type. Options are 'FULLDAY', 'AFTERNOON', and 'MORNING'."
               }
           },
           "required": ["date", "buildingId", "user", "duration", "floorId", "roomId"]
