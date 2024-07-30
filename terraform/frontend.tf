@@ -118,3 +118,18 @@ resource "azurerm_app_service_certificate_binding" "frontend" {
   certificate_id      = azurerm_app_service_certificate.frontend.id
   ssl_state           = "SniEnabled"
 }
+
+resource "azurerm_monitor_diagnostic_setting" "frontend_diagnostics" {
+  name                       = "${replace(var.project_name, "_", "-")}-frontend-diag"
+  target_resource_id         = azurerm_linux_web_app.frontend.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+
+  enabled_log {
+    category = "AppServiceConsoleLogs"
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true 
+  }
+}
