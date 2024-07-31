@@ -1,7 +1,7 @@
 from dataclasses import field
 from enum import Enum
 from marshmallow_dataclass import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 @dataclass
 class Metadata:
@@ -51,7 +51,7 @@ class MessageRequest:
     query: Optional[str]
     messages: Optional[List[Message]]
     quotedText: Optional[str]
-    model: str
+    model: Literal['gpt-4o', 'gpt-35-turbo-1106']
     top: int = field(default=3)
     lang: str = field(default='en')
     max: int = field(default=10)
