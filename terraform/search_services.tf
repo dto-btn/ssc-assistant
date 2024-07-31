@@ -21,4 +21,9 @@ resource "azurerm_monitor_diagnostic_setting" "search_service_diagnostics" {
   enabled_log {
     category = "OperationLogs"
   }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = false
+  }
 }
