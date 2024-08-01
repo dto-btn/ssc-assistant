@@ -135,8 +135,8 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
           <Divider />
           <RadioGroup
             defaultValue="gpt-4o"
-            aria-labelledby="demo-customized-radios"
-            name="customized-radios"
+            aria-labelledby="select-language-model-radio"
+            name="model-radios"
             sx={{marginLeft: '70px'}}
             value={selectedModel}
             onChange={handleRadioChange}
