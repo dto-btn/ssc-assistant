@@ -160,5 +160,23 @@
         "required": ["buildingId", "floorId", "bookingDate"]
       }
     }
-  }  
+  },
+  {
+    "type": "function",
+    "tool_type": "archibus",
+    "function": {
+      "name": "get_floor_plan",
+      "description": "Retrieves the floor plan image associated with the selected floor from the user.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+            "floorId": {
+                "type": "string",
+                "description": "The unique identifier of the floor."
+            }     
+        },
+        "required": ["floorId"]
+      } 
+    }
+  }
 ]

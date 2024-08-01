@@ -368,6 +368,10 @@ def get_available_rooms(buildingId: str, floorId: str, bookingDate: str):
         logger.error(f"Error occurred during the GET request to retrieve available rooms: {e}")
         return f"An error occurred while trying to fetch rooms for the given floor {floorId} and building {buildingId}."
     
+def get_floor_plan(floorId: str):
+    # search for matching floor image and return
+    return "No floor map found"
+    
 
 def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[ChatCompletionMessageParam]:
     """
