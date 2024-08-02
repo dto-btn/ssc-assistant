@@ -13,6 +13,7 @@ import { AccountInfo, InteractionStatus } from "@azure/msal-browser";
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from 'uuid';
 import QuoteTextTooltip from "../components/QuoteTextTooltip";
+import HelpfulTips from "../components/HelpfulTips";
 
 interface MainScreenProps {
     userData: {
@@ -40,6 +41,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
     })
     const [selectedModel, setSelectedModel] = useState<string>("gpt-4o")
     const [quotedText, setQuotedText] = useState<string>();
+    const [showHelpTips, setShowHelpTips] = useState(true); // true for testing, should be false
 
     const convertChatHistoryToMessages = (chatHistory: ChatItem[]) : Message[] => {
         const startIndex = Math.max(chatHistory.length - maxMessagesSent, 0);
@@ -343,20 +345,32 @@ const MainScreen = ({userData}: MainScreenProps) => {
         ...enabledTools,
         [event.target.name]: event.target.checked
         });
-    }
+    };
 
     const handleAddQuotedText = (quotedText: string) => {
         setQuotedText(quotedText);
-    }
+    };
 
     const handleRemoveQuote = () => {
         setQuotedText(undefined);
-    }
+    };
 
     const hanldeUpdateModelVersion = (modelName: string) => {
         setSelectedModel(modelName);
         localStorage.setItem("selectedModel", JSON.stringify(modelName));
-    }
+    };
+
+    useEffect(() => {
+        const hasSeenHelpTips = localStorage.getItem("hasSeenHelpTips");
+        if (hasSeenHelpTips !== "true") {
+            setShowHelpTips(true);
+        }
+    }, [])
+
+    const handleAllHelpTipsDisplayed = () => {
+        localStorage.setItem("hasSeenHelpTips", "false");
+        setShowHelpTips(false);
+    };
     
     return (
         <>
@@ -425,6 +439,9 @@ const MainScreen = ({userData}: MainScreenProps) => {
                 handleClose={() => setIsFeedbackVisible(false)}
                 handleFeedbackSubmit={handleFeedbackSubmit}
             />
+            {showHelpTips &&
+                <HelpfulTips handleAllHelpTipsDisplayed={handleAllHelpTipsDisplayed} />
+            }
         </>
     )
 }
