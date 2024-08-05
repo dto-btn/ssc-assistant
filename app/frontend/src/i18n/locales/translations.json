@@ -296,7 +296,7 @@
         "fr": "Copier"
     },
     "menu.chooseTools": {
-        "en": "Choose Tools",
+        "en": "Select Tools",
         "fr": "Choisir les outils"
     },
     "menu.title": {
@@ -392,7 +392,11 @@
         "fr": "Déconnexion"
     },
     "model.version.disclaimer": {
-        "en": "Powered by GPT-4o",
-        "fr": "Propulsé par GPT-4o"
+        "en": "Powered by",
+        "fr": "Propulsé par"
+    },
+    "model.version.select": {
+        "en": "Select Model Version",
+        "fr": "Sélectionnez la Version du Modèle"
     }
 }
