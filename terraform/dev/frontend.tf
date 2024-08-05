@@ -2,22 +2,22 @@
 *                 Azure App frontend                *
 *****************************************************/
 resource "azurerm_user_assigned_identity" "frontend" {
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.dev.name
+  location            = azurerm_resource_group.dev.location
   name                = "chatbot-frontend-identity"
 }
 
 resource "azurerm_service_plan" "frontend" {
   name                = "${var.name_prefix}${var.project_name}-frontend-plan"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.dev.name
+  location            = azurerm_resource_group.dev.location
   sku_name            = "S1"
   os_type             = "Linux"
 }
 
 resource "azurerm_linux_web_app" "frontend" {
   name                = "${replace(var.project_name, "_", "-")}"
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = azurerm_resource_group.dev.name
   location            = azurerm_service_plan.frontend.location
   service_plan_id     = azurerm_service_plan.frontend.id
 
@@ -40,6 +40,16 @@ resource "azurerm_linux_web_app" "frontend" {
       allowed_origins     = ["https://assistant.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"]
       support_credentials = true
     }
+
+    dynamic "ip_restriction" {
+      for_each = var.enable_auth == false ? [""] : []
+      content {
+        ip_address = "0.0.0.0/0"  # Deny all IPs
+        action     = "Deny"
+        priority   = 100
+        name       = "DenyAll"
+      }
+    }
   }
 
   app_settings = {
@@ -48,7 +58,7 @@ resource "azurerm_linux_web_app" "frontend" {
     WEBSITE_RUN_FROM_PACKAGE = "1"
     MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
     PORT = 8080
-    WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
+    # WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
   }
 
   sticky_settings {
@@ -59,19 +69,6 @@ resource "azurerm_linux_web_app" "frontend" {
     type = "UserAssigned"
     identity_ids = [ azurerm_user_assigned_identity.frontend.id ]
   }
-
-  dynamic "ip_restriction" {
-    for_each = var.enable_auth == false ? [""] : []
-    content {
-      ip_restriction {
-        ip_address = "0.0.0.0/0"  # Deny all IPs
-        action     = "Deny"
-        priority   = 100
-        name       = "DenyAll"
-      }
-    }
-  }
-
   dynamic "auth_settings_v2" {
     for_each = var.enable_auth == true ? [""] : []
     content {
@@ -113,35 +110,20 @@ resource "azurerm_linux_web_app" "frontend" {
 
 resource "azurerm_app_service_certificate" "frontend" {
   name                = "ssc-assistant-cert"
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = azurerm_resource_group.dev.name
   location            = azurerm_service_plan.frontend.location
-  pfx_blob            = filebase64("certificates/ssc-assistant-sandbox.pfx")
+  pfx_blob            = filebase64("../certificates/ssc-assistant-sandbox.pfx")
   password            = var.pfx_secret
 }
 
 resource "azurerm_app_service_custom_hostname_binding" "frontend" {
-  hostname            = "assistant.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"
+  hostname            = "assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"
   app_service_name    = azurerm_linux_web_app.frontend.name
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = azurerm_resource_group.dev.name
 }
 
 resource "azurerm_app_service_certificate_binding" "frontend" {
   hostname_binding_id = azurerm_app_service_custom_hostname_binding.frontend.id
   certificate_id      = azurerm_app_service_certificate.frontend.id
   ssl_state           = "SniEnabled"
-}
-
-resource "azurerm_monitor_diagnostic_setting" "frontend_diagnostics" {
-  name                       = "${replace(var.project_name, "_", "-")}-frontend-diag"
-  target_resource_id         = azurerm_linux_web_app.frontend.id
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
-
-  enabled_log {
-    category = "AppServiceConsoleLogs"
-  }
-
-  metric {
-    category = "AllMetrics"
-    enabled  = true
-  }
 }
