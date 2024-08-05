@@ -38,6 +38,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
         "geds": true,
         "corporate": true,
     })
+    const [selectedModel, setSelectedModel] = useState<string>("gpt-4o")
     const [quotedText, setQuotedText] = useState<string>();
 
     const convertChatHistoryToMessages = (chatHistory: ChatItem[]) : Message[] => {
@@ -154,7 +155,8 @@ const MainScreen = ({userData}: MainScreenProps) => {
             top: 5,
             tools: (Object.keys(enabledTools)).filter((key) => enabledTools[key]),
             uuid: uuid,
-            quotedText: messagedQuoted
+            quotedText: messagedQuoted,
+            model: selectedModel
         };
 
         //update current chat window with the message sent..
@@ -226,14 +228,19 @@ const MainScreen = ({userData}: MainScreenProps) => {
     };
 
       // This function will be used to load the chat history from localStorage
-    const loadChatHistoryAndTools = () => {
+    const loadChatHistoryAndSettings = () => {
         const savedChatHistory = localStorage.getItem("chatHistory");
         const enabledToolHistory = localStorage.getItem("enabledTools");
+        const selectedModelHistory = localStorage.getItem("selectedModel");
+
         if (savedChatHistory) {
             setChatHistory(JSON.parse(savedChatHistory));
         }
         if (enabledToolHistory) {
             setEnabledTools(JSON.parse(enabledToolHistory));
+        }
+        if (selectedModelHistory) {
+            setSelectedModel(JSON.parse(selectedModelHistory));
         }
     };
 
@@ -288,6 +295,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
           top: 5,
           tools: [],
           uuid: uuid,
+          model: selectedModel
         };
     
         sendApiRequest(request);
@@ -312,7 +320,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
 
     // Load chat history if present
     useEffect(() => {
-        loadChatHistoryAndTools();
+        loadChatHistoryAndSettings();
     }, []);
 
     const handleRemoveToastMessage = useCallback((indexToRemove: number) => {
@@ -343,6 +351,11 @@ const MainScreen = ({userData}: MainScreenProps) => {
 
     const handleRemoveQuote = () => {
         setQuotedText(undefined);
+    }
+
+    const hanldeUpdateModelVersion = (modelName: string) => {
+        setSelectedModel(modelName);
+        localStorage.setItem("selectedModel", JSON.stringify(modelName));
     }
     
     return (
@@ -388,6 +401,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
                         onSend={(question) => makeApiRequest(question)}
                         quotedText={quotedText}
                         handleRemoveQuote={handleRemoveQuote}
+                        selectedModel={selectedModel}
                     />
                 </Box>
             </Box>
@@ -401,6 +415,8 @@ const MainScreen = ({userData}: MainScreenProps) => {
                 logout={handleLogout}
                 enabledTools={enabledTools}
                 handleUpdateEnabledTools={handleUpdateEnabledTools}
+                selectedModel={selectedModel}
+                handleSelectedModelChanged={hanldeUpdateModelVersion}
             />
             <FeedbackForm
                 feedback={feedback}

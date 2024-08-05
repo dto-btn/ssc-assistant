@@ -29,7 +29,6 @@ api_version             = os.getenv("AZURE_OPENAI_VERSION", "2024-04-01-preview"
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
 index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "latest")
-model: str              = os.getenv("AZURE_OPENAI_MODEL", "gpt-4-1106")
 #model_data: str         = os.getenv("AZURE_OPENAI_MODEL_DATA", "gpt-4-32k")
 
 # versions capabilities
@@ -71,6 +70,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
         - https://github.com/openai/openai-cookbook/blob/main/examples/azure/chat_with_your_own_data.ipynb
         - https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
     """
+    model = message_request.model
     messages = load_messages(message_request)
     data_source = _create_azure_cognitive_search_data_source()
     data_sources = { #https://learn.microsoft.com/en-us/azure/ai-services/openai/references/azure-search?tabs=python
@@ -180,6 +180,14 @@ def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: Lis
 
     return tools_info
 
+def extract_last_description(organization_info):
+    # The JSON response has nested [organizationInformation][organization]
+    # This traverses through the nested objects to get the last description
+    while "organizationInformation" in organization_info:
+        organization_info = organization_info["organizationInformation"]["organization"]
+    
+    return organization_info["description"]
+
 def extract_geds_profiles(content):
     try:
         start_index = content.find("[") # trim the text preceeding the results
@@ -198,10 +206,10 @@ def extract_geds_profiles(content):
             profile["url"] = f"https://geds-sage.gc.ca/en/GEDS?pgid=015&dn={geds_profile_string}"
             profile["name"] = result["givenName"] + " " + result["surname"]
             profile["email"] = result["contactInformation"]["email"]
-            if result["organizationInformation"]["organization"]["organizationInformation"]["organization"]["organizationInformation"]["organization"]["description"]["en"]:
-                profile["organization_en"] = result["organizationInformation"]["organization"]["organizationInformation"]["organization"]["organizationInformation"]["organization"]["description"]["en"]
-            if result["organizationInformation"]["organization"]["organizationInformation"]["organization"]["organizationInformation"]["organization"]["description"]["fr"]:
-                profile["organization_fr"] = result["organizationInformation"]["organization"]["organizationInformation"]["organization"]["organizationInformation"]["organization"]["description"]["fr"]
+
+            description = extract_last_description(result.get("organizationInformation", {}).get("organization", {}))
+            profile["organization_en"] = description.get("en", "")
+            profile["organization_fr"] = description.get("fr", "")
 
             if "phoneNumber" in result["contactInformation"]:
                 profile["phone"] = result["contactInformation"]["phoneNumber"]

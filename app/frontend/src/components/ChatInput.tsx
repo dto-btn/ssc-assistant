@@ -12,13 +12,16 @@ interface ChatInputProps {
   clearOnSend?: boolean;
   quotedText?: string;
   handleRemoveQuote: () => void;
+  selectedModel: string;
 };
 
-export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemoveQuote}: ChatInputProps) => {
+export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemoveQuote, selectedModel}: ChatInputProps) => {
   const [question, setQuestion] = useState<string>("");
   const { t } = useTranslation();
   const [error, setError] = useState(false);
-  const theme = useTheme(); 
+  const theme = useTheme();
+  
+  const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "GPT-3.5 Turbo"
 
   const sendQuestion = () => {
       if (disabled || !question.trim()) {
@@ -53,7 +56,7 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
         sx={{ mb: 1, position: 'sticky', bottom: 0}}
         maxWidth="md"
         >
-      <Typography sx={{fontSize: '13px', ml: '10px', opacity: 0.7}}>{t("model.version.disclaimer")}</Typography>
+      <Typography sx={{fontSize: '13px', ml: '10px', opacity: 0.7}}>{t("model.version.disclaimer")} {modelName}</Typography>
       <ChatInputWrapper theme={theme}> 
         {quotedText && (
             <QuoteContainer>

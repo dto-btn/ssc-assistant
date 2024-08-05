@@ -15,11 +15,13 @@ import {
   ListItemText,
   Switch,
 } from "@mui/material";
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
 import { changeLanguage, t } from "i18next";
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useIsAuthenticated } from "@azure/msal-react";
 import Handyman from "@mui/icons-material/Handyman";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 
@@ -30,20 +32,46 @@ interface DrawerMenuProps {
   setLangCookie: () => void;
   logout: () => void;
   enabledTools: Record<string, boolean>;
+  selectedModel: string;
   handleUpdateEnabledTools: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleSelectedModelChanged: (modelName: string) => void;
 }
 
 export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie, 
-  logout, enabledTools, handleUpdateEnabledTools} : DrawerMenuProps) => {
+  logout, enabledTools, handleUpdateEnabledTools, handleSelectedModelChanged, selectedModel} : DrawerMenuProps) => {
   const isAuthenticated = useIsAuthenticated();
   const [toolMenuOpen, setToolMenuOpen] = useState(false);
+  const [selectModelMenuOpen, setSelectModelMenuOpen] = useState(false);
 
   const toggleToolDrawerOpen = () => {
     setToolMenuOpen(!toolMenuOpen);
   }
 
+  const toggleSelectModelMenuOpen = () => {
+    setSelectModelMenuOpen(!selectModelMenuOpen);
+  }
+
+  const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    handleSelectedModelChanged((event.target as HTMLInputElement).value);
+  };
+
+  // use effect to close the collapses when the drawer is toggled closed
+  useEffect(() => {
+    if (!openDrawer) {
+      setSelectModelMenuOpen(false);
+      setToolMenuOpen(false);
+    }
+  }, [openDrawer]);
+
+
   const list = () => (
-    <Box role="presentation" sx={{ width: 250 }}>
+    <Box role="presentation" 
+      sx={{ 
+        width: 350,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh'
+     }}>
       <List>
         <ListItem key="language" disablePadding>
           <ListItemButton onClick={() => {
@@ -93,9 +121,33 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
             })}
           </FormGroup>
         </Collapse>
+        <ListItem key="modelSelection" disablePadding>
+          <ListItemButton onClick={toggleSelectModelMenuOpen} aria-expanded={selectModelMenuOpen}>
+            <ListItemIcon>
+              <PsychologyIcon />
+            </ListItemIcon>
+            <ListItemText>
+              {t("model.version.select")}
+            </ListItemText>
+            {selectModelMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          </ListItemButton>
+        </ListItem>
+        <Collapse in={selectModelMenuOpen} timeout="auto" unmountOnExit>
+          <Divider />
+          <RadioGroup
+            defaultValue="gpt-4o"
+            aria-labelledby="select-language-model-radio"
+            name="model-radios"
+            sx={{marginLeft: '70px'}}
+            value={selectedModel}
+            onChange={handleRadioChange}
+          >
+            <FormControlLabel value="gpt-4o" control={<Radio />} label="GPT-4o" />
+            <FormControlLabel value="gpt-35-turbo-1106" control={<Radio />} label="GPT-3.5 Turbo" />
+          </RadioGroup>
+        </Collapse>
       </List>
-      <Divider />
-      <List>
+      <List sx={{marginTop: 'auto'}}>
         {isAuthenticated &&
         (<ListItem key="logout" disablePadding>
           <ListItemButton onClick={logout}>
