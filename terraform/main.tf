@@ -87,6 +87,14 @@ resource "azurerm_dns_cname_record" "assistant" {
   record              = azurerm_linux_web_app.frontend.default_hostname
 }
 
+resource "azurerm_dns_cname_record" "assistant-dev" {
+  name                = "assistant-dev"
+  zone_name           = data.azurerm_dns_zone.main.name
+  resource_group_name = data.azurerm_dns_zone.main.resource_group_name
+  ttl                 = 3600
+  record              = "${replace(var.project_name, "_", "-")}-dev.azurewebsites.net"
+}
+
 resource "azurerm_dns_txt_record" "assistant" {
   name                = "asuid.assistant"
   zone_name           = data.azurerm_dns_zone.main.name

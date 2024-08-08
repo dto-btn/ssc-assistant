@@ -87,11 +87,3 @@ data "azurerm_dns_zone" "dns" {
   name                = "cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"
   resource_group_name = "ScSc-CIO_ECT_DNS-rg"
 }
-
-resource "azurerm_dns_cname_record" "dns" {
-  name                = "assistant-dev"
-  zone_name           = data.azurerm_dns_zone.dns.name
-  resource_group_name = "ScSc-CIO_ECT_DNS-rg"
-  ttl                 = 3600
-  record              = "${replace(var.project_name, "_", "-")}.azurewebsites.net"
-}

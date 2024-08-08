@@ -99,6 +99,37 @@ resource "azurerm_linux_web_app" "frontend" {
   }
 }
 
+resource "azurerm_linux_web_app_slot" "dev" {
+  name           = "dev" # will append it to the prod slot name (ssc-assistant)
+  app_service_id = azurerm_linux_web_app.frontend.id
+
+  site_config {
+    cors {
+      allowed_origins     = ["https://assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"]
+      support_credentials = true
+    }
+
+    dynamic "ip_restriction" {
+      for_each = var.enable_auth == false ? [""] : []
+      content {
+        ip_address = "0.0.0.0/0"  # Deny all IPs
+        action     = "Deny"
+        priority   = 100
+        name       = "DenyAll"
+      }
+    }
+  }
+
+  app_settings = {
+    VITE_API_BACKEND         = "https://${replace(var.project_name, "_", "-")}-dev-api.azurewebsites.net/"
+    VITE_API_KEY             = var.vite_api_key_dev
+    WEBSITE_RUN_FROM_PACKAGE = "1"
+    MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
+    PORT = 8080
+    # WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
+  }
+}
+
 resource "azurerm_app_service_certificate" "frontend" {
   name                = "ssc-assistant-cert"
   resource_group_name = azurerm_resource_group.main.name
