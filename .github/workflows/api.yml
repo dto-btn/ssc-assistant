@@ -13,7 +13,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: pilot-prod
     steps:
     - uses: actions/checkout@v4
       with:
@@ -47,6 +46,7 @@ jobs:
     if: github.event_name == 'pull_request'
     needs: build
     concurrency: dev
+    environment: dev
     runs-on: ubuntu-latest
     steps:
     - name: Log in with Azure
@@ -57,15 +57,15 @@ jobs:
     - name: 'Deploy to Azure Web App'
       uses: azure/webapps-deploy@v3
       with:
-        app-name: 'ssc-assistant-dev-api'
-        slot-name: 'production' # this is still on dev. Using the default slot for it.
+        app-name: 'ssc-assistant-api'
+        slot-name: 'ssc-assistant-api-dev'
         # az webapp deployment list-publishing-profiles --name ssc-assistant-dev-api --resource-group YourResourceGroupName --xml (save as secret)
-        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_DEV }}
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         package: '.'
         startup-command: ''
 
   deploy-pilot-prod:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     concurrency: pilot-prod
     needs: build
@@ -74,9 +74,6 @@ jobs:
         uses: azure/login@v1
         with:
           creds: '${{ secrets.AZURE_CREDENTIALS }}'
-          #client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          #tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          #subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3

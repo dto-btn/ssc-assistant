@@ -121,7 +121,7 @@ resource "azurerm_linux_web_app_slot" "dev" {
   }
 
   app_settings = {
-    VITE_API_BACKEND         = "https://${replace(var.project_name, "_", "-")}-dev-api.azurewebsites.net/"
+    VITE_API_BACKEND         = "https://${replace(var.project_name, "_", "-")}-api-dev.azurewebsites.net/"
     VITE_API_KEY             = var.vite_api_key_dev
     WEBSITE_RUN_FROM_PACKAGE = "1"
     MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
