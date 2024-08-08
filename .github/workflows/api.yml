@@ -1,4 +1,4 @@
-name: Build and deploy SSC Assistant API
+name: API
 
 on:
   push:

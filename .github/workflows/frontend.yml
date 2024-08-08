@@ -1,4 +1,4 @@
-name: Builds and deploy the application React frontend
+name: Frontend
 
 on:
   push:
@@ -41,12 +41,10 @@ jobs:
 
     # This step will only run when the event is a push to the main branch
     - name: Zip artifact for deployment
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: zip release.zip ./* -r
 
     # This step will only run when the event is a push to the main branch
     - name: Upload artifact for deployment job
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       uses: actions/upload-artifact@v3
       with:
         name: node-app
@@ -76,7 +74,7 @@ jobs:
       uses: azure/webapps-deploy@v3
       with:
         app-name: 'ssc-assistant'
-        slot-name: 'production'
+        slot-name: 'ssc-assistant-dev'
         # az webapp deployment list-publishing-profiles --name ssc-assistant-api --resource-group YourResourceGroupName --xml (save as secret)
         publish-profile: ${{ secrets.AZURE_FRONTEND_PUBLISH_PROFILE }}
         # very important: https://learn.microsoft.com/en-us/azure/app-service/deploy-run-package#enable-running-from-package
@@ -112,15 +110,15 @@ jobs:
         # very important: https://learn.microsoft.com/en-us/azure/app-service/deploy-run-package#enable-running-from-package
         package: 'release.zip'
 
-  cleanup_artifacts:
-    needs: 
-      - build 
-      - deploy-pilot-prod
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delete artifacts
-        run: |
-          # Use GitHub's REST API to delete the artifacts
-          curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          "https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ github.run_id }}"
+  # cleanup_artifacts:
+  #   needs: 
+  #     - build 
+  #     - deploy-pilot-prod
+  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Delete artifacts
+  #       run: |
+  #         # Use GitHub's REST API to delete the artifacts
+  #         curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+  #         "https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ github.run_id }}"
