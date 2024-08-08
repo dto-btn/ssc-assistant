@@ -55,7 +55,7 @@ const getArrowStyles = (tipNumber: number): React.CSSProperties => {
     };
 };
 
-const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, updateTutorialBubbleNumber}: TutorialBubbleProps) => {
+export const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, updateTutorialBubbleNumber}: TutorialBubbleProps) => {
     const [tipNumber, setTipNumber] = useState(1);
     const [allTutorialsSeen, setAllTutorialsSeen] = useState(false);
     const [dialogPosition, setDialogPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
@@ -66,14 +66,14 @@ const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, updateTutoria
             const rect = menuIconRef.current.getBoundingClientRect();
             setDialogPosition({
                 top: tipNumber < 2 ? rect.top + 70 : rect.top + 15, 
-                left: tipNumber < 2 ? rect.right + 410 : window.innerWidth
+                left: tipNumber < 2 ? rect.right + 310 : window.innerWidth - 15
             });
         }
     }, [menuIconRef, tipNumber]);
 
     const StyledPaper = styled(Paper)(({ theme }) => ({
         backgroundColor: '#8F7EE7',
-        width: '400px',
+        width: '300px',
         padding: '16px',
         borderRadius: '7px',
         boxShadow: theme.shadows[24],
@@ -108,7 +108,9 @@ const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, updateTutoria
                         tabIndex={1}
                     >
                         <Typography variant="h6" sx={{color: 'white'}}>{tipTitles[tipNumber - 1]}</Typography>
-                        <Typography sx={{color: 'white'}}>{tips[tipNumber - 1]}</Typography>
+                        <Typography sx={{color: 'white'}}
+                            dangerouslySetInnerHTML={{ __html: tips[tipNumber - 1] }}
+                        />
                         <ButtonView>
                             <div>
                                 {tipNumber > 1 && 
@@ -157,8 +159,6 @@ const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, updateTutoria
         </>
     )
 }
-
-export default TutorialBubble;
 
 const ButtonView = styled(Box)`
     display: flex;

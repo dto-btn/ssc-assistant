@@ -23,6 +23,7 @@ import Handyman from "@mui/icons-material/Handyman";
 import { useEffect, useState } from "react";
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import InfoIcon from '@mui/icons-material/Info';
 
 interface DrawerMenuProps {
   openDrawer: boolean;
@@ -35,10 +36,11 @@ interface DrawerMenuProps {
   handleUpdateEnabledTools: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handleSelectedModelChanged: (modelName: string) => void;
   tutorialBubbleNumber?: number;
+  handleToggleTutorials: (showTutorials?: boolean) => void;
 }
 
 export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie, 
-  logout, enabledTools, handleUpdateEnabledTools, handleSelectedModelChanged, selectedModel, tutorialBubbleNumber} : DrawerMenuProps) => {
+  logout, enabledTools, handleUpdateEnabledTools, handleSelectedModelChanged, selectedModel, tutorialBubbleNumber, handleToggleTutorials} : DrawerMenuProps) => {
   const isAuthenticated = useIsAuthenticated();
   const [toolMenuOpen, setToolMenuOpen] = useState(false);
   const [selectModelMenuOpen, setSelectModelMenuOpen] = useState(false);
@@ -88,7 +90,7 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
   const list = () => (
     <Box role="presentation" 
       sx={{ 
-        width: 350,
+        width: 300,
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
@@ -169,6 +171,15 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
         </Collapse>
       </List>
       <List sx={{marginTop: 'auto'}}>
+        {!tutorialBubbleNumber && 
+          (<ListItem key="tutorials" disablePadding>
+            <ListItemButton onClick={() => handleToggleTutorials(true)}>
+              <ListItemIcon>
+                <InfoIcon />
+              </ListItemIcon>
+              <ListItemText primary={t("tutorial.view")} />
+            </ListItemButton>
+          </ListItem>)}
         {isAuthenticated &&
         (<ListItem key="logout" disablePadding>
           <ListItemButton onClick={logout}>

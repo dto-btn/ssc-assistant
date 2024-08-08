@@ -401,31 +401,31 @@
     },
     "tutorial.menu": {
         "en": "Use the menu to view customization settings, change language, clear chat, and more.",
-        "fr": ""
+        "fr": "Utilisez le menu pour voir les paramètres de personnalisation, changer la langue, effacer la discussion, et plus encore."
     },
     "tutorial.menu.title": {
         "en": "Menu Options",
         "fr": "Options du Menu"
     },
     "tutorial.clearChat": {
-        "en": "Use this button to clear the chat. Clearing the chat can help with improving responses occasionally.",
-        "fr": ""
+        "en": "Clearing the chat will remove your entire conversation history.",
+        "fr": "Effacer la discussion supprimera tout l'historique de votre conversation."
     },
     "tutorial.clearChat.title": {
         "en": "Clear Chat",
         "fr": "Effacer la Conversation"
     },
     "tutorial.toolSelection": {
-        "en": "You can enable/disable various tools to tailor which resources the chatbot will use and in turn your responses. GEDS provides access to the employee directory. MySSC+ provides access to the intranet documents.",
-        "fr": ""
+        "en": "You can enable/disable various tools to tailor which resources the chatbot has access to.<br /><ul><li>GEDS: Provides access to the employee directory.</li><li>MySSC+: Provides access to the intranet documents.</li></ul>",
+        "fr": "Vous pouvez activer/désactiver divers outils pour adapter les ressources auxquelles le chatbot a accès.<br /><ul><li>GEDS : Fournit l'accès à l'annuaire des employés.</li><li>MySSC+ : Fournit l'accès aux documents de l'intranet.</li></ul>"
     },
     "tutorial.toolSelection.title": {
         "en": "Tool Selection",
         "fr": "Sélection d’Outil"
     },
     "tutorial.modelSelection": {
-        "en": "You can change the model used when generating responses. For quicker responses, try GPT-3.5 Turbo. For more accurate responses, try GPT-4o.",
-        "fr": ""
+        "en": "You can change the model used when generating responses to potentially get different results.<br /><ul><li>GPT-3.5 Turbo: For quicker but less accurate results.</li><li>GPT-4o: For slower but more accurate responses.</li></ul>",
+        "fr": "Vous pouvez changer le modèle utilisé lors de la génération des réponses pour obtenir potentiellement des résultats différents.<br /><ul><li>GPT-3.5 Turbo : Pour des résultats plus rapides mais moins précis.</li><li>GPT-4 : Pour des réponses plus lentes mais plus précises.</li></ul>"
     },
     "tutorial.modelSelection.title": {
         "en": "Model Selection",
@@ -440,8 +440,12 @@
         "fr": "Suivant"
     },
     "tutorial.skip": {
-        "en": "Skip Tour",
-        "fr": "Passer la Visite"
+        "en": "Skip",
+        "fr": "Passer"
+    },
+    "tutorial.view": {
+        "en": "View Tutorials",
+        "fr": "Voir les Tutoriels"
     }
 
 }
