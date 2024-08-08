@@ -398,5 +398,50 @@
     "model.version.select": {
         "en": "Select Model Version",
         "fr": "Sélectionnez la Version du Modèle"
+    },
+    "tutorial.menu": {
+        "en": "Use the menu to view customization settings, change language, clear chat, and more.",
+        "fr": ""
+    },
+    "tutorial.menu.title": {
+        "en": "Menu Options",
+        "fr": "Options du Menu"
+    },
+    "tutorial.clearChat": {
+        "en": "Use this button to clear the chat. Clearing the chat can help with improving responses occasionally.",
+        "fr": ""
+    },
+    "tutorial.clearChat.title": {
+        "en": "Clear Chat",
+        "fr": "Effacer la Conversation"
+    },
+    "tutorial.toolSelection": {
+        "en": "You can enable/disable various tools to tailor which resources the chatbot will use and in turn your responses. GEDS provides access to the employee directory. MySSC+ provides access to the intranet documents.",
+        "fr": ""
+    },
+    "tutorial.toolSelection.title": {
+        "en": "Tool Selection",
+        "fr": "Sélection d’Outil"
+    },
+    "tutorial.modelSelection": {
+        "en": "You can change the model used when generating responses. For quicker responses, try GPT-3.5 Turbo. For more accurate responses, try GPT-4o.",
+        "fr": ""
+    },
+    "tutorial.modelSelection.title": {
+        "en": "Model Selection",
+        "fr": "Sélection de Modèle"
+    },
+    "tutorial.previous": {
+        "en": "Previous",
+        "fr": "Précédent"
+    },
+    "tutorial.next": {
+        "en": "Next",
+        "fr": "Suivant"
+    },
+    "tutorial.skip": {
+        "en": "Skip Tour",
+        "fr": "Passer la Visite"
     }
+
 }

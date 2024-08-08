@@ -34,10 +34,11 @@ interface DrawerMenuProps {
   selectedModel: string;
   handleUpdateEnabledTools: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handleSelectedModelChanged: (modelName: string) => void;
+  tutorialBubbleNumber?: number;
 }
 
 export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie, 
-  logout, enabledTools, handleUpdateEnabledTools, handleSelectedModelChanged, selectedModel} : DrawerMenuProps) => {
+  logout, enabledTools, handleUpdateEnabledTools, handleSelectedModelChanged, selectedModel, tutorialBubbleNumber} : DrawerMenuProps) => {
   const isAuthenticated = useIsAuthenticated();
   const [toolMenuOpen, setToolMenuOpen] = useState(false);
   const [selectModelMenuOpen, setSelectModelMenuOpen] = useState(false);
@@ -62,6 +63,27 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
     }
   }, [openDrawer]);
 
+  // Use effect for opening the collapses for tools/model selection with tutorials
+  useEffect(() => {
+    if (openDrawer && tutorialBubbleNumber) {
+      switch (tutorialBubbleNumber) {
+        case 2:
+          setToolMenuOpen(false);
+          setSelectModelMenuOpen(false);
+          break;
+        case 3:
+          setToolMenuOpen(true);
+          setSelectModelMenuOpen(false);
+          break;
+        case 4:
+          setSelectModelMenuOpen(true);
+          setToolMenuOpen(false);
+          break;
+        default:
+          break;
+      }
+    }
+  }, [tutorialBubbleNumber, openDrawer]);
 
   const list = () => (
     <Box role="presentation" 
@@ -69,7 +91,7 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
         width: 350,
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh'
+        height: '100vh',
      }}>
       <List>
         <ListItem key="language" disablePadding>
@@ -161,7 +183,7 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
   );
 
   return (
-    <Drawer anchor="right" open={openDrawer} onClose={() => toggleDrawer(false)}>
+    <Drawer anchor="right" open={openDrawer} onClose={() => toggleDrawer(false)} sx={{zIndex: 1100}}>
       {list()}
     </Drawer>
   );

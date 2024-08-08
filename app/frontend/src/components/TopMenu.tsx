@@ -8,6 +8,8 @@ import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { UserProfilePicture } from './ProfilePicture';
 import { useContext } from "react";
 import { UserContext } from '../context/UserContext';
+import { forwardRef } from "react";
+import React from "react";
 
 const logoStyle = {
   width: "50px",
@@ -17,9 +19,10 @@ const logoStyle = {
 
 interface TopMenuProps {
   toggleDrawer: (arg: boolean) => void;
+  ref: React.RefObject<HTMLButtonElement>;
 }
 
-export const TopMenu = ({ toggleDrawer } : TopMenuProps) => {
+export const TopMenu = forwardRef<HTMLButtonElement, TopMenuProps>(({ toggleDrawer }, ref) => {
   const { t } = useTranslation();
   const { accessToken, graphData } = useContext(UserContext);
 
@@ -86,6 +89,7 @@ export const TopMenu = ({ toggleDrawer } : TopMenuProps) => {
                   color="inherit"
                   onClick={() => toggleDrawer(true)}
                   aria-label={t("aria.show.menu")}
+                  ref={ref} 
                 >
                   <MenuIcon />
                 </IconButton>
@@ -96,4 +100,4 @@ export const TopMenu = ({ toggleDrawer } : TopMenuProps) => {
       </AppBar>
     </>
   );
-};
+});
