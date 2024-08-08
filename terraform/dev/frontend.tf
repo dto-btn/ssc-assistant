@@ -26,6 +26,17 @@ resource "azurerm_linux_web_app" "frontend" {
   client_affinity_enabled = true
   https_only = true
 
+  site_config {}
+
+  sticky_settings {
+    app_setting_names = [ "VITE_API_BACKEND", "VITE_API_KEY", "WEBSITE_RUN_FROM_PACKAGE", "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET", "PORT"]
+  }
+}
+
+resource "azurerm_linux_web_app_slot" "pilot-prod" {
+  name           = "pilot-prod"
+  app_service_id = azurerm_linux_web_app.frontend.id
+
   site_config {
     ftps_state = "FtpsOnly"
 
@@ -37,7 +48,7 @@ resource "azurerm_linux_web_app" "frontend" {
     app_command_line = "NODE_ENV=production node server.js"
 
     cors {
-      allowed_origins     = ["https://assistant.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"]
+      allowed_origins     = ["https://assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"]
       support_credentials = true
     }
 
@@ -61,50 +72,54 @@ resource "azurerm_linux_web_app" "frontend" {
     # WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
   }
 
-  sticky_settings {
-    app_setting_names = [ "VITE_API_BACKEND", "VITE_API_KEY", "WEBSITE_RUN_FROM_PACKAGE", "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET", "PORT"]
+  identity {
+    type = "UserAssigned"
+    identity_ids = [ azurerm_user_assigned_identity.frontend.id ]
+  }
+}
+
+resource "azurerm_linux_web_app_slot" "dev" {
+  name           = "dev"
+  app_service_id = azurerm_linux_web_app.frontend.id
+
+  site_config {
+    ftps_state = "FtpsOnly"
+
+    application_stack {
+      node_version = "18-lts"
+    }
+    use_32_bit_worker = false
+
+    app_command_line = "NODE_ENV=production node server.js"
+
+    cors {
+      allowed_origins     = ["https://assistant-dev2.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"]
+      support_credentials = true
+    }
+
+    dynamic "ip_restriction" {
+      for_each = var.enable_auth == false ? [""] : []
+      content {
+        ip_address = "0.0.0.0/0"  # Deny all IPs
+        action     = "Deny"
+        priority   = 100
+        name       = "DenyAll"
+      }
+    }
+  }
+
+  app_settings = {
+    VITE_API_BACKEND         = "https://${replace(var.project_name, "_", "-")}2-api.azurewebsites.net/"
+    VITE_API_KEY             = var.vite_api_key
+    WEBSITE_RUN_FROM_PACKAGE = "1"
+    MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
+    PORT = 8080
+    # WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
   }
 
   identity {
     type = "UserAssigned"
     identity_ids = [ azurerm_user_assigned_identity.frontend.id ]
-  }
-  dynamic "auth_settings_v2" {
-    for_each = var.enable_auth == true ? [""] : []
-    content {
-      auth_enabled = true
-      default_provider = "azureactivedirectory"
-      require_authentication = true
-
-      active_directory_v2 {
-        client_id = var.aad_client_id
-        client_secret_setting_name = "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET"
-        tenant_auth_endpoint = var.aad_auth_endpoint
-        allowed_audiences = ["api://${var.aad_client_id}"]
-        allowed_applications = [var.aad_client_id]
-      }
-
-      # apple_v2 {
-      #   login_scopes = []
-      # }
-
-      # facebook_v2 {
-      #   login_scopes = []
-      # }
-
-      # github_v2 {
-      #   login_scopes = []
-      # }
-
-      # google_v2 {
-      #   allowed_audiences = []
-      #   login_scopes      = []
-      # }
-
-      login {
-        token_store_enabled = true
-      }
-    }
   }
 }
 

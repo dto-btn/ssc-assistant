@@ -93,5 +93,5 @@ resource "azurerm_dns_cname_record" "dns" {
   zone_name           = data.azurerm_dns_zone.dns.name
   resource_group_name = "ScSc-CIO_ECT_DNS-rg"
   ttl                 = 3600
-  record              = "${replace(var.project_name, "_", "-")}-api.azurewebsites.net"
+  record              = "${replace(var.project_name, "_", "-")}.azurewebsites.net"
 }

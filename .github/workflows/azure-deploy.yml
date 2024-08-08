@@ -1,7 +1,5 @@
 name: Deploy appliactions (frontend, api, functions) to Azure
 
-concurrency: pilot-prod
-
 on:
   push:
     branches:
@@ -15,6 +13,7 @@ permissions:
 jobs:
   api-build-and-deploy:
     if: github.event_name != 'pull_request'
+    concurrency: pilot-prod
     runs-on: ubuntu-latest
     environment: pilot-prod
     steps:
