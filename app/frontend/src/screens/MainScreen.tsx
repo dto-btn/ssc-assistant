@@ -383,11 +383,6 @@ const MainScreen = ({userData}: MainScreenProps) => {
             setShowTutorials(false);
         }        
     }
-
-    const hanldeUpdateModelVersion = (modelName: string) => {
-        setSelectedModel(modelName);
-        localStorage.setItem("selectedModel", JSON.stringify(modelName));
-    }
     
     return (
         <>
