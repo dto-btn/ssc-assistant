@@ -103,6 +103,11 @@ resource "azurerm_linux_web_app_slot" "dev" {
   name           = "dev" # will append it to the prod slot name (ssc-assistant)
   app_service_id = azurerm_linux_web_app.frontend.id
 
+  virtual_network_subnet_id = azurerm_subnet.frontend.id
+
+  client_affinity_enabled = true
+  https_only = true
+
   site_config {
     cors {
       allowed_origins     = ["https://assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"]
@@ -127,6 +132,11 @@ resource "azurerm_linux_web_app_slot" "dev" {
     MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
     PORT = 8080
     # WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
+  }
+
+  identity {
+    type = "UserAssigned"
+    identity_ids = [ azurerm_user_assigned_identity.frontend.id ]
   }
 }
 
@@ -154,6 +164,15 @@ resource "azurerm_app_service_slot_custom_hostname_binding" "frontend-dev" {
   hostname            = "assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"
   app_service_slot_id = azurerm_linux_web_app_slot.dev.id
 }
+
+/**
+* TODO: WARNING CURRENTLY UNSUPPORTED IT SEEMS, I had to manually do it.
+**/
+# resource "azurerm_app_service_slot_certificate_binding" "frontend-dev" {
+#   hostname_binding_id = azurerm_app_service_slot_custom_hostname_binding.frontend-dev.id
+#   certificate_id      = azurerm_app_service_certificate.frontend.id
+#   ssl_state           = "SniEnabled"
+# }
 
 resource "azurerm_monitor_diagnostic_setting" "frontend_diagnostics" {
   name                       = "${replace(var.project_name, "_", "-")}-frontend-diag"
