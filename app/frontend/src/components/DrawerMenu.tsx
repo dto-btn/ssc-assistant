@@ -1,6 +1,7 @@
 import LanguageIcon from "@mui/icons-material/Language";
 import DeleteIcon from '@mui/icons-material/Delete';
-import PsychologyIcon from '@mui/icons-material/Psychology';import {
+import PsychologyIcon from '@mui/icons-material/Psychology';
+import {
   Box,
   Collapse,
   Divider,
