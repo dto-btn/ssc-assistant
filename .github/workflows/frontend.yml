@@ -76,7 +76,7 @@ jobs:
         app-name: 'ssc-assistant'
         slot-name: 'ssc-assistant-dev'
         # az webapp deployment list-publishing-profiles --name ssc-assistant-api --resource-group YourResourceGroupName --xml (save as secret)
-        publish-profile: ${{ secrets.AZURE_FRONTEND_PUBLISH_PROFILE }}
+        publish-profile: ${{ secrets.FRONTEND_PUBLISH_PROFILE }}
         # very important: https://learn.microsoft.com/en-us/azure/app-service/deploy-run-package#enable-running-from-package
         package: 'release.zip'
 
@@ -106,7 +106,7 @@ jobs:
         app-name: 'ssc-assistant'
         slot-name: 'production'
         # az webapp deployment list-publishing-profiles --name ssc-assistant-api --resource-group YourResourceGroupName --xml (save as secret)
-        publish-profile: ${{ secrets.AZURE_FRONTEND_PUBLISH_PROFILE }}
+        publish-profile: ${{ secrets.FRONTEND_PUBLISH_PROFILE }}
         # very important: https://learn.microsoft.com/en-us/azure/app-service/deploy-run-package#enable-running-from-package
         package: 'release.zip'
 
