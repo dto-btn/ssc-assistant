@@ -104,3 +104,13 @@ resource "azurerm_dns_txt_record" "assistant" {
     value = "78b0199e2df7d755f121ad995a9192f55622702ae3526f9a4bc826bac852574d"
   }
 }
+
+resource "azurerm_dns_txt_record" "assistant-dev" {
+  name                = "asuid.assistant-dev"
+  zone_name           = data.azurerm_dns_zone.main.name
+  resource_group_name = data.azurerm_dns_zone.main.resource_group_name
+  ttl                 = 300
+  record {
+    value = "78b0199e2df7d755f121ad995a9192f55622702ae3526f9a4bc826bac852574d"
+  }
+}

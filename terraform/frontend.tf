@@ -150,6 +150,11 @@ resource "azurerm_app_service_certificate_binding" "frontend" {
   ssl_state           = "SniEnabled"
 }
 
+resource "azurerm_app_service_slot_custom_hostname_binding" "frontend-dev" {
+  hostname            = "assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"
+  app_service_slot_id = azurerm_linux_web_app_slot.dev.id
+}
+
 resource "azurerm_monitor_diagnostic_setting" "frontend_diagnostics" {
   name                       = "${replace(var.project_name, "_", "-")}-frontend-diag"
   target_resource_id         = azurerm_linux_web_app.frontend.id
