@@ -57,7 +57,7 @@ jobs:
     - name: 'Deploy to Azure Web App'
       uses: azure/webapps-deploy@v3
       with:
-        app-name: 'ssc-assistant-api__dev'
+        app-name: 'ssc-assistant-api'
         slot-name: 'dev'
         # az webapp deployment list-publishing-profiles --name ssc-assistant-dev-api --resource-group YourResourceGroupName --xml (save as secret)
         publish-profile: ${{ secrets.API_PUBLISH_PROFILE }}
