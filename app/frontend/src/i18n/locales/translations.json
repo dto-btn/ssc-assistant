@@ -397,7 +397,7 @@
     },
     "model.version.select": {
         "en": "Select Model Version",
-        "fr": "Sélectionnez la Version du Modèle"
+        "fr": "Sélectionnez la Version du modèle"
     },
     "tutorial.menu": {
         "en": "Use the menu to view customization settings, change language, clear chat, and more.",
@@ -405,7 +405,7 @@
     },
     "tutorial.menu.title": {
         "en": "Menu Options",
-        "fr": "Options du Menu"
+        "fr": "Options du menu"
     },
     "tutorial.clearChat": {
         "en": "Clearing the chat will remove your entire conversation history.",
@@ -413,15 +413,15 @@
     },
     "tutorial.clearChat.title": {
         "en": "Clear Chat",
-        "fr": "Effacer la Conversation"
+        "fr": "Effacer la conversation"
     },
     "tutorial.toolSelection": {
         "en": "You can enable/disable various tools to tailor which resources the chatbot has access to.<br /><ul><li>GEDS: Provides access to the employee directory.</li><li>MySSC+: Provides access to the intranet documents.</li></ul>",
-        "fr": "Vous pouvez activer/désactiver divers outils pour adapter les ressources auxquelles le chatbot a accès.<br /><ul><li>GEDS : Fournit l'accès à l'annuaire des employés.</li><li>MySSC+ : Fournit l'accès aux documents de l'intranet.</li></ul>"
+        "fr": "Vous pouvez activer/désactiver divers outils pour adapter les ressources auxquelles le chatbot a accès.<br /><ul><li>SAGE : Fournit l'accès à l'annuaire des employés.</li><li>MonSPC+ : Fournit l'accès aux documents de l'intranet.</li></ul>"
     },
     "tutorial.toolSelection.title": {
         "en": "Tool Selection",
-        "fr": "Sélection d’Outil"
+        "fr": "Sélection des outils"
     },
     "tutorial.modelSelection": {
         "en": "You can change the model used when generating responses to potentially get different results.<br /><ul><li>GPT-3.5 Turbo: For quicker but less accurate results.</li><li>GPT-4o: For slower but more accurate responses.</li></ul>",
@@ -429,7 +429,7 @@
     },
     "tutorial.modelSelection.title": {
         "en": "Model Selection",
-        "fr": "Sélection de Modèle"
+        "fr": "Sélection du modèle"
     },
     "tutorial.previous": {
         "en": "Previous",
@@ -444,7 +444,7 @@
         "fr": "Passer"
     },
     "tutorial.view": {
-        "en": "View Tutorials",
-        "fr": "Voir les Tutoriels"
+        "en": "View Tutorial",
+        "fr": "Voir le tutoriel"
     }
 }
