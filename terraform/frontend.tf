@@ -109,6 +109,16 @@ resource "azurerm_linux_web_app_slot" "dev" {
   https_only = true
 
   site_config {
+
+    ftps_state = "FtpsOnly"
+
+    application_stack {
+      node_version = "18-lts"
+    }
+    use_32_bit_worker = false
+
+    app_command_line = "NODE_ENV=production node server.js"
+
     cors {
       allowed_origins     = ["https://assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"]
       support_credentials = true

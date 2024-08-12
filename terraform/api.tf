@@ -72,6 +72,15 @@ resource "azurerm_linux_web_app_slot" "dev-api" {
   name           = "dev" # will append it to the prod slot name (ssc-assistant)
   app_service_id = azurerm_linux_web_app.api.id
 
+  virtual_network_subnet_id = azurerm_subnet.api.id
+
+  client_affinity_enabled = true
+  https_only = true
+
+  identity {
+    type = "SystemAssigned"
+  }
+  
   site_config {
     ftps_state = "FtpsOnly"
     api_definition_url = "https://${replace(var.project_name, "_", "-")}-dev-api.azurewebsites.net/openapi.json"
