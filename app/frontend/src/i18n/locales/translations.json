@@ -446,5 +446,17 @@
     "tutorial.view": {
         "en": "View Tutorial",
         "fr": "Voir le tutoriel"
+    },
+    "aria.previous.tutorial.button": {
+        "en": "Previous tutorial",
+        "fr": "Tutoriel précédent"
+    },
+    "aria.next.tutorial.button": {
+        "en": "Next tutorial",
+        "fr": "Prochaine tutoriel"
+    },
+    "aria.skip.tutorial.button": {
+        "en": "Skip tutorial",
+        "fr": "Passer le tutoriel"
     }
 }

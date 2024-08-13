@@ -24,6 +24,7 @@ import { useEffect, useState } from "react";
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import InfoIcon from '@mui/icons-material/Info';
+import { useTranslation } from "react-i18next";
 
 interface DrawerMenuProps {
   openDrawer: boolean;
@@ -44,6 +45,7 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
   const isAuthenticated = useIsAuthenticated();
   const [toolMenuOpen, setToolMenuOpen] = useState(false);
   const [selectModelMenuOpen, setSelectModelMenuOpen] = useState(false);
+  const { t } = useTranslation();
 
   const toggleToolDrawerOpen = () => {
     setToolMenuOpen(!toolMenuOpen);
@@ -194,7 +196,7 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
   );
 
   return (
-    <Drawer anchor="right" open={openDrawer} onClose={() => toggleDrawer(false)} sx={{zIndex: 1100}}>
+    <Drawer anchor="right" disableEnforceFocus open={openDrawer} onClose={() => toggleDrawer(false)} sx={{zIndex: 1100}}>
       {list()}
     </Drawer>
   );

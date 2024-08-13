@@ -1,7 +1,7 @@
 import { Box, Button, Fade, Paper, styled, Typography } from "@mui/material";
 import { useEffect, useState } from "react"
 import TrapFocus from '@mui/material/Unstable_TrapFocus';
-import { t } from "i18next";
+import { useTranslation } from "react-i18next";
 
 interface TutorialBubbleProps {
     handleAllTutorialsDisplayed: () => void;
@@ -59,6 +59,7 @@ export const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, update
     const [tipNumber, setTipNumber] = useState(1);
     const [allTutorialsSeen, setAllTutorialsSeen] = useState(false);
     const [dialogPosition, setDialogPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+    const { t } = useTranslation();
 
     // Anchors the tutorial bubble near the menu icon
     useEffect(() => {
@@ -99,13 +100,13 @@ export const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, update
 
     return (
         <>
-          <TrapFocus open disableAutoFocus disableEnforceFocus>
+          <TrapFocus open >
                 <Fade appear={false} in={!allTutorialsSeen}>
                     <StyledPaper
                         role="dialog"
                         aria-modal="false"
                         aria-label="Tutorial bubble"
-                        tabIndex={1}
+                        tabIndex={0}
                     >
                         <Typography variant="h6" sx={{color: 'white', mb: '5px'}}>{t(tipTitles[tipNumber - 1])}</Typography>
                         <Typography sx={{color: 'white', fontSize: '15px'}}
@@ -116,11 +117,12 @@ export const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, update
                                 {tipNumber > 1 &&
                                     <Button
                                         onClick={() => handleSetTip(tipNumber - 1)}
+                                        aria-label={t("aria.previous.tutorial.button")}
                                         sx={{
-                                            fontSize: '14px',
+                                            fontSize: '13px',
                                             color: 'white',
                                             padding: '4px 4px',
-                                            mr: '10px',
+                                            mr: '5px',
                                             '&:hover' : { textDecoration: 'underline'}
                                         }}>
                                         {t("tutorial.previous")}
@@ -129,8 +131,9 @@ export const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, update
                                 {(tipNumber < tips.length) &&
                                     <Button
                                         onClick={() => handleSetTip(tipNumber + 1)}
+                                        aria-label={t("aria.next.tutorial.button")}
                                         sx={{
-                                            fontSize: '14px',
+                                            fontSize: '13px',
                                             color: 'white',
                                             padding: '4px 4px',
                                             '&:hover' : { textDecoration: 'underline'}
@@ -141,12 +144,13 @@ export const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, update
                             </div>
                             <Button
                                 onClick={handleDismissTips}
+                                aria-label={t("aria.skip.tutorial.button")}
                                 sx={{
-                                    fontSize: '14px',
+                                    fontSize: '13px',
                                     color: 'white',
                                     padding: '4px 4px',
                                     ml: '5px',
-                                    mr: '5px',
+                                    mr: '0px',
                                     '&:hover' : { textDecoration: 'underline'}
                                 }}
                             >
@@ -162,6 +166,6 @@ export const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, update
 
 const ButtonView = styled(Box)`
     display: flex;
-    margin-top: 20px;
+    margin-top: 25px;
     justify-content: space-between;
 `
