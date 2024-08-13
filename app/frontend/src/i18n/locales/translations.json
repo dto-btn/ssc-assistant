@@ -397,7 +397,7 @@
     },
     "model.version.select": {
         "en": "Select Model Version",
-        "fr": "Sélectionnez la Version du modèle"
+        "fr": "Sélectionnez la version du modèle"
     },
     "tutorial.menu": {
         "en": "Use the menu to view customization settings, change language, clear chat, and more.",

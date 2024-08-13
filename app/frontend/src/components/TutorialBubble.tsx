@@ -10,17 +10,17 @@ interface TutorialBubbleProps {
 }
 
 const tips = [
-    t("tutorial.menu"),
-    t("tutorial.clearChat"),
-    t("tutorial.toolSelection"),
-    t("tutorial.modelSelection")
+    "tutorial.menu",
+    "tutorial.clearChat",
+    "tutorial.toolSelection",
+    "tutorial.modelSelection"
 ];
 
 const tipTitles = [
-    t("tutorial.menu.title"),
-    t("tutorial.clearChat.title"),
-    t("tutorial.toolSelection.title"),
-    t("tutorial.modelSelection.title")
+    "tutorial.menu.title",
+    "tutorial.clearChat.title",
+    "tutorial.toolSelection.title",
+    "tutorial.modelSelection.title"
 ]
 
 interface ArrowStyle {
@@ -65,7 +65,7 @@ export const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, update
         if (menuIconRef.current) {
             const rect = menuIconRef.current.getBoundingClientRect();
             setDialogPosition({
-                top: tipNumber < 2 ? rect.top + 70 : rect.top + 15, 
+                top: tipNumber < 2 ? rect.top + 70 : rect.top + 15,
                 left: tipNumber < 2 ? rect.right + 310 : window.innerWidth - 15
             });
         }
@@ -80,7 +80,7 @@ export const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, update
         position: 'fixed',
         top: `${dialogPosition.top}px`,
         left: `${dialogPosition.left}px`,
-        transform: 'translateX(-200%)', 
+        transform: 'translateX(-200%)',
         zIndex: 1200,
         '&::after': getArrowStyles(tipNumber)
     }));
@@ -107,48 +107,51 @@ export const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, update
                         aria-label="Tutorial bubble"
                         tabIndex={1}
                     >
-                        <Typography variant="h6" sx={{color: 'white'}}>{tipTitles[tipNumber - 1]}</Typography>
+                        <Typography variant="h6" sx={{color: 'white'}}>{t(tipTitles[tipNumber - 1])}</Typography>
                         <Typography sx={{color: 'white'}}
-                            dangerouslySetInnerHTML={{ __html: tips[tipNumber - 1] }}
+                            dangerouslySetInnerHTML={{ __html: t(tips[tipNumber - 1]) }}
                         />
                         <ButtonView>
                             <div>
-                                {tipNumber > 1 && 
-                                    <Button 
+                                {tipNumber > 1 &&
+                                    <Button
                                         onClick={() => handleSetTip(tipNumber - 1)}
-                                        sx={{ 
-                                            fontSize: { xs: '0.75rem', sm: '0.75rem' }, 
-                                            backgroundColor: 'primary.main', 
-                                            color: 'white', 
+                                        sx={{
+                                            fontSize: { xs: '0.75rem', sm: '0.75rem' },
+                                            backgroundColor: 'primary.main',
+                                            color: 'white',
                                             padding: '4px 4px',
-                                            mr: '10px'
-                                        }}                                     >
+                                            mr: '10px',
+                                            '&:hover' : { backgroundColor: 'black'}
+                                        }}>
                                         {t("tutorial.previous")}
                                     </Button>
                                 }
-                                {(tipNumber < tips.length) && 
-                                    <Button 
+                                {(tipNumber < tips.length) &&
+                                    <Button
                                         onClick={() => handleSetTip(tipNumber + 1)}
-                                        sx={{ 
-                                            fontSize: { xs: '0.75rem', sm: '0.75rem' }, 
-                                            backgroundColor: 'primary.main', 
-                                            color: 'white', 
-                                            padding: '4px 4px' 
-                                        }}                                     >
+                                        sx={{
+                                            fontSize: { xs: '0.75rem', sm: '0.75rem' },
+                                            backgroundColor: 'primary.main',
+                                            color: 'white',
+                                            padding: '4px 4px',
+                                            '&:hover' : { backgroundColor: 'black'}
+                                        }}>
                                         {t("tutorial.next")}
                                     </Button>
                                 }
                             </div>
-                            <Button 
+                            <Button
                                 onClick={handleDismissTips}
-                                sx={{ 
-                                    fontSize: { xs: '0.75rem', sm: '0.75rem' }, 
-                                    backgroundColor: 'primary.main', 
-                                    color: 'white', 
+                                sx={{
+                                    fontSize: { xs: '0.75rem', sm: '0.75rem' },
+                                    backgroundColor: 'primary.main',
+                                    color: 'white',
                                     padding: '4px 4px',
                                     ml: '5px',
-                                    mr: '5px'
-                                }} 
+                                    mr: '5px',
+                                    '&:hover' : { backgroundColor: 'black'}
+                                }}
                             >
                                 {tipNumber < tips.length ? `${t("tutorial.skip")} (${tipNumber} / ${tips.length})` : `${t("close")}`}
                         </Button>
