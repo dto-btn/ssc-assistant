@@ -40,7 +40,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
     })
     const [selectedModel, setSelectedModel] = useState<string>("gpt-4o")
     const [quotedText, setQuotedText] = useState<string>();
-    const [showTutorials, setShowTutorials] = useState(false); // true for testing, should be false
+    const [showTutorials, setShowTutorials] = useState(false);
     const menuIconRef = useRef<HTMLButtonElement>(null);
     const [tutorialBubbleNumber, setTutorialBubbleNumber] = useState<number | undefined>(undefined);
     const theme = useTheme();
@@ -365,7 +365,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
 
     useEffect(() => {
         const hasSeenTutorials = localStorage.getItem("hasSeenTutorials");
-        if (hasSeenTutorials !== "false" && displayIsAtleastSm) {
+        if (hasSeenTutorials !== "true" && displayIsAtleastSm) {
             setShowTutorials(true);
         }
     }, [])
