@@ -33,10 +33,10 @@ interface ArrowStyle {
 }
 
 const arrowStyles: Record<number, ArrowStyle> = {
-    1: { top: -12, right: 18, borderRight: '15px solid transparent', borderBottom: '15px solid #8F7EE7', borderLeft: '15px solid transparent' },
-    2: { top: 20, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #8F7EE7' },
-    3: { top: 70, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #8F7EE7' },
-    4: { top: 120, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #8F7EE7' },
+    1: { top: -12, right: 18, borderRight: '15px solid transparent', borderBottom: '15px solid #24604A', borderLeft: '15px solid transparent' },
+    2: { top: 20, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #24604A' },
+    3: { top: 70, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #24604A' },
+    4: { top: 120, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #24604A' },
 };
 
 const getArrowStyles = (tipNumber: number): React.CSSProperties => {
@@ -72,7 +72,7 @@ export const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, update
     }, [menuIconRef, tipNumber]);
 
     const StyledPaper = styled(Paper)(({ theme }) => ({
-        backgroundColor: '#8F7EE7',
+        backgroundColor: '#24604A',
         width: '300px',
         padding: '16px',
         borderRadius: '7px',
@@ -107,8 +107,8 @@ export const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, update
                         aria-label="Tutorial bubble"
                         tabIndex={1}
                     >
-                        <Typography variant="h6" sx={{color: 'white'}}>{t(tipTitles[tipNumber - 1])}</Typography>
-                        <Typography sx={{color: 'white'}}
+                        <Typography variant="h6" sx={{color: 'white', mb: '5px'}}>{t(tipTitles[tipNumber - 1])}</Typography>
+                        <Typography sx={{color: 'white', fontSize: '15px'}}
                             dangerouslySetInnerHTML={{ __html: t(tips[tipNumber - 1]) }}
                         />
                         <ButtonView>
@@ -117,12 +117,11 @@ export const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, update
                                     <Button
                                         onClick={() => handleSetTip(tipNumber - 1)}
                                         sx={{
-                                            fontSize: { xs: '0.75rem', sm: '0.75rem' },
-                                            backgroundColor: 'primary.main',
+                                            fontSize: '14px',
                                             color: 'white',
                                             padding: '4px 4px',
                                             mr: '10px',
-                                            '&:hover' : { backgroundColor: 'black'}
+                                            '&:hover' : { textDecoration: 'underline'}
                                         }}>
                                         {t("tutorial.previous")}
                                     </Button>
@@ -131,11 +130,10 @@ export const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, update
                                     <Button
                                         onClick={() => handleSetTip(tipNumber + 1)}
                                         sx={{
-                                            fontSize: { xs: '0.75rem', sm: '0.75rem' },
-                                            backgroundColor: 'primary.main',
+                                            fontSize: '14px',
                                             color: 'white',
                                             padding: '4px 4px',
-                                            '&:hover' : { backgroundColor: 'black'}
+                                            '&:hover' : { textDecoration: 'underline'}
                                         }}>
                                         {t("tutorial.next")}
                                     </Button>
@@ -144,13 +142,12 @@ export const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, update
                             <Button
                                 onClick={handleDismissTips}
                                 sx={{
-                                    fontSize: { xs: '0.75rem', sm: '0.75rem' },
-                                    backgroundColor: 'primary.main',
+                                    fontSize: '14px',
                                     color: 'white',
                                     padding: '4px 4px',
                                     ml: '5px',
                                     mr: '5px',
-                                    '&:hover' : { backgroundColor: 'black'}
+                                    '&:hover' : { textDecoration: 'underline'}
                                 }}
                             >
                                 {tipNumber < tips.length ? `${t("tutorial.skip")} (${tipNumber} / ${tips.length})` : `${t("close")}`}
@@ -165,6 +162,6 @@ export const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, update
 
 const ButtonView = styled(Box)`
     display: flex;
-    margin-top: 10px;
+    margin-top: 20px;
     justify-content: space-between;
 `
