@@ -1,6 +1,7 @@
 import LanguageIcon from "@mui/icons-material/Language";
 import DeleteIcon from '@mui/icons-material/Delete';
-import PsychologyIcon from '@mui/icons-material/Psychology';import {
+import PsychologyIcon from '@mui/icons-material/Psychology';
+import {
   Box,
   Collapse,
   Divider,
@@ -16,7 +17,7 @@ import PsychologyIcon from '@mui/icons-material/Psychology';import {
 } from "@mui/material";
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
-import { changeLanguage, t } from "i18next";
+import { changeLanguage } from "i18next";
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useIsAuthenticated } from "@azure/msal-react";
 import Handyman from "@mui/icons-material/Handyman";
