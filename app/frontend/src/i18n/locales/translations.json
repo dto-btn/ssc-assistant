@@ -397,6 +397,66 @@
     },
     "model.version.select": {
         "en": "Select Model Version",
-        "fr": "Sélectionnez la Version du Modèle"
+        "fr": "Sélectionnez la version du modèle"
+    },
+    "tutorial.menu": {
+        "en": "Use the menu to view customization settings, change language, clear chat, and more.",
+        "fr": "Utilisez le menu pour voir les paramètres de personnalisation, changer la langue, effacer la discussion, et plus encore."
+    },
+    "tutorial.menu.title": {
+        "en": "Menu Options",
+        "fr": "Options du menu"
+    },
+    "tutorial.clearChat": {
+        "en": "Clearing the chat will remove your entire conversation history.",
+        "fr": "Effacer la discussion supprimera tout l'historique de votre conversation."
+    },
+    "tutorial.clearChat.title": {
+        "en": "Clear Chat",
+        "fr": "Effacer la conversation"
+    },
+    "tutorial.toolSelection": {
+        "en": "You can enable/disable various tools to tailor which resources the chatbot has access to.<br /><ul><li>GEDS: Provides access to the employee directory.</li><li>MySSC+: Provides access to the intranet documents.</li></ul>",
+        "fr": "Vous pouvez activer/désactiver divers outils pour adapter les ressources auxquelles le chatbot a accès.<br /><ul><li>SAGE : Fournit l'accès à l'annuaire des employés.</li><li>MonSPC+ : Fournit l'accès aux documents de l'intranet.</li></ul>"
+    },
+    "tutorial.toolSelection.title": {
+        "en": "Tool Selection",
+        "fr": "Sélection des outils"
+    },
+    "tutorial.modelSelection": {
+        "en": "You can change the model used when generating responses to potentially get different results.<br /><ul><li>GPT-3.5 Turbo: For quicker but less accurate results.</li><li>GPT-4o: For slower but more accurate responses.</li></ul>",
+        "fr": "Vous pouvez changer le modèle utilisé lors de la génération des réponses pour obtenir potentiellement des résultats différents.<br /><ul><li>GPT-3.5 Turbo : Pour des résultats plus rapides mais moins précis.</li><li>GPT-4 : Pour des réponses plus lentes mais plus précises.</li></ul>"
+    },
+    "tutorial.modelSelection.title": {
+        "en": "Model Selection",
+        "fr": "Sélection du modèle"
+    },
+    "tutorial.previous": {
+        "en": "Previous",
+        "fr": "Précédent"
+    },
+    "tutorial.next": {
+        "en": "Next",
+        "fr": "Suivant"
+    },
+    "tutorial.skip": {
+        "en": "Skip",
+        "fr": "Passer"
+    },
+    "tutorial.view": {
+        "en": "View Tutorial",
+        "fr": "Voir le tutoriel"
+    },
+    "aria.previous.tutorial.button": {
+        "en": "Previous tutorial",
+        "fr": "Tutoriel précédent"
+    },
+    "aria.next.tutorial.button": {
+        "en": "Next tutorial",
+        "fr": "Prochaine tutoriel"
+    },
+    "aria.skip.tutorial.button": {
+        "en": "Skip tutorial",
+        "fr": "Passer le tutoriel"
     }
 }

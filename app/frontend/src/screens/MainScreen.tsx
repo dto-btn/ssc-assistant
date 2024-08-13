@@ -1,4 +1,4 @@
-import { Box, CssBaseline } from "@mui/material";
+import { Box, CssBaseline, useMediaQuery, useTheme } from "@mui/material";
 import { ChatInput, Dial, Disclaimer, DrawerMenu, FeedbackForm, TopMenu } from "../components";
 import ChatMessagesContainer from "../containers/ChatMessagesContainer";
 import { t } from "i18next";
@@ -13,7 +13,7 @@ import { AccountInfo, InteractionStatus } from "@azure/msal-browser";
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from 'uuid';
 import QuoteTextTooltip from "../components/QuoteTextTooltip";
-
+import { TutorialBubble } from "../components/TutorialBubble";
 interface MainScreenProps {
     userData: {
         accessToken: string;
@@ -40,6 +40,11 @@ const MainScreen = ({userData}: MainScreenProps) => {
     })
     const [selectedModel, setSelectedModel] = useState<string>("gpt-4o")
     const [quotedText, setQuotedText] = useState<string>();
+    const [showTutorials, setShowTutorials] = useState(false); // true for testing, should be false
+    const menuIconRef = useRef<HTMLButtonElement>(null);
+    const [tutorialBubbleNumber, setTutorialBubbleNumber] = useState<number | undefined>(undefined);
+    const theme = useTheme();
+    const displayIsAtleastSm = useMediaQuery(theme.breakpoints.up('sm'));
 
     const convertChatHistoryToMessages = (chatHistory: ChatItem[]) : Message[] => {
         const startIndex = Math.max(chatHistory.length - maxMessagesSent, 0);
@@ -343,25 +348,46 @@ const MainScreen = ({userData}: MainScreenProps) => {
         ...enabledTools,
         [event.target.name]: event.target.checked
         });
-    }
+    };
 
     const handleAddQuotedText = (quotedText: string) => {
         setQuotedText(quotedText);
-    }
+    };
 
     const handleRemoveQuote = () => {
         setQuotedText(undefined);
-    }
+    };
 
     const hanldeUpdateModelVersion = (modelName: string) => {
         setSelectedModel(modelName);
         localStorage.setItem("selectedModel", JSON.stringify(modelName));
+    };
+
+    useEffect(() => {
+        const hasSeenTutorials = localStorage.getItem("hasSeenTutorials");
+        if (hasSeenTutorials !== "false" && displayIsAtleastSm) {
+            setShowTutorials(true);
+        }
+    }, [])
+
+    const handleUpdateTutorialBubbleNumber = (tipNumber: number | undefined) => {
+        setTutorialBubbleNumber(tipNumber);
+    }
+
+    const toggleTutorials = (showTutorials?: boolean) => {
+        if (showTutorials) {
+            setOpenDrawer(false);
+            setShowTutorials(true);
+        } else {
+            localStorage.setItem("hasSeenTutorials", "true");
+            setShowTutorials(false);
+        }        
     }
     
     return (
         <>
             <CssBaseline />
-            <TopMenu toggleDrawer={setOpenDrawer} />
+            <TopMenu toggleDrawer={setOpenDrawer} ref={menuIconRef}  />
             <Box
                 sx={{
                 display: "flex",
@@ -405,10 +431,13 @@ const MainScreen = ({userData}: MainScreenProps) => {
                     />
                 </Box>
             </Box>
-            <Dial drawerVisible={openDrawer} onClearChat={handleClearChat} />
+            <Dial 
+                drawerVisible={openDrawer || (tutorialBubbleNumber !== undefined && tutorialBubbleNumber > 1)} 
+                onClearChat={handleClearChat} 
+            />
             <Disclaimer />
             <DrawerMenu 
-                openDrawer={openDrawer} 
+                openDrawer={openDrawer || (tutorialBubbleNumber !== undefined && tutorialBubbleNumber > 1)} 
                 toggleDrawer={setOpenDrawer} 
                 onClearChat={handleClearChat} 
                 setLangCookie={setLangCookie} 
@@ -417,6 +446,8 @@ const MainScreen = ({userData}: MainScreenProps) => {
                 handleUpdateEnabledTools={handleUpdateEnabledTools}
                 selectedModel={selectedModel}
                 handleSelectedModelChanged={hanldeUpdateModelVersion}
+                tutorialBubbleNumber={tutorialBubbleNumber}
+                handleToggleTutorials={toggleTutorials}
             />
             <FeedbackForm
                 feedback={feedback}
@@ -425,6 +456,9 @@ const MainScreen = ({userData}: MainScreenProps) => {
                 handleClose={() => setIsFeedbackVisible(false)}
                 handleFeedbackSubmit={handleFeedbackSubmit}
             />
+            {showTutorials &&
+                <TutorialBubble handleAllTutorialsDisplayed={toggleTutorials} menuIconRef={menuIconRef} updateTutorialBubbleNumber={handleUpdateTutorialBubbleNumber} />
+            }
         </>
     )
 }

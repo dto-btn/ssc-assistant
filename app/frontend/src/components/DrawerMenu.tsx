@@ -1,6 +1,7 @@
 import LanguageIcon from "@mui/icons-material/Language";
 import DeleteIcon from '@mui/icons-material/Delete';
-import PsychologyIcon from '@mui/icons-material/Psychology';import {
+import PsychologyIcon from '@mui/icons-material/Psychology';
+import {
   Box,
   Collapse,
   Divider,
@@ -16,13 +17,15 @@ import PsychologyIcon from '@mui/icons-material/Psychology';import {
 } from "@mui/material";
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
-import { changeLanguage, t } from "i18next";
+import { changeLanguage } from "i18next";
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useIsAuthenticated } from "@azure/msal-react";
 import Handyman from "@mui/icons-material/Handyman";
 import { useEffect, useState } from "react";
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import InfoIcon from '@mui/icons-material/Info';
+import { useTranslation } from "react-i18next";
 
 interface DrawerMenuProps {
   openDrawer: boolean;
@@ -34,13 +37,16 @@ interface DrawerMenuProps {
   selectedModel: string;
   handleUpdateEnabledTools: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handleSelectedModelChanged: (modelName: string) => void;
+  tutorialBubbleNumber?: number;
+  handleToggleTutorials: (showTutorials?: boolean) => void;
 }
 
 export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie, 
-  logout, enabledTools, handleUpdateEnabledTools, handleSelectedModelChanged, selectedModel} : DrawerMenuProps) => {
+  logout, enabledTools, handleUpdateEnabledTools, handleSelectedModelChanged, selectedModel, tutorialBubbleNumber, handleToggleTutorials} : DrawerMenuProps) => {
   const isAuthenticated = useIsAuthenticated();
   const [toolMenuOpen, setToolMenuOpen] = useState(false);
   const [selectModelMenuOpen, setSelectModelMenuOpen] = useState(false);
+  const { t } = useTranslation();
 
   const toggleToolDrawerOpen = () => {
     setToolMenuOpen(!toolMenuOpen);
@@ -62,14 +68,35 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
     }
   }, [openDrawer]);
 
+  // Use effect for opening the collapses for tools/model selection with tutorials
+  useEffect(() => {
+    if (openDrawer && tutorialBubbleNumber) {
+      switch (tutorialBubbleNumber) {
+        case 2:
+          setToolMenuOpen(false);
+          setSelectModelMenuOpen(false);
+          break;
+        case 3:
+          setToolMenuOpen(true);
+          setSelectModelMenuOpen(false);
+          break;
+        case 4:
+          setSelectModelMenuOpen(true);
+          setToolMenuOpen(false);
+          break;
+        default:
+          break;
+      }
+    }
+  }, [tutorialBubbleNumber, openDrawer]);
 
   const list = () => (
     <Box role="presentation" 
       sx={{ 
-        width: 350,
+        width: 300,
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh'
+        height: '100vh',
      }}>
       <List>
         <ListItem key="language" disablePadding>
@@ -147,6 +174,15 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
         </Collapse>
       </List>
       <List sx={{marginTop: 'auto'}}>
+        {!tutorialBubbleNumber && 
+          (<ListItem key="tutorials" disablePadding>
+            <ListItemButton onClick={() => handleToggleTutorials(true)}>
+              <ListItemIcon>
+                <InfoIcon />
+              </ListItemIcon>
+              <ListItemText primary={t("tutorial.view")} />
+            </ListItemButton>
+          </ListItem>)}
         {isAuthenticated &&
         (<ListItem key="logout" disablePadding>
           <ListItemButton onClick={logout}>
@@ -161,7 +197,7 @@ export const DrawerMenu = ({openDrawer, toggleDrawer, onClearChat, setLangCookie
   );
 
   return (
-    <Drawer anchor="right" open={openDrawer} onClose={() => toggleDrawer(false)}>
+    <Drawer anchor="right" disableEnforceFocus open={openDrawer} onClose={() => toggleDrawer(false)} sx={{zIndex: 1100}}>
       {list()}
     </Drawer>
   );
