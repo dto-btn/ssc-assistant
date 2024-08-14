@@ -15,7 +15,6 @@ interface UserChatProps {
 }
 
 export const UserBubble = ({ text, quote }: UserChatProps) => {
-
   const { graphData } = useContext(UserContext);
 
   return (
@@ -26,7 +25,8 @@ export const UserBubble = ({ text, quote }: UserChatProps) => {
           color: 'primary.contrastText',
           borderRadius: '20px',
           borderTopRightRadius: 0,
-          maxWidth: '80%',
+          maxWidth: '70%',
+          padding: '10px', /* Add padding to avoid text touching edges */
         }}
         elevation={4}
       >
@@ -67,8 +67,9 @@ export const UserBubble = ({ text, quote }: UserChatProps) => {
 
 const UserBubbleContainer = styled(Box)`
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   padding: 0px 15px;
+  max-width: 100%;
 `
 
 const ProfilePictureView = styled(Box)`
