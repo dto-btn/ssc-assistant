@@ -26,7 +26,7 @@ export const UserBubble = ({ text, quote }: UserChatProps) => {
           borderRadius: '20px',
           borderTopRightRadius: 0,
           maxWidth: '70%',
-          padding: '10px', /* Add padding to avoid text touching edges */
+          padding: '10px', 
         }}
         elevation={4}
       >
