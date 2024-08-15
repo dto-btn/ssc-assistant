@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 import os
@@ -360,13 +361,16 @@ def get_available_rooms(buildingId: str, floorId: str, bookingDate: str):
             pretty_response = json.dumps(filtered_rooms, indent=4)
             logger.debug(pretty_response)
             logger.debug(f"Response status code: {response.status_code}")
+            
+            result = {
+                "rooms": filtered_rooms
+            }
+            
             if floor_plan_blob is not None:
-                return {
-                    "floorPlan": floor_plan_blob,
-                    "rooms": filtered_rooms
-                }
-            else:
-                return filtered_rooms
+                # base64_svg = base64.b64encode(floor_plan_blob).decode('utf-8')
+                result["floorPlan"] = floor_plan_blob
+
+            return result
         else:
             logger.error(f"Unable to get any available rooms info for the given floor and building. Status code: {response.status_code}")
             return f"Didn't find any rooms for the given floor {floorId} and building {buildingId}."
@@ -405,8 +409,8 @@ def get_floor_plan(buildingId: str, floorId: str):
             
             if target_floor_blob_name:
                 # container_client = blob_service_client.get_container_client(container_name)
-                # blob_client = container_client.get_blob_client(target_floor_url)
-                # floor_plan_blob = blob_client.download_blob().readall().decode('utf-8')
+                # blob_client = container_client.get_blob_client(target_floor_blob_name)
+                # floor_plan_blob = blob_client.download_blob().readall()
                 return target_floor_blob_name
             else:
                 logger.error(f"Floor plan URL not found for floorId: {floorId}")

@@ -87,6 +87,8 @@ const MainScreen = ({userData}: MainScreenProps) => {
             accessToken: idToken
             });
 
+            console.log(completionResponse)
+
             setChatHistory((prevChatHistory) => {
             const updatedChatHistory = [...prevChatHistory]; //making a copy
             const lastItemIndex = updatedChatHistory.length - 1;

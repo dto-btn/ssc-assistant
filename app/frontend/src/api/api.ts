@@ -46,6 +46,7 @@ export async function completionMySSC({ request, updateLastMessage, accessToken 
   const contentRegex = new RegExp(`${startBoundaryRegex.source}([\\s\\S]*?)(?=${endBoundaryRegex.source}|$)`, 's');
   const jsonRegex = new RegExp(`${endBoundaryRegex.source}([\\s\\S]+?)${finalBoundaryRegex.source}`, 's');
 
+
   try {
     while (true) {
       const { done, value } = await reader.read();
