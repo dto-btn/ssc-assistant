@@ -68,6 +68,46 @@ resource "azurerm_linux_web_app" "api" {
   }
 }
 
+resource "azurerm_linux_web_app_slot" "dev-api" {
+  name           = "dev" # will append it to the prod slot name (ssc-assistant)
+  app_service_id = azurerm_linux_web_app.api.id
+
+  virtual_network_subnet_id = azurerm_subnet.api.id
+
+  client_affinity_enabled = true
+  https_only = true
+
+  identity {
+    type = "SystemAssigned"
+  }
+  
+  site_config {
+    ftps_state = "FtpsOnly"
+    api_definition_url = "https://${replace(var.project_name, "_", "-")}-dev-api.azurewebsites.net/openapi.json"
+
+    application_stack {
+      python_version = "3.11"
+    }
+    use_32_bit_worker = false
+  }
+
+  app_settings = {
+    AZURE_SEARCH_SERVICE_ENDPOINT = "https://${azurerm_search_service.main.name}.search.windows.net"
+    AZURE_SEARCH_ADMIN_KEY        = azurerm_search_service.main.primary_key
+    AZURE_OPENAI_ENDPOINT         = data.azurerm_cognitive_account.ai.endpoint
+    AZURE_OPENAI_API_KEY          = data.azurerm_cognitive_account.ai.primary_access_key
+    AZURE_OPENAI_MODEL            = "gpt-4o"
+    AZURE_SEARCH_INDEX_NAME       = "current"
+    GEDS_API_TOKEN                = var.geds_api_token
+    SERVER_URL_PROD               = "https://${replace(var.project_name, "_", "-")}-dev-api.azurewebsites.net"
+    JWT_SECRET                    = var.jwt_secret_dev
+    DATABASE_ENDPOINT             = azurerm_storage_account.main.primary_table_endpoint
+    AZURE_AD_CLIENT_ID            = var.aad_client_id
+    AZURE_AD_TENANT_ID            = data.azurerm_client_config.current.tenant_id
+    #PORT = 5001
+  }
+}
+
 resource "azurerm_monitor_diagnostic_setting" "api_diagnostics" {
   name                       = "${replace(var.project_name, "_", "-")}-api-diag"
   target_resource_id         = azurerm_linux_web_app.api.id

@@ -99,6 +99,57 @@ resource "azurerm_linux_web_app" "frontend" {
   }
 }
 
+resource "azurerm_linux_web_app_slot" "dev" {
+  name           = "dev" # will append it to the prod slot name (ssc-assistant)
+  app_service_id = azurerm_linux_web_app.frontend.id
+
+  virtual_network_subnet_id = azurerm_subnet.frontend.id
+
+  client_affinity_enabled = true
+  https_only = true
+
+  site_config {
+
+    ftps_state = "FtpsOnly"
+
+    application_stack {
+      node_version = "18-lts"
+    }
+    use_32_bit_worker = false
+
+    app_command_line = "NODE_ENV=production node server.js"
+
+    cors {
+      allowed_origins     = ["https://assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"]
+      support_credentials = true
+    }
+
+    dynamic "ip_restriction" {
+      for_each = var.enable_auth == false ? [""] : []
+      content {
+        ip_address = "0.0.0.0/0"  # Deny all IPs
+        action     = "Deny"
+        priority   = 100
+        name       = "DenyAll"
+      }
+    }
+  }
+
+  app_settings = {
+    VITE_API_BACKEND         = "https://${replace(var.project_name, "_", "-")}-api-dev.azurewebsites.net/"
+    VITE_API_KEY             = var.vite_api_key_dev
+    WEBSITE_RUN_FROM_PACKAGE = "1"
+    MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
+    PORT = 8080
+    # WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
+  }
+
+  identity {
+    type = "UserAssigned"
+    identity_ids = [ azurerm_user_assigned_identity.frontend.id ]
+  }
+}
+
 resource "azurerm_app_service_certificate" "frontend" {
   name                = "ssc-assistant-cert"
   resource_group_name = azurerm_resource_group.main.name
@@ -118,6 +169,20 @@ resource "azurerm_app_service_certificate_binding" "frontend" {
   certificate_id      = azurerm_app_service_certificate.frontend.id
   ssl_state           = "SniEnabled"
 }
+
+resource "azurerm_app_service_slot_custom_hostname_binding" "frontend-dev" {
+  hostname            = "assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"
+  app_service_slot_id = azurerm_linux_web_app_slot.dev.id
+}
+
+/**
+* TODO: WARNING CURRENTLY UNSUPPORTED IT SEEMS, I had to manually do it.
+**/
+# resource "azurerm_app_service_slot_certificate_binding" "frontend-dev" {
+#   hostname_binding_id = azurerm_app_service_slot_custom_hostname_binding.frontend-dev.id
+#   certificate_id      = azurerm_app_service_certificate.frontend.id
+#   ssl_state           = "SniEnabled"
+# }
 
 resource "azurerm_monitor_diagnostic_setting" "frontend_diagnostics" {
   name                       = "${replace(var.project_name, "_", "-")}-frontend-diag"
