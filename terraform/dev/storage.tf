@@ -27,6 +27,7 @@ resource "azurerm_storage_table" "flagged" {
 resource "azurerm_storage_container" "archibus" {
   name                 = "archibus-floor-plans"
   storage_account_name = azurerm_storage_account.dev.name
+  container_access_type = "blob"
 }
 
 data "azuread_user" "dev1" {
