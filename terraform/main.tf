@@ -7,15 +7,6 @@ resource "azurerm_resource_group" "main" {
 }
 
 /****************************************************
-*                     OpenAI                        *
-*****************************************************/
-data "azurerm_cognitive_account" "ai" {
-  name                = var.openai_name
-  resource_group_name = var.openai_rg
-  //kind = "OpenAI"
-}
-
-/****************************************************
 *                     KEYVAULT                      *
 *****************************************************/
 data "azurerm_client_config" "current" {}
@@ -96,8 +87,26 @@ resource "azurerm_dns_cname_record" "assistant" {
   record              = azurerm_linux_web_app.frontend.default_hostname
 }
 
+resource "azurerm_dns_cname_record" "assistant-dev" {
+  name                = "assistant-dev"
+  zone_name           = data.azurerm_dns_zone.main.name
+  resource_group_name = data.azurerm_dns_zone.main.resource_group_name
+  ttl                 = 3600
+  record              = "${replace(var.project_name, "_", "-")}-dev.azurewebsites.net"
+}
+
 resource "azurerm_dns_txt_record" "assistant" {
   name                = "asuid.assistant"
+  zone_name           = data.azurerm_dns_zone.main.name
+  resource_group_name = data.azurerm_dns_zone.main.resource_group_name
+  ttl                 = 300
+  record {
+    value = "78b0199e2df7d755f121ad995a9192f55622702ae3526f9a4bc826bac852574d"
+  }
+}
+
+resource "azurerm_dns_txt_record" "assistant-dev" {
+  name                = "asuid.assistant-dev"
   zone_name           = data.azurerm_dns_zone.main.name
   resource_group_name = data.azurerm_dns_zone.main.resource_group_name
   ttl                 = 300

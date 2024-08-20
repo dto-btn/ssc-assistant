@@ -24,6 +24,10 @@ resource "azurerm_storage_table" "flagged" {
   storage_account_name = azurerm_storage_account.dev.name
 }
 
+resource "azurerm_storage_container" "archibus" {
+  name                 = "archibus-floor-plans"
+  storage_account_name = azurerm_storage_account.dev.name
+}
 
 data "azuread_user" "dev1" {
   user_principal_name = "guillaume.turcotte2@ssc-spc.gc.ca"
@@ -31,6 +35,10 @@ data "azuread_user" "dev1" {
 
 data "azuread_user" "dev2" {
   user_principal_name = "kyle.aitken@ssc-spc.gc.ca"
+}
+
+data "azuread_user" "akash" {
+  user_principal_name = "akash.bakshi@ssc-spc.gc.ca"
 }
 
 locals {
@@ -46,4 +54,34 @@ resource "azurerm_role_assignment" "storage_table_contributor" {
   scope                = azurerm_storage_account.dev.id
   role_definition_name = "Storage Table Data Contributor"
   principal_id         = each.value
+}
+
+resource "azurerm_role_assignment" "archibus_container" {
+  scope                = "${azurerm_storage_account.dev.id}/blobServices/default/containers/${azurerm_storage_container.archibus.name}"
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azuread_user.akash.object_id
+}
+
+resource "azurerm_role_assignment" "archibus_container_read" {
+  scope                = "${azurerm_storage_account.dev.id}"
+  role_definition_name = "Storage Blob Data Reader"
+  principal_id         = data.azuread_user.akash.object_id
+  condition_version    = "2.0"
+  condition            = <<-EOT
+(
+ (
+  (ActionMatches{'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read'})
+ )
+ AND
+ (
+  @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:name] StringEqualsIgnoreCase 'archibus-floor-plans'
+ )
+)
+EOT
+}
+
+resource "azurerm_role_assignment" "archibus_account" {
+  scope                = "${azurerm_storage_account.dev.id}"
+  role_definition_name = "Reader"
+  principal_id         = data.azuread_user.akash.object_id
 }

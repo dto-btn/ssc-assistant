@@ -58,5 +58,19 @@ resource "azurerm_linux_function_app" "functions" {
   }
 
   virtual_network_subnet_id = data.azurerm_subnet.subscription-vnet-sub.id
+}
 
+resource "azurerm_monitor_diagnostic_setting" "function_app_diagnostics" {
+  name                       = "${replace(var.project_name, "_", "-")}-function-diag"
+  target_resource_id         = azurerm_linux_function_app.functions.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+
+  enabled_log {
+    category = "FunctionAppLogs"
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = false
+  }
 }
