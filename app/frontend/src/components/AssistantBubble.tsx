@@ -251,19 +251,19 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
                         zIndex: 10, 
                         color: 'black',
                       }}
-                      aria-label='expand floor plan image'
+                      aria-label={t("aria.expand.floorPlan")}
                       onClick={() => setFloorPlanExpanded(true)}
                     >
                         <FitScreenIcon sx={{fontSize: '35px'}}/>
                     </IconButton>
-                    <img src={floorPlanFilename} alt="Archibus floor plan" />
+                    <img src={floorPlanFilename} alt={t("archibus.floorPlan")} />
                   </FloorPlanView>
 
                   <Dialog open={isFloorPlanExpanded} onClose={() => setFloorPlanExpanded(false)} fullWidth maxWidth="lg">
                     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
                       <img
                         src={floorPlanFilename}
-                        alt="Archibus floor plan"
+                        alt={t("archibus.floorPlan")}
                         style={{
                           width: '100%',
                           height: 'auto',
