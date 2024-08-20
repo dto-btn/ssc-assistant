@@ -46,6 +46,7 @@ export async function completionMySSC({ request, updateLastMessage, accessToken 
   const contentRegex = new RegExp(`${startBoundaryRegex.source}([\\s\\S]*?)(?=${endBoundaryRegex.source}|$)`, 's');
   const jsonRegex = new RegExp(`${endBoundaryRegex.source}([\\s\\S]+?)${finalBoundaryRegex.source}`, 's');
 
+
   try {
     while (true) {
       const { done, value } = await reader.read();
@@ -100,4 +101,29 @@ export async function sendFeedback(feedback: string, isGoodResponse: boolean, uu
   }
 
   return response;
+}
+
+export async function bookReservation(request: BookingConfirmation): Promise<Response> {
+  const proxyURL = 'http://localhost:8080/bookReservation';
+
+  try {
+    const bookingResponse = await fetch(proxyURL, {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(request)
+    })
+
+    if (!bookingResponse.ok) {
+      throw new Error();
+    }
+
+    const data = await bookingResponse.json();
+    return data;
+
+  } catch (error) {
+    throw new Error();
+  }
+
 }

@@ -11,11 +11,12 @@ interface ChatMessagesContainerProps {
     setIsFeedbackVisible: React.Dispatch<React.SetStateAction<boolean>>;
     setIsGoodResponse: React.Dispatch<React.SetStateAction<boolean>>;
     handleRemoveToastMessage: (index: number) => void;
+    handleBookReservation: (bookingDetails: BookingConfirmation) => void;
 }
 
 const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     const { chatHistory, isLoading, chatMessageStreamEnd, replayChat, 
-        setIsFeedbackVisible, setIsGoodResponse, handleRemoveToastMessage } = props;
+        setIsFeedbackVisible, setIsGoodResponse, handleRemoveToastMessage, handleBookReservation } = props;
     
     return (
         <Box
@@ -58,6 +59,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                     total={chatHistory.length}
                     setIsFeedbackVisible={setIsFeedbackVisible}
                     setIsGoodResponse={setIsGoodResponse}
+                    handleBookReservation={handleBookReservation}
                     />
                 )}
 

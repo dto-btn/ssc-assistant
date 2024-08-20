@@ -13,7 +13,9 @@ import { AccountInfo, InteractionStatus } from "@azure/msal-browser";
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from 'uuid';
 import QuoteTextTooltip from "../components/QuoteTextTooltip";
+import { bookReservation } from "../api/api";
 import { TutorialBubble } from "../components/TutorialBubble";
+
 interface MainScreenProps {
     userData: {
         accessToken: string;
@@ -37,6 +39,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
     const [enabledTools, setEnabledTools] = useState<Record<string, boolean>>({
         "geds": true,
         "corporate": true,
+        "archibus": true
     })
     const [selectedModel, setSelectedModel] = useState<string>("gpt-4o")
     const [quotedText, setQuotedText] = useState<string>();
@@ -91,6 +94,8 @@ const MainScreen = ({userData}: MainScreenProps) => {
             updateLastMessage: updateLastMessage,
             accessToken: idToken
             });
+
+            console.log(completionResponse)
 
             setChatHistory((prevChatHistory) => {
             const updatedChatHistory = [...prevChatHistory]; //making a copy
@@ -383,6 +388,23 @@ const MainScreen = ({userData}: MainScreenProps) => {
             setShowTutorials(false);
         }        
     }
+
+    const handleBookReservation = async (bookingDetails: BookingConfirmation) => {
+        try {
+            await bookReservation(bookingDetails);
+            const bookingSuccessfulToast: ToastMessage = {
+                toastMessage: `${t("booking.success")} ${bookingDetails.startDate}`,
+                isError: false
+            };
+            setChatHistory(prevChatHistory => [...prevChatHistory, bookingSuccessfulToast]);
+        } catch (error) {
+           const bookingFailedToast: ToastMessage = {
+                toastMessage: `${t("booking.fail")} ${error}`,
+                isError: true
+            };
+            setChatHistory(prevChatHistory => [...prevChatHistory, bookingFailedToast]);
+        }
+    }
     
     return (
         <>
@@ -407,6 +429,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
                     setIsFeedbackVisible={setIsFeedbackVisible}
                     setIsGoodResponse={setIsGoodResponse}
                     handleRemoveToastMessage={handleRemoveToastMessage}
+                    handleBookReservation={handleBookReservation}
                 />
                 <div ref={chatMessageStreamEnd} style={{ height: '50px' }} />
                 <Box

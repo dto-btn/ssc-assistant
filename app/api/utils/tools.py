@@ -1,10 +1,11 @@
+import base64
 import json
 import logging
 import os
 import re
 from pathlib import Path
-from typing import List
-
+from typing import Dict, List, Optional, Union
+from azure.storage.blob import BlobServiceClient
 import requests
 from openai import AzureOpenAI
 from openai.types.chat import (ChatCompletionMessageParam)
@@ -183,6 +184,214 @@ def get_employee_by_phone_number(employee_phone_number: str):
     else:
         logger.debug("Unable to get any info.", response)
         return "Didn't find any matching employee with that phone number."
+    
+
+def get_buildings(buildingName: str = ""):
+    """
+    get information about buildings available to book a workspace through Archibus, such as the
+    building's address, buildingId, name, and postal code
+    """
+    url = "http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1/buildings/"
+
+    if not buildingName:
+        return "Please provide a building name or address to search for"
+
+    username = str(os.getenv("ARCHIBUS_API_USERNAME"))
+    password = str(os.getenv("ARCHIBUS_API_PASSWORD"))
+
+    # Include username and password in the request headers
+    auth = (username, password)
+
+    headers = {
+        'Accept': 'application/json'
+    }
+
+    try:
+        response = requests.get(url, headers=headers, auth=auth)
+
+        if response.status_code == 200:
+            response_json = json.loads(response.text)
+
+            substrings = buildingName.lower().split()
+
+            excluded_substrings = ['road', 'rd', 'street', 'ave', 'avenue']
+            filtered_substrings = [substring for substring in substrings if substring not in excluded_substrings]
+
+            logger.debug(f"SUBSTRINGS: {filtered_substrings}")
+            filtered_buildings = [building for building in response_json if building.get('name') and any(substring in building['name'].lower() for substring in filtered_substrings)]
+            pretty_response = json.dumps(filtered_buildings, indent=4)
+            logger.debug(pretty_response)
+            return pretty_response
+
+        else:
+            logger.error(f"Unable to get any buildings info. Status code: {response.status_code}")
+            return "Didn't find any buildings."
+
+    except requests.RequestException as e:
+        logger.error(f"Error occurred during the GET request: {e}")
+        return "An error occurred while trying to fetch buildings."
+    
+
+def verify_booking_details(date: str, buildingId: str, user: str, bookingType: str, floorId: str, roomId: str):
+
+    booking_details = {
+        "createdBy": user,
+        "assignedTo": user,
+        "buildingId": buildingId,
+        "floorId": floorId,
+        "roomId": roomId,
+        "bookingType": bookingType,
+        "startDate": date
+    }
+
+    return booking_details
+    
+
+def get_user_bookings(firstName: str = "", lastName: str = ""):
+    logger.debug("IN GET USER BOOKINGS")
+    if not firstName or not lastName:
+        return "please provide a first and last name to search for a user's reservations"
+
+    url = f"http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1/reservations/creator/{lastName},%20{firstName}"
+
+    logger.debug(f"get reservations URL: {url}")
+    api_username = str(os.getenv("ARCHIBUS_API_USERNAME"))
+    api_password = str(os.getenv("ARCHIBUS_API_PASSWORD"))
+
+    # Include username and password in the request headers
+    auth = (api_username, api_password)
+
+    headers = {
+        'Accept': 'application/json'
+    }
+
+    try:
+        response = requests.get(url, headers=headers, auth=auth)
+
+        if response.status_code == 200:
+            response_json = json.loads(response.text)
+            pretty_response = json.dumps(response_json, indent=4)
+            logger.debug(f"Reservations: {pretty_response}")
+            logger.debug(f"Response status code: {response.status_code}")
+            return response.json()  
+        else:
+            logger.error(f"Unable to get any buildings info. Status code: {response.status_code}")
+            return "Didn't find any buildings."
+
+    except requests.RequestException as e:
+        logger.error(f"Error occurred during the GET request: {e}")
+        return "An error occurred while trying to fetch buildings."
+    
+
+def get_floors(buildingId: str):
+    url = f"http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1/buildings/{buildingId}/floors/"
+
+    api_username = str(os.getenv("ARCHIBUS_API_USERNAME"))
+    api_password = str(os.getenv("ARCHIBUS_API_PASSWORD"))
+
+    auth = (api_username, api_password)
+
+    headers = {
+        'Accept': 'application/json'
+    }
+
+    try:
+        response = requests.get(url, headers=headers, auth=auth)
+
+        if response.status_code == 200:
+            response_json = json.loads(response.text)
+            pretty_response = json.dumps(response_json, indent=4)
+            logger.debug(pretty_response)
+            logger.debug(f"Response status code: {response.status_code}")
+            return response.json()  
+        else:
+            logger.error(f"Unable to get any available floors info for the given building. Status code: {response.status_code}")
+            return "Didn't find any floors for the given building."
+
+    except requests.RequestException as e:
+        logger.error(f"Error occurred during the GET request to retrieve floors: {e}")
+        return f"An error occurred while trying to fetch floors for the building {buildingId}."
+    
+
+def get_available_rooms(buildingId: str, floorId: str, bookingDate: str):
+    floor_plan_file_name = get_floor_plan(buildingId=buildingId, floorId=floorId)
+    logger.debug(f"FILE NAME: {floor_plan_file_name}")
+   
+    url = f"http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1/reservations/buildings/{buildingId}/vacant/{floorId}?bookingDate={bookingDate}"
+
+    api_username = str(os.getenv("ARCHIBUS_API_USERNAME"))
+    api_password = str(os.getenv("ARCHIBUS_API_PASSWORD"))
+
+    auth = (api_username, api_password)
+
+    headers = {
+        'Accept': 'application/json'
+    }
+
+    try:
+        response = requests.get(url, headers=headers, auth=auth)
+
+        if response.status_code == 200:
+            response_json = json.loads(response.text)
+            filtered_rooms = response_json[:10]
+            pretty_response = json.dumps(filtered_rooms, indent=4)
+            logger.debug(pretty_response)
+            logger.debug(f"Response status code: {response.status_code}")
+            
+            result = {
+                "rooms": filtered_rooms
+            }
+            
+            if floor_plan_file_name is not None:
+                # base64_svg = base64.b64encode(floor_plan_blob).decode('utf-8')
+                result["floorPlan"] = floor_plan_file_name
+
+            return result
+        else:
+            logger.error(f"Unable to get any available rooms info for the given floor and building. Status code: {response.status_code}")
+            return f"Didn't find any rooms for the given floor {floorId} and building {buildingId}."
+
+    except requests.RequestException as e:
+        logger.error(f"Error occurred during the GET request to retrieve available rooms: {e}")
+        return f"An error occurred while trying to fetch rooms for the given floor {floorId} and building {buildingId}."
+    
+def get_floor_plan(buildingId: str, floorId: str):
+    url = f"http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1/buildings/{buildingId}/floors/"
+
+    api_username = str(os.getenv("ARCHIBUS_API_USERNAME"))
+    api_password = str(os.getenv("ARCHIBUS_API_PASSWORD"))
+
+    auth = (api_username, api_password)
+
+    headers = {
+        'Accept': 'application/json'
+    }
+
+    try:
+        response = requests.get(url, headers=headers, auth=auth)
+
+        if response.status_code == 200:
+            response_json = json.loads(response.text)
+            target_floor_blob_name = None
+
+            for floor in response_json:
+                if floor.get('flId') == floorId:
+                    target_floor_blob_name = floor.get('floorPlanFilename', '1430b-05-afm.svg').lower()
+                    break  
+            
+            if target_floor_blob_name:
+                return target_floor_blob_name
+            else:
+                logger.error(f"Floor plan URL not found for floorId: {floorId}")
+                return None
+
+        else:
+            logger.error(f"Unable to get any available floors info for the given building. Status code: {response.status_code}")
+            return None
+
+    except requests.RequestException as e:
+        logger.error(f"Error occurred during the GET request to retrieve floors: {e}")
+        return None    
 
 def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[ChatCompletionMessageParam]:
     """
@@ -191,7 +400,12 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
     # Define the available functions
     available_functions = {
         "get_employee_information": get_employee_information,
-        "get_employee_by_phone_number": get_employee_by_phone_number
+        "get_employee_by_phone_number": get_employee_by_phone_number,
+        "get_buildings": get_buildings,
+        "verify_booking_details": verify_booking_details,
+        "get_user_bookings": get_user_bookings,
+        "get_floors": get_floors,
+        "get_available_rooms": get_available_rooms
     }
 
     # Send the info for each function call and function response to the model
@@ -199,13 +413,16 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
         function_name = tool_call.function.name
         if function_name in available_functions:
             function_to_call = available_functions[function_name]
-            function_args = json.loads(tool_call.function.arguments)
+            function = tool_call.function
 
-            # Prepare the arguments for the function call
-            prepared_args = {arg: function_args[arg] for arg in function_args}
+            # function_args = function.arguments
+            function_args = json.loads(function.arguments) if function.arguments else {}
 
-            # Call the function with the prepared arguments
-            function_response = function_to_call(**prepared_args)
+            if function_args:
+                prepared_args = {arg: function_args[arg] for arg in function_args}
+                function_response = function_to_call(**prepared_args)
+            else:
+                function_response = function_to_call()
             
             messages.append({
                 "role": "assistant",
@@ -216,8 +433,11 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
                 }
             })
 
-            # Convert the function response to a string
-            response_as_string = "\n".join(function_response) if function_response is list else str(function_response)
+            # Convert the function response to a JSON string if it's a list or dict
+            if isinstance(function_response, (list, dict)):
+                response_as_string = json.dumps(function_response)
+            else:
+                response_as_string = str(function_response)
 
             # Add the function response to the messages
             messages.append({
