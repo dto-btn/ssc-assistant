@@ -249,14 +249,14 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
                       sx={{
                         position: 'absolute',
                         top: '0px', 
-                        left: '0px', 
+                        right: '0px', 
                         zIndex: 10, 
                         color: 'black',
                       }}
                       aria-label={t("aria.expand.floorPlan")}
                       onClick={() => setFloorPlanExpanded(true)}
                     >
-                        <FitScreenIcon sx={{fontSize: '35px'}}/>
+                        <FitScreenIcon sx={{fontSize: '30px'}}/>
                     </IconButton>
                     <img src={floorPlanFilename} alt={t("archibus.floorPlan")} />
                   </FloorPlanView>
