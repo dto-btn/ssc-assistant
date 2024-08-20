@@ -186,12 +186,12 @@ def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: Lis
                         logger.debug(f"FLOOR PLAN: {floor_plan}")
                         tools_info.payload = {"floorPlan": floor_plan}
 
-            if function_name == "confirm_booking":
+            if function_name == "verify_booking_details":
                 content = message.get("content", "")
                 if content is not None:
                     booking_details = json.loads(content)
                     logger.debug(f"BOOKING DETAILS {booking_details}")
-                    tools_info.payload = {"bookingConfirmation": booking_details}
+                    tools_info.payload = {"bookingDetails": booking_details}
 
             # extract profiles if it's a geds function
             if tool_name == "geds":

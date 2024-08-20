@@ -23,7 +23,7 @@ export const AlertBubble = ({ toast, index, removeMessageHandler }: AlterBubbleP
             <Box sx={visuallyHidden}>{t("aria.alert.message")}</Box> {/* Hidden div for screen reader */}
             <Alert 
                 severity={alertSeverity} 
-                style={{ width: '70%', borderRadius: '20px' }} 
+                style={{ width: '70%', borderRadius: '20px', fontSize: '16px', padding: '16px 20px' }} 
                 elevation={4}
                 onClose={() => {handleCloseClicked()}}
             >
@@ -38,4 +38,5 @@ const AlertView = styled(Box)`
     margin: 30px 0px;
     display: flex;
     justify-content: center;
+    align-items: center;
 `;

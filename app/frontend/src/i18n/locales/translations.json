@@ -398,5 +398,17 @@
     "archibus": {
         "en": "Archibus",
         "fr": "Archibus"
+    },
+    "booking.success": {
+        "en": "Your workspace has been reserved successfully for the date: ",
+        "fr": ""
+    },
+    "booking.fail": {
+        "en": "There was an issue reserving your workspace: ",
+        "fr": ""
+    },
+    "booking.complete": {
+        "en": "COMPLETE RESERVATION",
+        "fr": ""
     }
 }

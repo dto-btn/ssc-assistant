@@ -232,41 +232,19 @@ def get_buildings(buildingName: str = ""):
         return "An error occurred while trying to fetch buildings."
     
 
-def confirm_booking(date: str, buildingId: str, user: str, duration: str, floorId: str, roomId: str):
-    # url = 'http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1/reservations/'
-    # username = str(os.getenv("ARCHIBUS_API_USERNAME"))
-    # password = str(os.getenv("ARCHIBUS_API_PASSWORD"))
-    # auth = (username, password)
-
-    # headers = {
-    #     'Accept': '*/*',
-    #     'Content-Type': 'application/json',
-    # 
+def verify_booking_details(date: str, buildingId: str, user: str, bookingType: str, floorId: str, roomId: str):
 
     booking_details = {
-        "name": user,
+        "createdBy": user,
+        "assignedTo": user,
         "buildingId": buildingId,
         "floorId": floorId,
         "roomId": roomId,
-        "bookingType": duration,
+        "bookingType": bookingType,
         "startDate": date
     }
 
     return booking_details
-
-    # try:
-    #     response = requests.post(url, headers=headers, json=payload, auth=auth)
-
-    #     if response.status_code == 201:  # 201 is the status code for a created resource
-    #         logger.debug(f"Successfully made a booking")
-    #         return response.json()
-    #     else:
-    #         logger.error(f"Unable to make the requested booking. Status code: {response.status_code}, Response: {response.text}")
-    #         return "Didn't make the reservation."
-
-    # except requests.RequestException as e:
-    #     logger.error(f"Error occurred during the POST request: {e}")
-    #     return "An error occurred while trying to make the reservation."
     
 
 def get_user_bookings(firstName: str = "", lastName: str = ""):
@@ -335,11 +313,10 @@ def get_floors(buildingId: str):
     
 
 def get_available_rooms(buildingId: str, floorId: str, bookingDate: str):
-    floor_plan_blob = get_floor_plan(buildingId=buildingId, floorId=floorId)
+    floor_plan_file_name = get_floor_plan(buildingId=buildingId, floorId=floorId)
+    logger.debug(f"FILE NAME: {floor_plan_file_name}")
    
     url = f"http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1/reservations/buildings/{buildingId}/vacant/{floorId}?bookingDate={bookingDate}"
-
-    logger.debug(f"get rooms URL: {url}")
 
     api_username = str(os.getenv("ARCHIBUS_API_USERNAME"))
     api_password = str(os.getenv("ARCHIBUS_API_PASSWORD"))
@@ -349,8 +326,6 @@ def get_available_rooms(buildingId: str, floorId: str, bookingDate: str):
     headers = {
         'Accept': 'application/json'
     }
-
-    logger.debug(f"URL: {url}")
 
     try:
         response = requests.get(url, headers=headers, auth=auth)
@@ -366,9 +341,9 @@ def get_available_rooms(buildingId: str, floorId: str, bookingDate: str):
                 "rooms": filtered_rooms
             }
             
-            if floor_plan_blob is not None:
+            if floor_plan_file_name is not None:
                 # base64_svg = base64.b64encode(floor_plan_blob).decode('utf-8')
-                result["floorPlan"] = floor_plan_blob
+                result["floorPlan"] = floor_plan_file_name
 
             return result
         else:
@@ -380,10 +355,6 @@ def get_available_rooms(buildingId: str, floorId: str, bookingDate: str):
         return f"An error occurred while trying to fetch rooms for the given floor {floorId} and building {buildingId}."
     
 def get_floor_plan(buildingId: str, floorId: str):
-    # container_name = 'archibus-floor-plans'
-    # blob_connection_string  = os.getenv("BLOB_CONNECTION_STRING")
-    # blob_service_client = BlobServiceClient.from_connection_string(str(blob_connection_string))
-
     url = f"http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1/buildings/{buildingId}/floors/"
 
     api_username = str(os.getenv("ARCHIBUS_API_USERNAME"))
@@ -404,13 +375,10 @@ def get_floor_plan(buildingId: str, floorId: str):
 
             for floor in response_json:
                 if floor.get('flId') == floorId:
-                    target_floor_blob_name = floor.get('floorPlanURL', '1430b-06-afm.svg')
+                    target_floor_blob_name = floor.get('floorPlanFilename', '1430b-05-afm.svg').lower()
                     break  
             
             if target_floor_blob_name:
-                # container_client = blob_service_client.get_container_client(container_name)
-                # blob_client = container_client.get_blob_client(target_floor_blob_name)
-                # floor_plan_blob = blob_client.download_blob().readall()
                 return target_floor_blob_name
             else:
                 logger.error(f"Floor plan URL not found for floorId: {floorId}")
@@ -433,7 +401,7 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
         "get_employee_information": get_employee_information,
         "get_employee_by_phone_number": get_employee_by_phone_number,
         "get_buildings": get_buildings,
-        "confirm_booking": confirm_booking,
+        "verify_booking_details": verify_booking_details,
         "get_user_reservations": get_user_bookings,
         "get_floors": get_floors,
         "get_available_rooms": get_available_rooms

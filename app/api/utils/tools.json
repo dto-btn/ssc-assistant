@@ -43,8 +43,8 @@
     "type": "function",
     "tool_type": "archibus",
     "function": {
-      "name": "confirm_booking",
-      "description": "Confirms the workspace or meeting space booking details with the user. This function should be used after all the necessary information has been acquired, including the buildingId, floorId, roomId, date, first AND last name, and duration. ",
+      "name": "verify_booking_details",
+      "description": "Confirms the workspace or meeting space booking details with the user. You are not making the booking for them. This function should be used after all the necessary information has been acquired, including the buildingId, floorId, roomId, date, first AND last name, and duration. ",
       "parameters": {
         "type": "object",
           "properties": {
@@ -62,15 +62,15 @@
               },
               "date": {
                   "type": "string",
-                  "description": "The month, day, and year of the booking, formatted like YYYY-MM-DD. If the user does not provide a date, ask them for it. Default year is 2024."
+                  "description": "The month, day, and year of the booking, formatted like YYYY-MM-DD. If the user does not provide a date, ask them for it. The year is 2024 unless otherwise specified."
               },
               "user": {
                 "type": "string",
                 "description": "The name for whom the booking is being made for, in the format 'lastname, firstname'. If the user doesn't provide a first and last name, ask them for it."
               }, 
-              "duration": {
+              "bookingType": {
                 "type": "string",
-                "description": "The duration of the booking/booking type. Options are 'FULLDAY', 'AFTERNOON', and 'MORNING'."
+                "description": "The duration of the booking. Options are 'FULLDAY', 'AFTERNOON', and 'MORNING'."
               }
           },
           "required": ["date", "buildingId", "user", "duration", "floorId", "roomId"]
@@ -140,7 +140,7 @@
     "tool_type": "archibus",
     "function": {
       "name": "get_available_rooms",
-      "description": "Gets a list of all the vacant rooms or workspaces in a specified building and floor. Use this method once you have a buildingId, floorId, and date to retrieve a list of all the vacant rooms. IF YOU DONT HAVE A BUILDINGID, USE GET_BUILDINGS FUNCTION FIRST. DO NOT USE THE BUILDING ADDRESS OR NAME AS THE BUILDINGID. You should then present this list of the first 10 rooms to the user and ask which room they would like to book before proceeding to the book_reservation function.",
+      "description": "Gets a list of all the vacant rooms or workspaces in a specified building and floor. Use this method once you have a buildingId, floorId, and date to retrieve a list of all the vacant rooms. IF YOU DONT HAVE A BUILDINGID, USE GET_BUILDINGS FUNCTION FIRST. DO NOT USE THE BUILDING ADDRESS OR NAME AS THE BUILDINGID. You should then present this list of rooms to the user and ask which room they would like to book.",
       "parameters": {
         "type": "object",
         "properties": {
@@ -154,7 +154,7 @@
           },
           "bookingDate": {
             "type": "string",
-            "description": "A string indicating the date of the booking, including the month, day, and year, formatted like YYYY-MM-DD."
+            "description": "A string indicating the date of the booking, including the month, day, and year, formatted like YYYY-MM-DD. The default year is 2024."
           }
         },
         "required": ["buildingId", "floorId", "bookingDate"]
@@ -166,7 +166,7 @@
     "tool_type": "archibus",
     "function": {
       "name": "get_floor_plan",
-      "description": "Retrieves the floor plan image associated with the selected floor from the user.",
+      "description": "Retrieves the floor plan image associated with the selected floor from the user. DO NOT MENTION THE FLOOR PLAN IN THE RESPONSE.",
       "parameters": {
         "type": "object",
         "properties": {

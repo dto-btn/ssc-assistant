@@ -66,3 +66,13 @@ interface EmployeeProfile {
   organization_fr: string;
   matchedProfile?: boolean;
 }
+
+interface BookingConfirmation {
+  bookingType: string;
+  buildingId: string;
+  floorId: string;
+  roomId: string;
+  createdBy: string;
+  assignedTo: string;
+  startDate: string;
+}

@@ -1,4 +1,4 @@
-import { Box, Paper, Divider, Chip, Stack, Typography, Link, Tooltip } from '@mui/material';
+import { Box, Paper, Divider, Chip, Stack, Typography, Link, Tooltip, Button, IconButton, Dialog } from '@mui/material';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -11,6 +11,7 @@ import ProfileCardsContainer from '../containers/ProfileCardsContainer';
 import HandymanIcon from '@mui/icons-material/Handyman';
 import AutoAwesome from '@mui/icons-material/AutoAwesome';
 import { visuallyHidden } from '@mui/utils';
+import FitScreenIcon from '@mui/icons-material/FitScreen';
 
 interface AssistantBubbleProps {
     text: string;
@@ -23,17 +24,23 @@ interface AssistantBubbleProps {
     total: number;
     setIsFeedbackVisible: React.Dispatch<React.SetStateAction<boolean>>;
     setIsGoodResponse: React.Dispatch<React.SetStateAction<boolean>>;
+    handleBookReservation: (bookingDetails: BookingConfirmation) => void;
 }
 
-export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse }: AssistantBubbleProps) => {
+export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse, handleBookReservation }: AssistantBubbleProps) => {
   const { t, i18n } = useTranslation();
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [profiles, setProfiles] = useState<EmployeeProfile[]>([])
   const [profilesExpanded, setExpandProfiles] = useState(false)
+  const [floorPlanFilename, setFloorPlanFilename] = useState("");
+  const [bookingDetails, setBookingDetails] = useState<BookingConfirmation | undefined>(undefined);
+  const [confirmButtonDisabled, setConfirmButtonDisabled] = useState(false);
+  const [isFloorPlanExpanded, setFloorPlanExpanded] = useState(false);
+  const floorPlansBasePath = "https://sscassistantdevstorage.blob.core.windows.net/archibus-floor-plans/";
   const isMostRecent = index === total - 1;
-  const toolsUsed = toolsInfo && toolsInfo.tool_type.length > 0
+  const toolsUsed = toolsInfo && toolsInfo.tool_type.length > 0;
 
   const components = {
     a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <Link target="_blank" rel="noopener noreferrer" {...props} />,
@@ -100,12 +107,18 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
 };
 
   useEffect(() => {
-      if (toolsInfo && toolsInfo.payload?.hasOwnProperty("profiles") && toolsInfo.payload.profiles !== null) {
-          const processedProfiles = processProfiles(toolsInfo.payload.profiles);
-          setProfiles(processedProfiles);
+    if (toolsInfo) {
+      if (toolsInfo.payload?.hasOwnProperty("profiles") && toolsInfo.payload.profiles !== null) {
+        const processedProfiles = processProfiles(toolsInfo.payload.profiles);
+        setProfiles(processedProfiles);
+      } else if (toolsInfo.payload?.hasOwnProperty("floorPlan")) {
+        const floorPlanFile = toolsInfo.payload.floorPlan;
+        setFloorPlanFilename(floorPlansBasePath + floorPlanFile)
+      } else if (toolsInfo.payload?.hasOwnProperty("bookingDetails")) {
+        setBookingDetails(toolsInfo.payload.bookingDetails);
       }
+    }
   }, [toolsInfo]);
-
 
   useEffect(() => processingComplete ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" }) : undefined, [processingComplete, scrollRef]);
 
@@ -117,6 +130,13 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
   const handleToggleShowProfiles = () => {
     setExpandProfiles(!profilesExpanded)
   }
+
+  const handleConfirmButtonClicked = () => {
+    setConfirmButtonDisabled(true);
+    if (bookingDetails) {
+      handleBookReservation(bookingDetails);
+    }
+  };
 
   return (
     <ChatBubbleWrapper tabIndex={0}>
@@ -212,6 +232,78 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
               toggleShowProfileHandler={handleToggleShowProfiles}
             />
             } 
+
+            {floorPlanFilename && 
+              <>
+                  <FloorPlanView 
+                    sx={{
+                      display: 'flex', 
+                      flex: '1', 
+                      width: {'xs': '300px', 'sm': '450px', 'md': '600px', 'lg': '800px'},
+                      position: 'relative',
+                    }}
+                  >
+                    <IconButton
+                      sx={{
+                        position: 'absolute',
+                        top: '0px', 
+                        left: '0px', 
+                        zIndex: 10, 
+                        color: 'black',
+                      }}
+                      aria-label='expand floor plan image'
+                      onClick={() => setFloorPlanExpanded(true)}
+                    >
+                        <FitScreenIcon sx={{fontSize: '35px'}}/>
+                    </IconButton>
+                    <img src={floorPlanFilename} alt="Archibus floor plan" />
+                  </FloorPlanView>
+
+                  <Dialog open={isFloorPlanExpanded} onClose={() => setFloorPlanExpanded(false)} fullWidth maxWidth="lg">
+                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                      <img
+                        src={floorPlanFilename}
+                        alt="Archibus floor plan"
+                        style={{
+                          width: '100%',
+                          height: 'auto',
+                          display: 'block'
+                        }}
+                      />
+                    </div>
+                  </Dialog>
+              </>
+            }
+
+            {bookingDetails &&
+              <ConfirmBookingBox >
+                  <Button
+                    disabled={confirmButtonDisabled}
+                    sx={{
+                      fontSize: '20px',
+                      color: 'white',
+                      borderRadius: '5px',
+                      backgroundColor: 'primary.main',
+                      height: '40px',
+                      width: '80%',
+                      maxWidth: '400px',
+                      padding: '40px',
+                      '&:hover': {
+                        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.3)',
+                        backgroundColor: '#261F4C'
+                      },
+                      '&:disabled': {
+                        backgroundColor: 'grey',
+                        color: 'white', 
+                      }
+                    }}
+                    onClick={handleConfirmButtonClicked}
+                  >
+                    {t('booking.complete')}
+                  </Button>
+              </ConfirmBookingBox> 
+            }
+
           </Paper>
         </Box>
         <Box>
@@ -260,3 +352,14 @@ const IconWrapper = styled(Box)`
 
 const TextComponentsBox = styled(Box)`
 `;
+
+const FloorPlanView = styled(Box)({
+  margin: '20px 30px',
+});
+
+const ConfirmBookingBox = styled(Box)`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 30px;
+`
