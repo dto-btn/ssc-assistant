@@ -248,6 +248,7 @@ def verify_booking_details(date: str, buildingId: str, user: str, bookingType: s
     
 
 def get_user_bookings(firstName: str = "", lastName: str = ""):
+    logger.debug("IN GET USER BOOKINGS")
     if not firstName or not lastName:
         return "please provide a first and last name to search for a user's reservations"
 
@@ -402,7 +403,7 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
         "get_employee_by_phone_number": get_employee_by_phone_number,
         "get_buildings": get_buildings,
         "verify_booking_details": verify_booking_details,
-        "get_user_reservations": get_user_bookings,
+        "get_user_bookings": get_user_bookings,
         "get_floors": get_floors,
         "get_available_rooms": get_available_rooms
     }
