@@ -8,12 +8,12 @@ RUN apt-get install -y nodejs
 WORKDIR /workspace
 
 # Install python dependencies
-COPY api/requirements.txt /tmp/pip-tmp/
+COPY app/api/requirements.txt /tmp/pip-tmp/
 RUN pip install --no-cache-dir -r /tmp/pip-tmp/requirements.txt \
     && rm -rf /tmp/pip-tmp
 
 # Install frontend dependencies
-COPY frontend/package.json frontend/yarn.lock /tmp/npm-tmp/
+COPY app/frontend/package.json frontend/yarn.lock /tmp/npm-tmp/
 RUN cd /tmp/npm-tmp && yarn install \
     && rm -rf /tmp/npm-tmp
 
