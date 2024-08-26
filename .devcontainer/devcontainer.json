@@ -32,7 +32,7 @@
     }
   },
   "forwardPorts": [5001, 8000],
-  "postCreateCommand": "pip install -r api/requirements.txt && npm install --prefix frontend",
+  "postCreateCommand": "pip install -r app/api/requirements.txt && npm install --prefix app/frontend",
   "remoteUser": "vscode",
   "workspaceFolder": "/workspace",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
