@@ -13,8 +13,8 @@ RUN pip install --no-cache-dir -r /tmp/pip-tmp/requirements.txt \
     && rm -rf /tmp/pip-tmp
 
 # Install frontend dependencies
-COPY app/frontend/package.json frontend/yarn.lock /tmp/npm-tmp/
-RUN cd /tmp/npm-tmp && yarn install \
+COPY app/frontend/package.json /tmp/npm-tmp/
+RUN cd /tmp/npm-tmp && npm install \
     && rm -rf /tmp/npm-tmp
 
 EXPOSE 5001 8000
