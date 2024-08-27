@@ -64,8 +64,8 @@ class QueryType(Enum):
 @dataclass
 class AzureCognitiveSearchParameters:
     endpoint: str
-    key: str
     indexName: str
+    key: str
     queryType: QueryType = QueryType.VECTOR_SIMPLE_HYBRID
 
 @dataclass
