@@ -130,7 +130,6 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
             sx={{
               bgcolor: '#f2f2f2',
               color: 'grey.contrastText',
-              display: 'inline-block',
               borderRadius: '20px',
               borderTopLeftRadius: 0,
               flexDirection: 'row',
@@ -145,7 +144,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
               <IconWrapper>
                 <AutoAwesome sx={{color: "primary.main", fontSize: 24}} />
               </IconWrapper>
-              <TextComponentsBox>
+              <TextComponentsBox className='textCompBox'>
                 <Typography sx={visuallyHidden}>{t("aria.assistant.message")}</Typography> {/* Hidden div for screen reader */}
                 <Markdown
                   components={components}
@@ -265,7 +264,11 @@ const TextComponentsBox = styled(Box)`
   max-width: 95%;
   
   code {
-    width: 100%;
+    max-width: 95%;
     padding-right: 15px;
+    background-color: white;
+    overflow-x: auto;
+    padding: 4px 2px;
+    margin: 5px 5px 5px 0px;
   }
 `;

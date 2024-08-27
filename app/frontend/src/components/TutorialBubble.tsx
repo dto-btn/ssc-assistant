@@ -11,16 +11,20 @@ interface TutorialBubbleProps {
 
 const tips = [
     "tutorial.menu",
-    "tutorial.clearChat",
     "tutorial.toolSelection",
-    "tutorial.modelSelection"
+    "tutorial.modelSelection",
+    "tutorial.clearChat",
+    "tutorial.newChat",
+    "tutorial.conversation.selection"
 ];
 
 const tipTitles = [
     "tutorial.menu.title",
-    "tutorial.clearChat.title",
     "tutorial.toolSelection.title",
-    "tutorial.modelSelection.title"
+    "tutorial.modelSelection.title",
+    "clear.conversation",
+    "new.conversation",
+    "tutorial.conversation.selection.title"
 ]
 
 interface ArrowStyle {
@@ -32,15 +36,27 @@ interface ArrowStyle {
     borderBottom?: string;
 }
 
-const arrowStyles: Record<number, ArrowStyle> = {
+const arrowStylesEN: Record<number, ArrowStyle> = {
     1: { top: -12, right: 18, borderRight: '15px solid transparent', borderBottom: '15px solid #24604A', borderLeft: '15px solid transparent' },
-    2: { top: 20, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #24604A' },
-    3: { top: 70, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #24604A' },
-    4: { top: 120, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #24604A' },
+    2: { top: 58, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #24604A' },
+    3: { top: 105, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #24604A' },
+    4: { top: 65, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #24604A' },
+    5: { top: 110, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #24604A' },
+    6: { top: 160, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #24604A' },
 };
 
-const getArrowStyles = (tipNumber: number): React.CSSProperties => {
-    const styles = arrowStyles[tipNumber] || {};
+const arrowStylesFR: Record<number, ArrowStyle> = {
+    1: { top: -12, right: 18, borderRight: '15px solid transparent', borderBottom: '15px solid #24604A', borderLeft: '15px solid transparent' },
+    2: { top: 58, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #24604A' },
+    3: { top: 115, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #24604A' },
+    4: { top: 100, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #24604A' },
+    5: { top: 160, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #24604A' },
+    6: { top: 220, right: -12, borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: '15px solid #24604A' },
+};
+
+const getArrowStyles = (tipNumber: number, language: string): React.CSSProperties => {
+    const styles = language === 'en' ? arrowStylesEN[tipNumber] : arrowStylesFR[tipNumber] || {};
+
     return {
         content: '""',
         position: 'absolute',
@@ -60,14 +76,15 @@ export const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, update
     const [allTutorialsSeen, setAllTutorialsSeen] = useState(false);
     const [dialogPosition, setDialogPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
     const { t } = useTranslation();
+    const language = document.documentElement.lang;
 
     // Anchors the tutorial bubble near the menu icon
     useEffect(() => {
         if (menuIconRef.current) {
             const rect = menuIconRef.current.getBoundingClientRect();
             setDialogPosition({
-                top: tipNumber < 2 ? rect.top + 70 : rect.top + 15,
-                left: tipNumber < 2 ? rect.right + 310 : window.innerWidth - 15
+                top: tipNumber < 2 ? rect.top + 70 : tipNumber < 4 ? rect.top + 15 : rect.top + 140,
+                left: tipNumber < 2 ? rect.right + 310 : window.innerWidth - 5
             });
         }
     }, [menuIconRef, tipNumber]);
@@ -83,7 +100,7 @@ export const TutorialBubble = ({handleAllTutorialsDisplayed, menuIconRef, update
         left: `${dialogPosition.left}px`,
         transform: 'translateX(-200%)',
         zIndex: 1200,
-        '&::after': getArrowStyles(tipNumber)
+        '&::after': getArrowStyles(tipNumber, language)
     }));
 
 

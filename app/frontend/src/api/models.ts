@@ -67,3 +67,11 @@ interface EmployeeProfile {
   organization_fr: string;
   matchedProfile?: boolean;
 }
+
+interface ChatHistory {
+  chatItems: ChatItem[];
+  description: string;
+  uuid: string;
+  enabledTools: Record<string, boolean>;
+  model: string;
+}
