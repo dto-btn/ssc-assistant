@@ -1,17 +1,20 @@
 import { useTranslation } from 'react-i18next';
 import { SpeedDial, SpeedDialAction, SpeedDialIcon, Box } from '@mui/material';
+import AddCommentIcon from '@mui/icons-material/AddComment';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 interface DialProps {
+  onNewChat: () => void;
   onClearChat: () => void;
   drawerVisible: boolean;
 }
 
-export const Dial = ({ onClearChat, drawerVisible }: DialProps) => {
+export const Dial = ({ onNewChat, onClearChat, drawerVisible }: DialProps) => {
   const { t } = useTranslation();
 
   const actions = [
-    { icon: <DeleteIcon />, name: t('clearchat'), handler: onClearChat },
+    { icon: <AddCommentIcon />, name: t('new.conversation'), handler: onNewChat },
+    { icon: <DeleteIcon />, name: t('clear.conversation'), handler: onClearChat },
   ];
 
   return (

@@ -1,8 +1,8 @@
-import { Box, CssBaseline, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Button, CssBaseline, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, useMediaQuery, useTheme } from "@mui/material";
 import { ChatInput, Dial, Disclaimer, DrawerMenu, FeedbackForm, TopMenu } from "../components";
 import ChatMessagesContainer from "../containers/ChatMessagesContainer";
 import { t } from "i18next";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import i18n from "../i18n";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { isACompletion, isAMessage, isAToastMessage } from "../utils";
@@ -27,24 +27,29 @@ const MainScreen = ({userData}: MainScreenProps) => {
     const [maxMessagesSent] = useState<number>(10);
     const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
     const [openDrawer, setOpenDrawer] = useState<boolean>(false);
-    const [uuid, setUuid] = useState<string>(uuidv4());
-    const {instance, inProgress} = useMsal();
-    const isAuthenticated = useIsAuthenticated();
     const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
     const [feedback, setFeedback] = useState('');
     const [isGoodResponse, setIsGoodResponse] = useState(false);
-    const [chatHistory, setChatHistory] = useState<ChatItem[]>([]);
-    const [enabledTools, setEnabledTools] = useState<Record<string, boolean>>({
-        "geds": true,
-        "corporate": true,
-    })
-    const [selectedModel, setSelectedModel] = useState<string>("gpt-4o")
+    const [currentChatIndex, setCurrentChatIndex] = useState<number>(0);
+    const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
+    const [chatToLoadOrDelete, setChatToLoadOrDelete] = useState<number | null>(null);
+    const [showDeleteChatDialog, setShowDeleteChatDialog] = useState(false);
+    const [warningDialogMessage, setWarningDialogMessage] = useState("");
     const [quotedText, setQuotedText] = useState<string>();
     const [showTutorials, setShowTutorials] = useState(false);
-    const menuIconRef = useRef<HTMLButtonElement>(null);
     const [tutorialBubbleNumber, setTutorialBubbleNumber] = useState<number | undefined>(undefined);
+
+    const menuIconRef = useRef<HTMLButtonElement>(null);
     const theme = useTheme();
+    const {instance, inProgress} = useMsal();
+    const isAuthenticated = useIsAuthenticated();
     const displayIsAtleastSm = useMediaQuery(theme.breakpoints.up('sm'));
+    
+    const defaultEnabledTools = {
+        "geds": true,
+        "corporate": true,
+    };
+    const defaultModel = "gpt-4o";
 
     const convertChatHistoryToMessages = (chatHistory: ChatItem[]) : Message[] => {
         const startIndex = Math.max(chatHistory.length - maxMessagesSent, 0);
@@ -87,43 +92,65 @@ const MainScreen = ({userData}: MainScreenProps) => {
             throw new Error(t("no.id.token"));
 
             const completionResponse = await completionMySSC({
-            request: request,
-            updateLastMessage: updateLastMessage,
-            accessToken: idToken
+                request: request,
+                updateLastMessage: updateLastMessage,
+                accessToken: idToken
             });
 
-            setChatHistory((prevChatHistory) => {
-            const updatedChatHistory = [...prevChatHistory]; //making a copy
-            const lastItemIndex = updatedChatHistory.length - 1;
-            const lastItem = updatedChatHistory[lastItemIndex];
-
-            if (isACompletion(lastItem)) {
-                updatedChatHistory[lastItemIndex] = {
-                ...lastItem,
-                    message: {
-                    ...lastItem.message,
-                    context: completionResponse.message.context,
-                    tools_info: completionResponse.message.tools_info
-                    }
+            setChatHistories((prevChatHistories) => {
+                if (!prevChatHistories[currentChatIndex]) {
+                    return prevChatHistories;
                 }
-            }
 
-            saveChatHistory(updatedChatHistory); // Save chat history to local storage
-            return updatedChatHistory;
+                const updatedChatHistories = prevChatHistories.map((history, index) => {
+                    if (index !== currentChatIndex) return history;
+            
+                    const updatedChatItems = history.chatItems.map((item, itemIndex) => {
+                        if (itemIndex === history.chatItems.length - 1 && isACompletion(item)) {
+                            return {
+                                ...item,
+                                message: {
+                                    ...item.message,
+                                    context: completionResponse.message.context,
+                                    tools_info: completionResponse.message.tools_info
+                                }
+                            };
+                        }
+                        return item;
+                    }).filter(item => !isAToastMessage(item));
+            
+                    return { ...history, chatItems: updatedChatItems };
+                });
+
+                saveChatHistories(updatedChatHistories);
+                return updatedChatHistories;
             });
 
         } catch (error) {
             let errorMessage: string;
+
             if (error instanceof Error) {
-            errorMessage = error.message;
+                errorMessage = error.message;
             } else {
-            errorMessage = t("chat.unknownError");
+                errorMessage = t("chat.unknownError");
             }
+
             const toast : ToastMessage = {
-            toastMessage: errorMessage,
-            isError: true
+                toastMessage: errorMessage,
+                isError: true
             }
-            setChatHistory(prevChatHistory => [...prevChatHistory, toast]);
+
+            setChatHistories((prevChatHistories) => {
+                if (!prevChatHistories[currentChatIndex]) { return prevChatHistories };
+
+                const updatedChatHistories = prevChatHistories.map((history, index) =>
+                    index === currentChatIndex
+                        ? { ...history, chatItems: [...history.chatItems, toast] }
+                        : history
+                );
+
+                return updatedChatHistories;
+            });
 
         } finally {
             setIsLoading(false);
@@ -149,7 +176,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
         };
 
         const messages = convertChatHistoryToMessages([
-            ...chatHistory,
+            ...chatHistories[currentChatIndex].chatItems,
             userMessage,
         ]);
 
@@ -158,25 +185,33 @@ const MainScreen = ({userData}: MainScreenProps) => {
             messages: messages,
             max: maxMessagesSent,
             top: 5,
-            tools: (Object.keys(enabledTools)).filter((key) => enabledTools[key]),
-            uuid: uuid,
+            tools: (Object.keys(chatHistories[currentChatIndex].enabledTools)).filter((key) => chatHistories[currentChatIndex].enabledTools[key]),
+            uuid: chatHistories[currentChatIndex].uuid,
             quotedText: messagedQuoted,
-            model: selectedModel
+            model: chatHistories[currentChatIndex].model
         };
 
-        //update current chat window with the message sent..
-        setChatHistory((prevChatHistory) => {
-            const updatedChatHistory = [
-            ...prevChatHistory,
-            userMessage,
-            responsePlaceholder,
-            ];
-            saveChatHistory(updatedChatHistory); // Save chat history to local storage
-            return updatedChatHistory;
+        // update current chat window with the message sent..
+        setChatHistories((prevChatHistories) => {
+            const updatedChatHistories = prevChatHistories.map((history, index) =>
+                index === currentChatIndex
+                    ? {
+                        ...history,
+                        chatItems: [
+                            ...history.chatItems,
+                            userMessage,
+                            responsePlaceholder
+                        ]
+                    }
+                    : history
+            );
+
+            saveChatHistories(updatedChatHistories);
+            return updatedChatHistories;
         });
 
         sendApiRequest(request);
-        setQuotedText(undefined)
+        setQuotedText(undefined);
     };
 
     const handleFeedbackSubmit = async (event: React.FormEvent) => {
@@ -185,7 +220,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
         let toast: ToastMessage;
     
         try {
-          await sendFeedback(feedback, isGoodResponse, uuid);
+          await sendFeedback(feedback, isGoodResponse, chatHistories[currentChatIndex].uuid);
           toast = {
             toastMessage: t("feedback.success"),
             isError: false
@@ -197,62 +232,95 @@ const MainScreen = ({userData}: MainScreenProps) => {
           };
         }
     
-        setChatHistory(prevChatHistory => [...prevChatHistory, toast]);
+        setChatHistories((prevChatHistories) => {
+            const updatedChatHistories = prevChatHistories.map((history, index) => 
+                index === currentChatIndex
+                    ? {
+                        ...history,
+                        chatItems: [
+                            ...history.chatItems,
+                            toast
+                        ]
+                    }
+                    : history
+            );
+
+            return updatedChatHistories;
+        });
+
         setFeedback('');
     };
 
     const updateLastMessage = (message_chunk: string) => {
-        setChatHistory((prevChatHistory) => {
-          const updatedChatHistory = [...prevChatHistory]; //making a copy
-          const lastItemIndex = updatedChatHistory.length - 1;
-          const lastItem = updatedChatHistory[lastItemIndex];
-
-          if (isACompletion(lastItem)) {
-            updatedChatHistory[lastItemIndex] = {
-              ...lastItem,
-              message: {
-                ...lastItem.message,
-                content: message_chunk
-              }
+        setChatHistories((prevChatHistories) => {
+            if (!prevChatHistories[currentChatIndex]) {
+                return prevChatHistories;
             }
-          }
-          return updatedChatHistory;
+
+            const updatedChatHistories = prevChatHistories.map((history, index) => {
+                if (index !== currentChatIndex) return history;
+        
+                const updatedChatItems = history.chatItems.map((item, itemIndex) => {
+                    if (itemIndex === history.chatItems.length - 1 && isACompletion(item)) {
+                        return {
+                            ...item,
+                            message: {
+                                ...item.message,
+                                content: message_chunk,
+                            }
+                        };
+                    }
+                    return item;
+                });
+        
+                return { ...history, chatItems: updatedChatItems };
+            });
+            saveChatHistories(updatedChatHistories); 
+            return updatedChatHistories;
         });
     };
 
     const replayChat = () => {
-        const lastQuestion = chatHistory[chatHistory.length - 2];
-        setChatHistory(chatHistory => chatHistory.slice(0, chatHistory.length - 2));
+        const currentChatHistoryItems = chatHistories[currentChatIndex].chatItems;
+        const lastQuestion = currentChatHistoryItems[currentChatHistoryItems.length - 2];
+
+        setChatHistories((prevChatHistories) => {
+            if (!prevChatHistories[currentChatIndex]) {
+                return prevChatHistories;
+            };
+
+            const updatedChatHistories = prevChatHistories.map((history, index) => {
+                if (index !== currentChatIndex) return history;
+
+                const updatedChatItems = history.chatItems.slice(0, history.chatItems.length - 2);
+                return { ...history, chatItems: updatedChatItems };
+            });
+
+            saveChatHistories(updatedChatHistories);
+            return updatedChatHistories;
+        });
+
         if (isAMessage(lastQuestion)) {
           makeApiRequest(lastQuestion.content ? lastQuestion.content : "", lastQuestion.quotedText);
         }
     };
-    
-    const saveChatHistory = (chatHistory: ChatItem[]) => {
-        localStorage.setItem("chatHistory", JSON.stringify(chatHistory.filter(item => !isAToastMessage(item))));
-    };
 
-      // This function will be used to load the chat history from localStorage
-    const loadChatHistoryAndSettings = () => {
-        const savedChatHistory = localStorage.getItem("chatHistory");
-        const enabledToolHistory = localStorage.getItem("enabledTools");
-        const selectedModelHistory = localStorage.getItem("selectedModel");
-
-        if (savedChatHistory) {
-            setChatHistory(JSON.parse(savedChatHistory));
-        }
-        if (enabledToolHistory) {
-            setEnabledTools(JSON.parse(enabledToolHistory));
-        }
-        if (selectedModelHistory) {
-            setSelectedModel(JSON.parse(selectedModelHistory));
+    const loadChatHistoriesFromStorage = () => {
+        const chatHistories = localStorage.getItem("chatHistories");
+        if (chatHistories) {
+            setChatHistories(JSON.parse(chatHistories));
         }
     };
 
     const handleClearChat = () => {
-        localStorage.removeItem("chatHistory"); // Clear chat history from local storage
-        setWelcomeMessage(userData.graphData);
-        setUuid(uuidv4());
+        setChatHistories((prevChatHistories) => {
+            const updatedChatHistories = prevChatHistories.map((history, index) => {
+                if (index !== currentChatIndex) return history;
+                return { ...history, chatItems: [] };
+            });
+            saveChatHistories(updatedChatHistories);
+            return updatedChatHistories;
+        })
         setOpenDrawer(false);
     };
     
@@ -271,6 +339,17 @@ const MainScreen = ({userData}: MainScreenProps) => {
     
     const setWelcomeMessage = async (graphData: any) => {
         setIsLoading(true);
+
+        if (!chatHistories[currentChatIndex]) {
+            const newuuid = uuidv4();
+            chatHistories[currentChatIndex] = {
+                "chatItems": [],
+                "description": "",
+                "uuid": newuuid,
+                "enabledTools": defaultEnabledTools,
+                "model": defaultModel
+            }
+        }
     
         const systemMessage: Message = {
           role: "system",
@@ -290,8 +369,14 @@ const MainScreen = ({userData}: MainScreenProps) => {
             },
         };
     
-        //update current chat window with the message sent..
-        setChatHistory([responsePlaceholder]);
+        // update current chat window with the message sent..
+        setChatHistories((prevChatHistories) => {
+            const updatedChatHistories = prevChatHistories.map((history, index) => {
+                if (index !== currentChatIndex) return history;
+                return { ...history, chatItems: [responsePlaceholder]}
+            })
+            return updatedChatHistories;
+        });
     
         // prepare request bundle
         const request: MessageRequest = {
@@ -299,19 +384,21 @@ const MainScreen = ({userData}: MainScreenProps) => {
           max: maxMessagesSent,
           top: 5,
           tools: [],
-          uuid: uuid,
-          model: selectedModel
+          uuid: chatHistories[currentChatIndex].uuid,
+          model: chatHistories[currentChatIndex].model
         };
     
         sendApiRequest(request);
     }
 
-    // Effect for setting the welcome message
+    // Effect for setting the welcome message whenever the current chat is empty
     useEffect(() => {
-        if (isAuthenticated && userData.graphData && inProgress === InteractionStatus.None && chatHistory.length === 0) {
-        setWelcomeMessage(userData.graphData);
+        const currentChatHistory = chatHistories[currentChatIndex];
+        if (isAuthenticated && userData.graphData && inProgress === InteractionStatus.None && 
+            (!currentChatHistory || currentChatHistory.chatItems.length === 0)) {
+            setWelcomeMessage(userData.graphData);
         }
-    }, [isAuthenticated, userData.graphData, inProgress, chatHistory.length]);
+    }, [isAuthenticated, userData.graphData, inProgress, chatHistories[currentChatIndex]?.chatItems.length]);
 
     useEffect(() => {
         // Set the `lang` attribute whenever the language changes
@@ -321,33 +408,59 @@ const MainScreen = ({userData}: MainScreenProps) => {
     // Scrolls the last updated message (if its streaming, or once done) into view
     useEffect(() => {
         chatMessageStreamEnd.current?.scrollIntoView({behavior: "smooth",});
-    }, [chatHistory[chatHistory.length - 1]]);
+    }, [chatHistories[currentChatIndex]?.chatItems]);
 
-    // Load chat history if present
+    // Load chat histories if present
     useEffect(() => {
-        loadChatHistoryAndSettings();
+        loadChatHistoriesFromStorage();
     }, []);
 
-    const handleRemoveToastMessage = useCallback((indexToRemove: number) => {
-        setChatHistory(prevChatHistory => {
-        return prevChatHistory.filter((_item, index) => index !== indexToRemove);
+    const handleRemoveToastMessage = (indexToRemove: number) => {
+        setChatHistories((prevChatHistories) => {
+            if (!prevChatHistories[currentChatIndex]) return prevChatHistories;
+    
+            const updatedChatHistories = prevChatHistories.map((history, index) =>
+                index === currentChatIndex
+                    ? { ...history, chatItems: history.chatItems.filter((_, itemIndex) => itemIndex !== indexToRemove) }
+                    : history
+            );
+
+            return updatedChatHistories;
         });
-    }, []);
+    };
 
-    const saveToolSelection = (enabledTools: Record<string, boolean>) => {
-        localStorage.setItem("enabledTools", JSON.stringify(enabledTools));
+    const saveChatHistories = (updatedChatHistories: ChatHistory[]) => {
+        try {
+            localStorage.setItem("chatHistories", JSON.stringify(updatedChatHistories));
+        } catch (error) {
+            if (error instanceof DOMException && error.name === "QuotaExceededError") {
+                console.error("LocalStorage is full:", error);
+                setWarningDialogMessage(t("storage.full"))
+            }
+            console.error("Failed to save to localStorage:", error);
+        }
     }
 
-    // Update localStorage with new enabledTools
-    useEffect(() => {
-        saveToolSelection(enabledTools);
-    }, [enabledTools]); 
-
     const handleUpdateEnabledTools = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setEnabledTools({
-        ...enabledTools,
-        [event.target.name]: event.target.checked
-        });
+        const { name, checked } = event.target;
+
+        setChatHistories((prevChatHistories) => {
+            if (!prevChatHistories[currentChatIndex]) return prevChatHistories;
+            
+            const updatedTools = {
+                ...prevChatHistories[currentChatIndex].enabledTools,
+                [name]: checked
+            };
+
+            const updatedChatHistories = prevChatHistories.map((history, index) =>
+                index === currentChatIndex
+                    ? { ...history, enabledTools: updatedTools }
+                    : history
+            );
+
+            saveChatHistories(updatedChatHistories);
+            return updatedChatHistories;
+        })
     };
 
     const handleAddQuotedText = (quotedText: string) => {
@@ -359,8 +472,18 @@ const MainScreen = ({userData}: MainScreenProps) => {
     };
 
     const hanldeUpdateModelVersion = (modelName: string) => {
-        setSelectedModel(modelName);
-        localStorage.setItem("selectedModel", JSON.stringify(modelName));
+        setChatHistories((prevChatHistories) => {
+            if (!prevChatHistories[currentChatIndex]) return prevChatHistories;
+            
+            const updatedChatHistories = prevChatHistories.map((history, index) => 
+                index === currentChatIndex
+                    ? {...history, model: modelName}
+                    : history
+            );
+
+            saveChatHistories(updatedChatHistories);
+            return updatedChatHistories;
+        });
     };
 
     useEffect(() => {
@@ -368,11 +491,11 @@ const MainScreen = ({userData}: MainScreenProps) => {
         if (hasSeenTutorials !== "true" && displayIsAtleastSm) {
             setShowTutorials(true);
         }
-    }, [])
+    }, []);
 
     const handleUpdateTutorialBubbleNumber = (tipNumber: number | undefined) => {
         setTutorialBubbleNumber(tipNumber);
-    }
+    };
 
     const toggleTutorials = (showTutorials?: boolean) => {
         if (showTutorials) {
@@ -382,6 +505,70 @@ const MainScreen = ({userData}: MainScreenProps) => {
             localStorage.setItem("hasSeenTutorials", "true");
             setShowTutorials(false);
         }        
+    };
+
+    const handleDeleteSavedChat = (index: number) => {
+        setChatToLoadOrDelete(index);
+        setShowDeleteChatDialog(true);
+    };
+
+    const deleteSavedChat = () => {
+        setShowDeleteChatDialog(false);
+        if (chatToLoadOrDelete !== null) {
+
+            setChatHistories((prevChatHistories) => {
+                const updatedChatHistories = [
+                    ...prevChatHistories.slice(0, chatToLoadOrDelete),
+                    ...prevChatHistories.slice(chatToLoadOrDelete + 1)
+                ];
+
+                if (updatedChatHistories.length === 0) {
+                    setOpenDrawer(false);
+                }
+
+                if (currentChatIndex === chatToLoadOrDelete) {
+                    setCurrentChatIndex(0); 
+                } else if (chatToLoadOrDelete < currentChatIndex) {
+                    setCurrentChatIndex(currentChatIndex - 1);
+                } 
+                
+                setChatToLoadOrDelete(null);
+                saveChatHistories(updatedChatHistories);
+                return updatedChatHistories;
+            })
+        }
+    };
+
+    const handleCancelDeleteSavedChat = () => {
+        setShowDeleteChatDialog(false);
+        setChatToLoadOrDelete(null);
+    };
+    
+    const handleLoadSavedChat = (index: number) => {
+        setCurrentChatIndex(index);
+    };
+
+    const handleNewChat = () => {
+        if (chatHistories.length === 10) {
+            setWarningDialogMessage(t("chat.history.full"));
+        } else {
+            const newChatIndex = chatHistories.length;
+            setCurrentChatIndex(newChatIndex);
+            setOpenDrawer(false);
+        }
+    }
+
+    const renameChat = (newDescription: string, indexToUpdate: number) => {
+        setChatHistories((prevChatHistories) => {
+            const updatedChatHistories = prevChatHistories.map((history, index) => {
+                if (index !== indexToUpdate) return history;
+
+                return { ...history, description: newDescription }; 
+            })
+
+            saveChatHistories(updatedChatHistories);
+            return updatedChatHistories;
+        });
     }
     
     return (
@@ -400,7 +587,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
                 <Box sx={{ flexGrow: 1 }}></Box>
                 <QuoteTextTooltip addQuotedText={handleAddQuotedText}/>
                 <ChatMessagesContainer 
-                    chatHistory={chatHistory}
+                    chatHistory={chatHistories[currentChatIndex]}
                     isLoading={isLoading}
                     chatMessageStreamEnd={chatMessageStreamEnd}
                     replayChat={replayChat}
@@ -427,27 +614,34 @@ const MainScreen = ({userData}: MainScreenProps) => {
                         onSend={(question) => makeApiRequest(question)}
                         quotedText={quotedText}
                         handleRemoveQuote={handleRemoveQuote}
-                        selectedModel={selectedModel}
+                        selectedModel = {chatHistories[currentChatIndex]?.model || defaultModel}
                     />
                 </Box>
             </Box>
             <Dial 
                 drawerVisible={openDrawer || (tutorialBubbleNumber !== undefined && tutorialBubbleNumber > 1)} 
-                onClearChat={handleClearChat} 
+                onNewChat={handleNewChat} 
+                onClearChat={handleClearChat}
             />
             <Disclaimer />
             <DrawerMenu 
                 openDrawer={openDrawer || (tutorialBubbleNumber !== undefined && tutorialBubbleNumber > 1)} 
+                chatHistories={chatHistories}
+                currentChatIndex={currentChatIndex}
                 toggleDrawer={setOpenDrawer} 
-                onClearChat={handleClearChat} 
+                onClearChat={handleClearChat}
+                onNewChat={handleNewChat}
                 setLangCookie={setLangCookie} 
                 logout={handleLogout}
-                enabledTools={enabledTools}
+                enabledTools={chatHistories[currentChatIndex]?.enabledTools || defaultEnabledTools}
                 handleUpdateEnabledTools={handleUpdateEnabledTools}
-                selectedModel={selectedModel}
+                selectedModel = {chatHistories[currentChatIndex]?.model || defaultModel}
                 handleSelectedModelChanged={hanldeUpdateModelVersion}
                 tutorialBubbleNumber={tutorialBubbleNumber}
                 handleToggleTutorials={toggleTutorials}
+                handleDeleteSavedChat={handleDeleteSavedChat}
+                handleLoadSavedChat={handleLoadSavedChat}
+                renameChat={renameChat}
             />
             <FeedbackForm
                 feedback={feedback}
@@ -458,6 +652,39 @@ const MainScreen = ({userData}: MainScreenProps) => {
             />
             {showTutorials &&
                 <TutorialBubble handleAllTutorialsDisplayed={toggleTutorials} menuIconRef={menuIconRef} updateTutorialBubbleNumber={handleUpdateTutorialBubbleNumber} />
+            }
+
+            {showDeleteChatDialog &&
+                <Dialog
+                    open={showDeleteChatDialog}
+                    onClose={handleCancelDeleteSavedChat}
+                >
+                    <DialogTitle>{t("delete.conversation.title")}</DialogTitle>
+                    <DialogContent>
+                       <DialogContentText>
+                            {t("delete.conversation.content")}
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions sx={{display: 'flex', justifyContent: 'flex-start'}}>
+                        <Button onClick={handleCancelDeleteSavedChat} sx={{backgroundColor: 'primary.main', color: 'white', width: '100px', margin: '5px 15px'}}>
+                            {t("cancel")}
+                        </Button>
+                        <Button onClick={deleteSavedChat} sx={{backgroundColor: '#C43831', color: 'white', width: '100px'}}>
+                            {t("delete")}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            }
+
+            {warningDialogMessage && 
+                <Dialog 
+                    open={Boolean(warningDialogMessage)}
+                    onClose={() => setWarningDialogMessage("")}
+                >
+                    <DialogContent>
+                        {warningDialogMessage}
+                    </DialogContent>
+                </Dialog>
             }
         </>
     )
