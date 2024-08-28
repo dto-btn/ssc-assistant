@@ -23,7 +23,6 @@ __all__ = ["chat_with_data", "convert_chat_with_data_response", "build_completio
 token_provider = get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default")
 
 azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
-#api_key                 = os.getenv("AZURE_OPENAI_API_KEY")
 api_version             = os.getenv("AZURE_OPENAI_VERSION", "2024-04-01-preview")
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
@@ -44,14 +43,11 @@ index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "latest")
 # https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
 # example of using functions with azure search instead of the data source 
 #   https://github.com/Azure-Samples/openai/blob/main/Basic_Samples/Functions/functions_with_azure_search.ipynb
-default_headers = {
-    "Authorization": f"Bearer {token_provider()}"
-}
 
 client = AzureOpenAI(
     api_version=api_version,
     azure_endpoint=str(azure_openai_uri),
-    default_headers=default_headers
+    azure_ad_token=token_provider(),
 )
 
 def _create_azure_cognitive_search_data_source() -> AzureCognitiveSearchDataSource:
