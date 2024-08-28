@@ -79,3 +79,13 @@ class Feedback:
     feedback: Optional[str]
     positive: bool
     uuid: str = field(default='')
+
+@dataclass
+class BookingConfirmation:
+  bookingType: str
+  buildingId: str
+  floorId: str
+  roomId: str
+  createdBy: str
+  assignedTo: str
+  startDate: str

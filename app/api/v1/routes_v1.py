@@ -1,13 +1,15 @@
 import json
 import logging
+import os
 
 from apiflask import APIBlueprint, abort
 from flask import Response, jsonify, request, stream_with_context
 from openai import Stream
 import openai
 from openai.types.chat import (ChatCompletion, ChatCompletionChunk)
+import requests
 from utils.db import store_completion, store_request, leave_feedback, flag_conversation
-from utils.models import Completion, Feedback, MessageRequest, ToolInfo
+from utils.models import Completion, Feedback, MessageRequest, BookingConfirmation
 from utils.openai import (build_completion_response, chat_with_data,
                           convert_chat_with_data_response)
 from utils.auth import auth, user_ad
@@ -168,3 +170,46 @@ def completion_chat_stream(message_request: MessageRequest):
 def feedback(feedback: Feedback):
     leave_feedback(feedback)
     return jsonify("Feedback saved!", 200)
+
+
+@api_v1.post('/book_reservation')
+@api_v1.doc("Make a workspace booking through the Archibus API.")
+@api_v1.doc(security='ApiKeyAuth')
+@auth.login_required(role='chat')
+@api_v1.input(BookingConfirmation.Schema, arg_name="booking_confirmation", example={ # type: ignore
+                                                                                    "buildingId": "HQ-BAS4",
+                                                                                    "floorId": "T404",
+                                                                                    "roomId": "W037",
+                                                                                    "createdBy": "AITKEN, KYLE",
+                                                                                    "assignedTo": "AITKEN, KYLE",
+                                                                                    "bookingType": "FULLDAY",
+                                                                                    "startDate": "2024-10-19"
+                                                                                })                                                                              
+def book_reservation(booking_confirmation: BookingConfirmation):
+    logger.debug("book reservation called")
+    # logger.debug("Received booking confirmation: %s", booking_confirmation)
+
+    url = 'http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1/reservations/'
+    username = os.getenv('ARCHIBUS_API_USERNAME')
+    password = os.getenv('ARCHIBUS_API_PASSWORD')
+
+    if username is None or password is None:
+        raise ValueError("ARCHIBUS_API_USERNAME and ARCHIBUS_API_PASSWORD must be set")
+
+    auth = (username, password)
+
+    payload = json.dumps(
+                booking_confirmation.__dict__,
+                default=lambda o: o.__dict__
+            )
+
+    headers = {
+        'Accept': '*/*',
+        'Content-Type': 'application/json',
+    }
+
+    response = requests.post(url, headers=headers, json=payload, auth=auth)  # type: ignore
+    if response.status_code == 201:
+        return response.json()
+    else:
+        return "Didn't make the reservation."

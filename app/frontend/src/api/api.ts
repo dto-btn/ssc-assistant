@@ -103,27 +103,20 @@ export async function sendFeedback(feedback: string, isGoodResponse: boolean, uu
   return response;
 }
 
-export async function bookReservation(request: BookingConfirmation): Promise<Response> {
-  const proxyURL = 'http://localhost:8080/bookReservation';
+export async function bookReservation(bookingDetails: BookingConfirmation): Promise<Response> {
+  const url = "/api/1.0/book_reservation";
 
-  try {
-    const bookingResponse = await fetch(proxyURL, {
-      method: "POST",
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(request)
-    })
+  const bookingResponse = await fetch(url, {
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(bookingDetails)
+  })
 
-    if (!bookingResponse.ok) {
-      throw new Error();
-    }
-
-    const data = await bookingResponse.json();
-    return data;
-
-  } catch (error) {
-    throw new Error();
+  if (!bookingResponse.ok) {
+    throw new Error("Failed to book reservation");
   }
 
+  return bookingResponse;
 }
