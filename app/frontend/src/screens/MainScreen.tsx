@@ -31,7 +31,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
     const [feedback, setFeedback] = useState('');
     const [isGoodResponse, setIsGoodResponse] = useState(false);
     const [currentChatIndex, setCurrentChatIndex] = useState<number>(0);
-    const [savedChatHistories, setSavedChatHistories] = useState<ChatHistory[]>([]);
+    const [chatHistories, setChatHistories] = useState<ChatHistory[]>([]);
     const [chatToLoadOrDelete, setChatToLoadOrDelete] = useState<number | null>(null);
     const [showDeleteChatDialog, setShowDeleteChatDialog] = useState(false);
     const [warningDialogMessage, setWarningDialogMessage] = useState("");
@@ -97,7 +97,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
                 accessToken: idToken
             });
 
-            setSavedChatHistories((prevChatHistories) => {
+            setChatHistories((prevChatHistories) => {
                 if (!prevChatHistories[currentChatIndex]) {
                     return prevChatHistories;
                 }
@@ -140,7 +140,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
                 isError: true
             }
 
-            setSavedChatHistories((prevChatHistories) => {
+            setChatHistories((prevChatHistories) => {
                 if (!prevChatHistories[currentChatIndex]) { return prevChatHistories };
 
                 const updatedChatHistories = prevChatHistories.map((history, index) =>
@@ -176,7 +176,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
         };
 
         const messages = convertChatHistoryToMessages([
-            ...savedChatHistories[currentChatIndex].chatItems,
+            ...chatHistories[currentChatIndex].chatItems,
             userMessage,
         ]);
 
@@ -185,14 +185,14 @@ const MainScreen = ({userData}: MainScreenProps) => {
             messages: messages,
             max: maxMessagesSent,
             top: 5,
-            tools: (Object.keys(savedChatHistories[currentChatIndex].enabledTools)).filter((key) => savedChatHistories[currentChatIndex].enabledTools[key]),
-            uuid: savedChatHistories[currentChatIndex].uuid,
+            tools: (Object.keys(chatHistories[currentChatIndex].enabledTools)).filter((key) => chatHistories[currentChatIndex].enabledTools[key]),
+            uuid: chatHistories[currentChatIndex].uuid,
             quotedText: messagedQuoted,
-            model: savedChatHistories[currentChatIndex].model
+            model: chatHistories[currentChatIndex].model
         };
 
         // update current chat window with the message sent..
-        setSavedChatHistories((prevChatHistories) => {
+        setChatHistories((prevChatHistories) => {
             const updatedChatHistories = prevChatHistories.map((history, index) =>
                 index === currentChatIndex
                     ? {
@@ -220,7 +220,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
         let toast: ToastMessage;
     
         try {
-          await sendFeedback(feedback, isGoodResponse, savedChatHistories[currentChatIndex].uuid);
+          await sendFeedback(feedback, isGoodResponse, chatHistories[currentChatIndex].uuid);
           toast = {
             toastMessage: t("feedback.success"),
             isError: false
@@ -232,7 +232,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
           };
         }
     
-        setSavedChatHistories((prevChatHistories) => {
+        setChatHistories((prevChatHistories) => {
             const updatedChatHistories = prevChatHistories.map((history, index) => 
                 index === currentChatIndex
                     ? {
@@ -252,7 +252,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
     };
 
     const updateLastMessage = (message_chunk: string) => {
-        setSavedChatHistories((prevChatHistories) => {
+        setChatHistories((prevChatHistories) => {
             if (!prevChatHistories[currentChatIndex]) {
                 return prevChatHistories;
             }
@@ -281,10 +281,10 @@ const MainScreen = ({userData}: MainScreenProps) => {
     };
 
     const replayChat = () => {
-        const currentChatHistoryItems = savedChatHistories[currentChatIndex].chatItems;
+        const currentChatHistoryItems = chatHistories[currentChatIndex].chatItems;
         const lastQuestion = currentChatHistoryItems[currentChatHistoryItems.length - 2];
 
-        setSavedChatHistories((prevChatHistories) => {
+        setChatHistories((prevChatHistories) => {
             if (!prevChatHistories[currentChatIndex]) {
                 return prevChatHistories;
             };
@@ -306,14 +306,14 @@ const MainScreen = ({userData}: MainScreenProps) => {
     };
 
     const loadChatHistoriesFromStorage = () => {
-        const savedChatHistories = localStorage.getItem("savedChatHistories");
-        if (savedChatHistories) {
-            setSavedChatHistories(JSON.parse(savedChatHistories));
+        const chatHistories = localStorage.getItem("chatHistories");
+        if (chatHistories) {
+            setChatHistories(JSON.parse(chatHistories));
         }
     };
 
     const handleClearChat = () => {
-        setSavedChatHistories((prevChatHistories) => {
+        setChatHistories((prevChatHistories) => {
             const updatedChatHistories = prevChatHistories.map((history, index) => {
                 if (index !== currentChatIndex) return history;
                 return { ...history, chatItems: [] };
@@ -340,9 +340,9 @@ const MainScreen = ({userData}: MainScreenProps) => {
     const setWelcomeMessage = async (graphData: any) => {
         setIsLoading(true);
 
-        if (!savedChatHistories[currentChatIndex]) {
+        if (!chatHistories[currentChatIndex]) {
             const newuuid = uuidv4();
-            savedChatHistories[currentChatIndex] = {
+            chatHistories[currentChatIndex] = {
                 "chatItems": [],
                 "description": "",
                 "uuid": newuuid,
@@ -370,7 +370,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
         };
     
         // update current chat window with the message sent..
-        setSavedChatHistories((prevChatHistories) => {
+        setChatHistories((prevChatHistories) => {
             const updatedChatHistories = prevChatHistories.map((history, index) => {
                 if (index !== currentChatIndex) return history;
                 return { ...history, chatItems: [responsePlaceholder]}
@@ -384,8 +384,8 @@ const MainScreen = ({userData}: MainScreenProps) => {
           max: maxMessagesSent,
           top: 5,
           tools: [],
-          uuid: savedChatHistories[currentChatIndex].uuid,
-          model: savedChatHistories[currentChatIndex].model
+          uuid: chatHistories[currentChatIndex].uuid,
+          model: chatHistories[currentChatIndex].model
         };
     
         sendApiRequest(request);
@@ -393,12 +393,12 @@ const MainScreen = ({userData}: MainScreenProps) => {
 
     // Effect for setting the welcome message whenever the current chat is empty
     useEffect(() => {
-        const currentChatHistory = savedChatHistories[currentChatIndex];
+        const currentChatHistory = chatHistories[currentChatIndex];
         if (isAuthenticated && userData.graphData && inProgress === InteractionStatus.None && 
             (!currentChatHistory || currentChatHistory.chatItems.length === 0)) {
             setWelcomeMessage(userData.graphData);
         }
-    }, [isAuthenticated, userData.graphData, inProgress, savedChatHistories[currentChatIndex]?.chatItems.length]);
+    }, [isAuthenticated, userData.graphData, inProgress, chatHistories[currentChatIndex]?.chatItems.length]);
 
     useEffect(() => {
         // Set the `lang` attribute whenever the language changes
@@ -408,7 +408,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
     // Scrolls the last updated message (if its streaming, or once done) into view
     useEffect(() => {
         chatMessageStreamEnd.current?.scrollIntoView({behavior: "smooth",});
-    }, [savedChatHistories[currentChatIndex]?.chatItems]);
+    }, [chatHistories[currentChatIndex]?.chatItems]);
 
     // Load chat histories if present
     useEffect(() => {
@@ -416,7 +416,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
     }, []);
 
     const handleRemoveToastMessage = (indexToRemove: number) => {
-        setSavedChatHistories((prevChatHistories) => {
+        setChatHistories((prevChatHistories) => {
             if (!prevChatHistories[currentChatIndex]) return prevChatHistories;
     
             const updatedChatHistories = prevChatHistories.map((history, index) =>
@@ -431,7 +431,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
 
     const saveChatHistories = (updatedChatHistories: ChatHistory[]) => {
         try {
-            localStorage.setItem("savedChatHistories", JSON.stringify(updatedChatHistories));
+            localStorage.setItem("chatHistories", JSON.stringify(updatedChatHistories));
         } catch (error) {
             if (error instanceof DOMException && error.name === "QuotaExceededError") {
                 console.error("LocalStorage is full:", error);
@@ -444,7 +444,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
     const handleUpdateEnabledTools = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, checked } = event.target;
 
-        setSavedChatHistories((prevChatHistories) => {
+        setChatHistories((prevChatHistories) => {
             if (!prevChatHistories[currentChatIndex]) return prevChatHistories;
             
             const updatedTools = {
@@ -472,7 +472,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
     };
 
     const hanldeUpdateModelVersion = (modelName: string) => {
-        setSavedChatHistories((prevChatHistories) => {
+        setChatHistories((prevChatHistories) => {
             if (!prevChatHistories[currentChatIndex]) return prevChatHistories;
             
             const updatedChatHistories = prevChatHistories.map((history, index) => 
@@ -516,7 +516,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
         setShowDeleteChatDialog(false);
         if (chatToLoadOrDelete !== null) {
 
-            setSavedChatHistories((prevChatHistories) => {
+            setChatHistories((prevChatHistories) => {
                 const updatedChatHistories = [
                     ...prevChatHistories.slice(0, chatToLoadOrDelete),
                     ...prevChatHistories.slice(chatToLoadOrDelete + 1)
@@ -549,17 +549,17 @@ const MainScreen = ({userData}: MainScreenProps) => {
     };
 
     const handleNewChat = () => {
-        if (savedChatHistories.length === 10) {
+        if (chatHistories.length === 10) {
             setWarningDialogMessage(t("chat.history.full"));
         } else {
-            const newChatIndex = savedChatHistories.length;
+            const newChatIndex = chatHistories.length;
             setCurrentChatIndex(newChatIndex);
             setOpenDrawer(false);
         }
     }
 
     const renameChat = (newDescription: string, indexToUpdate: number) => {
-        setSavedChatHistories((prevChatHistories) => {
+        setChatHistories((prevChatHistories) => {
             const updatedChatHistories = prevChatHistories.map((history, index) => {
                 if (index !== indexToUpdate) return history;
 
@@ -587,7 +587,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
                 <Box sx={{ flexGrow: 1 }}></Box>
                 <QuoteTextTooltip addQuotedText={handleAddQuotedText}/>
                 <ChatMessagesContainer 
-                    chatHistory={savedChatHistories[currentChatIndex]}
+                    chatHistory={chatHistories[currentChatIndex]}
                     isLoading={isLoading}
                     chatMessageStreamEnd={chatMessageStreamEnd}
                     replayChat={replayChat}
@@ -614,7 +614,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
                         onSend={(question) => makeApiRequest(question)}
                         quotedText={quotedText}
                         handleRemoveQuote={handleRemoveQuote}
-                        selectedModel = {savedChatHistories[currentChatIndex]?.model || defaultModel}
+                        selectedModel = {chatHistories[currentChatIndex]?.model || defaultModel}
                     />
                 </Box>
             </Box>
@@ -626,16 +626,16 @@ const MainScreen = ({userData}: MainScreenProps) => {
             <Disclaimer />
             <DrawerMenu 
                 openDrawer={openDrawer || (tutorialBubbleNumber !== undefined && tutorialBubbleNumber > 1)} 
-                savedChatHistories={savedChatHistories}
+                chatHistories={chatHistories}
                 currentChatIndex={currentChatIndex}
                 toggleDrawer={setOpenDrawer} 
                 onClearChat={handleClearChat}
                 onNewChat={handleNewChat}
                 setLangCookie={setLangCookie} 
                 logout={handleLogout}
-                enabledTools={savedChatHistories[currentChatIndex]?.enabledTools || defaultEnabledTools}
+                enabledTools={chatHistories[currentChatIndex]?.enabledTools || defaultEnabledTools}
                 handleUpdateEnabledTools={handleUpdateEnabledTools}
-                selectedModel = {savedChatHistories[currentChatIndex]?.model || defaultModel}
+                selectedModel = {chatHistories[currentChatIndex]?.model || defaultModel}
                 handleSelectedModelChanged={hanldeUpdateModelVersion}
                 tutorialBubbleNumber={tutorialBubbleNumber}
                 handleToggleTutorials={toggleTutorials}

@@ -41,7 +41,7 @@ import React from "react";
 
 interface DrawerMenuProps {
   openDrawer: boolean;
-  savedChatHistories: ChatHistory[];
+  chatHistories: ChatHistory[];
   currentChatIndex: number;
   toggleDrawer: (arg: boolean) => void;
   onClearChat: () => void;
@@ -59,7 +59,7 @@ interface DrawerMenuProps {
   renameChat: (newChatDescription: string, index: number) => void;
 }
 
-export const DrawerMenu = ({openDrawer, savedChatHistories, toggleDrawer, onClearChat, onNewChat, setLangCookie, 
+export const DrawerMenu = ({openDrawer, chatHistories, toggleDrawer, onClearChat, onNewChat, setLangCookie, 
   logout, enabledTools, handleUpdateEnabledTools, handleSelectedModelChanged, selectedModel, tutorialBubbleNumber, handleToggleTutorials,
   handleDeleteSavedChat, handleLoadSavedChat, renameChat, currentChatIndex} : DrawerMenuProps) => {
   const [toolMenuOpen, setToolMenuOpen] = useState(false);
@@ -93,10 +93,6 @@ export const DrawerMenu = ({openDrawer, savedChatHistories, toggleDrawer, onClea
     setSelectedChatIndex(index);
   };
 
-  const handleCloseMoreMenu = () => {
-    setMoreMenuAnchor(null);
-  };
-
   const handleDeleteChatClicked = () => {
     if (selectedChatIndex !== null) {
       handleDeleteSavedChat(selectedChatIndex);
@@ -105,12 +101,12 @@ export const DrawerMenu = ({openDrawer, savedChatHistories, toggleDrawer, onClea
   }
 
   const handleRenameClicked = () => {
-    if (selectedChatIndex !== null && savedChatHistories[selectedChatIndex].description) {
-      setEditedDescription(savedChatHistories[selectedChatIndex].description);
+    if (selectedChatIndex !== null && chatHistories[selectedChatIndex].description) {
+      setEditedDescription(chatHistories[selectedChatIndex].description);
     }
     setEditingIndex(selectedChatIndex);
     setTextFieldIsFocused(true);
-    handleCloseMoreMenu();
+    setMoreMenuAnchor(null);
   }
 
   const handleSaveEdit = () => {
@@ -130,6 +126,7 @@ export const DrawerMenu = ({openDrawer, savedChatHistories, toggleDrawer, onClea
     setTextFieldIsFocused(false);
   };
 
+  // timeout prevent the blur from occuring immediately when it shouldn't
   const handleBlur = () => {
     setTimeout(() => {
       if (textFieldIsFocused) {
@@ -292,7 +289,7 @@ export const DrawerMenu = ({openDrawer, savedChatHistories, toggleDrawer, onClea
         </ListItem>
         <Collapse in={selectChatMenuOpen} timeout="auto" unmountOnExit>
           <Divider />
-          {savedChatHistories.map((chatHistory, index) => {
+          {chatHistories.map((chatHistory, index) => {
             return (
               <ListItem key={index} 
                 sx={{
@@ -353,7 +350,7 @@ export const DrawerMenu = ({openDrawer, savedChatHistories, toggleDrawer, onClea
                   }}
                   anchorEl={moreMenuAnchor}
                   open={moreMenuOpen}
-                  onClose={handleCloseMoreMenu}
+                  onClose={() => setMoreMenuAnchor(null)}
                   transformOrigin={{
                     vertical: 'top',
                     horizontal: 'center',
