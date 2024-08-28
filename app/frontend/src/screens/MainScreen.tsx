@@ -34,7 +34,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
     const [savedChatHistories, setSavedChatHistories] = useState<ChatHistory[]>([]);
     const [chatToLoadOrDelete, setChatToLoadOrDelete] = useState<number | null>(null);
     const [showDeleteChatDialog, setShowDeleteChatDialog] = useState(false);
-    const [showChatHistoryFullDialog, setShowChatHistoryFullDialog] = useState(false);
+    const [warningDialogMessage, setWarningDialogMessage] = useState("");
     const [quotedText, setQuotedText] = useState<string>();
     const [showTutorials, setShowTutorials] = useState(false);
     const [tutorialBubbleNumber, setTutorialBubbleNumber] = useState<number | undefined>(undefined);
@@ -433,6 +433,10 @@ const MainScreen = ({userData}: MainScreenProps) => {
         try {
             localStorage.setItem("savedChatHistories", JSON.stringify(updatedChatHistories));
         } catch (error) {
+            if (error instanceof DOMException && error.name === "QuotaExceededError") {
+                console.error("LocalStorage is full:", error);
+                setWarningDialogMessage(t("storage.full"))
+            }
             console.error("Failed to save to localStorage:", error);
         }
     }
@@ -546,7 +550,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
 
     const handleNewChat = () => {
         if (savedChatHistories.length === 10) {
-            setShowChatHistoryFullDialog(true);
+            setWarningDialogMessage(t("chat.history.full"));
         } else {
             const newChatIndex = savedChatHistories.length;
             setCurrentChatIndex(newChatIndex);
@@ -672,13 +676,13 @@ const MainScreen = ({userData}: MainScreenProps) => {
                 </Dialog>
             }
 
-            {showChatHistoryFullDialog && 
+            {warningDialogMessage && 
                 <Dialog 
-                    open={showChatHistoryFullDialog}
-                    onClose={() => setShowChatHistoryFullDialog(false)}
+                    open={Boolean(warningDialogMessage)}
+                    onClose={() => setWarningDialogMessage("")}
                 >
                     <DialogContent>
-                        {t("chat.history.full")}
+                        {warningDialogMessage}
                     </DialogContent>
                 </Dialog>
             }

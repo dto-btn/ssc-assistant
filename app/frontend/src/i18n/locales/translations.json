@@ -492,11 +492,15 @@
         "fr": "Nouvelle Conversation"
     },
     "drawer.header.conversations": {
-        "en": "Conversations Management",
-        "fr": "Gestion des Conversations"
+        "en": "Conversations",
+        "fr": "Conversations"
     },
     "drawer.header.toolsAndModels": {
-        "en": "Tools and Models Settings",
-        "fr": "Paramètres des Outils et Modèles"
+        "en": "Tools and Models",
+        "fr": "Outils et Modèles"
+    },
+    "storage.full": {
+        "en": "Warning: Your storage is full. Please delete or clear a conversation/conversations to continue.",
+        "fr": "Avertissement : Votre stockage est plein. Veuillez supprimer ou effacer une ou plusieurs conversations pour continuer."
     }
 }
