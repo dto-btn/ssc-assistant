@@ -269,11 +269,11 @@ def get_user_bookings(firstName: str = "", lastName: str = ""):
         response = requests.get(url, headers=headers, auth=auth)
 
         if response.status_code == 200:
-            response_json = json.loads(response.text)
-            pretty_response = json.dumps(response_json, indent=4)
+            filtered_response_json = json.loads(response.text)[-10:] # take last 10 items (API might be returning duplicates?)
+            pretty_response = json.dumps(filtered_response_json, indent=4)
             logger.debug(f"Reservations: {pretty_response}")
             logger.debug(f"Response status code: {response.status_code}")
-            return response.json()  
+            return filtered_response_json  
         else:
             logger.error(f"Unable to get any buildings info. Status code: {response.status_code}")
             return "Didn't find any buildings."
