@@ -81,6 +81,9 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
         setProcessedContent({ processedText, citedCitations });
         setCitationNumberMapping(citationNumberMapping); // store the citationNumberMapping in state
         setProcessingComplete(true);
+    } else {
+      setProcessedContent({processedText: "", citedCitations: []});
+      setCitationNumberMapping({});
     }
 }, [isLoading, context, text, scrollRef]);
 
@@ -103,6 +106,8 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
       if (toolsInfo && toolsInfo.payload?.hasOwnProperty("profiles") && toolsInfo.payload.profiles !== null) {
           const processedProfiles = processProfiles(toolsInfo.payload.profiles);
           setProfiles(processedProfiles);
+      } else {
+        setProfiles([]);
       }
   }, [toolsInfo]);
 
