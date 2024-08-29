@@ -1,4 +1,4 @@
-import { Box, Paper, Divider, Chip, Stack, Typography, Link, Tooltip, Button, IconButton, Dialog } from '@mui/material';
+import { Box, Paper, Divider, Chip, Stack, Typography, Link, Tooltip, Button, IconButton, Dialog, PaperProps, DialogTitle } from '@mui/material';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -12,6 +12,7 @@ import HandymanIcon from '@mui/icons-material/Handyman';
 import AutoAwesome from '@mui/icons-material/AutoAwesome';
 import { visuallyHidden } from '@mui/utils';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
+import Draggable from 'react-draggable';
 
 interface AssistantBubbleProps {
     text: string;
@@ -25,6 +26,17 @@ interface AssistantBubbleProps {
     setIsFeedbackVisible: React.Dispatch<React.SetStateAction<boolean>>;
     setIsGoodResponse: React.Dispatch<React.SetStateAction<boolean>>;
     handleBookReservation: (bookingDetails: BookingConfirmation) => void;
+}
+
+function DraggablePaperComponent(props: PaperProps) {
+  return (
+    <Draggable
+      handle="#draggable-dialog-title"
+      cancel={'[class*="MuiDialogContent-root"]'}
+    >
+      <Paper {...props} />
+    </Draggable>
+  );
 }
 
 export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse, handleBookReservation }: AssistantBubbleProps) => {
@@ -261,7 +273,16 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
                     <img src={floorPlanFilename} alt={t("archibus.floorPlan")} />
                   </FloorPlanView>
 
-                  <Dialog open={isFloorPlanExpanded} onClose={() => setFloorPlanExpanded(false)} fullWidth maxWidth="lg">
+                  <Dialog 
+                    open={isFloorPlanExpanded} 
+                    onClose={() => setFloorPlanExpanded(false)} 
+                    PaperComponent={DraggablePaperComponent}
+                    aria-labelledby="draggable-dialog-title"
+                    fullWidth maxWidth="md"
+                    disableScrollLock
+                  >
+                    <DialogTitle style={{ cursor: 'move', height: '50px' }} id="draggable-dialog-title">
+                    </DialogTitle>
                     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
                       <img
                         src={floorPlanFilename}
@@ -269,7 +290,8 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
                         style={{
                           width: '100%',
                           height: 'auto',
-                          display: 'block'
+                          display: 'block',
+                          padding: '0px 50px 50px 50px'
                         }}
                       />
                     </div>
