@@ -89,7 +89,7 @@
     },
     "clear.conversation": {
         "en": "Clear Current Chat",
-        "fr": "Effacer la Conversation Actuelle"
+        "fr": "Effacer la conversation actuelle"
     },
     "toolsUsed": {
         "en": "Tools used by the assistant in the response",
@@ -293,7 +293,7 @@
     },
     "menu.chooseTools": {
         "en": "Select Tools",
-        "fr": "Sélectionnez les Outils"
+        "fr": "Sélectionnez les outils"
     },
     "menu.title": {
         "en": "Configure answer generation",
@@ -393,7 +393,7 @@
     },
     "model.version.select": {
         "en": "Select Model Version",
-        "fr": "Sélectionnez la Version du Modèle"
+        "fr": "Sélectionnez la version du modèle"
     },
     "tutorial.menu": {
         "en": "Use the menu to view customization settings, change language, clear chat, and more.",
@@ -465,7 +465,7 @@
     },
     "select.conversation": {
         "en": "Select Conversation",
-        "fr": "Sélectionnez la Conversation"
+        "fr": "Sélectionnez la conversation"
     },
     "delete": {
         "en": "Delete",
@@ -477,7 +477,7 @@
     },
     "delete.conversation.title": {
         "en": "Delete Conversation",
-        "fr": "Supprimer la Conversation"
+        "fr": "Supprimer la conversation"
     },
     "delete.conversation.content": {
         "en": "Are you sure you want to delete this conversation?",
@@ -489,7 +489,7 @@
     },
     "new.conversation": {
         "en": "New Conversarion",
-        "fr": "Nouvelle Conversation"
+        "fr": "Nouvelle conversation"
     },
     "drawer.header.conversations": {
         "en": "Conversations",
@@ -497,7 +497,7 @@
     },
     "drawer.header.toolsAndModels": {
         "en": "Tools and Models",
-        "fr": "Outils et Modèles"
+        "fr": "Outils et modèles"
     },
     "storage.full": {
         "en": "Warning: Your storage is full. Please delete or clear a conversation/conversations to continue.",
