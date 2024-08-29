@@ -41,7 +41,7 @@ import React from "react";
 
 interface DrawerMenuProps {
   openDrawer: boolean;
-  chatHistories: ChatHistory[];
+  chatDescriptions: string[];
   currentChatIndex: number;
   toggleDrawer: (arg: boolean) => void;
   onClearChat: () => void;
@@ -59,7 +59,7 @@ interface DrawerMenuProps {
   renameChat: (newChatDescription: string, index: number) => void;
 }
 
-export const DrawerMenu = ({openDrawer, chatHistories, toggleDrawer, onClearChat, onNewChat, setLangCookie, 
+export const DrawerMenu = ({openDrawer, chatDescriptions, toggleDrawer, onClearChat, onNewChat, setLangCookie, 
   logout, enabledTools, handleUpdateEnabledTools, handleSelectedModelChanged, selectedModel, tutorialBubbleNumber, handleToggleTutorials,
   handleDeleteSavedChat, handleLoadSavedChat, renameChat, currentChatIndex} : DrawerMenuProps) => {
   const [toolMenuOpen, setToolMenuOpen] = useState(false);
@@ -101,8 +101,8 @@ export const DrawerMenu = ({openDrawer, chatHistories, toggleDrawer, onClearChat
   }
 
   const handleRenameClicked = () => {
-    if (selectedChatIndex !== null && chatHistories[selectedChatIndex].description) {
-      setEditedDescription(chatHistories[selectedChatIndex].description);
+    if (selectedChatIndex !== null && chatDescriptions[selectedChatIndex]) {
+      setEditedDescription("");
     }
     setEditingIndex(selectedChatIndex);
     setTextFieldIsFocused(true);
@@ -289,7 +289,7 @@ export const DrawerMenu = ({openDrawer, chatHistories, toggleDrawer, onClearChat
         </ListItem>
         <Collapse in={selectChatMenuOpen} timeout="auto" unmountOnExit>
           <Divider />
-          {chatHistories.map((chatHistory, index) => {
+          {chatDescriptions.map((chatDescription, index) => {
             return (
               <ListItem key={index} 
                 sx={{
@@ -413,7 +413,7 @@ export const DrawerMenu = ({openDrawer, chatHistories, toggleDrawer, onClearChat
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      {chatHistory.description ? chatHistory.description : "Conversation " + (index + 1)}
+                      {chatDescription}
                     </Typography>
                   </ListItemButton>
                 }
