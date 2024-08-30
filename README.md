@@ -1,11 +1,43 @@
 # SSC Assistant
 Second iteration of the SSC chatbot/assistant.
 
+[<img alt="Main screen of the SSC Assistant" width="600px" src="img/mainscreen.png" />]()
+
+The SSC Assistant leverages the **Azure OpenAI** API to utilize advanced language models such as **GPT-4o**. It employs the Retrieval Augmented Generation (RAG) method, integrating external APIs and tools to offer a wide array of options for users.
+
+[<img alt="Display of the Assistant's options menu" width="175px" src="img/optionsmenu.png">]()
+
+When the Assistant uses a tool in its API call, it indicates which tools were used in the response and displays the relevant metadata. For example, here is how it presents information retrieved using the GEDS tool:
+
+[<img alt="Answer with options" width="400px" src="img/tools.png">]()
+
 ## Developer(s)
 
 This section will help developer understand this project and how to set it up from the ground up and how to run it on their machine.
 
-### Python setup
+### Codespaces
+
+Simply create your branch and create a codespace for it from github. Load up that codespace you will have everything that you need to start working,
+
+`Ctrl + Shift + ~` to open 2 new terminals and simply start the services: 
+
+API: 
+
+`cd app/api && flask run --debug --port=5001`
+
+Frontend: 
+
+`cd app/frontend && npm run dev`
+
+All the necessary `npm install` and `pip install` commands have already been run and you can simply reach the codespace url that points to the `8080` port.
+
+**NOTE**: You will need to have a `163dev` account in order to develop and test on DEV/locally ([request an account](https://forms.office.com/pages/responsepage.aspx?id=lMFb0L-U1kquLh2w8uOPXgYMhvp43QhHmpexXCVOi0NUNzZSUjJZSjRDNldYWUpPWDVIWkdZMzZJMi4u)).
+
+### Devcontainers
+
+TODO
+
+### Manual setup (deprecated)
 
 We are developing on python 3.11+.
 
