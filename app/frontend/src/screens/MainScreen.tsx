@@ -118,14 +118,20 @@ const MainScreen = ({userData}: MainScreenProps) => {
                         };
                     }
                     return item;
-                }).filter(item => !isAToastMessage(item));
+                });
 
                 const updatedChatHistory: ChatHistory = {
                     ...prevChatHistory,
                     chatItems: updatedChatItems
                 };
 
-                saveChatHistories(updatedChatHistory);
+                // filters toast messages so they're not saved to local storage
+                const filteredChatHistory = {
+                    ...updatedChatHistory,
+                    chatItems: updatedChatItems.filter(item => !isAToastMessage(item))
+                }
+
+                saveChatHistories(filteredChatHistory);
                 return updatedChatHistory;
             });
 
