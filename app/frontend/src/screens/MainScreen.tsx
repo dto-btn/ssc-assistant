@@ -540,6 +540,9 @@ const MainScreen = ({userData}: MainScreenProps) => {
         };
         updatedChatHistories[indexToUpdate] = updatedChatHistory;
         localStorage.setItem("chatHistories", JSON.stringify(updatedChatHistories));
+        if (currentChatIndex === indexToUpdate) {
+            setCurrentChatHistory(updatedChatHistory);
+        }
         setChatHistoriesDescriptions(updatedChatHistories.map((chatHistory, index) => chatHistory.description || "Conversation " + (index + 1)));
     }
     
