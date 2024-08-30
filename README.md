@@ -21,6 +21,8 @@ Simply create your branch and create a codespace for it from github. Load up tha
 
 `Ctrl + Shift + ~` to open 2 new terminals and simply start the services: 
 
+> NOTE: It is important that you firsts login via `az login --device-code`
+
 API: 
 
 `cd app/api && flask run --debug --port=5001`
