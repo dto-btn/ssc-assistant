@@ -35,9 +35,19 @@ All the necessary `npm install` and `pip install` commands have already been run
 
 **NOTE**: You will need to have a `163dev` account in order to develop and test on DEV/locally ([request an account](https://forms.office.com/pages/responsepage.aspx?id=lMFb0L-U1kquLh2w8uOPXgYMhvp43QhHmpexXCVOi0NUNzZSUjJZSjRDNldYWUpPWDVIWkdZMzZJMi4u)).
 
-### Devcontainers
+### Dev Containers (recommended)
 
-TODO
+Here is how you can develop locally with Dev Containers.
+
+#### Pre-requisites
+
+* VSCode with Dev Container extension
+* Docker engine installed on Linux (Can be via WSL 2.0 on Windows)
+  * **NOTE:** If you are using Docker Desktop you are **required** to have an Enterprise lisence.
+
+#### Steps
+
+`Ctrl + Shift + P` in VSCode and then `Dev Containers: Reopen in Container` (or alternatively if you never did open it `Dev Containers: Open Folder in Container...` and select the repo with `ssc-assistant`).
 
 ### Manual setup (deprecated)
 
