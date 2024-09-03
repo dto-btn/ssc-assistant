@@ -84,6 +84,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
     } else {
       setProcessedContent({processedText: "", citedCitations: []});
       setCitationNumberMapping({});
+      setProcessingComplete(false);
     }
 }, [isLoading, context, text, scrollRef]);
 
