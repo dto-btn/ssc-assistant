@@ -1,15 +1,15 @@
 # SSC Assistant
 Second iteration of the SSC chatbot/assistant.
 
-[<img alt="Main screen of the SSC Assistant" width="600px" src="img/mainscreen.png" />]()
+<img alt="Main screen of the SSC Assistant"  src="img/mainscreen.png" />
 
 The SSC Assistant leverages the **Azure OpenAI** API to utilize advanced language models such as **GPT-4o**. It employs the Retrieval Augmented Generation (RAG) method, integrating external APIs and tools to offer a wide array of options for users.
 
-[<img alt="Display of the Assistant's options menu" width="175px" src="img/optionsmenu.png">]()
+<img alt="Display of the Assistant's options menu" width="300px" src="img/optionsmenu.png">
 
 When the Assistant uses a tool in its API call, it indicates which tools were used in the response and displays the relevant metadata. For example, here is how it presents information retrieved using the GEDS tool:
 
-[<img alt="Answer with options" width="400px" src="img/tools.png">]()
+<img alt="Answer with options" src="img/tools.png">
 
 ## Developer(s)
 
