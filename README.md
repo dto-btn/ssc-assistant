@@ -19,23 +19,7 @@ This section will help developer understand this project and how to set it up fr
 
 Simply create your branch and create a codespace for it from github. Load up that codespace you will have everything that you need to start working,
 
-`Ctrl + Shift + ~` to open 2 new terminals and simply start the services: 
-
-> NOTE: It is important that you firsts login via `az login --device-code`
-
-API: 
-
-`cd app/api && flask run --debug --port=5001`
-
-Frontend: 
-
-`cd app/frontend && npm run dev`
-
-All the necessary `npm install` and `pip install` commands have already been run and you can simply reach the codespace url that points to the `8080` port.
-
-**NOTE**: You will need to have a `163dev` account in order to develop and test on DEV/locally ([request an account](https://forms.office.com/pages/responsepage.aspx?id=lMFb0L-U1kquLh2w8uOPXgYMhvp43QhHmpexXCVOi0NUNzZSUjJZSjRDNldYWUpPWDVIWkdZMzZJMi4u)).
-
-### Dev Containers (recommended)
+### or Dev Containers (recommended)
 
 Here is how you can develop locally with Dev Containers.
 
@@ -50,6 +34,26 @@ Here is how you can develop locally with Dev Containers.
 `Ctrl + Shift + P` in VSCode and then `Dev Containers: Reopen in Container` (or alternatively if you never did open it `Dev Containers: Open Folder in Container...` and select the repo with `ssc-assistant`).
 
 > **NOTE:** [Sharing SSH Key with the container via `ssh-agent`](https://code.visualstudio.com/remote/advancedcontainers/sharing-git-credentials)
+
+### Development steps:
+
+Development steps are the same once you are inside the container (regardless if spun from Codespaces or locally from Dev Containers extension):
+
+`Ctrl + Shift + ~` to open 2 new terminals and simply start the services: 
+
+> NOTE: It is important that you firsts login via `az login  --use-device-code`
+
+API: 
+
+`cd app/api && flask run --debug --port=5001`
+
+Frontend: 
+
+`cd app/frontend && npm run dev`
+
+All the necessary `npm install` and `pip install` commands have already been run and you can simply reach the codespace url that points to the `8080` port.
+
+**NOTE**: You will need to have a `163dev` account in order to develop and test on DEV/locally ([request an account](https://forms.office.com/pages/responsepage.aspx?id=lMFb0L-U1kquLh2w8uOPXgYMhvp43QhHmpexXCVOi0NUNzZSUjJZSjRDNldYWUpPWDVIWkdZMzZJMi4u)).
 
 ### Manual setup (deprecated)
 
@@ -87,7 +91,21 @@ pip install -r az-functions/create-index/requirements.txt --upgrade
 
 #### Starting up projects
 
-For the `app/frontend` simply:
+For the `app/frontend` simply:`Ctrl + Shift + ~` to open 2 new terminals and simply start the services: 
+
+> NOTE: It is important that you firsts login via `az login  --use-device-code`
+
+API: 
+
+`cd app/api && flask run --debug --port=5001`
+
+Frontend: 
+
+`cd app/frontend && npm run dev`
+
+All the necessary `npm install` and `pip install` commands have already been run and you can simply reach the codespace url that points to the `8080` port.
+
+**NOTE**: You will need to have a `163dev` account in order to develop and test on DEV/locally ([request an account](https://forms.office.com/pages/responsepage.aspx?id=lMFb0L-U1kquLh2w8uOPXgYMhvp43QhHmpexXCVOi0NUNzZSUjJZSjRDNldYWUpPWDVIWkdZMzZJMi4u)).
 
 ```bash
 npm install
