@@ -10,7 +10,7 @@ from openai.types.completion_usage import CompletionUsage
 from utils.manage_message import load_messages
 from utils.models import (AzureCognitiveSearchDataSource,
                           AzureCognitiveSearchParameters, Citation, Completion,
-                          Context, Message, MessageRequest, Metadata, ToolInfo)
+                          Context, Message, MessageRequest, ToolInfo)
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
 from utils.tools import load_tools, call_tools
@@ -20,16 +20,13 @@ logger.setLevel(logging.DEBUG)
 
 __all__ = ["chat_with_data", "convert_chat_with_data_response", "build_completion_response"]
 
-#token_provider = get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default")
-
+token_provider = get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default")
 
 azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
-api_key                 = os.getenv("AZURE_OPENAI_API_KEY")
 api_version             = os.getenv("AZURE_OPENAI_VERSION", "2024-04-01-preview")
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
 index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "latest")
-#model_data: str         = os.getenv("AZURE_OPENAI_MODEL_DATA", "gpt-4-32k")
 
 # versions capabilities
 # https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
@@ -46,20 +43,21 @@ index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "latest")
 # https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
 # example of using functions with azure search instead of the data source 
 #   https://github.com/Azure-Samples/openai/blob/main/Basic_Samples/Functions/functions_with_azure_search.ipynb
+
 client = AzureOpenAI(
     api_version=api_version,
     azure_endpoint=str(azure_openai_uri),
-    api_key=api_key
+    azure_ad_token=token_provider(),
 )
 
 def _create_azure_cognitive_search_data_source() -> AzureCognitiveSearchDataSource:
     parameters = AzureCognitiveSearchParameters(
         endpoint=service_endpoint,
-        key=key,
-        indexName=index_name
+        indexName=index_name,
+        key=key
     )
     return AzureCognitiveSearchDataSource(
-        parameters=parameters
+        parameters=parameters,
     )
 
 def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optional['ToolInfo'], Union['ChatCompletion', 'Stream[ChatCompletionChunk]']]:
@@ -78,7 +76,6 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                     "type": data_source.type,
                     "parameters": {
                         "endpoint": data_source.parameters.endpoint,
-                        "key": data_source.parameters.key,
                         "index_name": data_source.parameters.indexName,
                         "in_scope": True,
                         "top_n_documents": message_request.top,
@@ -87,7 +84,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                         "fields_mapping": {},
                         "authentication": {
                             "type": "api_key",
-                            "key": key
+                            "key": data_source.parameters.key,
                         },
                         "embedding_dependency": {
                             "type": "deployment_name",
