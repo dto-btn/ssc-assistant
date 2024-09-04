@@ -12,3 +12,9 @@ In order to spin up this environement you currently need to at least have `secre
 touch secret.tfvars
 echo 'jwt_secret = "THE_SECRET"' > secret.tfvars
 ```
+
+### Rotating keys for needed secrets
+
+Search Service still has a code limitation that I need to provide dev with a secret so we need to rotate it when Dev leaves: 
+
+`az search admin-key renew --name "MySearchService" --resource-group "MyResourceGroup" --key-kind secondary` or via Azure Portal.
