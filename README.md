@@ -43,11 +43,13 @@ Here is how you can develop locally with Dev Containers.
 
 * VSCode with Dev Container extension
 * Docker engine installed on Linux (Can be via WSL 2.0 on Windows)
-  * **NOTE:** If you are using Docker Desktop you are **required** to have an Enterprise lisence.
+> **NOTE:** If you are using Docker Desktop you are **required** to have an Enterprise lisence.
 
 #### Steps
 
 `Ctrl + Shift + P` in VSCode and then `Dev Containers: Reopen in Container` (or alternatively if you never did open it `Dev Containers: Open Folder in Container...` and select the repo with `ssc-assistant`).
+
+> **NOTE:** [Sharing SSH Key with the container via `ssh-agent`](https://code.visualstudio.com/remote/advancedcontainers/sharing-git-credentials)
 
 ### Manual setup (deprecated)
 
