@@ -6,18 +6,6 @@ This api is exposed to the frontend and other teams (MySSC Plus).
 
 To run the application simply do `cd app/api` then `flask --debug run --port=5001`
 
-### .env
-
-Make sure you populate your `.env` file with the following values: 
-
-```.env
-AZURE_SEARCH_SERVICE_ENDPOINT=<domain>
-AZURE_SEARCH_ADMIN_KEY=<key>
-AZURE_OPENAI_ENDPOINT=<domain>
-AZURE_OPENAI_API_KEY=<key>
-JWT_SECRET=secret
-```
-
 ## generating new keys
 
 [Documentation on how to generate a new key](https://pyjwt.readthedocs.io/en/stable/)
