@@ -16,7 +16,7 @@ resource "azurerm_service_plan" "frontend" {
 }
 
 resource "azurerm_linux_web_app" "frontend" {
-  name                = "${replace(var.project_name, "_", "-")}"
+  name                = "${replace(var.project_name, "_", "-")}-dev"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_service_plan.frontend.location
   service_plan_id     = azurerm_service_plan.frontend.id
@@ -37,13 +37,13 @@ resource "azurerm_linux_web_app" "frontend" {
     app_command_line = "NODE_ENV=production node server.js"
 
     cors {
-      allowed_origins     = ["https://assistant.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"]
+      allowed_origins     = ["https://assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"]
       support_credentials = true
     }
   }
 
   app_settings = {
-    VITE_API_BACKEND         = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net/"
+    VITE_API_BACKEND         = "https://${replace(var.project_name, "_", "-")}-dev-api.azurewebsites.net/"
     VITE_API_KEY             = var.vite_api_key
     WEBSITE_RUN_FROM_PACKAGE = "1"
     MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
@@ -108,7 +108,7 @@ resource "azurerm_app_service_certificate" "frontend" {
 }
 
 resource "azurerm_app_service_custom_hostname_binding" "frontend" {
-  hostname            = "assistant.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"
+  hostname            = "assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"
   app_service_name    = azurerm_linux_web_app.frontend.name
   resource_group_name = azurerm_resource_group.main.name
 }
@@ -117,19 +117,4 @@ resource "azurerm_app_service_certificate_binding" "frontend" {
   hostname_binding_id = azurerm_app_service_custom_hostname_binding.frontend.id
   certificate_id      = azurerm_app_service_certificate.frontend.id
   ssl_state           = "SniEnabled"
-}
-
-resource "azurerm_monitor_diagnostic_setting" "frontend_diagnostics" {
-  name                       = "${replace(var.project_name, "_", "-")}-frontend-diag"
-  target_resource_id         = azurerm_linux_web_app.frontend.id
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
-
-  enabled_log {
-    category = "AppServiceConsoleLogs"
-  }
-
-  metric {
-    category = "AllMetrics"
-    enabled  = true 
-  }
 }

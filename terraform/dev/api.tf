@@ -10,7 +10,7 @@ resource "azurerm_service_plan" "api" {
 }
 
 resource "azurerm_linux_web_app" "api" {
-  name                = "${replace(var.project_name, "_", "-")}-api"
+  name                = "${replace(var.project_name, "_", "-")}-dev-api"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_service_plan.api.location
   service_plan_id     = azurerm_service_plan.api.id
@@ -22,7 +22,7 @@ resource "azurerm_linux_web_app" "api" {
 
   site_config {
     ftps_state = "FtpsOnly"
-    api_definition_url = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net/openapi.json"
+    api_definition_url = "https://${replace(var.project_name, "_", "-")}-dev-api.azurewebsites.net/openapi.json"
 
     application_stack {
       python_version = "3.11"
@@ -55,7 +55,7 @@ resource "azurerm_linux_web_app" "api" {
     AZURE_OPENAI_MODEL            = "gpt-4o"
     AZURE_SEARCH_INDEX_NAME       = "current"
     GEDS_API_TOKEN                = var.geds_api_token
-    SERVER_URL_PROD               = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net"
+    SERVER_URL_PROD               = "https://${replace(var.project_name, "_", "-")}-dev-api.azurewebsites.net"
     JWT_SECRET                    = var.jwt_secret
     DATABASE_ENDPOINT             = azurerm_storage_account.main.primary_table_endpoint
     AZURE_AD_CLIENT_ID            = var.aad_client_id
@@ -65,20 +65,5 @@ resource "azurerm_linux_web_app" "api" {
 
   sticky_settings { # settings that are the same regardless of deployment slot..
     app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DATABASE_ENDPOINT", "AZURE_SEARCH_INDEX_NAME" ]
-  }
-}
-
-resource "azurerm_monitor_diagnostic_setting" "api_diagnostics" {
-  name                       = "${replace(var.project_name, "_", "-")}-api-diag"
-  target_resource_id         = azurerm_linux_web_app.api.id
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
-
-  enabled_log {
-    category = "AppServiceConsoleLogs"
-  }
-
-  metric {
-    category = "AllMetrics"
-    enabled  = true 
   }
 }
