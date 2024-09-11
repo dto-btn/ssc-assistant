@@ -72,10 +72,5 @@ variable "aad_client_id" {
 
 variable "aad_auth_endpoint" {
     type = string
-    default = ""
-}
-
-variable "aad_auth_endpoint" {
-    type = string
     default = "https://sts.windows.net/d05bc194-94bf-4ad6-ae2e-1db0f2e38f5e/v2.0"
 }
