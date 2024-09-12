@@ -198,6 +198,10 @@ def book_reservation(booking_confirmation: BookingConfirmation):
 
     auth = (username, password)
 
+    # simple work around to uppercase the name
+    booking_confirmation.createdBy = booking_confirmation.createdBy.upper()
+    booking_confirmation.assignedTo = booking_confirmation.assignedTo.upper()
+
     payload = json.dumps(
                 booking_confirmation.__dict__,
                 default=lambda o: o.__dict__
@@ -207,8 +211,8 @@ def book_reservation(booking_confirmation: BookingConfirmation):
         'Accept': '*/*',
         'Content-Type': 'application/json',
     }
-
-    response = requests.post(url, headers=headers, json=payload, auth=auth)  # type: ignore
+    logger.debug(payload)
+    response = requests.post(url, headers=headers, data=payload, auth=auth)  # type: ignore
     if response.status_code == 201:
         return response.json()
     else:

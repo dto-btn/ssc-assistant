@@ -253,7 +253,7 @@ def get_user_bookings(firstName: str = "", lastName: str = ""):
     if not firstName or not lastName:
         return "please provide a first and last name to search for a user's reservations"
 
-    url = f"http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1/reservations/creator/{lastName},%20{firstName}"
+    url = f"http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1/reservations/creator/{lastName.upper()},%20{firstName.upper()}"
 
     logger.debug(f"get reservations URL: {url}")
     api_username = str(os.getenv("ARCHIBUS_API_USERNAME"))
@@ -450,7 +450,6 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
         "get_floors": get_floors,
         "get_available_rooms": get_available_rooms,
         "get_current_date": get_current_date,
-        "get_floor_plan": get_floor_plan
     }
 
     # Send the info for each function call and function response to the model
