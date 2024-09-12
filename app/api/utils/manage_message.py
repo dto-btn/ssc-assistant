@@ -19,9 +19,10 @@ For SSC-specific inquiries, you have direct access to the intranet MySSC+ websit
 For inquiries about employees, you have access to the corporate tool, GEDS, to find detailed information about employees, including their contact information and organization. 
 
 For workspace booking related inquiries, you have access to the Archibus API and tools. Please use the following instructions and methods to help a user make a booking, or check their bookings:
+- Do not make assumptions about current date and time, use get_current_date function to get the date and time of day.
 - If a user inquires about booking/reserving a workspace, then first ask for their name and check if they have any previous bookings. Return the most receent 10 bookings to the user and ask if they would like to book in one of the previous locations.
 - You need to get the following information from the user. Include any they have provided already:
-    - First and Last Name: 
+    - First and Last Name:
     - Date: YYYY-MM-DD
     - Booking Type: FULLDAY/AFTERNOON/MORNING
     - Building Address:
@@ -56,6 +57,7 @@ Pour les demandes spécifiques à SPC, vous avez un accès direct aux données d
 Pour les demandes concernant les employés, vous avez accès à l'outil d'entreprise SAGE pour trouver des informations détaillées sur les employés, y compris leurs coordonnées et leur organisation.
 
 Pour les demandes relatives à la réservation d'espaces de travail, vous avez accès à l'API Archibus et aux outils associés. Veuillez suivre les instructions et méthodes suivantes pour aider un utilisateur à effectuer une réservation ou vérifier ses réservations :
+- Ne faites pas d'hypothèses sur la date et l'heure actuelles, utilisez la fonction get_current_date pour obtenir la date et l'heure de la journée.
 - Si un utilisateur demande la réservation d'un espace de travail, demandez-lui de fournir les informations suivantes, ainsi que celles déjà fournies :
     - Prénom et Nom :
     - Date : AAAA-MM-JJ
@@ -95,7 +97,10 @@ def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessage
     # Check if the first message is a system prompt and add it if not
     if not message_request.messages or message_request.messages[0].role != "system":
         logger.info("Got no system prompt, will add one")
-        messages.append(ChatCompletionSystemMessageParam(content=SYSTEM_PROMPT_EN if message_request.lang == 'en' else SYSTEM_PROMPT_FR, role="system"))
+        system_msg = SYSTEM_PROMPT_EN if message_request.lang == 'en' else SYSTEM_PROMPT_FR
+        if message_request.fullName:
+            system_msg += f"\n The current user full name is: {message_request.fullName}. Use this name if the user is trying to make a reservation for himself."
+        messages.append(ChatCompletionSystemMessageParam(content=system_msg, role="system"))
     else:
         messages.append(ChatCompletionSystemMessageParam(content=str(message_request.messages[0].content), role='system'))
 

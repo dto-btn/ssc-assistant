@@ -57,6 +57,7 @@ class MessageRequest:
     max: int = field(default=10)
     tools: List[str] = field(default_factory=lambda: ["corporate", "geds", "archibus"])
     uuid: str = field(default='')
+    fullName: str = field(default='')
 
 class QueryType(Enum):
     VECTOR_SIMPLE_HYBRID = "vectorSimpleHybrid"

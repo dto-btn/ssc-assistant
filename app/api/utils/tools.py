@@ -432,7 +432,7 @@ def get_floor_plan(buildingId: str, floorId: str):
         logger.error(f"Error occurred during the GET request to retrieve floors: {e}")
         return None
     
-def get_current_day() -> str:
+def get_current_date() -> str:
     current_date_time = datetime.now()
     return "Formatted date and time:" + current_date_time.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -449,7 +449,7 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
         "get_user_bookings": get_user_bookings,
         "get_floors": get_floors,
         "get_available_rooms": get_available_rooms,
-        "get_current_day": get_current_day,
+        "get_current_date": get_current_date,
         "get_floor_plan": get_floor_plan
     }
 

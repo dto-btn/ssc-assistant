@@ -166,7 +166,8 @@ const MainScreen = ({userData}: MainScreenProps) => {
             tools: (Object.keys(enabledTools)).filter((key) => enabledTools[key]),
             uuid: uuid,
             quotedText: messagedQuoted,
-            model: selectedModel
+            model: selectedModel,
+            fullName: userData.graphData['givenName'] + ' ' + userData.graphData['surname']
         };
 
         //update current chat window with the message sent..
