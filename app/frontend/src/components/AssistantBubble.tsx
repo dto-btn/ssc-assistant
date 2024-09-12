@@ -50,7 +50,6 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
   const [bookingDetails, setBookingDetails] = useState<BookingConfirmation | undefined>(undefined);
   const [confirmButtonDisabled, setConfirmButtonDisabled] = useState(false);
   const [isFloorPlanExpanded, setFloorPlanExpanded] = useState(false);
-  const floorPlansBasePath = "https://sscassistantdevstorage.blob.core.windows.net/archibus-floor-plans/";
   const isMostRecent = index === total - 1;
   const toolsUsed = toolsInfo && toolsInfo.tool_type.length > 0;
 
@@ -123,10 +122,12 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
       if (toolsInfo.payload?.hasOwnProperty("profiles") && toolsInfo.payload.profiles !== null) {
         const processedProfiles = processProfiles(toolsInfo.payload.profiles);
         setProfiles(processedProfiles);
-      } else if (toolsInfo.payload?.hasOwnProperty("floorPlan")) {
+      }
+      if (toolsInfo.payload?.hasOwnProperty("floorPlan")) {
         const floorPlanFile = toolsInfo.payload.floorPlan;
-        setFloorPlanFilename(floorPlansBasePath + floorPlanFile)
-      } else if (toolsInfo.payload?.hasOwnProperty("bookingDetails")) {
+        setFloorPlanFilename(floorPlanFile)
+      }
+      if (toolsInfo.payload?.hasOwnProperty("bookingDetails")) {
         setBookingDetails(toolsInfo.payload.bookingDetails);
       }
     }

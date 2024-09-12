@@ -9,6 +9,7 @@ from azure.storage.blob import BlobServiceClient
 import requests
 from openai import AzureOpenAI
 from openai.types.chat import (ChatCompletionMessageParam)
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -284,7 +285,7 @@ def get_user_bookings(firstName: str = "", lastName: str = ""):
     
 
 def get_floors(buildingId: str):
-    url = f"http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1/buildings/{buildingId}/floors/"
+    url = f"http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1/buildings/{buildingId}/floors"
 
     api_username = str(os.getenv("ARCHIBUS_API_USERNAME"))
     api_password = str(os.getenv("ARCHIBUS_API_PASSWORD"))
@@ -355,7 +356,7 @@ def get_available_rooms(buildingId: str, floorId: str, bookingDate: str):
         logger.error(f"Error occurred during the GET request to retrieve available rooms: {e}")
         return f"An error occurred while trying to fetch rooms for the given floor {floorId} and building {buildingId}."
     
-def get_floor_plan(buildingId: str, floorId: str):
+def get_floor_plan_OLD(buildingId: str, floorId: str):
     url = f"http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1/buildings/{buildingId}/floors/"
 
     api_username = str(os.getenv("ARCHIBUS_API_USERNAME"))
@@ -391,7 +392,49 @@ def get_floor_plan(buildingId: str, floorId: str):
 
     except requests.RequestException as e:
         logger.error(f"Error occurred during the GET request to retrieve floors: {e}")
-        return None    
+        return None
+
+def get_floor_plan(buildingId: str, floorId: str):
+    url = f"http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1/buildings/{buildingId}/floors"
+
+    api_username = str(os.getenv("ARCHIBUS_API_USERNAME"))
+    api_password = str(os.getenv("ARCHIBUS_API_PASSWORD"))
+
+    auth = (api_username, api_password)
+
+    headers = {
+        'Accept': 'application/json'
+    }
+
+    try:
+        response = requests.get(url, headers=headers, auth=auth)
+        logger.debug(url)
+        if response.status_code == 200:
+            response_json = json.loads(response.text)
+            target_floor_blob_name = None
+
+            for floor in response_json:
+                if floor.get('flId') == floorId:
+                    target_floor_blob_name = floor.get('floorPlanURL')
+                    break  
+            
+            if target_floor_blob_name:
+                return target_floor_blob_name
+            else:
+                logger.error(f"Floor plan URL not found for floorId: {floorId}")
+                return None
+
+        else:
+            logger.error(f"Unable to get any available floors info for the given building. Status code: {response.status_code}")
+            return None
+
+    except requests.RequestException as e:
+        logger.error(f"Error occurred during the GET request to retrieve floors: {e}")
+        return None
+    
+def get_current_day() -> str:
+    current_date_time = datetime.now()
+    return "Formatted date and time:" + current_date_time.strftime("%Y-%m-%d %H:%M:%S")
 
 def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[ChatCompletionMessageParam]:
     """
@@ -405,7 +448,9 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
         "verify_booking_details": verify_booking_details,
         "get_user_bookings": get_user_bookings,
         "get_floors": get_floors,
-        "get_available_rooms": get_available_rooms
+        "get_available_rooms": get_available_rooms,
+        "get_current_day": get_current_day,
+        "get_floor_plan": get_floor_plan
     }
 
     # Send the info for each function call and function response to the model
