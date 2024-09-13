@@ -121,6 +121,7 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
             multiline={true}
             minRows={3}
             maxRows={3}
+            label={t("ask.question")}
             sx={{
               padding: '10px 20px',
               '& .MuiInputBase-input::placeholder': {

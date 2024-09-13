@@ -33,7 +33,7 @@ function stringToColor(string: string) {
   for (i = 0; i < 3; i += 1) {
     let value = (hash >> (i * 8)) & 0xff;
     // Adjust value to ensure high contrast
-    value = value > threshold ? 100 : 0;
+    value = value > threshold ? 0 : 128;
     color += `00${value.toString(16)}`.slice(-2);
   }
   /* eslint-enable no-bitwise */
