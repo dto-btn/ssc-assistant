@@ -1,9 +1,12 @@
 name: Code Scanning
 
 on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
   schedule:
-    - cron: '0 10 * * *'
-  workflow_dispatch:  
+    - cron: '15 13 * * 5'
 
 permissions:
   contents: read
