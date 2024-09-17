@@ -62,7 +62,6 @@ jobs:
       uses: azure/webapps-deploy@v3
       with:
         app-name: ${{ github.ref == 'refs/heads/main' && 'ssc-assistant-api' || 'ssc-assistant-dev-api'}}
-        slot-name: 'production'
         # az webapp deployment list-publishing-profiles --name ssc-assistant-dev-api --resource-group YourResourceGroupName --xml (save as secret)
         publish-profile: ${{ secrets.API_PUBLISH_PROFILE }}
         package: '.'
