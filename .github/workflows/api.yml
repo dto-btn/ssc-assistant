@@ -10,6 +10,10 @@ permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -42,11 +46,10 @@ jobs:
     #- name: Run tests
     #     TODO
 
-  deploy-dev:
-    if: github.event_name == 'pull_request'
+  deploy:
+    if: github.ref == 'refs/heads/main' || github.ref == '134-connect-assistant-to-archibus-api'
     needs: build
-    concurrency: dev
-    environment: dev
+    environment: ${{ github.ref == 'refs/heads/main' && 'pilot-prod' || 'dev'}}
     runs-on: ubuntu-latest
     steps:
     - name: Log in with Azure
@@ -57,31 +60,9 @@ jobs:
     - name: 'Deploy to Azure Web App'
       uses: azure/webapps-deploy@v3
       with:
-        app-name: 'ssc-assistant-dev-api'
+        app-name: ${{ github.ref == 'refs/heads/main' && 'ssc-assistant-api' || 'ssc-assistant-dev-api'}}
         slot-name: 'production'
         # az webapp deployment list-publishing-profiles --name ssc-assistant-dev-api --resource-group YourResourceGroupName --xml (save as secret)
         publish-profile: ${{ secrets.API_PUBLISH_PROFILE }}
         package: '.'
         startup-command: ''
-
-  deploy-pilot-prod:
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    concurrency: pilot-prod
-    environment: pilot-prod
-    needs: build
-    steps:
-      - name: Log in with Azure
-        uses: azure/login@v1
-        with:
-          creds: '${{ secrets.AZURE_CREDENTIALS }}'
-
-      - name: 'Deploy to Azure Web App'
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: 'ssc-assistant-api'
-          slot-name: 'production'
-          # az webapp deployment list-publishing-profiles --name ssc-assistant-api --resource-group YourResourceGroupName --xml (save as secret)
-          publish-profile: ${{ secrets.API_PUBLISH_PROFILE }}
-          package: '.'
-          startup-command: ''
