@@ -3,15 +3,15 @@
 *****************************************************/
 resource "azurerm_service_plan" "api" {
   name                = "${var.name_prefix}${var.project_name}-api-plan"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.dev.name
+  location            = azurerm_resource_group.dev.location
   sku_name            = "S1"
   os_type             = "Linux"
 }
 
 resource "azurerm_linux_web_app" "api" {
   name                = "${replace(var.project_name, "_", "-")}-api"
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = azurerm_resource_group.dev.name
   location            = azurerm_service_plan.api.location
   service_plan_id     = azurerm_service_plan.api.id
 
@@ -57,7 +57,7 @@ resource "azurerm_linux_web_app" "api" {
     GEDS_API_TOKEN                = var.geds_api_token
     SERVER_URL_PROD               = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net"
     JWT_SECRET                    = var.jwt_secret
-    DATABASE_ENDPOINT             = azurerm_storage_account.main.primary_table_endpoint
+    DATABASE_ENDPOINT             = azurerm_storage_account.dev.primary_table_endpoint
     AZURE_AD_CLIENT_ID            = var.aad_client_id
     AZURE_AD_TENANT_ID            = data.azurerm_client_config.current.tenant_id
     #PORT = 5001
@@ -65,20 +65,5 @@ resource "azurerm_linux_web_app" "api" {
 
   sticky_settings { # settings that are the same regardless of deployment slot..
     app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DATABASE_ENDPOINT", "AZURE_SEARCH_INDEX_NAME" ]
-  }
-}
-
-resource "azurerm_monitor_diagnostic_setting" "api_diagnostics" {
-  name                       = "${replace(var.project_name, "_", "-")}-api-diag"
-  target_resource_id         = azurerm_linux_web_app.api.id
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
-
-  enabled_log {
-    category = "AppServiceConsoleLogs"
-  }
-
-  metric {
-    category = "AllMetrics"
-    enabled  = true 
   }
 }

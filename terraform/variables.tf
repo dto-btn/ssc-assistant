@@ -35,12 +35,6 @@ variable "jwt_secret" {
     description = "the jwt secret that will be used to decrypt the access key from the API"
 }
 
-variable "jwt_secret_dev" {
-    type = string
-    sensitive = true
-    description = "the jwt secret that will be used to decrypt the access key from the DEV API"
-}
-
 variable "pfx_secret" {
     type = string
     sensitive = true
@@ -72,12 +66,6 @@ variable "enable_auth" {
 variable "vite_api_key" {
     type = string
     description = "the jwt token value used to communicate from the frontend to the ssc assistant api"
-    sensitive = true
-}
-
-variable "vite_api_key_dev" {
-    type = string
-    description = "the jwt token value used to communicate from the frontend to the ssc assistant api (for dev)"
     sensitive = true
 }
 
