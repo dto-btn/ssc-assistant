@@ -27,14 +27,11 @@ resource "azurerm_storage_table" "flagged" {
 resource "azurerm_storage_container" "archibus" {
   name                 = "archibus-floor-plans"
   storage_account_name = azurerm_storage_account.dev.name
+  container_access_type = "blob"
 }
 
 data "azuread_user" "dev1" {
   user_principal_name = "guillaume.turcotte2@ssc-spc.gc.ca"
-}
-
-data "azuread_user" "dev2" {
-  user_principal_name = "kyle.aitken@ssc-spc.gc.ca"
 }
 
 data "azuread_user" "akash" {
@@ -44,7 +41,6 @@ data "azuread_user" "akash" {
 locals {
   all_dev_user_object_ids = flatten([
     data.azuread_user.dev1[*].object_id,
-    data.azuread_user.dev2[*].object_id,
   ])
 }
 

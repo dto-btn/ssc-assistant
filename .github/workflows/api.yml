@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 134-connect-assistant-to-archibus-api
   pull_request:
 
 permissions:

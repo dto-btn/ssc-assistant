@@ -74,3 +74,13 @@ variable "aad_auth_endpoint" {
     type = string
     default = "https://sts.windows.net/d05bc194-94bf-4ad6-ae2e-1db0f2e38f5e/v2.0"
 }
+
+variable "archibus_api_user" {
+    type = string
+    default = "apiuser"
+}
+
+variable "archibus_api_password" {
+    type = string
+    sensitive = true
+}
