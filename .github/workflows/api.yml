@@ -48,7 +48,7 @@ jobs:
     #     TODO
 
   deploy:
-    if: github.ref == 'refs/heads/main' || github.ref == '134-connect-assistant-to-archibus-api'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/134-connect-assistant-to-archibus-api'
     needs: build
     environment: ${{ github.ref == 'refs/heads/main' && 'pilot-prod' || 'dev'}}
     runs-on: ubuntu-latest
