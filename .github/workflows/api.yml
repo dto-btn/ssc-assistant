@@ -74,7 +74,7 @@ jobs:
         creds: '${{ secrets.AZURE_CREDENTIALS }}'
 
     - name: 'Deploy to Azure Web App'
-      uses: azure/webapps-deploy@v3
+      uses: azure/webapps-deploy@v3.0.1
       with:
         app-name: ${{ github.ref == 'refs/heads/main' && 'ssc-assistant-api' || 'ssc-assistant-dev-api'}}
         # az webapp deployment list-publishing-profiles --name ssc-assistant-dev-api --resource-group YourResourceGroupName --xml (save as secret)
