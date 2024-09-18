@@ -60,6 +60,8 @@ resource "azurerm_linux_web_app" "api" {
     DATABASE_ENDPOINT             = azurerm_storage_account.main.primary_table_endpoint
     AZURE_AD_CLIENT_ID            = var.aad_client_id
     AZURE_AD_TENANT_ID            = data.azurerm_client_config.current.tenant_id
+    WEBSITE_WEBDEPLOY_USE_SCM     = true
+    WEBSITE_RUN_FROM_PACKAGE      = "1"
     #PORT = 5001
   }
 
