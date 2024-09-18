@@ -50,7 +50,7 @@
           "properties": {
               "buildingId": {
                   "type": "string",
-                  "description": "The unique identifier of the building where the booking takes place. Example: AB-BAS4. DO NOTT USE THE STREET NUMBER OR ADDRESS."
+                  "description": "The unique identifier of the building where the booking takes place. Example: AB-BAS4. DO NOT USE THE STREET NUMBER OR ADDRESS."
               },
               "floorId": {
                 "type": "string",

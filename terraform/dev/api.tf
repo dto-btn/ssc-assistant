@@ -62,8 +62,9 @@ resource "azurerm_linux_web_app" "api" {
     AZURE_AD_TENANT_ID            = data.azurerm_client_config.current.tenant_id
     ARCHIBUS_API_USERNAME         = var.archibus_api_user
     ARCHIBUS_API_PASSWORD         = var.archibus_api_password
-    #WEBSITE_WEBDEPLOY_USE_SCM     = true
-    PORT = 5001
+    WEBSITE_WEBDEPLOY_USE_SCM     = true
+    WEBSITE_RUN_FROM_PACKAGE      = "1"
+    #PORT = 5001
   }
 
   sticky_settings { # settings that are the same regardless of deployment slot..
