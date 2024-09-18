@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 134-connect-assistant-to-archibus-api
   pull_request:
 
 permissions:
@@ -56,7 +57,7 @@ jobs:
         path: release.zip
 
   deploy:  # TEMPORARY DEPLOY ONLY ON ARCHIBUS BRANCH OR MAIN
-    if: github.ref == 'refs/heads/main' || github.ref == '134-connect-assistant-to-archibus-api'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/134-connect-assistant-to-archibus-api'
     environment: ${{ github.ref == 'refs/heads/main' && 'pilot-prod' || 'dev'}}
     runs-on: ubuntu-latest
     needs: build
@@ -78,7 +79,6 @@ jobs:
       uses: azure/webapps-deploy@v3
       with:
         app-name: ${{ github.ref == 'refs/heads/main' && 'ssc-assistant' || 'ssc-assistant-dev'}}
-        slot-name: 'production'
         # az webapp deployment list-publishing-profiles --name ssc-assistant-api --resource-group YourResourceGroupName --xml (save as secret)
         publish-profile: ${{ secrets.FRONTEND_PUBLISH_PROFILE }}
         # very important: https://learn.microsoft.com/en-us/azure/app-service/deploy-run-package#enable-running-from-package
