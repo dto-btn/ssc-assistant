@@ -31,6 +31,33 @@ data "azuread_user" "po-af" {
   user_principal_name = "alain.forcier@ssc-spc.gc.ca"
 }
 
+data "azuread_user" "dev-harsha" {
+  user_principal_name = "harsha.kakumanu@ssc-spc.gc.ca"
+}
+
 data "azuread_service_principal" "terraform" {
   display_name = "Terraform-CIO-Automation-SP"
+}
+
+#######################################################
+#                     Sub Readers                     #
+#######################################################
+resource "azurerm_role_assignment" "sub-read-1" {
+  scope                = azurerm_resource_group.main.id
+  role_definition_name = "Reader"
+  principal_id         = data.azuread_user.dev-harsha.object_id
+}
+
+#######################################################
+#             Cognitive Search Contributor            #
+#######################################################
+
+data "azurerm_resource_group" "aoi" {
+  name = var.openai_rg
+}
+
+resource "azurerm_role_assignment" "cogn-search-contri-1" {
+  scope                = data.azurerm_resource_group.aoi.id
+  role_definition_name = "Cognitive Services User"
+  principal_id         = data.azuread_user.dev-harsha.object_id
 }

@@ -116,15 +116,18 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
             fullWidth
             type="text"
             id="ask-question"
-            placeholder={t("ask.question")}
             onKeyDown={onEnterPress}
             multiline={true}
             minRows={3}
             maxRows={3}
+            label={t("ask.question")}
             sx={{
               padding: '10px 20px',
               '& .MuiInputBase-input::placeholder': {
                 opacity: 0.7, 
+              },
+              '.MuiFormLabel-root': {
+                padding:'5px 0px 0px 20px',
               },
             }}
             variant="standard"
