@@ -77,3 +77,19 @@ and then `cat ServerCertificate.crt <(echo) Intermediate.crt <(echo) Root.crt > 
 Depending on how you setup the security on the application you might need to setup the Web Redirect URI(s) or Single Page Application (SPA) Redirect URI(s) *or both*:
 
 ![App Registration example configuration](../../docs/appregistration.png)
+
+##### Modifying App Reg
+
+In Powershell: 
+
+```powershell
+Connect-AzureAD
+$sp = Get-AzureADServicePrincipal -Filter "displayName eq 'SSC-Assistant-Dev'"
+$assistant_dev_grp = Get-AzureADGroup -SearchString "SEC SSC-Assistant-Dev Enterprise App Users"
+$appId = $sp.AppId
+$app = Get-AzureADApplication -Filter "AppId eq '$appId'"
+$newRedirectUri = "http://localhost:8080/"
+$appReplyUrls = $app.ReplyUrls
+$appReplyUrls.Add($newRedirectUri)
+Set-AzureADApplication -ObjectId $app.ObjectId -ReplyUrls $appReplyUrls
+```
