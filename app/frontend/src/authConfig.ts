@@ -15,7 +15,6 @@ export const msalConfig = {
     auth: {
         clientId: import.meta.env.VITE_AZURE_AD_CLIENT_ID as string,
         authority: `https://login.microsoftonline.com/${import.meta.env.VITE_AZURE_AD_TENANT_ID}`,
-        knownAuthorities: [`${import.meta.env.VITE_AZURE_AD_TENANT_ID}.b2clogin.com`],
         postLogoutRedirectUri: "/"
     },
     cache: {
