@@ -47,7 +47,7 @@ index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "latest")
 client = AzureOpenAI(
     api_version=api_version,
     azure_endpoint=str(azure_openai_uri),
-    azure_ad_token=token_provider(),
+    azure_ad_token_provider=token_provider,
 )
 
 def _create_azure_cognitive_search_data_source() -> AzureCognitiveSearchDataSource:
