@@ -60,6 +60,10 @@ resource "azurerm_linux_web_app" "api" {
     DATABASE_ENDPOINT             = azurerm_storage_account.dev.primary_table_endpoint
     AZURE_AD_CLIENT_ID            = var.aad_client_id
     AZURE_AD_TENANT_ID            = data.azurerm_client_config.current.tenant_id
+    ARCHIBUS_API_USERNAME         = var.archibus_api_user
+    ARCHIBUS_API_PASSWORD         = var.archibus_api_password
+    WEBSITE_WEBDEPLOY_USE_SCM     = true
+    WEBSITE_RUN_FROM_PACKAGE      = "1"
     #PORT = 5001
   }
 
