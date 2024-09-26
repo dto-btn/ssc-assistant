@@ -1,3 +1,4 @@
+import importlib.util
 import json
 import logging
 import os
@@ -8,46 +9,51 @@ from typing import List
 import requests
 from openai.types.chat import (ChatCompletionMessageParam)
 
+__all__ = ["load_tools", "call_tools"]
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-_allowed_tools_str: str = os.getenv("ALLOWED_TOOLS", "intranet")
-_allowed_tools          = _allowed_tools_str.split(",")
+_allowed_tools_str: str = os.getenv("ALLOWED_TOOLS", "intranet, geds")
+_allowed_tools          = [tool.strip() for tool in _allowed_tools_str.split(",")]
 
-# Always present tool (mapped outside via data source, else move inside a module if this method changes)
-_intranet_json = '''
-{
-    "type": "function",
-    "tool_type": "intranet",
-    "function": {
-      "name": "intranet_question",
-      "description": "Answers questions that are related to Shared Services Canada (SSC) / Services Partagés Canada (SPC) or any corporate questions related to the intranet website (MySSC+/MonSPC+) or anything that could be found on it. It could be accomodations, finance, workplace tools, HR information, anything an employee could need as information in a day to day job.",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "query": {
-            "type": "string",
-            "description": "The question that relates to anything corporate or SSC"
-          }
-        },
-        "required": ["query"]
-      }
-    }
-  }
-'''
+_functions_with_metadata = None  # Global variable to store discovered functions
 
-_allowed_tools.append(json.loads(_intranet_json))
+def discover_functions_with_metadata(base_path):
+    functions_with_metadata = {}
 
-# Get the directory of the current file (tools.py)
-_current_dir = Path(__file__).parent
-# Construct the path to 'tools.json' within the same directory
-_tools_path = _current_dir / 'tools.json'
-# Open the file using the absolute path
-with _tools_path.open('r') as f:
-    _all_tools = json.load(f)
+    for root, _, files in os.walk(base_path):
+        for file in files:
+            if file.endswith("_functions.py"):
+                module_path = Path(root) / file
+                module_name = f"{root.replace(os.sep, '.')}.{file[:-3]}"
 
-def load_tools(toolsUsed: List[str]):
-    tools = [tool for tool in _all_tools if 'tool_type' in tool and tool['tool_type'] in toolsUsed]
+                spec = importlib.util.spec_from_file_location(module_name, module_path)
+                if spec is not None and spec.loader is not None:
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    logger.debug(module)
+                    for attr_name in dir(module):
+                        attr = getattr(module, attr_name)
+                        if callable(attr) and hasattr(attr, "_tool_metadata"):
+                            metadata = attr._tool_metadata
+                            functions_with_metadata[metadata["function"]["name"]] = metadata
+    return functions_with_metadata
+
+def get_functions_with_metadata():
+    global _functions_with_metadata
+    if _functions_with_metadata is None:
+        # Discover functions only once
+        base_path = "tools"
+        _functions_with_metadata = discover_functions_with_metadata(base_path)
+    return _functions_with_metadata
+
+def load_tools(tools_requested: List[str]) -> List[ChatCompletionMessageParam]:
+    tools = []
+    for _, value in get_functions_with_metadata().items():
+        # Ensure BOTH function type is in requested types and ALLOWED types by the system.
+        if value['tool_type'] in tools_requested and value['tool_type'] in _allowed_tools:
+            tools.append(value)
     return tools
 
 def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[ChatCompletionMessageParam]:
@@ -56,8 +62,7 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
     """
     # Define the available functions
     available_functions = {
-        "get_employee_information": get_employee_information,
-        "get_employee_by_phone_number": get_employee_by_phone_number
+        
     }
 
     # Send the info for each function call and function response to the model
@@ -72,7 +77,7 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
 
             # Call the function with the prepared arguments
             function_response = function_to_call(**prepared_args)
-            
+
             messages.append({
                 "role": "assistant",
                 "content": None,
@@ -83,7 +88,7 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
             })
 
             # Convert the function response to a string
-            response_as_string = "\n".join(function_response) if function_response is list else str(function_response)
+            response_as_string = "\n".join(function_response) if function_response is list else str(function_response) # type: ignore
 
             # Add the function response to the messages
             messages.append({

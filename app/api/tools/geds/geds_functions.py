@@ -3,9 +3,12 @@ import os
 import json
 import logging
 
-from app.api.utils.decorators import tool_metadata
+from utils.decorators import tool_metadata
 
 __all__ = ["get_employee_information"]
+
+_api_endpoint: str = os.getenv("GEDS_API", "https://api.geds-sage.gc.ca/gapi/v2")
+_api_token = os.getenv("GEDS_API_TOKEN")
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -48,14 +51,13 @@ def get_employee_information(employee_lastname: str = "", employee_firstname: st
         search_value = employee_lastname
 
     url = (
-        "https://api.geds-sage.gc.ca/gapi/v2/employees?"
+        _api_endpoint + "/employees?"
         f"searchValue={search_value}&searchField=9&searchCriterion=2&searchScope=sub&searchFilter=2&maxEntries=5&pageNumber=1&returnOrganizationInformation=yes"
     )
 
     payload = {}
-    api_token = os.getenv("GEDS_API_TOKEN")
     headers = {
-        'X-3scale-proxy-secret-token': api_token,
+        'X-3scale-proxy-secret-token': _api_token,
         'Accept': 'application/json'
     }
 
@@ -86,14 +88,13 @@ def _get_employee_by_phone_number(employee_phone_number: str):
         employee_phone_number = employee_phone_number[:3] + "-" + employee_phone_number[3:6] + "-" + employee_phone_number[6:]
 
     url = (
-        "https://api.geds-sage.gc.ca/gapi/v2/employees?"
+        _api_endpoint + "/employees?"
         f"searchValue={employee_phone_number}&searchField=9&searchCriterion=2&searchScope=sub&searchFilter=2&maxEntries=5&pageNumber=1&returnOrganizationInformation=yes"
     )
 
     payload = {}
-    api_token = os.getenv("GEDS_API_TOKEN")
     headers = {
-        'X-3scale-proxy-secret-token': api_token,
+        'X-3scale-proxy-secret-token': _api_token,
         'Accept': 'application/json'
     }
 

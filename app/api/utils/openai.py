@@ -7,13 +7,12 @@ from openai import AzureOpenAI, Stream
 from openai.types.chat import (ChatCompletion, ChatCompletionChunk,
                                ChatCompletionMessageParam)
 from openai.types.completion_usage import CompletionUsage
+from tools.tools import load_tools, call_tools
 from utils.manage_message import load_messages
 from utils.models import (AzureCognitiveSearchDataSource,
                           AzureCognitiveSearchParameters, Citation, Completion,
                           Context, Message, MessageRequest, ToolInfo)
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
-
-from app.api.tools.tools import load_tools, call_tools
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -103,6 +102,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
     if message_request.tools:
         logger.debug(f"Using Tools: {message_request.tools}")
         tools = load_tools(message_request.tools)
+        logger.debug(tools)
         """
         1a. Invoke tools completion, 
         """
@@ -113,10 +113,10 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
             completion_tools = client.chat.completions.create(
                     messages=messages,
                     model=model,
-                    tools=tools,
+                    tools=tools, # type: ignore
                     tool_choice='auto',
                     stream=False
-                )
+                ) # type: ignore
 
             if completion_tools.choices[0].message.tool_calls:
                 tools_used = True 
