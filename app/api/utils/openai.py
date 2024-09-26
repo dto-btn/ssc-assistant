@@ -13,7 +13,7 @@ from utils.models import (AzureCognitiveSearchDataSource,
                           Context, Message, MessageRequest, ToolInfo)
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
-from utils.tools import load_tools, call_tools
+from app.api.tools.tools import load_tools, call_tools
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
