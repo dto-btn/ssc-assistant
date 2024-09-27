@@ -1,5 +1,5 @@
 /****************************************************
-*                 Azure App frontend                *
+*                 Azure App Dev API                *
 *****************************************************/
 resource "azurerm_service_plan" "api" {
   name                = "${var.name_prefix}${var.project_name}-api-plan"
