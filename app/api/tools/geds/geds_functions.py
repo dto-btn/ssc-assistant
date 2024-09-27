@@ -5,10 +5,12 @@ import logging
 
 from utils.decorators import tool_metadata
 
-__all__ = ["get_employee_information"]
+__all__ = ["get_employee_information", "extract_geds_profiles"]
 
 _api_endpoint: str = os.getenv("GEDS_API", "https://api.geds-sage.gc.ca/gapi/v2")
 _api_token = os.getenv("GEDS_API_TOKEN")
+
+_domain = os.getenv("GEDS_DOMAIN", "https://geds-sage.gc.ca")
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -106,3 +108,44 @@ def _get_employee_by_phone_number(employee_phone_number: str):
     else:
         logger.debug("Unable to get any info.", response)
         return "Didn't find any matching employee with that phone number."
+    
+def _extract_last_description(organization_info):
+    # The JSON response has nested [organizationInformation][organization]
+    # This traverses through the nested objects to get the last description
+    while "organizationInformation" in organization_info:
+        organization_info = organization_info["organizationInformation"]["organization"]
+    
+    return organization_info["description"]
+
+def extract_geds_profiles(content):
+    try:
+        start_index = content.find("[") # trim the text preceeding the results
+        if start_index == -1: 
+            return []
+        else:    
+            content = content[start_index:]
+
+        data = json.loads(content)
+        profiles = []
+
+        for result in data:
+            profile = dict()
+
+            geds_profile_string = result["id"]
+            profile["url"] = f"{_domain}/en/GEDS?pgid=015&dn={geds_profile_string}"
+            profile["name"] = result["givenName"] + " " + result["surname"]
+            profile["email"] = result["contactInformation"]["email"]
+
+            description = _extract_last_description(result.get("organizationInformation", {}).get("organization", {}))
+            profile["organization_en"] = description.get("en", "")
+            profile["organization_fr"] = description.get("fr", "")
+
+            if "phoneNumber" in result["contactInformation"]:
+                profile["phone"] = result["contactInformation"]["phoneNumber"]
+
+            profiles.append(profile)
+        
+        return profiles
+
+    except Exception as e:
+        logger.debug(f"error: {e}")

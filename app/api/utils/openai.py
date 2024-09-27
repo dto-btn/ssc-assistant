@@ -7,6 +7,7 @@ from openai import AzureOpenAI, Stream
 from openai.types.chat import (ChatCompletion, ChatCompletionChunk,
                                ChatCompletionMessageParam)
 from openai.types.completion_usage import CompletionUsage
+from tools.geds.geds_functions import extract_geds_profiles
 from tools.tools import load_tools, call_tools
 from utils.manage_message import load_messages
 from utils.models import (AzureCognitiveSearchDataSource,
@@ -177,46 +178,7 @@ def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: Lis
 
     return tools_info
 
-def extract_last_description(organization_info):
-    # The JSON response has nested [organizationInformation][organization]
-    # This traverses through the nested objects to get the last description
-    while "organizationInformation" in organization_info:
-        organization_info = organization_info["organizationInformation"]["organization"]
-    
-    return organization_info["description"]
 
-def extract_geds_profiles(content):
-    try:
-        start_index = content.find("[") # trim the text preceeding the results
-        if start_index == -1: 
-            return []
-        else:    
-            content = content[start_index:]
-
-        data = json.loads(content)
-        profiles = []
-
-        for result in data:
-            profile = dict()
-
-            geds_profile_string = result["id"]
-            profile["url"] = f"https://geds-sage.gc.ca/en/GEDS?pgid=015&dn={geds_profile_string}"
-            profile["name"] = result["givenName"] + " " + result["surname"]
-            profile["email"] = result["contactInformation"]["email"]
-
-            description = extract_last_description(result.get("organizationInformation", {}).get("organization", {}))
-            profile["organization_en"] = description.get("en", "")
-            profile["organization_fr"] = description.get("fr", "")
-
-            if "phoneNumber" in result["contactInformation"]:
-                profile["phone"] = result["contactInformation"]["phoneNumber"]
-
-            profiles.append(profile)
-        
-        return profiles
-
-    except Exception as e:
-        logger.debug(f"error: {e}")
 
 def convert_chat_with_data_response(chat_completion: ChatCompletion) -> Completion:
     """
