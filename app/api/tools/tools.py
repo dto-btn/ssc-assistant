@@ -14,7 +14,7 @@ __all__ = ["load_tools", "call_tools"]
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-_allowed_tools_str: str = os.getenv("ALLOWED_TOOLS", "intranet, geds")
+_allowed_tools_str: str = os.getenv("ALLOWED_TOOLS", "corporate, geds")
 _allowed_tools          = [tool.strip() for tool in _allowed_tools_str.split(",")]
 
 _functions_with_metadata = None  # Global variable to store discovered functions
@@ -51,8 +51,10 @@ def get_functions_with_metadata():
 def load_tools(tools_requested: List[str]) -> List[ChatCompletionMessageParam]:
     tools = []
     for _, value in get_functions_with_metadata().items():
+        logger.debug(f"Looping in this dude {value['function']['name']}")
         # Ensure BOTH function type is in requested types and ALLOWED types by the system.
         if value['tool_type'] in tools_requested and value['tool_type'] in _allowed_tools:
+            logger.debug("WE GOT A MATCH MY DUDE")
             tools.append(value)
     return tools
 
