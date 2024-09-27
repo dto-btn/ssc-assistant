@@ -6,7 +6,6 @@ import re
 from pathlib import Path
 from typing import List
 
-import requests
 from openai.types.chat import (ChatCompletionMessageParam)
 
 __all__ = ["load_tools", "call_tools"]
@@ -32,12 +31,19 @@ def discover_functions_with_metadata(base_path):
                 if spec is not None and spec.loader is not None:
                     module = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(module)
-                    logger.debug(module)
+
+                    # Extract tool_type from the file name
+                    tool_type = file[:-3].split('_functions')[0]
+
+                    # Check if tool_type is defined inside the module
+                    if hasattr(module, 'TOOL_TYPE'):
+                        tool_type = getattr(module, 'TOOL_TYPE')
+
                     for attr_name in dir(module):
                         attr = getattr(module, attr_name)
                         if callable(attr) and hasattr(attr, "_tool_metadata"):
                             metadata = attr._tool_metadata
-                            functions_with_metadata[metadata["function"]["name"]] = metadata
+                    functions_with_metadata[metadata["function"]["name"]] = {'metadata': metadata, 'module_name': module_name, 'tool_type': tool_type}
     return functions_with_metadata
 
 def get_functions_with_metadata():
@@ -51,11 +57,9 @@ def get_functions_with_metadata():
 def load_tools(tools_requested: List[str]) -> List[ChatCompletionMessageParam]:
     tools = []
     for _, value in get_functions_with_metadata().items():
-        logger.debug(f"Looping in this dude {value['function']['name']}")
         # Ensure BOTH function type is in requested types and ALLOWED types by the system.
         if value['tool_type'] in tools_requested and value['tool_type'] in _allowed_tools:
-            logger.debug("WE GOT A MATCH MY DUDE")
-            tools.append(value)
+            tools.append(value['metadata'])
     return tools
 
 def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[ChatCompletionMessageParam]:
@@ -64,7 +68,7 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
     """
     # Define the available functions
     available_functions = {
-        
+
     }
 
     # Send the info for each function call and function response to the model

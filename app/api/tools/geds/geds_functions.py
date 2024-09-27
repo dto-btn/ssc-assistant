@@ -15,7 +15,6 @@ logger.setLevel(logging.DEBUG)
 
 @tool_metadata({
   "type": "function",
-  "tool_type": "geds",
   "function": {
     "name": "get_employee_information",
     "description": "Gets information on Government of Canada employee(s) by their name, it typically consists of a first name (given name) and last name (surname) of an employee, e.g. John Smith. Do NOT use this method unless you have been clearly asked by a user to provide contact information for a person and been provided with a full name.",
