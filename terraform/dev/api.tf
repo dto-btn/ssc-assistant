@@ -11,7 +11,7 @@ resource "azurerm_service_plan" "api" {
 resource "azurerm_monitor_metric_alert" "http_alert" {
   name                = "${replace(var.project_name, "_", "-")}-api-alert"
   resource_group_name = azurerm_resource_group.dev.name
-  scopes              = [azurerm_linux_web_app.api.id]
+  scopes              = [var.scope]
   description         = "Alert for HTTP Error"
   severity            = 3
   frequency           = "PT1M"
