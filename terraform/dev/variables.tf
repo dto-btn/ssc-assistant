@@ -84,3 +84,8 @@ variable "archibus_api_password" {
     type = string
     sensitive = true
 }
+
+variable "action_group_id" {
+    type = string
+    default = "/subscriptions/f5fb90f1-6d1e-4a21-8935-6968d811afd8/resourcegroups/scsc-cio_ect_ssc_assistant_dev-rg/providers/microsoft.insights/actiongroups/alerts group"
+}

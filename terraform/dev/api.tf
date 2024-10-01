@@ -25,7 +25,7 @@ resource "azurerm_monitor_metric_alert" "http_alert" {
   }
 
   action {
-    action_group_id =  azurerm_resource_group.dev.actionGroupId
+    action_group_id =  var.action_group_id
   }
 }
 resource "azurerm_linux_web_app" "api" {
