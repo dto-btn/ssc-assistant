@@ -18,7 +18,7 @@ resource "azurerm_monitor_metric_alert" "http_alert" {
   window_size         = "PT5M"
   criteria {
     metric_namespace = "Microsoft.Web/sites"
-    metric_name      = "CpuPercentage"
+    metric_name      = "Http5xx"
     aggregation      = "Total"
     operator         = "GreaterThan"
     threshold        = 1
