@@ -8,7 +8,26 @@ resource "azurerm_service_plan" "api" {
   sku_name            = "S1"
   os_type             = "Linux"
 }
+resource "azurerm_monitor_metric_alert" "http_alert" {
+  name                = "${replace(var.project_name, "_", "-")}-api-alert"
+  resource_group_name = azurerm_resource_group.dev.name
+  scopes              = [azurerm_linux_web_app.api.id]
+  description         = "Alert for HTTP Error"
+  severity            = 3
+  frequency           = "PT1M"
+  window_size         = "PT5M"
+  criteria {
+    metric_namespace = "Microsoft.Web/sites"
+    metric_name      = "CpuPercentage"
+    aggregation      = "Total"
+    operator         = "GreaterThan"
+    threshold        = 1
+  }
 
+  action {
+    action_group_id =  azurerm_resource_group.dev.actionGroupId
+  }
+}
 resource "azurerm_linux_web_app" "api" {
   name                = "${replace(var.project_name, "_", "-")}-api"
   resource_group_name = azurerm_resource_group.dev.name
