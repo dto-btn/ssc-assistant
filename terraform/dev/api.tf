@@ -11,7 +11,7 @@ resource "azurerm_service_plan" "api" {
 resource "azurerm_monitor_metric_alert" "http_alert" {
   name                = "${replace(var.project_name, "_", "-")}-api-alert"
   resource_group_name = azurerm_resource_group.dev.name
-  scopes              = [var.scope]
+  scopes              = [azurerm_resource_group.dev]
   description         = "Alert for HTTP Error"
   severity            = 3
   frequency           = "PT1M"
@@ -23,25 +23,18 @@ resource "azurerm_monitor_metric_alert" "http_alert" {
     operator         = "GreaterThan"
     threshold        = 1
   }
-
-  action {
-    action_group_id =  var.action_group_id
-  }
 }
 resource "azurerm_monitor_action_group" "alerts_group" {
   name                = "Alerts group"
   resource_group_name = azurerm_resource_group.dev.name
   short_name          = "Alert"
-  
-  email_receiver {
-    name                    = "Harsha"
-    email_address           = "harsha.kakumanu@ssc-spc.gc.ca"
-  }
-  email_receiver {
-    name                    = "Guillaume"
-    email_address           = "guillaume.turcotte2@ssc-spc.gc.ca"
-  }
 
+  arm_role_receiver {
+    name                    = "monitoring"
+    role_id                 = azuread_group.contributors.role_id
+    use_common_alert_schema = true
+  }
+  
 }
 resource "azurerm_linux_web_app" "api" {
   name                = "${replace(var.project_name, "_", "-")}-api"
