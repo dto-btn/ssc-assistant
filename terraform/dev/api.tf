@@ -28,14 +28,14 @@ resource "azurerm_monitor_action_group" "alerts_group" {
   name                = "Alerts group"
   resource_group_name = azurerm_resource_group.dev.name
   short_name          = "Alert"
-  
+
   email_receiver {
-    name          = "sendtoadmin"
+    name          = "sendtogt"
     email_address = data.azuread_user.dev-gt.user_principal_name
   }  
 
   email_receiver {
-    name          = "sendtoadmin"
+    name          = "sendtoharsha"
     email_address = data.azuread_user.dev-harsha.user_principal_name
   }
 
