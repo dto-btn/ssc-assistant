@@ -11,7 +11,7 @@ resource "azurerm_service_plan" "api" {
 resource "azurerm_monitor_metric_alert" "http_alert" {
   name                = "${replace(var.project_name, "_", "-")}-api-alert"
   resource_group_name = azurerm_resource_group.dev.name
-  scopes              = [azurerm_resource_group.dev]
+  scopes              = [azurerm_resource_group.dev.id]
   description         = "Alert for HTTP Error"
   severity            = 3
   frequency           = "PT1M"
@@ -28,12 +28,17 @@ resource "azurerm_monitor_action_group" "alerts_group" {
   name                = "Alerts group"
   resource_group_name = azurerm_resource_group.dev.name
   short_name          = "Alert"
+  
+  email_receiver {
+    name          = "sendtoadmin"
+    email_address = data.azuread_user.dev-gt.user_principal_name
+  }  
 
-  arm_role_receiver {
-    name                    = "monitoring"
-    role_id                 = azuread_group.contributors.role_id
-    use_common_alert_schema = true
+  email_receiver {
+    name          = "sendtoadmin"
+    email_address = data.azuread_user.dev-harsha.user_principal_name
   }
+
   
 }
 resource "azurerm_linux_web_app" "api" {
