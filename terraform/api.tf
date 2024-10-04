@@ -1,5 +1,5 @@
 /****************************************************
-*                 Azure App frontend                *
+*                 Azure App API                *
 *****************************************************/
 resource "azurerm_service_plan" "api" {
   name                = "${var.name_prefix}${var.project_name}-api-plan"
@@ -7,6 +7,38 @@ resource "azurerm_service_plan" "api" {
   location            = azurerm_resource_group.main.location
   sku_name            = "S1"
   os_type             = "Linux"
+}
+
+resource "azurerm_monitor_metric_alert" "http_alert" {
+  name                = "${replace(var.project_name, "_", "-")}-api-alert"
+  resource_group_name = azurerm_resource_group.main.name
+  scopes              = [azurerm_resource_group.main.id]
+  description         = "Alert for HTTP Error"
+  severity            = 3
+  frequency           = "PT1M"
+  window_size         = "PT5M"
+  criteria {
+    metric_namespace = "Microsoft.Web/sites"
+    metric_name      = "Http5xx"
+    aggregation      = "Total"
+    operator         = "GreaterThan"
+    threshold        = 1
+  }
+}
+resource "azurerm_monitor_action_group" "alerts_group" {
+  name                = "Alerts group"
+  resource_group_name = azurerm_resource_group.main.name
+  short_name          = "Alert"
+
+  email_receiver {
+    name          = "sendtogt"
+    email_address = data.azuread_user.dev-gt.user_principal_name
+  }  
+
+  email_receiver {
+    name          = "sendtoharsha"
+    email_address = data.azuread_user.dev-harsha.user_principal_name
+  }  
 }
 
 resource "azurerm_linux_web_app" "api" {

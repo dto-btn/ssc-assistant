@@ -37,10 +37,9 @@ resource "azurerm_monitor_action_group" "alerts_group" {
   email_receiver {
     name          = "sendtoharsha"
     email_address = data.azuread_user.dev-harsha.user_principal_name
-  }
-
-  
+  }  
 }
+
 resource "azurerm_linux_web_app" "api" {
   name                = "${replace(var.project_name, "_", "-")}-api"
   resource_group_name = azurerm_resource_group.dev.name
