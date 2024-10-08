@@ -17,6 +17,7 @@ resource "azurerm_monitor_metric_alert" "http_alert" {
   severity            = 3
   frequency           = "PT1M"
   window_size         = "PT5M"
+  target_resource_type = "Microsoft.Web/sites"  
   criteria {
     metric_namespace = "Microsoft.Web/sites"
     metric_name      = "Http5xx"
