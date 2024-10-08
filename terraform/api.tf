@@ -62,6 +62,7 @@ resource "azurerm_linux_web_app" "api" {
     AZURE_AD_TENANT_ID            = data.azurerm_client_config.current.tenant_id
     WEBSITE_WEBDEPLOY_USE_SCM     = true
     WEBSITE_RUN_FROM_PACKAGE      = "1"
+    ALLOWED_TOOLS                 = "corporate, geds"
     #PORT = 5001
   }
 
