@@ -11,12 +11,12 @@ resource "azurerm_service_plan" "api" {
 resource "azurerm_monitor_metric_alert" "http_alert" {
   name                = "${replace(var.project_name, "_", "-")}-api-alert"
   resource_group_name = azurerm_resource_group.dev.name
-  scopes              = [azurerm_resource_group.dev.id]
+  scopes              = [azurerm_linux_web_app.api.id]
   description         = "Alert for HTTP Error"
   severity            = 3
   frequency           = "PT1M"
   window_size         = "PT5M"
-  target_resource_type = "Microsoft.Web/sites"  
+  target_resource_type = "Microsoft.Web/sites"
   criteria {
     metric_namespace = "Microsoft.Web/sites"
     metric_name      = "Http5xx"
@@ -25,6 +25,7 @@ resource "azurerm_monitor_metric_alert" "http_alert" {
     threshold        = 1
   }
 }
+
 resource "azurerm_monitor_action_group" "alerts_group" {
   name                = "Alerts group"
   resource_group_name = azurerm_resource_group.dev.name
