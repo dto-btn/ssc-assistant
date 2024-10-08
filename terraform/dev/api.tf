@@ -8,39 +8,6 @@ resource "azurerm_service_plan" "api" {
   sku_name            = "S1"
   os_type             = "Linux"
 }
-resource "azurerm_monitor_metric_alert" "http_alert" {
-  name                = "${replace(var.project_name, "_", "-")}-api-alert"
-  resource_group_name = azurerm_resource_group.dev.name
-  scopes              = [azurerm_linux_web_app.api.id]
-  description         = "Alert for HTTP Error"
-  severity            = 3
-  frequency           = "PT1M"
-  window_size         = "PT5M"
-  target_resource_type = "Microsoft.Web/sites"
-  criteria {
-    metric_namespace = "Microsoft.Web/sites"
-    metric_name      = "Http5xx"
-    aggregation      = "Total"
-    operator         = "GreaterThan"
-    threshold        = 1
-  }
-}
-
-resource "azurerm_monitor_action_group" "alerts_group" {
-  name                = "Alerts group"
-  resource_group_name = azurerm_resource_group.dev.name
-  short_name          = "Alert"
-
-  email_receiver {
-    name          = "sendtogt"
-    email_address = data.azuread_user.dev-gt.user_principal_name
-  }  
-
-  email_receiver {
-    name          = "sendtoharsha"
-    email_address = data.azuread_user.dev-harsha.user_principal_name
-  }  
-}
 
 resource "azurerm_linux_web_app" "api" {
   name                = "${replace(var.project_name, "_", "-")}-api"

@@ -9,12 +9,12 @@ resource "azurerm_service_plan" "api" {
   os_type             = "Linux"
 }
 
-resource "azurerm_monitor_metric_alert" "http_alert" {
-  name                = "${replace(var.project_name, "_", "-")}-api-alert"
-  resource_group_name = azurerm_resource_group.main.name
+resource "azurerm_monitor_metric_alert" "http_5xx_alert" {
+  name                = "SSC Assistant 5xx Alert"
+  resource_group_name = azurerm_resource_group.dev.name
   scopes              = [azurerm_linux_web_app.api.id]
-  description         = "Alert for HTTP Error"
-  severity            = 3
+  description         = "Alert for HTTP 5xx Errors"
+  severity            = 1
   frequency           = "PT1M"
   window_size         = "PT5M"
   target_resource_type = "Microsoft.Web/sites"
@@ -27,8 +27,27 @@ resource "azurerm_monitor_metric_alert" "http_alert" {
   }
 }
 
+resource "azurerm_monitor_metric_alert" "http_4xx_alert" {
+  name                = "SSC Assistant 4xx Alert"
+  resource_group_name = azurerm_resource_group.main.name
+  scopes              = [azurerm_linux_web_app.api.id]
+  description         = "Alert for HTTP 4xx Errors"
+  severity            = 2
+  frequency           = "PT1M"
+  window_size         = "PT5M"
+  target_resource_type = "Microsoft.Web/sites"
+  criteria {
+    metric_namespace = "Microsoft.Web/sites"
+    metric_name      = "Http4xx"
+    aggregation      = "Total"
+    operator         = "GreaterThan"
+    threshold        = 10
+  }
+}
+
+
 resource "azurerm_monitor_action_group" "alerts_group" {
-  name                = "Alerts group"
+  name                = "SSC Assistant Alerts group"
   resource_group_name = azurerm_resource_group.main.name
   short_name          = "Alert"
 
