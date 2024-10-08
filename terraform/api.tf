@@ -11,7 +11,7 @@ resource "azurerm_service_plan" "api" {
 
 resource "azurerm_monitor_metric_alert" "http_5xx_alert" {
   name                = "SSC Assistant 5xx Alert"
-  resource_group_name = azurerm_resource_group.dev.name
+  resource_group_name = azurerm_resource_group.main.name
   scopes              = [azurerm_linux_web_app.api.id]
   description         = "Alert for HTTP 5xx Errors"
   severity            = 1
