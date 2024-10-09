@@ -54,12 +54,7 @@ resource "azurerm_monitor_action_group" "alerts_group" {
   email_receiver {
     name          = "sendtogt"
     email_address = data.azuread_user.dev-gt.user_principal_name
-  }  
-
-  email_receiver {
-    name          = "sendtoharsha"
-    email_address = data.azuread_user.dev-harsha.user_principal_name
-  }  
+  }
 }
 
 resource "azurerm_linux_web_app" "api" {
