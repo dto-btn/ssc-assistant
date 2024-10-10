@@ -170,6 +170,19 @@ def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: Lis
                 tool_name = function_to_tool_type[function_name]
                 tools_info.tool_type.append(tool_name)
 
+            if function_name == "get_available_rooms":
+                content = message.get("content", "")
+                if content is not None:
+                    try:
+                        data = json.loads(content)
+                    except json.JSONDecodeError:
+                        logger.warning(f"Content is not valid JSON: {content}")
+                        data = {}
+                    if data.get("floorPlan") is not None:
+                        floor_plan = data.get("floorPlan")
+                        logger.debug(f"FLOOR PLAN: {floor_plan}")
+                        tools_info.payload = {"floorPlan": floor_plan}
+
             # extract profiles if it's a geds function
             if tool_name == "geds":
                 content = message.get("content", "")
