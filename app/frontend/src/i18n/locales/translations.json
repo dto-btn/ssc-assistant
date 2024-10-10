@@ -502,5 +502,29 @@
     "storage.full": {
         "en": "Warning: Your storage is full. Please delete or clear a conversation/conversations to continue.",
         "fr": "Avertissement : Votre stockage est plein. Veuillez supprimer ou effacer une ou plusieurs conversations pour continuer."
+    },
+    "archibus": {
+        "en": "Archibus",
+        "fr": "Archibus"
+    },
+    "booking.success": {
+        "en": "Your workspace has been reserved successfully for the date: ",
+        "fr": "Votre espace de travail a été réservé avec succès pour la date : "
+    },
+    "booking.fail": {
+        "en": "There was an issue reserving your workspace: ",
+        "fr": "Il y a eu un problème lors de la réservation de votre espace de travail : "
+    },
+    "booking.complete": {
+        "en": "COMPLETE RESERVATION",
+        "fr": "COMPLÉTER LA RÉSERVATION"
+    },
+    "aria.expand.floorPlan": {
+        "en": "Expand floor plan image",
+        "fr": "Agrandir l'image du plan d'étage"
+    },
+    "archibus.floorPlan": {
+        "en": "Archibus floor plan",
+        "fr": "Plan d'étage Archibus"
     }
 }

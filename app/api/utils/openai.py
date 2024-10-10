@@ -41,7 +41,7 @@ index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "latest")
 # https://learn.microsoft.com/en-us/azure/ai-services/openai/references/on-your-data?tabs=python
 # versions capabilities
 # https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
-# example of using functions with azure search instead of the data source 
+# example of using functions with azure search instead of the data source
 #   https://github.com/Azure-Samples/openai/blob/main/Basic_Samples/Functions/functions_with_azure_search.ipynb
 
 client = AzureOpenAI(
@@ -64,7 +64,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
     """
     Initiate a chat with via openai api using data_source (azure cognitive search)
 
-    Documentation on this method: 
+    Documentation on this method:
         - https://github.com/openai/openai-cookbook/blob/main/examples/azure/chat_with_your_own_data.ipynb
         - https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
     """
@@ -105,7 +105,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
         tools = load_tools(message_request.tools)
         logger.debug(tools)
         """
-        1a. Invoke tools completion, 
+        1a. Invoke tools completion,
         """
         additional_tools_required = True
         tools_used = False
@@ -120,7 +120,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                 ) # type: ignore
 
             if completion_tools.choices[0].message.tool_calls:
-                tools_used = True 
+                tools_used = True
 
                 if "intranet_question" in [f.function.name for f in completion_tools.choices[0].message.tool_calls]:
                     '''
@@ -140,12 +140,12 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                         extra_body=data_sources,
                         stream=stream
                     ))
-                
+
                 messages = call_tools(completion_tools.choices[0].message.tool_calls, messages)
 
             else:
                 additional_tools_required = False
-        
+
         # add tool info for tools used
         if tools_used:
             tools_info = add_tool_info_if_used(messages, tools)
@@ -170,6 +170,12 @@ def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: Lis
                 tool_name = function_to_tool_type[function_name]
                 tools_info.tool_type.append(tool_name)
 
+                # extract profiles if it's a geds function
+                if tool_name == "geds":
+                    content = message.get("content", "")
+                    profiles = extract_geds_profiles(content)
+                    tools_info.payload = {"profiles": profiles}
+
             if function_name == "get_available_rooms":
                 content = message.get("content", "")
                 if content is not None:
@@ -183,11 +189,12 @@ def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: Lis
                         logger.debug(f"FLOOR PLAN: {floor_plan}")
                         tools_info.payload = {"floorPlan": floor_plan}
 
-            # extract profiles if it's a geds function
-            if tool_name == "geds":
+            if function_name == "verify_booking_details":
                 content = message.get("content", "")
-                profiles = extract_geds_profiles(content)
-                tools_info.payload = {"profiles": profiles}
+                if content is not None:
+                    booking_details = json.loads(content)
+                    logger.debug(f"BOOKING DETAILS {booking_details}")
+                    tools_info.payload = {"bookingDetails": booking_details}
 
     return tools_info
 

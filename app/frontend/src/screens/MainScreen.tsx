@@ -28,6 +28,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
     const defaultEnabledTools = {
         "geds": true,
         "corporate": true,
+        "archibus": true
     };
     const defaultModel = "gpt-4o";
     const defaultChatHistory = {
@@ -195,7 +196,8 @@ const MainScreen = ({userData}: MainScreenProps) => {
             tools: (Object.keys(currentChatHistory.enabledTools)).filter((key) => currentChatHistory.enabledTools[key]),
             uuid: currentChatHistory.uuid,
             quotedText: messagedQuoted,
-            model: currentChatHistory.model
+            model: currentChatHistory.model,
+            fullName: userData.graphData['givenName'] + ' ' + userData.graphData['surname']
         };
 
         // update current chat window with the message sent..
