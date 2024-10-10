@@ -45,6 +45,7 @@ def discover_functions_with_metadata(base_path):
                             metadata = attr._tool_metadata
                             metadata['tool_type'] = tool_type # also add tool type on top of the rest of things
                     functions_with_metadata[metadata["function"]["name"]] = {'metadata': metadata, 'module': module, 'tool_type': tool_type}
+    logger.debug(f"FUNCTIONS WITH METADATA: {functions_with_metadata}")
     return functions_with_metadata
 
 def get_functions_with_metadata():
@@ -78,6 +79,8 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
         function_name = tool_call.function.name
         function_args = json.loads(tool_call.function.arguments)
 
+        logger.debug(f"Func to call:{function_name} and the args; {function_args}")
+
         # Prepare the arguments for the function call
         prepared_args = {arg: function_args[arg] for arg in function_args}
 
@@ -86,9 +89,9 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
             module = get_functions_with_metadata()[function_name]['module']
             function_to_call = getattr(module, function_name)
             function_response = function_to_call(**prepared_args)
-        except:
+        except Exception as exception:
             e = "Unable to call function"
-            logger.error(e)
+            logger.error(e, exception)
             function_response = e
         
         messages.append({

@@ -10,29 +10,28 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["make_api_call", "get_user_bookings", "get_floors", "get_available_rooms", "get_floor_plan", "get_current_date"]
 
-api_url = str(os.getenv("ARCHIBUS_API_USERNAME", "http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1"))
+api_url = str(os.getenv("ARCHIBUS_API_URL", "http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1"))
 api_username = str(os.getenv("ARCHIBUS_API_USERNAME"))
 api_password = str(os.getenv("ARCHIBUS_API_PASSWORD"))
 
 @tool_metadata({
     "type": "function",
-    "tool_type": "archibus",
     "function": {
-      "name": "get_user_bookings",
-      "description": "Gets a user's existing bookings in the archibus system by their first and last name. Do not use this method unless you have been asked to retrieve a user's bookings and have their first and last name",
-      "parameters": {
-        "type": "object",
-        "properties": {
-            "firstName": {
-                "type": "string",
-                "description": "A string indicating the first name of the user."
+        "name": "get_user_bookings",
+        "description": "Gets a user's existing bookings in the archibus system by their first and last name. Do not use this method unless you have been asked to retrieve a user's bookings and have their first and last name",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "firstName": {
+                    "type": "string",
+                    "description": "A string indicating the first name of the user."
+                },
+                "lastName": {
+                    "type": "string",
+                    "description": "A string indicating the last name of the user."
+                }
             },
-            "lastName": {
-                "type": "string",
-                "description": "A string indicating the last name of the user."
-            }
-        },
-        "required": ["firstName", "lastName"]
+            "required": ["firstName", "lastName"]
       }
     }
   })
@@ -57,20 +56,19 @@ def get_user_bookings(firstName: str = "", lastName: str = ""):
 
 @tool_metadata({
     "type": "function",
-    "tool_type": "archibus",
     "function": {
-      "name": "get_floors",
-      "description": "Gets a list of the available floors in a building where a user can make a booking. If the user is attempting to make a booking and does not specify a floor, use this method to return a list of available floors to them and ask which floor they would like to book on before proceeding to any other functions. Do not use this method unless you have a buildingId. DO NOT USE A BUILDING NAME OR ADDRESS IN PLACE OF AN ID. Return the buildingId as well when you answer so you have it for later.",
-      "parameters": {
-        "type": "object",
-        "properties": {
-            "buildingId": {
-                "type": "string",
-                "description": "The unique identifier of the building where the booking takes place. Do not use the building name or address as the id"
-            }
-        },
-        "required": ["buildingId"]
-      }
+        "name": "get_floors",
+        "description": "Gets a list of the available floors in a building where a user can make a booking. If the user is attempting to make a booking and does not specify a floor, use this method to return a list of available floors to them and ask which floor they would like to book on before proceeding to any other functions. Do not use this method unless you have a buildingId. DO NOT USE A BUILDING NAME OR ADDRESS IN PLACE OF AN ID. Return the buildingId as well when you answer so you have it for later.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "buildingId": {
+                    "type": "string",
+                    "description": "The unique identifier of the building where the booking takes place. Do not use the building name or address as the id"
+                }
+            },
+            "required": ["buildingId"]
+        }
     }
   })
 def get_floors(buildingId: str):
@@ -89,28 +87,27 @@ def get_floors(buildingId: str):
 
 @tool_metadata({
     "type": "function",
-    "tool_type": "archibus",
     "function": {
-      "name": "get_available_rooms",
-      "description": "Gets a list of all the vacant rooms or workspaces in a specified building and floor. Use this method once you have a buildingId, floorId, and date to retrieve a list of all the vacant rooms. IF YOU DONT HAVE A BUILDINGID, USE GET_BUILDINGS FUNCTION FIRST. DO NOT USE THE BUILDING ADDRESS OR NAME AS THE BUILDINGID. You should then present this list of rooms to the user and ask which room they would like to book.",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "buildingId": {
-            "type": "string",
-            "description": "A string indicating the ID of the building."
-          },
-          "floorId": {
-            "type": "string",
-            "description": "A string indicating the ID of the floor within the specified building."
-          },
-          "bookingDate": {
-            "type": "string",
-            "description": "A string indicating the date of the booking, including the month, day, and year, formatted like YYYY-MM-DD. The default year is 2024."
-          }
-        },
-        "required": ["buildingId", "floorId", "bookingDate"]
-      }
+        "name": "get_available_rooms",
+        "description": "Gets a list of all the vacant rooms or workspaces in a specified building and floor. Use this method once you have a buildingId, floorId, and date to retrieve a list of all the vacant rooms. IF YOU DONT HAVE A BUILDINGID, USE GET_BUILDINGS FUNCTION FIRST. DO NOT USE THE BUILDING ADDRESS OR NAME AS THE BUILDINGID. You should then present this list of rooms to the user and ask which room they would like to book.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+            "buildingId": {
+                "type": "string",
+                "description": "A string indicating the ID of the building."
+            },
+            "floorId": {
+                "type": "string",
+                "description": "A string indicating the ID of the floor within the specified building."
+            },
+            "bookingDate": {
+                "type": "string",
+                "description": "A string indicating the date of the booking, including the month, day, and year, formatted like YYYY-MM-DD. The default year is 2024."
+            }
+            },
+            "required": ["buildingId", "floorId", "bookingDate"]
+        }
     }
   })
 def get_available_rooms(buildingId: str, floorId: str, bookingDate: str):
@@ -144,24 +141,23 @@ def get_available_rooms(buildingId: str, floorId: str, bookingDate: str):
 
 @tool_metadata({
     "type": "function",
-    "tool_type": "archibus",
     "function": {
-      "name": "get_floor_plan",
-      "description": "Retrieves the floor plan image associated with the selected floor from the user.",
-      "parameters": {
-        "type": "object",
-        "properties": {
-            "buildingId": {
-            "type": "string",
-            "description": "A string indicating the ID of the building."
+        "name": "get_floor_plan",
+        "description": "Retrieves the floor plan image associated with the selected floor from the user.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "buildingId": {
+                "type": "string",
+                "description": "A string indicating the ID of the building."
+                },
+                "floorId": {
+                "type": "string",
+                "description": "A string indicating the ID of the floor within the specified building."
+                }
             },
-            "floorId": {
-              "type": "string",
-              "description": "A string indicating the ID of the floor within the specified building."
-            }
-        },
-        "required": ["floorId", "buildingId"]
-      }
+            "required": ["floorId", "buildingId"]
+        }
     }
   })
 def get_floor_plan(buildingId: str, floorId: str):
@@ -189,10 +185,9 @@ def get_floor_plan(buildingId: str, floorId: str):
 
 @tool_metadata({
     "type": "function",
-    "tool_type": "archibus",
     "function": {
-      "name": "get_current_date",
-      "description": "This function is used to know what is the current date and time. It returns the current date and time in text format. Use this if you are unsure of what is the current date, do not make assumptions about the current date and time."
+        "name": "get_current_date",
+        "description": "This function is used to know what is the current date and time. It returns the current date and time in text format. Use this if you are unsure of what is the current date, do not make assumptions about the current date and time."
     }
   })
 def get_current_date() -> str:
