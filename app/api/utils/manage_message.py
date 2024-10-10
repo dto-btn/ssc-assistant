@@ -109,7 +109,7 @@ def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessage
         message_request.messages[-1].content = quote_injection + message_request.messages[-1].content
 
     # Below we only filter messages that are not related to system prompt, so the first thing
-    # we will do is, insert a system prompt.
+    # We force archibus as a system prompt if archibus tool is enabled, else we only add prompt if a system prompt is missing
     if 'archibus' in message_request.tools:
         system_msg = ARCHIBUS_SYSTEM_PROMPT_EN if message_request.lang == 'en' else ARCHIBUS_SYSTEM_PROMPT_FR
         if message_request.fullName:
@@ -118,8 +118,10 @@ def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessage
             else:
                system_msg += f"\n Le nom complet de l'usager est: {message_request.fullName}. Utilisez ce nom si l'utilisateur essaie de faire une réservation pour lui-même." 
         messages.append(ChatCompletionSystemMessageParam(content=system_msg, role="system"))
-    else:
+    elif not message_request.messages or message_request.messages[0].role != "system":
         messages.append(ChatCompletionSystemMessageParam(content=SYSTEM_PROMPT_EN if message_request.lang == 'en' else SYSTEM_PROMPT_FR, role="system"))
+    else:
+        messages.append(ChatCompletionSystemMessageParam(content=str(message_request.messages[0].content), role='system'))
 
     # Convert MessageRequest messages to ChatCompletionMessageParam
     for message in message_request.messages or []:

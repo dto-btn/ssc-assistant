@@ -6,7 +6,6 @@ interface CompletionProps {
 
 export async function completionMySSC({ request, updateLastMessage, accessToken }: CompletionProps): Promise<Completion> {
   let completion: Completion | undefined;
-  console.log(request)
   const url = "/api/1.0/completion/chat/stream";
   const response = await fetch(url, {
     method: "POST",
