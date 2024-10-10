@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import QuoteTextTooltip from "../components/QuoteTextTooltip";
 import { TutorialBubble } from "../components/TutorialBubble";
 import { bookReservation } from "../api/api";
+import { allowedToolsSet } from '../allowedTools';
 
 interface MainScreenProps {
     userData: {
@@ -25,11 +26,8 @@ interface MainScreenProps {
 }
 
 const MainScreen = ({userData}: MainScreenProps) => {
-
-    const allowedToolsString = import.meta.env.VITE_ALLOWED_TOOLS || 'corporate';
-    const allowedToolsArray = allowedToolsString.split(',').map(tool => tool.trim());
     const defaultEnabledTools: { [key: string]: boolean } = {};
-    allowedToolsArray.forEach(tool => {
+    allowedToolsSet.forEach(tool => {
         defaultEnabledTools[tool] = true;
     });
 
