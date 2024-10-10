@@ -7,7 +7,7 @@ from openai import Stream
 import openai
 from openai.types.chat import (ChatCompletion, ChatCompletionChunk)
 import requests
-from app.api.tools.archibus.archibus_functions import make_api_call
+from tools.archibus.archibus_functions import make_api_call
 from utils.db import store_completion, store_request, leave_feedback, flag_conversation
 from utils.models import BookingConfirmation, Completion, Feedback, MessageRequest, ToolInfo
 from utils.openai import (build_completion_response, chat_with_data,
