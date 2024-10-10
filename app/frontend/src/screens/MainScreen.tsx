@@ -25,11 +25,14 @@ interface MainScreenProps {
 }
 
 const MainScreen = ({userData}: MainScreenProps) => {
-    const defaultEnabledTools = {
-        "geds": true,
-        "corporate": true,
-        "archibus": true
-    };
+
+    const allowedToolsString = import.meta.env.VITE_ALLOWED_TOOLS || 'corporate';
+    const allowedToolsArray = allowedToolsString.split(',').map(tool => tool.trim());
+    const defaultEnabledTools: { [key: string]: boolean } = {};
+    allowedToolsArray.forEach(tool => {
+        defaultEnabledTools[tool] = true;
+    });
+
     const defaultModel = "gpt-4o";
     const defaultChatHistory = {
         "chatItems": [],
