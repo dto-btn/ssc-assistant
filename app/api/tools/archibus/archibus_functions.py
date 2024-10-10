@@ -34,8 +34,24 @@ api_password = str(os.getenv("ARCHIBUS_API_PASSWORD"))
       }
     }
   })
-def get_user_bookings():
-    pass
+def get_user_bookings(firstName: str = "", lastName: str = ""):
+    if not firstName or not lastName:
+        return "please provide a first and last name to search for a user's reservations"
+
+    try:
+        uri = f"/reservations/creator/{lastName.upper()},%20{firstName.upper()}"
+        response = _make_api_call(uri)
+        filtered_response_json = json.loads(response.text)[-10:] # take last 10 items (API might be returning duplicates?)
+        pretty_response = json.dumps(filtered_response_json, indent=4)
+        logger.debug(f"Reservations: {pretty_response}")
+        logger.debug(f"Response status code: {response.status_code}")
+        return filtered_response_json
+
+    except requests.HTTPError as e:
+        msg = f"Unable to get user bookings (firstName: {firstName}, lastName: {lastName})"
+        logger.error(msg)
+        return msg
+
 
 @tool_metadata({
     "type": "function",
@@ -64,7 +80,7 @@ def get_floors(buildingId: str):
         logger.debug(pretty_response)
         logger.debug(f"Response status code: {response.status_code}")
         return response.json()  
-    except requests.RequestException as e:
+    except requests.HTTPError as e:
         msg = f"An error occurred while trying to fetch floors for the building {buildingId}."
         logger.error(msg)
         return msg
