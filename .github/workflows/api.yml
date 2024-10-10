@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - 134-connect-assistant-to-archibus-api
+      - dev
   pull_request:
 
 permissions:
@@ -50,14 +50,14 @@ jobs:
       run: zip release.zip ./* -r
 
     - name: Upload artifact for deployment job
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/134-connect-assistant-to-archibus-api'
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
       uses: actions/upload-artifact@v3
       with:
         name: api
         path: release.zip
 
   deploy:
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/134-connect-assistant-to-archibus-api'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
     needs: build
     environment: ${{ github.ref == 'refs/heads/main' && 'pilot-prod' || 'dev'}}
     runs-on: ubuntu-latest

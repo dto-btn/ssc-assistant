@@ -56,7 +56,7 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
         sx={{ mb: 1, position: 'sticky', bottom: 0}}
         maxWidth="md"
         >
-      <Typography sx={{fontSize: '13px', ml: '10px', opacity: 0.7}}>{t("model.version.disclaimer")} {modelName}</Typography>
+      <Typography sx={{fontSize: '13px', mr: '10px', opacity: 0.7, textAlign: 'right'}}>{t("model.version.disclaimer")} {modelName}</Typography>
       <ChatInputWrapper theme={theme}> 
         {quotedText && (
             <QuoteContainer>
@@ -116,15 +116,18 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
             fullWidth
             type="text"
             id="ask-question"
-            placeholder={t("ask.question")}
             onKeyDown={onEnterPress}
             multiline={true}
             minRows={3}
             maxRows={3}
+            label={t("ask.question")}
             sx={{
               padding: '10px 20px',
               '& .MuiInputBase-input::placeholder': {
                 opacity: 0.7, 
+              },
+              '.MuiFormLabel-root': {
+                padding:'5px 0px 0px 20px',
               },
             }}
             variant="standard"

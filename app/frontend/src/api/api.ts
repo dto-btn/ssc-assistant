@@ -6,8 +6,7 @@ interface CompletionProps {
 
 export async function completionMySSC({ request, updateLastMessage, accessToken }: CompletionProps): Promise<Completion> {
   let completion: Completion | undefined;
-
-  let url = "/api/1.0/completion/chat/stream";
+  const url = "/api/1.0/completion/chat/stream";
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -47,6 +46,8 @@ export async function completionMySSC({ request, updateLastMessage, accessToken 
   const jsonRegex = new RegExp(`${endBoundaryRegex.source}([\\s\\S]+?)${finalBoundaryRegex.source}`, 's');
 
   try {
+    //TODO: this should be set
+    //eslint no-constant-condition: ["error", { "checkLoops": "none" }]
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -100,4 +101,22 @@ export async function sendFeedback(feedback: string, isGoodResponse: boolean, uu
   }
 
   return response;
+}
+
+export async function bookReservation(bookingDetails: BookingConfirmation): Promise<Response> {
+  const url = "/api/1.0/book_reservation";
+
+  const bookingResponse = await fetch(url, {
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(bookingDetails)
+  })
+
+  if (!bookingResponse.ok) {
+    throw new Error("Failed to book reservation");
+  }
+
+  return bookingResponse;
 }

@@ -1,5 +1,5 @@
 /****************************************************
-*                 Azure App frontend                *
+*                 Azure App Dev API                *
 *****************************************************/
 resource "azurerm_service_plan" "api" {
   name                = "${var.name_prefix}${var.project_name}-api-plan"
@@ -64,6 +64,7 @@ resource "azurerm_linux_web_app" "api" {
     ARCHIBUS_API_PASSWORD         = var.archibus_api_password
     WEBSITE_WEBDEPLOY_USE_SCM     = true
     WEBSITE_RUN_FROM_PACKAGE      = "1"
+    ALLOWED_TOOLS                 = "corporate, geds, archibus"
     #PORT = 5001
   }
 

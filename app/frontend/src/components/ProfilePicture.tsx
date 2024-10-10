@@ -28,9 +28,12 @@ function stringToColor(string: string) {
   }
 
   let color = '#';
+  const threshold = 128; // Midpoint value for high contrast
 
   for (i = 0; i < 3; i += 1) {
-    const value = (hash >> (i * 8)) & 0xff;
+    let value = (hash >> (i * 8)) & 0xff;
+    // Adjust value to ensure high contrast
+    value = value > threshold ? 0 : 128;
     color += `00${value.toString(16)}`.slice(-2);
   }
   /* eslint-enable no-bitwise */

@@ -57,6 +57,7 @@ class MessageRequest:
     max: int = field(default=10)
     tools: List[str] = field(default_factory=lambda: ["corporate", "geds"])
     uuid: str = field(default='')
+    fullName: str = field(default='')
 
 class QueryType(Enum):
     VECTOR_SIMPLE_HYBRID = "vectorSimpleHybrid"
@@ -79,3 +80,13 @@ class Feedback:
     feedback: Optional[str]
     positive: bool
     uuid: str = field(default='')
+
+@dataclass
+class BookingConfirmation:
+  bookingType: str
+  buildingId: str
+  floorId: str
+  roomId: str
+  createdBy: str
+  assignedTo: str
+  startDate: str
