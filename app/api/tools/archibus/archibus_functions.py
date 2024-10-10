@@ -8,6 +8,8 @@ from utils.decorators import tool_metadata
 
 logger = logging.getLogger(__name__)
 
+__all__ = ["make_api_call", "get_user_bookings", "get_floors", "get_available_rooms", "get_floor_plan", "get_current_date"]
+
 api_url = str(os.getenv("ARCHIBUS_API_USERNAME", "http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1"))
 api_username = str(os.getenv("ARCHIBUS_API_USERNAME"))
 api_password = str(os.getenv("ARCHIBUS_API_PASSWORD"))
@@ -40,7 +42,7 @@ def get_user_bookings(firstName: str = "", lastName: str = ""):
 
     try:
         uri = f"/reservations/creator/{lastName.upper()},%20{firstName.upper()}"
-        response = _make_api_call(uri)
+        response = make_api_call(uri)
         filtered_response_json = json.loads(response.text)[-10:] # take last 10 items (API might be returning duplicates?)
         pretty_response = json.dumps(filtered_response_json, indent=4)
         logger.debug(f"Reservations: {pretty_response}")
@@ -74,7 +76,7 @@ def get_user_bookings(firstName: str = "", lastName: str = ""):
 def get_floors(buildingId: str):
     try:
         uri = f"/buildings/{buildingId}/floors"
-        response = _make_api_call(uri)
+        response = make_api_call(uri)
         response_json = json.loads(response.text)
         pretty_response = json.dumps(response_json, indent=4)
         logger.debug(pretty_response)
@@ -117,7 +119,7 @@ def get_available_rooms(buildingId: str, floorId: str, bookingDate: str):
 
     try:
         uri = f"/reservations/buildings/{buildingId}/vacant/{floorId}?bookingDate={bookingDate}"
-        response = _make_api_call(uri)
+        response = make_api_call(uri)
         response_json = json.loads(response.text)
         filtered_rooms = response_json[:10]
         pretty_response = json.dumps(filtered_rooms, indent=4)
@@ -165,7 +167,7 @@ def get_available_rooms(buildingId: str, floorId: str, bookingDate: str):
 def get_floor_plan(buildingId: str, floorId: str):
     try:
         uri = f"/buildings/{buildingId}/floors"
-        response = _make_api_call(uri)
+        response = make_api_call(uri)
         response_json = json.loads(response.text)
         target_floor_blob_name = None
 
@@ -200,14 +202,19 @@ def get_current_date() -> str:
     current_date_time = datetime.now()
     return "Formatted date and time:" + current_date_time.strftime("%Y-%m-%d %H:%M:%S")
 
-def _make_api_call(uri: str, ) -> requests.Response:
+
+def make_api_call(uri: str, payload=None) -> requests.Response:
     auth = (api_username, api_password)
 
     headers = {
         'Accept': 'application/json'
     }
 
-    response = requests.get(api_url + uri, headers=headers, auth=auth)
+    if payload:
+        response = requests.post(api_url + uri, headers=headers, auth=auth, data=payload)
+    else:
+        response = requests.get(api_url + uri, headers=headers, auth=auth)
+
     logger.debug(api_url + uri)
     response.raise_for_status()  # This will raise an HTTPError if the HTTP request returned an unsuccessful status code
     return response
