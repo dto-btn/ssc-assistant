@@ -83,11 +83,7 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
         try:
             module = get_functions_with_metadata()[function_name]['module']
             function_to_call = getattr(module, function_name)
-            if len(prepared_args):
-                logger.debug(f"THIS IS THE LEN: {len(prepared_args)}")
-                function_response = function_to_call(**prepared_args)
-            else: 
-                function_response = function_to_call()
+            function_response = function_to_call(**prepared_args)
         except Exception as exception:
             e = "Unable to call function"
             logger.error(e, exception)
@@ -102,8 +98,11 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
             }
         })
 
-        # Convert the function response to a string
-        response_as_string = "\n".join(function_response) if function_response is list else str(function_response) # type: ignore
+        # Convert the function response to a JSON string if it's a list or dict
+        if isinstance(function_response, (list, dict)):
+            response_as_string = json.dumps(function_response)
+        else:
+            response_as_string = str(function_response)
 
         # Add the function response to the messages
         messages.append({

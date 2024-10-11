@@ -182,6 +182,58 @@ def get_floor_plan(buildingId: str, floorId: str):
         msg = f"Error occurred during the request to retrieve floors: {e}"
         logger.error(msg)
         return msg
+    
+@tool_metadata({
+    "type": "function",
+    "tool_type": "archibus",
+    "function": {
+      "name": "verify_booking_details",
+      "description": "Confirms the workspace or meeting space booking details with the user. You are not making the booking for them. This function should be used after all the necessary information has been acquired, including the buildingId, floorId, roomId, date, first AND last name, and duration. ",
+      "parameters": {
+        "type": "object",
+          "properties": {
+              "buildingId": {
+                  "type": "string",
+                  "description": "The unique identifier of the building where the booking takes place. Example: AB-BAS4. DO NOT USE THE STREET NUMBER OR ADDRESS."
+              },
+              "floorId": {
+                "type": "string",
+                "description": "The unique identifier of the floor in the building that the user would like to make a booking on. Example: T404."
+              },
+              "roomId": {
+                "type": "string",
+                "description": "The identifier of the room in the building and on the given floor that the user would like to make a booking on. Example: W037."
+              },
+              "date": {
+                  "type": "string",
+                  "description": "The month, day, and year of the booking, formatted like YYYY-MM-DD. If the user does not provide a date, ask them for it. The year is 2024 unless otherwise specified."
+              },
+              "user": {
+                "type": "string",
+                "description": "The name for whom the booking is being made for, in the format 'lastname, firstname'. If the user doesn't provide a first and last name, ask them for it."
+              }, 
+              "bookingType": {
+                "type": "string",
+                "description": "The duration of the booking. Options are 'FULLDAY', 'AFTERNOON', and 'MORNING'."
+              }
+          },
+          "required": ["date", "buildingId", "user", "duration", "floorId", "roomId"]
+      }
+    }
+  })
+def verify_booking_details(date: str, buildingId: str, user: str, bookingType: str, floorId: str, roomId: str):
+
+    booking_details = {
+        "createdBy": user,
+        "assignedTo": user,
+        "buildingId": buildingId,
+        "floorId": floorId,
+        "roomId": roomId,
+        "bookingType": bookingType,
+        "startDate": date
+    }
+
+    return booking_details
 
 @tool_metadata({
     "type": "function",
@@ -206,6 +258,8 @@ def make_api_call(uri: str, payload=None) -> requests.Response:
     }
 
     if payload:
+        headers['Accept'] = '*/*'
+        headers['Content-Type'] = 'application/json'
         response = requests.post(api_url + uri, headers=headers, auth=auth, data=payload)
     else:
         response = requests.get(api_url + uri, headers=headers, auth=auth)

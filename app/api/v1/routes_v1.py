@@ -201,6 +201,6 @@ def book_reservation(booking_confirmation: BookingConfirmation):
         response = make_api_call(uri, payload)
         return response.json()
     except requests.HTTPError as e:
-            msg = f"Didn't make the reservation: {e}"
-            logger.error(msg)
-            return msg
+        msg = f"Didn't make the reservation: {e}"
+        logger.error(msg)
+        abort(500, msg)
