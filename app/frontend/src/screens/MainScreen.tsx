@@ -27,7 +27,7 @@ interface MainScreenProps {
 
 const MainScreen = ({userData}: MainScreenProps) => {
     const defaultEnabledTools: { [key: string]: boolean } = {};
-    allowedToolsSet.forEach(tool => {
+    allowedToolsSet.forEach((tool) => {
         defaultEnabledTools[tool] = true;
     });
 

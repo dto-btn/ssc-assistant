@@ -190,7 +190,7 @@ def get_floor_plan(buildingId: str, floorId: str):
         "description": "This function is used to know what is the current date and time. It returns the current date and time in text format. Use this if you are unsure of what is the current date, do not make assumptions about the current date and time."
     }
   })
-def get_current_date() -> str:
+def get_current_date():
     """
     TODO: this perhaps should be moved into a more generic tools folder.
     """

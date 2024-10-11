@@ -103,7 +103,6 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
     if message_request.tools:
         logger.debug(f"Using Tools: {message_request.tools}")
         tools = load_tools(message_request.tools)
-        logger.debug(tools)
         """
         1a. Invoke tools completion,
         """

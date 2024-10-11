@@ -35,17 +35,12 @@ def discover_functions_with_metadata(base_path):
                     # Extract tool_type from the file name
                     tool_type = file[:-3].split('_functions')[0]
 
-                    # Check if tool_type is defined inside the module
-                    if hasattr(module, 'TOOL_TYPE'):
-                        tool_type = getattr(module, 'TOOL_TYPE')
-
                     for attr_name in dir(module):
                         attr = getattr(module, attr_name)
                         if callable(attr) and hasattr(attr, "_tool_metadata"):
                             metadata = attr._tool_metadata
                             metadata['tool_type'] = tool_type # also add tool type on top of the rest of things
-                    functions_with_metadata[metadata["function"]["name"]] = {'metadata': metadata, 'module': module, 'tool_type': tool_type}
-    logger.debug(f"FUNCTIONS WITH METADATA: {functions_with_metadata}")
+                            functions_with_metadata[metadata["function"]["name"]] = {'metadata': metadata, 'module': module, 'tool_type': tool_type}
     return functions_with_metadata
 
 def get_functions_with_metadata():
@@ -88,7 +83,11 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
         try:
             module = get_functions_with_metadata()[function_name]['module']
             function_to_call = getattr(module, function_name)
-            function_response = function_to_call(**prepared_args)
+            if len(prepared_args):
+                logger.debug(f"THIS IS THE LEN: {len(prepared_args)}")
+                function_response = function_to_call(**prepared_args)
+            else: 
+                function_response = function_to_call()
         except Exception as exception:
             e = "Unable to call function"
             logger.error(e, exception)
