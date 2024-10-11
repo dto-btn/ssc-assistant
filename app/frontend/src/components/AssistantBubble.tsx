@@ -1,4 +1,4 @@
-import { Box, Paper, Divider, Chip, Stack, Typography, Link, Tooltip } from '@mui/material';
+import { Box, Paper, Divider, Chip, Stack, Typography, Link, Tooltip, Button, Dialog, DialogTitle, IconButton, PaperProps } from '@mui/material';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -11,6 +11,8 @@ import ProfileCardsContainer from '../containers/ProfileCardsContainer';
 import HandymanIcon from '@mui/icons-material/Handyman';
 import AutoAwesome from '@mui/icons-material/AutoAwesome';
 import { visuallyHidden } from '@mui/utils';
+import Draggable from 'react-draggable';
+import FitScreenIcon from '@mui/icons-material/FitScreen';
 
 interface AssistantBubbleProps {
     text: string;
@@ -23,15 +25,31 @@ interface AssistantBubbleProps {
     total: number;
     setIsFeedbackVisible: React.Dispatch<React.SetStateAction<boolean>>;
     setIsGoodResponse: React.Dispatch<React.SetStateAction<boolean>>;
+    handleBookReservation: (bookingDetails: BookingConfirmation) => void;
 }
 
-export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse }: AssistantBubbleProps) => {
+function DraggablePaperComponent(props: PaperProps) {
+    return (
+      <Draggable
+        handle="#draggable-dialog-title"
+        cancel={'[class*="MuiDialogContent-root"]'}
+      >
+        <Paper {...props} />
+      </Draggable>
+    );
+}
+
+export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse, handleBookReservation }: AssistantBubbleProps) => {
   const { t, i18n } = useTranslation();
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
-  const [profiles, setProfiles] = useState<EmployeeProfile[]>([])
-  const [profilesExpanded, setExpandProfiles] = useState(false)
+  const [profiles, setProfiles] = useState<EmployeeProfile[]>([]);
+  const [profilesExpanded, setExpandProfiles] = useState(false);
+  const [floorPlanFilename, setFloorPlanFilename] = useState("");
+  const [bookingDetails, setBookingDetails] = useState<BookingConfirmation | undefined>(undefined);
+  const [confirmButtonDisabled, setConfirmButtonDisabled] = useState(false);
+  const [isFloorPlanExpanded, setFloorPlanExpanded] = useState(false);
   const isMostRecent = index === total - 1;
   const toolsUsed = toolsInfo && toolsInfo.tool_type.length > 0
 
@@ -88,29 +106,38 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
     }
 }, [isLoading, context, text, scrollRef]);
 
-  const processProfiles = (employeeProfiles: EmployeeProfile[]) => {
-      const processedProfiles: EmployeeProfile[] = [];
-      
-      employeeProfiles.forEach((profile) => {
-          if (text.includes(profile.email) || (profile.phone && text.includes(profile.phone))) {
-              profile.matchedProfile = true;
-          } else {
-            profile.matchedProfile = false;
-          }
-          processedProfiles.push(profile);
-      });
-
-    return processedProfiles;
-};
-
   useEffect(() => {
-      if (toolsInfo && toolsInfo.payload?.hasOwnProperty("profiles") && toolsInfo.payload.profiles !== null) {
-          const processedProfiles = processProfiles(toolsInfo.payload.profiles);
-          setProfiles(processedProfiles);
-      } else {
-        setProfiles([]);
-      }
-  }, [toolsInfo]);
+    const processProfiles = (employeeProfiles: EmployeeProfile[]) => {
+        const processedProfiles: EmployeeProfile[] = [];
+
+        employeeProfiles.forEach((profile) => {
+            if (text.includes(profile.email) || (profile.phone && text.includes(profile.phone))) {
+                profile.matchedProfile = true;
+            } else {
+                profile.matchedProfile = false;
+            }
+            processedProfiles.push(profile);
+        });
+
+        return processedProfiles;
+    };
+
+    if (toolsInfo) {
+        if (toolsInfo.payload && Object.prototype.hasOwnProperty.call(toolsInfo.payload, "profiles") && toolsInfo.payload.profiles !== null) {
+            const processedProfiles = processProfiles(toolsInfo.payload.profiles);
+            setProfiles(processedProfiles);
+        }
+
+        if (toolsInfo.payload && Object.prototype.hasOwnProperty.call(toolsInfo.payload, "floorPlan")) {
+            const floorPlanFile = toolsInfo.payload.floorPlan;
+            setFloorPlanFilename(floorPlanFile)
+        }
+
+        if (toolsInfo.payload && Object.prototype.hasOwnProperty.call(toolsInfo.payload, "bookingDetails")) {
+            setBookingDetails(toolsInfo.payload.bookingDetails);
+        }
+    }
+  }, [toolsInfo, text]);
 
 
   useEffect(() => processingComplete ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" }) : undefined, [processingComplete, scrollRef]);
@@ -123,6 +150,13 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
   const handleToggleShowProfiles = () => {
     setExpandProfiles(!profilesExpanded)
   }
+
+  const handleConfirmButtonClicked = () => {
+    setConfirmButtonDisabled(true);
+    if (bookingDetails) {
+      handleBookReservation(bookingDetails);
+    }
+  };
 
   return (
     <ChatBubbleWrapper tabIndex={0}>
@@ -218,11 +252,92 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
               isExpanded={profilesExpanded}
               toggleShowProfileHandler={handleToggleShowProfiles}
             />
-            } 
+            }
+
+            {floorPlanFilename && 
+              <>
+                  <FloorPlanView 
+                    sx={{
+                      display: 'flex', 
+                      flex: '1', 
+                      width: {'xs': '300px', 'sm': '450px', 'md': '600px', 'lg': '800px'},
+                      position: 'relative',
+                    }}
+                  >
+                    <IconButton
+                      sx={{
+                        position: 'absolute',
+                        top: '0px', 
+                        right: '0px', 
+                        zIndex: 10, 
+                        color: 'black',
+                      }}
+                      aria-label={t("aria.expand.floorPlan")}
+                      onClick={() => setFloorPlanExpanded(true)}
+                    >
+                        <FitScreenIcon sx={{fontSize: '30px'}}/>
+                    </IconButton>
+                    <img src={floorPlanFilename} alt={t("archibus.floorPlan")} />
+                  </FloorPlanView>
+
+                  <Dialog 
+                    open={isFloorPlanExpanded} 
+                    onClose={() => setFloorPlanExpanded(false)} 
+                    PaperComponent={DraggablePaperComponent}
+                    aria-labelledby="draggable-dialog-title"
+                    fullWidth maxWidth="md"
+                    disableScrollLock
+                  >
+                    <DialogTitle style={{ cursor: 'move', height: '50px' }} id="draggable-dialog-title">
+                    </DialogTitle>
+                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                      <img
+                        src={floorPlanFilename}
+                        alt={t("archibus.floorPlan")}
+                        style={{
+                          width: '100%',
+                          height: 'auto',
+                          display: 'block',
+                          padding: '0px 50px 50px 50px'
+                        }}
+                      />
+                    </div>
+                  </Dialog>
+              </>
+            }
+
+            {bookingDetails &&
+              <ConfirmBookingBox >
+                  <Button
+                    disabled={confirmButtonDisabled}
+                    sx={{
+                      fontSize: '20px',
+                      color: 'white',
+                      borderRadius: '5px',
+                      backgroundColor: 'primary.main',
+                      height: '40px',
+                      width: '80%',
+                      maxWidth: '400px',
+                      padding: '40px',
+                      '&:hover': {
+                        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.3)',
+                        backgroundColor: '#261F4C'
+                      },
+                      '&:disabled': {
+                        backgroundColor: 'grey',
+                        color: 'white', 
+                      }
+                    }}
+                    onClick={handleConfirmButtonClicked}
+                  >
+                    {t('booking.complete')}
+                  </Button>
+              </ConfirmBookingBox> 
+            }
           </Paper>
         </Box>
         <Box>
-          {total > 1 && index !!!= 0  &&
+          {total > 1 && index !!= 0  &&
           <Paper sx={{backgroundColor: 'transparent', boxShadow: 'none', mt: 1, ml:2}}>
             <BubbleButtons 
               setIsFeedbackVisible={setIsFeedbackVisible} 
@@ -268,7 +383,7 @@ const IconWrapper = styled(Box)`
 
 const TextComponentsBox = styled(Box)`
   max-width: 95%;
-  
+
   code {
     max-width: 95%;
     padding-right: 15px;
@@ -277,4 +392,15 @@ const TextComponentsBox = styled(Box)`
     padding: 4px 2px;
     margin: 5px 5px 5px 0px;
   }
+`;
+
+const FloorPlanView = styled(Box)({
+    margin: '20px 30px',
+});
+
+const ConfirmBookingBox = styled(Box)`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 30px;
 `;

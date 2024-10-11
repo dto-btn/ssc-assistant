@@ -1,5 +1,5 @@
 /****************************************************
-*                 Azure App frontend                *
+*                 Azure App API                *
 *****************************************************/
 resource "azurerm_service_plan" "api" {
   name                = "${var.name_prefix}${var.project_name}-api-plan"
@@ -7,6 +7,54 @@ resource "azurerm_service_plan" "api" {
   location            = azurerm_resource_group.main.location
   sku_name            = "S1"
   os_type             = "Linux"
+}
+
+resource "azurerm_monitor_metric_alert" "http_5xx_alert" {
+  name                = "SSC Assistant 5xx Alert"
+  resource_group_name = azurerm_resource_group.main.name
+  scopes              = [azurerm_linux_web_app.api.id]
+  description         = "Alert for HTTP 5xx Errors"
+  severity            = 1
+  frequency           = "PT1M"
+  window_size         = "PT5M"
+  target_resource_type = "Microsoft.Web/sites"
+  criteria {
+    metric_namespace = "Microsoft.Web/sites"
+    metric_name      = "Http5xx"
+    aggregation      = "Total"
+    operator         = "GreaterThan"
+    threshold        = 1
+  }
+}
+
+resource "azurerm_monitor_metric_alert" "http_4xx_alert" {
+  name                = "SSC Assistant 4xx Alert"
+  resource_group_name = azurerm_resource_group.main.name
+  scopes              = [azurerm_linux_web_app.api.id]
+  description         = "Alert for HTTP 4xx Errors"
+  severity            = 2
+  frequency           = "PT1M"
+  window_size         = "PT5M"
+  target_resource_type = "Microsoft.Web/sites"
+  criteria {
+    metric_namespace = "Microsoft.Web/sites"
+    metric_name      = "Http4xx"
+    aggregation      = "Total"
+    operator         = "GreaterThan"
+    threshold        = 10
+  }
+}
+
+
+resource "azurerm_monitor_action_group" "alerts_group" {
+  name                = "SSC Assistant Alerts group"
+  resource_group_name = azurerm_resource_group.main.name
+  short_name          = "Alert"
+
+  email_receiver {
+    name          = "sendtogt"
+    email_address = data.azuread_user.dev-gt.user_principal_name
+  }
 }
 
 resource "azurerm_linux_web_app" "api" {
@@ -62,11 +110,12 @@ resource "azurerm_linux_web_app" "api" {
     AZURE_AD_TENANT_ID            = data.azurerm_client_config.current.tenant_id
     WEBSITE_WEBDEPLOY_USE_SCM     = true
     WEBSITE_RUN_FROM_PACKAGE      = "1"
+    ALLOWED_TOOLS                 = "corporate, geds"
     #PORT = 5001
   }
 
   sticky_settings { # settings that are the same regardless of deployment slot..
-    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DATABASE_ENDPOINT", "AZURE_SEARCH_INDEX_NAME" ]
+    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DATABASE_ENDPOINT", "AZURE_SEARCH_INDEX_NAME", "ALLOWED_TOOLS" ]
   }
 }
 

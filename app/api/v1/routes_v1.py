@@ -6,8 +6,10 @@ from flask import Response, jsonify, request, stream_with_context
 from openai import Stream
 import openai
 from openai.types.chat import (ChatCompletion, ChatCompletionChunk)
+import requests
+from tools.archibus.archibus_functions import make_api_call
 from utils.db import store_completion, store_request, leave_feedback, flag_conversation
-from utils.models import Completion, Feedback, MessageRequest, ToolInfo
+from utils.models import BookingConfirmation, Completion, Feedback, MessageRequest, ToolInfo
 from utils.openai import (build_completion_response, chat_with_data,
                           convert_chat_with_data_response)
 from utils.auth import auth, user_ad
@@ -168,3 +170,37 @@ def completion_chat_stream(message_request: MessageRequest):
 def feedback(feedback: Feedback):
     leave_feedback(feedback)
     return jsonify("Feedback saved!", 200)
+
+@api_v1.post('/book_reservation')
+@api_v1.doc("Make a workspace booking through the Archibus API.")
+@api_v1.doc(security='ApiKeyAuth')
+@auth.login_required(role='chat')
+@api_v1.input(BookingConfirmation.Schema, arg_name="booking_confirmation", example={ # type: ignore
+                                                                                    "buildingId": "HQ-BAS4",
+                                                                                    "floorId": "T404",
+                                                                                    "roomId": "W037",
+                                                                                    "createdBy": "AITKEN, KYLE",
+                                                                                    "assignedTo": "AITKEN, KYLE",
+                                                                                    "bookingType": "FULLDAY",
+                                                                                    "startDate": "2024-10-19"
+                                                                                })                                                                              
+def book_reservation(booking_confirmation: BookingConfirmation):
+    try:
+        uri = '/reservations/'
+
+        # simple work around to uppercase the name (I think they fixed their API by now, this is code that will be removed anyways.)
+        booking_confirmation.createdBy = booking_confirmation.createdBy.upper()
+        booking_confirmation.assignedTo = booking_confirmation.assignedTo.upper()
+
+        payload = json.dumps(
+                    booking_confirmation.__dict__,
+                    default=lambda o: o.__dict__
+                )
+
+        logger.debug(payload)
+        response = make_api_call(uri, payload)
+        return response.json()
+    except requests.HTTPError as e:
+        msg = f"Didn't make the reservation: {e}"
+        logger.error(msg)
+        abort(500, msg)
