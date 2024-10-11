@@ -21,3 +21,12 @@ data "azuread_service_principal" "terraform" {
 #   role_definition_name = "Contributor"
 #   principal_id         = ###
 # }
+
+#######################################################
+#                      APPS                           #
+#######################################################
+resource "azurerm_role_assignment" "api_read_openai" {
+  role_definition_name = "Cognitive Services User"
+  scope = data.azurerm_resource_group.ai.id
+  principal_id = azurerm_linux_web_app.api.identity[0].principal_id
+}

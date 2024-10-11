@@ -11,6 +11,10 @@ data "azurerm_client_config" "current" {}
 /****************************************************
 *                     OpenAI                        *
 *****************************************************/
+data "azurerm_resource_group" "ai" {
+  name = var.openai_rg
+}
+
 data "azurerm_cognitive_account" "ai" {
   name                = var.openai_name
   resource_group_name = var.openai_rg
