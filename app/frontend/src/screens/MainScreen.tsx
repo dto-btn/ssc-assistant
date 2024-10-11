@@ -28,7 +28,10 @@ interface MainScreenProps {
 const MainScreen = ({userData}: MainScreenProps) => {
     const defaultEnabledTools: { [key: string]: boolean } = {};
     allowedToolsSet.forEach((tool) => {
-        defaultEnabledTools[tool] = true;
+        if(tool == 'archibus')
+            defaultEnabledTools[tool] = false;
+        else
+            defaultEnabledTools[tool] = true;
     });
 
     const defaultModel = "gpt-4o";
@@ -422,10 +425,28 @@ const MainScreen = ({userData}: MainScreenProps) => {
         const { name, checked } = event.target;
 
         setCurrentChatHistory((prevChatHistory) => {
-            const updatedTools = {
-                ...prevChatHistory.enabledTools,
-                [name]: checked
-            };
+            let updatedTools;
+
+            if (name === 'archibus' && checked) {
+                // If 'archibus' is enabled, set all other tools to off
+                updatedTools = Object.keys(prevChatHistory.enabledTools).reduce((acc: { [key: string]: boolean }, tool: string) => {
+                    acc[tool] = tool === 'archibus';
+                    return acc;
+                }, {});
+            } else if (name !== 'archibus' && checked) {
+                // If any tool other than 'archibus' is enabled, set 'archibus' to off
+                updatedTools = {
+                    ...prevChatHistory.enabledTools,
+                    [name]: checked,
+                    'archibus': false
+                };
+            } else {
+                // Otherwise, just update the specific tool's state
+                updatedTools = {
+                    ...prevChatHistory.enabledTools,
+                    [name]: checked
+                };
+            }
 
             const updatedChatHistory = {
                 ...prevChatHistory,
