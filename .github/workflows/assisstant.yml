@@ -23,7 +23,7 @@ jobs:
     secrets: inherit
 
   api-pilot-prod:
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/api.yml
     with:
       environment: 'pilot-prod'
@@ -31,7 +31,7 @@ jobs:
     secrets: inherit
 
   frontend-pilot-prod:
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/frontend.yml
     with:
       allowed-tools: 'geds,corporate'

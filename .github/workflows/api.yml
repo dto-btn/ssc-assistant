@@ -19,9 +19,9 @@ permissions:
   id-token: write
   contents: read
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: true
 
 jobs:
   build:
@@ -55,6 +55,7 @@ jobs:
     #- name: Run tests
     #     TODO
     - name: Zip artifact for deployment
+      if: github.ref == 'refs/heads/main'
       run: zip release.zip ./* -r
 
     - name: Upload artifact for deployment job
