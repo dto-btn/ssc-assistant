@@ -1,11 +1,19 @@
 name: API
 
 on:
-  push:
-    branches:
-      - main
-      - dev
-  pull_request:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+      app-name:
+        type: string
+        required: true
+    secrets: 
+      API_PUBLISH_PROFILE:
+        required: true
+      AZURE_CREDENTIALS:
+        required: true
 
 permissions:
   id-token: write
@@ -50,16 +58,16 @@ jobs:
       run: zip release.zip ./* -r
 
     - name: Upload artifact for deployment job
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+      if: github.event_name != 'pull_request'
       uses: actions/upload-artifact@v3
       with:
         name: api
         path: release.zip
 
   deploy:
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    if: github.event_name != 'pull_request'
     needs: build
-    environment: ${{ github.ref == 'refs/heads/main' && 'pilot-prod' || 'dev'}}
+    environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
 
     steps:
@@ -76,7 +84,7 @@ jobs:
     - name: 'Deploy to Azure Web App'
       uses: azure/webapps-deploy@v3.0.1
       with:
-        app-name: ${{ github.ref == 'refs/heads/main' && 'ssc-assistant-api' || 'ssc-assistant-dev-api'}}
+        app-name: ${{ inputs.app-name }}
         # az webapp deployment list-publishing-profiles --name ssc-assistant-dev-api --resource-group YourResourceGroupName --xml (save as secret)
         publish-profile: ${{ secrets.API_PUBLISH_PROFILE }}
         package: 'release.zip'
