@@ -1,23 +1,38 @@
 name: Frontend
 
 on:
-  push:
-    branches:
-      - main
-      - dev
-  pull_request:
+  workflow_call:
+    inputs:
+      allowed-tools:
+        type: string
+        required: true
+      environment:
+        type: string
+        required: true
+      app-name:
+        type: string
+        required: true
+    secrets: 
+      FRONTEND_PUBLISH_PROFILE:
+        required: false
+      AZURE_CREDENTIALS:
+        required: true
+      VITE_AZURE_AD_CLIENT_ID:
+        required: false
+      VITE_AZURE_AD_TENANT_ID:
+        required: false
 
 permissions:
   id-token: write
   contents: read
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: true
 
 jobs:
   build:
-    environment: ${{ github.ref == 'refs/heads/main' && 'pilot-prod' || 'dev'}}
+    environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -44,22 +59,24 @@ jobs:
       env:
         VITE_AZURE_AD_CLIENT_ID: ${{ secrets.VITE_AZURE_AD_CLIENT_ID }}
         VITE_AZURE_AD_TENANT_ID: ${{ secrets.VITE_AZURE_AD_TENANT_ID }}
-        VITE_ALLOWED_TOOLS: ${{ github.ref == 'refs/heads/main' && 'geds,corporate' || 'geds,corporate,archibus'}}
+        VITE_ALLOWED_TOOLS: ${{ inputs.allowed-tools }}
 
     # This step will only run when the event is a push to the main branch
     - name: Zip artifact for deployment
+      if: github.ref == 'refs/heads/main'
       run: zip release.zip ./* -r
 
     # This step will only run when the event is a push to the main branch
     - name: Upload artifact for deployment job
+      if: github.ref == 'refs/heads/main'
       uses: actions/upload-artifact@v3
       with:
         name: node-app
         path: release.zip
 
   deploy:  # TEMPORARY DEPLOY ONLY ON ARCHIBUS BRANCH OR MAIN
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
-    environment: ${{ github.ref == 'refs/heads/main' && 'pilot-prod' || 'dev'}}
+    if: github.ref == 'refs/heads/main'
+    environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     needs: build
     steps:
@@ -79,21 +96,8 @@ jobs:
     - name: 'Deploy to Azure Web App'
       uses: azure/webapps-deploy@v3.0.1
       with:
-        app-name: ${{ github.ref == 'refs/heads/main' && 'ssc-assistant' || 'ssc-assistant-dev'}}
+        app-name: ${{ inputs.app-name }}
         # az webapp deployment list-publishing-profiles --name ssc-assistant-api --resource-group YourResourceGroupName --xml (save as secret)
         publish-profile: ${{ secrets.FRONTEND_PUBLISH_PROFILE }}
         # very important: https://learn.microsoft.com/en-us/azure/app-service/deploy-run-package#enable-running-from-package
         package: 'release.zip'
-
-  # cleanup_artifacts:
-  #   needs: 
-  #     - build 
-  #     - deploy-pilot-prod
-  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Delete artifacts
-  #       run: |
-  #         # Use GitHub's REST API to delete the artifacts
-  #         curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-  #         "https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${{ github.run_id }}"
