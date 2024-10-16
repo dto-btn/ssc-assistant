@@ -23,7 +23,7 @@ __all__ = ["chat_with_data", "convert_chat_with_data_response", "build_completio
 token_provider = get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default")
 
 azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
-api_version             = os.getenv("AZURE_OPENAI_VERSION", "2024-04-01-preview")
+api_version             = os.getenv("AZURE_OPENAI_VERSION", "2024-05-01-preview")
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
 index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "latest")
