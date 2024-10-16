@@ -26,10 +26,6 @@ permissions:
   id-token: write
   contents: read
 
-# concurrency:
-#   group: ${{ github.workflow }}-${{ github.ref }}
-#   cancel-in-progress: true
-
 jobs:
   build:
     environment: ${{ inputs.environment }}
@@ -71,7 +67,7 @@ jobs:
       if: github.ref == 'refs/heads/main'
       uses: actions/upload-artifact@v3
       with:
-        name: node-app
+        name: node-app ${{ inputs.environment }}
         path: release.zip
 
   deploy:  # TEMPORARY DEPLOY ONLY ON ARCHIBUS BRANCH OR MAIN
@@ -88,7 +84,7 @@ jobs:
     - name: Download artifact from build job
       uses: actions/download-artifact@v3
       with:
-        name: node-app
+        name: node-app ${{ inputs.environment }}
 
     # - name: Unzip artifact for deployment
     #   run: unzip release.zip
