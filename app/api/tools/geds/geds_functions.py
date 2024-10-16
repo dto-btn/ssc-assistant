@@ -40,7 +40,7 @@ def get_employee_information(employee_lastname: str = "", employee_firstname: st
     """
     get information about a specific employee
     """
-    print(f"getting info for employee -> {employee_firstname} {employee_lastname}")
+    logger.debug("getting info for an employee")
     # Check if the last name is provided, otherwise request it
     if not employee_lastname:
         return "Please provide a last name to search for an employee."
@@ -83,7 +83,7 @@ def _get_employee_by_phone_number(employee_phone_number: str):
     """
     get information about a specific employee by phone number
     """
-    print(f"getting info for employee with phone number-> {employee_phone_number}")
+    logger.debug("getting info for employee with phone number")
     # if phone number doesnt contain "-", add it
     if "-" not in employee_phone_number:
         employee_phone_number = employee_phone_number[:3] + "-" + employee_phone_number[3:6] + "-" + employee_phone_number[6:]
@@ -103,10 +103,9 @@ def _get_employee_by_phone_number(employee_phone_number: str):
 
     # Check if the response was successful
     if response.status_code == 200:
-        logger.debug(response)
         return json.dumps(response.text)
     else:
-        logger.debug("Unable to get any info.", response)
+        logger.debug("Unable to get any info.", response.reason)
         return "Didn't find any matching employee with that phone number."
     
 def _extract_last_description(organization_info):
