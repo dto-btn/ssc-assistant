@@ -43,6 +43,7 @@ interface MessageRequest {
   uuid?: string;
   quotedText?: string;
   model: string;
+  fullName?: string;
 }
 
 interface ToastMessage {
@@ -74,4 +75,14 @@ interface ChatHistory {
   uuid: string;
   enabledTools: Record<string, boolean>;
   model: string;
+}
+
+interface BookingConfirmation {
+  bookingType: string;
+  buildingId: string;
+  floorId: string;
+  roomId: string;
+  createdBy: string;
+  assignedTo: string;
+  startDate: string;
 }

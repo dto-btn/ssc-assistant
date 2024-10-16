@@ -14,19 +14,26 @@ import Cookies from "js-cookie";
 import { v4 as uuidv4 } from 'uuid';
 import QuoteTextTooltip from "../components/QuoteTextTooltip";
 import { TutorialBubble } from "../components/TutorialBubble";
+import { bookReservation } from "../api/api";
+import { allowedToolsSet } from '../allowedTools';
+
 interface MainScreenProps {
     userData: {
         accessToken: string;
-        graphData: any; 
+        graphData: any;
         profilePictureURL: string;
     };
 }
 
 const MainScreen = ({userData}: MainScreenProps) => {
-    const defaultEnabledTools = {
-        "geds": true,
-        "corporate": true,
-    };
+    const defaultEnabledTools: { [key: string]: boolean } = {};
+    allowedToolsSet.forEach((tool) => {
+        if(tool == 'archibus')
+            defaultEnabledTools[tool] = false;
+        else
+            defaultEnabledTools[tool] = true;
+    });
+
     const defaultModel = "gpt-4o";
     const defaultChatHistory = {
         "chatItems": [],
@@ -75,7 +82,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
             return undefined;
         }).filter(message => message !== undefined) as Message[];
     };
-    
+
     const sendApiRequest = async (request: MessageRequest) => {
         try {
             /**
@@ -193,7 +200,8 @@ const MainScreen = ({userData}: MainScreenProps) => {
             tools: (Object.keys(currentChatHistory.enabledTools)).filter((key) => currentChatHistory.enabledTools[key]),
             uuid: currentChatHistory.uuid,
             quotedText: messagedQuoted,
-            model: currentChatHistory.model
+            model: currentChatHistory.model,
+            fullName: userData.graphData['givenName'] + ' ' + userData.graphData['surname']
         };
 
         // update current chat window with the message sent..
@@ -214,7 +222,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
         event.preventDefault();
         setIsFeedbackVisible(false);
         let toast: ToastMessage;
-    
+
         try {
           await sendFeedback(feedback, isGoodResponse, currentChatHistory.uuid);
           toast = {
@@ -227,7 +235,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
             isError: true
           };
         }
-    
+
         setCurrentChatHistory((prevChatHistory) => {
             const updatedChatHistory = {
                 ...prevChatHistory,
@@ -260,7 +268,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
                 chatItems: updatedChatItems
             };
 
-            saveChatHistories(updatedChatHistory); 
+            saveChatHistories(updatedChatHistory);
             return updatedChatHistory;
         });
     };
@@ -304,37 +312,37 @@ const MainScreen = ({userData}: MainScreenProps) => {
         })
         setOpenDrawer(false);
     };
-    
+
     const setLangCookie = () => {
         Cookies.set("lang_setting", i18n.language, {
           expires: 30,
         });
         setOpenDrawer(false);
     };
-    
+
     const handleLogout = () => {
         instance.logoutRedirect({
           postLogoutRedirectUri: "/",
         });
     };
-    
+
     const setWelcomeMessage = async (graphData: any) => {
         setIsLoading(true);
 
         if (!currentChatHistory.uuid) {
             currentChatHistory.uuid = uuidv4();
         }
-    
+
         const systemMessage: Message = {
           role: "system",
           content: t("welcome.prompt.system")
         };
-    
+
         const welcomeMessageRequest: Message = {
           role: "user",
           content: t("welcome.prompt.user", {givenName: graphData['givenName']})
         };
-    
+
         const messages = [systemMessage, welcomeMessageRequest];
         const responsePlaceholder: Completion = {
             message: {
@@ -342,7 +350,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
             content: "",
             },
         };
-    
+
         // update current chat window with the message sent..
         setCurrentChatHistory((prevChatHistory) => {
             const updatedChatHistory = {
@@ -351,7 +359,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
             };
             return updatedChatHistory;
         });
-    
+
         // prepare request bundle
         const request: MessageRequest = {
           messages: messages,
@@ -361,13 +369,13 @@ const MainScreen = ({userData}: MainScreenProps) => {
           uuid: currentChatHistory.uuid,
           model: currentChatHistory.model
         };
-    
+
         sendApiRequest(request);
     }
 
     // Effect for setting the welcome message whenever the current chat is empty
     useEffect(() => {
-        if (isAuthenticated && userData.graphData && inProgress === InteractionStatus.None && 
+        if (isAuthenticated && userData.graphData && inProgress === InteractionStatus.None &&
             currentChatHistory.chatItems.length === 0) {
             setWelcomeMessage(userData.graphData);
         }
@@ -416,11 +424,29 @@ const MainScreen = ({userData}: MainScreenProps) => {
     const handleUpdateEnabledTools = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, checked } = event.target;
 
-        setCurrentChatHistory((prevChatHistory) => {            
-            const updatedTools = {
-                ...prevChatHistory.enabledTools,
-                [name]: checked
-            };
+        setCurrentChatHistory((prevChatHistory) => {
+            let updatedTools;
+
+            if (name === 'archibus' && checked) {
+                // If 'archibus' is enabled, set all other tools to off
+                updatedTools = Object.keys(prevChatHistory.enabledTools).reduce((acc: { [key: string]: boolean }, tool: string) => {
+                    acc[tool] = tool === 'archibus';
+                    return acc;
+                }, {});
+            } else if (name !== 'archibus' && checked) {
+                // If any tool other than 'archibus' is enabled, set 'archibus' to off
+                updatedTools = {
+                    ...prevChatHistory.enabledTools,
+                    [name]: checked,
+                    'archibus': false
+                };
+            } else {
+                // Otherwise, just update the specific tool's state
+                updatedTools = {
+                    ...prevChatHistory.enabledTools,
+                    [name]: checked
+                };
+            }
 
             const updatedChatHistory = {
                 ...prevChatHistory,
@@ -441,11 +467,11 @@ const MainScreen = ({userData}: MainScreenProps) => {
     };
 
     const hanldeUpdateModelVersion = (modelName: string) => {
-        setCurrentChatHistory((prevChatHistory) => {   
+        setCurrentChatHistory((prevChatHistory) => {
             const updatedChatHistory = {
                 ...prevChatHistory,
                 model: modelName
-            }         
+            }
             saveChatHistories(updatedChatHistory);
             return updatedChatHistory;
         });
@@ -469,7 +495,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
         } else {
             localStorage.setItem("hasSeenTutorials", "true");
             setShowTutorials(false);
-        }        
+        }
     };
 
     const handleDeleteSavedChat = (index: number) => {
@@ -502,9 +528,9 @@ const MainScreen = ({userData}: MainScreenProps) => {
             if (updatedChatHistories.length === 0) {
                 setChatHistoriesDescriptions(["Conversation 1"]);
             } else {
-                setChatHistoriesDescriptions(updatedChatHistories.map((chatHistory, index) => chatHistory.description || "Conversation " + (index + 1)));  
+                setChatHistoriesDescriptions(updatedChatHistories.map((chatHistory, index) => chatHistory.description || "Conversation " + (index + 1)));
             }
-            
+
             setChatIndexToLoadOrDelete(null);
             localStorage.setItem("chatHistories", JSON.stringify(updatedChatHistories));
         }
@@ -514,14 +540,14 @@ const MainScreen = ({userData}: MainScreenProps) => {
         setShowDeleteChatDialog(false);
         setChatIndexToLoadOrDelete(null);
     };
-    
+
     const handleLoadSavedChat = (index: number) => {
         const chatHistories = JSON.parse(localStorage.getItem("chatHistories") || "[]") as ChatHistory[];
         if (chatHistories) {
             const newChat = chatHistories[index];
             setCurrentChatHistory(newChat);
             setCurrentChatIndex(index);
-        }        
+        }
     };
 
     const handleNewChat = () => {
@@ -551,7 +577,32 @@ const MainScreen = ({userData}: MainScreenProps) => {
         }
         setChatHistoriesDescriptions(updatedChatHistories.map((chatHistory, index) => chatHistory.description || "Conversation " + (index + 1)));
     }
-    
+
+    const handleBookReservation = async (bookingDetails: BookingConfirmation) => {
+        let toast: ToastMessage;
+        try {
+            await bookReservation(bookingDetails);
+            toast = {
+                toastMessage: `${t("booking.success")} ${bookingDetails.startDate}`,
+                isError: false
+            };
+        } catch (error) {
+           toast = {
+                toastMessage: `${t("booking.fail")} ${error}`,
+                isError: true
+            };
+        }
+
+        setCurrentChatHistory((prevChatHistory) => {
+            const updatedChatHistory = {
+                ...prevChatHistory,
+                chatItems: [...prevChatHistory.chatItems, toast],
+            };
+            saveChatHistories(updatedChatHistory);
+            return updatedChatHistory;
+        });
+    }
+
     return (
         <>
             <CssBaseline />
@@ -567,7 +618,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
             >
                 <Box sx={{ flexGrow: 1 }}></Box>
                 <QuoteTextTooltip addQuotedText={handleAddQuotedText}/>
-                <ChatMessagesContainer 
+                <ChatMessagesContainer
                     chatHistory={currentChatHistory}
                     isLoading={isLoading}
                     chatMessageStreamEnd={chatMessageStreamEnd}
@@ -575,6 +626,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
                     setIsFeedbackVisible={setIsFeedbackVisible}
                     setIsGoodResponse={setIsGoodResponse}
                     handleRemoveToastMessage={handleRemoveToastMessage}
+                    handleBookReservation={handleBookReservation}
                 />
                 <div ref={chatMessageStreamEnd} style={{ height: '50px' }} />
                 <Box
@@ -599,20 +651,20 @@ const MainScreen = ({userData}: MainScreenProps) => {
                     />
                 </Box>
             </Box>
-            <Dial 
-                drawerVisible={openDrawer || (tutorialBubbleNumber !== undefined && tutorialBubbleNumber > 1)} 
-                onNewChat={handleNewChat} 
+            <Dial
+                drawerVisible={openDrawer || (tutorialBubbleNumber !== undefined && tutorialBubbleNumber > 1)}
+                onNewChat={handleNewChat}
                 onClearChat={handleClearChat}
             />
             <Disclaimer />
-            <DrawerMenu 
-                openDrawer={openDrawer || (tutorialBubbleNumber !== undefined && tutorialBubbleNumber > 1)} 
+            <DrawerMenu
+                openDrawer={openDrawer || (tutorialBubbleNumber !== undefined && tutorialBubbleNumber > 1)}
                 chatDescriptions={chatHistoriesDescriptions}
                 currentChatIndex={currentChatIndex}
-                toggleDrawer={setOpenDrawer} 
+                toggleDrawer={setOpenDrawer}
                 onClearChat={handleClearChat}
                 onNewChat={handleNewChat}
-                setLangCookie={setLangCookie} 
+                setLangCookie={setLangCookie}
                 logout={handleLogout}
                 enabledTools={currentChatHistory.enabledTools}
                 handleUpdateEnabledTools={handleUpdateEnabledTools}
@@ -657,8 +709,8 @@ const MainScreen = ({userData}: MainScreenProps) => {
                 </Dialog>
             }
 
-            {warningDialogMessage && 
-                <Dialog 
+            {warningDialogMessage &&
+                <Dialog
                     open={Boolean(warningDialogMessage)}
                     onClose={() => setWarningDialogMessage("")}
                 >

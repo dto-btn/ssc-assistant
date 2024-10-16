@@ -38,6 +38,7 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import EditIcon from '@mui/icons-material/Edit';
 import { useTranslation } from "react-i18next";
 import React from "react";
+import { allowedToolsSet } from "../allowedTools";
 
 interface DrawerMenuProps {
   openDrawer: boolean;
@@ -215,7 +216,7 @@ export const DrawerMenu = ({openDrawer, chatDescriptions, toggleDrawer, onClearC
         <Collapse in={toolMenuOpen} timeout="auto" unmountOnExit>
           <Divider />
           <FormGroup>
-            {Object.keys(enabledTools).map((tool, index) => {
+            {Object.keys(enabledTools).filter(tool => allowedToolsSet.has(tool)).map((tool, index) => {
               return (
                 <FormControlLabel 
                   label={t(tool)} key={index}

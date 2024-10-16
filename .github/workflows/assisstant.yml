@@ -1,0 +1,40 @@
+name: SSC Assistant
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  api-dev:
+    uses: ./.github/workflows/api.yml
+    with:
+      environment: 'dev'
+      app-name: 'ssc-assistant-dev-api'
+    secrets: inherit
+
+  frontend-dev:
+    uses: ./.github/workflows/frontend.yml
+    with:
+      allowed-tools: 'geds,corporate,archibus'
+      environment: 'dev'
+      app-name: 'ssc-assistant-dev'
+    secrets: inherit
+
+  api-pilot-prod:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/api.yml
+    with:
+      environment: 'pilot-prod'
+      app-name: 'ssc-assistant-api'
+    secrets: inherit
+
+  frontend-pilot-prod:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/frontend.yml
+    with:
+      allowed-tools: 'geds,corporate'
+      environment: 'pilot-prod'
+      app-name: 'ssc-assistant'
+    secrets: inherit
