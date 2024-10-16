@@ -13,7 +13,7 @@ on:
       API_PUBLISH_PROFILE:
         required: false
       AZURE_CREDENTIALS:
-        required: true
+        required: false
 
 permissions:
   id-token: write
@@ -36,7 +36,7 @@ jobs:
         ls -la
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5.2.0
       with:
         python-version: '3.11'
 
@@ -56,7 +56,7 @@ jobs:
 
     - name: Upload artifact for deployment job
       if: github.ref == 'refs/heads/main'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4.3.3
       with:
         name: api ${{ inputs.environment }}
         path: release.zip
@@ -69,7 +69,7 @@ jobs:
 
     steps:
     - name: Download artifact from build job
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4.1.8
       with:
         name: api ${{ inputs.environment }}
 
