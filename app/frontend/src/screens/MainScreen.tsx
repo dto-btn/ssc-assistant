@@ -85,24 +85,24 @@ const MainScreen = () => {
 
     const sendApiRequest = async (request: MessageRequest) => {
         try {
-            const expired = isTokenExpired(apiAccessToken);
-            if(expired){
-                instance.acquireTokenSilent({
+            let token = apiAccessToken;
+            if(!apiAccessToken || isTokenExpired(apiAccessToken)){
+                const response = await instance.acquireTokenSilent({
                     ...apiUse,
                     account: instance.getActiveAccount() as AccountInfo,
                     forceRefresh: true
-                }).then(response => {
-                    setApiAccessToken(response.accessToken);
                 });
+                setApiAccessToken(response.accessToken);
+                token = response.accessToken;
             }
 
-            if (!apiAccessToken)
+            if (!token)
             throw new Error(t("no.token"));
 
             const completionResponse = await completionMySSC({
                 request: request,
                 updateLastMessage: updateLastMessage,
-                accessToken: apiAccessToken
+                accessToken: token
             });
 
             setCurrentChatHistory((prevChatHistory) => {

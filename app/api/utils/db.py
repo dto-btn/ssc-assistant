@@ -33,10 +33,8 @@ def create_entity(data, partition_key: str, row_key_prefix: str, user: Any):
     entity['RowKey'] = f"{row_key_prefix}-{uuid.uuid4()}"
     try:
       #https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#payload-claims
-      if user and user['oid'] and user['sub'] and user['preferred_username']:
-          entity['oid'] = user['oid']
-          entity['sub'] = user['sub']
-          entity['preferred_username'] = user['preferred_username']
+      if user and user['upn']:
+          entity['preferred_username'] = user['upn']
     except Exception as e:
         logger.error("Unable to add user information", e)
 

@@ -15,8 +15,9 @@ class OAuth2TokenValidation:
     def __init__(self, tenant_id, client_id):
         # those are obtained via: https://login.microsoftonline.com/{tenant_id}/v2.0/.well-known/openid-configuration
         self.jwks_url = f"https://login.microsoftonline.com/{tenant_id}/discovery/v2.0/keys"
-        self.issuer_url = f"https://login.microsoftonline.com/{tenant_id}/v2.0"
-        self.audience = client_id
+        #self.issuer_url = f"https://login.microsoftonline.com/{tenant_id}/v2.0"
+        self.issuer_url = f"https://sts.windows.net/{tenant_id}/"
+        self.audience = client_id # client id here would be the API one, such as api://ID/scope format.
 
         self.jwks = json.loads(urlopen(self.jwks_url).read())
         self.last_jwks_public_key_update = time.time()
@@ -26,7 +27,6 @@ class OAuth2TokenValidation:
         :param token: the jwt token to validate
         :return: the decoded token if valid, else raises an exception
         """
-        print(token)
         try:
             unverified_header = jwt.get_unverified_header(token)
         except Exception as e:

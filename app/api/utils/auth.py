@@ -50,7 +50,6 @@ def verify_user_access_token(token):
     try:
         #https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#payload-claims
         user = oauth_validator.validate_token_and_decode_it(token)
-        logger.info("VALIDATED USER", user)
         if user:
             return user
     except Exception as e:
