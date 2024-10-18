@@ -43,10 +43,11 @@ msalInstance.initialize().then(() => {
   msalInstance.enableAccountStorageEvents();
 
   msalInstance.addEventCallback((event: EventMessage) => {
-    if (event.eventType === EventType.LOGIN_SUCCESS && event.payload) {
+    console.debug("msalInstance -> In addEventCallback(), EvenType = " + event.eventType);
+    if ((event.eventType === EventType.LOGIN_SUCCESS || event.eventType === EventType.SSO_SILENT_SUCCESS) && event.payload) {
       const account = event.payload as AccountInfo;
       msalInstance.setActiveAccount(account);
-      console.debug("msalInstance -> In Call back function, Login success detected, using payload account.");
+      console.debug("msalInstance -> In addEventCallback(), Login success detected, using payload account.");
     }
   });
 
