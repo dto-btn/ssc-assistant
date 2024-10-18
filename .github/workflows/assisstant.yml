@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 206-fix-double-log-in-issue-in-dev-environment-for-ssc-assistant
   pull_request:
 
 jobs:
