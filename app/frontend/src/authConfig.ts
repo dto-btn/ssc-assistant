@@ -54,9 +54,14 @@ export const msalConfig = {
  * For more information about OIDC scopes, visit:
  * https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-permissions-and-consent#openid-connect-scopes
  */
-export const loginRequest = {
+export const userRead = {
     //NOTE: scopes ["email", "openid", "profile"] are added by default
     scopes: ["User.Read"]
+};
+
+export const apiUse = {
+    //NOTE: scopes ["email", "openid", "profile"] are added by default
+    scopes: ["api://5026ea6d-9af1-49be-ba99-10d205d41e78/api.use"]
 };
 
 /**

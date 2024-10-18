@@ -26,7 +26,7 @@ class OAuth2TokenValidation:
         :param token: the jwt token to validate
         :return: the decoded token if valid, else raises an exception
         """
-
+        print(token)
         try:
             unverified_header = jwt.get_unverified_header(token)
         except Exception as e:
@@ -48,7 +48,7 @@ class OAuth2TokenValidation:
         except jwt.ExpiredSignatureError:
             raise Exception("Token has expired")
         except jwt.InvalidTokenError as e:
-            raise Exception("Invalid token")
+            raise Exception("Invalid token", e)
         except Exception as e:
             # update the public key if not fresh and try again
             if int(time.time() - self.last_jwks_public_key_update) > 60:

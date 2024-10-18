@@ -1,4 +1,4 @@
-import { loginRequest, graphConfig } from "./authConfig";
+import { userRead, graphConfig } from "./authConfig";
 import { msalInstance } from "./index";
 
 /**
@@ -16,7 +16,7 @@ export async function callMsGraph(accessToken?: string) {
         }
 
         const response = await msalInstance.acquireTokenSilent({
-            ...loginRequest,
+            ...userRead,
             account: account
         });
         accessToken = response.accessToken;
@@ -53,5 +53,5 @@ export async function callMsGraph(accessToken?: string) {
         console.error('Error fetching profile picture:', error);
     }
 
-    return {graphData, profilePictureURL};
+    return {graphData, accessToken, profilePictureURL};
 }

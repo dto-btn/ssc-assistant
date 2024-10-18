@@ -8,7 +8,7 @@ import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { isACompletion, isAMessage, isAToastMessage } from "../utils";
 import { isTokenExpired } from "../util/token";
 import { completionMySSC, sendFeedback } from "../api/api";
-import { loginRequest } from "../authConfig";
+import { apiUse } from "../authConfig";
 import { AccountInfo, InteractionStatus } from "@azure/msal-browser";
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from 'uuid';
@@ -58,6 +58,7 @@ const MainScreen = () => {
     const [quotedText, setQuotedText] = useState<string>();
     const [showTutorials, setShowTutorials] = useState(false);
     const [tutorialBubbleNumber, setTutorialBubbleNumber] = useState<number | undefined>(undefined);
+    const [ apiAccessToken, setApiAccessToken ] = useState<string>("");
 
     const menuIconRef = useRef<HTMLButtonElement>(null);
     const theme = useTheme();
@@ -84,31 +85,24 @@ const MainScreen = () => {
 
     const sendApiRequest = async (request: MessageRequest) => {
         try {
-            /**
-             * TODO: API call should be made with an accessToken to respect the auth flow,
-             *       however in this case, we do not have the luxury to modify our service provider config.
-             *       We at least send the idToken to decode and validate it on our API to ensure we log
-             *       proper user.
-             */
-            let idToken = instance.getActiveAccount()?.idToken;
-            const expired = isTokenExpired(idToken);
-
+            const expired = isTokenExpired(apiAccessToken);
             if(expired){
-            const response = await instance.acquireTokenSilent({
-                ...loginRequest,
-                account: instance.getActiveAccount() as AccountInfo,
-                forceRefresh: true
-            });
-            idToken = response.idToken;
+                instance.acquireTokenSilent({
+                    ...apiUse,
+                    account: instance.getActiveAccount() as AccountInfo,
+                    forceRefresh: true
+                }).then(response => {
+                    setApiAccessToken(response.accessToken);
+                });
             }
 
-            if (!idToken)
-            throw new Error(t("no.id.token"));
+            if (!apiAccessToken)
+            throw new Error(t("no.token"));
 
             const completionResponse = await completionMySSC({
                 request: request,
                 updateLastMessage: updateLastMessage,
-                accessToken: idToken
+                accessToken: apiAccessToken
             });
 
             setCurrentChatHistory((prevChatHistory) => {

@@ -1,17 +1,17 @@
 import { Box, CircularProgress, Typography, styled } from "@mui/material";
 import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png"
 import { useMsalAuthentication } from "@azure/msal-react";
-import { loginRequest } from "../authConfig";
+import { userRead } from "../authConfig";
 import { InteractionType } from "@azure/msal-browser";
 import { useEffect } from "react";
 
 const ConnectingScreen = () => {
-    const { login, error } = useMsalAuthentication(InteractionType.Silent, loginRequest);
+    const { login, error } = useMsalAuthentication(InteractionType.Silent, userRead);
 
     useEffect(() => {
         if (error) {
             console.log("useMsalAuthentication -> Unable to authenticate via silent SSO method, will force redirect login.");
-            login(InteractionType.Redirect, loginRequest);
+            login(InteractionType.Redirect, userRead);
         }
     }, [error]);
 
