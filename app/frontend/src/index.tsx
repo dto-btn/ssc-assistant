@@ -8,41 +8,57 @@ import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 
-import { MsalProvider } from "@azure/msal-react";
-import { PublicClientApplication } from "@azure/msal-browser";
-import { msalConfig, loginRequest } from './authConfig.ts';
+import { PublicClientApplication, EventType, AccountInfo, EventMessage } from "@azure/msal-browser";
+import { msalConfig } from './authConfig.ts';
+
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+
+const mainTheme = createTheme({
+  palette: {
+    primary: {
+      main: "#4b3e99" /* SSC's official colour code I found using our chatbot! XD */,
+    },
+    secondary: {
+      main: "#f33aea",
+    },
+    background: {
+      default: "white",
+    },
+  },
+});
 
 export const msalInstance = new PublicClientApplication(msalConfig);
 
 msalInstance.initialize().then(() => {
-  msalInstance.handleRedirectPromise().then((response) => {
-    console.debug("handleRedirectPromise --> start");
-    if (response && response.account) {
-      console.debug("handleRedirectPromise --> found account we will use:", response.account);
-      msalInstance.setActiveAccount(response.account);
-    } else {
-      // scope it to this tenant only.
-      const currentAccounts = msalInstance.getAllAccounts({tenantId: import.meta.env.VITE_AZURE_AD_TENANT_ID});
-      if (currentAccounts.length === 0) {
-        console.debug("handleRedirectPromise --> no account found, need to login with redirect");
-        msalInstance.loginRedirect(loginRequest);
-      } else {
-        console.debug("handleRedirectPromise --> account(s) found", currentAccounts[0]);
-        msalInstance.setActiveAccount(currentAccounts[0]);
-      }
-    }
-  }).catch((error) => {
-    console.error('Redirect error:', error);
-  });
-});
+  console.debug("msalInstance -> Initialisation...");
+  // Default to using the first account if no account is active on page load
+  const currentAccounts = msalInstance.getAllAccounts({tenantId: import.meta.env.VITE_AZURE_AD_TENANT_ID})
+  if (!msalInstance.getActiveAccount() && currentAccounts.length > 0) {
+    // Account selection logic is app dependent. Adjust as needed for different use cases.
+    msalInstance.setActiveAccount(currentAccounts[0]);
+    console.debug("msalInstance -> Found an active account from filtered tenant. Will use it to connect to the application.");
+  }
 
-const root = ReactDOM.createRoot(
-  document.getElementById("root") as HTMLElement
-);
-root.render(
-  <React.StrictMode>
-    <MsalProvider instance={msalInstance}>
-      <App />
-    </MsalProvider>
-  </React.StrictMode>
-);
+  // Optional - This will update account state if a user signs in from another tab or window
+  msalInstance.enableAccountStorageEvents();
+
+  msalInstance.addEventCallback((event: EventMessage) => {
+    if (event.eventType === EventType.LOGIN_SUCCESS && event.payload) {
+      const account = event.payload as AccountInfo;
+      msalInstance.setActiveAccount(account);
+      console.debug("msalInstance -> In Call back function, Login success detected, using payload account.");
+    }
+  });
+
+  const root = ReactDOM.createRoot(
+    document.getElementById("root") as HTMLElement
+  );
+
+  root.render(
+    <React.StrictMode>
+      <ThemeProvider theme={mainTheme}>
+          <App instance={msalInstance} />
+      </ThemeProvider>
+    </React.StrictMode>
+  );
+});

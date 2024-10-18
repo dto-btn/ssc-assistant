@@ -16,16 +16,10 @@ import QuoteTextTooltip from "../components/QuoteTextTooltip";
 import { TutorialBubble } from "../components/TutorialBubble";
 import { bookReservation } from "../api/api";
 import { allowedToolsSet } from '../allowedTools';
+import { callMsGraph } from "../graph";
+import { UserContext } from "../context/UserContext";
 
-interface MainScreenProps {
-    userData: {
-        accessToken: string;
-        graphData: any;
-        profilePictureURL: string;
-    };
-}
-
-const MainScreen = ({userData}: MainScreenProps) => {
+const MainScreen = () => {
     const defaultEnabledTools: { [key: string]: boolean } = {};
     allowedToolsSet.forEach((tool) => {
         if(tool == 'archibus')
@@ -42,6 +36,11 @@ const MainScreen = ({userData}: MainScreenProps) => {
         "enabledTools": defaultEnabledTools,
         "model": defaultModel
     }
+
+    const [userData, setUserData] = useState({
+        graphData: null,
+        profilePictureURL: ''
+    });
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [maxMessagesSent] = useState<number>(10);
@@ -169,7 +168,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
         }
     }
 
-    const makeApiRequest = async (question: string, quotedTextFromRegenerate?: string) => {
+    const makeApiRequest = async (question: string, userData: {graphData: any}, quotedTextFromRegenerate?: string) => {
         // set is loading so we disable some interactive functionality while we load the response
         setIsLoading(true);
         const messagedQuoted = quotedTextFromRegenerate ? quotedTextFromRegenerate : quotedText;
@@ -288,7 +287,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
         });
 
         if (isAMessage(lastQuestion)) {
-          makeApiRequest(lastQuestion.content ? lastQuestion.content : "", lastQuestion.quotedText);
+          makeApiRequest(lastQuestion.content ? lastQuestion.content : "", userData, lastQuestion.quotedText);
         }
     };
 
@@ -603,8 +602,22 @@ const MainScreen = ({userData}: MainScreenProps) => {
         });
     }
 
+    useEffect(() => {
+        console.debug("useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? "+isAuthenticated+", InProgress? "+inProgress+")");
+        if(isAuthenticated && !userData.graphData && inProgress === InteractionStatus.None){
+          //we do not have graphData, but since user is logged in we can now fetch it.
+          callMsGraph().then(response => {
+            console.debug("callMsGraph() -> Done!");
+            setUserData({ 
+              graphData: response.graphData,
+              profilePictureURL: response.profilePictureURL
+            });
+          });
+        }
+    }, [isAuthenticated, inProgress, userData]);
+
     return (
-        <>
+        <UserContext.Provider value={userData}>
             <CssBaseline />
             <TopMenu toggleDrawer={setOpenDrawer} ref={menuIconRef}  />
             <Box
@@ -644,7 +657,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
                         clearOnSend
                         placeholder={t("placeholder")}
                         disabled={isLoading}
-                        onSend={(question) => makeApiRequest(question)}
+                        onSend={(question) => makeApiRequest(question, userData)}
                         quotedText={quotedText}
                         handleRemoveQuote={handleRemoveQuote}
                         selectedModel ={currentChatHistory.model}
@@ -719,7 +732,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
                     </DialogContent>
                 </Dialog>
             }
-        </>
+        </UserContext.Provider>
     )
 }
 
