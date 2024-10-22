@@ -31,6 +31,10 @@ data "azuread_user" "po-af" {
   user_principal_name = "alain.forcier@ssc-spc.gc.ca"
 }
 
+data "azuread_user" "tl-davids" {
+  user_principal_name = "david.simard@ssc-spc.gc.ca"
+}
+
 data "azuread_service_principal" "terraform" {
   display_name = "Terraform-CIO-Automation-SP"
 }
