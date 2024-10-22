@@ -65,6 +65,7 @@ resource "azurerm_linux_web_app" "api" {
     WEBSITE_WEBDEPLOY_USE_SCM     = true
     WEBSITE_RUN_FROM_PACKAGE      = "1"
     ALLOWED_TOOLS                 = "corporate, geds, archibus"
+    WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
     #PORT = 5001
   }
 
