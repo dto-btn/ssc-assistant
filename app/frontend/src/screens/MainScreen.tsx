@@ -8,7 +8,7 @@ import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { isACompletion, isAMessage, isAToastMessage } from "../utils";
 import { isTokenExpired } from "../util/token";
 import { completionMySSC, sendFeedback } from "../api/api";
-import { loginRequest } from "../authConfig";
+import { apiUse } from "../authConfig";
 import { AccountInfo, InteractionStatus } from "@azure/msal-browser";
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from 'uuid';
@@ -16,16 +16,10 @@ import QuoteTextTooltip from "../components/QuoteTextTooltip";
 import { TutorialBubble } from "../components/TutorialBubble";
 import { bookReservation } from "../api/api";
 import { allowedToolsSet } from '../allowedTools';
+import { callMsGraph } from "../graph";
+import { UserContext } from "../context/UserContext";
 
-interface MainScreenProps {
-    userData: {
-        accessToken: string;
-        graphData: any;
-        profilePictureURL: string;
-    };
-}
-
-const MainScreen = ({userData}: MainScreenProps) => {
+const MainScreen = () => {
     const defaultEnabledTools: { [key: string]: boolean } = {};
     allowedToolsSet.forEach((tool) => {
         if(tool == 'archibus')
@@ -43,6 +37,11 @@ const MainScreen = ({userData}: MainScreenProps) => {
         "model": defaultModel
     }
 
+    const [userData, setUserData] = useState({
+        graphData: null,
+        profilePictureURL: ''
+    });
+
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [maxMessagesSent] = useState<number>(10);
     const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
@@ -59,6 +58,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
     const [quotedText, setQuotedText] = useState<string>();
     const [showTutorials, setShowTutorials] = useState(false);
     const [tutorialBubbleNumber, setTutorialBubbleNumber] = useState<number | undefined>(undefined);
+    const [ apiAccessToken, setApiAccessToken ] = useState<string>("");
 
     const menuIconRef = useRef<HTMLButtonElement>(null);
     const theme = useTheme();
@@ -85,31 +85,24 @@ const MainScreen = ({userData}: MainScreenProps) => {
 
     const sendApiRequest = async (request: MessageRequest) => {
         try {
-            /**
-             * TODO: API call should be made with an accessToken to respect the auth flow,
-             *       however in this case, we do not have the luxury to modify our service provider config.
-             *       We at least send the idToken to decode and validate it on our API to ensure we log
-             *       proper user.
-             */
-            let idToken = instance.getActiveAccount()?.idToken;
-            const expired = isTokenExpired(idToken);
-
-            if(expired){
-            const response = await instance.acquireTokenSilent({
-                ...loginRequest,
-                account: instance.getActiveAccount() as AccountInfo,
-                forceRefresh: true
-            });
-            idToken = response.idToken;
+            let token = apiAccessToken;
+            if(!apiAccessToken || isTokenExpired(apiAccessToken)){
+                const response = await instance.acquireTokenSilent({
+                    ...apiUse,
+                    account: instance.getActiveAccount() as AccountInfo,
+                    forceRefresh: true
+                });
+                setApiAccessToken(response.accessToken);
+                token = response.accessToken;
             }
 
-            if (!idToken)
-            throw new Error(t("no.id.token"));
+            if (!token)
+            throw new Error(t("no.token"));
 
             const completionResponse = await completionMySSC({
                 request: request,
                 updateLastMessage: updateLastMessage,
-                accessToken: idToken
+                accessToken: token
             });
 
             setCurrentChatHistory((prevChatHistory) => {
@@ -169,7 +162,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
         }
     }
 
-    const makeApiRequest = async (question: string, quotedTextFromRegenerate?: string) => {
+    const makeApiRequest = async (question: string, userData: {graphData: any}, quotedTextFromRegenerate?: string) => {
         // set is loading so we disable some interactive functionality while we load the response
         setIsLoading(true);
         const messagedQuoted = quotedTextFromRegenerate ? quotedTextFromRegenerate : quotedText;
@@ -288,7 +281,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
         });
 
         if (isAMessage(lastQuestion)) {
-          makeApiRequest(lastQuestion.content ? lastQuestion.content : "", lastQuestion.quotedText);
+          makeApiRequest(lastQuestion.content ? lastQuestion.content : "", userData, lastQuestion.quotedText);
         }
     };
 
@@ -603,8 +596,22 @@ const MainScreen = ({userData}: MainScreenProps) => {
         });
     }
 
+    useEffect(() => {
+        console.debug("useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? "+isAuthenticated+", InProgress? "+inProgress+")");
+        if(isAuthenticated && !userData.graphData && inProgress === InteractionStatus.None){
+          //we do not have graphData, but since user is logged in we can now fetch it.
+          callMsGraph().then(response => {
+            console.debug("callMsGraph() -> Done!");
+            setUserData({ 
+              graphData: response.graphData,
+              profilePictureURL: response.profilePictureURL
+            });
+          });
+        }
+    }, [isAuthenticated, inProgress, userData]);
+
     return (
-        <>
+        <UserContext.Provider value={userData}>
             <CssBaseline />
             <TopMenu toggleDrawer={setOpenDrawer} ref={menuIconRef}  />
             <Box
@@ -644,7 +651,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
                         clearOnSend
                         placeholder={t("placeholder")}
                         disabled={isLoading}
-                        onSend={(question) => makeApiRequest(question)}
+                        onSend={(question) => makeApiRequest(question, userData)}
                         quotedText={quotedText}
                         handleRemoveQuote={handleRemoveQuote}
                         selectedModel ={currentChatHistory.model}
@@ -719,7 +726,7 @@ const MainScreen = ({userData}: MainScreenProps) => {
                     </DialogContent>
                 </Dialog>
             }
-        </>
+        </UserContext.Provider>
     )
 }
 

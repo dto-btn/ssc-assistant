@@ -7,6 +7,7 @@ from v1.routes_v1 import api_v1
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("v1").setLevel(logging.DEBUG)
+logging.getLogger("azure.core.pipeline.policies").setLevel(logging.ERROR)
 
 load_dotenv()
 

@@ -24,7 +24,7 @@ interface TopMenuProps {
 
 export const TopMenu = forwardRef<HTMLButtonElement, TopMenuProps>(({ toggleDrawer }, ref) => {
   const { t } = useTranslation();
-  const { accessToken, graphData } = useContext(UserContext);
+  const { graphData } = useContext(UserContext);
 
   return (
     <>
@@ -76,10 +76,11 @@ export const TopMenu = forwardRef<HTMLButtonElement, TopMenuProps>(({ toggleDraw
               <Typography variant="h1" sx={{fontSize: '28px', fontWeight: '500'}}>{t("title")}</Typography>
             </Grid>
             <Grid container item xs={3} sm={4} sx={{ display: "flex" }} justifyContent='flex-end' alignItems="center">
-              {graphData && accessToken && 
+              {graphData && 
               <>
                 <Typography variant="body1" mr={2} sx={{ display: { xs: 'none', sm: 'block' } }}>{graphData['givenName']} {graphData['surname']}</Typography>
-                <UserProfilePicture fullName={graphData['givenName'] + " " + graphData['surname']} />              </>
+                <UserProfilePicture fullName={graphData['givenName'] + " " + graphData['surname']} />
+              </>
              }
             </Grid>
             <Grid container item xs={1} sm={0.5} justifyContent='flex-end' sx={{ml: { xs: "18px" }}}>
