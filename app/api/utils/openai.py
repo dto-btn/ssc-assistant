@@ -26,7 +26,7 @@ azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
 api_version             = os.getenv("AZURE_OPENAI_VERSION", "2024-05-01-preview")
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
-index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "latest")
+index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "current")
 
 # versions capabilities
 # https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
