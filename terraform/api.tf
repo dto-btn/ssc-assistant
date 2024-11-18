@@ -55,6 +55,16 @@ resource "azurerm_monitor_action_group" "alerts_group" {
     name          = "sendtogt"
     email_address = data.azuread_user.dev-gt.user_principal_name
   }
+
+  email_receiver {
+    name          = "alainforcier"
+    email_address = data.azuread_user.po-af.user_principal_name
+  }
+
+  email_receiver {
+    name          = "davidsimard"
+    email_address = data.azuread_user.tl-davids.user_principal_name
+  }
 }
 
 resource "azurerm_linux_web_app" "api" {
@@ -111,6 +121,7 @@ resource "azurerm_linux_web_app" "api" {
     WEBSITE_WEBDEPLOY_USE_SCM     = true
     WEBSITE_RUN_FROM_PACKAGE      = "1"
     ALLOWED_TOOLS                 = "corporate, geds"
+    WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
     #PORT = 5001
   }
 
