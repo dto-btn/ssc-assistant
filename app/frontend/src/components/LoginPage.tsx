@@ -1,6 +1,6 @@
 import React from 'react';
 import { useMsal } from "@azure/msal-react";
-import { loginRequest } from "../authConfig";
+import { userRead } from "../authConfig";
 import Modal from '@mui/material/Modal';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
@@ -16,7 +16,7 @@ const LoginPage = ({ open, setOpen, setLangCookie }: { open: boolean, setOpen: R
   const { instance } = useMsal();
 
   const handleLogin = () => {
-    instance.loginPopup(loginRequest).then((response) => {
+    instance.loginPopup(userRead).then((response) => {
       if (response) {
         setOpen(false);
       }
