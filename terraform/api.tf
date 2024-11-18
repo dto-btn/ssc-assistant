@@ -116,7 +116,7 @@ resource "azurerm_linux_web_app" "api" {
     SERVER_URL_PROD               = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net"
     JWT_SECRET                    = var.jwt_secret
     DATABASE_ENDPOINT             = azurerm_storage_account.main.primary_table_endpoint
-    AZURE_AD_CLIENT_ID            = var.aad_client_id
+    AZURE_AD_CLIENT_ID            = var.aad_client_id_api
     AZURE_AD_TENANT_ID            = data.azurerm_client_config.current.tenant_id
     WEBSITE_WEBDEPLOY_USE_SCM     = true
     WEBSITE_RUN_FROM_PACKAGE      = "1"

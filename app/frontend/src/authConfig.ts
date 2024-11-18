@@ -60,8 +60,8 @@ export const userRead = {
 };
 
 export const apiUse = {
-    //NOTE: scopes ["email", "openid", "profile"] are added by default
-    scopes: ["api://5026ea6d-9af1-49be-ba99-10d205d41e78/api.use"]
+    // format api://<uuid>/scope.name
+    scopes: [import.meta.env.VITE_AZURE_AD_API_SCOPE]
 };
 
 /**

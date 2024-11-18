@@ -53,4 +53,4 @@ def verify_user_access_token(token):
         if user:
             return user
     except Exception as e:
-        logger.error("Unable to validate user", e)
+        logger.error("Unable to validate user %s", e) # pylint: disable=broad-except

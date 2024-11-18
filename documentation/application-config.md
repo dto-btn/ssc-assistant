@@ -7,6 +7,9 @@ and the authorization is done via OAuth2 scopes.
 
 This will demonstrate how to perform **some** of the `az cli` configuration changes needed for the App Registration.
 
+You must ensure you have `Owner` Role on the *Application registration/Application* before being able to run those 
+commands.
+
 ### Basic configuration
 
 Documentation [is found here](https://learn.microsoft.com/en-us/cli/azure/ad/app?view=azure-cli-latest)
@@ -51,3 +54,13 @@ az ad app permission grant --id <your-app-id> --api <your-app-id> --scope api.ac
 # OR
 az ad app permission add --id <your-app-id> --api <your-app-id> --api-permissions <unique-uuid>=Scope
 ```
+
+### Terraform changes
+
+Required changes for this above update for `terraform` are all in the `api.tf` file. Client ID needs to match the api.
+
+```terraform
+AZURE_AD_CLIENT_ID            = "api://<uuid>"
+```
+
+And for the `frontend.tf` the scope requested needs to be appropriate.
