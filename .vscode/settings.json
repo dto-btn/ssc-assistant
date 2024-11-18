@@ -8,6 +8,9 @@
     "azureFunctions.projectSubpath": "az-functions/create-index",
     "python.analysis.typeCheckingMode": "basic",
     "editor.rulers": [
-        80,120
+        /*80,*/120
+    ],
+    "pylint.args": [
+        "--rcfile=.vscode/pylintrc"
     ],
 }

@@ -311,7 +311,7 @@
         "en": "Github repository link",
         "fr": "Lien vers entrepôt Github"
     },
-    "no.id.token": {
+    "no.token": {
         "en": "Missing authentication token, please refresh the page.",
         "fr": "Jeton d'authentification manquant, veuillez rafraîchir la page."
     },

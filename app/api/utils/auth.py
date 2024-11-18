@@ -44,13 +44,13 @@ def get_user_roles(user):
 
 @user_ad.verify_token
 def verify_user_access_token(token):
-    if bool(os.getenv("SKIP_USER_VALIDATION", False)):
+    if os.getenv("SKIP_USER_VALIDATION", "False").lower() == "true":
+        logger.info("Skipping User Validation")
         return True
-    
     try:
         #https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#payload-claims
         user = oauth_validator.validate_token_and_decode_it(token)
         if user:
             return user
     except Exception as e:
-        logger.error("Unable to validate user", e)
+        logger.error("Unable to validate user %s", e) # pylint: disable=broad-except
