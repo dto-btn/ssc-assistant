@@ -19,7 +19,7 @@ Documentation [is found here](https://learn.microsoft.com/en-us/cli/azure/ad/app
 az ad app show --id 12345678-1234-1234-1234-1234567890ab
 
 # update basic flags to false
-az ad app update --id <your-app-id> --enable-id-token-issuance false
+az ad app update --id <your-app-id> --enable-id-token-issuance true
 az ad app update --id <your-app-id> --enable-access-token-issuance false
 touch api-scope.json
 uuidgen
