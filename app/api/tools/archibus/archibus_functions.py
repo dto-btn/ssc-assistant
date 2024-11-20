@@ -5,10 +5,12 @@ import json
 import logging
 
 from utils.decorators import tool_metadata
+from win32comext.shell.demos.servers.folder_view import debug
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
-__all__ = ["make_api_call", "get_user_bookings", "get_floors", "get_available_rooms", "get_floor_plan", "get_current_date"]
+__all__ = ["make_api_call", "get_user_bookings", "get_floors", "get_available_rooms", "get_floor_plan", "get_current_date", "book_first_available_room"]
 
 api_url = str(os.getenv("ARCHIBUS_API_URL", "http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1"))
 api_username = str(os.getenv("ARCHIBUS_API_USERNAME"))
@@ -267,3 +269,74 @@ def make_api_call(uri: str, payload=None) -> requests.Response:
     logger.debug(api_url + uri)
     response.raise_for_status()  # This will raise an HTTPError if the HTTP request returned an unsuccessful status code
     return response
+
+
+@tool_metadata({
+    "type": "function",
+    "function": {
+        "name": "book_first_available_room",
+        "description": "Books the first available room if no other information is provided.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "buildingId": {
+                    "type": "string",
+                    "description": "Optional: A string indicating the ID of the desired building."
+                },
+                "floorId": {
+                    "type": "string",
+                    "description": "Optional: A string indicating the ID of the desired floor within the building. If not provided, the user will be prompted."
+                },
+                "bookingDate": {
+                    "type": "string",
+                    "description": "Optional: The date of the booking, formatted like YYYY-MM-DD."
+                }
+            }
+        }
+    }
+})
+def book_first_available_room(buildingId: str = None, floorId: str = None, bookingDate: str = None):
+
+    #TODO get user login from active directory
+    userID = dummy_get_user()#dummy user
+    #logger.debug(userID)
+
+    buildingId = "HQ-BAS4"
+    #logger.debug(buildingId)
+
+    available_floors = get_floors(buildingId)
+    #logger.debug(available_floors)
+    floorId = available_floors[0]["flId"]
+    #logger.debug(f"Floor ID: {floorId}")
+
+    bookingDate = datetime.now().strftime("%Y-%m-%d")
+    #logger.debug(f"Booking Date: {bookingDate}")
+
+    available_rooms = get_available_rooms(buildingId, floorId, bookingDate)
+    #logger.debug(f"Available Rooms: {available_rooms}")
+    roomId = available_rooms['rooms'][0]['roomId']
+    #logger.debug(f"Room ID: {roomId}")
+
+    bookingType = "FULLDAY"
+
+    #TODO need to making the booking_details and return it
+    booking_details = verify_booking_details(bookingDate, buildingId, userID,bookingType, floorId, roomId, )
+    logger.debug(f"Booking Details: {booking_details}")
+    logger.debug(f"Reservations: IT'S WORKING")
+
+    return
+
+
+# DUMMY DATA
+def dummy_get_user_building_selection():
+    # Mockup function to simulate user selecting a building ID.
+    # In a real application, this would be replaced by the actual user input from frontend or chatbot interface.
+    # In this example, we will just return a sample response:
+    return {
+        'selectedBuildingId': 'HQ-BAS4'  # Replace with actual building ID from user selection.
+    }
+
+def dummy_get_user():
+    return {
+        "selectedUserId": "CODY.ROBILLARD@SSC-SPC.GC.CA"
+    }
