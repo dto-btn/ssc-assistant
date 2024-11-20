@@ -52,6 +52,11 @@ variable "aad_client_id" {
     default = "fa97a723-f604-438b-8bd6-06543065f6a9"
 }
 
+variable "aad_client_id_api" {
+    type = string
+    default = ""
+}
+
 variable "aad_auth_endpoint" {
     type = string
     default = "https://sts.windows.net/d05bc194-94bf-4ad6-ae2e-1db0f2e38f5e/v2.0"

@@ -58,7 +58,7 @@ resource "azurerm_linux_web_app" "api" {
     SERVER_URL_PROD               = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net"
     JWT_SECRET                    = var.jwt_secret
     DATABASE_ENDPOINT             = azurerm_storage_account.dev.primary_table_endpoint
-    AZURE_AD_CLIENT_ID            = var.aad_client_id
+    AZURE_AD_CLIENT_ID            = var.aad_client_id_api
     AZURE_AD_TENANT_ID            = data.azurerm_client_config.current.tenant_id
     ARCHIBUS_API_USERNAME         = var.archibus_api_user
     ARCHIBUS_API_PASSWORD         = var.archibus_api_password

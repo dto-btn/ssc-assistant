@@ -7,7 +7,7 @@ import uuid
 
 from azure.data.tables import TableServiceClient
 from azure.identity import DefaultAzureCredential
-from utils.models import Completion, Feedback, MessageRequest
+from .models import Completion, Feedback, MessageRequest
 
 __all__ = ["store_request", "store_completion", "leave_feedback", "flag_conversation"]
 
@@ -32,13 +32,16 @@ def create_entity(data, partition_key: str, row_key_prefix: str, user: Any):
     entity['PartitionKey'] = partition_key
     entity['RowKey'] = f"{row_key_prefix}-{uuid.uuid4()}"
     try:
-      #https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#payload-claims
-      if user and user['oid'] and user['sub'] and user['preferred_username']:
-          entity['oid'] = user['oid']
-          entity['sub'] = user['sub']
-          entity['preferred_username'] = user['preferred_username']
+        #https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#payload-claims
+        if user and user['upn']:
+            entity['preferred_username'] = user['upn']
+        # Issue for removing this code: https://github.com/dto-btn/ssc-assistant/issues/253
+        elif user and user['oid'] and user['sub'] and user['preferred_username']: # supports old method, the id_token
+            entity['oid'] = user['oid']
+            entity['sub'] = user['sub']
+            entity['preferred_username'] = user['preferred_username']
     except Exception as e:
-        logger.error("Unable to add user information", e)
+        logger.error("Unable to add user information: %s", e)
 
     if isinstance(data_copy, Completion):
         entity['Answer'] = data_copy.message.content
