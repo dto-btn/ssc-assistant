@@ -94,18 +94,14 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                 }],
             }
 
-    """
-    1. Check if we are to use tools
-    """
 
+    # 1. Check if we are to use tools
     tools_info = None
 
     if message_request.tools:
-        logger.debug(f"Using Tools: {message_request.tools}")
+        logger.debug("Using Tools: %s", message_request.tools)
         tools = load_tools(message_request.tools)
-        """
-        1a. Invoke tools completion,
-        """
+        # 1a. Invoke tools completion,
         additional_tools_required = True
         tools_used = False
 
