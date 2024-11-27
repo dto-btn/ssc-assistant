@@ -1,20 +1,23 @@
 import json
 import logging
+import threading
+import uuid
 
+import openai
+import requests
 from apiflask import APIBlueprint, abort
 from flask import Response, jsonify, request, stream_with_context
 from openai import Stream
-import openai
-from openai.types.chat import (ChatCompletion, ChatCompletionChunk)
-import requests
-from tools.archibus.archibus_functions import make_api_call
-from utils.db import store_completion, store_request, leave_feedback, flag_conversation
-from utils.models import BookingConfirmation, Completion, Feedback, MessageRequest, ToolInfo
-from utils.openai import (build_completion_response, chat_with_data,
-                          convert_chat_with_data_response)
-from utils.auth import auth, user_ad
-import uuid
-import threading
+from openai.types.chat import ChatCompletion, ChatCompletionChunk
+
+from app.api.tools.archibus.archibus_functions import make_api_call
+from app.api.utils.auth import auth, user_ad
+from app.api.utils.db import (flag_conversation, leave_feedback,
+                              store_completion, store_request)
+from app.api.utils.models import (BookingConfirmation, Completion, Feedback,
+                                  MessageRequest, ToolInfo)
+from app.api.utils.openai import (build_completion_response, chat_with_data,
+                                  convert_chat_with_data_response)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

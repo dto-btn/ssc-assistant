@@ -1,9 +1,10 @@
-import requests
-import os
 import json
 import logging
+import os
 
-from utils.decorators import tool_metadata
+import requests
+
+from app.api.utils.decorators import tool_metadata
 
 __all__ = ["get_employee_information", "extract_geds_profiles"]
 

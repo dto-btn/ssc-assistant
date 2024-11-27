@@ -4,7 +4,7 @@ import os
 from typing import List
 
 from openai.types.chat import (ChatCompletionMessageParam)
-from utils.decorators import discover_functions_with_metadata
+from app.api.utils.decorators import discover_functions_with_metadata
 
 __all__ = ["load_tools", "call_tools"]
 
@@ -14,7 +14,7 @@ logger.setLevel(logging.DEBUG)
 _allowed_tools_str: str = os.getenv("ALLOWED_TOOLS", "corporate, geds")
 _allowed_tools          = [tool.strip() for tool in _allowed_tools_str.split(",")]
 
-_DISCOVERED_FUNCTIONS_WITH_METADATA = discover_functions_with_metadata('tools')
+_DISCOVERED_FUNCTIONS_WITH_METADATA = discover_functions_with_metadata("tools")
 
 def load_tools(tools_requested: List[str]) -> List[ChatCompletionMessageParam]:
     """
@@ -39,7 +39,7 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
         function_name = tool_call.function.name
         function_args = json.loads(tool_call.function.arguments)
 
-        logger.debug(f"Func to call:{function_name} and the args; {function_args}")
+        logger.debug("Func to call:%s and the args; %s", function_name, function_args)
 
         # Prepare the arguments for the function call
         prepared_args = {arg: function_args[arg] for arg in function_args}
@@ -53,7 +53,7 @@ def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[C
             e = "Unable to call function"
             logger.error(e, exception)
             function_response = e
-        
+
         messages.append({
             "role": "assistant",
             "content": None,

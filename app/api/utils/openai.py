@@ -3,17 +3,18 @@ import logging
 import os
 from typing import Any, List, Optional, Tuple, Union
 
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from openai import AzureOpenAI, Stream
 from openai.types.chat import (ChatCompletion, ChatCompletionChunk,
                                ChatCompletionMessageParam)
 from openai.types.completion_usage import CompletionUsage
-from tools.geds.geds_functions import extract_geds_profiles
-from tools.tools import load_tools, call_tools
-from utils.manage_message import load_messages
-from utils.models import (AzureCognitiveSearchDataSource,
-                          AzureCognitiveSearchParameters, Citation, Completion,
-                          Context, Message, MessageRequest, ToolInfo)
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+
+from app.api.tools.geds.geds_functions import extract_geds_profiles
+from app.api.tools.tools import call_tools, load_tools
+from app.api.utils.manage_message import load_messages
+from app.api.utils.models import (Citation,
+                                  Completion, Context, Message, MessageRequest,
+                                  ToolInfo)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -26,12 +27,12 @@ azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
 api_version             = os.getenv("AZURE_OPENAI_VERSION", "2024-05-01-preview")
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
-index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "current")
 
 # versions capabilities
 # https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
 # client_data = AzureOpenAI(
-#     # if we just use the azure_endpoint here it doesn't reach the extensions endpoint and thus we cannot use data sources directly
+#     # if we just use the azure_endpoint here it doesn't reach the extensions endpoint
+#     # and thus we cannot use data sources directly
 #     base_url=f'{azure_openai_uri}openai/deployments/{model}/extensions',
 #     api_version=api_version,
 #     #azure_endpoint=azure_openai_uri,
@@ -50,15 +51,30 @@ client = AzureOpenAI(
     azure_ad_token_provider=token_provider,
 )
 
-def _create_azure_cognitive_search_data_source() -> AzureCognitiveSearchDataSource:
-    parameters = AzureCognitiveSearchParameters(
-        endpoint=service_endpoint,
-        indexName=index_name,
-        key=key
-    )
-    return AzureCognitiveSearchDataSource(
-        parameters=parameters,
-    )
+def _create_azure_cognitive_search_data_source(index_name: str, top: int=3) -> dict:
+    return {"data_sources":
+            [{
+            "type": "azure_search",
+            "parameters": {
+                "endpoint": service_endpoint,
+                "index_name": index_name,
+                "in_scope": True,
+                "top_n_documents": top,
+                "semantic_configuration": "default",
+                "query_type": "vector_simple_hybrid",
+                "fields_mapping": {},
+                "authentication": {
+                    "type": "api_key",
+                    "key": key,
+                },
+                "embedding_dependency": {
+                    "type": "deployment_name",
+                    "deployment_name": "text-embedding-ada-002"
+                },
+            }
+        }
+    ]}
+
 
 def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optional['ToolInfo'], Union['ChatCompletion', 'Stream[ChatCompletionChunk]']]:
     """
@@ -70,30 +86,6 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
     """
     model = message_request.model
     messages = load_messages(message_request)
-    data_source = _create_azure_cognitive_search_data_source()
-    data_sources = { #https://learn.microsoft.com/en-us/azure/ai-services/openai/references/azure-search?tabs=python
-                "data_sources": [{
-                    "type": data_source.type,
-                    "parameters": {
-                        "endpoint": data_source.parameters.endpoint,
-                        "index_name": data_source.parameters.indexName,
-                        "in_scope": True,
-                        "top_n_documents": message_request.top,
-                        "semantic_configuration": "default",
-                        "query_type": "vector_simple_hybrid",
-                        "fields_mapping": {},
-                        "authentication": {
-                            "type": "api_key",
-                            "key": data_source.parameters.key,
-                        },
-                        "embedding_dependency": {
-                            "type": "deployment_name",
-                            "deployment_name": "text-embedding-ada-002"
-                        },
-                    }
-                }],
-            }
-
 
     # 1. Check if we are to use tools
     tools_info = None
@@ -118,13 +110,13 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                 tools_used = True
 
                 if "intranet_question" in [f.function.name for f in completion_tools.choices[0].message.tool_calls]:
-                    '''
-                    This will always end the while loop if a intranet question is detected, since the Azure OpenAI call for this currently holds the citations
-                    and we do not wish to maintain this part at this time.
-
-                    TODO: solution would be to retain citation and quote from answer and figure a way to retain them if the text match (not citations as part of msg extra content)
-                          but the actual citations within the returned text, ex; The president is John Wayne[1] and you can contact him at 888-888-8888[2]
-                    '''
+                    # This will always end the while loop if a intranet question is detected, since the Azure OpenAI
+                    # call for this currently holds the citations
+                    # and we do not wish to maintain this part at this time.
+                    # solution would be to retain citation and quote from answer and figure a way to retain them
+                    # if the text match (not citations as part of msg extra content)
+                    #      but the actual citations within the returned text, ex; The president is John Wayne[1]
+                    # and you can contact him at 888-888-8888[2]
                     tools_info = ToolInfo()
                     tools_info.tool_type.append("corporate")
                     tools_info.function_names.append("intranet_question")
@@ -132,7 +124,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                     return (tools_info, client.chat.completions.create(
                         messages=messages,
                         model=model,
-                        extra_body=data_sources,
+                        extra_body=_create_azure_cognitive_search_data_source("ds-tbssn-sat", message_request.top),
                         stream=stream
                     ))
 

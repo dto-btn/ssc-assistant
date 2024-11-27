@@ -59,21 +59,6 @@ class MessageRequest:
     uuid: str = field(default='')
     fullName: str = field(default='')
 
-class QueryType(Enum):
-    VECTOR_SIMPLE_HYBRID = "vectorSimpleHybrid"
-
-@dataclass
-class AzureCognitiveSearchParameters:
-    endpoint: str
-    indexName: str
-    key: str
-    queryType: QueryType = QueryType.VECTOR_SIMPLE_HYBRID
-
-@dataclass
-class AzureCognitiveSearchDataSource:
-    type: str = field(init=False, default="azure_search")
-    parameters: AzureCognitiveSearchParameters
-
 @dataclass
 class Feedback:
     feedback: Optional[str]
