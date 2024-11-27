@@ -8,7 +8,7 @@ __all__ = ["intranet_question"]
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "current")
+index_name: str = os.getenv("AZURE_SEARCH_INDEX_NAME", "current")
 
 # pylint: disable=line-too-long
 @tool_metadata({
@@ -30,7 +30,28 @@ index_name: str         = os.getenv("AZURE_SEARCH_INDEX_NAME", "current")
 })
 def intranet_question():
     """
-    Never actually invoked ATM, this is bypassed in the openai.py 
-    code to simply invoke the data_source parameters with the Azure Search Services so we get annotations back
+    Returns the MySSC+ index (most up to date, generally the index alias named "current")
     """
     return index_name
+
+
+@tool_metadata({
+    "type": "function",
+    "function": {
+        "name": "telecom_question",
+        "description": "The documents contain processes, service controls, and contextual information relating to the use and provisioning of mobile telephone services for Shared Services Canada and their Partner clients.",
+        "parameters": {
+        "type": "object",
+        "properties": {
+            "query": {
+            "type": "string",
+            "description": "The question that relates to anything related to telecomunication within SSC"
+            }
+        },
+        "required": ["query"]
+        }
+    }
+})
+def telecom_question():
+    """returns the name of the telecom index name"""
+    return "ds-tbssn-sat"

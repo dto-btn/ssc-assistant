@@ -29,6 +29,29 @@ def load_tools(tools_requested: List[str]) -> List[ChatCompletionMessageParam]:
             tools.append(value['metadata'])
     return tools
 
+def get_functions_by_type(tool_type: str) -> List[str]:
+    """
+    Return function name by module type
+    """
+    tools = []
+    for _, value in _DISCOVERED_FUNCTIONS_WITH_METADATA.items():
+        # Ensure BOTH function type is in requested types and ALLOWED types by the system.
+        if tool_type == value['tool_type']:
+            tools.append(value['metadata']['function']['name'])
+    return tools
+
+def invoke_corporate_function(function_name: str) -> str:
+    """invokes a corporate functions to retreive the index name"""
+    try:
+        module = _DISCOVERED_FUNCTIONS_WITH_METADATA[function_name]['module']
+        function_to_call = getattr(module, function_name)
+        function_response = function_to_call()
+    except Exception as exception:
+        e = "Unable to call function"
+        logger.error(e, exception)
+        function_response = e
+    return function_response
+
 def call_tools(tool_calls, messages: List[ChatCompletionMessageParam]) -> List[ChatCompletionMessageParam]:
     """
     Call the tool functions and return a new completion with the results

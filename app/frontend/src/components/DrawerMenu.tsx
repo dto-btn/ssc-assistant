@@ -182,7 +182,7 @@ export const DrawerMenu = ({openDrawer, chatDescriptions, toggleDrawer, onClearC
   }, [editingIndex]);
 
   const list = () => (
-    <Box role="presentation" 
+    <Box role="presentation"
       sx={{ 
         width: 300,
         display: 'flex',

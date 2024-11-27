@@ -10,7 +10,7 @@ from openai.types.chat import (ChatCompletion, ChatCompletionChunk,
 from openai.types.completion_usage import CompletionUsage
 
 from app.api.tools.geds.geds_functions import extract_geds_profiles
-from app.api.tools.tools import call_tools, load_tools
+from app.api.tools.tools import call_tools, load_tools, invoke_corporate_function
 from app.api.utils.manage_message import load_messages
 from app.api.utils.models import (Citation,
                                   Completion, Context, Message, MessageRequest,
@@ -109,7 +109,9 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
             if completion_tools.choices[0].message.tool_calls:
                 tools_used = True
 
-                if "intranet_question" in [f.function.name for f in completion_tools.choices[0].message.tool_calls]:
+                # pylint: disable=line-too-long
+                if message_request.corporate_function in [f.function.name for f in completion_tools.choices[0].message.tool_calls]:
+                    # pylint: enable=line-too-long
                     # This will always end the while loop if a intranet question is detected, since the Azure OpenAI
                     # call for this currently holds the citations
                     # and we do not wish to maintain this part at this time.
@@ -119,12 +121,14 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                     # and you can contact him at 888-888-8888[2]
                     tools_info = ToolInfo()
                     tools_info.tool_type.append("corporate")
-                    tools_info.function_names.append("intranet_question")
+                    tools_info.function_names.append(message_request.corporate_function)
+
+                    index_name = invoke_corporate_function(message_request.corporate_function)
 
                     return (tools_info, client.chat.completions.create(
                         messages=messages,
                         model=model,
-                        extra_body=_create_azure_cognitive_search_data_source("ds-tbssn-sat", message_request.top),
+                        extra_body=_create_azure_cognitive_search_data_source(index_name, message_request.top),
                         stream=stream
                     ))
 
@@ -142,7 +146,6 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
         model=model,
         stream=stream
     ))
-
 
 def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: List[Any]) -> ToolInfo:
     tools_info = ToolInfo()
