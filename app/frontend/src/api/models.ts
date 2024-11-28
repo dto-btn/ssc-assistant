@@ -44,6 +44,7 @@ interface MessageRequest {
   quotedText?: string;
   model: string;
   fullName?: string;
+  corporateFunction?: string
 }
 
 interface ToastMessage {
@@ -73,7 +74,6 @@ interface ChatHistory {
   chatItems: ChatItem[];
   description: string;
   uuid: string;
-  enabledTools: Record<string, boolean>;
   model: string;
 }
 

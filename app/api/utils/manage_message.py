@@ -1,11 +1,12 @@
 import logging
-from typing import Any, List
+from typing import List
 
 from openai.types.chat import (ChatCompletionAssistantMessageParam,
                                ChatCompletionMessageParam,
                                ChatCompletionSystemMessageParam,
                                ChatCompletionUserMessageParam)
-from utils.models import MessageRequest
+
+from app.api.utils.models import MessageRequest
 
 logger = logging.getLogger(__name__)
 

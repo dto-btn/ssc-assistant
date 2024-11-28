@@ -1,5 +1,4 @@
 from dataclasses import field
-from enum import Enum
 from marshmallow_dataclass import dataclass
 from typing import Any, Dict, List, Literal, Optional
 
@@ -56,23 +55,9 @@ class MessageRequest:
     lang: str = field(default='en')
     max: int = field(default=10)
     tools: List[str] = field(default_factory=lambda: ["corporate", "geds"])
+    corporateFunction: str = field(default='intranet_question')
     uuid: str = field(default='')
     fullName: str = field(default='')
-
-class QueryType(Enum):
-    VECTOR_SIMPLE_HYBRID = "vectorSimpleHybrid"
-
-@dataclass
-class AzureCognitiveSearchParameters:
-    endpoint: str
-    indexName: str
-    key: str
-    queryType: QueryType = QueryType.VECTOR_SIMPLE_HYBRID
-
-@dataclass
-class AzureCognitiveSearchDataSource:
-    type: str = field(init=False, default="azure_search")
-    parameters: AzureCognitiveSearchParameters
 
 @dataclass
 class Feedback:
@@ -82,10 +67,10 @@ class Feedback:
 
 @dataclass
 class BookingConfirmation:
-  bookingType: str
-  buildingId: str
-  floorId: str
-  roomId: str
-  createdBy: str
-  assignedTo: str
-  startDate: str
+    bookingType: str
+    buildingId: str
+    floorId: str
+    roomId: str
+    createdBy: str
+    assignedTo: str
+    startDate: str

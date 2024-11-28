@@ -21,6 +21,7 @@ jobs:
     uses: ./.github/workflows/frontend.yml
     with:
       allowed-tools: 'geds,corporate,archibus'
+      allowed-corporate-functions: 'intranet_question,telecom_question'
       environment: 'dev'
       app-name: 'ssc-assistant-dev'
     secrets: inherit
@@ -41,6 +42,7 @@ jobs:
     uses: ./.github/workflows/frontend.yml
     with:
       allowed-tools: 'geds,corporate'
+      allowed-corporate-functions: 'intranet_question'
       environment: 'pilot-prod'
       app-name: 'ssc-assistant'
     secrets: inherit

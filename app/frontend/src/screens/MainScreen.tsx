@@ -2,7 +2,7 @@ import { Box, Button, CssBaseline, Dialog, DialogActions, DialogContent, DialogC
 import { ChatInput, Dial, Disclaimer, DrawerMenu, FeedbackForm, TopMenu } from "../components";
 import ChatMessagesContainer from "../containers/ChatMessagesContainer";
 import { t } from "i18next";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import i18n from "../i18n";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { isACompletion, isAMessage, isAToastMessage } from "../utils";
@@ -33,7 +33,6 @@ const MainScreen = () => {
         "chatItems": [],
         "description": "",
         "uuid": "",
-        "enabledTools": defaultEnabledTools,
         "model": defaultModel
     }
 
@@ -58,7 +57,9 @@ const MainScreen = () => {
     const [quotedText, setQuotedText] = useState<string>();
     const [showTutorials, setShowTutorials] = useState(false);
     const [tutorialBubbleNumber, setTutorialBubbleNumber] = useState<number | undefined>(undefined);
-    const [ apiAccessToken, setApiAccessToken ] = useState<string>("");
+    const [apiAccessToken, setApiAccessToken ] = useState<string>("");
+    const [enabledTools, setEnabledTools] = useState<Record<string, boolean>>(defaultEnabledTools);
+    const [selectedCorporateFunction, setSelectedCorporateFunction] = useState<string>('intranet_question')
 
     const menuIconRef = useRef<HTMLButtonElement>(null);
     const theme = useTheme();
@@ -190,11 +191,12 @@ const MainScreen = () => {
             messages: messages,
             max: maxMessagesSent,
             top: 5,
-            tools: (Object.keys(currentChatHistory.enabledTools)).filter((key) => currentChatHistory.enabledTools[key]),
+            tools: (Object.keys(enabledTools)).filter((key) => enabledTools[key]),
             uuid: currentChatHistory.uuid,
             quotedText: messagedQuoted,
             model: currentChatHistory.model,
-            fullName: userData.graphData['givenName'] + ' ' + userData.graphData['surname']
+            fullName: userData.graphData['givenName'] + ' ' + userData.graphData['surname'],
+            corporateFunction: selectedCorporateFunction
         };
 
         // update current chat window with the message sent..
@@ -416,39 +418,34 @@ const MainScreen = () => {
 
     const handleUpdateEnabledTools = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, checked } = event.target;
+        let updatedTools;
 
-        setCurrentChatHistory((prevChatHistory) => {
-            let updatedTools;
+        if (name === 'archibus' && checked) {
+            // If 'archibus' is enabled, set all other tools to off
+            updatedTools = Object.keys(enabledTools).reduce((acc: { [key: string]: boolean }, tool: string) => {
+                acc[tool] = tool === 'archibus';
+                return acc;
+            }, {});
+        } else if (name !== 'archibus' && checked) {
+            // If any tool other than 'archibus' is enabled, set 'archibus' to off
+            updatedTools = {
+                ...enabledTools,
+                [name]: checked,
+                'archibus': false
+            };
+        } else {
+            // Otherwise, just update the specific tool's state
+            updatedTools = {
+                ...enabledTools,
+                [name]: checked
+            };
+        }
+        setEnabledTools(updatedTools);
+    };
 
-            if (name === 'archibus' && checked) {
-                // If 'archibus' is enabled, set all other tools to off
-                updatedTools = Object.keys(prevChatHistory.enabledTools).reduce((acc: { [key: string]: boolean }, tool: string) => {
-                    acc[tool] = tool === 'archibus';
-                    return acc;
-                }, {});
-            } else if (name !== 'archibus' && checked) {
-                // If any tool other than 'archibus' is enabled, set 'archibus' to off
-                updatedTools = {
-                    ...prevChatHistory.enabledTools,
-                    [name]: checked,
-                    'archibus': false
-                };
-            } else {
-                // Otherwise, just update the specific tool's state
-                updatedTools = {
-                    ...prevChatHistory.enabledTools,
-                    [name]: checked
-                };
-            }
-
-            const updatedChatHistory = {
-                ...prevChatHistory,
-                enabledTools: updatedTools
-            }
-
-            saveChatHistories(updatedChatHistory);
-            return updatedChatHistory;
-        })
+    const handleSetSelectedCorporateFunction = (event: React.ChangeEvent<HTMLInputElement>) => {
+        //https://mui.com/material-ui/react-radio-button/
+        setSelectedCorporateFunction((event.target as HTMLInputElement).value);
     };
 
     const handleAddQuotedText = (quotedText: string) => {
@@ -673,8 +670,10 @@ const MainScreen = () => {
                 onNewChat={handleNewChat}
                 setLangCookie={setLangCookie}
                 logout={handleLogout}
-                enabledTools={currentChatHistory.enabledTools}
+                enabledTools={enabledTools}
                 handleUpdateEnabledTools={handleUpdateEnabledTools}
+                handleSetSelectedCorporateFunction={handleSetSelectedCorporateFunction}
+                selectedCorporateFunction={selectedCorporateFunction}
                 selectedModel ={currentChatHistory.model}
                 handleSelectedModelChanged={hanldeUpdateModelVersion}
                 tutorialBubbleNumber={tutorialBubbleNumber}

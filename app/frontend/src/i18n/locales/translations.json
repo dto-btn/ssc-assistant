@@ -104,8 +104,8 @@
         "fr": "Guide d'utilisation de l'IA Générative"
     },
     "corporate": {
-        "en": "MySSC+",
-        "fr": "MonSPC+"
+        "en": "SSC's data",
+        "fr": "Données des SPC"
     },
     "langlink.shorthand": {
         "en": "fr",
@@ -526,5 +526,21 @@
     "archibus.floorPlan": {
         "en": "Archibus floor plan",
         "fr": "Plan d'étage Archibus"
+    },
+    "none": {
+        "en": "None",
+        "fr": "Aucun(ne)"
+    },
+    "intranet_question": {
+        "en": "MySSC+",
+        "fr": "MonSPC+"
+    },
+    "telecom_question": {
+        "en": "Telecomunication",
+        "fr": "Télécomunication"
+    },
+    "corporate.data": {
+        "en": "SSC's data",
+        "fr": "Données de SPC"
     }
 }
