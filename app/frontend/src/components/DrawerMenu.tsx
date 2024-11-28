@@ -39,6 +39,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import { useTranslation } from "react-i18next";
 import React from "react";
 import { allowedToolsSet } from "../allowedTools";
+import FormControl from '@mui/material/FormControl';
+import FormLabel from '@mui/material/FormLabel';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
 
 interface DrawerMenuProps {
   openDrawer: boolean;
@@ -60,7 +63,7 @@ interface DrawerMenuProps {
   renameChat: (newChatDescription: string, index: number) => void;
 }
 
-export const DrawerMenu = ({openDrawer, chatDescriptions, toggleDrawer, onClearChat, onNewChat, setLangCookie, 
+export const DrawerMenu = ({openDrawer, chatDescriptions, toggleDrawer, onClearChat, onNewChat, setLangCookie,
   logout, enabledTools, handleUpdateEnabledTools, handleSelectedModelChanged, selectedModel, tutorialBubbleNumber, handleToggleTutorials,
   handleDeleteSavedChat, handleLoadSavedChat, renameChat, currentChatIndex} : DrawerMenuProps) => {
   const [toolMenuOpen, setToolMenuOpen] = useState(false);
@@ -181,9 +184,14 @@ export const DrawerMenu = ({openDrawer, chatDescriptions, toggleDrawer, onClearC
     }
   }, [editingIndex]);
 
+  const tools = Object.keys(enabledTools).filter(tool => allowedToolsSet.has(tool));
+  // Separate the corporate key
+  const corporateKeyIndex = tools.indexOf('corporate');
+  const corporateKey = corporateKeyIndex > -1 ? tools.splice(corporateKeyIndex, 1)[0] : null;
+
   const list = () => (
     <Box role="presentation"
-      sx={{ 
+      sx={{
         width: 300,
         display: 'flex',
         flexDirection: 'column',
@@ -204,7 +212,7 @@ export const DrawerMenu = ({openDrawer, chatDescriptions, toggleDrawer, onClearC
         <Divider sx={{margin: '5px 0px'}}>
           <Chip label={t("drawer.header.toolsAndModels")} size="small" sx={{backgroundColor: 'transparent'}}/>
         </Divider>
-        <ListItem key="toolSettings=" disablePadding>
+        <ListItem key="toolSettings" disablePadding>
           <ListItemButton onClick={toggleToolDrawerOpen} aria-expanded={toolMenuOpen}>
             <ListItemIcon>
               <Handyman />
@@ -216,14 +224,31 @@ export const DrawerMenu = ({openDrawer, chatDescriptions, toggleDrawer, onClearC
         <Collapse in={toolMenuOpen} timeout="auto" unmountOnExit>
           <Divider />
           <FormGroup>
-            {Object.keys(enabledTools).filter(tool => allowedToolsSet.has(tool)).map((tool, index) => {
+          {corporateKey && (
+              <Box sx={{ minWidth: 120, marginLeft: '70px', marginRight: '10px'}}>
+                  <FormControl sx={{ paddingTop: '5px'}}>
+                    <FormLabel id="demo-radio-buttons-group-label">SSC's data</FormLabel>
+                    <RadioGroup
+                      aria-labelledby="demo-radio-buttons-group-label"
+                      defaultValue="intranet_question"
+                      name="radio-buttons-group"
+                    >
+                      <FormControlLabel value="none" control={<Radio />} label="None" />
+                      <FormControlLabel value="intranet_question" control={<Radio />} label="MySSC+" />
+                      <FormControlLabel value="telecom_question" control={<Radio />} label="Telecomunication" />
+                    </RadioGroup>
+                </FormControl>
+              </Box>
+            )}
+            <Divider />
+            {tools.map((tool, index) => {
               return (
-                <FormControlLabel 
+                <FormControlLabel
                   label={t(tool)} key={index}
                   control={
-                    <Switch 
+                    <Switch
                       checked={enabledTools[tool]}
-                      onChange={handleUpdateEnabledTools} 
+                      onChange={handleUpdateEnabledTools}
                       name={tool}
                       sx={{marginLeft: '70px', marginRight: '10px', color: "primary.main"}}
                     />
@@ -292,11 +317,11 @@ export const DrawerMenu = ({openDrawer, chatDescriptions, toggleDrawer, onClearC
           <Divider />
           {chatDescriptions.map((chatDescription, index) => {
             return (
-              <ListItem key={index} 
+              <ListItem key={index}
                 sx={{
-                  display: 'flex', 
-                  flexDirection: 'row', 
-                  padding: '2px 0px', 
+                  display: 'flex',
+                  flexDirection: 'row',
+                  padding: '2px 0px',
                   backgroundColor: index === currentChatIndex ? 'lightgray' : 'transparent',
                   '&:hover': {
                     backgroundColor: 'lightgrey',
@@ -304,7 +329,7 @@ export const DrawerMenu = ({openDrawer, chatDescriptions, toggleDrawer, onClearC
                   transition: 'none'
                 }}
               >
-                <IconButton 
+                <IconButton
                   onClick={(event) => handleMoreMenuClick(event, index)}
                   disableRipple
                   id="chat-history-options-button"
@@ -312,20 +337,20 @@ export const DrawerMenu = ({openDrawer, chatDescriptions, toggleDrawer, onClearC
                   aria-controls={moreMenuOpen ? 'chat-history-menu' : undefined}
                   aria-expanded={moreMenuOpen ? 'true' : undefined}
                   aria-haspopup="true"
-                  sx={{                      
+                  sx={{
                     '&:hover': {
                     backgroundColor: 'transparent',
                     color: 'black'
                   },}}
                 >
-                  <Tooltip 
-                    title="Options" 
+                  <Tooltip
+                    title="Options"
                     placement="top"
                     PopperProps={{
                       sx: {
                         '& .MuiTooltip-tooltip': {
-                          backgroundColor: 'black', 
-                          color: 'white', 
+                          backgroundColor: 'black',
+                          color: 'white',
                       }
                     }}}
                     slotProps={{
@@ -396,14 +421,14 @@ export const DrawerMenu = ({openDrawer, chatDescriptions, toggleDrawer, onClearC
                 )}
 
                 {(editingIndex === null || editingIndex !== index) &&
-                  <ListItemButton 
+                  <ListItemButton
                     disableRipple
                     sx={{
                       padding: '5px 10px',
                       '&:hover': {
                         backgroundColor: 'transparent',
                       },
-                    }} 
+                    }}
                     onClick={() => handleLoadSavedChat(index)}
                   >
                     <Typography
@@ -425,7 +450,7 @@ export const DrawerMenu = ({openDrawer, chatDescriptions, toggleDrawer, onClearC
         </Collapse>
       </List>
       <List sx={{marginTop: 'auto'}}>
-        {!tutorialBubbleNumber && 
+        {!tutorialBubbleNumber &&
           (<ListItem key="tutorials" disablePadding>
             <ListItemButton onClick={() => handleToggleTutorials(true)}>
               <ListItemIcon>

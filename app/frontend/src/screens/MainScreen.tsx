@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import QuoteTextTooltip from "../components/QuoteTextTooltip";
 import { TutorialBubble } from "../components/TutorialBubble";
 import { bookReservation } from "../api/api";
-import { allowedToolsSet } from '../allowedTools';
+import { allowedToolsSet, allowedCorporateFunctionsSet } from '../allowedTools';
 import { callMsGraph } from "../graph";
 import { UserContext } from "../context/UserContext";
 
@@ -33,7 +33,6 @@ const MainScreen = () => {
         "chatItems": [],
         "description": "",
         "uuid": "",
-        "enabledTools": defaultEnabledTools,
         "model": defaultModel
     }
 
@@ -58,7 +57,8 @@ const MainScreen = () => {
     const [quotedText, setQuotedText] = useState<string>();
     const [showTutorials, setShowTutorials] = useState(false);
     const [tutorialBubbleNumber, setTutorialBubbleNumber] = useState<number | undefined>(undefined);
-    const [ apiAccessToken, setApiAccessToken ] = useState<string>("");
+    const [apiAccessToken, setApiAccessToken ] = useState<string>("");
+    const [enabledTools, setEnabledTools] = useState<Record<string, boolean>>(defaultEnabledTools);
 
     const menuIconRef = useRef<HTMLButtonElement>(null);
     const theme = useTheme();
@@ -190,7 +190,7 @@ const MainScreen = () => {
             messages: messages,
             max: maxMessagesSent,
             top: 5,
-            tools: (Object.keys(currentChatHistory.enabledTools)).filter((key) => currentChatHistory.enabledTools[key]),
+            tools: (Object.keys(enabledTools)).filter((key) => enabledTools[key]),
             uuid: currentChatHistory.uuid,
             quotedText: messagedQuoted,
             model: currentChatHistory.model,
@@ -416,39 +416,29 @@ const MainScreen = () => {
 
     const handleUpdateEnabledTools = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, checked } = event.target;
+        let updatedTools;
 
-        setCurrentChatHistory((prevChatHistory) => {
-            let updatedTools;
-
-            if (name === 'archibus' && checked) {
-                // If 'archibus' is enabled, set all other tools to off
-                updatedTools = Object.keys(prevChatHistory.enabledTools).reduce((acc: { [key: string]: boolean }, tool: string) => {
-                    acc[tool] = tool === 'archibus';
-                    return acc;
-                }, {});
-            } else if (name !== 'archibus' && checked) {
-                // If any tool other than 'archibus' is enabled, set 'archibus' to off
-                updatedTools = {
-                    ...prevChatHistory.enabledTools,
-                    [name]: checked,
-                    'archibus': false
-                };
-            } else {
-                // Otherwise, just update the specific tool's state
-                updatedTools = {
-                    ...prevChatHistory.enabledTools,
-                    [name]: checked
-                };
-            }
-
-            const updatedChatHistory = {
-                ...prevChatHistory,
-                enabledTools: updatedTools
-            }
-
-            saveChatHistories(updatedChatHistory);
-            return updatedChatHistory;
-        })
+        if (name === 'archibus' && checked) {
+            // If 'archibus' is enabled, set all other tools to off
+            updatedTools = Object.keys(enabledTools).reduce((acc: { [key: string]: boolean }, tool: string) => {
+                acc[tool] = tool === 'archibus';
+                return acc;
+            }, {});
+        } else if (name !== 'archibus' && checked) {
+            // If any tool other than 'archibus' is enabled, set 'archibus' to off
+            updatedTools = {
+                ...enabledTools,
+                [name]: checked,
+                'archibus': false
+            };
+        } else {
+            // Otherwise, just update the specific tool's state
+            updatedTools = {
+                ...enabledTools,
+                [name]: checked
+            };
+        }
+        setEnabledTools(updatedTools);
     };
 
     const handleAddQuotedText = (quotedText: string) => {
@@ -673,7 +663,7 @@ const MainScreen = () => {
                 onNewChat={handleNewChat}
                 setLangCookie={setLangCookie}
                 logout={handleLogout}
-                enabledTools={currentChatHistory.enabledTools}
+                enabledTools={enabledTools}
                 handleUpdateEnabledTools={handleUpdateEnabledTools}
                 selectedModel ={currentChatHistory.model}
                 handleSelectedModelChanged={hanldeUpdateModelVersion}
