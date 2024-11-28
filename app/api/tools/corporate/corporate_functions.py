@@ -28,7 +28,7 @@ index_name: str = os.getenv("AZURE_SEARCH_INDEX_NAME", "current")
         }
     }
 })
-def intranet_question():
+def intranet_question(*args): # pylint: disable=unused-argument
     """
     Returns the MySSC+ index (most up to date, generally the index alias named "current")
     """
@@ -52,6 +52,6 @@ def intranet_question():
         }
     }
 })
-def telecom_question():
+def telecom_question(*args): # pylint: disable=unused-argument
     """returns the name of the telecom index name"""
     return "ds-tbssn-sat"

@@ -82,7 +82,7 @@ def completion_chat(message_request: MessageRequest):
         if e.code == 'content_filter':
             # flag innapropriate
             flag_conversation(message_request, convo_uuid)
-            logger.warn(f"Innaproriate question detected for convo id {convo_uuid}")
+            logger.warning(f"Innaproriate question detected for convo id {convo_uuid}")
         abort(400, message="OpenAI request error", extra_data=e.body) # type: ignore
 
 @api_v1.post('/completion/chat/stream')

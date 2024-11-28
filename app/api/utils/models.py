@@ -55,7 +55,7 @@ class MessageRequest:
     lang: str = field(default='en')
     max: int = field(default=10)
     tools: List[str] = field(default_factory=lambda: ["corporate", "geds"])
-    corporate_function: str = field(default='intranet_question')
+    corporateFunction: str = field(default='intranet_question')
     uuid: str = field(default='')
     fullName: str = field(default='')
 

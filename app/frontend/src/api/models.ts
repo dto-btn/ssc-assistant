@@ -44,6 +44,7 @@ interface MessageRequest {
   quotedText?: string;
   model: string;
   fullName?: string;
+  corporateFunction?: string
 }
 
 interface ToastMessage {

@@ -38,10 +38,9 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import EditIcon from '@mui/icons-material/Edit';
 import { useTranslation } from "react-i18next";
 import React from "react";
-import { allowedToolsSet } from "../allowedTools";
+import { allowedToolsSet, allowedCorporateFunctionsSet } from "../allowedTools";
 import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
 
 interface DrawerMenuProps {
   openDrawer: boolean;
@@ -55,6 +54,8 @@ interface DrawerMenuProps {
   enabledTools: Record<string, boolean>;
   selectedModel: string;
   handleUpdateEnabledTools: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleSetSelectedCorporateFunction: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  selectedCorporateFunction: string;
   handleSelectedModelChanged: (modelName: string) => void;
   tutorialBubbleNumber?: number;
   handleToggleTutorials: (showTutorials?: boolean) => void;
@@ -64,7 +65,7 @@ interface DrawerMenuProps {
 }
 
 export const DrawerMenu = ({openDrawer, chatDescriptions, toggleDrawer, onClearChat, onNewChat, setLangCookie,
-  logout, enabledTools, handleUpdateEnabledTools, handleSelectedModelChanged, selectedModel, tutorialBubbleNumber, handleToggleTutorials,
+  logout, enabledTools, handleUpdateEnabledTools, handleSetSelectedCorporateFunction, selectedCorporateFunction, handleSelectedModelChanged, selectedModel, tutorialBubbleNumber, handleToggleTutorials,
   handleDeleteSavedChat, handleLoadSavedChat, renameChat, currentChatIndex} : DrawerMenuProps) => {
   const [toolMenuOpen, setToolMenuOpen] = useState(false);
   const [selectModelMenuOpen, setSelectModelMenuOpen] = useState(false);
@@ -225,19 +226,20 @@ export const DrawerMenu = ({openDrawer, chatDescriptions, toggleDrawer, onClearC
           <Divider />
           <FormGroup>
           {corporateKey && (
-              <Box sx={{ minWidth: 120, marginLeft: '70px', marginRight: '10px'}}>
-                  <FormControl sx={{ paddingTop: '5px'}}>
-                    <FormLabel id="demo-radio-buttons-group-label">SSC's data</FormLabel>
-                    <RadioGroup
-                      aria-labelledby="demo-radio-buttons-group-label"
-                      defaultValue="intranet_question"
-                      name="radio-buttons-group"
-                    >
-                      <FormControlLabel value="none" control={<Radio />} label="None" />
-                      <FormControlLabel value="intranet_question" control={<Radio />} label="MySSC+" />
-                      <FormControlLabel value="telecom_question" control={<Radio />} label="Telecomunication" />
-                    </RadioGroup>
-                </FormControl>
+              <Box sx={{ minWidth: 120, marginLeft: '70px', marginRight: '10px', paddingTop: '5px'}}>
+                  <FormLabel id="corpo-data-label">{t('corporate.data')}</FormLabel>
+                  <RadioGroup
+                    aria-labelledby="corpo-data-label"
+                    name="corpo-data-group"
+                    onChange={handleSetSelectedCorporateFunction}
+                    value={selectedCorporateFunction}
+                    defaultValue="intranet_question"
+                  >
+                    <FormControlLabel key={-1} value="none" control={<Radio />} label={t('none')} />
+                    {Array.from(allowedCorporateFunctionsSet).map((name, index) => (
+                        <FormControlLabel key={index} value={name} control={<Radio />} label={t(name)} />
+                      ))}
+                  </RadioGroup>
               </Box>
             )}
             <Divider />

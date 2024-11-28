@@ -2,7 +2,7 @@ import { Box, Button, CssBaseline, Dialog, DialogActions, DialogContent, DialogC
 import { ChatInput, Dial, Disclaimer, DrawerMenu, FeedbackForm, TopMenu } from "../components";
 import ChatMessagesContainer from "../containers/ChatMessagesContainer";
 import { t } from "i18next";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import i18n from "../i18n";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { isACompletion, isAMessage, isAToastMessage } from "../utils";
@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import QuoteTextTooltip from "../components/QuoteTextTooltip";
 import { TutorialBubble } from "../components/TutorialBubble";
 import { bookReservation } from "../api/api";
-import { allowedToolsSet, allowedCorporateFunctionsSet } from '../allowedTools';
+import { allowedToolsSet } from '../allowedTools';
 import { callMsGraph } from "../graph";
 import { UserContext } from "../context/UserContext";
 
@@ -59,6 +59,7 @@ const MainScreen = () => {
     const [tutorialBubbleNumber, setTutorialBubbleNumber] = useState<number | undefined>(undefined);
     const [apiAccessToken, setApiAccessToken ] = useState<string>("");
     const [enabledTools, setEnabledTools] = useState<Record<string, boolean>>(defaultEnabledTools);
+    const [selectedCorporateFunction, setSelectedCorporateFunction] = useState<string>('intranet_question')
 
     const menuIconRef = useRef<HTMLButtonElement>(null);
     const theme = useTheme();
@@ -194,7 +195,8 @@ const MainScreen = () => {
             uuid: currentChatHistory.uuid,
             quotedText: messagedQuoted,
             model: currentChatHistory.model,
-            fullName: userData.graphData['givenName'] + ' ' + userData.graphData['surname']
+            fullName: userData.graphData['givenName'] + ' ' + userData.graphData['surname'],
+            corporateFunction: selectedCorporateFunction
         };
 
         // update current chat window with the message sent..
@@ -441,6 +443,11 @@ const MainScreen = () => {
         setEnabledTools(updatedTools);
     };
 
+    const handleSetSelectedCorporateFunction = (event: React.ChangeEvent<HTMLInputElement>) => {
+        //https://mui.com/material-ui/react-radio-button/
+        setSelectedCorporateFunction((event.target as HTMLInputElement).value);
+    };
+
     const handleAddQuotedText = (quotedText: string) => {
         setQuotedText(quotedText);
     };
@@ -665,6 +672,8 @@ const MainScreen = () => {
                 logout={handleLogout}
                 enabledTools={enabledTools}
                 handleUpdateEnabledTools={handleUpdateEnabledTools}
+                handleSetSelectedCorporateFunction={handleSetSelectedCorporateFunction}
+                selectedCorporateFunction={selectedCorporateFunction}
                 selectedModel ={currentChatHistory.model}
                 handleSelectedModelChanged={hanldeUpdateModelVersion}
                 tutorialBubbleNumber={tutorialBubbleNumber}
