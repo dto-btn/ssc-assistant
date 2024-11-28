@@ -39,7 +39,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import { useTranslation } from "react-i18next";
 import React from "react";
 import { allowedToolsSet, allowedCorporateFunctionsSet } from "../allowedTools";
-import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
 
 interface DrawerMenuProps {
