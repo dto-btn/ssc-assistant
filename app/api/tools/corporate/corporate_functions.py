@@ -1,7 +1,7 @@
 import logging
 import os
 
-from app.api.utils.decorators import tool_metadata
+from utils.decorators import tool_metadata
 
 __all__ = ["intranet_question"]
 

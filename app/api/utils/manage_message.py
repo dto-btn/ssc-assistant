@@ -6,7 +6,7 @@ from openai.types.chat import (ChatCompletionAssistantMessageParam,
                                ChatCompletionSystemMessageParam,
                                ChatCompletionUserMessageParam)
 
-from app.api.utils.models import MessageRequest
+from utils.models import MessageRequest
 
 logger = logging.getLogger(__name__)
 

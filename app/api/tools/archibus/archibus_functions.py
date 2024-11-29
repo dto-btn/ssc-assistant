@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 
 import requests
-from app.api.utils.decorators import tool_metadata
+from utils.decorators import tool_metadata
 
 logger = logging.getLogger(__name__)
 

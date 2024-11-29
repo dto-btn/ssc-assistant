@@ -3,7 +3,7 @@ import os
 
 from apiflask import APIFlask
 from dotenv import load_dotenv
-from app.api.v1.routes_v1 import api_v1
+from v1.routes_v1 import api_v1
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("v1").setLevel(logging.DEBUG)
