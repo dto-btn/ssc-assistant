@@ -10,7 +10,7 @@ from win32comext.shell.demos.servers.folder_view import debug
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-__all__ = ["make_api_call", "get_user_bookings", "get_floors", "get_available_rooms", "get_floor_plan", "get_current_date", "book_first_available_room"]
+__all__ = ["make_api_call", "get_user_bookings", "get_floors", "get_available_rooms", "get_floor_plan", "get_current_date", "book_first_available_room", "book_specific_room"]
 
 api_url = str(os.getenv("ARCHIBUS_API_URL", "http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1"))
 api_username = str(os.getenv("ARCHIBUS_API_USERNAME"))
@@ -340,3 +340,80 @@ def dummy_get_user():
     return {
         "selectedUserId": "CODY.ROBILLARD@SSC-SPC.GC.CA"
     }
+
+
+@tool_metadata({
+    "type": "function",
+    "tool_type": "archibus",
+    "function": {
+        "name": "book_specific_room",
+        "description": "Books a selected room given the building identifier, floor identifier, room identifier, booking type, and booking date. This function should only be invoked after collecting all the necessary details from the user. It books the space directly in the system using the Archibus API.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "buildingId": {
+                    "type": "string",
+                    "description": "The unique identifier of the building where the user wishes to book a room. Do not use the street number or address. Example: AB-BAS4."
+                },
+                "floorId": {
+                    "type": "string",
+                    "description": "The unique identifier of the floor within the building where the room is to be booked. Example: T404."
+                },
+                "roomId": {
+                    "type": "string",
+                    "description": "The identifier of the room to be booked within the specified floor and building. Example: W037."
+                },
+                "bookingDate": {
+                    "type": "string",
+                    "description": "The date of the booking, formatted as YYYY-MM-DD. Assume the year to be 2024 unless specified otherwise."
+                },
+                "bookingType": {
+                    "type": "string",
+                    "enum": ["FULLDAY", "AFTERNOON", "MORNING"],
+                    "description": "The type of booking the user requires, which determines the duration of the booking. Valid options are 'FULLDAY', 'AFTERNOON', and 'MORNING'."
+                }
+            },
+            "required": ["buildingId", "floorId", "roomId", "bookingDate", "bookingType"]
+        }
+    }
+})
+def book_specific_room(buildingId: str, floorId: str, roomId: str, bookingDate: str, bookingType: str):
+    #TODO get user login from active directory
+    userID = "PAGEERATHAN, JENEERTHAN"
+
+    # verify_booking_details(user=userID, buildingId=buildingId, floorId=floorId, roomId=roomId, date=bookingDate, bookingType=bookingType)
+
+    logging.debug("Book specific room")
+
+    # Make api call to Archibus API to book room
+    try:
+        today = datetime.now().strftime("%Y-%m-%d")
+    
+        url = "http://localhost:80/api/v1/reservations/"
+        
+        booking_dto = {
+            "buildingId": "HQ-BAS4",
+            "floorId": "T305",
+            "roomId": "W085",
+            "createdBy": "PAGEERATHAN, JENEERTHAN",
+            "assignedTo": "PAGEERATHAN, JENEERTHAN",
+            "bookingType": "FULLDAY",
+            "startDate": datetime.now().strftime("%Y-%m-%d")
+        }
+
+        headers = {
+            'Content-Type': 'application/json'
+        }
+
+        response = requests.post(url=url, json=booking_dto, headers=headers)
+
+        logger.debug(f"Response status code: {response.status_code}")
+        logger.debug(f"Response text: {response.text}")
+
+        return
+
+    except requests.HTTPError as e:
+        msg = f"Unable to reserve space {roomId} on floor {floorId} in {buildingId}"
+        logger.error(msg)
+        return msg
+
