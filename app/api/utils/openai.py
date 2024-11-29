@@ -9,10 +9,10 @@ from openai.types.chat import (ChatCompletion, ChatCompletionChunk,
                                ChatCompletionMessageParam)
 from openai.types.completion_usage import CompletionUsage
 
-from app.api.tools.geds.geds_functions import extract_geds_profiles
-from app.api.tools.tools import call_tools, load_tools, invoke_corporate_function, get_functions_by_type
-from app.api.utils.manage_message import load_messages
-from app.api.utils.models import (Citation,
+from tools.geds.geds_functions import extract_geds_profiles
+from tools.tools import call_tools, load_tools, invoke_corporate_function, get_functions_by_type
+from utils.manage_message import load_messages
+from utils.models import (Citation,
                                   Completion, Context, Message, MessageRequest,
                                   ToolInfo)
 

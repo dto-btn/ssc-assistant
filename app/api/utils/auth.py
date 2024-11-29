@@ -4,7 +4,7 @@ import os
 import jwt
 from flask import g
 from flask_httpauth import HTTPTokenAuth
-from app.api.utils.oauth_validation import OAuth2TokenValidation
+from utils.oauth_validation import OAuth2TokenValidation
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

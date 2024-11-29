@@ -4,7 +4,7 @@ import os
 from typing import List
 
 from openai.types.chat import (ChatCompletionMessageParam)
-from app.api.utils.decorators import discover_functions_with_metadata
+from utils.decorators import discover_functions_with_metadata
 
 __all__ = ["load_tools", "call_tools"]
 
