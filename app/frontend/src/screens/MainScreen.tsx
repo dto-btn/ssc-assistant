@@ -390,6 +390,13 @@ const MainScreen = () => {
     useEffect(() => {
         loadChatHistoriesFromStorage();
         // TODO: load settings
+        const enabledTools = localStorage.getItem("enabledTools");
+        if (enabledTools) {
+            const parsedEnabledTools = JSON.parse(enabledTools) as Record<string, boolean>;
+            setEnabledTools(parsedEnabledTools);
+        }
+        const selectedCorporateFunction = localStorage.getItem("selectedCorporateFunction");
+        if(selectedCorporateFunction) setSelectedCorporateFunction(selectedCorporateFunction);
     }, []);
 
     const handleRemoveToastMessage = (indexToRemove: number) => {
@@ -430,6 +437,7 @@ const MainScreen = () => {
             // disable the function being used 
             // (should have no incidence on backend but this is to make it clear to the user)
             setSelectedCorporateFunction("none");
+            localStorage.setItem("selectedCorporateFunction", "none");
         } else if (name !== 'archibus' && checked) {
             // If any tool other than 'archibus' is enabled, set 'archibus' to off
             updatedTools = {
