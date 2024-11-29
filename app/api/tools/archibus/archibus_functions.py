@@ -386,19 +386,17 @@ def book_specific_room(buildingId: str, floorId: str, roomId: str, bookingDate: 
     logging.debug("Book specific room")
 
     # Make api call to Archibus API to book room
-    try:
-        today = datetime.now().strftime("%Y-%m-%d")
-    
+    try:    
         url = "http://localhost:80/api/v1/reservations/"
         
         booking_dto = {
             "buildingId": "HQ-BAS4",
             "floorId": "T305",
-            "roomId": "W085",
+            "roomId": "W078",
             "createdBy": "PAGEERATHAN, JENEERTHAN",
             "assignedTo": "PAGEERATHAN, JENEERTHAN",
             "bookingType": "FULLDAY",
-            "startDate": datetime.now().strftime("%Y-%m-%d")
+            "startDate": "2024-11-30"
         }
 
         headers = {
@@ -410,7 +408,7 @@ def book_specific_room(buildingId: str, floorId: str, roomId: str, bookingDate: 
         logger.debug(f"Response status code: {response.status_code}")
         logger.debug(f"Response text: {response.text}")
 
-        return
+        return f"space {roomId} on floor {floorId} in {buildingId} has been succesfully reserved"
 
     except requests.HTTPError as e:
         msg = f"Unable to reserve space {roomId} on floor {floorId} in {buildingId}"
