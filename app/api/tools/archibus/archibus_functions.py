@@ -365,7 +365,7 @@ def dummy_get_user():
                 },
                 "bookingDate": {
                     "type": "string",
-                    "description": "The date of the booking, formatted as YYYY-MM-DD. Assume the year to be 2024 unless specified otherwise."
+                    "description": "The date of the booking, formatted as YYYY-MM-DD. Assume the year to be the current year, 2024, unless specified otherwise."
                 },
                 "bookingType": {
                     "type": "string",
@@ -381,8 +381,6 @@ def book_specific_room(buildingId: str, floorId: str, roomId: str, bookingDate: 
     #TODO get user login from active directory
     userID = "PAGEERATHAN, JENEERTHAN"
 
-    # verify_booking_details(user=userID, buildingId=buildingId, floorId=floorId, roomId=roomId, date=bookingDate, bookingType=bookingType)
-
     logging.debug("Book specific room")
 
     # Make api call to Archibus API to book room
@@ -390,13 +388,13 @@ def book_specific_room(buildingId: str, floorId: str, roomId: str, bookingDate: 
         url = "http://localhost:80/api/v1/reservations/"
         
         booking_dto = {
-            "buildingId": "HQ-BAS4",
-            "floorId": "T305",
-            "roomId": "W078",
-            "createdBy": "PAGEERATHAN, JENEERTHAN",
-            "assignedTo": "PAGEERATHAN, JENEERTHAN",
-            "bookingType": "FULLDAY",
-            "startDate": "2024-11-30"
+            "buildingId": buildingId,
+            "floorId": floorId,
+            "roomId": roomId,
+            "createdBy": userID,
+            "assignedTo": userID,
+            "bookingType": bookingType,
+            "startDate": bookingDate
         }
 
         headers = {
