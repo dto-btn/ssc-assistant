@@ -389,6 +389,7 @@ const MainScreen = () => {
     // Load chat histories if present
     useEffect(() => {
         loadChatHistoriesFromStorage();
+        // TODO: load settings
     }, []);
 
     const handleRemoveToastMessage = (indexToRemove: number) => {
@@ -426,6 +427,9 @@ const MainScreen = () => {
                 acc[tool] = tool === 'archibus';
                 return acc;
             }, {});
+            // disable the function being used 
+            // (should have no incidence on backend but this is to make it clear to the user)
+            setSelectedCorporateFunction("none");
         } else if (name !== 'archibus' && checked) {
             // If any tool other than 'archibus' is enabled, set 'archibus' to off
             updatedTools = {
@@ -441,11 +445,14 @@ const MainScreen = () => {
             };
         }
         setEnabledTools(updatedTools);
+        localStorage.setItem("enabledTools", JSON.stringify(updatedTools));
     };
 
     const handleSetSelectedCorporateFunction = (event: React.ChangeEvent<HTMLInputElement>) => {
         //https://mui.com/material-ui/react-radio-button/
-        setSelectedCorporateFunction((event.target as HTMLInputElement).value);
+        let functionName = (event.target as HTMLInputElement).value;
+        setSelectedCorporateFunction(functionName);
+        localStorage.setItem("selectedCorporateFunction", functionName);
     };
 
     const handleAddQuotedText = (quotedText: string) => {
