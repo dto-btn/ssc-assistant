@@ -41,6 +41,12 @@ const MainScreen = () => {
         profilePictureURL: ''
     });
 
+    const loadCurrentChatIndexIfAble =  () => {
+        const index = localStorage.getItem('currentChatIndex');
+        if(index != null) return Number(index);
+        return 0;
+    };
+
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [maxMessagesSent] = useState<number>(10);
     const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
@@ -48,7 +54,7 @@ const MainScreen = () => {
     const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
     const [feedback, setFeedback] = useState('');
     const [isGoodResponse, setIsGoodResponse] = useState(false);
-    const [currentChatIndex, setCurrentChatIndex] = useState<number>(0);
+    const [currentChatIndex, _setCurrentChatIndex] = useState<number>(0);
     const [currentChatHistory, setCurrentChatHistory] = useState<ChatHistory>(defaultChatHistory);
     const [chatHistoriesDescriptions, setChatHistoriesDescriptions] = useState<string[]>(["Conversation 1"]);
     const [chatIndexToLoadOrDelete, setChatIndexToLoadOrDelete] = useState<number | null>(null);
@@ -66,6 +72,13 @@ const MainScreen = () => {
     const {instance, inProgress} = useMsal();
     const isAuthenticated = useIsAuthenticated();
     const displayIsAtleastSm = useMediaQuery(theme.breakpoints.up('sm'));
+
+    const setCurrentChatIndex = (index: number) => {
+        // Set the index in local storage
+        localStorage.setItem('currentChatIndex', index.toString());
+        // Update the state
+        _setCurrentChatIndex(index);
+      };
 
     const convertChatHistoryToMessages = (chatHistory: ChatItem[]) : Message[] => {
         const startIndex = Math.max(chatHistory.length - maxMessagesSent, 0);
@@ -291,7 +304,9 @@ const MainScreen = () => {
         const chatHistories = localStorage.getItem("chatHistories");
         if (chatHistories) {
             const parsedChatHistories = JSON.parse(chatHistories) as ChatHistory[];
-            setCurrentChatHistory(parsedChatHistories[0]);
+            const currentIndex = loadCurrentChatIndexIfAble();
+            _setCurrentChatIndex(currentIndex); //just need to set the state here, no need to modify local storage.
+            setCurrentChatHistory(parsedChatHistories[currentIndex]);
             setChatHistoriesDescriptions(parsedChatHistories.map((chatHistory, index) => chatHistory.description || "Conversation " + (index + 1)));
         }
     };
@@ -389,6 +404,14 @@ const MainScreen = () => {
     // Load chat histories if present
     useEffect(() => {
         loadChatHistoriesFromStorage();
+        // TODO: load settings
+        const enabledTools = localStorage.getItem("enabledTools");
+        if (enabledTools) {
+            const parsedEnabledTools = JSON.parse(enabledTools) as Record<string, boolean>;
+            setEnabledTools(parsedEnabledTools);
+        }
+        const selectedCorporateFunction = localStorage.getItem("selectedCorporateFunction");
+        if(selectedCorporateFunction) setSelectedCorporateFunction(selectedCorporateFunction);
     }, []);
 
     const handleRemoveToastMessage = (indexToRemove: number) => {
@@ -426,6 +449,10 @@ const MainScreen = () => {
                 acc[tool] = tool === 'archibus';
                 return acc;
             }, {});
+            // disable the function being used 
+            // (should have no incidence on backend but this is to make it clear to the user)
+            setSelectedCorporateFunction("none");
+            localStorage.setItem("selectedCorporateFunction", "none");
         } else if (name !== 'archibus' && checked) {
             // If any tool other than 'archibus' is enabled, set 'archibus' to off
             updatedTools = {
@@ -441,11 +468,22 @@ const MainScreen = () => {
             };
         }
         setEnabledTools(updatedTools);
+        localStorage.setItem("enabledTools", JSON.stringify(updatedTools));
     };
 
     const handleSetSelectedCorporateFunction = (event: React.ChangeEvent<HTMLInputElement>) => {
         //https://mui.com/material-ui/react-radio-button/
-        setSelectedCorporateFunction((event.target as HTMLInputElement).value);
+        let functionName = (event.target as HTMLInputElement).value;
+        setSelectedCorporateFunction(functionName);
+        localStorage.setItem("selectedCorporateFunction", functionName);
+        // disable Archibus if it's checked and on...
+        setEnabledTools((enabledTools) => {
+            if(enabledTools.hasOwnProperty('archibus')){
+                enabledTools['archibus'] = false;
+                localStorage.setItem("enabledTools", JSON.stringify(enabledTools));
+            }
+            return enabledTools;
+        });
     };
 
     const handleAddQuotedText = (quotedText: string) => {
