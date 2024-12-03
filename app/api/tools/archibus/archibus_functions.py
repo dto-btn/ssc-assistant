@@ -10,7 +10,7 @@ from win32comext.shell.demos.servers.folder_view import debug
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-__all__ = ["make_api_call", "get_user_bookings", "get_floors", "get_available_rooms", "get_floor_plan", "get_current_date", "book_first_available_room", "book_specific_room"]
+__all__ = ["make_api_call", "get_user_bookings", "get_floors", "get_available_rooms", "get_floor_plan", "get_current_date", "book_first_available_room", "book_specific_room", "create_repeat_booking"]
 
 api_url = str(os.getenv("ARCHIBUS_API_URL", "http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1"))
 api_username = str(os.getenv("ARCHIBUS_API_USERNAME"))
@@ -413,3 +413,121 @@ def book_specific_room(buildingId: str, floorId: str, roomId: str, bookingDate: 
         logger.error(msg)
         return msg
 
+
+@tool_metadata({
+    "type": "function",
+    "tool_type": "archibus",
+    "function": {
+        "name": "create_repeat_booking",
+        "description": "Creates a new booking for the user based on an existing future-dated booking or the latest booking from the user's history if no reference date is provided. The function replicates the room, building, and booking type found in the referenced booking. The booking is made directly in the system using the Archibus API.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "bookingDate": {
+                    "type": "string",
+                    "description": "The preferred date for the new booking, formatted as YYYY-MM-DD. The current date will be used if this parameter is not provided."
+                },
+                "referenceDate": {
+                    "type": "string",
+                    "description": "The date of an existing future-dated booking to use as a reference for creating a similar booking, formatted as YYYY-MM-DD. If not provided, the latest booking will be used.",
+                    "required": False
+                }
+            },
+            "required": ["bookingDate"]
+        }
+    }
+})
+def create_repeat_booking(bookingDate: str, referenceDate: str):
+    userId = "PAGEERATHAN, JENEERTHAN"
+
+    logging.debug(f"Creating repeat booking for user {userId}")
+
+    # Make 2 API calls, one to get future booking data, one to create a new booking
+    try:
+        get_url = f"http://localhost:80/api/v1/reservations/creator/{userId}"
+        get_headers = {
+            'Accept': 'application/json'
+        }
+        get_response = requests.get(url=get_url, headers=get_headers)
+
+        logger.debug(f"GET Response status code: {get_response.status_code}")
+        logger.debug(f"GET Response text: {get_response.text}")
+
+        # Parse response & make into payload for repeat booking
+        booking_history = get_response.json()
+        repeat_booking = {
+            "id": -1,
+            "activityLog": {
+                "activityId": -1,
+                "requestor": "l, f",
+                "activityType": "SERVICE DESK - HOTELING",
+                "timeRequested": "1899-12-30T15:29:09",
+                "dateRequested": "2024-12-03",
+                "dateScheduled": "2024-12-03",
+                "assignedTo": "l, f",
+                "buildingId": "HQ-BAS4",
+                "floorId": "T305",
+                "roomId": "W000",
+                "createdBy": "l, f",
+                "status": "REQUESTED"
+            },
+            "buildingId": "HQ-BAS4",
+            "floorId": "T305",
+            "roomId": "W000",
+            "dateStart": "2024-12-03",
+            "dateEnd": "2024-12-03",
+            "emId": "l, f",
+            "percentageTime": 50.0,
+            "roomCategory": "ABW WK POINT",
+            "roomType": "WK TYPE 2",
+            "dayPart": 0,
+            "department": "08_BUSINESS INFO",
+            "parentPercentId": -1,
+            "primaryRoom": 0,
+            "division": "08_CIO",
+            "status": 0
+        }
+
+        bookingType = "FULLDAY"
+
+        if repeat_booking['dayPart'] == 1:
+            bookingType = "MORNING"
+        elif repeat_booking['dayPart'] == 2:
+            bookingType = "AFTERNOON"
+
+
+        if booking_history:
+            repeat_booking = booking_history[0]
+        else:
+            msg = f"No booking history found to create a repeat booking for {bookingDate}"
+            logger.error(msg)
+            return msg
+
+        # POST request to create the repeat booking based on referenced booking details
+        booking_dto = {
+            "buildingId": repeat_booking['buildingId'],
+            "floorId": repeat_booking['floorId'],
+            "roomId": repeat_booking['roomId'],
+            "createdBy": userId,
+            "assignedTo": userId,
+            "bookingType": bookingType,
+            "startDate": bookingDate
+        }
+
+        logger.debug(f"Booking DTO = {booking_dto}")
+
+        post_url = "http://localhost:80/api/v1/reservations/"
+        post_headers = {
+            'Content-Type': 'application/json'
+        }        
+        post_response = requests.post(url=post_url, json=booking_dto, headers=post_headers)
+
+        logger.debug(f"POST Response status code: {post_response.status_code}")
+        logger.debug(f"POST Response text: {post_response.text}")
+
+        return f"Repeat booking was successfully created on {bookingDate}"
+            
+    except requests.HTTPError as e:
+        msg = f"Unable to create repeat booking for {bookingDate}"
+        logger.error(msg)
+        return msg
