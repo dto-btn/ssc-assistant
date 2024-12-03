@@ -430,7 +430,6 @@ def book_specific_room(buildingId: str, floorId: str, roomId: str, bookingDate: 
                 "referenceDate": {
                     "type": "string",
                     "description": "The date of an existing future-dated booking to use as a reference for creating a similar booking, formatted as YYYY-MM-DD. If not provided, the latest booking will be used.",
-                    "required": False
                 }
             },
             "required": ["bookingDate"]
