@@ -524,7 +524,7 @@ def create_repeat_booking(bookingDate: str, referenceDate: str):
         logger.debug(f"POST Response status code: {post_response.status_code}")
         logger.debug(f"POST Response text: {post_response.text}")
 
-        return f"Repeat booking was successfully created on {bookingDate}"
+        return f"Repeat booking was successfully created for {bookingDate} at {repeat_booking['buildingId']} on floor {repeat_booking['floorId']} for room {repeat_booking['roomId']}"
             
     except requests.HTTPError as e:
         msg = f"Unable to create repeat booking for {bookingDate}"
