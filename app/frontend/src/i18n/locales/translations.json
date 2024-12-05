@@ -542,5 +542,9 @@
     "corporate.data": {
         "en": "SSC's data",
         "fr": "Données de SPC"
+    },
+    "pmcoe_question": {
+        "en": "PMCoE",
+        "fr": "CEGP"
     }
 }

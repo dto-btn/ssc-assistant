@@ -123,7 +123,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                         tools_info.function_names.append(message_request.corporateFunction)
 
                         index_name = invoke_corporate_function(message_request.corporateFunction)
-
+                        logger.debug("Invoking index named --> %s", index_name)
                         return (tools_info, client.chat.completions.create(
                             messages=messages,
                             model=model,
