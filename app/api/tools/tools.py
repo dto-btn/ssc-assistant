@@ -43,6 +43,7 @@ def get_functions_by_type(tool_type: str) -> List[str]:
 def invoke_corporate_function(function_name: str) -> str:
     """invokes a corporate functions to retreive the index name"""
     try:
+        logging.debug("Invoking corporate function --> %s", function_name)
         module = _DISCOVERED_FUNCTIONS_WITH_METADATA[function_name]['module']
         function_to_call = getattr(module, function_name)
         function_response = function_to_call()

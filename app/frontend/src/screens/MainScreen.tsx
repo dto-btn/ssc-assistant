@@ -478,10 +478,15 @@ const MainScreen = () => {
         localStorage.setItem("selectedCorporateFunction", functionName);
         // disable Archibus if it's checked and on...
         setEnabledTools((enabledTools) => {
+            if(functionName == "none"){
+                enabledTools['corporate'] = false;
+            }else{
+                enabledTools['corporate'] = true;
+            }
             if(enabledTools.hasOwnProperty('archibus')){
                 enabledTools['archibus'] = false;
-                localStorage.setItem("enabledTools", JSON.stringify(enabledTools));
             }
+            localStorage.setItem("enabledTools", JSON.stringify(enabledTools));
             return enabledTools;
         });
     };
