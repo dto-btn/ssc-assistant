@@ -408,7 +408,9 @@ const MainScreen = () => {
         const enabledTools = localStorage.getItem("enabledTools");
         if (enabledTools) {
             const parsedEnabledTools = JSON.parse(enabledTools) as Record<string, boolean>;
-            setEnabledTools(parsedEnabledTools);
+            if(Object.keys(defaultEnabledTools).length == Object.keys(parsedEnabledTools).length){
+                setEnabledTools(parsedEnabledTools);
+            }
         }
         const selectedCorporateFunction = localStorage.getItem("selectedCorporateFunction");
         if(selectedCorporateFunction) setSelectedCorporateFunction(selectedCorporateFunction);
