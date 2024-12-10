@@ -436,7 +436,7 @@ def book_specific_room(buildingId: str, floorId: str, roomId: str, bookingDate: 
         }
     }
 })
-def create_repeat_booking(bookingDate: str, referenceDate: str):
+def create_repeat_booking(bookingDate: str, referenceDate: str = ""):
     userId = "PAGEERATHAN, JENEERTHAN"
 
     logging.debug(f"Creating repeat booking for user {userId}")
@@ -495,15 +495,19 @@ def create_repeat_booking(bookingDate: str, referenceDate: str):
             bookingType = "AFTERNOON"
 
 
-        if booking_history:
-            repeat_booking = booking_history[0]
+        if referenceDate != "":
+            repeat_booking = matching_object = next((obj for obj in booking_history if obj.get('dateEnd') == referenceDate), None)
+        elif booking_history:
+            sorted_history = sorted(booking_history, key=lambda x: x['dateEnd'], reverse=True)
+            repeat_booking = sorted_history[0]
         else:
             msg = f"No booking history found to create a repeat booking for {bookingDate}"
             logger.error(msg)
             return msg
 
         # POST request to create the repeat booking based on referenced booking details
-        booking_dto = {
+        if repeat_booking:
+            booking_dto = {
             "buildingId": repeat_booking['buildingId'],
             "floorId": repeat_booking['floorId'],
             "roomId": repeat_booking['roomId'],
@@ -511,7 +515,12 @@ def create_repeat_booking(bookingDate: str, referenceDate: str):
             "assignedTo": userId,
             "bookingType": bookingType,
             "startDate": bookingDate
-        }
+            }
+        else:
+            msg = f"No booking history found to create a repeat booking for {bookingDate}"
+            logger.error(msg)
+            return msg
+        
 
         logger.debug(f"Booking DTO = {booking_dto}")
 
