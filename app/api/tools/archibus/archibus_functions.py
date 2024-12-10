@@ -454,6 +454,7 @@ def create_repeat_booking(bookingDate: str, referenceDate: str = ""):
 
         # Parse response & make into payload for repeat booking
         booking_history = get_response.json()
+        # Gets reassigned later, is initalized like this to remember the data structure
         repeat_booking = {
             "id": -1,
             "activityLog": {
