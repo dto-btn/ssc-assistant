@@ -23,16 +23,29 @@ resource "azuread_group" "readers" {
 #######################################################
 #                     USERS                           #
 #######################################################
-data "azuread_user" "dev-gt" {
-  user_principal_name = "guillaume.turcotte2@ssc-spc.gc.ca"
+locals {
+  users = [
+    { 
+      name = "dev-gt"
+      user_principal_name = "guillaume.turcotte2@ssc-spc.gc.ca"
+    },
+    { 
+      name = "po-af"
+      user_principal_name = "alain.forcier@ssc-spc.gc.ca"
+    },
+    { 
+      name = "tl-davids"
+      user_principal_name = "david.simard@ssc-spc.gc.ca"
+    }
+  ]
 }
 
-data "azuread_user" "po-af" {
-  user_principal_name = "alain.forcier@ssc-spc.gc.ca"
-}
-
-data "azuread_user" "tl-davids" {
-  user_principal_name = "david.simard@ssc-spc.gc.ca"
+data "azuread_user" "users" {
+  for_each = {
+    for user in local.users:
+      user.name => user
+    }
+  user_principal_name = each.value.user_principal_name
 }
 
 data "azuread_service_principal" "terraform" {
