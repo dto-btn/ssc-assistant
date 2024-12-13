@@ -15,3 +15,7 @@ pyjwt
 Flask-HTTPAuth
 urllib3==1.26.19 # this version is required for the GEDS API to work
 cryptography==43.0.3 #https://github.com/pyca/cryptography/issues/12064
+# not using this lib (even if this is the recommended one by Microsoft)
+# since it had extra install steps on Linux and I didn't want to complicate api deployment.
+#pyodbc # https://github.com/mkleehammer/pyodbc/wiki/Install
+pymssql>=2.2.0

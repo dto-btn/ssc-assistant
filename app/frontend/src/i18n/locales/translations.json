@@ -546,5 +546,9 @@
     "pmcoe_question": {
         "en": "PMCoE",
         "fr": "CEGP"
+    },
+    "bits": {
+        "en": "EDR (BITS)",
+        "fr": "EDR (BITS) [FR]"
     }
 }
