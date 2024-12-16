@@ -57,7 +57,7 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
         maxWidth="md"
         >
       <Typography sx={{fontSize: '13px', mr: '10px', opacity: 0.7, textAlign: 'right'}}>{t("model.version.disclaimer")} {modelName}</Typography>
-      <ChatInputWrapper theme={theme}> 
+      
         {quotedText && (
             <QuoteContainer>
               <KeyboardReturnIcon sx={{ transform: 'scaleX(-1)', ml: '8px', color: 'black' }} />
@@ -121,16 +121,6 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
             minRows={3}
             maxRows={3}
             label={t("ask.question")}
-            sx={{
-              padding: '10px 20px',
-              '& .MuiInputBase-input::placeholder': {
-                opacity: 0.7, 
-              },
-              '.MuiFormLabel-root': {
-                padding:'5px 0px 0px 20px',
-              },
-            }}
-            variant="standard"
             InputProps={{
               disableUnderline: true,
               endAdornment: <InputAdornment position="end">
@@ -149,22 +139,12 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
                               </IconButton>
                             </InputAdornment>,
             }}
-          >  
+          >
           </TextField>
         </Box>
-      </ChatInputWrapper>
     </Container>
   );
 };
-
-
-const ChatInputWrapper = styled(Box)(({ theme }) => ({
-  border: '2px solid #e0e0e0',
-  borderRadius: '5px',
-  '&:focus-within': {
-    borderColor: theme.palette.primary.main,
-  }
-}));
 
 const QuoteContainer = styled(Box)`
   display: flex;
