@@ -1,14 +1,18 @@
 resource "azuread_group" "owners" {
   display_name = "ScSc-CIO_ECT_Subscription_Owners"
   # owners # Managed by Infra group, do not alter.
-  members = [ data.azuread_user.dev-gt.object_id, data.azuread_user.po-af.object_id, data.azuread_service_principal.terraform.object_id ]
+  members = [
+    data.azuread_user.users["dev-gt"].object_id,
+    data.azuread_user.users["po-af"].object_id,
+    data.azuread_service_principal.terraform.object_id
+  ]
   security_enabled = true
 }
 
 resource "azuread_group" "contributors" {
   display_name = "ScSc-CIO_ECT_Subscription_Contributors"
   # owners # Managed by Infra group, do not alter.
-  members = [ data.azuread_user.dev-gt.object_id ]
+  members = [ data.azuread_user.users["dev-gt"].object_id ]
   security_enabled = true
 }
 
