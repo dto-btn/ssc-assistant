@@ -1,6 +1,6 @@
 from dataclasses import field
 from marshmallow_dataclass import dataclass
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, Iterable, List, Literal, Optional
 
 @dataclass
 class Metadata:
@@ -28,12 +28,25 @@ class ToolInfo:
     payload: Optional[Dict] = None
 
 @dataclass
+class Attachment:
+    """
+    Supports various attachments, type, and blob storage location.
+
+    example:
+
+    { type: 'image', blob_storage_url: "https://somestorage.azurestorage.net/hash"}
+    """
+    type: str
+    blob_storage_url: str
+
+@dataclass
 class Message:
     role: str
     quotedText: Optional[str] = None
     content: Optional[str] = None
     context: Optional[Context] = None
     tools_info: Optional[ToolInfo] = None
+    attachments: Optional[Iterable[Attachment]] = None
 
 @dataclass
 class Completion:
