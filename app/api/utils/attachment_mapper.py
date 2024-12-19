@@ -60,13 +60,14 @@ def map_attachments(message: Message):
     if message.attachments:
         for attachment in message.attachments:
             processed_url = attachment.blob_storage_url
-            content.append(
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": processed_url,
-                        "detail": "auto" # would be interesting to parameterize this.
-                    }
-                })
+            if attachment.type == "image": # yikes?
+                content.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": processed_url,
+                            "detail": "auto" # would be interesting to parameterize this.
+                        }
+                    })
 
     return content
