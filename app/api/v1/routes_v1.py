@@ -122,7 +122,8 @@ def completion_chat_stream(message_request: MessageRequest):
                 )
                 yield f'\r\n--{_boundary}--\r\n'
 
-            return Response(stream_with_context(generate_single_response()), content_type=f'multipart/x-mixed-replace; boundary={_boundary}')
+            return Response(stream_with_context(generate_single_response()),
+                            content_type=f'multipart/x-mixed-replace; boundary={_boundary}')
 
         def generate():
             context = None
@@ -157,7 +158,7 @@ def completion_chat_stream(message_request: MessageRequest):
         if e.code == 'content_filter':
             # flag innapropriate
             flag_conversation(message_request, convo_uuid)
-            logger.warn(f"Innaproriate question detected for convo id {convo_uuid}")
+            logger.warning("Innaproriate question detected for convo id %s", convo_uuid)
         abort(400, message="OpenAI request error", extra_data=e.body) # type: ignore
 
 @api_v1.post('/feedback')

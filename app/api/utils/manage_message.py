@@ -6,12 +6,14 @@ from openai.types.chat import (ChatCompletionAssistantMessageParam,
                                ChatCompletionSystemMessageParam,
                                ChatCompletionUserMessageParam)
 
+from utils.attachment_mapper import map_attachments
 from utils.models import MessageRequest
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["load_messages"]
 
+# pylint: disable=line-too-long
 SYSTEM_PROMPT_EN = """You are a versatile assistant for Shared Services Canada (SSC) employees, designed to provide comprehensive support for both work-related requests and general knowledge questions.
 
 For SSC-specific inquiries, you have direct access to the intranet MySSC+ website data and can utilize contextual data from that website to deliver accurate answers. Additionally, you can access corporate tools like:
@@ -100,34 +102,48 @@ Au-delà des questions liées à SPC, vous êtes doté d'une large compréhensio
 Lorsque vous répondez aux requêtes, vous devriez prioriser la fourniture d'informations directement à partir des sources de données disponibles. Vous avez également la capacité d'invoquer des fonctions spécialisées pour effectuer certaines tâches ou récupérer des types spécifiques d'informations. Il est crucial que ces fonctions soient utilisées uniquement en réponse à la requête actuelle de l'utilisateur qui indique explicitement l'intention d'invoquer une telle fonction. Ne déduisez pas l'intention d'utiliser une fonction en fonction de l'historique de la conversation ; au contraire, fiez-vous aux directives claires et actuelles de l'utilisateur dans son dernier message.
 
 Lorsqu'une fonction ne produit pas les résultats attendus, comme lorsqu'il peut y avoir une faute de frappe ou des détails insuffisants fournis, vous devriez poliment demander des informations supplémentaires ou des éclaircissements à l'utilisateur pour améliorer la précision des réponses ultérieures."""
+# pylint: enable=line-too-long
 
 def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessageParam]:
+    """
+    Main method responsible for loading in the messages sent to the API and making sure they are converted in something
+    suitable to send to the (Azure) OpenAI API.
+    """
     messages: List[ChatCompletionMessageParam] = []
 
     # Check if the user quoted text in their query
     if message_request.quotedText and message_request.messages and message_request.messages[-1].content:
-        quote_injection = f"The user has quoted specific text in their question. Please direct your response specifically to the quoted text: \"{message_request.quotedText}\". Make sure your answer addresses or references this quoted text directly."
+        quote_injection = ("The user has quoted specific text in their question."
+                           "Please direct your response specifically to the quoted text:"
+                           f"\"{message_request.quotedText}\"."
+                           " Make sure your answer addresses or references this quoted text directly.")
         message_request.messages[-1].content = quote_injection + message_request.messages[-1].content
 
     # Below we only filter messages that are not related to system prompt, so the first thing
-    # We force archibus as a system prompt if archibus tool is enabled, else we only add prompt if a system prompt is missing
+    # We force archibus as a system prompt if archibus tool is enabled,
+    # else we only add prompt if a system prompt is missing
     if 'archibus' in message_request.tools:
         system_msg = ARCHIBUS_SYSTEM_PROMPT_EN if message_request.lang == 'en' else ARCHIBUS_SYSTEM_PROMPT_FR
         if message_request.fullName:
             if message_request.lang == 'en':
-                system_msg += f"\n The current user full name is: {message_request.fullName}. Use this name if the user is trying to make a reservation for himself."
+                system_msg += (f"\n The current user full name is: {message_request.fullName}."
+                               " Use this name if the user is trying to make a reservation for himself.")
             else:
-               system_msg += f"\n Le nom complet de l'usager est: {message_request.fullName}. Utilisez ce nom si l'utilisateur essaie de faire une réservation pour lui-même." 
-        messages.append(ChatCompletionSystemMessageParam(content=system_msg, role="system"))
+                system_msg += (f"\n Le nom complet de l'usager est: {message_request.fullName}."
+                              " Utilisez ce nom si l'utilisateur essaie de faire une réservation pour lui-même.")
+        messages.append(ChatCompletionSystemMessageParam(
+            content=system_msg, role="system"))
     elif not message_request.messages or message_request.messages[0].role != "system":
-        messages.append(ChatCompletionSystemMessageParam(content=SYSTEM_PROMPT_EN if message_request.lang == 'en' else SYSTEM_PROMPT_FR, role="system"))
+        messages.append(ChatCompletionSystemMessageParam(
+            content=SYSTEM_PROMPT_EN if message_request.lang == 'en' else SYSTEM_PROMPT_FR, role="system"))
     else:
-        messages.append(ChatCompletionSystemMessageParam(content=str(message_request.messages[0].content), role='system'))
+        messages.append(ChatCompletionSystemMessageParam(
+            content=str(message_request.messages[0].content), role='system'))
 
     # Convert MessageRequest messages to ChatCompletionMessageParam
     for message in message_request.messages or []:
         if message.attachments and message.role == "user":
-            message_with_attachment = ChatCompletionUserMessageParam(content=str(message.content), role='user')
+            message_with_attachment = ChatCompletionUserMessageParam(content=map_attachments(message), role='user')
             messages.append(message_with_attachment)
         elif not message.attachments and message.role == "user":
             messages.append(ChatCompletionUserMessageParam(content=str(message.content), role='user'))
@@ -138,10 +154,11 @@ def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessage
     # if messages is still one, meaning we didn't add a message it means query was passed via query str
     if len(messages) == 1:
         messages.append(ChatCompletionUserMessageParam(content=str(message_request.query), role='user'))
-    
+
     # parameter message history via max attribute
-    max = min(message_request.max, 20)
-    if len(messages) - 1 > max:
-        messages = [messages[0]] + (messages[-(max-1):] if max > 1 else []) #else if 1 we end up with -0 wich is interpreted as 0: (whole list)
+    history_max = min(message_request.max, 20)
+    if len(messages) - 1 > history_max:
+        # else if 1 we end up with -0 wich is interpreted as 0: (whole list)
+        messages = [messages[0]] + (messages[-(history_max-1):] if history_max > 1 else [])
 
     return messages

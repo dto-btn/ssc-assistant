@@ -46,7 +46,7 @@ class Message:
     content: Optional[str] = None
     context: Optional[Context] = None
     tools_info: Optional[ToolInfo] = None
-    attachments: Optional[Iterable[Attachment]] = None
+    attachments: Optional[List[Attachment]] = None
 
 @dataclass
 class Completion:

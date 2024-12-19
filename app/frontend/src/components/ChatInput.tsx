@@ -19,7 +19,6 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
   const [question, setQuestion] = useState<string>("");
   const { t } = useTranslation();
   const [error, setError] = useState(false);
-  const theme = useTheme();
   
   const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "GPT-3.5 Turbo"
 
