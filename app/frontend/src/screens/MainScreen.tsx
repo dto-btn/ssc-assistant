@@ -1,4 +1,4 @@
-import { Box, Button, CssBaseline, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, useMediaQuery, useTheme } from "@mui/material";
+import { Box, CssBaseline, Dialog, DialogContent, useMediaQuery, useTheme } from "@mui/material";
 import { ChatInput, Dial, Disclaimer, DrawerMenu, FeedbackForm, TopMenu } from "../components";
 import ChatMessagesContainer from "../containers/ChatMessagesContainer";
 import { t } from "i18next";
@@ -18,11 +18,12 @@ import { bookReservation } from "../api/api";
 import { allowedToolsSet } from '../allowedTools';
 import { callMsGraph } from "../graph";
 import { UserContext } from "../context/UserContext";
+import { DeleteConversationConfirmation } from "../components/DeleteConversationConfirmation";
 
 const MainScreen = () => {
     const defaultEnabledTools: { [key: string]: boolean } = {};
     allowedToolsSet.forEach((tool) => {
-        if(tool == 'archibus')
+        if (tool == 'archibus')
             defaultEnabledTools[tool] = false;
         else
             defaultEnabledTools[tool] = true;
@@ -41,9 +42,9 @@ const MainScreen = () => {
         profilePictureURL: ''
     });
 
-    const loadCurrentChatIndexIfAble =  () => {
+    const loadCurrentChatIndexIfAble = () => {
         const index = localStorage.getItem('currentChatIndex');
-        if(index != null) return Number(index);
+        if (index != null) return Number(index);
         return 0;
     };
 
@@ -63,13 +64,13 @@ const MainScreen = () => {
     const [quotedText, setQuotedText] = useState<string>();
     const [showTutorials, setShowTutorials] = useState(false);
     const [tutorialBubbleNumber, setTutorialBubbleNumber] = useState<number | undefined>(undefined);
-    const [apiAccessToken, setApiAccessToken ] = useState<string>("");
+    const [apiAccessToken, setApiAccessToken] = useState<string>("");
     const [enabledTools, setEnabledTools] = useState<Record<string, boolean>>(defaultEnabledTools);
     const [selectedCorporateFunction, setSelectedCorporateFunction] = useState<string>('intranet_question')
 
     const menuIconRef = useRef<HTMLButtonElement>(null);
     const theme = useTheme();
-    const {instance, inProgress} = useMsal();
+    const { instance, inProgress } = useMsal();
     const isAuthenticated = useIsAuthenticated();
     const displayIsAtleastSm = useMediaQuery(theme.breakpoints.up('sm'));
 
@@ -78,29 +79,29 @@ const MainScreen = () => {
         localStorage.setItem('currentChatIndex', index.toString());
         // Update the state
         _setCurrentChatIndex(index);
-      };
+    };
 
-    const convertChatHistoryToMessages = (chatHistory: ChatItem[]) : Message[] => {
+    const convertChatHistoryToMessages = (chatHistory: ChatItem[]): Message[] => {
         const startIndex = Math.max(chatHistory.length - maxMessagesSent, 0);
         return chatHistory.slice(startIndex).map(
-          (chatItem) => {
-            if (isACompletion(chatItem)) {
-              return {
-                role: chatItem.message.role,
-                content: chatItem.message.content,
-              };
-            }
-            if (isAMessage(chatItem)) {
-              return chatItem;
-            }
-            return undefined;
-        }).filter(message => message !== undefined) as Message[];
+            (chatItem) => {
+                if (isACompletion(chatItem)) {
+                    return {
+                        role: chatItem.message.role,
+                        content: chatItem.message.content,
+                    };
+                }
+                if (isAMessage(chatItem)) {
+                    return chatItem;
+                }
+                return undefined;
+            }).filter(message => message !== undefined) as Message[];
     };
 
     const sendApiRequest = async (request: MessageRequest) => {
         try {
             let token = apiAccessToken;
-            if(!apiAccessToken || isTokenExpired(apiAccessToken)){
+            if (!apiAccessToken || isTokenExpired(apiAccessToken)) {
                 const response = await instance.acquireTokenSilent({
                     ...apiUse,
                     account: instance.getActiveAccount() as AccountInfo,
@@ -111,7 +112,7 @@ const MainScreen = () => {
             }
 
             if (!token)
-            throw new Error(t("no.token"));
+                throw new Error(t("no.token"));
 
             const completionResponse = await completionMySSC({
                 request: request,
@@ -158,7 +159,7 @@ const MainScreen = () => {
                 errorMessage = t("chat.unknownError");
             }
 
-            const toast : ToastMessage = {
+            const toast: ToastMessage = {
                 toastMessage: errorMessage,
                 isError: true
             }
@@ -176,7 +177,7 @@ const MainScreen = () => {
         }
     }
 
-    const makeApiRequest = async (question: string, userData: {graphData: any}, quotedTextFromRegenerate?: string) => {
+    const makeApiRequest = async (question: string, userData: { graphData: any }, quotedTextFromRegenerate?: string) => {
         // set is loading so we disable some interactive functionality while we load the response
         setIsLoading(true);
         const messagedQuoted = quotedTextFromRegenerate ? quotedTextFromRegenerate : quotedText;
@@ -189,8 +190,8 @@ const MainScreen = () => {
 
         const responsePlaceholder: Completion = {
             message: {
-            role: "assistant",
-            content: "",
+                role: "assistant",
+                content: "",
             }
         };
 
@@ -232,16 +233,16 @@ const MainScreen = () => {
         let toast: ToastMessage;
 
         try {
-          await sendFeedback(feedback, isGoodResponse, currentChatHistory.uuid);
-          toast = {
-            toastMessage: t("feedback.success"),
-            isError: false
-          };
+            await sendFeedback(feedback, isGoodResponse, currentChatHistory.uuid);
+            toast = {
+                toastMessage: t("feedback.success"),
+                isError: false
+            };
         } catch (error) {
-          toast = {
-            toastMessage: t("feedback.fail"),
-            isError: true
-          };
+            toast = {
+                toastMessage: t("feedback.fail"),
+                isError: true
+            };
         }
 
         setCurrentChatHistory((prevChatHistory) => {
@@ -296,7 +297,7 @@ const MainScreen = () => {
         });
 
         if (isAMessage(lastQuestion)) {
-          makeApiRequest(lastQuestion.content ? lastQuestion.content : "", userData, lastQuestion.quotedText);
+            makeApiRequest(lastQuestion.content ? lastQuestion.content : "", userData, lastQuestion.quotedText);
         }
     };
 
@@ -325,14 +326,14 @@ const MainScreen = () => {
 
     const setLangCookie = () => {
         Cookies.set("lang_setting", i18n.language, {
-          expires: 30,
+            expires: 30,
         });
         setOpenDrawer(false);
     };
 
     const handleLogout = () => {
         instance.logoutRedirect({
-          postLogoutRedirectUri: "/",
+            postLogoutRedirectUri: "/",
         });
     };
 
@@ -344,20 +345,20 @@ const MainScreen = () => {
         }
 
         const systemMessage: Message = {
-          role: "system",
-          content: t("welcome.prompt.system")
+            role: "system",
+            content: t("welcome.prompt.system")
         };
 
         const welcomeMessageRequest: Message = {
-          role: "user",
-          content: t("welcome.prompt.user", {givenName: graphData['givenName']})
+            role: "user",
+            content: t("welcome.prompt.user", { givenName: graphData['givenName'] })
         };
 
         const messages = [systemMessage, welcomeMessageRequest];
         const responsePlaceholder: Completion = {
             message: {
-            role: "assistant",
-            content: "",
+                role: "assistant",
+                content: "",
             },
         };
 
@@ -372,12 +373,12 @@ const MainScreen = () => {
 
         // prepare request bundle
         const request: MessageRequest = {
-          messages: messages,
-          max: maxMessagesSent,
-          top: 5,
-          tools: [],
-          uuid: currentChatHistory.uuid,
-          model: currentChatHistory.model
+            messages: messages,
+            max: maxMessagesSent,
+            top: 5,
+            tools: [],
+            uuid: currentChatHistory.uuid,
+            model: currentChatHistory.model
         };
 
         sendApiRequest(request);
@@ -398,7 +399,7 @@ const MainScreen = () => {
 
     // Scrolls the last updated message (if its streaming, or once done) into view
     useEffect(() => {
-        chatMessageStreamEnd.current?.scrollIntoView({behavior: "smooth",});
+        chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth", });
     }, [currentChatHistory.chatItems]);
 
     // Load chat histories if present
@@ -408,12 +409,12 @@ const MainScreen = () => {
         const enabledTools = localStorage.getItem("enabledTools");
         if (enabledTools) {
             const parsedEnabledTools = JSON.parse(enabledTools) as Record<string, boolean>;
-            if(Object.keys(defaultEnabledTools).length == Object.keys(parsedEnabledTools).length){
+            if (Object.keys(defaultEnabledTools).length == Object.keys(parsedEnabledTools).length) {
                 setEnabledTools(parsedEnabledTools);
             }
         }
         const selectedCorporateFunction = localStorage.getItem("selectedCorporateFunction");
-        if(selectedCorporateFunction) setSelectedCorporateFunction(selectedCorporateFunction);
+        if (selectedCorporateFunction) setSelectedCorporateFunction(selectedCorporateFunction);
     }, []);
 
     const handleRemoveToastMessage = (indexToRemove: number) => {
@@ -480,12 +481,12 @@ const MainScreen = () => {
         localStorage.setItem("selectedCorporateFunction", functionName);
         // disable Archibus if it's checked and on...
         setEnabledTools((enabledTools) => {
-            if(functionName == "none"){
+            if (functionName == "none") {
                 enabledTools['corporate'] = false;
-            }else{
+            } else {
                 enabledTools['corporate'] = true;
             }
-            if(enabledTools.hasOwnProperty('archibus')){
+            if (enabledTools.hasOwnProperty('archibus')) {
                 enabledTools['archibus'] = false;
             }
             localStorage.setItem("enabledTools", JSON.stringify(enabledTools));
@@ -622,7 +623,7 @@ const MainScreen = () => {
                 isError: false
             };
         } catch (error) {
-           toast = {
+            toast = {
                 toastMessage: `${t("booking.fail")} ${error}`,
                 isError: true
             };
@@ -639,34 +640,34 @@ const MainScreen = () => {
     }
 
     useEffect(() => {
-        console.debug("useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? "+isAuthenticated+", InProgress? "+inProgress+")");
-        if(isAuthenticated && !userData.graphData && inProgress === InteractionStatus.None){
-          //we do not have graphData, but since user is logged in we can now fetch it.
-          callMsGraph().then(response => {
-            console.debug("callMsGraph() -> Done!");
-            setUserData({ 
-              graphData: response.graphData,
-              profilePictureURL: response.profilePictureURL
+        console.debug("useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " + isAuthenticated + ", InProgress? " + inProgress + ")");
+        if (isAuthenticated && !userData.graphData && inProgress === InteractionStatus.None) {
+            //we do not have graphData, but since user is logged in we can now fetch it.
+            callMsGraph().then(response => {
+                console.debug("callMsGraph() -> Done!");
+                setUserData({
+                    graphData: response.graphData,
+                    profilePictureURL: response.profilePictureURL
+                });
             });
-          });
         }
     }, [isAuthenticated, inProgress, userData]);
 
     return (
         <UserContext.Provider value={userData}>
             <CssBaseline />
-            <TopMenu toggleDrawer={setOpenDrawer} ref={menuIconRef}  />
+            <TopMenu toggleDrawer={setOpenDrawer} ref={menuIconRef} />
             <Box
                 sx={{
-                display: "flex",
-                flexFlow: "column",
-                minHeight: "100vh",
-                margin: "auto",
+                    display: "flex",
+                    flexFlow: "column",
+                    minHeight: "100vh",
+                    margin: "auto",
                 }}
                 maxWidth="lg"
             >
                 <Box sx={{ flexGrow: 1 }}></Box>
-                <QuoteTextTooltip addQuotedText={handleAddQuotedText}/>
+                <QuoteTextTooltip addQuotedText={handleAddQuotedText} />
                 <ChatMessagesContainer
                     chatHistory={currentChatHistory}
                     isLoading={isLoading}
@@ -696,7 +697,7 @@ const MainScreen = () => {
                         onSend={(question) => makeApiRequest(question, userData)}
                         quotedText={quotedText}
                         handleRemoveQuote={handleRemoveQuote}
-                        selectedModel ={currentChatHistory.model}
+                        selectedModel={currentChatHistory.model}
                     />
                 </Box>
             </Box>
@@ -719,7 +720,7 @@ const MainScreen = () => {
                 handleUpdateEnabledTools={handleUpdateEnabledTools}
                 handleSetSelectedCorporateFunction={handleSetSelectedCorporateFunction}
                 selectedCorporateFunction={selectedCorporateFunction}
-                selectedModel ={currentChatHistory.model}
+                selectedModel={currentChatHistory.model}
                 handleSelectedModelChanged={hanldeUpdateModelVersion}
                 tutorialBubbleNumber={tutorialBubbleNumber}
                 handleToggleTutorials={toggleTutorials}
@@ -738,27 +739,11 @@ const MainScreen = () => {
                 <TutorialBubble handleAllTutorialsDisplayed={toggleTutorials} menuIconRef={menuIconRef} updateTutorialBubbleNumber={handleUpdateTutorialBubbleNumber} />
             }
 
-            {showDeleteChatDialog &&
-                <Dialog
-                    open={showDeleteChatDialog}
-                    onClose={handleCancelDeleteSavedChat}
-                >
-                    <DialogTitle>{t("delete.conversation.title")}</DialogTitle>
-                    <DialogContent>
-                       <DialogContentText>
-                            {t("delete.conversation.content")}
-                        </DialogContentText>
-                    </DialogContent>
-                    <DialogActions sx={{display: 'flex', justifyContent: 'flex-start'}}>
-                        <Button onClick={handleCancelDeleteSavedChat} sx={{backgroundColor: 'primary.main', color: 'white', width: '100px', margin: '5px 15px'}}>
-                            {t("cancel")}
-                        </Button>
-                        <Button onClick={deleteSavedChat} sx={{backgroundColor: '#C43831', color: 'white', width: '100px'}}>
-                            {t("delete")}
-                        </Button>
-                    </DialogActions>
-                </Dialog>
-            }
+            <DeleteConversationConfirmation
+                open={showDeleteChatDialog}
+                onClose={handleCancelDeleteSavedChat}
+                onDelete={deleteSavedChat}
+            />
 
             {warningDialogMessage &&
                 <Dialog

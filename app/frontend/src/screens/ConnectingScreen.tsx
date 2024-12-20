@@ -10,23 +10,26 @@ const ConnectingScreen = () => {
 
     useEffect(() => {
         if (error) {
-            console.log("useMsalAuthentication -> Unable to authenticate via silent SSO method, will force redirect login.");
+            console.log("ConnectingScreen -> Unable to authenticate via silent SSO method, will force redirect login.");
             login(InteractionType.Redirect, userRead);
         }
-    }, [error]);
+    }, [error, login]);
 
     return (
         <ConnectingScreenView>
             <ConnectingContainer>
-                <img src={logo} style={{width: 'auto', height: '100px'}} alt="logo of SSC" />
+                <Logo src={logo} alt="logo of SSC" />
                 <ConnectingTextWrapper>
                     <ConnectingText variant="h6" align="left">En cours de connection...</ConnectingText>
-                    <ConnectingText variant="h6" align="left">Connecting...</ConnectingText>
+                    <ConnectingText variant="h6" align="left">
+                        {
+                            error ? "Erreur lors de la connection, redirection vers la page de connection..." : "Connecting..."
+                        }
+                    </ConnectingText>
                 </ConnectingTextWrapper>
             </ConnectingContainer>
-            <LoadingSpinnerView sx={{ display: 'flex', justifyContent: 'center', my: '2rem', marginTop: '100px' }}>
-                <CircularProgress
-                    sx={{ color: 'url(#multicolor)' }}
+            <LoadingSpinnerView>
+                <CircularProgressStyled
                     size={50}
                 />
             </LoadingSpinnerView>
@@ -35,6 +38,11 @@ const ConnectingScreen = () => {
 }
 
 export default ConnectingScreen;
+
+const Logo = styled('img')({
+    width: 'auto',
+    height: '100px'
+});
 
 const ConnectingScreenView = styled(Box)`
     display: flex;
@@ -62,5 +70,12 @@ const ConnectingText = styled(Typography)`
 const LoadingSpinnerView = styled(Box)`
     display: flex;
     justify-content: center;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+    margin-top: 100px;
 `;
 
+const CircularProgressStyled = styled(CircularProgress)`
+    color: url(#multicolor);
+`;
