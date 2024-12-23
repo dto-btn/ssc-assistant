@@ -1,9 +1,10 @@
-import { Box, Container, TextField, InputAdornment, IconButton, CircularProgress, styled, Typography, useTheme } from '@mui/material';
+import { Box, Container, TextField, InputAdornment, IconButton, CircularProgress, styled, Typography } from '@mui/material';
 import Send from '@mui/icons-material/Send';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn'
 import CloseIcon from '@mui/icons-material/Close';
+import UploadFileButton from './UploadFileButton';
 
 interface ChatInputProps {
   onSend: (question: string) => void;
@@ -136,6 +137,7 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
                                 <Send sx={{ color: 'primary.main' }} aria-label={t("send")}/>
                               )}
                               </IconButton>
+                              <UploadFileButton disabled={disabled} />
                             </InputAdornment>,
             }}
           >

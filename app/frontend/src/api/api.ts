@@ -120,3 +120,21 @@ export async function bookReservation(bookingDetails: BookingConfirmation): Prom
 
   return bookingResponse;
 }
+
+export async function uploadFile(encodedFile: string, accessToken: string): Promise<string> {
+  const url = "/api/1.0/upload";
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + accessToken.trim()
+    },
+    body: JSON.stringify({"encodedFile": encodedFile})
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed store image");
+  }
+
+  return response.json();
+}
