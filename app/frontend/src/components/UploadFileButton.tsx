@@ -27,6 +27,7 @@ export default function InputFileUpload({disabled}: UploadFileButtonProps) {
 
   const encodeAndUploadFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    console.log("in encodeAndUploadFile");
     if (file) {
       const reader = new FileReader();
       reader.onloadend = async () => {

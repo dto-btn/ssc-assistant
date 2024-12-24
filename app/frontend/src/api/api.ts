@@ -123,6 +123,8 @@ export async function bookReservation(bookingDetails: BookingConfirmation): Prom
 
 export async function uploadFile(encodedFile: string, accessToken: string): Promise<string> {
   const url = "/api/1.0/upload";
+  console.log("Uploading file");
+  console.log(encodedFile);
   const response = await fetch(url, {
     method: "POST",
     headers: {

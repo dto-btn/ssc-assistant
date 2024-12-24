@@ -122,7 +122,6 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
             maxRows={3}
             label={t("ask.question")}
             InputProps={{
-              disableUnderline: true,
               endAdornment: <InputAdornment position="end">
                               <IconButton
                                 onClick={sendQuestion} 

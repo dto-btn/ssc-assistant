@@ -1,6 +1,6 @@
 from dataclasses import field
 from marshmallow_dataclass import dataclass
-from typing import Any, Dict, Iterable, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 @dataclass
 class Metadata:
