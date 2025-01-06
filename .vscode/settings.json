@@ -13,4 +13,7 @@
     "pylint.args": [
         "--rcfile=.vscode/pylintrc"
     ],
+    "[typescriptreact]": {
+        "editor.formatOnSave": true
+    }
 }
