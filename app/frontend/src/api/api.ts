@@ -123,20 +123,24 @@ export async function bookReservation(bookingDetails: BookingConfirmation): Prom
 
 export async function uploadFile(encodedFile: string, accessToken: string): Promise<string> {
   const url = "/api/1.0/upload";
-  console.log("Uploading file");
-  console.log(encodedFile);
+
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": "Bearer " + accessToken.trim()
     },
-    body: JSON.stringify({"encodedFile": encodedFile})
+    body: JSON.stringify({ "encodedFile": encodedFile })
   });
 
   if (!response.ok) {
-    throw new Error("Failed store image");
+    const errorMessage = await response.text();
+    throw new Error(`Failed to upload file: ${errorMessage}`);
   }
 
-  return response.json();
+  return await response.json().catch(
+    (error) => {
+      console.error("Error while reading the stream:", error);
+      throw error;
+    });
 }
