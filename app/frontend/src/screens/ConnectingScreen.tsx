@@ -21,11 +21,7 @@ const ConnectingScreen = () => {
                 <Logo src={logo} alt="logo of SSC" />
                 <ConnectingTextWrapper>
                     <ConnectingText variant="h6" align="left">En cours de connection...</ConnectingText>
-                    <ConnectingText variant="h6" align="left">
-                        {
-                            error ? "Erreur lors de la connection, redirection vers la page de connection..." : "Connecting..."
-                        }
-                    </ConnectingText>
+                    <ConnectingText variant="h6" align="left">Connecting...</ConnectingText>
                 </ConnectingTextWrapper>
             </ConnectingContainer>
             <LoadingSpinnerView>
