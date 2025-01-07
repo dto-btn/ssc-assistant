@@ -13,8 +13,7 @@
       },
       "args": [
         "run",
-        "--no-debugger",
-        "--no-reload",
+        "--debug",
         "--port=5001"
       ],
       "jinja": true,
