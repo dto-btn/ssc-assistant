@@ -12,7 +12,7 @@ export const AppErrorBoundary: React.FC<PropsWithChildren> = ({ children }) => {
         <ErrorBoundary
             fallback={
                 <Container>
-                    <h1>Something went wrong / Quelque chose a mal tourné</h1>
+                    <h1>Please refresh the page / Veuillez rafraîchir la page</h1>
                     <p>
                         We apologize for the inconvenience. Please try refreshing the page or come back later.
                         <br />
