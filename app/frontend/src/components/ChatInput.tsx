@@ -16,7 +16,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import UploadFileButton from "./UploadFileButton";
 
 interface ChatInputProps {
-  onSend: (question: string) => void;
+  onSend: (question: string, files: Attachment[]) => void;
   disabled: boolean;
   placeholder?: string;
   clearOnSend?: boolean;
@@ -44,11 +44,19 @@ export const ChatInput = ({
     if (disabled || !question.trim()) {
       return;
     }
-
-    onSend(question);
+    let attachments: Attachment[] = [];
+    if (file) {
+      // or for(files) down the road ...
+      attachments.push({
+        type: "image",
+        blob_storage_url: file.file_url,
+      });
+    }
+    onSend(question, attachments);
 
     if (clearOnSend) {
       setQuestion("");
+      setFile(null);
     }
   };
 

@@ -24,6 +24,7 @@ interface Message {
   context?: Context | null;
   tools_info?: ToolInfo;
   quotedText?: string;
+  attachments?: Attachment[];
 }
 
 interface Completion {
@@ -91,4 +92,9 @@ interface FileUpload {
   file_url: string;
   message: string;
   file_name: string;
+}
+
+interface Attachment {
+  type: string;
+  blob_storage_url: string;
 }
