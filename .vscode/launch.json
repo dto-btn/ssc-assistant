@@ -2,11 +2,43 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "API",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "flask",
+      "cwd": "${workspaceFolder}/app/api",
+      "env": {
+        "FLASK_APP": "app.py",
+        "FLASK_DEBUG": "1"
+      },
+      "args": [
+        "run",
+        "--no-debugger",
+        "--no-reload"
+      ],
+      "jinja": true,
+      "autoStartBrowser": false
+    },
+    {
+      "name": "Frontend",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/app/frontend",
+      "runtimeArgs": [
+        "run-script",
+        "start"
+      ],
+      "runtimeExecutable": "npm",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "node"
+    },
+    {
       "name": "Attach to Python Functions",
       "type": "python",
       "request": "attach",
-      "port": 9091,
+      "port": 5001,
       "preLaunchTask": "func: host start"
-    }
+    },
   ]
 }

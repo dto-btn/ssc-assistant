@@ -6,20 +6,23 @@ import {
 import ConnectingScreen from "./screens/ConnectingScreen";
 import MainScreen from "./screens/MainScreen";
 import { MsalProvider } from "@azure/msal-react";
+import { AppErrorBoundary } from ".//AppErrorBoundary";
 
 interface AppProps {
   instance: PublicClientApplication;
 }
 
-export const App = ({instance}: AppProps) => {
+export const App = ({ instance }: AppProps) => {
   return (
-    <MsalProvider instance={instance}>
-      <UnauthenticatedTemplate>
-        <ConnectingScreen />
-      </UnauthenticatedTemplate>
-      <AuthenticatedTemplate>
-        <MainScreen/>
-      </AuthenticatedTemplate>
-    </MsalProvider>
+    <AppErrorBoundary>
+      <MsalProvider instance={instance}>
+        <UnauthenticatedTemplate>
+          <ConnectingScreen />
+        </UnauthenticatedTemplate>
+        <AuthenticatedTemplate>
+          <MainScreen />
+        </AuthenticatedTemplate>
+      </MsalProvider>
+    </AppErrorBoundary>
   );
 };
