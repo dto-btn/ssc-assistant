@@ -1,6 +1,6 @@
 import React, { MouseEventHandler, PropsWithChildren } from "react";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { styled, Button, Container } from "@mui/material";
+import { Button, Container } from "@mui/material";
 
 export const AppErrorBoundary: React.FC<PropsWithChildren> = ({ children }) => {
     const handleRefresh: MouseEventHandler<HTMLButtonElement> = (e) => {
