@@ -655,7 +655,6 @@ const MainScreen = () => {
 
     return (
         <UserContext.Provider value={userData}>
-            <CssBaseline />
             <TopMenu toggleDrawer={setOpenDrawer} ref={menuIconRef} />
             <Box
                 sx={{

@@ -2,6 +2,7 @@ import React, { PropsWithChildren, ErrorInfo } from "react";
 
 type ErrorBoundaryProps = PropsWithChildren<{
     fallback: React.ReactNode;
+    forceShow?: boolean; // mainly for development purposes
 }>;
 
 type ErrorBoundaryState = {
@@ -10,12 +11,12 @@ type ErrorBoundaryState = {
 
 // The latest boundary docs are sometimes a little hard to find. Here's the link to the official React docs:
 // https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary
-export class ErrorBoundary<P extends ErrorBoundaryProps> extends React.Component<P> {
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps> {
     state: ErrorBoundaryState;
 
-    constructor(props: P) {
+    constructor(props: ErrorBoundaryProps) {
         super(props);
-        this.state = { hasError: true };
+        this.state = { hasError: false };
     }
 
     static getDerivedStateFromError(): ErrorBoundaryState {
@@ -33,7 +34,7 @@ export class ErrorBoundary<P extends ErrorBoundaryProps> extends React.Component
 
 
     render() {
-        if (this.state.hasError) {
+        if (this.state.hasError || this.props.forceShow) {
             return (
                 this.props.fallback
             );
