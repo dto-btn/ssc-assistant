@@ -87,3 +87,9 @@ class BookingConfirmation:
     createdBy: str
     assignedTo: str
     startDate: str
+
+@dataclass
+class FilePayload:
+    '''Contains the payload of the file uploaded to be fed to the OpenAI API'''
+    encoded_file: str
+    name: str

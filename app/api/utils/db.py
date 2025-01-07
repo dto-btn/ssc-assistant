@@ -1,13 +1,16 @@
+import base64
 import copy
 import json
 import logging
 import os
-from typing import Any
 import uuid
+from typing import Any
 
 from azure.data.tables import TableServiceClient
 from azure.identity import DefaultAzureCredential
-from .models import Completion, Feedback, MessageRequest
+from azure.storage.blob import BlobServiceClient
+
+from .models import Completion, Feedback, FilePayload, MessageRequest
 
 __all__ = ["store_request", "store_completion", "leave_feedback", "flag_conversation"]
 
@@ -20,6 +23,7 @@ table_service_client = TableServiceClient(endpoint=os.getenv("DATABASE_ENDPOINT"
 chat_table_client = table_service_client.get_table_client(table_name="chat")
 feedback_table_client = table_service_client.get_table_client(table_name="feedback")
 flagged_client = table_service_client.get_table_client(table_name="flagged")
+blob_service_client = BlobServiceClient(account_url=os.getenv("BLOB_ENDPOINT") or "", credential=credential)
 
 def create_entity(data, partition_key: str, row_key_prefix: str, user: Any):
     '''
@@ -45,7 +49,7 @@ def create_entity(data, partition_key: str, row_key_prefix: str, user: Any):
 
     if isinstance(data_copy, Completion):
         entity['Answer'] = data_copy.message.content
-    
+
     if isinstance(data_copy, MessageRequest) and data_copy.messages:
         msg = data_copy.messages[-1]
         data_copy.messages = [] #avoid saving the whole conversation (no need to)
@@ -61,17 +65,17 @@ def create_entity(data, partition_key: str, row_key_prefix: str, user: Any):
     return entity
 
 def store_request(message_request: MessageRequest, conversation_uuid: str, user: Any):
-      '''
-      Store the conversation in the database, we store what we received (history and question) 
+    '''
+    Store the conversation in the database, we store what we received (history and question) 
 
-      NOTE: Azure Table storage offers a limit of 32k per column for string type of characters.
-            one solution is to compress and split the data: https://github.com/mebjas/AzureStorageTableLargeDataWriter/blob/master/AzureStorageTableLargeDataWriter/StorageTableWriter.cs
-      '''
-      try:
+    NOTE: Azure Table storage offers a limit of 32k per column for string type of characters.
+        one solution is to compress and split the data: https://github.com/mebjas/AzureStorageTableLargeDataWriter/blob/master/AzureStorageTableLargeDataWriter/StorageTableWriter.cs
+    '''
+    try:
         message_request_entity = create_entity(message_request, conversation_uuid, 'MessageRequest', user)
         chat_table_client.upsert_entity(message_request_entity)
-      except Exception as e:
-          logger.error(e)
+    except Exception as e:
+        logger.error(e)
 
 def store_completion(completion: Completion, conversation_uuid: str, user: Any):
       '''
@@ -106,3 +110,20 @@ def flag_conversation(message_request: MessageRequest, conversation_uuid: str):
         flagged_client.upsert_entity(message_request_entity)
       except Exception as e:
           logger.error(e)
+
+def save_file(file: FilePayload) -> str:
+    '''
+    Store the feedback in the database, we store what we received (history and question) and the completion (answer)
+
+    NOTE: We do not store the user here since the file tied to the user operation 
+          is stored in a different table (history)
+
+    Returns the blob storage url if successful
+    '''
+    file_name_uuid = str(uuid.uuid4()) + '-' + file.name
+    blob_client = blob_service_client.get_blob_client(container="assistant-chat-files", blob=file_name_uuid)
+    logger.info("Blob client created for container 'assistant-chat-files' and blob '%s'.", file_name_uuid)
+    # encode file to bytes
+    file_as_byte = base64.b64decode(file.encoded_file.split(",")[1])
+    blob_client.upload_blob(file_as_byte, blob_type="BlockBlob", overwrite=True)
+    return blob_client.url

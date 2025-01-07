@@ -86,3 +86,9 @@ interface BookingConfirmation {
   assignedTo: string;
   startDate: string;
 }
+
+interface FileUpload {
+  file_url: string;
+  message: string;
+  file_name: string;
+}

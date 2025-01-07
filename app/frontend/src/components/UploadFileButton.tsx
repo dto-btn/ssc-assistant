@@ -8,6 +8,7 @@ import { AccountInfo } from "@azure/msal-browser";
 
 interface UploadFileButtonProps {
   disabled: boolean;
+  onFileUpload: (file: FileUpload) => void;
 }
 
 const VisuallyHiddenInput = styled("input")({
@@ -22,7 +23,10 @@ const VisuallyHiddenInput = styled("input")({
   width: 1,
 });
 
-export default function InputFileUpload({ disabled }: UploadFileButtonProps) {
+export default function InputFileUpload({
+  disabled,
+  onFileUpload,
+}: UploadFileButtonProps) {
   const { instance } = useMsal();
 
   const encodeAndUploadFile = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,9 +42,18 @@ export default function InputFileUpload({ disabled }: UploadFileButtonProps) {
             account: instance.getActiveAccount() as AccountInfo,
             forceRefresh: true,
           });
-          await uploadFile(encodedFile, response.accessToken);
+          console.log(
+            "Processing encoded file: ",
+            encodedFile.substring(0, 100)
+          );
+          var fileUpload = await uploadFile(
+            encodedFile,
+            file.name,
+            response.accessToken
+          );
+          onFileUpload(fileUpload);
         } catch (error) {
-          console.error("Error while reading the stream:", error);
+          console.error("Error uploading file");
           throw error;
         }
       };
@@ -60,6 +73,7 @@ export default function InputFileUpload({ disabled }: UploadFileButtonProps) {
       <VisuallyHiddenInput
         type="file"
         onChange={encodeAndUploadFile}
+        //accept=".jpg,.jpeg,.png" //only images for now since the UI doesn't support other file types
         accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
         //multiple
       />

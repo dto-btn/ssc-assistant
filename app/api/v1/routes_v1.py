@@ -11,9 +11,9 @@ from openai.types.chat import ChatCompletion
 
 from tools.archibus.archibus_functions import make_api_call
 from utils.auth import auth, user_ad
-from utils.db import (flag_conversation, leave_feedback,
+from utils.db import (flag_conversation, leave_feedback, save_file,
                               store_completion, store_request)
-from utils.models import (BookingConfirmation, Completion, Feedback,
+from utils.models import (BookingConfirmation, Completion, Feedback, FilePayload,
                                   MessageRequest)
 from utils.openai import (build_completion_response, chat_with_data,
                                   convert_chat_with_data_response)
@@ -213,8 +213,8 @@ def book_reservation(booking_confirmation: BookingConfirmation):
 @api_v1.doc("Upload a file that will be stored in the blob storage")
 @api_v1.doc(security='ApiKeyAuth')
 @auth.login_required(role='chat')
-@api_v1.input({"encodedFile": str}, location='json')
-def upload_file(json_data: str):
+@api_v1.input(FilePayload.Schema, arg_name="file", location='json')
+def upload_file(file: FilePayload):
     """Allow users to uploaded encoded files and to decode and store them in Azure blob storage"""
-    print(json_data)
-    return jsonify({"message": "File received", "file": json_data}), 200
+    url = save_file(file)
+    return jsonify({"message": "File received", "file_url": url}), 200
