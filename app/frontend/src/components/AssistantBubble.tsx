@@ -9,7 +9,7 @@ import { BubbleButtons } from './BubbleButtons';
 import { styled } from '@mui/system';
 import ProfileCardsContainer from '../containers/ProfileCardsContainer';
 import HandymanIcon from '@mui/icons-material/Handyman';
-import AutoAwesome from '@mui/icons-material/AutoAwesome';
+import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { visuallyHidden } from '@mui/utils';
 import Draggable from 'react-draggable';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
@@ -173,7 +173,12 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
             <MainContentWrapper
             >
               <IconWrapper>
-                <AutoAwesome sx={{ color: "primary.main", fontSize: 24 }} />
+                <img src={logo} style={{
+                  width: "35px",
+                  height: "auto",
+                  cursor: "pointer",
+                }} alt="logo of SSC" />
+                {/* <AutoAwesome sx={{ color: "primary.main", fontSize: 24 }} /> */}
               </IconWrapper>
               <TextComponentsBox className='textCompBox'>
                 <Typography sx={visuallyHidden}>{t("aria.assistant.message")}</Typography> {/* Hidden div for screen reader */}

@@ -6,6 +6,7 @@ import { UserContext } from '../context/UserContext';
 interface UserProfileProps {
   fullName: string;
   size?: string;
+  fontSize?: string;
 }
 
 interface AvatarData {
@@ -41,30 +42,34 @@ function stringToColor(string: string) {
   return color;
 }
 
-function getLetterAvatar(name: string, size: string | undefined): AvatarData {  return {
+function getLetterAvatar(name: string, size: string | undefined, fontSize: string | undefined): AvatarData {
+  const avatarData: AvatarData = {
     sx: {
       bgcolor: stringToColor(name),
-      ...(size && { width: size, height: size, fontSize: '16px' })
     },
     children: `${name.split(' ')[0][0]}${name.split(' ')[1][0]}`,
   };
+
+  if (fontSize) {
+    avatarData.sx.fontSize = fontSize;
+  }
+
+  if (size) {
+    avatarData.sx.width = size;
+    avatarData.sx.height = size;
+  }
+
+  return avatarData;
 }
 
-export const UserProfilePicture = ({ fullName, size } : UserProfileProps) => {  
+export const UserProfilePicture = ({ fullName, size, fontSize }: UserProfileProps) => {
   const { profilePictureURL } = useContext(UserContext);
-  const [letterAvatar, setLetterAvatar] = useState<AvatarData>();
 
-  useEffect(() => {
-    if (!profilePictureURL) {
-      setLetterAvatar(getLetterAvatar(fullName, size));
-    }
-  }, [profilePictureURL, fullName, size]);
-
-  if(profilePictureURL)
-    return <Avatar aria-hidden alt={fullName} src={profilePictureURL}  sx={size ? { width: size, height: size } : {}}  
-  />;
-  else if (letterAvatar)
-    return <Avatar aria-hidden alt={fullName} sx={letterAvatar.sx} children={letterAvatar.children} />;
-  else
-    return null;
+  if (profilePictureURL) {
+    return <Avatar aria-hidden alt={fullName} src={profilePictureURL} sx={size ? { width: size, height: size } : {}}
+    />
+  } else {
+    const letterAvatar = getLetterAvatar(fullName, size, fontSize);
+    return <Avatar aria-hidden alt={fullName} sx={letterAvatar?.sx} children={letterAvatar?.children} />;
+  }
 };

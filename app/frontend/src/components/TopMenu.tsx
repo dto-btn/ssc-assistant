@@ -11,12 +11,6 @@ import { UserContext } from '../context/UserContext';
 import { forwardRef } from "react";
 import React from "react";
 
-const logoStyle = {
-  width: "50px",
-  height: "auto",
-  cursor: "pointer",
-};
-
 interface TopMenuProps {
   toggleDrawer: (arg: boolean) => void;
   ref: React.RefObject<HTMLButtonElement>;
@@ -33,72 +27,103 @@ export const TopMenu = forwardRef<HTMLButtonElement, TopMenuProps>(({ toggleDraw
         sx={{
           bgcolor: "white",
           backgroundImage: "none",
-          boxShadow: "none",
-          pt: { xs: 0, sm: 2 },
+          boxShadow: "none"
         }}
       >
         <Toolbar
-          variant="regular"
+          variant="dense"
           sx={(theme) => ({
-            width: { xs: "100%", sm: "95%", xl: "75%" },
+            width: "100%",
             margin: "auto",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: "32px",
             flexShrink: 0,
-            borderRadius: { xs: 0, sm: 999 },
+            borderRadius: 0,
             background: `linear-gradient(45deg, black, ${theme.palette.primary.main})`,
             maxHeight: 40,
-            border: { xs: "none", sm: "1px solid" },
-            borderColor: "black",
-            boxShadow:
-              theme.palette.mode === "light"
-                ? `0 0 1px rgba(85, 166, 246, 0.1), 1px 1.5px 2px -1px rgba(85, 166, 246, 0.15), 4px 4px 12px -2.5px rgba(85, 166, 246, 0.15)`
-                : "0 0 1px rgba(2, 31, 59, 0.7), 1px 1.5px 2px -1px rgba(2, 31, 59, 0.65), 4px 4px 12px -2.5px rgba(2, 31, 59, 0.65)",
+            border: "none"
           })}
         >
-          <Grid container alignItems="center">
+          <Box sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: "1rem"
+          }}>
+            <img src={logo} style={{
+              width: "35px",
+              height: "auto",
+              cursor: "pointer",
+            }} alt="logo of SSC" />
+            <Typography variant="h1" sx={{ fontSize: '20px', fontWeight: '500' }}>{t("title")}</Typography>
+          </Box>
+          <Box sx={{
+            display: "flex",
+            flexGrow: 1,
+            justifyContent: "flex-end",
+            alignItems: "center",
+            gap: "1rem"
+          }}>
+            {graphData &&
+              <>
+                <Typography variant="body1" sx={{ display: { xs: 'none', sm: 'block' } }}>{graphData['givenName']} {graphData['surname']}</Typography>
+                <UserProfilePicture fullName={graphData['givenName'] + " " + graphData['surname']} size="30px" fontSize="12px" />
+              </>
+            }
+            <IconButton
+              edge="start"
+              color="inherit"
+              onClick={() => toggleDrawer(true)}
+              aria-label={t("aria.show.menu")}
+              ref={ref}
+            >
+              <MenuIcon />
+            </IconButton>
+          </Box>
+
+          {/* <Grid container alignItems="center">
             <Grid
               item
               sx={{
-                flexGrow: 1,
-                display: "flex",
-                alignItems: "center",
                 ml: { xs: "-18px" },
               }}
-              xs={2}
+              xs={0}
               sm={1}
             >
-              <img src={logo} style={logoStyle} alt="logo of SSC" />
+              &nbsp;
             </Grid>
-            <Grid item sx={{ display: "flex", flexGrow: 1 }} xs={6} sm={6.5}>
-              <Typography variant="h1" sx={{fontSize: '28px', fontWeight: '500'}}>{t("title")}</Typography>
+            <Grid item sx={{ display: "flex", flexGrow: 1, alignItems: "center", gap: "1rem" }} xs={6} sm={6.5}>
+              <img src={logo} style={{
+                width: "35px",
+                height: "auto",
+                cursor: "pointer",
+              }} alt="logo of SSC" />
+              <Typography variant="h1" sx={{ fontSize: '20px', fontWeight: '500' }}>{t("title")}</Typography>
             </Grid>
             <Grid container item xs={3} sm={4} sx={{ display: "flex" }} justifyContent='flex-end' alignItems="center">
-              {graphData && 
-              <>
-                <Typography variant="body1" mr={2} sx={{ display: { xs: 'none', sm: 'block' } }}>{graphData['givenName']} {graphData['surname']}</Typography>
-                <UserProfilePicture fullName={graphData['givenName'] + " " + graphData['surname']} />
-              </>
-             }
+              {graphData &&
+                <>
+                  <Typography variant="body1" mr={2} sx={{ display: { xs: 'none', sm: 'block' } }}>{graphData['givenName']} {graphData['surname']}</Typography>
+                  <UserProfilePicture fullName={graphData['givenName'] + " " + graphData['surname']} size="30px" fontSize="12px" />
+                </>
+              }
             </Grid>
-            <Grid container item xs={1} sm={0.5} justifyContent='flex-end' sx={{ml: { xs: "18px" }}}>
+            <Grid container item xs={1} sm={0.5} justifyContent='flex-end' sx={{ ml: { xs: "18px" } }}>
               <Box>
                 <IconButton
                   edge="start"
                   color="inherit"
                   onClick={() => toggleDrawer(true)}
                   aria-label={t("aria.show.menu")}
-                  ref={ref} 
+                  ref={ref}
                 >
                   <MenuIcon />
                 </IconButton>
               </Box>
             </Grid>
-          </Grid>
+          </Grid> */}
         </Toolbar>
-      </AppBar>
+      </AppBar >
     </>
   );
 });
