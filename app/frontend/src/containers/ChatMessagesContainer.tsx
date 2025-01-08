@@ -15,18 +15,18 @@ interface ChatMessagesContainerProps {
 }
 
 const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
-    const { chatHistory, isLoading, chatMessageStreamEnd, replayChat, 
+    const { chatHistory, isLoading, chatMessageStreamEnd, replayChat,
         setIsFeedbackVisible, setIsGoodResponse, handleRemoveToastMessage, handleBookReservation } = props;
-    
+
     return (
         <Box
             sx={{
-            overflowY: "hidden",
-            padding: "3rem",
-            paddingTop: "6rem",
-            alignItems: "flex-end",
+                overflowY: "hidden",
+                padding: "0.5rem",
+                paddingTop: "6rem",
+                alignItems: "flex-end",
             }}
-            aria-live="polite" 
+            aria-live="polite"
             aria-relevant='additions'
         >
             {!chatHistory?.chatItems ? (
