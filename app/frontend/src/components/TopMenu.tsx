@@ -48,12 +48,13 @@ export const TopMenu = forwardRef<HTMLButtonElement, TopMenuProps>(({ toggleDraw
           <Box sx={{
             display: "flex",
             alignItems: "center",
-            gap: "1rem"
+            gap: "1rem",
+            cursor: "pointer",
+            userSelect: "none"
           }}>
             <img src={logo} style={{
               width: "35px",
               height: "auto",
-              cursor: "pointer",
             }} alt="logo of SSC" />
             <Typography variant="h1" sx={{ fontSize: '20px', fontWeight: '500' }}>{t("title")}</Typography>
           </Box>
@@ -62,7 +63,7 @@ export const TopMenu = forwardRef<HTMLButtonElement, TopMenuProps>(({ toggleDraw
             flexGrow: 1,
             justifyContent: "flex-end",
             alignItems: "center",
-            gap: "1rem"
+            gap: "1rem",
           }}>
             {graphData &&
               <>
