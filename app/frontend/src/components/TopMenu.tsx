@@ -1,5 +1,5 @@
 import MenuIcon from "@mui/icons-material/Menu";
-import { Box, Grid, IconButton } from "@mui/material";
+import { Box, Grid, IconButton, Tooltip } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
@@ -9,6 +9,8 @@ import { UserProfilePicture } from './ProfilePicture';
 import { useContext } from "react";
 import { UserContext } from '../context/UserContext';
 import { forwardRef } from "react";
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddCommentIcon from '@mui/icons-material/AddComment';
 import React from "react";
 
 interface TopMenuProps {
@@ -16,9 +18,34 @@ interface TopMenuProps {
   ref: React.RefObject<HTMLButtonElement>;
 }
 
+type TopMenuItem = {
+  icon: React.ReactElement;
+  label: string;
+  onClick: () => void;
+}
+
 export const TopMenu = forwardRef<HTMLButtonElement, TopMenuProps>(({ toggleDrawer }, ref) => {
   const { t } = useTranslation();
   const { graphData } = useContext(UserContext);
+
+  const topMenuItems: TopMenuItem[] = [
+    {
+      icon: <AddCommentIcon sx={{ fontSize: "1.1rem" }} />,
+      label: t("new.conversation.short"),
+      onClick: () => {
+        // TODO: Implement new conversation
+        alert("TODO: Implement");
+      }
+    },
+    {
+      icon: <DeleteIcon sx={{ fontSize: "1.1rem" }} />,
+      label: t("clear.conversation.short"),
+      onClick: () => {
+        // TODO: Implement clear conversation
+        alert("TODO: Implement");
+      }
+    }
+  ]
 
   return (
     <>
@@ -57,6 +84,23 @@ export const TopMenu = forwardRef<HTMLButtonElement, TopMenuProps>(({ toggleDraw
               height: "auto",
             }} alt="logo of SSC" />
             <Typography variant="h1" sx={{ fontSize: '20px', fontWeight: '500' }}>{t("title")}</Typography>
+            {
+              topMenuItems.map((item, index) => (
+                <Box key={index} sx={{
+                  transition: "border-color 0.2s",
+                  display: 'flex', gap: 0.5, alignItems: 'center', cursor: 'pointer',
+                  border: "2px solid transparent",
+                  padding: "0.25rem 0.5rem",
+                  borderRadius: "0.5rem",
+                  ":hover": {
+                    borderColor: "white",
+                  }
+                }}>
+                  {item.icon}
+                  <Typography variant="body1" sx={{ display: { xs: 'none', sm: 'block' } }}>{item.label}</Typography>
+                </Box>
+              ))
+            }
           </Box>
           <Box sx={{
             display: "flex",
