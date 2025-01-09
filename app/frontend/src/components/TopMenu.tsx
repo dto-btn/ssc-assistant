@@ -16,6 +16,8 @@ import React from "react";
 interface TopMenuProps {
   toggleDrawer: (arg: boolean) => void;
   ref: React.RefObject<HTMLButtonElement>;
+  onClearChat: () => void;
+  onNewChat: () => void;
 }
 
 type TopMenuItem = {
@@ -24,7 +26,7 @@ type TopMenuItem = {
   onClick: () => void;
 }
 
-export const TopMenu = forwardRef<HTMLButtonElement, TopMenuProps>(({ toggleDrawer }, ref) => {
+export const TopMenu = forwardRef<HTMLButtonElement, TopMenuProps>(({ toggleDrawer, onClearChat, onNewChat }, ref) => {
   const { t } = useTranslation();
   const { graphData } = useContext(UserContext);
 
@@ -33,16 +35,14 @@ export const TopMenu = forwardRef<HTMLButtonElement, TopMenuProps>(({ toggleDraw
       icon: <AddCommentIcon sx={{ fontSize: "1.1rem" }} />,
       label: t("new.conversation.short"),
       onClick: () => {
-        // TODO: Implement new conversation
-        alert("TODO: Implement");
+        onNewChat()
       }
     },
     {
       icon: <DeleteIcon sx={{ fontSize: "1.1rem" }} />,
       label: t("clear.conversation.short"),
       onClick: () => {
-        // TODO: Implement clear conversation
-        alert("TODO: Implement");
+        onClearChat()
       }
     }
   ]
@@ -95,7 +95,9 @@ export const TopMenu = forwardRef<HTMLButtonElement, TopMenuProps>(({ toggleDraw
                   ":hover": {
                     borderColor: "white",
                   }
-                }}>
+                }}
+                  onClick={item.onClick}
+                >
                   {item.icon}
                   <Typography variant="body1" sx={{ display: { xs: 'none', sm: 'block' } }}>{item.label}</Typography>
                 </Box>

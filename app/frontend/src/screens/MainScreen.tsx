@@ -656,7 +656,10 @@ const MainScreen = () => {
     return (
         <UserContext.Provider value={userData}>
             <CssBaseline />
-            <TopMenu toggleDrawer={setOpenDrawer} ref={menuIconRef} />
+            <TopMenu toggleDrawer={setOpenDrawer} ref={menuIconRef}
+                onClearChat={handleClearChat}
+                onNewChat={handleNewChat}
+            />
             <Box
                 sx={{
                     display: "flex",
