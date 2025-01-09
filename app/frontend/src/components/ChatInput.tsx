@@ -158,13 +158,34 @@ export const ChatInput = ({
           label={t("ask.question")}
           InputProps={{
             startAdornment: file && (
-              <Box display="flex" alignItems="center" mb={2}>
+              <Box
+                display="flex"
+                alignItems="start"
+                mb={2}
+                sx={{ padding: 1, mr: 3 }}
+              >
+                <IconButton
+                  onClick={handleRemoveFile}
+                  sx={{
+                    mr: -2,
+                    mt: -2,
+                    backgroundColor: "white",
+                    border: "1px solid black",
+                    "&:hover": {
+                      backgroundColor: "white", // maintain white background on hover
+                    },
+                  }}
+                  size={"small"}
+                  color="primary"
+                >
+                  <CloseIcon color="primary" />
+                </IconButton>
                 {/\.(jpeg|jpg|gif|png|webp|bmp|svg)$/i.test(file.file_url) ? (
                   <Box
                     component="img"
                     src={file.file_url}
                     alt="uploaded file"
-                    sx={{ maxWidth: "100%", maxHeight: 125, borderRadius: 2 }}
+                    sx={{ maxWidth: "100%", maxHeight: 100, borderRadius: 2 }}
                   />
                 ) : (
                   <Box
@@ -177,9 +198,6 @@ export const ChatInput = ({
                     {file.file_name}
                   </Box>
                 )}
-                <IconButton onClick={handleRemoveFile} sx={{ ml: 1 }}>
-                  <CloseIcon />
-                </IconButton>
               </Box>
             ),
             endAdornment: (

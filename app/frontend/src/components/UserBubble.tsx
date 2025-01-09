@@ -53,10 +53,10 @@ export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
           </QuoteContainer>
         )}
         <UserBubbleContainer tabIndex={0}>
-          {attachments && <img src={attachments[0].blob_storage_url}></img>}
-          <Typography sx={visuallyHidden}>
-            {t("aria.user.question")}
-          </Typography>{" "}
+          {attachments && attachments[0]?.blob_storage_url && (
+            <img src={attachments[0].blob_storage_url}></img>
+          )}
+          <Typography sx={visuallyHidden}>{t("aria.user.question")}</Typography>{" "}
           {/* Hidden div for screen reader */}
           <Markdown
             rehypePlugins={[rehypeHighlight]}
