@@ -1,5 +1,5 @@
 import { Box, CssBaseline, Dialog, DialogContent, useMediaQuery, useTheme } from "@mui/material";
-import { ChatInput, Dial, Disclaimer, DrawerMenu, FeedbackForm, TopMenu } from "../components";
+import { ChatInput, Disclaimer, DrawerMenu, FeedbackForm, TopMenu } from "../components";
 import ChatMessagesContainer from "../containers/ChatMessagesContainer";
 import { t } from "i18next";
 import React, { useEffect, useRef, useState } from "react";
@@ -399,7 +399,7 @@ const MainScreen = () => {
 
     // Scrolls the last updated message (if its streaming, or once done) into view
     useEffect(() => {
-        chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth", });
+        chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" });
     }, [currentChatHistory.chatItems]);
 
     // Load chat histories if present
@@ -686,8 +686,7 @@ const MainScreen = () => {
                         left: 0,
                         right: 0,
                         zIndex: 1100,
-                        bgcolor: "background.default",
-                        padding: "1rem",
+                        bgcolor: "background.default"
                     }}
                 >
                     <ChatInput
@@ -701,11 +700,6 @@ const MainScreen = () => {
                     />
                 </Box>
             </Box>
-            <Dial
-                drawerVisible={openDrawer || (tutorialBubbleNumber !== undefined && tutorialBubbleNumber > 1)}
-                onNewChat={handleNewChat}
-                onClearChat={handleClearChat}
-            />
             <Disclaimer />
             <DrawerMenu
                 openDrawer={openDrawer || (tutorialBubbleNumber !== undefined && tutorialBubbleNumber > 1)}

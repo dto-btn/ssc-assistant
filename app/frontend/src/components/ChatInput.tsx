@@ -53,10 +53,12 @@ export const ChatInput = ({ onSend, disabled, clearOnSend, quotedText, handleRem
   return (
     <Container
       component="footer"
-      sx={{ mb: 1, position: 'sticky', bottom: 0 }}
-      maxWidth="md"
+      sx={(theme) => ({
+        mb: 1, position: 'sticky', bottom: 0,
+        // box shadow fading upwards
+        boxShadow: "0px -15px 20px " + theme.palette.background.default,
+      })}
     >
-      <Typography sx={{ fontSize: '13px', mr: '10px', opacity: 0.7, textAlign: 'right' }}>{t("model.version.disclaimer")} {modelName}</Typography>
       <ChatInputWrapper theme={theme}>
         {quotedText && (
           <QuoteContainer>
@@ -154,6 +156,7 @@ export const ChatInput = ({ onSend, disabled, clearOnSend, quotedText, handleRem
           >
           </TextField>
         </Box>
+        <Typography sx={{ fontSize: '13px', mr: '10px', opacity: 0.7, textAlign: 'right' }}>{t("model.version.disclaimer")} {modelName}</Typography>
       </ChatInputWrapper>
     </Container>
   );

@@ -24,6 +24,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                 overflowY: "hidden",
                 padding: "0.5rem",
                 paddingTop: "6rem",
+                paddingBottom: 0,
                 alignItems: "flex-end",
             }}
             aria-live="polite"
@@ -52,7 +53,6 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                                 isLoading={index === chatHistory.chatItems.length - 1 && isLoading}
                                 context={chatItem.message?.context}
                                 toolsInfo={chatItem.message.tools_info}
-                                scrollRef={chatMessageStreamEnd}
                                 replayChat={replayChat}
                                 index={index}
                                 total={chatHistory.chatItems.length}
@@ -74,6 +74,11 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                     </Fragment>
                 ))
             )}
+            {/* 
+                We need this to be at the bottom so that we scroll PAST the last message. Otherwise,
+                the last message will not be fully visible.
+            */}
+            <Box sx={{ mt: 5 }} ref={chatMessageStreamEnd} />
         </Box>
     )
 }
