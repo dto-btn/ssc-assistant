@@ -5,6 +5,8 @@ import { uploadFile } from "../api/api";
 import { useMsal } from "@azure/msal-react";
 import { apiUse } from "../authConfig";
 import { AccountInfo } from "@azure/msal-browser";
+import { useState } from "react";
+import { CircularProgress } from "@mui/material";
 
 interface UploadFileButtonProps {
   disabled: boolean;
@@ -28,11 +30,13 @@ export default function InputFileUpload({
   onFileUpload,
 }: UploadFileButtonProps) {
   const { instance } = useMsal();
+  const [uploading, setUploading] = useState(false);
 
   const encodeAndUploadFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     console.log("in encodeAndUploadFile");
     if (file) {
+      setUploading(true);
       const reader = new FileReader();
       reader.onloadend = async () => {
         const encodedFile = reader.result as string;
@@ -55,6 +59,8 @@ export default function InputFileUpload({
         } catch (error) {
           console.error("Error uploading file");
           throw error;
+        } finally {
+          setUploading(false);
         }
       };
       reader.readAsDataURL(file);
@@ -67,14 +73,14 @@ export default function InputFileUpload({
       role={undefined}
       variant="text"
       tabIndex={-1}
-      disabled={disabled}
+      disabled={disabled || uploading}
     >
-      <AttachFileIcon />
+      {uploading ? <CircularProgress /> : <AttachFileIcon />}
       <VisuallyHiddenInput
         type="file"
         onChange={encodeAndUploadFile}
-        //accept=".jpg,.jpeg,.png" //only images for now since the UI doesn't support other file types
-        accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
+        accept=".jpg,.jpeg,.png,.gif,.png,.webp,.bmp,.svg" //only images for now since OpenAI API only supports images
+        //accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
         //multiple
       />
     </IconButton>

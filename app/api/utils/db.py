@@ -52,9 +52,9 @@ def create_entity(data, partition_key: str, row_key_prefix: str, user: Any):
 
     if isinstance(data_copy, MessageRequest) and data_copy.messages:
         msg = data_copy.messages[-1]
-        data_copy.messages = [] #avoid saving the whole conversation (no need to)
-        logger.debug(f"question length is: {len(str(msg.content))}")
-        logger.debug(f"history length is: {len(data_copy.messages)}")
+        data_copy.messages = [msg] #avoid saving the whole conversation (no need to)
+        logger.debug("question length is: %s", len(str(msg.content)))
+        logger.debug("history length is: %s", len(data_copy.messages))
         entity['Question'] = msg.content
 
     entity[row_key_prefix] = json.dumps(

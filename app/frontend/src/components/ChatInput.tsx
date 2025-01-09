@@ -188,6 +188,7 @@ export const ChatInput = ({
                     sx={{ maxWidth: "100%", maxHeight: 100, borderRadius: 2 }}
                   />
                 ) : (
+                  //leaving this code in but it's not used at the moment since we disabled non-image uploads
                   <Box
                     component="a"
                     href={file.file_url}
