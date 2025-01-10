@@ -1,4 +1,4 @@
-import { Box, CssBaseline, Dialog, DialogContent, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Dialog, DialogContent, useMediaQuery, useTheme } from "@mui/material";
 import { ChatInput, Dial, Disclaimer, DrawerMenu, FeedbackForm, TopMenu } from "../components";
 import ChatMessagesContainer from "../containers/ChatMessagesContainer";
 import { t } from "i18next";
@@ -655,7 +655,6 @@ const MainScreen = () => {
 
     return (
         <UserContext.Provider value={userData}>
-            <CssBaseline />
             <TopMenu toggleDrawer={setOpenDrawer} ref={menuIconRef} />
             <Box
                 sx={{
