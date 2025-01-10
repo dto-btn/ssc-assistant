@@ -1,3 +1,4 @@
+
 import { Box, CssBaseline, Dialog, DialogContent, useMediaQuery, useTheme } from "@mui/material";
 import { ChatInput, Disclaimer, DrawerMenu, FeedbackForm, TopMenu } from "../components";
 import ChatMessagesContainer from "../containers/ChatMessagesContainer";
@@ -732,7 +733,8 @@ const MainScreen = () => {
                 handleClose={() => setIsFeedbackVisible(false)}
                 handleFeedbackSubmit={handleFeedbackSubmit}
             />
-            {showTutorials &&
+            {
+                showTutorials &&
                 <TutorialBubble handleAllTutorialsDisplayed={toggleTutorials} menuIconRef={menuIconRef} updateTutorialBubbleNumber={handleUpdateTutorialBubbleNumber} />
             }
 
@@ -742,7 +744,8 @@ const MainScreen = () => {
                 onDelete={deleteSavedChat}
             />
 
-            {warningDialogMessage &&
+            {
+                warningDialogMessage &&
                 <Dialog
                     open={Boolean(warningDialogMessage)}
                     onClose={() => setWarningDialogMessage("")}
@@ -752,7 +755,7 @@ const MainScreen = () => {
                     </DialogContent>
                 </Dialog>
             }
-        </UserContext.Provider>
+        </UserContext.Provider >
     )
 }
 
