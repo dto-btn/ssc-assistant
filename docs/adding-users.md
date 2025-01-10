@@ -10,7 +10,7 @@ az ad app show --id $appId
 objectId=$(az ad sp show --id $appId -o tsv --query id)
 # show group tied to appId (direct method, since above method doesn't work)
 groupId=$(az ad group list --filter "displayname eq 'SEC SSC-Assistant-Dev Enterprise App Users'" \
--o json --query "[0].id")
+-o tsv --query "[0].id")
 memberId=$(az ad user show --id some.one@ssc-spc.gc.ca -o tsv --query id)
 az ad group member add --group $groupId --member-id $memberId
 ```

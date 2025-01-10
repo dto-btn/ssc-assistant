@@ -65,6 +65,7 @@ export default function InputFileUpload({
       };
       reader.readAsDataURL(file);
     }
+    event.target.value = "";
   };
 
   return (

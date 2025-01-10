@@ -184,7 +184,7 @@ export const ChatInput = ({
                   <Box
                     component="img"
                     src={file.file_url}
-                    alt="uploaded file"
+                    alt={t("uploaded.file.alt")}
                     sx={{ maxWidth: "100%", maxHeight: 100, borderRadius: 2 }}
                   />
                 ) : (
