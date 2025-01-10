@@ -54,7 +54,7 @@ export const ChatInput = ({ onSend, disabled, clearOnSend, quotedText, handleRem
     <Container
       component="footer"
       sx={(theme) => ({
-        mb: 1, position: 'sticky', bottom: 0,
+        mb: 3, position: 'sticky', bottom: 0,
         // box shadow fading upwards
         boxShadow: "0px -15px 20px " + theme.palette.background.default,
       })}

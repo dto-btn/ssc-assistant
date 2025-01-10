@@ -1,5 +1,5 @@
 import MenuIcon from "@mui/icons-material/Menu";
-import { Box, Grid, IconButton, Tooltip } from "@mui/material";
+import { Box, IconButton } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
@@ -67,7 +67,7 @@ export const TopMenu = forwardRef<HTMLButtonElement, TopMenuProps>(({ toggleDraw
             justifyContent: "center",
             flexShrink: 0,
             borderRadius: 0,
-            background: `linear-gradient(45deg, black, ${theme.palette.primary.main})`,
+            background: `linear-gradient(45deg, #222, ${theme.palette.primary.main})`,
             maxHeight: 40,
             border: "none"
           })}

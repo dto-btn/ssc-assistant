@@ -363,7 +363,7 @@ const ChatBubbleView = styled(Box)`
   justify-content: flex-start;
 `
 
-const ChatBubbleInner = styled(Paper)(({ theme }) => ({
+const ChatBubbleInner = styled(Paper)(() => ({
   borderRadius: 0,
   boxShadow: 'none',
   flexDirection: 'row',

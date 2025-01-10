@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import Avatar from '@mui/material/Avatar';
 import { useContext } from 'react';
 import { UserContext } from '../context/UserContext';
