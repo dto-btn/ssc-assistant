@@ -15,30 +15,30 @@ interface ChatInputProps {
   selectedModel: string;
 };
 
-export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemoveQuote, selectedModel}: ChatInputProps) => {
+export const ChatInput = ({ onSend, disabled, clearOnSend, quotedText, handleRemoveQuote, selectedModel }: ChatInputProps) => {
   const [question, setQuestion] = useState<string>("");
   const { t } = useTranslation();
   const [error, setError] = useState(false);
   const theme = useTheme();
-  
+
   const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "GPT-3.5 Turbo"
 
   const sendQuestion = () => {
-      if (disabled || !question.trim()) {
-          return;
-      }
+    if (disabled || !question.trim()) {
+      return;
+    }
 
-      onSend(question);
+    onSend(question);
 
-      if (clearOnSend) {
-          setQuestion("");
-      }
+    if (clearOnSend) {
+      setQuestion("");
+    }
   };
 
   const onEnterPress = (ev: React.KeyboardEvent<Element>) => {
     if (ev.key === "Enter" && !ev.shiftKey) {
-        ev.preventDefault();
-        sendQuestion();
+      ev.preventDefault();
+      sendQuestion();
     }
   };
 
@@ -48,54 +48,56 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
       const chatInput = document.getElementById("ask-question")
       chatInput?.focus()
     }
-  }, [quotedText]); 
+  }, [quotedText]);
 
   return (
     <Container
-        component="footer"
-        sx={{ mb: 1, position: 'sticky', bottom: 0}}
-        maxWidth="md"
-        >
-      <Typography sx={{fontSize: '13px', mr: '10px', opacity: 0.7, textAlign: 'right'}}>{t("model.version.disclaimer")} {modelName}</Typography>
-      <ChatInputWrapper theme={theme}> 
+      component="footer"
+      sx={(theme) => ({
+        mb: 3, position: 'sticky', bottom: 0,
+        // box shadow fading upwards
+        boxShadow: "0px -15px 20px " + theme.palette.background.default,
+      })}
+    >
+      <ChatInputWrapper theme={theme}>
         {quotedText && (
-            <QuoteContainer>
-              <KeyboardReturnIcon sx={{ transform: 'scaleX(-1)', ml: '8px', color: 'black' }} />
-              <Typography 
-                variant="body1"
-                sx={{ 
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  maxWidth: 'calc(100% - 24px)',
-                  fontSize: '14px',
-                  ml: '10px', 
-                  mr: '5px',
-                  color: 'black',
-                  flex: 1
+          <QuoteContainer>
+            <KeyboardReturnIcon sx={{ transform: 'scaleX(-1)', ml: '8px', color: 'black' }} />
+            <Typography
+              variant="body1"
+              sx={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                maxWidth: 'calc(100% - 24px)',
+                fontSize: '14px',
+                ml: '10px',
+                mr: '5px',
+                color: 'black',
+                flex: 1
+              }}
+            >
+              "{quotedText}"
+            </Typography>
+            <IconButton
+              onClick={handleRemoveQuote}
+              sx={{
+                mr: '5px',
+                '&:hover': {
+                  backgroundColor: '#979797'
+                }
+              }}
+            >
+              <CloseIcon
+                sx={{
+                  fontSize: '20px',
+                  color: 'black'
                 }}
-              >
-                "{quotedText}"
-              </Typography>
-              <IconButton 
-                  onClick={handleRemoveQuote}
-                  sx={{ 
-                    mr: '5px',
-                    '&:hover': {
-                      backgroundColor: '#979797'
-                    }
-                  }}
-              >
-                <CloseIcon 
-                  sx={{
-                    fontSize: '20px',
-                    color: 'black' 
-                  }}
-                />
-              </IconButton>
-            </QuoteContainer>
+              />
+            </IconButton>
+          </QuoteContainer>
         )}
         <Box
           component="form"
@@ -107,7 +109,7 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
             helperText={error ? t("question.maxlength") : ""}
             value={question}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-              if(event.target.value && event.target.value.length > 24000)
+              if (event.target.value && event.target.value.length > 24000)
                 setError(true)
               else
                 setError(false)
@@ -122,36 +124,39 @@ export const ChatInput = ({onSend, disabled, clearOnSend, quotedText, handleRemo
             maxRows={3}
             label={t("ask.question")}
             sx={{
-              padding: '10px 20px',
+              padding: '0px 20px',
               '& .MuiInputBase-input::placeholder': {
-                opacity: 0.7, 
+                opacity: 0.7,
               },
               '.MuiFormLabel-root': {
-                padding:'5px 0px 0px 20px',
+                padding: '5px 0px 0px 20px',
               },
             }}
             variant="standard"
             InputProps={{
               disableUnderline: true,
               endAdornment: <InputAdornment position="end">
-                              <IconButton
-                                onClick={sendQuestion} 
-                                disabled={disabled}
-                                sx={{ '&:hover': {
-                                  backgroundColor: 'rgba(0, 0, 0, 0.2)'
-                                } }}
-                                aria-label={t("send")}
-                              >                              {disabled ? (
-                                <CircularProgress size={24} aria-label={t("generating")}/>
-                              ) : (
-                                <Send sx={{ color: 'primary.main' }} aria-label={t("send")}/>
-                              )}
-                              </IconButton>
-                            </InputAdornment>,
+                <IconButton
+                  onClick={sendQuestion}
+                  disabled={disabled}
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 0, 0, 0.2)'
+                    }
+                  }}
+                  aria-label={t("send")}
+                >                              {disabled ? (
+                  <CircularProgress size={24} aria-label={t("generating")} />
+                ) : (
+                  <Send sx={{ color: 'primary.main' }} aria-label={t("send")} />
+                )}
+                </IconButton>
+              </InputAdornment>,
             }}
-          >  
+          >
           </TextField>
         </Box>
+        <Typography sx={{ fontSize: '13px', mr: '10px', opacity: 0.7, textAlign: 'right' }}>{t("model.version.disclaimer")} {modelName}</Typography>
       </ChatInputWrapper>
     </Container>
   );
