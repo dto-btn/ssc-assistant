@@ -20,6 +20,7 @@ table_service_client = TableServiceClient(endpoint=os.getenv("DATABASE_ENDPOINT"
 chat_table_client = table_service_client.get_table_client(table_name="chat")
 feedback_table_client = table_service_client.get_table_client(table_name="feedback")
 flagged_client = table_service_client.get_table_client(table_name="flagged")
+    
 
 def create_entity(data, partition_key: str, row_key_prefix: str, user: Any):
     '''
@@ -106,3 +107,30 @@ def flag_conversation(message_request: MessageRequest, conversation_uuid: str):
         flagged_client.upsert_entity(message_request_entity)
       except Exception as e:
           logger.error(e)
+
+def list_conversations():
+      '''
+      List all conversations from the database
+      '''
+      try:
+        # entities = chat_table_client.query_entities("RowKey eq 'MessageRequest'")
+        # filter should actually be rowkey startswith 'MessageRequest'
+        # entities = chat_table_client.query_entities("startswith(RowKey, 'MessageRequest')")
+        # actually just retrieve ALL entities
+        entities = chat_table_client.list_entities()
+        # filter where the rowkey starts with 'MessageRequest'
+        return entities
+      except Exception as e:
+          logger.error(e)
+          return None
+
+def retrieve_conversation(conversation_uuid: str):
+      '''
+      Retrieve the conversation from the database
+      '''
+      try:
+        entity = chat_table_client.get_entity(partition_key=conversation_uuid, row_key='MessageRequest')
+        return entity
+      except Exception as e:
+          logger.error(e)
+          return None
