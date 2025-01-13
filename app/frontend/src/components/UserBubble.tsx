@@ -13,6 +13,10 @@ interface UserChatProps {
 }
 
 export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
+  // keeping this here for typesafety because we are ts-expect-error down in the return
+  const blobStorageUrl: string | undefined =
+    attachments && attachments[0]?.blob_storage_url;
+
   return (
     <Box sx={{ display: "flex", justifyContent: "flex-end", my: "1rem" }}>
       <Paper
@@ -47,8 +51,12 @@ export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
           </QuoteContainer>
         )}
         <UserBubbleContainer tabIndex={0}>
-          {attachments && attachments[0]?.blob_storage_url && (
-            <img src={attachments[0].blob_storage_url}></img>
+          {blobStorageUrl && (
+            <ImageContainer
+              component="img"
+              // @ts-expect-error - we are using `img` component type, but `Box` doesnt know about src prop
+              src={blobStorageUrl}
+            ></ImageContainer>
           )}
           <Typography sx={visuallyHidden}>{t("aria.user.question")}</Typography>{" "}
           {/* Hidden div for screen reader */}
@@ -78,4 +86,8 @@ const QuoteContainer = styled(Box)`
   margin: 10px 10px 0px 10px;
   background-color: white;
   border-radius: 10px;
+`;
+
+const ImageContainer = styled(Box)`
+  padding-top: 15px;
 `;
