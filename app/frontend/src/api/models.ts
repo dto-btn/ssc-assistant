@@ -24,6 +24,7 @@ interface Message {
   context?: Context | null;
   tools_info?: ToolInfo;
   quotedText?: string;
+  attachments?: Attachment[];
 }
 
 interface Completion {
