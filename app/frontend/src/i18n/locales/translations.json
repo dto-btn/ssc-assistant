@@ -558,5 +558,9 @@
     "bits": {
         "en": "EDR (BITS)",
         "fr": "EDR (BITS) [FR]"
+    },
+    "uploaded.file.alt": {
+        "en": "Uploaded file preview",
+        "fr": "Aperçu du fichier téléchargé"
     }
 }

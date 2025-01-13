@@ -1,26 +1,27 @@
-import { Box, Paper, Typography, styled } from '@mui/material';
-import Markdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import rehypeHighlight from 'rehype-highlight'
-import 'highlight.js/styles/github.css'
-import { visuallyHidden } from '@mui/utils';
-import { t } from 'i18next';
+import { Box, Paper, Typography, styled } from "@mui/material";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import "highlight.js/styles/github.css";
+import { visuallyHidden } from "@mui/utils";
+import { t } from "i18next";
 
 interface UserChatProps {
   text: string | null | undefined;
   quote?: string;
+  attachments?: Attachment[];
 }
 
-export const UserBubble = ({ text, quote }: UserChatProps) => {
+export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'flex-end', my: '1rem' }}>
+    <Box sx={{ display: "flex", justifyContent: "flex-end", my: "1rem" }}>
       <Paper
         sx={{
-          bgcolor: 'primary.main',
-          color: 'primary.contrastText',
-          borderRadius: '20px',
+          bgcolor: "primary.main",
+          color: "primary.contrastText",
+          borderRadius: "20px",
           borderTopRightRadius: 0,
-          maxWidth: '70%'
+          maxWidth: "70%",
         }}
         elevation={4}
       >
@@ -29,16 +30,16 @@ export const UserBubble = ({ text, quote }: UserChatProps) => {
             <Typography
               variant="body1"
               sx={{
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                display: '-webkit-box',
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                display: "-webkit-box",
                 WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                maxWidth: 'calc(100% - 10px)',
-                pl: '10px',
-                fontSize: '14px',
-                color: 'black',
-                flex: 1
+                WebkitBoxOrient: "vertical",
+                maxWidth: "calc(100% - 10px)",
+                pl: "10px",
+                fontSize: "14px",
+                color: "black",
+                flex: 1,
               }}
             >
               "{quote}"
@@ -46,8 +47,17 @@ export const UserBubble = ({ text, quote }: UserChatProps) => {
           </QuoteContainer>
         )}
         <UserBubbleContainer tabIndex={0}>
-          <Typography sx={visuallyHidden}>{t("aria.user.question")}</Typography> {/* Hidden div for screen reader */}
-          <Markdown rehypePlugins={[rehypeHighlight]} remarkPlugins={[remarkGfm]}>{text}</Markdown>
+          {attachments && attachments[0]?.blob_storage_url && (
+            <img src={attachments[0].blob_storage_url}></img>
+          )}
+          <Typography sx={visuallyHidden}>{t("aria.user.question")}</Typography>{" "}
+          {/* Hidden div for screen reader */}
+          <Markdown
+            rehypePlugins={[rehypeHighlight]}
+            remarkPlugins={[remarkGfm]}
+          >
+            {text}
+          </Markdown>
         </UserBubbleContainer>
       </Paper>
     </Box>
@@ -59,7 +69,7 @@ const UserBubbleContainer = styled(Box)`
   flex-direction: column;
   padding: 0px 15px;
   max-width: 100%;
-`
+`;
 
 const QuoteContainer = styled(Box)`
   display: flex;
@@ -68,4 +78,4 @@ const QuoteContainer = styled(Box)`
   margin: 10px 10px 0px 10px;
   background-color: white;
   border-radius: 10px;
-`
+`;
