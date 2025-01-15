@@ -80,7 +80,9 @@ export default function InputFileUpload({
       <VisuallyHiddenInput
         type="file"
         onChange={encodeAndUploadFile}
-        accept=".jpg,.jpeg,.png,.gif,.png,.webp,.bmp,.svg" //only images for now since OpenAI API only supports images
+        accept=".jpg,.jpeg,.png,.webp" //only images for now since OpenAI API only supports images
+        // https://platform.openai.com/docs/guides/vision#what-type-of-files-can-i-upload (TLDR; png, jpeg, jpg, webp.)
+        // (and non animated gif but we will omit them for simplicity for now)
         //accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
         //multiple
       />
