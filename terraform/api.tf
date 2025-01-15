@@ -53,17 +53,17 @@ resource "azurerm_monitor_action_group" "alerts_group" {
 
   email_receiver {
     name          = "sendtogt"
-    email_address = data.azuread_user.dev-gt.user_principal_name
+    email_address = data.azuread_user.users["dev-gt"].user_principal_name
   }
 
   email_receiver {
     name          = "alainforcier"
-    email_address = data.azuread_user.po-af.user_principal_name
+    email_address = data.azuread_user.users["po-af"].user_principal_name
   }
 
   email_receiver {
     name          = "davidsimard"
-    email_address = data.azuread_user.tl-davids.user_principal_name
+    email_address = data.azuread_user.users["tl-davids"].user_principal_name
   }
 }
 
