@@ -91,3 +91,10 @@ resource "azurerm_role_assignment" "devs_storage_blob_contributor" {
   scope = azurerm_storage_account.dev.id
   principal_id         = each.value.id
 }
+
+resource "azurerm_role_assignment" "devs_storage_table_reader" {
+  for_each             = data.azuread_user.devs
+  role_definition_name = "Storage Table Data Reader"
+  scope = azurerm_storage_account.dev.id
+  principal_id         = each.value.id
+}

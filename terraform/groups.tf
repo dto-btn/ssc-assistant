@@ -40,7 +40,11 @@ locals {
     { 
       name = "tl-davids"
       user_principal_name = "david.simard@ssc-spc.gc.ca"
-    }
+    },
+    { 
+      name = "dev-mw"
+      user_principal_name = "Monarch.Wadia@ssc-spc.gc.ca"
+    },
   ]
 }
 
@@ -64,6 +68,16 @@ data "azuread_service_principal" "terraform" {
 #   role_definition_name = "Reader"
 #   principal_id         = ###
 # }
+
+#######################################################
+#                     Azure Storage                   #
+#######################################################
+resource "azurerm_role_assignment" "storage_table_reader" {
+  for_each             = data.azuread_user.users
+  scope                = azurerm_storage_account.main.id
+  role_definition_name = "Storage Table Data Reader"
+  principal_id         = each.value.id
+}
 
 #######################################################
 #             Cognitive Search Contributor            #
