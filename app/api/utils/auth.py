@@ -18,6 +18,8 @@ tenant_id = os.getenv('AZURE_AD_TENANT_ID')
 client_id = os.getenv('AZURE_AD_CLIENT_ID')
 secret = os.getenv('JWT_SECRET', 'secret')
 
+api_scope = os.getenv('API_SCOPE', 'api.access')
+
 oauth_validator = OAuth2TokenValidation(tenant_id, client_id)
 
 @auth.verify_token
@@ -50,7 +52,10 @@ def verify_user_access_token(token):
     try:
         #https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#payload-claims
         user = oauth_validator.validate_token_and_decode_it(token)
-        if user:
+        print(user)
+        if user and 'scp' in user and user['scp'] == api_scope:
             return user
+        else:
+            raise ValueError("Invalid scope or user")
     except Exception as e:
-        logger.error("Unable to validate user %s", e) # pylint: disable=broad-except
+        logger.error("Unable to validate user: %s", e) # pylint: disable=broad-except

@@ -39,6 +39,7 @@ def create_entity(data, partition_key: str, row_key_prefix: str, user: Any):
         #https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#payload-claims
         if user and user['upn']:
             entity['preferred_username'] = user['upn']
+            entity['oid'] = user['oid']
         # Issue for removing this code: https://github.com/dto-btn/ssc-assistant/issues/253
         elif user and user['oid'] and user['sub'] and user['preferred_username']: # supports old method, the id_token
             entity['oid'] = user['oid']
