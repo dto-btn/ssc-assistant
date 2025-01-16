@@ -14,7 +14,7 @@ from utils.auth import auth, user_ad
 from utils.db import (flag_conversation, leave_feedback, save_file,
                               store_completion, store_request)
 from utils.models import (BookingConfirmation, Completion, Feedback, FilePayload,
-                                  MessageRequest)
+                                  MessageRequest, SuggestionRequest)
 from utils.openai import (build_completion_response, chat_with_data,
                                   convert_chat_with_data_response)
 
@@ -222,3 +222,77 @@ def upload_file(file: FilePayload):
     """Allow users to uploaded encoded files and to decode and store them in Azure blob storage"""
     url = save_file(file)
     return jsonify({"message": "File received", "file_url": url}), 200
+
+@api_v1.post('/mysscplus/suggest')
+@api_v1.doc("""Send a search query that would be inputed by the users in the MySSC+ search field,
+            and return a completion response along with citations (URLs) to MySSC+ content""")
+@api_v1.input(SuggestionRequest.Schema, # pylint: disable=no-member # type: ignore
+            arg_name="suggestion_request",
+            example={
+                        "query": "What is SSC's content management system?",
+                    })
+@api_v1.output(Completion.Schema, content_type='application/json', example={ # pylint: disable=no-member # type: ignore
+    "completion_tokens": 241,
+    "message": {
+        "content": "The retrieved documents provide information on various services offered by Shared Services Canada (SSC). According to the documents, ....",
+        "context": {
+            "citations": [
+                {
+                    "content": "Service Catalogue Summary Catalogue of SSC services offered to partners and clients and how to order – available on SSC’s Serving Government website. URL http://service.ssc-spc.gc.ca/en/services VPN access required 1",
+                    "metadata": {
+                        "chunking": "{'chunking': 'orignal document size=53. Scores=7.680358Org Highlight count=8.'}"
+                    },
+                    "title": "Service Catalogue",
+                    "url": "https://plus.ssc-spc.gc.ca/en/node/1296"
+                }],
+            "intent": [
+                "services offered at SSC",
+                "SSC services list",
+                "what does SSC provide"
+            ],
+            "role": "tool"
+        },
+        "role": "assistant"
+    },
+    "prompt_tokens": 4962,
+    "total_tokens": 5203
+})
+@api_v1.doc(security='ApiKeyAuth')
+@auth.login_required(role='mysscplus')
+@user_ad.login_required
+def mysscplus_suggestion(suggestion_request: SuggestionRequest):
+    """ This will receive most likely search terms and will return an AI response along with citations"""
+    if not suggestion_request.query:
+        return jsonify({"error":"Request body must at least contain a query."}), 400
+
+    ## build a MessageRequest in order to send to the OpenAI API.
+    message_request = MessageRequest(
+        query=suggestion_request.query,
+        messages=[], # we don't need messages for this
+        quotedText="",
+        model='gpt-4o',
+        top=10,
+        lang='en',
+        tools=['corporate'],
+        corporateFunction='intranet_question',
+        uuid=str(uuid.uuid4())
+    )
+
+    try:
+        convo_uuid = message_request.uuid
+        thread = threading.Thread(target=store_request, args=(message_request, convo_uuid))
+        thread.start()
+
+        tools_info, completion = chat_with_data(message_request)
+        if isinstance(completion, ChatCompletion):
+            completion_response = convert_chat_with_data_response(completion)
+        else:
+            raise TypeError("Expected completion to be of type ChatCompletion")
+        user = user_ad.current_user()
+        thread = threading.Thread(target=store_completion, args=(completion_response, convo_uuid, user))
+        thread.start()
+
+        return completion_response
+    except Exception as e:
+        logger.error("Error processing suggestion request: %s", e)
+        abort(500, message="Internal server error")

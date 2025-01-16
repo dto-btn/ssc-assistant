@@ -116,6 +116,7 @@ resource "azurerm_linux_web_app" "api" {
     SERVER_URL_PROD               = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net"
     JWT_SECRET                    = var.jwt_secret
     DATABASE_ENDPOINT             = azurerm_storage_account.main.primary_table_endpoint
+    BLOB_ENDPOINT                 = azurerm_storage_account.main.primary_blob_endpoint 
     AZURE_AD_CLIENT_ID            = var.aad_client_id_api
     AZURE_AD_TENANT_ID            = data.azurerm_client_config.current.tenant_id
     WEBSITE_WEBDEPLOY_USE_SCM     = true
@@ -126,7 +127,7 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   sticky_settings { # settings that are the same regardless of deployment slot..
-    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DATABASE_ENDPOINT", "AZURE_SEARCH_INDEX_NAME", "ALLOWED_TOOLS" ]
+    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DATABASE_ENDPOINT", "BLOB_ENDPOINT", "AZURE_SEARCH_INDEX_NAME", "ALLOWED_TOOLS" ]
   }
 }
 
