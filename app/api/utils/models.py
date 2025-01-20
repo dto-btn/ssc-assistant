@@ -96,3 +96,4 @@ class FilePayload:
 class SuggestionRequest:
     '''this is a suggestion request that most likely comes from the myssc+ search feature'''
     query: str
+    corporate_function: str = field(default='intranet_question')

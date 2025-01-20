@@ -19,6 +19,16 @@ resource "azurerm_storage_table" "chat" {
   storage_account_name = azurerm_storage_account.main.name
 }
 
+resource "azurerm_storage_table" "flagged" {
+  name                 = "flagged"
+  storage_account_name = azurerm_storage_account.main.name
+}
+
+resource "azurerm_storage_table" "suggest" {
+  name                 = "suggest"
+  storage_account_name = azurerm_storage_account.main.name
+}
+
 resource "azurerm_role_assignment" "storage_table_contributor" {
   scope                = azurerm_storage_account.main.id
   role_definition_name = "Storage Table Data Contributor"

@@ -23,6 +23,18 @@ _API_APP_SCOPE = os.getenv('API_APP_SCOPE', 'api.access.app')
 
 oauth_validator = OAuth2TokenValidation(tenant_id, client_id)
 
+class User:
+    """User object used to pass around accesstoken and apitoken"""
+    def __init__(self, api_key=None, token=None):
+        self.api_key = api_key
+        self.token = token
+
+def get_or_create_user():
+    """tries to get the user from the global context or creates a new one"""
+    if not hasattr(g, 'user'):
+        g.user = User()
+    return g.user
+
 @auth.verify_token
 def verify_token(token):
     try:
@@ -30,16 +42,18 @@ def verify_token(token):
         data = jwt.decode(token, secret, algorithms=['HS256'])
         # Store the decoded token data in the Flask's global user object
         if 'roles' in data:
+            user = get_or_create_user()
+            user.api_key = token
             g.roles = data['roles']
             return True
         else:
-            return False
+            return None
     except jwt.ExpiredSignatureError:
         # Signature has expired
-        return False
+        return None
     except jwt.InvalidTokenError:
         # Invalid token
-        return False
+        return None
 
 @auth.get_user_roles
 def get_user_roles(user):
@@ -47,17 +61,22 @@ def get_user_roles(user):
 
 @user_ad.verify_token
 def verify_user_access_token(token):
+    global_user = get_or_create_user()
     if os.getenv("SKIP_USER_VALIDATION", "False").lower() == "true":
         logger.info("Skipping User Validation")
+        global_user.token = None
         return True
     try:
         #https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#payload-claims
         user = oauth_validator.validate_token_and_decode_it(token)
         if user and 'scp' in user and user['scp'] == _API_SCOPE:
-            return user
+            global_user.token = user
+            return True
         elif user and 'roles' in user and _API_APP_SCOPE in user['roles']:
-            return user
+            global_user.token = user
+            return True
         else:
             raise ValueError("Invalid scope or user")
     except Exception as e:
         logger.error("Unable to validate user: %s", e) # pylint: disable=broad-except
+        return False
