@@ -53,7 +53,6 @@ def verify_user_access_token(token):
     try:
         #https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#payload-claims
         user = oauth_validator.validate_token_and_decode_it(token)
-        print(user)
         if user and 'scp' in user and user['scp'] == _API_SCOPE:
             return user
         elif user and 'roles' in user and _API_APP_SCOPE in user['roles']:
