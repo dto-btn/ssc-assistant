@@ -37,14 +37,20 @@ def create_entity(data, partition_key: str, row_key_prefix: str, user: Any):
     entity['RowKey'] = f"{row_key_prefix}-{uuid.uuid4()}"
     try:
         #https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#payload-claims
-        if user and user['upn']:
+        if user and user.get('oid') and user.get('upn'):
+            logger.debug("User information added to entity")
             entity['preferred_username'] = user['upn']
             entity['oid'] = user['oid']
         # Issue for removing this code: https://github.com/dto-btn/ssc-assistant/issues/253
-        elif user and user['oid'] and user['sub'] and user['preferred_username']: # supports old method, the id_token
+        elif user and user.get('oid') and user.get('sub') and user.get('preferred_username'): # supports old method, the id_token
+            logger.debug("*DEPRECATED* User information added to entity")
             entity['oid'] = user['oid']
             entity['sub'] = user['sub']
             entity['preferred_username'] = user['preferred_username']
+        elif user and user.get('oid') and user.get('appid'):
+            logger.debug("Application information added to entity")
+            entity['preferred_username'] = user['appid']
+            entity['oid'] = user['oid']
     except Exception as e:
         logger.error("Unable to add user information: %s", e)
 

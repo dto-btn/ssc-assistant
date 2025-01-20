@@ -67,12 +67,13 @@ def completion_chat(message_request: MessageRequest):
 
     try:
         convo_uuid = message_request.uuid if message_request.uuid else str(uuid.uuid4())
-        thread = threading.Thread(target=store_request, args=(message_request, convo_uuid))
+        user = user_ad.current_user()
+        thread = threading.Thread(target=store_request, args=(message_request, convo_uuid, user))
         thread.start()
 
         completion: ChatCompletion = chat_with_data(message_request) # type: ignore
         completion_response = convert_chat_with_data_response(completion)
-        user = user_ad.current_user()
+        
         thread = threading.Thread(target=store_completion, args=(completion_response, convo_uuid, user))
         thread.start()
 
@@ -280,7 +281,8 @@ def mysscplus_suggestion(suggestion_request: SuggestionRequest):
 
     try:
         convo_uuid = message_request.uuid
-        thread = threading.Thread(target=store_request, args=(message_request, convo_uuid))
+        user = user_ad.current_user()
+        thread = threading.Thread(target=store_request, args=(message_request, convo_uuid, user))
         thread.start()
 
         tools_info, completion = chat_with_data(message_request)
@@ -288,7 +290,6 @@ def mysscplus_suggestion(suggestion_request: SuggestionRequest):
             completion_response = convert_chat_with_data_response(completion)
         else:
             raise TypeError("Expected completion to be of type ChatCompletion")
-        user = user_ad.current_user()
         thread = threading.Thread(target=store_completion, args=(completion_response, convo_uuid, user))
         thread.start()
 
