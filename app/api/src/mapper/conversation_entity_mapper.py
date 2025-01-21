@@ -4,9 +4,9 @@
 # pyright: reportUnknownArgumentType=false
 
 
-from entity.conversation_entity import ConversationMessageEntity
-from entity.table_row_entity import ChatTableRow
-from mapper.table_entity_common_fields_mapper import TableEntityCommonFieldsMapper
+from src.entity.conversation_entity import ConversationMessageEntity
+from src.entity.table_row_entity import ChatTableRow
+from src.mapper.table_entity_common_fields_mapper import TableEntityCommonFieldsMapper
 
 
 class ChatTableEntityMapper:

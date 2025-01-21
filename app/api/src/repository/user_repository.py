@@ -1,6 +1,6 @@
-from dao.chat_table_dao import ChatTableDaoInterface
-from entity.user_entity import UserEntity
-from mapper.table_entity_common_fields_mapper import TableEntityCommonFieldsMapper
+from src.dao.chat_table_dao import ChatTableDaoInterface
+from src.entity.user_entity import UserEntity
+from src.mapper.table_entity_common_fields_mapper import TableEntityCommonFieldsMapper
 
 
 class UserRepository:

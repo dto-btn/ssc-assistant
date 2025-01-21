@@ -4,7 +4,7 @@
 # pyright: reportUnknownArgumentType=false
 
 
-from entity.table_row_entity import (
+from src.entity.table_row_entity import (
     ChatTableRow,
     CommonTableRowEntityFields,
 )

@@ -8,7 +8,7 @@ from typing import override
 from azure.data.tables import TableServiceClient
 from azure.core.paging import ItemPaged
 from azure.data.tables import TableEntity, TableClient
-from entity.table_row_entity import ChatTableRow, TableRowMetadata
+from src.entity.table_row_entity import ChatTableRow, TableRowMetadata
 
 
 class ChatTableDaoInterface:
