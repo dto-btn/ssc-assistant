@@ -281,6 +281,7 @@ def suggestion(suggestion_request: SuggestionRequest):
 
     try:
         user = user_ad.current_user()
+        print("routes - USER ----> ",user)
         thread = threading.Thread(target=store_suggestion, args=(message_request, user))
         thread.start()
 

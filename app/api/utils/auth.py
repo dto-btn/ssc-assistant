@@ -25,9 +25,10 @@ oauth_validator = OAuth2TokenValidation(tenant_id, client_id)
 
 class User:
     """User object used to pass around accesstoken and apitoken"""
-    def __init__(self, api_key=None, token=None):
+    def __init__(self, api_key=None, token=None, roles=None):
         self.api_key = api_key
         self.token = token
+        self.roles = roles
 
 def get_or_create_user():
     """tries to get the user from the global context or creates a new one"""
@@ -37,6 +38,11 @@ def get_or_create_user():
 
 @auth.verify_token
 def verify_token(token):
+    """
+    this is the validatation method for the X-Api-key header token. Contains the roles for the user
+
+    NOTE: would much prefer just using scopes for access control but right now, it's hard for us to control this aspect.
+    """
     try:
         # Decode the token using the same secret key and algorithm used to encode
         data = jwt.decode(token, secret, algorithms=['HS256'])
@@ -44,8 +50,8 @@ def verify_token(token):
         if 'roles' in data:
             user = get_or_create_user()
             user.api_key = token
-            g.roles = data['roles']
-            return True
+            user.roles = data['roles']
+            return user
         else:
             return None
     except jwt.ExpiredSignatureError:
@@ -56,25 +62,27 @@ def verify_token(token):
         return None
 
 @auth.get_user_roles
-def get_user_roles(user):
-    return g.roles
+def get_user_roles(user: User):
+    """retrieve the roles from the user object"""
+    return user.roles
 
 @user_ad.verify_token
 def verify_user_access_token(token):
-    global_user = get_or_create_user()
+    """verify the access token provided in the Authorization header"""
+    user = get_or_create_user()
     if os.getenv("SKIP_USER_VALIDATION", "False").lower() == "true":
         logger.info("Skipping User Validation")
-        global_user.token = None
-        return True
+        user.token = None
+        return user
     try:
         #https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#payload-claims
-        user = oauth_validator.validate_token_and_decode_it(token)
-        if user and 'scp' in user and user['scp'] == _API_SCOPE:
-            global_user.token = user
-            return True
-        elif user and 'roles' in user and _API_APP_SCOPE in user['roles']:
-            global_user.token = user
-            return True
+        decoded_token = oauth_validator.validate_token_and_decode_it(token)
+        if decoded_token and 'scp' in decoded_token and decoded_token['scp'] == _API_SCOPE:
+            user.token = decoded_token
+            return user
+        elif decoded_token and 'roles' in decoded_token and _API_APP_SCOPE in decoded_token['roles']:
+            user.token = decoded_token
+            return user
         else:
             raise ValueError("Invalid scope or user")
     except Exception as e:

@@ -37,10 +37,10 @@ def create_entity(data, partition_key: str, row_key_prefix: str, user: User | No
     entity['PartitionKey'] = partition_key
     entity['RowKey'] = f"{row_key_prefix}-{uuid.uuid4()}"
 
-    # if api_token:
-    #     entity['api_token'] = api_token
-
     try:
+        if user and user.api_key:
+            entity['api_key'] = user.api_key
+
         #https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#payload-claims
         if user and user.token and user.token.get('oid') and user.token.get('upn'):
             logger.debug("User information added to entity")
