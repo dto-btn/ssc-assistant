@@ -4,15 +4,15 @@ import json
 import logging
 import os
 import uuid
-from typing import Any
 
 from azure.data.tables import TableServiceClient
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 
+from .auth import User
 from .models import Completion, Feedback, FilePayload, MessageRequest
 
-__all__ = ["store_request", "store_completion", "leave_feedback", "flag_conversation"]
+__all__ = ["store_request", "store_completion", "leave_feedback", "flag_conversation", "store_suggestion"]
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -23,9 +23,10 @@ table_service_client = TableServiceClient(endpoint=os.getenv("DATABASE_ENDPOINT"
 chat_table_client = table_service_client.get_table_client(table_name="chat")
 feedback_table_client = table_service_client.get_table_client(table_name="feedback")
 flagged_client = table_service_client.get_table_client(table_name="flagged")
+suggest_client = table_service_client.get_table_client(table_name="suggest")
 blob_service_client = BlobServiceClient(account_url=os.getenv("BLOB_ENDPOINT") or "", credential=credential)
 
-def create_entity(data, partition_key: str, row_key_prefix: str, user: Any):
+def create_entity(data, partition_key: str, row_key_prefix: str, user: User | None):
     '''
     Create entity that we will store in the database
 
@@ -35,15 +36,20 @@ def create_entity(data, partition_key: str, row_key_prefix: str, user: Any):
     entity = dict()
     entity['PartitionKey'] = partition_key
     entity['RowKey'] = f"{row_key_prefix}-{uuid.uuid4()}"
+
     try:
+        if user and user.api_key:
+            entity['api_key'] = user.api_key
+
         #https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#payload-claims
-        if user and user['upn']:
-            entity['preferred_username'] = user['upn']
-        # Issue for removing this code: https://github.com/dto-btn/ssc-assistant/issues/253
-        elif user and user['oid'] and user['sub'] and user['preferred_username']: # supports old method, the id_token
-            entity['oid'] = user['oid']
-            entity['sub'] = user['sub']
-            entity['preferred_username'] = user['preferred_username']
+        if user and user.token and user.token.get('oid') and user.token.get('upn'):
+            logger.debug("User information added to entity")
+            entity['preferred_username'] = user.token['upn']
+            entity['oid'] = user.token['oid']
+        elif user and user.token and user.token.get('oid') and user.token.get('appid'):
+            logger.debug("Application information added to entity")
+            entity['preferred_username'] = user.token['appid']
+            entity['oid'] = user.token['oid']
     except Exception as e:
         logger.error("Unable to add user information: %s", e)
 
@@ -65,7 +71,7 @@ def create_entity(data, partition_key: str, row_key_prefix: str, user: Any):
 
     return entity
 
-def store_request(message_request: MessageRequest, conversation_uuid: str, user: Any):
+def store_request(message_request: MessageRequest, conversation_uuid: str, user: User):
     '''
     Store the conversation in the database, we store what we received (history and question) 
     NOTE: Azure Table storage offers a limit of 32k per column for string type of characters.
@@ -77,7 +83,7 @@ def store_request(message_request: MessageRequest, conversation_uuid: str, user:
     except Exception as e:
           logger.error(e)
 
-def store_completion(completion: Completion, conversation_uuid: str, user: Any):
+def store_completion(completion: Completion, conversation_uuid: str, user: User):
       '''
       Store the conversation in the database, we store the completion (answer)
 
@@ -125,3 +131,13 @@ def save_file(file: FilePayload) -> str:
     file_as_byte = base64.b64decode(file.encoded_file.split(",")[1])
     blob_client.upload_blob(file_as_byte, blob_type="BlockBlob", overwrite=True)
     return blob_client.url
+
+def store_suggestion(message_request: MessageRequest, user: User):
+    '''
+    Store the suggestion in the database
+    '''
+    try:
+        suggestion_request_entity = create_entity(message_request, message_request.uuid, 'SuggestionRequest', user)
+        suggest_client.upsert_entity(suggestion_request_entity)
+    except Exception as e:
+          logger.error(e)

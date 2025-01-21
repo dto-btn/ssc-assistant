@@ -91,3 +91,9 @@ class FilePayload:
     '''Contains the payload of the file uploaded to be fed to the OpenAI API'''
     encoded_file: str
     name: str
+
+@dataclass
+class SuggestionRequest:
+    '''this is a suggestion request that most likely comes from the myssc+ search feature'''
+    query: str
+    corporate_function: str = field(default='intranet_question')

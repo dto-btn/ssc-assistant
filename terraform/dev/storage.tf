@@ -24,6 +24,11 @@ resource "azurerm_storage_table" "flagged" {
   storage_account_name = azurerm_storage_account.dev.name
 }
 
+resource "azurerm_storage_table" "suggest" {
+  name                 = "suggest"
+  storage_account_name = azurerm_storage_account.dev.name
+}
+
 resource "azurerm_storage_container" "archibus" {
   name                 = "archibus-floor-plans"
   storage_account_name = azurerm_storage_account.dev.name

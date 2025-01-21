@@ -132,5 +132,6 @@ The following permisions must be granted to the account through Azure:
 
 ## Documentation
 
+* [SSC Assistant API](http://127.0.0.1:5001/docs)
 * [Azure Search Services](https://learn.microsoft.com/en-us/azure/search/search-get-started-portal)
 * [Use your data](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/use-your-data?tabs=ai-search)

@@ -15,11 +15,21 @@ app = APIFlask(__name__, title="SSC Assistant API", version="1.0")
 
 app.servers = [
     {
-        'name': 'Current Env.',
+        'name': 'Prod (Sandbox)',
         'url': os.getenv('SERVER_URL', 'https://ssc-assistant-api.azurewebsites.net')
+    },
+    {
+        'name': 'DEV',
+        'url': 'https://ssc-assistant-dev-api.azurewebsites.net'
+    },
+    {
+        'name': 'Localhost',
+        'url': 'http://127.0.0.1:5001'
     }
 ]
 
+# https://apiflask.com/configuration/#security_schemes
+# doesn't seem to be a way to add multiple ones that are concurrently used.
 app.security_schemes = {  # equals to use config SECURITY_SCHEMES
     'ApiKeyAuth': {
       'type': 'apiKey',
