@@ -64,10 +64,7 @@ export default function InputFileUpload({
             account: instance.getActiveAccount() as AccountInfo,
             forceRefresh: true,
           });
-          console.log(
-            "Processing encoded file: ",
-            encodedFile.substring(0, 100)
-          );
+
           var fileUpload = await uploadFile(
             encodedFile,
             file.name,

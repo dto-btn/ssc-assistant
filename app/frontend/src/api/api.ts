@@ -143,5 +143,5 @@ export async function uploadFile(encodedFile: string, name: string, accessToken:
       console.error("Error while reading the stream:", error);
       throw error;
     });
-  return { file_url: responseData.file_url, file_name: name, message: responseData.message };
+  return { file_url: responseData.file_url, encoded_file: encodedFile, file_name: name, message: responseData.message };
 }

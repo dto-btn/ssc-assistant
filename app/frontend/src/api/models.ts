@@ -88,13 +88,23 @@ interface BookingConfirmation {
   startDate: string;
 }
 
-interface FileUpload {
-  file_url: string;
-  message: string;
-  file_name: string;
-}
-
 interface Attachment {
   type: string;
   blob_storage_url: string;
+}
+
+class FileUpload implements Attachment {
+  type: string;
+  blob_storage_url: string;
+  encoded_file: string;
+  message: string;
+  file_name: string;
+
+  constructor(type: string, blob_storage_url: string, encoded_file: string, message: string, file_name: string) {
+    this.type = type;
+    this.blob_storage_url = blob_storage_url;
+    this.encoded_file = encoded_file;
+    this.message = message;
+    this.file_name = file_name;
+  }
 }
