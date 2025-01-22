@@ -21,7 +21,7 @@ data "azurerm_cognitive_account" "ai" {
   //kind = "OpenAI"
 }
 
-data "azurerm_search_service" "main" {
-  resource_group_name   = "ScSc-CIO_ECT_ssc_assistant-rg"
-  name   = "ssc-assistant-search-service"
-}
+# data "azurerm_search_service" "main" {
+#   resource_group_name   = "ScSc-CIO_ECT_ssc_assistant-rg"
+#   name   = "ssc-assistant-search-service"
+# }

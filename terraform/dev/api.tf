@@ -48,8 +48,8 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   app_settings = {
-    AZURE_SEARCH_SERVICE_ENDPOINT = "https://${data.azurerm_search_service.main.name}.search.windows.net"
-    AZURE_SEARCH_ADMIN_KEY        = data.azurerm_search_service.main.primary_key
+    AZURE_SEARCH_SERVICE_ENDPOINT = "https://${azurerm_search_service.main.name}.search.windows.net"
+    AZURE_SEARCH_ADMIN_KEY        = azurerm_search_service.main.primary_key
     AZURE_OPENAI_ENDPOINT         = data.azurerm_cognitive_account.ai.endpoint
     AZURE_OPENAI_API_KEY          = data.azurerm_cognitive_account.ai.primary_access_key
     AZURE_OPENAI_MODEL            = "gpt-4o"
