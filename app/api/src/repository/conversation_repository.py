@@ -1,7 +1,7 @@
-
 from src.dao.chat_table_dao import ChatTableDaoInterface
 from src.entity.conversation_entity import ConversationEntity
 from src.mapper.conversation_entity_mapper import ChatTableEntityMapper
+
 
 
 class ConversationRepository:

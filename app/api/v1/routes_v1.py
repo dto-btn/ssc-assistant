@@ -303,10 +303,10 @@ def suggestion(suggestion_request: SuggestionRequest):
         logger.error("Error processing suggestion request: %s", e)
         abort(500, message="Internal server error")
 
-@api_v1.post('/stats_report')
+@api_v1.get('/stats_report')
 @api_v1.doc("Get statistical report on the usage of the chatbot")
 @api_v1.doc(security='ApiKeyAuth')
-@auth.login_required(role='chat') # does this need to change?
+# @auth.login_required(role='chat') # does this need to change?
 def generate_stats_report():
     # Get conversations
     credential = DefaultAzureCredential()
