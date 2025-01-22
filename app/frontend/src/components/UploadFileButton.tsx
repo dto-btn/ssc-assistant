@@ -7,6 +7,7 @@ import { apiUse } from "../authConfig";
 import { AccountInfo } from "@azure/msal-browser";
 import { useState } from "react";
 import { CircularProgress } from "@mui/material";
+import { t } from "i18next";
 
 interface UploadFileButtonProps {
   disabled: boolean;
@@ -25,6 +26,16 @@ const VisuallyHiddenInput = styled("input")({
   width: 1,
 });
 
+const isValidFileType = (file: File) => {
+  const acceptedFileTypes = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/webp",
+  ];
+  return acceptedFileTypes.includes(file.type);
+};
+
 export default function InputFileUpload({
   disabled,
   onFileUpload,
@@ -36,6 +47,13 @@ export default function InputFileUpload({
     const file = event.target.files?.[0];
     console.log("in encodeAndUploadFile");
     if (file) {
+      if (!isValidFileType(file)) {
+        event.target.value = ""; // Clear the input
+        const invalidFileType = t("invalid.file.type");
+        alert(invalidFileType);
+        throw Error(invalidFileType);
+      }
+
       setUploading(true);
       const reader = new FileReader();
       reader.onloadend = async () => {

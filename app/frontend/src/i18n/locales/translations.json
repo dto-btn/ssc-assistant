@@ -562,5 +562,9 @@
     "uploaded.file.alt": {
         "en": "Uploaded file preview",
         "fr": "Aperçu du fichier téléchargé"
+    },
+    "invalid.file.type": {
+        "en": "Invalid file type. Please upload a image.",
+        "fr": "Type de fichier non valide. Veuillez télécharger une image."
     }
 }
