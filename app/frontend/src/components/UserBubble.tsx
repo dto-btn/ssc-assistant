@@ -5,6 +5,7 @@ import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github.css";
 import { visuallyHidden } from "@mui/utils";
 import { t } from "i18next";
+import { Attachment } from "../api/models";
 
 interface UserChatProps {
   text: string | null | undefined;
@@ -14,8 +15,8 @@ interface UserChatProps {
 
 export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
   // keeping this here for typesafety because we are ts-expect-error down in the return
-  const blobStorageUrl: string | undefined =
-    attachments && attachments[0]?.blob_storage_url;
+  const encodedFile: string | undefined =
+    attachments && attachments[0]?.encoded_file;
 
   return (
     <Box sx={{ display: "flex", justifyContent: "flex-end", my: "1rem" }}>
@@ -51,11 +52,11 @@ export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
           </QuoteContainer>
         )}
         <UserBubbleContainer tabIndex={0}>
-          {blobStorageUrl && (
+          {encodedFile && (
             <ImageContainer
               component="img"
               // @ts-expect-error - we are using `img` component type, but `Box` doesnt know about src prop
-              src={blobStorageUrl}
+              src={encodedFile}
             ></ImageContainer>
           )}
           <Typography sx={visuallyHidden}>{t("aria.user.question")}</Typography>{" "}

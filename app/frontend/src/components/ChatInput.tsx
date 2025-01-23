@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn";
 import CloseIcon from "@mui/icons-material/Close";
 import UploadFileButton from "./UploadFileButton";
+import { FileUpload, Attachment } from "../models/files";
 
 interface ChatInputProps {
   onSend: (question: string, files: Attachment[]) => void;
@@ -38,7 +39,7 @@ export const ChatInput = ({
   const { t } = useTranslation();
   const [error, setError] = useState(false);
   const theme = useTheme();
-  const [file, setFile] = useState<FileUpload | null>(null);
+  const [file, setFile] = useState<FileUpload | undefined>(undefined);
 
   const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "GPT-3.5 Turbo";
 
@@ -47,19 +48,11 @@ export const ChatInput = ({
       return;
     }
 
-    let attachments: Attachment[] = [];
-    if (file) {
-      // or for(files) down the road ...
-      attachments.push({
-        type: "image",
-        blob_storage_url: file.file_url,
-      });
-    }
-    onSend(question, attachments);
+    onSend(question, file ? [file] : []);
 
     if (clearOnSend) {
       setQuestion("");
-      setFile(null);
+      setFile(undefined);
     }
   };
 
@@ -75,7 +68,7 @@ export const ChatInput = ({
   };
 
   const handleRemoveFile = () => {
-    setFile(null);
+    setFile(undefined);
   };
 
   // this useEffect focuses the chatInput whenever quotedText is added
@@ -193,7 +186,7 @@ export const ChatInput = ({
                   >
                     <CloseIcon color="primary" />
                   </IconButton>
-                  {/\.(jpeg|jpg|gif|png|webp|bmp|svg)$/i.test(file.file_url) ? (
+                  {/\.(jpeg|jpg|gif|png|webp|bmp|svg)$/i.test(file.blob_storage_url) ? (
                     <Box
                       component="img"
                       src={file.encoded_file}
