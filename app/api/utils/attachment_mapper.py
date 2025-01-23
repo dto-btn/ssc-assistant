@@ -64,25 +64,23 @@ def map_attachments(message: Message):
     if message.attachments:
         for attachment in message.attachments:
             processed_url = attachment.blob_storage_url
-            if attachment.type == "image": # yikes?
+            image_bytes = _download_attachment(processed_url)
+            encoded_image = _encode_image_to_base64(image_bytes)
+            if attachment.type == "image":
                 content.append(
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": _encode_image_to_base64(processed_url),
+                            "url": encoded_image,
                             "detail": "auto" # would be interesting to parameterize this.
                         }
                     })
 
     return content
 
-def _encode_image_to_base64(url: str, img_format: str = "JPEG") -> str:
-    # Step 1: Download the image from the URL
-    response = requests.get(url, timeout=5)
-    response.raise_for_status()  # Ensure the request was successful
-
-    # Step 2: Open the image using Pillow
-    img = Image.open(BytesIO(response.content))
+def _encode_image_to_base64(image_data: bytes, img_format: str = "JPEG") -> str:
+    # Open the image using Pillow
+    img = Image.open(BytesIO(image_data))
 
     # Step 3: Convert the image to JPEG
     with BytesIO() as buffer:
@@ -92,3 +90,9 @@ def _encode_image_to_base64(url: str, img_format: str = "JPEG") -> str:
     # Step 4: Encode the JPEG image in base64
     base64_encoded = base64.b64encode(jpeg_image).decode('utf-8')
     return f"data:image/jpeg;base64,{base64_encoded}"
+
+def _download_attachment(url: str) -> bytes:
+    """Download the attachment from the given URL and return the bytes"""
+    response = requests.get(url, timeout=5)
+    response.raise_for_status()  # Ensure the request was successful
+    return response.content
