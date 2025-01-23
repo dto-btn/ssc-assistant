@@ -87,8 +87,13 @@ interface BookingConfirmation {
   assignedTo: string;
   startDate: string;
 }
-interface Attachment {
-  type: string;
+interface OpenAPIAttachment {
+  type?: string;
   blob_storage_url: string;
+}
+
+interface Attachment extends OpenAPIAttachment {
+  message: string;
+  file_name: string;
   encoded_file: string;
 }

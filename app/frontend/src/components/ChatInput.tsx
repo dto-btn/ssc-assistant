@@ -15,7 +15,6 @@ import { useTranslation } from "react-i18next";
 import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn";
 import CloseIcon from "@mui/icons-material/Close";
 import UploadFileButton from "./UploadFileButton";
-import { FileUpload } from "../models/files";
 
 interface ChatInputProps {
   onSend: (question: string, files: Attachment[]) => void;
@@ -39,7 +38,7 @@ export const ChatInput = ({
   const { t } = useTranslation();
   const [error, setError] = useState(false);
   const theme = useTheme();
-  const [file, setFile] = useState<FileUpload | undefined>(undefined);
+  const [file, setFile] = useState<Attachment | undefined>(undefined);
 
   const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "GPT-3.5 Turbo";
 
@@ -63,7 +62,7 @@ export const ChatInput = ({
     }
   };
 
-  const onFileUpload = (file: FileUpload) => {
+  const onFileUpload = (file: Attachment) => {
     setFile(file);
   };
 

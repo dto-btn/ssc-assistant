@@ -1,5 +1,3 @@
-import { FileUpload } from "../models/files";
-
 interface CompletionProps {
   request: MessageRequest;
   updateLastMessage: (message_chunk: string) => void;
@@ -123,7 +121,7 @@ export async function bookReservation(bookingDetails: BookingConfirmation): Prom
   return bookingResponse;
 }
 
-export async function uploadFile(encodedFile: string, name: string, accessToken: string): Promise<FileUpload> {
+export async function uploadFile(encodedFile: string, name: string, accessToken: string): Promise<Attachment> {
   const url = "/api/1.0/upload";
 
   const response = await fetch(url, {
@@ -145,5 +143,10 @@ export async function uploadFile(encodedFile: string, name: string, accessToken:
       console.error("Error while reading the stream:", error);
       throw error;
     });
-  return new FileUpload(responseData.file_url, encodedFile, name, responseData.message);
+  return {
+    blob_storage_url: responseData.file_url,
+    encoded_file: encodedFile,
+    file_name: name,
+    message: responseData.message
+  };
 }

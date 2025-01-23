@@ -8,11 +8,10 @@ import { AccountInfo } from "@azure/msal-browser";
 import { useState } from "react";
 import { CircularProgress } from "@mui/material";
 import { t } from "i18next";
-import { FileUpload } from "../models/files";
 
 interface UploadFileButtonProps {
   disabled: boolean;
-  onFileUpload: (file: FileUpload) => void;
+  onFileUpload: (file: Attachment) => void;
 }
 
 const acceptedImageTypes = ["jpg", "jpeg", "png", "webp"];
