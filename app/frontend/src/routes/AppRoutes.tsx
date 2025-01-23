@@ -1,6 +1,5 @@
 import { FC } from "react";
 import { BrowserRouter, Routes, Route } from "react-router";
-import MainScreen from "../screens/MainScreen";
 import { RootRoute } from ".";
 import { AdminRoute } from "./admin";
 

@@ -4,7 +4,6 @@ import {
   UnauthenticatedTemplate
 } from "@azure/msal-react";
 import ConnectingScreen from "./screens/ConnectingScreen";
-import MainScreen from "./screens/MainScreen";
 import { MsalProvider } from "@azure/msal-react";
 import { AppErrorBoundary } from ".//AppErrorBoundary";
 import { CssBaseline } from "@mui/material";
