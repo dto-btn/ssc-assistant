@@ -38,7 +38,7 @@ resource "azurerm_storage_container" "archibus" {
 resource "azurerm_storage_container" "assistantfiles" {
   name                 = "assistant-chat-files"
   storage_account_name = azurerm_storage_account.dev.name
-  container_access_type = "blob"
+  container_access_type = "private"
 }
 
 data "azuread_user" "dev1" {
@@ -71,6 +71,13 @@ resource "azurerm_role_assignment" "storage_table_contributor" {
   for_each             = toset(local.all_dev_user_object_ids)
   scope                = azurerm_storage_account.dev.id
   role_definition_name = "Storage Table Data Contributor"
+  principal_id         = each.value
+}
+
+resource "azurerm_role_assignment" "storage_blob_contributor" {
+  for_each             = toset(local.all_dev_user_object_ids)
+  scope                = azurerm_storage_account.dev.id
+  role_definition_name = "Storage Blob Data Contributor"
   principal_id         = each.value
 }
 
