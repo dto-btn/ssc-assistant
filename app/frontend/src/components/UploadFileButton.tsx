@@ -40,13 +40,14 @@ export default function InputFileUpload({
 }: UploadFileButtonProps) {
   const { instance } = useMsal();
   const [uploading, setUploading] = useState(false);
+  const [fileInputKey, setFileInputKey] = useState(Date.now());
 
   const encodeAndUploadFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     console.log("in encodeAndUploadFile");
     if (file) {
       if (!isValidFileType(file)) {
-        event.target.value = ""; // Clear the input
+        event.preventDefault();
         const invalidFileType = t("invalid.file.type");
         alert(invalidFileType);
         throw Error(invalidFileType);
@@ -68,8 +69,10 @@ export default function InputFileUpload({
             file.name,
             response.accessToken
           );
+
           //TODO: Detect file type here I assume, in this case we force it to image
           fileUpload.type = "image";
+
           console.log("fileUpload", fileUpload);
           onFileUpload(fileUpload);
         } catch (error) {
@@ -77,11 +80,11 @@ export default function InputFileUpload({
           throw error;
         } finally {
           setUploading(false);
+          setFileInputKey(Date.now());
         }
       };
       reader.readAsDataURL(file);
     }
-    event.target.value = "";
   };
 
   return (
@@ -95,6 +98,7 @@ export default function InputFileUpload({
       {uploading ? <CircularProgress /> : <AttachFileIcon />}
       <VisuallyHiddenInput
         type="file"
+        key={fileInputKey}
         onChange={encodeAndUploadFile}
         accept={acceptedImageTypes.map(type => '.' + type).toString()} //only images for now since OpenAI API only supports images
       // https://platform.openai.com/docs/guides/vision#what-type-of-files-can-i-upload (TLDR; png, jpeg, jpg, webp.)
