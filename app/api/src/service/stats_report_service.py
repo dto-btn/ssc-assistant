@@ -34,7 +34,7 @@ class StatsReportService:
             ("Jul 2024", "2024-07-01T00:00:00Z", "2024-07-31T23:59:59Z"),
             ("Jun 2024", "2024-06-01T00:00:00Z", "2024-06-30T23:59:59Z"),
             ("May 2024", "2024-05-01T00:00:00Z", "2024-05-31T23:59:59Z"),
-            ("Lifetime", "2024-05-01T00:00:00Z", "2025-01-31T23:59:59Z")
+            # ("Lifetime", "2024-05-01T00:00:00Z", "2025-01-31T23:59:59Z")
         ]
 
         rows: list[MonthlyReportRow] = []
@@ -61,10 +61,14 @@ class StatsReportService:
             start_day = datetime.fromisoformat(date_range[1])
             end_day = datetime.fromisoformat(date_range[2])
             days_in_month = (end_day - start_day).days + 1
-            average_questions_per_day = total_questions_asked / days_in_month
+            average_questions_per_day = round(total_questions_asked / days_in_month, 2)
 
             # Average questions per user
-            average_questions_per_user = total_questions_asked / active_users_count if active_users_count > 0 else 0
+            average_questions_per_user = (
+                round(total_questions_asked / active_users_count, 2)
+                if active_users_count > 0
+                else 0
+            )
 
             row = MonthlyReportRow(
                 month_label=date_range[0],
