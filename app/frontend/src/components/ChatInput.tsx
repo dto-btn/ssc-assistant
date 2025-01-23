@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn";
 import CloseIcon from "@mui/icons-material/Close";
 import UploadFileButton from "./UploadFileButton";
-import { FileUpload, Attachment } from "../models/files";
+import { FileUpload } from "../models/files";
 
 interface ChatInputProps {
   onSend: (question: string, files: Attachment[]) => void;

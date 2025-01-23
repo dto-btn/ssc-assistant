@@ -1,5 +1,3 @@
-import { Attachment } from "../models/files";
-
 interface Metadata {
   chunking: string;
 }
@@ -88,4 +86,9 @@ interface BookingConfirmation {
   createdBy: string;
   assignedTo: string;
   startDate: string;
+}
+interface Attachment {
+  type: string;
+  blob_storage_url: string;
+  encoded_file: string;
 }

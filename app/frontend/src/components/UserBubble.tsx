@@ -5,7 +5,6 @@ import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github.css";
 import { visuallyHidden } from "@mui/utils";
 import { t } from "i18next";
-import { Attachment } from "../api/models";
 
 interface UserChatProps {
   text: string | null | undefined;

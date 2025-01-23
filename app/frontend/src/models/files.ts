@@ -1,9 +1,3 @@
-export interface Attachment {
-    type: string;
-    blob_storage_url: string;
-    encoded_file: string;
-}
-
 export class FileUpload implements Attachment {
     type!: string;
     blob_storage_url: string;

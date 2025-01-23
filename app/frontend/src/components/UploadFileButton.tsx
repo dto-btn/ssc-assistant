@@ -8,7 +8,7 @@ import { AccountInfo } from "@azure/msal-browser";
 import { useState } from "react";
 import { CircularProgress } from "@mui/material";
 import { t } from "i18next";
-import { FileUpload } from "../api/models";
+import { FileUpload } from "../models/files";
 
 interface UploadFileButtonProps {
   disabled: boolean;
