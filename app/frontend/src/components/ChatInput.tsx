@@ -182,6 +182,7 @@ export const ChatInput = ({
                     }}
                     size={"small"}
                     color="primary"
+                    aria-description={t("delete") + ": " + t("user.file.upload")}
                   >
                     <CloseIcon color="primary" />
                   </IconButton>

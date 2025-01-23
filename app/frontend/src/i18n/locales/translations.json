@@ -566,5 +566,9 @@
     "invalid.file.type": {
         "en": "Invalid file type. Please upload a image.",
         "fr": "Type de fichier non valide. Veuillez télécharger une image."
+    },
+    "user.file.upload": {
+        "en": "User uploaded file.",
+        "fr": "Fichier téléchargé par l'utilisateur."
     }
 }

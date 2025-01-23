@@ -56,6 +56,7 @@ export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
               component="img"
               // @ts-expect-error - we are using `img` component type, but `Box` doesnt know about src prop
               src={encodedFile}
+              aria-description={t("user.file.upload")}
             ></ImageContainer>
           )}
           <Typography sx={visuallyHidden}>{t("aria.user.question")}</Typography>{" "}
