@@ -4,9 +4,31 @@ interface CompletionProps {
   accessToken: string;
 }
 
+function convertAttachments(attachments: Attachment[]): AssistantAPIAttachement[] {
+  return attachments.map(({ type, blob_storage_url }) => ({
+    type,
+    blob_storage_url
+  }));
+}
+
 export async function completionMySSC({ request, updateLastMessage, accessToken }: CompletionProps): Promise<Completion> {
   let completion: Completion | undefined;
   const url = "/api/1.0/completion/chat/stream";
+
+  //massage request -> messages -> attachments so they are using the right interface
+  const massaged_messages = request.messages?.map((message) => {
+    const attachments = message.attachments ? convertAttachments(message.attachments) : [];
+    return {
+      ...message,
+      attachments
+    };
+  });
+
+  if (request.messages) {
+    //https://media1.tenor.com/images/8f9264d22c3ebf180cc70af621a9aefa/tenor.gif?itemid=10837736
+    request.messages = massaged_messages as unknown as Message[]; 
+  }
+
   const response = await fetch(url, {
     method: "POST",
     headers: {
