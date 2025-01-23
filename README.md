@@ -72,7 +72,7 @@ First we setup the backend API project:
 ```bash
 python3 -m venv .venv_api
 source .venv_api/bin/activate
-pip install -r app/api/requirements.txt --upgrade
+pip install -r app/api/requirements-dev.txt --upgrade
 ```
 
 You should then see something like this denoting which environement you are in your shell. To leave this `.venv` simply type `deactivate`

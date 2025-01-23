@@ -13,6 +13,7 @@ from apiflask import APIBlueprint, abort
 from flask import Response, jsonify, stream_with_context
 from openai.types.chat import ChatCompletion
 
+from src.service.stats_report_service import StatsReportService
 from src.dao.chat_table_dao import ChatTableDaoImpl
 from src.repository.conversation_repository import ConversationRepository
 
@@ -313,5 +314,6 @@ def generate_stats_report():
     table_service_client = TableServiceClient(endpoint=os.getenv("DATABASE_ENDPOINT") or "", credential=credential)
     chat_table_dao = ChatTableDaoImpl(table_service_client)
     conversation_repo = ConversationRepository(chat_table_dao)
-    conversations = conversation_repo.list_conversations(log_validation_errors=False)
-    return jsonify(conversations), 200
+    stats_report_service = StatsReportService(conversation_repo)
+    monthly_report = stats_report_service.get_report_by_month()
+    return jsonify(monthly_report), 200
