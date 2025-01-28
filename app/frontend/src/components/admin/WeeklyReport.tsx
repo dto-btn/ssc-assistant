@@ -25,10 +25,43 @@ export const WeeklyReport = ({ data }: WeeklyReportProps) => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="active_users" fill="#8884d8" activeBar={<Rectangle fill="pink" stroke="blue" />} />
-                <Bar dataKey="average_questions_asked_per_day" fill="#82ca9d" activeBar={<Rectangle fill="gold" stroke="purple" />} />
-                <Bar dataKey="average_questions_per_user" fill="#ff0000" activeBar={<Rectangle fill="green" stroke="black" />} />
-                <Bar dataKey="total_questions_asked" fill="#00ff00" activeBar={<Rectangle fill="black" stroke="red" />} />
+                <Bar dataKey="average_questions_asked_per_day" fill="#2f4b7c" activeBar={<Rectangle fill="#a05195" stroke="#2f4b7c" />} />
+            </BarChart>
+            <BarChart
+                width={500}
+                height={300}
+                data={data}
+                margin={{
+                    top: 5,
+                    right: 30,
+                    left: 20,
+                    bottom: 5,
+                }}
+            >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month_label" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="average_questions_per_user" fill="#665191" activeBar={<Rectangle fill="#d45087" stroke="#665191" />} />
+            </BarChart>
+            <BarChart
+                width={500}
+                height={300}
+                data={data}
+                margin={{
+                    top: 5,
+                    right: 30,
+                    left: 20,
+                    bottom: 5,
+                }}
+            >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month_label" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="total_questions_asked" fill="#a05195" activeBar={<Rectangle fill="#f95d6a" stroke="#a05195" />} />
             </BarChart>
             {/* </ResponsiveContainer> */}
         </div>
