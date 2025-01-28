@@ -95,7 +95,8 @@ class AzureAuthToken:
             return response.json()  # Return the user's data
         else:
             self.logger.error(f"Failed to get user with ID {self.user_id}: {response.text}")
-            response.raise_for_status()  # Raises an HTTPError if the HTTP request returned an unsuccessful status code
+            response.raise_for_status()
+            # Raises an HTTPError if the HTTP request returned an unsuccessful status code
 
 
 
