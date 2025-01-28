@@ -9,7 +9,7 @@ on:
       app-name:
         type: string
         required: true
-    secrets: 
+    secrets:
       API_PUBLISH_PROFILE:
         required: false
       AZURE_CREDENTIALS:
@@ -39,6 +39,11 @@ jobs:
       uses: actions/setup-python@v5.2.0
       with:
         python-version: '3.12'
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y freetds-dev gcc
 
     - name: Install dependencies
       run: |
