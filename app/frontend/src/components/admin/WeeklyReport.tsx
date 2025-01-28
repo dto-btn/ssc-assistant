@@ -1,12 +1,14 @@
 import { BarChart, Bar, Rectangle, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { WeeklyReportItemModel } from "../../api/admin.models"
+import { Box } from '@mui/material';
 
 type WeeklyReportProps = {
     data: WeeklyReportItemModel[]
 }
 export const WeeklyReport = ({ data }: WeeklyReportProps) => {
     return (
-        <div>
+        <>
+            <Box>
 
             {/* <ResponsiveContainer width="100%" height="100%"> */}
             <BarChart
@@ -45,6 +47,8 @@ export const WeeklyReport = ({ data }: WeeklyReportProps) => {
                 <Legend />
                 <Bar dataKey="average_questions_per_user" fill="#665191" activeBar={<Rectangle fill="#d45087" stroke="#665191" />} />
             </BarChart>
+            </Box>
+            <div>
             <BarChart
                 width={500}
                 height={300}
@@ -65,5 +69,6 @@ export const WeeklyReport = ({ data }: WeeklyReportProps) => {
             </BarChart>
             {/* </ResponsiveContainer> */}
         </div>
+        </>
     );
 }
