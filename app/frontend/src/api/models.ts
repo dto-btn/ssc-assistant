@@ -87,12 +87,7 @@ interface BookingConfirmation {
   assignedTo: string;
   startDate: string;
 }
-interface AssistantAPIAttachement {
-  type?: string;
-  blob_storage_url: string;
-}
-
-interface Attachment extends AssistantAPIAttachement {
+interface Attachment extends ApiAttachmentDto {
   message: string;
   file_name: string;
   encoded_file: string;

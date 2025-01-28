@@ -1,12 +1,22 @@
 import base64
+import logging
+import os
 from io import BytesIO
 from typing import Iterable
+from urllib.parse import urlparse
 
-import requests
+from azure.identity import DefaultAzureCredential
+from azure.storage.blob import BlobServiceClient
 from openai.types.chat.chat_completion_content_part_param import \
     ChatCompletionContentPartParam
 from PIL import Image
 from utils.models import Message
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+default_credential = DefaultAzureCredential()
+blob_service_client = BlobServiceClient(account_url=os.getenv("BLOB_ENDPOINT") or "", credential=default_credential)
 
 __all__ = ["map_attachments"]
 
@@ -64,17 +74,20 @@ def map_attachments(message: Message):
     if message.attachments:
         for attachment in message.attachments:
             processed_url = attachment.blob_storage_url
-            image_bytes = _download_attachment(processed_url)
-            encoded_image = _encode_image_to_base64(image_bytes)
-            if attachment.type == "image":
-                content.append(
-                    {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": encoded_image,
-                            "detail": "auto" # would be interesting to parameterize this.
-                        }
-                    })
+            try:
+                image_bytes = _download_attachment(processed_url)
+                encoded_image = _encode_image_to_base64(image_bytes)
+                if attachment.type == "image":
+                    content.append(
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": encoded_image,
+                                "detail": "auto" # would be interesting to parameterize this.
+                            }
+                        })
+            except Exception as e:
+                logger.error("Error processing attachment skipping: %s", e)
 
     return content
 
@@ -93,6 +106,22 @@ def _encode_image_to_base64(image_data: bytes, img_format: str = "JPEG") -> str:
 
 def _download_attachment(url: str) -> bytes:
     """Download the attachment from the given URL and return the bytes"""
-    response = requests.get(url, timeout=5)
-    response.raise_for_status()  # Ensure the request was successful
-    return response.content
+    _, container_name, blob_name = _parse_blob_url(url)
+    blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
+    blob_data = blob_client.download_blob()
+    image_data = blob_data.readall()
+    return image_data
+
+def _parse_blob_url(blob_url):
+    """Extracts the storage account, container, and blob name from the blob URL."""
+    parsed_url = urlparse(blob_url)
+
+    # Extract the storage account name from the URL
+    storage_account = parsed_url.netloc.split('.')[0]
+
+    # The path starts with a '/', so we need to strip it off
+    path_parts = parsed_url.path.lstrip('/').split('/')
+    container_name = path_parts[0]
+    blob_name = '/'.join(path_parts[1:])
+
+    return storage_account, container_name, blob_name

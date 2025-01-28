@@ -4,30 +4,42 @@ interface CompletionProps {
   accessToken: string;
 }
 
-function convertAttachments(attachments: Attachment[]): AssistantAPIAttachement[] {
-  return attachments.map(({ type, blob_storage_url }) => ({
-    type,
-    blob_storage_url
+function convertMessagesForAPI(messages: Message[]): ApiMessageDto[] {
+  return messages.map((message) => ({
+    role: message.role,
+    content: message.content,
+    context: message.context,
+    tools_info: message.tools_info,
+    quotedText: message.quotedText,
+    attachments: message.attachments && message.attachments.map((att) => ({
+      type: att.type,
+      blob_storage_url: att.blob_storage_url
+    }))
   }));
+}
+
+function convertRequestForAPI(request: MessageRequest): ApiMessageRequestDto {
+  return {
+    query: request.query,
+    messages: convertMessagesForAPI(request.messages || []),
+    top: request.top,
+    lang: request.lang,
+    max: request.max,
+    tools: request.tools,
+    uuid: request.uuid,
+    quotedText: request.quotedText,
+    model: request.model,
+    fullName: request.fullName,
+    corporateFunction: request.corporateFunction
+  };
 }
 
 export async function completionMySSC({ request, updateLastMessage, accessToken }: CompletionProps): Promise<Completion> {
   let completion: Completion | undefined;
   const url = "/api/1.0/completion/chat/stream";
 
-  //massage request -> messages -> attachments so they are using the right interface
-  const massaged_messages = request.messages?.map((message) => {
-    const attachments = message.attachments ? convertAttachments(message.attachments) : [];
-    return {
-      ...message,
-      attachments
-    };
-  });
-
-  if (request.messages) {
-    //https://media1.tenor.com/images/8f9264d22c3ebf180cc70af621a9aefa/tenor.gif?itemid=10837736
-    request.messages = massaged_messages as unknown as Message[]; 
-  }
+  const api_request = convertRequestForAPI(request);
+  
 
   const response = await fetch(url, {
     method: "POST",
@@ -35,7 +47,7 @@ export async function completionMySSC({ request, updateLastMessage, accessToken 
       "Content-Type": "application/json",
       "Authorization": "Bearer " + accessToken.trim()
     },
-    body: JSON.stringify(request)
+    body: JSON.stringify(api_request)
   });
 
   if (response.status === 401) {
