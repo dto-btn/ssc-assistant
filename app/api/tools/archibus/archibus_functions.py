@@ -13,7 +13,8 @@ __all__ = ["make_api_call",
            "get_floors",
            "get_available_rooms",
            "get_floor_plan",
-           "get_current_date"]
+           "get_current_date",
+           "get_buildings"]
 
 api_url = str(os.getenv("ARCHIBUS_API_URL", "http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1"))
 api_username = str(os.getenv("ARCHIBUS_API_USERNAME"))
@@ -254,6 +255,54 @@ def get_current_date():
     current_date_time = datetime.now()
     return "Formatted date and time:" + current_date_time.strftime("%Y-%m-%d %H:%M:%S")
 
+@tool_metadata({
+    "type": "function",
+    "tool_type": "archibus",
+    "function": {
+      "name": "get_buildings",
+      "description":  "Gets information about buildings available to book a workspace through Archibus. Use this method to whenever you need to retrieve a buildingId for the provided building address or name. Return the buildingId as part of your message so you have it for context later.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "buildingName": {
+            "type": "string",
+            "description": "The building's name or address"
+          }
+        },
+        "required": ["buildingName"]
+      }
+    }
+})
+def get_buildings(buildingName: str = ""):
+    """
+    get information about buildings available to book a workspace through Archibus, such as the
+    building's address, buildingId, name, and postal code
+    """
+    url = "http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1/"
+
+    if not buildingName:
+        return "Please provide a building name or address to search for"
+
+    try:
+        uri = f"/buildings"
+        response = make_api_call(uri)
+        filtered_response_json = json.loads(response.text)[-10:] # take last 10 items (API might be returning duplicates?)
+        pretty_response = json.dumps(filtered_response_json, indent=4)
+        substrings = buildingName.lower().split()
+
+        excluded_substrings = ['road', 'rd', 'street', 'ave', 'avenue']
+        filtered_substrings = [substring for substring in substrings if substring not in excluded_substrings]
+
+        logger.debug(f"SUBSTRINGS: {filtered_substrings}")
+        filtered_buildings = [building for building in response_json if building.get('name') and any(substring in building['name'].lower() for substring in filtered_substrings)]
+        pretty_response = json.dumps(filtered_buildings, indent=4)
+        logger.debug(pretty_response)
+        return pretty_response
+
+    except requests.HTTPError as e:
+        msg = f"Unable to get buildings"
+        logger.error(msg)
+        return msg
 
 def make_api_call(uri: str, payload=None) -> requests.Response:
     auth = (api_username, api_password)
