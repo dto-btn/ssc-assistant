@@ -13,6 +13,7 @@ from apiflask import APIBlueprint, abort
 from flask import Response, jsonify, stream_with_context
 from openai.types.chat import ChatCompletion
 
+from src.context.build_context import build_context
 from src.service.stats_report_service import StatsReportService
 from src.dao.chat_table_dao import ChatTableDaoImpl
 from src.repository.conversation_repository import ConversationRepository
@@ -304,16 +305,21 @@ def suggestion(suggestion_request: SuggestionRequest):
         logger.error("Error processing suggestion request: %s", e)
         abort(500, message="Internal server error")
 
-@api_v1.get('/stats_report')
+@api_v1.get("/stats_report/monthly")
+@api_v1.doc("Get statistical report on the usage of the chatbot")
+@api_v1.doc(security="ApiKeyAuth")
+# @auth.login_required(role='chat') # does this need to change?
+def generate_stats_report_monthly():
+    ctx = build_context()
+    monthly_report = ctx["stats_report_service"].get_statistics_by_month_of_year()
+    return jsonify(monthly_report), 200
+
+
+@api_v1.get("/stats_report/weekly")
 @api_v1.doc("Get statistical report on the usage of the chatbot")
 @api_v1.doc(security='ApiKeyAuth')
 # @auth.login_required(role='chat') # does this need to change?
-def generate_stats_report():
-    # Get conversations
-    credential = DefaultAzureCredential()
-    table_service_client = TableServiceClient(endpoint=os.getenv("DATABASE_ENDPOINT") or "", credential=credential)
-    chat_table_dao = ChatTableDaoImpl(table_service_client)
-    conversation_repo = ConversationRepository(chat_table_dao)
-    stats_report_service = StatsReportService(conversation_repo)
-    monthly_report = stats_report_service.get_report_by_month()
-    return jsonify(monthly_report), 200
+def generate_stats_report_weekly():
+    ctx = build_context()
+    weekly_report = ctx["stats_report_service"].get_statistics_by_day_of_week()
+    return jsonify(weekly_report), 200
