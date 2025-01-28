@@ -74,13 +74,6 @@ resource "azurerm_role_assignment" "storage_table_contributor" {
   principal_id         = each.value
 }
 
-resource "azurerm_role_assignment" "storage_blob_contributor" {
-  for_each             = toset(local.all_dev_user_object_ids)
-  scope                = azurerm_storage_account.dev.id
-  role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = each.value
-}
-
 resource "azurerm_role_assignment" "archibus_container" {
   scope                = "${azurerm_storage_account.dev.id}/blobServices/default/containers/${azurerm_storage_container.archibus.name}"
   role_definition_name = "Storage Blob Data Contributor"
