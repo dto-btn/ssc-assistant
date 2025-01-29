@@ -7,6 +7,7 @@ import requests
 from utils.decorators import tool_metadata
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 __all__ = ["make_api_call",
            "get_user_bookings",
@@ -278,24 +279,25 @@ def get_buildings(buildingName: str):
     get information about buildings available to book a workspace through Archibus, such as the
     building's address, buildingId, name, and postal code
     """
-    logger.info(f"hi kenovi {buildingName}")
     if not buildingName:
         return "Please provide a building name or address to search for"
 
     try:
         uri = "/buildings/"
         response = make_api_call(uri)
+        response.raise_for_status()
+        print(response.text)
         filtered_response_json = json.loads(response.text)[-10:] # take last 10 items (API might be returning duplicates?)
         pretty_response = json.dumps(filtered_response_json, indent=4)
+        print(pretty_response)
         substrings = buildingName.lower().split()
-
+        logger.debug(pretty_response)
         excluded_substrings = ['road', 'rd', 'street', 'ave', 'avenue']
         filtered_substrings = [substring for substring in substrings if substring not in excluded_substrings]
-
-        logger.debug(f"SUBSTRINGS: {filtered_substrings}")
+        logger.info("substrings %s", filtered_substrings)
         filtered_buildings = [building for building in filtered_response_json if building.get('name') and any(substring in building['name'].lower() for substring in filtered_substrings)]
         pretty_response = json.dumps(filtered_buildings, indent=4)
-        logger.debug(pretty_response)
+        logger.info(pretty_response)
         return pretty_response
 
     except Exception as e:
