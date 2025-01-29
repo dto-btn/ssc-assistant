@@ -19,15 +19,15 @@ class StatsReportService:
 
     def _get_date_ranges(self):
         return [
-            ("Jan 2025", "2025-01-01T00:00:00Z", "2025-01-16T23:59:59Z"),
-            ("Dec 2024", "2024-12-01T00:00:00Z", "2024-12-31T23:59:59Z"),
-            ("Nov 2024", "2024-11-01T00:00:00Z", "2024-11-30T23:59:59Z"),
-            ("Oct 2024", "2024-10-01T00:00:00Z", "2024-10-31T23:59:59Z"),
-            ("Sep 2024", "2024-09-01T00:00:00Z", "2024-09-30T23:59:59Z"),
-            ("Aug 2024", "2024-08-01T00:00:00Z", "2024-08-31T23:59:59Z"),
-            ("Jul 2024", "2024-07-01T00:00:00Z", "2024-07-31T23:59:59Z"),
-            ("Jun 2024", "2024-06-01T00:00:00Z", "2024-06-30T23:59:59Z"),
             ("May 2024", "2024-05-01T00:00:00Z", "2024-05-31T23:59:59Z"),
+            ("Jun 2024", "2024-06-01T00:00:00Z", "2024-06-30T23:59:59Z"),
+            ("Jul 2024", "2024-07-01T00:00:00Z", "2024-07-31T23:59:59Z"),
+            ("Aug 2024", "2024-08-01T00:00:00Z", "2024-08-31T23:59:59Z"),
+            ("Sep 2024", "2024-09-01T00:00:00Z", "2024-09-30T23:59:59Z"),
+            ("Oct 2024", "2024-10-01T00:00:00Z", "2024-10-31T23:59:59Z"),
+            ("Nov 2024", "2024-11-01T00:00:00Z", "2024-11-30T23:59:59Z"),
+            ("Dec 2024", "2024-12-01T00:00:00Z", "2024-12-31T23:59:59Z"),
+            ("Jan 2025", "2025-01-01T00:00:00Z", "2025-01-31T23:59:59Z"),
         ]
 
     def get_statistics_by_month_of_year(self):
@@ -90,13 +90,13 @@ class StatsReportService:
 
         conversations = self.conversations_cache
         days = [
+            "Sunday",
             "Monday",
             "Tuesday",
             "Wednesday",
             "Thursday",
             "Friday",
             "Saturday",
-            "Sunday",
         ]
         date_ranges = self._get_date_ranges()
 
@@ -110,14 +110,14 @@ class StatsReportService:
         active_users_count = len(active_users)
         statistics = []
 
-        for day in days:
+        for day_name in days:
             total_questions_asked = 0
             for conversation in conversations:
                 for message in conversation["messages"]:
                     if (
                         message["sender"] == "user"
                         and datetime.fromisoformat(message["created_at"]).strftime("%A")
-                        == day
+                        == day_name
                     ):
                         total_questions_asked += 1
 
@@ -130,7 +130,7 @@ class StatsReportService:
 
             statistics.append(
                 {
-                    "day_of_week": day,
+                    "day_of_week": day_name,
                     "total_questions_asked": total_questions_asked,
                     "average_questions_asked_per_day": round(
                         average_questions_per_day, 2

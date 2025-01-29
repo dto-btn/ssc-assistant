@@ -23,7 +23,7 @@ export const WeeklyReport = ({ data }: WeeklyReportProps) => {
                 }}
             >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month_label" />
+                    <XAxis dataKey="day_of_week" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
@@ -41,7 +41,7 @@ export const WeeklyReport = ({ data }: WeeklyReportProps) => {
                 }}
             >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month_label" />
+                    <XAxis dataKey="day_of_week" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
@@ -61,7 +61,7 @@ export const WeeklyReport = ({ data }: WeeklyReportProps) => {
                 }}
             >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month_label" />
+                    <XAxis dataKey="day_of_week" />
                 <YAxis />
                 <Tooltip />
                 <Legend />

@@ -29,10 +29,17 @@ export const AdminMainScreen = () => {
             .catch(console.error);
     }, [])
 
+    const dateTodayHumanFormat = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
     return (
         <Box>
-            <h1>Admin Main Screen</h1>
-            <h2>Monthly Report</h2>
+            <h1>SSC Assistant Reports</h1>
+            <h2>Report Date: {dateTodayHumanFormat}</h2>
+            <h2>Statistics over time</h2>
             {monthlyReport && (
                 <MonthlyReport data={monthlyReport} />
             )}
@@ -64,7 +71,7 @@ export const AdminMainScreen = () => {
                     </TableContainer>
                 </Box >
             )}
-            <h2>Weekly Report</h2>
+            <h2>Statistics by day of week</h2>
             {
                 weeklyReport && (
                     <WeeklyReport data={weeklyReport} />
