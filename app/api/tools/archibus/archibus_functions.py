@@ -273,18 +273,17 @@ def get_current_date():
       }
     }
 })
-def get_buildings(buildingName: str = ""):
+def get_buildings(buildingName: str):
     """
     get information about buildings available to book a workspace through Archibus, such as the
     building's address, buildingId, name, and postal code
     """
-    url = "http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1/"
-
+    logger.info(f"hi kenovi {buildingName}")
     if not buildingName:
         return "Please provide a building name or address to search for"
 
     try:
-        uri = f"/buildings"
+        uri = "/buildings/"
         response = make_api_call(uri)
         filtered_response_json = json.loads(response.text)[-10:] # take last 10 items (API might be returning duplicates?)
         pretty_response = json.dumps(filtered_response_json, indent=4)
@@ -294,14 +293,14 @@ def get_buildings(buildingName: str = ""):
         filtered_substrings = [substring for substring in substrings if substring not in excluded_substrings]
 
         logger.debug(f"SUBSTRINGS: {filtered_substrings}")
-        filtered_buildings = [building for building in response_json if building.get('name') and any(substring in building['name'].lower() for substring in filtered_substrings)]
+        filtered_buildings = [building for building in filtered_response_json if building.get('name') and any(substring in building['name'].lower() for substring in filtered_substrings)]
         pretty_response = json.dumps(filtered_buildings, indent=4)
         logger.debug(pretty_response)
         return pretty_response
 
-    except requests.HTTPError as e:
+    except Exception as e:
         msg = f"Unable to get buildings"
-        logger.error(msg)
+        logger.error(msg, e)
         return msg
 
 def make_api_call(uri: str, payload=None) -> requests.Response:
