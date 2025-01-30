@@ -46,6 +46,12 @@ resource "azurerm_storage_container" "sscplus" {
   storage_account_name = azurerm_storage_account.main.name
 }
 
+resource "azurerm_storage_container" "assistantfiles" {
+  name                 = "assistant-chat-files"
+  storage_account_name = azurerm_storage_account.main.name
+  container_access_type = "blob"
+}
+
 /*
 * DIAGNOSTICS
 */
