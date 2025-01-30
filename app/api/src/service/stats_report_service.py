@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import TypedDict
 from src.entity.conversation_entity import ConversationEntity
 from src.repository.conversation_repository import ConversationRepository
@@ -140,3 +140,32 @@ class StatsReportService:
             )
 
         return statistics
+
+    def get_top_users_past_90_days(self):
+        if not self.conversations_cache:
+            self.conversations_cache = self.conversation_repository.list_conversations()
+
+        conversations = self.conversations_cache
+
+        date_range = (
+            datetime.now().isoformat(),
+            (datetime.now() - timedelta(days=90)).isoformat(),
+        )
+
+        active_users: dict[str, int] = {}
+
+        for conversation in conversations:
+            for message in conversation["messages"]:
+                owner_id = message["owner_id"]
+                if (
+                    owner_id is not None
+                    and date_range[1] <= message["created_at"] <= date_range[0]
+                ):
+                    if owner_id in active_users:
+                        active_users[owner_id] += 1
+                    else:
+                        active_users[owner_id] = 1
+
+        sorted_users = sorted(active_users.items(), key=lambda x: x[1], reverse=True)
+
+        return sorted_users

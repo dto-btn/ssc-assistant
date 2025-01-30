@@ -2,9 +2,9 @@
 from datetime import datetime
 from typing import cast
 from unittest.mock import MagicMock
-from repository.conversation_repository import ConversationRepository
-from entity.table_row_entity import ChatTableRow, TableRowMetadata
-from dao.chat_table_dao import ChatTableDaoInterface
+from src.repository.conversation_repository import ConversationRepository
+from src.entity.table_row_entity import ChatTableRow, TableRowMetadata
+from src.dao.chat_table_dao import ChatTableDaoInterface
 
 
 def test_empty_database_returns_empty_results():
