@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn";
 import CloseIcon from "@mui/icons-material/Close";
 import UploadFileButton from "./UploadFileButton";
+import { disabledFeaturesSet } from "../allowedTools";
 
 interface ChatInputProps {
   onSend: (question: string, files: Attachment[]) => void;
@@ -182,16 +183,24 @@ export const ChatInput = ({
                     }}
                     size={"small"}
                     color="primary"
-                    aria-description={t("delete") + ": " + t("user.file.upload")}
+                    aria-description={
+                      t("delete") + ": " + t("user.file.upload")
+                    }
                   >
                     <CloseIcon color="primary" />
                   </IconButton>
-                  {/\.(jpeg|jpg|gif|png|webp|bmp|svg)$/i.test(file.blob_storage_url) ? (
+                  {/\.(jpeg|jpg|gif|png|webp|bmp|svg)$/i.test(
+                    file.blob_storage_url
+                  ) ? (
                     <Box
                       component="img"
                       src={file.encoded_file}
                       alt={t("uploaded.file.alt")}
-                      sx={{ maxWidth: "100%", maxHeight: 100, borderRadius: 2 }}
+                      sx={{
+                        maxWidth: "100%",
+                        maxHeight: 100,
+                        borderRadius: 2,
+                      }}
                     />
                   ) : (
                     //leaving this code in but it's not used at the moment since we disabled non-image uploads
@@ -232,10 +241,12 @@ export const ChatInput = ({
                       />
                     )}
                   </IconButton>
-                  <UploadFileButton
-                    disabled={disabled}
-                    onFileUpload={onFileUpload}
-                  />
+                  {!disabledFeaturesSet.has("file_upload") && (
+                    <UploadFileButton
+                      disabled={disabled}
+                      onFileUpload={onFileUpload}
+                    />
+                  )}
                 </InputAdornment>
               ),
             }}
