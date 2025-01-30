@@ -15,14 +15,20 @@ from .buildingInfo import get_floors, get_floor_plan
 #booking information
 from .bookinginfo import get_user_bookings,get_available_rooms
 
+#employee information
+from .employeeinfo import get_employee_record
+
 logger = logging.getLogger(__name__)
 
-__all__ = ["make_api_call",
-           "get_user_bookings",
-           "get_floors",
-           "get_available_rooms",
-           "get_floor_plan",
-           "get_current_date"]
+__all__ = [
+    "make_api_call",
+    "get_user_bookings",
+    "get_floors",
+    "get_available_rooms",
+    "get_floor_plan",
+    "get_current_date",
+    "get_employee_record",
+]
 
 @tool_metadata({
     "type": "function",
