@@ -1,9 +1,10 @@
 import json
 import logging
-import pymssql
 import os
+from datetime import datetime
+
+#import pymssql
 from utils.decorators import tool_metadata
-from datetime import datetime  
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -33,19 +34,24 @@ password: str    = os.getenv("BITS_DB_PWD", "missing.password")
   })
 def get_br_information(br_number: str = ""):
     """gets br information"""
-    conn = pymssql.connect(server,username,password,database) # pylint: disable=no-member
-    cursor = conn.cursor()
-    # Define your query
-    query = f"SELECT * FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR = {br_number};"
-    # Execute the query
-    cursor.execute(query)
-    # Fetch all rows from the executed query
-    result = cursor.fetchall()
-    print(result)
-    json_result = json.dumps(result, default=_datetime_serializer, indent=4)
-    conn.close()
-    logger.debug(json_result)
-    return json_result
+    # conn = pymssql.connect(server,username,password,database) # pylint: disable=no-member
+    # cursor = conn.cursor()
+    # # Define your query
+    # query = f"SELECT * FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR = {br_number};"
+    # # Execute the query
+    # cursor.execute(query)
+    # # Fetch all rows from the executed query
+    # result = cursor.fetchall()
+    # print(result)
+    # json_result = json.dumps(result, default=_datetime_serializer, indent=4)
+    # conn.close()
+    # logger.debug(json_result)
+    # return json_result
+    return json.dumps({
+        "br_number": br_number,
+        "status": "success",
+        "message": "This is a test message"
+    }, default=_datetime_serializer, indent=4)
 
 def _datetime_serializer(obj):
     """JSON serializer for datetime objects."""

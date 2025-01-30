@@ -2,12 +2,20 @@ import json
 import logging
 import threading
 import uuid
+import os
+
+from azure.identity import DefaultAzureCredential
+from azure.data.tables import TableServiceClient
 
 import openai
 import requests
 from apiflask import APIBlueprint, abort
 from flask import Response, jsonify, stream_with_context
 from openai.types.chat import ChatCompletion
+
+from src.service.stats_report_service import StatsReportService
+from src.dao.chat_table_dao import ChatTableDaoImpl
+from src.repository.conversation_repository import ConversationRepository
 
 from tools.archibus.archibus_functions import make_api_call
 from utils.auth import auth, user_ad
@@ -294,3 +302,17 @@ def suggestion(suggestion_request: SuggestionRequest):
     except Exception as e:
         logger.error("Error processing suggestion request: %s", e)
         abort(500, message="Internal server error")
+
+@api_v1.get('/stats_report')
+@api_v1.doc("Get statistical report on the usage of the chatbot")
+@api_v1.doc(security='ApiKeyAuth')
+# @auth.login_required(role='chat') # does this need to change?
+def generate_stats_report():
+    # Get conversations
+    credential = DefaultAzureCredential()
+    table_service_client = TableServiceClient(endpoint=os.getenv("DATABASE_ENDPOINT") or "", credential=credential)
+    chat_table_dao = ChatTableDaoImpl(table_service_client)
+    conversation_repo = ConversationRepository(chat_table_dao)
+    stats_report_service = StatsReportService(conversation_repo)
+    monthly_report = stats_report_service.get_report_by_month()
+    return jsonify(monthly_report), 200

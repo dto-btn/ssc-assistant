@@ -9,7 +9,7 @@ on:
       app-name:
         type: string
         required: true
-    secrets: 
+    secrets:
       API_PUBLISH_PROFILE:
         required: false
       AZURE_CREDENTIALS:
@@ -38,7 +38,13 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5.2.0
       with:
-        python-version: '3.11'
+        python-version: '3.12'
+
+    # commenting this one out until we re-enable the MS SQL dependencies in the requirements.txt
+    # - name: Install system dependencies
+    #   run: |
+    #     sudo apt-get update
+    #     sudo apt-get install -y freetds-dev gcc libkrb5-dev
 
     - name: Install dependencies
       run: |

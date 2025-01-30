@@ -4,10 +4,10 @@ import {
   UnauthenticatedTemplate
 } from "@azure/msal-react";
 import ConnectingScreen from "./screens/ConnectingScreen";
-import MainScreen from "./screens/MainScreen";
 import { MsalProvider } from "@azure/msal-react";
 import { AppErrorBoundary } from ".//AppErrorBoundary";
 import { CssBaseline } from "@mui/material";
+import { AppRoutes } from "./routes/AppRoutes";
 
 interface AppProps {
   instance: PublicClientApplication;
@@ -23,7 +23,7 @@ export const App = ({ instance }: AppProps) => {
             <ConnectingScreen />
           </UnauthenticatedTemplate>
           <AuthenticatedTemplate>
-            <MainScreen />
+            <AppRoutes />
           </AuthenticatedTemplate>
         </MsalProvider>
       </AppErrorBoundary>
