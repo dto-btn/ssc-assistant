@@ -47,6 +47,8 @@ direct method to reach a search service index however.
 * `VITE_DISABLED_FEATURES`: disables the listed features. For instance `file_upload` will disable the file upload button
 from the UI.
 
+**NOTE**: Important note here those values are controlled by the [github frontend.yml workflow](../../.github/workflows/frontend.yml)
+
 ## Documentation
 
 - [Based on MUI](https://mui.com/material-ui/all-components/)

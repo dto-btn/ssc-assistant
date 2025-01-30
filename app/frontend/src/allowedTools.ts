@@ -6,6 +6,6 @@ export const allowedCorporateFunctionsString = import.meta.env.VITE_ALLOWED_CORP
 export const allowedCorporateFunctionsArray = allowedCorporateFunctionsString.split(',').map((tool: string) => tool.trim());
 export const allowedCorporateFunctionsSet = new Set<string>(allowedCorporateFunctionsArray);
 
-export const disabledFeaturesString = import.meta.env.VITE_DISABLED_FEATURES || '';
-export const disabledFeaturesArray = disabledFeaturesString.split(',').map((tool: string) => tool.trim());
+const disabledFeaturesString = import.meta.env.VITE_DISABLED_FEATURES || '';
+const disabledFeaturesArray = disabledFeaturesString.split(',').map((tool: string) => tool.trim());
 export const disabledFeaturesSet = new Set<string>(disabledFeaturesArray);
