@@ -44,14 +44,19 @@ export const AdminMainScreen = () => {
     const [weeklyReport, setWeeklyReport] = useState<WeeklyReportItemModel[] | null>(null);
     const [isError, setIsError] = useState(false);
 
+    const setError = (e: any) => {
+        console.error(e);
+        setIsError(true);
+    }
+
     useEffect(() => {
         getMonthlyReport({ accessToken: "not-real" })
             .then(setMonthlyReport)
-            .catch(console.error);
+            .catch(setError);
 
         getWeeklyReport({ accessToken: "not-real" })
             .then(setWeeklyReport)
-            .catch(console.error);
+            .catch(setError);
     }, [])
 
     const dateTodayHumanFormat = new Date().toLocaleDateString('en-US', {
