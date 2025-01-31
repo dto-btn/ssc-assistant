@@ -13,9 +13,6 @@ export const getMonthlyReport = async (props: GetMonthlyReportProps): Promise<Mo
     return report;
 }
 
-type GetWeeklyReportProps = {
-    accessToken: string;
-}
 export const getWeeklyReport = async (props: GetMonthlyReportProps): Promise<WeeklyReportItemModel[]> => {
     const report = await get({
         url: "/api/1.0/stats_report/weekly",

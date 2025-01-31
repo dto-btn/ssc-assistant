@@ -15,5 +15,4 @@ pyjwt
 Flask-HTTPAuth
 urllib3==1.26.19 # this version is required for the GEDS API to work
 cryptography==43.0.3 #https://github.com/pyca/cryptography/issues/12064
-# MacOSX: https://github.com/pymssql/pymssql/issues/769#issuecomment-2572450367
-pymssql==2.2.8
+Pillow>=11.1.0

@@ -11,6 +11,9 @@ from azure.data.tables import TableEntity, TableClient
 from src.dao.chat_table_dao_types import ChatTableDaoInterface
 from src.entity.table_row_entity import ChatTableRow, TableRowMetadata
 
+from src.entity.table_row_entity import ChatTableRow, TableRowMetadata
+
+
 class ChatTableDaoImpl(ChatTableDaoInterface):
     """
     The default implementation of the `ChatTableDaoInterface`.

@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn";
 import CloseIcon from "@mui/icons-material/Close";
 import UploadFileButton from "./UploadFileButton";
+import { disabledFeaturesSet } from "../allowedTools";
 
 interface ChatInputProps {
   onSend: (question: string, files: Attachment[]) => void;
@@ -38,7 +39,7 @@ export const ChatInput = ({
   const { t } = useTranslation();
   const [error, setError] = useState(false);
   const theme = useTheme();
-  const [file, setFile] = useState<FileUpload | null>(null);
+  const [file, setFile] = useState<Attachment | undefined>(undefined);
 
   const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "GPT-3.5 Turbo";
 
@@ -47,19 +48,11 @@ export const ChatInput = ({
       return;
     }
 
-    let attachments: Attachment[] = [];
-    if (file) {
-      // or for(files) down the road ...
-      attachments.push({
-        type: "image",
-        blob_storage_url: file.file_url,
-      });
-    }
-    onSend(question, attachments);
+    onSend(question, file ? [file] : []);
 
     if (clearOnSend) {
       setQuestion("");
-      setFile(null);
+      setFile(undefined);
     }
   };
 
@@ -70,12 +63,12 @@ export const ChatInput = ({
     }
   };
 
-  const onFileUpload = (file: FileUpload) => {
+  const onFileUpload = (file: Attachment) => {
     setFile(file);
   };
 
   const handleRemoveFile = () => {
-    setFile(null);
+    setFile(undefined);
   };
 
   // this useEffect focuses the chatInput whenever quotedText is added
@@ -190,21 +183,30 @@ export const ChatInput = ({
                     }}
                     size={"small"}
                     color="primary"
+                    aria-description={
+                      t("delete") + ": " + t("user.file.upload")
+                    }
                   >
                     <CloseIcon color="primary" />
                   </IconButton>
-                  {/\.(jpeg|jpg|gif|png|webp|bmp|svg)$/i.test(file.file_url) ? (
+                  {/\.(jpeg|jpg|gif|png|webp|bmp|svg)$/i.test(
+                    file.blob_storage_url
+                  ) ? (
                     <Box
                       component="img"
-                      src={file.file_url}
+                      src={file.encoded_file}
                       alt={t("uploaded.file.alt")}
-                      sx={{ maxWidth: "100%", maxHeight: 100, borderRadius: 2 }}
+                      sx={{
+                        maxWidth: "100%",
+                        maxHeight: 100,
+                        borderRadius: 2,
+                      }}
                     />
                   ) : (
                     //leaving this code in but it's not used at the moment since we disabled non-image uploads
                     <Box
                       component="a"
-                      href={file.file_url}
+                      href={file.encoded_file}
                       target="_blank"
                       rel="noopener noreferrer"
                       sx={{ color: "blue", textDecoration: "underline" }}
@@ -239,10 +241,12 @@ export const ChatInput = ({
                       />
                     )}
                   </IconButton>
-                  <UploadFileButton
-                    disabled={disabled}
-                    onFileUpload={onFileUpload}
-                  />
+                  {!disabledFeaturesSet.has("file_upload") && (
+                    <UploadFileButton
+                      disabled={disabled}
+                      onFileUpload={onFileUpload}
+                    />
+                  )}
                 </InputAdornment>
               ),
             }}

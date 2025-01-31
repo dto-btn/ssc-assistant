@@ -38,7 +38,7 @@ resource "azurerm_storage_container" "archibus" {
 resource "azurerm_storage_container" "assistantfiles" {
   name                 = "assistant-chat-files"
   storage_account_name = azurerm_storage_account.dev.name
-  container_access_type = "blob"
+  container_access_type = "private"
 }
 
 data "azuread_user" "dev1" {

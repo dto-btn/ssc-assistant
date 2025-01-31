@@ -25,7 +25,7 @@ resource "azurerm_linux_web_app" "api" {
     api_definition_url = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net/openapi.json"
 
     application_stack {
-      python_version = "3.11"
+      python_version = "3.12"
     }
     use_32_bit_worker = false
 
@@ -48,8 +48,8 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   app_settings = {
-    AZURE_SEARCH_SERVICE_ENDPOINT = "https://${azurerm_search_service.main.name}.search.windows.net"
-    AZURE_SEARCH_ADMIN_KEY        = azurerm_search_service.main.primary_key
+    AZURE_SEARCH_SERVICE_ENDPOINT = "https://${data.azurerm_search_service.main.name}.search.windows.net"
+    AZURE_SEARCH_ADMIN_KEY        = data.azurerm_search_service.main.primary_key
     AZURE_OPENAI_ENDPOINT         = data.azurerm_cognitive_account.ai.endpoint
     AZURE_OPENAI_API_KEY          = data.azurerm_cognitive_account.ai.primary_access_key
     AZURE_OPENAI_MODEL            = "gpt-4o"
@@ -71,6 +71,6 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   sticky_settings { # settings that are the same regardless of deployment slot..
-    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DATABASE_ENDPOINT", "BLOB_ENDPOINT", "AZURE_SEARCH_INDEX_NAME", "ALLOWED_TOOLS" ]
+    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DATABASE_ENDPOINT", "BLOB_ENDPOINT", "AZURE_SEARCH_INDEX_NAME", "ALLOWED_TOOLS", "ARCHIBUS_API_USERNAME", "ARCHIBUS_API_PASSWORD"]
   }
 }

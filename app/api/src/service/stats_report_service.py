@@ -3,6 +3,7 @@ from typing import TypedDict
 from src.entity.conversation_entity import ConversationEntity
 from src.repository.conversation_repository import ConversationRepository
 
+
 class MonthlyReportRow(TypedDict):
     month_label: str
     month_start_iso_date: str
@@ -11,6 +12,7 @@ class MonthlyReportRow(TypedDict):
     total_questions_asked: int
     average_questions_asked_per_day: float
     average_questions_per_user: float
+
 
 class StatsReportService:
     def __init__(self, conversation_repository: ConversationRepository):
@@ -45,7 +47,10 @@ class StatsReportService:
             for conversation in conversations:
                 for message in conversation["messages"]:
                     owner_id = message["owner_id"]
-                    if owner_id is not None and date_range[1] <= message["created_at"] <= date_range[2]:
+                    if (
+                        owner_id is not None
+                        and date_range[1] <= message["created_at"] <= date_range[2]
+                    ):
                         active_users_set.add(owner_id)
 
             active_users_count = len(active_users_set)
@@ -54,7 +59,10 @@ class StatsReportService:
             total_questions_asked = 0
             for conversation in conversations:
                 for message in conversation["messages"]:
-                    if date_range[1] <= message["created_at"] <= date_range[2] and message["sender"] == "user":
+                    if (
+                        date_range[1] <= message["created_at"] <= date_range[2]
+                        and message["sender"] == "user"
+                    ):
                         total_questions_asked += 1
 
             # Average questions asked per day
@@ -77,7 +85,7 @@ class StatsReportService:
                 active_users=active_users_count,
                 total_questions_asked=total_questions_asked,
                 average_questions_asked_per_day=average_questions_per_day,
-                average_questions_per_user=average_questions_per_user
+                average_questions_per_user=average_questions_per_user,
             )
 
             rows.append(row)
