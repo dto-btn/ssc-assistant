@@ -8,16 +8,10 @@ from typing import override
 from azure.data.tables import TableServiceClient
 from azure.core.paging import ItemPaged
 from azure.data.tables import TableEntity, TableClient
+from src.dao.chat_table_dao_types import ChatTableDaoInterface
 from src.entity.table_row_entity import ChatTableRow, TableRowMetadata
 
-
-class ChatTableDaoInterface:
-    """
-    An interface that is intended to read from the `chat` table in Azure Table Storage.
-    """
-
-    def all(self) -> list[ChatTableRow]:
-        raise NotImplementedError
+from src.entity.table_row_entity import ChatTableRow, TableRowMetadata
 
 
 class ChatTableDaoImpl(ChatTableDaoInterface):

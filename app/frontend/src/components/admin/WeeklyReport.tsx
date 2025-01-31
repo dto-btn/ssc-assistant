@@ -1,32 +1,15 @@
 import { BarChart, Bar, Rectangle, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { MonthlyReportItemModel } from "../../api/admin.models"
+import { WeeklyReportItemModel } from "../../api/admin.models"
+import { Box } from '@mui/material';
 
-type MonthlyReportProps = {
-    data: MonthlyReportItemModel[]
+type WeeklyReportProps = {
+    data: WeeklyReportItemModel[]
 }
-export const MonthlyReport = ({ data }: MonthlyReportProps) => {
+export const WeeklyReport = ({ data }: WeeklyReportProps) => {
     return (
-        <div>
-            {/* <ResponsiveContainer width="100%" height="100%"> */}
-            <BarChart
-                width={500}
-                height={300}
-                data={data}
-                margin={{
-                    top: 5,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                }}
-            >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month_label" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="average_questions_asked_per_day" fill="#555555" activeBar={<Rectangle fill="#e6e6e6" stroke="#b3b3b3" />} />
+        <>
+            <Box>
 
-            </BarChart>
             {/* <ResponsiveContainer width="100%" height="100%"> */}
             <BarChart
                 width={500}
@@ -40,13 +23,12 @@ export const MonthlyReport = ({ data }: MonthlyReportProps) => {
                 }}
             >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month_label" />
+                    <XAxis dataKey="day_of_week" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="total_questions_asked" fill="#ffcc00" activeBar={<Rectangle fill="#fff2cc" stroke="#cc9900" />} />
+                <Bar dataKey="average_questions_asked_per_day" fill="#2f4b7c" activeBar={<Rectangle fill="#a05195" stroke="#2f4b7c" />} />
             </BarChart>
-            {/* <ResponsiveContainer width="100%" height="100%"> */}
             <BarChart
                 width={500}
                 height={300}
@@ -59,13 +41,34 @@ export const MonthlyReport = ({ data }: MonthlyReportProps) => {
                 }}
             >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month_label" />
+                    <XAxis dataKey="day_of_week" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="active_users" fill="#ff0000" activeBar={<Rectangle fill="#ffcccc" stroke="#cc0000" />} />
+                <Bar dataKey="average_questions_per_user" fill="#665191" activeBar={<Rectangle fill="#d45087" stroke="#665191" />} />
+            </BarChart>
+            </Box>
+            <div>
+            <BarChart
+                width={500}
+                height={300}
+                data={data}
+                margin={{
+                    top: 5,
+                    right: 30,
+                    left: 20,
+                    bottom: 5,
+                }}
+            >
+                <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="day_of_week" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="total_questions_asked" fill="#a05195" activeBar={<Rectangle fill="#f95d6a" stroke="#a05195" />} />
             </BarChart>
             {/* </ResponsiveContainer> */}
         </div>
+        </>
     );
 }
