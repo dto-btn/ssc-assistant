@@ -9,6 +9,9 @@ on:
       allowed-corporate-functions:
         type: string
         required: true
+      disabled-features:
+        type: string
+        required: true
       environment:
         type: string
         required: true
@@ -61,6 +64,7 @@ jobs:
         VITE_AZURE_AD_TENANT_ID: ${{ secrets.VITE_AZURE_AD_TENANT_ID }}
         VITE_ALLOWED_TOOLS: ${{ inputs.allowed-tools }}
         VITE_ALLOWED_CORPORATE_FUNCTIONS: ${{ inputs.allowed-corporate-functions }}
+        VITE_DISABLED_FEATURES: ${{ inputs.disabled-features }}
 
     # This step will only run when the event is a push to the main branch
     - name: Zip artifact for deployment

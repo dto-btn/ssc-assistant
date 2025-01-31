@@ -79,3 +79,13 @@ variable "geds_api_token" {
     description = "value of the geds api token"
     sensitive = true
 }
+
+variable "archibus_api_user" {
+    type = string
+    default = "apiuser"
+}
+
+variable "archibus_api_password" {
+    type = string
+    sensitive = true
+}
