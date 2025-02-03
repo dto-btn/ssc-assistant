@@ -9,16 +9,8 @@ type WeeklyReportProps = {
 }
 export const WeeklyReport = ({ data }: WeeklyReportProps) => {
     return (
-        <Box>
-            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                {/* <SimpleBarChart
-                                title='Active Users'
-                                xKey='month_label'
-                                yKey='active_users'
-                                color='#ff0000'
-                                data={data}
-                            /> */}
-
+        <Box width="fit-content">
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
                 <SimpleBarChart
                     title='Average Questions Asked Per Day'
                     xKey='day_of_week'

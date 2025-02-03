@@ -8,8 +8,8 @@ type MonthlyReportProps = {
 }
 export const MonthlyReport = ({ data }: MonthlyReportProps) => {
     return (
-        <Box>
-            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+        <Box width="fit-content">
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
             <SimpleBarChart
                 title='Average Questions Asked Per Day'
                 xKey='month_label'

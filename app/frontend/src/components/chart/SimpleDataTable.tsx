@@ -11,7 +11,7 @@ type SimpleDataTableProps<T = any> = {
 export const SimpleDataTable: React.FC<SimpleDataTableProps> = ({ data, columnMappings }) => {
     return (
 
-        <Box maxWidth={800}>
+        <Box>
             <TableContainer component={Paper} variant="outlined">
                 <Table>
                     <TableHead>

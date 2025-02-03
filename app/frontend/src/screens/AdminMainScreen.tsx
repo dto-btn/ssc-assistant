@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { getMonthlyReport, getWeeklyReport } from "../api/admin.api";
-import { Box, CssBaseline } from '@mui/material';
+import { Box, CssBaseline, Typography } from '@mui/material';
 import { MonthlyReport } from "../components/admin/MonthlyReport";
 import { MonthlyReportItemModel, WeeklyReportItemModel } from "../api/admin.models";
 import { WeeklyReport } from "../components/admin/WeeklyReport";
@@ -76,12 +76,18 @@ export const AdminMainScreen = () => {
         <Box>
             <CssBaseline />
             <TopMenuAdminPage />
-            <h1>SSC Assistant Reports</h1>
-            <h2>Report Date: {dateTodayHumanFormat}</h2>
-            <h2>Statistics over time</h2>
+            <Box display={"flex"} flexDirection={"column"} gap={2} p={2}>
+                <Typography variant="h1">SSC Assistant Reports</Typography>
+                <Typography variant="body1" fontWeight={"bold"}>Report Date: {dateTodayHumanFormat}</Typography>
+                <Typography variant="h2">Statistics over time</Typography>
+                <Typography variant="body1">This report shows the SSC Assistant's usage statistics month-over-month.</Typography>
             <MonthlyReport data={monthlyReport} />
-            <h2>Statistics by day of week</h2>
+                <Typography variant="h2" fontWeight={"bold"}>Statistics by day of week</Typography>
+                <Typography variant="body1">
+                    This report compares the SSC Assistant's statistics by day of the week.
+                </Typography>
             <WeeklyReport data={weeklyReport} />
+            </Box>
         </Box>
     )
 }
