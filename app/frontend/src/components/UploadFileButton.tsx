@@ -5,7 +5,7 @@ import { uploadFile } from "../api/api";
 import { useMsal } from "@azure/msal-react";
 import { apiUse } from "../authConfig";
 import { AccountInfo } from "@azure/msal-browser";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { CircularProgress } from "@mui/material";
 import { t } from "i18next";
 
@@ -30,7 +30,9 @@ const VisuallyHiddenInput = styled("input")({
 
 const isValidFileType = (file: File) => {
   // only validates images for now, eventually should validate other file types
-  const acceptedFileTypesFormatted = acceptedImageTypes.map(type => 'image/' + type);
+  const acceptedFileTypesFormatted = acceptedImageTypes.map(
+    (type) => "image/" + type
+  );
   return acceptedFileTypesFormatted.includes(file.type);
 };
 
@@ -41,6 +43,7 @@ export default function InputFileUpload({
   const { instance } = useMsal();
   const [uploading, setUploading] = useState(false);
   const [fileInputKey, setFileInputKey] = useState(Date.now());
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const encodeAndUploadFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -87,24 +90,32 @@ export default function InputFileUpload({
     }
   };
 
+  const handleKeyPress = (ev: React.KeyboardEvent<Element>) => {
+    if (ev.key === "Enter" && !ev.shiftKey) {
+      fileInputRef.current?.click(); // Trigger file input click
+    }
+  };
+
   return (
     <IconButton
       component="label"
       role={undefined}
       variant="text"
-      tabIndex={-1}
+      tabIndex={0}
       disabled={disabled || uploading}
+      onKeyDown={handleKeyPress}
     >
       {uploading ? <CircularProgress /> : <AttachFileIcon />}
       <VisuallyHiddenInput
         type="file"
         key={fileInputKey}
+        ref={fileInputRef}
         onChange={encodeAndUploadFile}
-        accept={acceptedImageTypes.map(type => '.' + type).toString()} //only images for now since OpenAI API only supports images
-      // https://platform.openai.com/docs/guides/vision#what-type-of-files-can-i-upload (TLDR; png, jpeg, jpg, webp.)
-      // (and non animated gif but we will omit them for simplicity for now)
-      //accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
-      //multiple
+        accept={acceptedImageTypes.map((type) => "." + type).toString()} //only images for now since OpenAI API only supports images
+        // https://platform.openai.com/docs/guides/vision#what-type-of-files-can-i-upload (TLDR; png, jpeg, jpg, webp.)
+        // (and non animated gif but we will omit them for simplicity for now)
+        //accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
+        //multiple
       />
     </IconButton>
   );

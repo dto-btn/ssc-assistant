@@ -16,6 +16,7 @@ import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn";
 import CloseIcon from "@mui/icons-material/Close";
 import UploadFileButton from "./UploadFileButton";
 import { disabledFeaturesSet } from "../allowedTools";
+import React from "react";
 
 interface ChatInputProps {
   onSend: (question: string, files: Attachment[]) => void;
@@ -40,6 +41,7 @@ export const ChatInput = ({
   const [error, setError] = useState(false);
   const theme = useTheme();
   const [file, setFile] = useState<Attachment | undefined>(undefined);
+  const inputFieldRef = React.useRef<HTMLInputElement>(null);
 
   const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "GPT-3.5 Turbo";
 
@@ -65,6 +67,7 @@ export const ChatInput = ({
 
   const onFileUpload = (file: Attachment) => {
     setFile(file);
+    inputFieldRef.current?.focus();
   };
 
   const handleRemoveFile = () => {
@@ -150,6 +153,7 @@ export const ChatInput = ({
             multiline={true}
             minRows={3}
             maxRows={3}
+            inputRef={inputFieldRef}
             label={t("ask.question")}
             sx={{
               padding: "0px 20px",
@@ -163,7 +167,7 @@ export const ChatInput = ({
             variant="standard"
             InputProps={{
               disableUnderline: true,
-              startAdornment: file && (
+              startAdornment: file ? (
                 <Box
                   display="flex"
                   alignItems="start"
@@ -215,6 +219,13 @@ export const ChatInput = ({
                     </Box>
                   )}
                 </Box>
+              ) : (
+                !disabledFeaturesSet.has("file_upload") && (
+                  <UploadFileButton
+                    disabled={disabled}
+                    onFileUpload={onFileUpload}
+                  />
+                )
               ),
               endAdornment: (
                 <InputAdornment position="end">
@@ -241,12 +252,6 @@ export const ChatInput = ({
                       />
                     )}
                   </IconButton>
-                  {!disabledFeaturesSet.has("file_upload") && (
-                    <UploadFileButton
-                      disabled={disabled}
-                      onFileUpload={onFileUpload}
-                    />
-                  )}
                 </InputAdornment>
               ),
             }}
