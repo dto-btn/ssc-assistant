@@ -1,8 +1,6 @@
 import json
 import logging
-import requests
-from .archibus_api_v1 import AzureAuthToken
-from .api_helper import make_api_call
+from .archibus_functions import make_archibus_api_call
 
 logger = logging.getLogger(__name__)
 from utils.decorators import tool_metadata
@@ -15,12 +13,12 @@ from utils.decorators import tool_metadata
     "parameters": {
       "type": "object",
       "properties": {
-        "employee_id": {
+        "emId": {
           "type": "string",
-          "description": "The employee's unique ID, which is used to obtain their record from the API."
+          "description": "The employee's unique ID, which is used to obtain their record from the API. it is fetch from the tool get_profile_data"
         }
       },
-      "required": ["employee_id"]
+      "required": ["emId"]
     },
     "returns": {
       "type": "array",
@@ -60,35 +58,18 @@ from utils.decorators import tool_metadata
     }
   ]
 })
-def get_employee_record(employee_id: str):
-    logger.debug(f"Employee ID is: {employee_id}")
+def get_employee_record(emId: str):
+    logger.debug(f"Employee ID is: {emId}")
 
-    if employee_id:
-      token = AzureAuthToken()
-      make_api_call(f"{AzureAuthToken.default_url}v1/user/{AzureAuthToken.user_id}")
-
-    return [
-    {
-        "em.name": "Cody Robillard",
-        "em.em_current_status": "YES",
-        "em.em_id.key": "ROBILLARD, CODY",
-        "em.fl_id": "T304",
-        "em.em_ft_telework": "Fixed",
-        "dv.bu_id": "08_EITP&CSB",
-        "em.name_first": "Cody",
-        "em.is_remote_worker": 0,
-        "em.email": "cody.robillard@ssc-spc.gc.ca",
-        "bl.address2": "Skyline Complex",
-        "fl.occupancy_type": "OI",
-        "bl.address1": "1285 & 1303 Baseline Road",
-        "em.em_type": "TYPE 4",
-        "em.em_id": "ROBILLARD, CODY",
-        "em.name_last": "Robillard",
-        "em.em_std": "NON EXEC",
-        "em.dv_id": "08_CIO",
-        "em.dp_id": "08_DES_BIS",
-        "em.classification": "FTE",
-        "em.honorific": "Mr",
-        "em.bl_id": "HQ-BAS4"
-    }
-]
+    if emId:
+      payload = [
+        {
+          "fieldName": "em_id",
+          "filterValue": emId,
+          "filterOperation": "="
+        }
+      ]
+      response = make_archibus_api_call(f"v1/data?viewName=ssc-common-def-em.axvw&dataSource=ab-common-def-em_grid_em", payload, 'GET')
+      return json.loads(response.text)
+    else:
+      return False
