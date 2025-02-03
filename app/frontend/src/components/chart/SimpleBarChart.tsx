@@ -13,24 +13,23 @@ type SimpleBarChartProps = {
 export const SimpleBarChart = ({ title, xKey, yKey, color, data }: SimpleBarChartProps) => {
     return (
         <div>
-            {/* <ResponsiveContainer width="100%" height="100%"> */}
             <BarChart
                 width={500}
-                height={300}
+                height={400}
                 data={data}
                 margin={{
                     top: 5,
                     right: 30,
                     left: 20,
-                    bottom: 5,
+                    bottom: 60,
                 }}
                 title={title}
             >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey={xKey} />
-                <YAxis />
+                <XAxis dataKey={xKey} angle={-39} textAnchor="end" fontWeight={"bold"} />
+                <YAxis fontWeight="bold" />
                 <Tooltip />
-                <Legend verticalAlign="top" />
+                <Legend verticalAlign="top" fontWeight={"bold"} />
                 <Bar dataKey={yKey} name={title} fill={color} activeBar={<Rectangle fill={color} stroke="#b3b3b3" />} />
 
             </BarChart>

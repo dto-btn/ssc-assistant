@@ -1,3 +1,4 @@
+import { Box } from "@mui/material";
 import { MonthlyReportItemModel } from "../../api/admin.models"
 import { SimpleBarChart } from '../chart/SimpleBarChart';
 import { SimpleDataTable } from "../chart/SimpleDataTable";
@@ -7,28 +8,31 @@ type MonthlyReportProps = {
 }
 export const MonthlyReport = ({ data }: MonthlyReportProps) => {
     return (
-        <div>
+        <Box>
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
             <SimpleBarChart
                 title='Average Questions Asked Per Day'
                 xKey='month_label'
                 yKey='average_questions_asked_per_day'
-                color='#555555'
+                    color='#4a90e2'
                 data={data}
             />
             <SimpleBarChart
                 title='Total Questions Asked'
                 xKey='month_label'
                 yKey='total_questions_asked'
-                color='#ffcc00'
+                    color='#50be87'
                 data={data}
             />
             <SimpleBarChart
                 title='Active Users'
                 xKey='month_label'
                 yKey='active_users'
-                color='#ff0000'
+                    color='#8e44ad'
                 data={data}
             />
+            </Box>
+            <Box>
             <SimpleDataTable
                 columnMappings={[
                     {
@@ -54,6 +58,7 @@ export const MonthlyReport = ({ data }: MonthlyReportProps) => {
                 ]}
                 data={data}
             />
-        </div>
+            </Box>
+        </Box>
     );
 }

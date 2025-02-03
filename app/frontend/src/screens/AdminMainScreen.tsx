@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react"
 import { getMonthlyReport, getWeeklyReport } from "../api/admin.api";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box, CssBaseline } from '@mui/material';
+import { Box, CssBaseline } from '@mui/material';
 import { MonthlyReport } from "../components/admin/MonthlyReport";
 import { MonthlyReportItemModel, WeeklyReportItemModel } from "../api/admin.models";
 import { WeeklyReport } from "../components/admin/WeeklyReport";
 import { TopMenuAdminPage } from "../components/TopMenu/TopMenuAdminPage";
-import { SimpleDataTable } from "../components/chart/SimpleDataTable";
 
 const AdminLoadingMessage = () => {
     const [showIsCachingMessage, setShowIsCachingMessage] = useState(false);
@@ -30,16 +29,6 @@ const AdminLoadingMessage = () => {
         <h1>Loading...</h1>
     )
 }
-
-// WEEKLY REPORT FORMAT:
-// {
-//     "day_of_week": day,
-//     "total_questions_asked": total_questions_asked,
-//     "average_questions_asked_per_day": round(
-//         average_questions_per_day, 2
-//     ),
-//     "average_questions_per_user": round(average_questions_per_user, 2),
-// }
 
 export const AdminMainScreen = () => {
     const [monthlyReport, setMonthlyReport] = useState<MonthlyReportItemModel[] | null>(null);
@@ -92,33 +81,7 @@ export const AdminMainScreen = () => {
             <h2>Statistics over time</h2>
             <MonthlyReport data={monthlyReport} />
             <h2>Statistics by day of week</h2>
-
             <WeeklyReport data={weeklyReport} />
-
-            <Box maxWidth={800}>
-                <TableContainer component={Paper} variant="outlined">
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Day of Week</TableCell>
-                                <TableCell>Total Questions Asked</TableCell>
-                                <TableCell>Average Questions Asked Per Day</TableCell>
-                                <TableCell>Average Questions Per User</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {weeklyReport.map((report, index: number) => (
-                                <TableRow key={index}>
-                                    <TableCell>{report.day_of_week}</TableCell>
-                                    <TableCell>{report.total_questions_asked}</TableCell>
-                                    <TableCell>{report.average_questions_asked_per_day}</TableCell>
-                                    <TableCell>{report.average_questions_per_user}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </Box>
         </Box>
     )
 }

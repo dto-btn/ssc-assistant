@@ -1,74 +1,67 @@
 import { BarChart, Bar, Rectangle, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { WeeklyReportItemModel } from "../../api/admin.models"
 import { Box } from '@mui/material';
+import { SimpleDataTable } from '../chart/SimpleDataTable';
+import { SimpleBarChart } from '../chart/SimpleBarChart';
 
 type WeeklyReportProps = {
     data: WeeklyReportItemModel[]
 }
 export const WeeklyReport = ({ data }: WeeklyReportProps) => {
     return (
-        <>
-            <Box>
+        <Box>
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                {/* <SimpleBarChart
+                                title='Active Users'
+                                xKey='month_label'
+                                yKey='active_users'
+                                color='#ff0000'
+                                data={data}
+                            /> */}
 
-            {/* <ResponsiveContainer width="100%" height="100%"> */}
-            <BarChart
-                width={500}
-                height={300}
+                <SimpleBarChart
+                    title='Average Questions Asked Per Day'
+                    xKey='day_of_week'
+                    yKey='average_questions_asked_per_day'
+                    color='#555555'
                 data={data}
-                margin={{
-                    top: 5,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                }}
-            >
-                <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="day_of_week" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="average_questions_asked_per_day" fill="#2f4b7c" activeBar={<Rectangle fill="#a05195" stroke="#2f4b7c" />} />
-            </BarChart>
-            <BarChart
-                width={500}
-                height={300}
-                data={data}
-                margin={{
-                    top: 5,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                }}
-            >
-                <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="day_of_week" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="average_questions_per_user" fill="#665191" activeBar={<Rectangle fill="#d45087" stroke="#665191" />} />
-            </BarChart>
+                />
+                <SimpleBarChart
+                    title='Average Questions Per User'
+                    xKey='day_of_week'
+                    yKey='average_questions_per_user'
+                    color='#665191'
+                    data={data}
+                />
+                <SimpleBarChart
+                    title='Total Questions Asked'
+                    xKey='day_of_week'
+                    yKey='total_questions_asked'
+                    color='#a05195'
+                    data={data}
+                />
             </Box>
-            <div>
-            <BarChart
-                width={500}
-                height={300}
+            <SimpleDataTable
+                columnMappings={[
+                    {
+                        headerLabel: "Day of Week",
+                        key: "day_of_week"
+                    },
+                    {
+                        headerLabel: "Average Questions Asked Per Day",
+                        key: "average_questions_asked_per_day"
+                    },
+                    {
+                        headerLabel: "Average Questions Per User",
+                        key: "average_questions_per_user"
+                    },
+                    {
+                        headerLabel: "Total Questions Asked",
+                        key: "total_questions_asked"
+                    }
+                ]}
                 data={data}
-                margin={{
-                    top: 5,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                }}
-            >
-                <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="day_of_week" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="total_questions_asked" fill="#a05195" activeBar={<Rectangle fill="#f95d6a" stroke="#a05195" />} />
-            </BarChart>
-            {/* </ResponsiveContainer> */}
-        </div>
-        </>
+            />
+        </Box>
     );
 }
