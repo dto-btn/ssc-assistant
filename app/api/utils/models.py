@@ -58,6 +58,7 @@ class MessageRequest:
     corporateFunction: str = field(default='intranet_question')
     uuid: str = field(default='')
     fullName: str = field(default='')
+    email: str = field(default='')
 
 @dataclass
 class Feedback:

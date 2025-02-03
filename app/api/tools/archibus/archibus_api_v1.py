@@ -6,6 +6,9 @@ import requests
 from jwt import PyJWKClient
 from dotenv import load_dotenv
 
+from app.api.tools.archibus.user_info import UserInfo
+
+
 class AzureAuthToken:
     def __init__(self):
         self.logger = None
@@ -40,7 +43,9 @@ class AzureAuthToken:
         }
 
     def get_user_id(self):
-        self.user_id = "CODY.ROBILLARD@SSC-SPC.GC.CA" #TODO get user's email from other part of the system
+        self.logger.info("Archibus API UserInfo: %s", UserInfo.email)
+        self.user_id = UserInfo.email
+        # self.user_id = "CODY.ROBILLARD@SSC-SPC.GC.CA" #TODO get user's email from other part of the system
 
     def configure_logger(self):
         logging.basicConfig(level=logging.DEBUG)

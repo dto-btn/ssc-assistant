@@ -209,7 +209,8 @@ const MainScreen = () => {
             quotedText: messagedQuoted,
             model: currentChatHistory.model,
             fullName: userData.graphData['givenName'] + ' ' + userData.graphData['surname'],
-            corporateFunction: selectedCorporateFunction
+            corporateFunction: selectedCorporateFunction,
+            email: userData.graphData['userPrincipalName']
         };
 
         // update current chat window with the message sent..

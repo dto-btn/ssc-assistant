@@ -45,6 +45,7 @@ interface MessageRequest {
   model: string;
   fullName?: string;
   corporateFunction?: string
+  email?: string
 }
 
 interface ToastMessage {
