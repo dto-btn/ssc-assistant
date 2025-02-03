@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react"
 import { getMonthlyReport, getWeeklyReport } from "../api/admin.api";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box, CssBaseline } from '@mui/material';
 import { MonthlyReport } from "../components/admin/MonthlyReport";
 import { MonthlyReportItemModel, WeeklyReportItemModel } from "../api/admin.models";
 import { WeeklyReport } from "../components/admin/WeeklyReport";
+import { TopMenuAdminPage } from "../components/TopMenu/TopMenuAdminPage";
 
 const AdminLoadingMessage = () => {
     const [showIsCachingMessage, setShowIsCachingMessage] = useState(false);
@@ -83,6 +84,8 @@ export const AdminMainScreen = () => {
 
     return (
         <Box>
+            <CssBaseline />
+            <TopMenuAdminPage />
             <h1>SSC Assistant Reports</h1>
             <h2>Report Date: {dateTodayHumanFormat}</h2>
             <h2>Statistics over time</h2>
