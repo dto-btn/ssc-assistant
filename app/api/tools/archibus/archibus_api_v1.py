@@ -3,11 +3,10 @@ import logging
 import os
 import jwt
 import requests
+import datetime
+
 from jwt import PyJWKClient
 from dotenv import load_dotenv
-
-from app.api.tools.archibus.user_info import UserInfo
-
 
 class AzureAuthToken:
     def __init__(self):
@@ -21,9 +20,10 @@ class AzureAuthToken:
         self.client_secret = None
         self.client_id = None
         self.tenant_id = None
-        self.user_id = None
+        self.token_info = {}
         self.load_environment_vars()
         self.configure_logger()
+        self.generate_token()
 
     def load_environment_vars(self):
         load_dotenv()
@@ -42,21 +42,31 @@ class AzureAuthToken:
             'scope': f'api://{self.client_id}/.default',
         }
 
-    def get_user_id(self):
-        self.logger.info("Archibus API UserInfo: %s", UserInfo.email)
-        self.user_id = UserInfo.email
-        # self.user_id = "CODY.ROBILLARD@SSC-SPC.GC.CA" #TODO get user's email from other part of the system
 
     def configure_logger(self):
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.ERROR)
         self.logger = logging.getLogger(__name__)
 
-    def get_access_token(self):
+    def generate_token(self):
         response = requests.post(self.token_url, data=self.token_data)
         if response.status_code == 200:
-            return response.json().get('access_token')
+            token_json = response.json()
+            self.token_info['access_token'] = token_json.get('access_token')
+            self.token_info['expires_on'] = datetime.datetime.now(datetime.UTC) + datetime.timedelta(
+                seconds=int(token_json.get('expires_in')))
+            self.logger.debug("Token generated successfully")
         else:
-            raise Exception(f"Failed to obtain token: {response.text}")
+            self.logger.error("Failed to obtain token: " + response.text)
+
+    def get_access_token(self):
+        # Check if token_info is empty or the token has expired, and regenerate it if necessary
+        if not self.token_info or datetime.datetime.now(datetime.UTC) >= self.token_info.get('expires_on',
+                                                                                    datetime.datetime.now(datetime.UTC)):
+            self.generate_token()
+        return self.token_info['access_token']
+
+    def get_archibus_url(self):
+        return self.default_url
 
     def verify_jwt(self, token, audience):
         jwk_client = PyJWKClient(self.jwks_url)
@@ -82,40 +92,17 @@ class AzureAuthToken:
         except jwt.InvalidTokenError:
             raise Exception("Invalid token")
 
-    def get_user_profile_by_id(self, azure_token):
-        # Assuming the API URL for users is on the default_url
-        self.get_user_id()
-        user_url = f"{self.default_url}v1/user/{self.user_id}"
-
-        # Get the access token to authenticate the request
-        headers = {
-            'Authorization': f'Bearer {azure_token}',
-            'Content-Type': 'application/json',
-            'email': f'{self.user_id}'
-        }
-
-        # Make the request to the API endpoint
-        response = requests.get(user_url, headers=headers)
-        if response.status_code == 200:
-            return response.json()  # Return the user's data
-        else:
-            self.logger.error(f"Failed to get user with ID {self.user_id}: {response.text}")
-            response.raise_for_status()
-            # Raises an HTTPError if the HTTP request returned an unsuccessful status code
-
-
 
 if __name__ == '__main__':
     auth_token = AzureAuthToken()
     try:
+        # Use the token from auth_token instance when needed
         token = auth_token.get_access_token()
         audience = f"api://{auth_token.client_id}"
         auth_token.logger.debug("Access Token acquired!")
         decoded_jwt = auth_token.verify_jwt(token, audience)
-        auth_token.logger.debug(f"Decoded JWT: {json.dumps(decoded_jwt, indent=4)}")
-        user_profile = auth_token.get_user_profile_by_id(token)
-        auth_token.logger.debug(f"Validated User Profile: {json.dumps(user_profile, indent=4)}")
+        auth_token.logger.err(f"Decoded JWT: {json.dumps(decoded_jwt, indent=4)}")
 
     except Exception as e:
-        auth_token.logger.error("An error occurred:", str(e))
+        auth_token.logger.error("An error occurred: " + str(e))
 
