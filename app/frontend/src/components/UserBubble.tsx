@@ -14,8 +14,8 @@ interface UserChatProps {
 
 export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
   // keeping this here for typesafety because we are ts-expect-error down in the return
-  const encodedFile: string | undefined =
-    attachments && attachments[0]?.encoded_file;
+  const url: string | undefined =
+    attachments && attachments[0]?.blob_storage_url;
 
   return (
     <Box sx={{ display: "flex", justifyContent: "flex-end", my: "1rem" }}>
@@ -51,11 +51,11 @@ export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
           </QuoteContainer>
         )}
         <UserBubbleContainer tabIndex={0}>
-          {encodedFile && (
+          {url && (
             <ImageContainer
               component="img"
               // @ts-expect-error - we are using `img` component type, but `Box` doesnt know about src prop
-              src={encodedFile}
+              src={url}
               aria-description={t("user.file.upload")}
             ></ImageContainer>
           )}

@@ -176,10 +176,12 @@ export async function uploadFile(encodedFile: string, name: string, accessToken:
     (error) => {
       console.error("Error while reading the stream:", error);
       throw error;
-    });
+  });
+
+  const response_url = new URL(responseData.file_url);
+
   return {
-    blob_storage_url: responseData.file_url,
-    encoded_file: encodedFile,
+    blob_storage_url: response_url.pathname,
     file_name: name,
     message: responseData.message
   };

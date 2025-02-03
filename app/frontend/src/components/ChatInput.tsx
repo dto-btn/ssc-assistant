@@ -194,7 +194,7 @@ export const ChatInput = ({
                   ) ? (
                     <Box
                       component="img"
-                      src={file.encoded_file}
+                      src={file.blob_storage_url}
                       alt={t("uploaded.file.alt")}
                       sx={{
                         maxWidth: "100%",
@@ -206,7 +206,7 @@ export const ChatInput = ({
                     //leaving this code in but it's not used at the moment since we disabled non-image uploads
                     <Box
                       component="a"
-                      href={file.encoded_file}
+                      href={file.blob_storage_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       sx={{ color: "blue", textDecoration: "underline" }}

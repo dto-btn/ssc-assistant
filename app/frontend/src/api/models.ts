@@ -90,5 +90,4 @@ interface BookingConfirmation {
 interface Attachment extends ApiAttachmentDto {
   message: string;
   file_name: string;
-  encoded_file: string;
 }
