@@ -13,7 +13,7 @@ from PIL import Image
 from utils.models import Message
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 default_credential = DefaultAzureCredential()
 blob_service_client = BlobServiceClient(account_url=os.getenv("BLOB_ENDPOINT") or "", credential=default_credential)
@@ -107,7 +107,9 @@ def _encode_image_to_base64(image_data: bytes, img_format: str = "JPEG") -> str:
 def _download_attachment(url: str) -> bytes:
     """Download the attachment from the given URL and return the bytes"""
     _, container_name, blob_name = _parse_blob_url(url)
+    logger.debug("Downloading attachment from container: %s, blob: %s", container_name, blob_name)
     blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
+    logger.debug(blob_client.url)
     blob_data = blob_client.download_blob()
     image_data = blob_data.readall()
     return image_data
