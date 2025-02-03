@@ -5,6 +5,7 @@ import { MonthlyReport } from "../components/admin/MonthlyReport";
 import { MonthlyReportItemModel, WeeklyReportItemModel } from "../api/admin.models";
 import { WeeklyReport } from "../components/admin/WeeklyReport";
 import { TopMenuAdminPage } from "../components/TopMenu/TopMenuAdminPage";
+import { SimpleDataTable } from "../components/chart/SimpleDataTable";
 
 const AdminLoadingMessage = () => {
     const [showIsCachingMessage, setShowIsCachingMessage] = useState(false);
@@ -90,32 +91,6 @@ export const AdminMainScreen = () => {
             <h2>Report Date: {dateTodayHumanFormat}</h2>
             <h2>Statistics over time</h2>
             <MonthlyReport data={monthlyReport} />
-            <Box maxWidth={800}>
-                <TableContainer component={Paper} variant="outlined">
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Month</TableCell>
-                                <TableCell>Active Users</TableCell>
-                                <TableCell>Average Questions Asked Per Day</TableCell>
-                                <TableCell>Average Questions Per User</TableCell>
-                                <TableCell>Total Questions Asked</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {monthlyReport.map((report, index: number) => (
-                                <TableRow key={index}>
-                                    <TableCell>{report.month_label}</TableCell>
-                                    <TableCell>{report.active_users}</TableCell>
-                                    <TableCell>{report.average_questions_asked_per_day}</TableCell>
-                                    <TableCell>{report.average_questions_per_user}</TableCell>
-                                    <TableCell>{report.total_questions_asked}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </Box >
             <h2>Statistics by day of week</h2>
 
             <WeeklyReport data={weeklyReport} />
