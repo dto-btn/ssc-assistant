@@ -8,12 +8,18 @@ import {
   styled,
   Typography,
   useTheme,
+  Paper,
+  InputBase,
+  Divider,
 } from "@mui/material";
 import Send from "@mui/icons-material/Send";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn";
 import CloseIcon from "@mui/icons-material/Close";
+import DirectionsIcon from "@mui/icons-material/Directions";
+import SearchIcon from "@mui/icons-material/Search";
+import MenuIcon from "@mui/icons-material/Menu";
 import UploadFileButton from "./UploadFileButton";
 import { disabledFeaturesSet } from "../allowedTools";
 import React from "react";
@@ -93,7 +99,27 @@ export const ChatInput = ({
         boxShadow: "0px -15px 20px " + theme.palette.background.default,
       })}
     >
-      <ChatInputWrapper theme={theme}>
+      <Paper
+        component="form"
+        sx={{ p: "2px 4px", display: "flex", alignItems: "center", width: 400 }}
+      >
+        <IconButton sx={{ p: "10px" }} aria-label="menu">
+          <MenuIcon />
+        </IconButton>
+        <InputBase
+          sx={{ ml: 1, flex: 1 }}
+          placeholder="Search Google Maps"
+          inputProps={{ "aria-label": "search google maps" }}
+        />
+        <IconButton type="button" sx={{ p: "10px" }} aria-label="search">
+          <SearchIcon />
+        </IconButton>
+        <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
+        <IconButton color="primary" sx={{ p: "10px" }} aria-label="directions">
+          <DirectionsIcon />
+        </IconButton>
+      </Paper>
+      {/* <ChatInputWrapper theme={theme}>
         {quotedText && (
           <QuoteContainer>
             <KeyboardReturnIcon
@@ -267,7 +293,7 @@ export const ChatInput = ({
         >
           {t("model.version.disclaimer")} {modelName}
         </Typography>
-      </ChatInputWrapper>
+      </ChatInputWrapper> */}
     </Container>
   );
 };
