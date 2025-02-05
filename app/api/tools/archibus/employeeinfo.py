@@ -1,9 +1,12 @@
 import json
 import logging
+
 from .archibus_functions import make_archibus_api_call
+from .userprofile import user_profile
+from utils.decorators import tool_metadata
 
 logger = logging.getLogger(__name__)
-from utils.decorators import tool_metadata
+
 
 @tool_metadata({
   "type": "function",
@@ -60,16 +63,18 @@ from utils.decorators import tool_metadata
 })
 def get_employee_record(emId: str):
     logger.debug(f"Employee ID is: {emId}")
-
-    if emId:
-      payload = [
-        {
-          "fieldName": "em_id",
-          "filterValue": emId,
-          "filterOperation": "="
-        }
-      ]
-      response = make_archibus_api_call(f"v1/data?viewName=ssc-common-def-em.axvw&dataSource=ab-common-def-em_grid_em", payload, 'GET')
-      return json.loads(response.text)
+    if user_profile.verify_profile():
+      if emId:
+        payload = [
+          {
+            "fieldName": "em_id",
+            "filterValue": emId,
+            "filterOperation": "="
+          }
+        ]
+        response = make_archibus_api_call(f"v1/data?viewName=ssc-common-def-em.axvw&dataSource=ab-common-def-em_grid_em", payload, 'GET')
+        return json.loads(response.text)
+      else:
+        return False
     else:
       return False

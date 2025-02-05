@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime
 
-import requests
 from utils.decorators import tool_metadata
 
 # Basic api helper function
@@ -16,23 +15,8 @@ from .bookinginfo import get_user_bookings, get_available_rooms
 # Employee information
 from .employeeinfo import get_employee_record
 
-# User profile information
-from .userprofile import get_user_profile_by_id
-
 logger = logging.getLogger(__name__)
 
-profile = get_user_profile_by_id()
-
-
-@tool_metadata({
-    "type": "function",
-    "function": {
-        "name":"get_profile_data",
-        "description":"This function returns a profile objected need for other functionality this is not same as employee information"
-    }
-})
-def get_profile_data():
-    return profile
 
 @tool_metadata({
     "type": "function",
@@ -49,13 +33,6 @@ def get_current_date():
     return "Formatted date and time: " + current_date_time.strftime("%Y-%m-%d %H:%M:%S")
 
 
-def verify_user_profile():
-    return len(profile) >= 1
-
-
-valid_profile = verify_user_profile()
-print(valid_profile)
-
 __all__ = [
     "make_api_call",
     "make_archibus_api_call",
@@ -65,7 +42,4 @@ __all__ = [
     "get_floor_plan",
     "get_current_date",
     "get_employee_record",
-    "get_profile_data",
-    valid_profile,
-    profile,
 ]
