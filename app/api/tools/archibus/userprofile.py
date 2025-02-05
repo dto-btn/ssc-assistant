@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 
 class UserProfile:
     def __init__(self):
+        self.user_id = None
         self._profile = None
 
     def load_profile(self):
@@ -22,7 +23,7 @@ class UserProfile:
                 response.raise_for_status()
 
     def get_user_id(self):
-        return ""  # Placeholder
+        return self.user_id
 
     def verify_profile(self):
         self.load_profile()
@@ -31,6 +32,10 @@ class UserProfile:
     def get_profile_data(self):
         self.load_profile()
         return self._profile
+
+    def set_user_id(self, new_user_id):
+        self.user_id = new_user_id
+        self._profile = None
 
 
 user_profile = UserProfile()
