@@ -19,7 +19,7 @@ import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn";
 import CloseIcon from "@mui/icons-material/Close";
 import DirectionsIcon from "@mui/icons-material/Directions";
 import SearchIcon from "@mui/icons-material/Search";
-import MenuIcon from "@mui/icons-material/Menu";
+import AddIcon from '@mui/icons-material/Add';
 import UploadFileButton from "./UploadFileButton";
 import { disabledFeaturesSet } from "../allowedTools";
 import React from "react";
@@ -101,22 +101,45 @@ export const ChatInput = ({
     >
       <Paper
         component="form"
-        sx={{ p: "2px 4px", display: "flex", alignItems: "center", width: 400 }}
+        sx={{ p: "2px 4px",
+          display: "flex",
+          alignItems: "center",
+          borderRadius: "20px",
+          borderColor: theme.palette.primary.main,
+          borderWidth: "1px",
+          borderStyle: "solid",
+        }}
       >
         <IconButton sx={{ p: "10px" }} aria-label="menu">
-          <MenuIcon />
+          <AddIcon />
         </IconButton>
         <InputBase
           sx={{ ml: 1, flex: 1 }}
-          placeholder="Search Google Maps"
-          inputProps={{ "aria-label": "search google maps" }}
+          placeholder={t("ask.question")}
+          inputProps={{ "aria-label": t("ask.question") }}
         />
-        <IconButton type="button" sx={{ p: "10px" }} aria-label="search">
-          <SearchIcon />
-        </IconButton>
-        <Divider sx={{ height: 28, m: 0.5 }} orientation="vertical" />
-        <IconButton color="primary" sx={{ p: "10px" }} aria-label="directions">
-          <DirectionsIcon />
+        <IconButton
+            onClick={sendQuestion}
+            disabled={disabled}
+            sx={{
+              "&:hover": {
+                backgroundColor: "rgba(0, 0, 0, 0.2)",
+              },
+            }}
+            aria-label={t("send")}
+          >
+            {" "}
+            {disabled ? (
+              <CircularProgress
+                size={24}
+                aria-label={t("generating")}
+              />
+            ) : (
+              <Send
+                sx={{ color: "primary.main" }}
+                aria-label={t("send")}
+              />
+            )}
         </IconButton>
       </Paper>
       {/* <ChatInputWrapper theme={theme}>
