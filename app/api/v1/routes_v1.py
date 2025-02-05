@@ -407,3 +407,12 @@ def generate_stats_report_top_users_90_days():
     ctx = build_context()
     weekly_report = ctx["stats_report_service"].get_top_users_past_90_days()
     return jsonify(weekly_report), 200
+
+@api_v1.get("/stats_report/monthly_user_engagement")
+@api_v1.doc("Get statistical report on the usage of the chatbot")
+@api_v1.doc(security="ApiKeyAuth")
+# @auth.login_required(role='chat') # does this need to change?
+def generate_monthly_user_engagement_report():
+    ctx = build_context()
+    weekly_report = ctx["stats_report_service"].get_monthly_user_engagement_report()
+    return jsonify(weekly_report), 200
