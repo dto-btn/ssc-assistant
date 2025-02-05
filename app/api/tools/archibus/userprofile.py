@@ -2,12 +2,14 @@ import logging
 from .archibus_functions import make_archibus_api_call
 from utils.decorators import tool_metadata
 
+from .user_info import UserInfo
+
 logger = logging.getLogger(__name__)
 
 
 class UserProfile:
     def __init__(self):
-        self.user_id = None
+        self.user_id = UserInfo.email
         self._profile = None
 
     def load_profile(self):

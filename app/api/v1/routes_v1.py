@@ -64,6 +64,10 @@ _boundary = "GPT-Interaction"
 @auth.login_required(role='chat')
 @user_ad.login_required
 def completion_chat(message_request: MessageRequest):
+    logger.info("completion chat request: %s", message_request)
+    if message_request.email != "":
+        UserInfo.set_email(message_request.email)
+
     if not message_request.query and not message_request.messages:
         return jsonify({"error":"Request body must at least contain messages (conversation) or a query (direct question)."}), 400
 

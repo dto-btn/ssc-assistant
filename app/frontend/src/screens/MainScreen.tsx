@@ -378,7 +378,8 @@ const MainScreen = () => {
           top: 5,
           tools: [],
           uuid: currentChatHistory.uuid,
-          model: currentChatHistory.model
+          model: currentChatHistory.model,
+          email: userData.graphData['userPrincipalName']
         };
 
         sendApiRequest(request);
