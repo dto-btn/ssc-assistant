@@ -28,17 +28,17 @@ export const UserEngagementReport: React.FC<Props> = ({ data }) => {
                         key: "total_questions_asked"
                     },
                     {
-                        headerLabel: "Distribution of Sessions Per User",
+                        headerLabel: "Distribution of Conversation Lengths",
                         key: "distribution_of_sessions_per_user",
                         renderer: (value: any) => {
                             return (
                                 <Box sx={{ display: "flex", flexDirection: "row" }}>
-                                    <Box sx={{ display: "flex", flexDirection: "column", width: "4rem" }}>
+                                    <Box sx={{ display: "flex", flexDirection: "column", width: "6rem" }}>
                                         <Box sx={{ border: "1px solid black", padding: "5px" }}>
-                                            Count
+                                            # Convo's
                                         </Box>
                                         <Box sx={{ padding: "5px", color: "#999999", fontSize: "0.7rem", fontStyle: "italic" }}>
-                                            Bucket
+                                            Convo Length
                                         </Box>
                                     </Box>
                                     {
