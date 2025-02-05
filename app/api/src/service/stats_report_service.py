@@ -281,4 +281,7 @@ class StatsReportService:
                 }
             )
 
+        # reverse so that the most recent month is first
+        monthly_engagement.reverse()
+
         return monthly_engagement
