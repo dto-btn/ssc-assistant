@@ -5,6 +5,7 @@ type SimpleDataTableProps<T = any> = {
     columnMappings: {
         headerLabel: string;
         key: keyof T;
+        renderer?: (value: any) => React.ReactNode;
     }[];
     data: T[];
 }
@@ -28,7 +29,9 @@ export const SimpleDataTable: React.FC<SimpleDataTableProps> = ({ data, columnMa
                             <TableRow key={JSON.stringify(obj)}>
                                 {
                                     columnMappings.map((column, index) => (
-                                        <TableCell key={`${index}-${column.headerLabel}`}>{obj[column.key]}</TableCell>
+                                        <TableCell key={`${index}-${column.headerLabel}`}>{
+                                            column.renderer ? column.renderer(obj[column.key]) : obj[column.key]
+                                        }</TableCell>
                                     ))
                                 }
                             </TableRow>

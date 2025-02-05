@@ -213,12 +213,14 @@ class StatsReportService:
                     ):
                         owner_id = message["owner_id"]
                         if owner_id:
+                            # Count the number of questions asked by each user
                             user_questions[owner_id] = (
                                 user_questions.get(owner_id, 0) + 1
                             )
                             users_in_convo.add(owner_id)
 
                 for user_id in users_in_convo:
+                    # Count the number of sessions per user
                     user_sessions[user_id] = user_sessions.get(user_id, 0) + 1
 
             active_users_count = len(user_questions)
