@@ -1,5 +1,6 @@
 import logging
 from .archibus_functions import make_archibus_api_call
+from utils.decorators import tool_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -9,6 +10,7 @@ class UserProfile:
         self._profile = None
 
     def load_profile(self):
+        logger.debug("Loading Profile")
         if self._profile is None:
             user_id = self.get_user_id()
             user_url = f"v1/user/{user_id}"
@@ -20,7 +22,7 @@ class UserProfile:
                 response.raise_for_status()
 
     def get_user_id(self):
-        return "CODY.ROBILLARD@SSC-SPC.GC.CA"  # Placeholder
+        return ""  # Placeholder
 
     def verify_profile(self):
         self.load_profile()
@@ -30,4 +32,44 @@ class UserProfile:
         self.load_profile()
         return self._profile
 
+
 user_profile = UserProfile()
+
+@tool_metadata({
+"type": "function",
+"function": {
+    "name": "get_archibus_profile",
+    "description": "This function returns the ARCHIBUS profile data for an employee.",
+    "returns": {
+        "type": "object",
+        "description": "A JSON object containing ARCHIBUS profile data for the employee.",
+        "properties": {
+            "role": {"type": "string", "description": "The user's role within the system."},
+            "isSecurityGroupAllowed": {"type": "boolean",
+                                       "description": "Whether the user has access to secured groups."},
+            "name": {"type": "string", "description": "The email identifier of the user."},
+            "isMobileEnabled": {"type": "boolean", "description": "Whether mobile access is enabled for the user."},
+            "locale": {"type": "string", "description": "The locale preference of the user."},
+            "employee": {
+                "type": "object",
+                "properties": {
+                    "sortField": {"type": "string", "description": "The field to sort by for the employee."},
+                    "id": {"type": "string", "description": "The unique identifier of the employee."},
+                    "emId": {"type": "string", "description": "The email identifier of the employee."},
+                    "key": {"type": "string", "description": "A key identifier for the employee."},
+                    "email": {"type": "string", "description": "The email address of the employee."}
+                }
+            },
+            "config": {"type": "object", "description": "Additional configuration for the user profile."},
+            "email": {"type": "string", "description": "The email address of the user."}
+        }
+    }
+},
+"errors": [
+    {"code": 400, "message": "Invalid request parameters"},
+    {"code": 404, "message": "User profile not found"},
+    {"code": 500, "message": "Internal server error"}
+]
+})
+def get_archibus_profile():
+    return user_profile.get_profile_data()

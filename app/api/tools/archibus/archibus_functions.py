@@ -15,6 +15,9 @@ from .bookinginfo import get_user_bookings, get_available_rooms
 # Employee information
 from .employeeinfo import get_employee_record
 
+# Profile Data
+from .userprofile import user_profile, get_archibus_profile
+
 logger = logging.getLogger(__name__)
 
 
@@ -42,4 +45,6 @@ __all__ = [
     "get_floor_plan",
     "get_current_date",
     "get_employee_record",
+    user_profile,
+    "get_archibus_profile"
 ]

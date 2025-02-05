@@ -13,16 +13,6 @@ logger = logging.getLogger(__name__)
   "function": {
     "name": "get_employee_record",
     "description": "This function fetches detailed information about an employee based on their unique identifier. It returns a complex JSON object containing various employee attributes such as status, telework preferences, building assignment, and contact details.",
-    "parameters": {
-      "type": "object",
-      "properties": {
-        "emId": {
-          "type": "string",
-          "description": "The employee's unique ID, which is used to obtain their record from the API. it is fetch from the tool get_profile_data"
-        }
-      },
-      "required": ["emId"]
-    },
     "returns": {
       "type": "array",
       "description": "An array of JSON objects containing comprehensive information on the requested employee.",
@@ -61,20 +51,26 @@ logger = logging.getLogger(__name__)
     }
   ]
 })
-def get_employee_record(emId: str):
+def get_employee_record():
+  logger.debug("getting employee record")
+  verified_profile = user_profile.verify_profile()
+
+  if verified_profile:
+    emId=user_profile.get_profile_data()['employee']['emId']
+
     logger.debug(f"Employee ID is: {emId}")
-    if user_profile.verify_profile():
-      if emId:
-        payload = [
-          {
-            "fieldName": "em_id",
-            "filterValue": emId,
-            "filterOperation": "="
-          }
-        ]
-        response = make_archibus_api_call(f"v1/data?viewName=ssc-common-def-em.axvw&dataSource=ab-common-def-em_grid_em", payload, 'GET')
-        return json.loads(response.text)
-      else:
-        return False
+    # if user_profile.verify_profile():
+    if emId:
+      payload = [
+        {
+          "fieldName": "em_id",
+          "filterValue": emId,
+          "filterOperation": "="
+        }
+      ]
+      response = make_archibus_api_call(f"v1/data?viewName=ssc-common-def-em.axvw&dataSource=ab-common-def-em_grid_em", payload, 'GET')
+      return json.loads(response.text)
     else:
       return False
+  else:
+     return False
