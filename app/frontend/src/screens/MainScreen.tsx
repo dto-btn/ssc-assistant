@@ -25,7 +25,6 @@ import { apiUse } from "../authConfig";
 import { AccountInfo, InteractionStatus } from "@azure/msal-browser";
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from "uuid";
-import QuoteTextTooltip from "../components/QuoteTextTooltip";
 import { TutorialBubble } from "../components/TutorialBubble";
 import { bookReservation } from "../api/api";
 import { allowedToolsSet } from "../allowedTools";
@@ -794,7 +793,6 @@ const MainScreen = () => {
         maxWidth="lg"
       >
         <Box sx={{ flexGrow: 1 }}></Box>
-        <QuoteTextTooltip addQuotedText={handleAddQuotedText} />
         <ChatMessagesContainer
           chatHistory={currentChatHistory}
           isLoading={isLoading}

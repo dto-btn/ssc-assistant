@@ -8,6 +8,7 @@ import { AccountInfo } from "@azure/msal-browser";
 import { useRef, useState } from "react";
 import { CircularProgress } from "@mui/material";
 import { t } from "i18next";
+import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
 
 interface UploadFileButtonProps {
   disabled: boolean;
@@ -17,8 +18,9 @@ interface UploadFileButtonProps {
 const acceptedImageTypes = ["jpg", "jpeg", "png", "webp"];
 
 const VisuallyHiddenInput = styled("input")({
-  clip: "rect(0 0 0 0)",
+  clip: "circle(0 0 0 0)",
   clipPath: "inset(50%)",
+  borderRadius: "50%",
   height: 1,
   overflow: "hidden",
   position: "absolute",
@@ -98,14 +100,12 @@ export default function InputFileUpload({
 
   return (
     <IconButton
-      component="label"
-      role={undefined}
-      variant="text"
+      aria-label={t("upload.image")}
       tabIndex={0}
       disabled={disabled || uploading}
       onKeyDown={handleKeyPress}
     >
-      {uploading ? <CircularProgress /> : <AttachFileIcon />}
+      {uploading ? <CircularProgress /> : <PhotoLibraryIcon />}
       <VisuallyHiddenInput
         type="file"
         key={fileInputKey}

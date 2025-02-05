@@ -11,6 +11,8 @@ import {
   Paper,
   InputBase,
   Divider,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import Send from "@mui/icons-material/Send";
 import { useEffect, useState } from "react";
@@ -22,6 +24,10 @@ import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from '@mui/icons-material/Add';
 import UploadFileButton from "./UploadFileButton";
 import { disabledFeaturesSet } from "../allowedTools";
+import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
+import SpeedDial from '@mui/material/SpeedDial';
+import SpeedDialIcon from '@mui/material/SpeedDialIcon';
+import SpeedDialAction from '@mui/material/SpeedDialAction';
 import React from "react";
 
 interface ChatInputProps {
@@ -48,6 +54,10 @@ export const ChatInput = ({
   const theme = useTheme();
   const [file, setFile] = useState<Attachment | undefined>(undefined);
   const inputFieldRef = React.useRef<HTMLInputElement>(null);
+  const [openInputActions, setOpenInputActions] = React.useState(false);
+  const handleOpenInputActions = () => setOpenInputActions(true);
+  const handleCloseInputActions = () => setOpenInputActions(false);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
   const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "GPT-3.5 Turbo";
 
@@ -110,13 +120,24 @@ export const ChatInput = ({
           borderStyle: "solid",
         }}
       >
-        <IconButton sx={{ p: "10px" }} aria-label="menu">
-          <AddIcon />
-        </IconButton>
+        <UploadFileButton
+          disabled={disabled}
+          onFileUpload={onFileUpload}
+        />
         <InputBase
           sx={{ ml: 1, flex: 1 }}
           placeholder={t("ask.question")}
           inputProps={{ "aria-label": t("ask.question") }}
+          error={error}
+          id="ask-question"
+          onKeyDown={onEnterPress}
+          value={question}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            if (event.target.value && event.target.value.length > 24000)
+              setError(true);
+            else setError(false);
+            setQuestion(event.target.value);
+          }}
         />
         <IconButton
             onClick={sendQuestion}
