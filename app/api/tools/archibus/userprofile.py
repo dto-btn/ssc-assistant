@@ -1,8 +1,7 @@
 import logging
 from .archibus_functions import make_archibus_api_call
 from utils.decorators import tool_metadata
-
-from .user_info import UserInfo
+from utils.auth import get_or_create_user
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +12,8 @@ class UserProfile:
         self._profile = None
 
     def load_profile(self):
+        if self.user_id is None:
+            self.user_id = get_or_create_user().token["upn"]
         logger.debug("Loading Profile")
         if self._profile is None:
             user_id = self.get_user_id()
@@ -35,8 +36,11 @@ class UserProfile:
         self.load_profile()
         return self._profile
 
-    def set_user_id(self, new_user_id):
-        self.user_id = new_user_id
+    def set_user_id(self, new_user_id=None):
+        if new_user_id is None:
+            self.user_id = get_or_create_user().token["upn"]
+        else:
+            self.user_id = new_user_id
         self._profile = None
 
 
@@ -46,13 +50,7 @@ user_profile = UserProfile()
 def verify_profile_is_valid():
   verified_profile = user_profile.verify_profile()
   if not verified_profile:
-    user_profile.set_user_id(UserInfo.email)
     user_profile.load_profile()
-    if user_profile.get_user_id() == UserInfo.email:
-        return True
-    else:
-        return False
-  return True
 
 @tool_metadata({
 "type": "function",
@@ -91,6 +89,4 @@ def verify_profile_is_valid():
 ]
 })
 def get_archibus_profile():
-    if(user_profile.user_id is None):
-        user_profile.set_user_id(UserInfo.email)
     return user_profile.get_profile_data()

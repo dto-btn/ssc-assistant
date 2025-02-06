@@ -1,10 +1,6 @@
 import requests
 import logging
 import os
-import json
-
-from .archibus_api_v1 import AzureAuthToken
-from .  user_info import UserInfo
 
 api_url = str(os.getenv("ARCHIBUS_API_URL", "http://archibusapi-dev.hnfpejbvhhbqenhy.canadacentral.azurecontainer.io/api/v1"))
 api_username = str(os.getenv("ARCHIBUS_API_USERNAME"))

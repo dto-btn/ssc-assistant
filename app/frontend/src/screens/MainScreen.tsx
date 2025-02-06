@@ -232,19 +232,19 @@ const MainScreen = () => {
       userMessage,
     ]);
 
-        // prepare request bundle
-        const request: MessageRequest = {
-            messages: messages,
-            max: maxMessagesSent,
-            top: 5,
-            tools: (Object.keys(enabledTools)).filter((key) => enabledTools[key]),
-            uuid: currentChatHistory.uuid,
-            quotedText: messagedQuoted,
-            model: currentChatHistory.model,
-            fullName: userData.graphData['givenName'] + ' ' + userData.graphData['surname'],
-            corporateFunction: selectedCorporateFunction,
-            email: userData.graphData['userPrincipalName']
-        };
+    // prepare request bundle
+    const request: MessageRequest = {
+      messages: messages,
+      max: maxMessagesSent,
+      top: 5,
+      tools: Object.keys(enabledTools).filter((key) => enabledTools[key]),
+      uuid: currentChatHistory.uuid,
+      quotedText: messagedQuoted,
+      model: currentChatHistory.model,
+      fullName:
+        userData.graphData["givenName"] + " " + userData.graphData["surname"],
+      corporateFunction: selectedCorporateFunction,
+    };
 
     // update current chat window with the message sent..
     setCurrentChatHistory((prevChatHistory) => {
@@ -427,16 +427,15 @@ const MainScreen = () => {
       return updatedChatHistory;
     });
 
-        // prepare request bundle
-        const request: MessageRequest = {
-          messages: messages,
-          max: maxMessagesSent,
-          top: 5,
-          tools: [],
-          uuid: currentChatHistory.uuid,
-          model: currentChatHistory.model,
-          email: userData.graphData['userPrincipalName']
-        };
+    // prepare request bundle
+    const request: MessageRequest = {
+      messages: messages,
+      max: maxMessagesSent,
+      top: 5,
+      tools: [],
+      uuid: currentChatHistory.uuid,
+      model: currentChatHistory.model,
+    };
 
     sendApiRequest(request);
   };

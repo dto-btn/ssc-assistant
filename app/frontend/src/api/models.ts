@@ -46,7 +46,6 @@ interface MessageRequest {
   model: string;
   fullName?: string;
   corporateFunction?: string
-  email?: string
 }
 
 interface ToastMessage {
@@ -88,8 +87,14 @@ interface BookingConfirmation {
   assignedTo: string;
   startDate: string;
 }
-interface Attachment extends ApiAttachmentDto {
+
+interface FileUpload {
+  file_url: string;
   message: string;
   file_name: string;
-  encoded_file: string;
+}
+
+interface Attachment {
+  type: string;
+  blob_storage_url: string;
 }
