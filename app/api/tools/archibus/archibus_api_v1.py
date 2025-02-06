@@ -101,7 +101,7 @@ if __name__ == '__main__':
         audience = f"api://{auth_token.client_id}"
         auth_token.logger.debug("Access Token acquired!")
         decoded_jwt = auth_token.verify_jwt(token, audience)
-        auth_token.logger.err(f"Decoded JWT: {json.dumps(decoded_jwt, indent=4)}")
+        auth_token.logger.error(f"Decoded JWT: {json.dumps(decoded_jwt, indent=4)}")
 
     except Exception as e:
         auth_token.logger.error("An error occurred: " + str(e))

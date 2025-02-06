@@ -9,7 +9,7 @@ from apiflask import APIBlueprint, abort
 from flask import Response, jsonify, stream_with_context
 from openai.types.chat import ChatCompletion
 
-from tools.archibus.archibus_functions import make_api_call
+from tools.archibus.archibus_functions import make_api_call,user_profile
 from utils.auth import auth, user_ad
 from utils.db import (flag_conversation, leave_feedback,
                               store_completion, store_request)
@@ -18,7 +18,7 @@ from utils.models import (BookingConfirmation, Completion, Feedback,
 from utils.openai import (build_completion_response, chat_with_data,
                                   convert_chat_with_data_response)
 
-from app.api.tools.archibus.user_info import UserInfo
+from tools.archibus.user_info import UserInfo
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
