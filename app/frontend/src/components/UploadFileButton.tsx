@@ -1,16 +1,12 @@
-import { styled } from "@mui/material/styles";
-import IconButton from "@mui/material/Button";
-import AttachFileIcon from "@mui/icons-material/AttachFile";
-import { uploadFile } from "../api/api";
-import { useMsal } from "@azure/msal-react";
-import { apiUse } from "../authConfig";
 import { AccountInfo } from "@azure/msal-browser";
-import { useRef, useState } from "react";
-import { CircularProgress } from "@mui/material";
-import { t } from "i18next";
-import PhotoLibraryRounded from "@mui/icons-material/PhotoLibraryRounded";
+import { useMsal } from "@azure/msal-react";
 import AddPhotoAlternateOutlinedIcon from "@mui/icons-material/AddPhotoAlternateOutlined";
-import Send from "@mui/icons-material/Send";
+import IconButton from "@mui/material/Button";
+import { styled } from "@mui/material/styles";
+import { t } from "i18next";
+import { useRef, useState } from "react";
+import { uploadFile } from "../api/api";
+import { apiUse } from "../authConfig";
 
 interface UploadFileButtonProps {
   disabled: boolean;

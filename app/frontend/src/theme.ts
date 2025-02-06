@@ -12,7 +12,7 @@ export const theme = createTheme({
       },
       background: {
         default: BACKGROUND_COLOR,
-        paper: BACKGROUND_COLOR,
+        paper: "BACKGROUND_COLOR",
       },
     },
   });

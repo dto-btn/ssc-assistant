@@ -1,12 +1,11 @@
 import LanguageIcon from "@mui/icons-material/Language";
-import DeleteIcon from '@mui/icons-material/Delete';
-import PsychologyIcon from '@mui/icons-material/Psychology';
+import DeleteIcon from "@mui/icons-material/Delete";
+import PsychologyIcon from "@mui/icons-material/Psychology";
 import {
   Box,
   Chip,
   Collapse,
   Divider,
-  Drawer,
   FormControlLabel,
   FormGroup,
   IconButton,
@@ -22,24 +21,25 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
+import Drawer from "@mui/material/Drawer";
+import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
 import { changeLanguage } from "i18next";
-import LogoutIcon from '@mui/icons-material/Logout';
+import LogoutIcon from "@mui/icons-material/Logout";
 import { useIsAuthenticated } from "@azure/msal-react";
 import Handyman from "@mui/icons-material/Handyman";
 import { useEffect, useRef, useState } from "react";
-import ExpandLessIcon from '@mui/icons-material/ExpandLess'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import InfoIcon from '@mui/icons-material/Info';
-import HistoryIcon from '@mui/icons-material/History';
-import AddCommentIcon from '@mui/icons-material/AddComment';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import EditIcon from '@mui/icons-material/Edit';
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import InfoIcon from "@mui/icons-material/Info";
+import HistoryIcon from "@mui/icons-material/History";
+import AddCommentIcon from "@mui/icons-material/AddComment";
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
+import EditIcon from "@mui/icons-material/Edit";
 import { useTranslation } from "react-i18next";
 import React from "react";
 import { allowedToolsSet, allowedCorporateFunctionsSet } from "../allowedTools";
-import FormLabel from '@mui/material/FormLabel';
+import FormLabel from "@mui/material/FormLabel";
 
 interface DrawerMenuProps {
   openDrawer: boolean;
@@ -52,8 +52,12 @@ interface DrawerMenuProps {
   logout: () => void;
   enabledTools: Record<string, boolean>;
   selectedModel: string;
-  handleUpdateEnabledTools: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSetSelectedCorporateFunction: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleUpdateEnabledTools: (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => void;
+  handleSetSelectedCorporateFunction: (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => void;
   selectedCorporateFunction: string;
   handleSelectedModelChanged: (modelName: string) => void;
   tutorialBubbleNumber?: number;
@@ -63,15 +67,37 @@ interface DrawerMenuProps {
   renameChat: (newChatDescription: string, index: number) => void;
 }
 
-export const DrawerMenu = ({ openDrawer, chatDescriptions, toggleDrawer, onClearChat, onNewChat, setLangCookie,
-  logout, enabledTools, handleUpdateEnabledTools, handleSetSelectedCorporateFunction, selectedCorporateFunction, handleSelectedModelChanged, selectedModel, tutorialBubbleNumber, handleToggleTutorials,
-  handleDeleteSavedChat, handleLoadSavedChat, renameChat, currentChatIndex }: DrawerMenuProps) => {
+export const DrawerMenu = ({
+  openDrawer,
+  chatDescriptions,
+  toggleDrawer,
+  onClearChat,
+  onNewChat,
+  setLangCookie,
+  logout,
+  enabledTools,
+  handleUpdateEnabledTools,
+  handleSetSelectedCorporateFunction,
+  selectedCorporateFunction,
+  handleSelectedModelChanged,
+  selectedModel,
+  tutorialBubbleNumber,
+  handleToggleTutorials,
+  handleDeleteSavedChat,
+  handleLoadSavedChat,
+  renameChat,
+  currentChatIndex,
+}: DrawerMenuProps) => {
   const [toolMenuOpen, setToolMenuOpen] = useState(false);
   const [selectModelMenuOpen, setSelectModelMenuOpen] = useState(false);
   const [selectChatMenuOpen, setSelectChatMenuOpen] = useState(false);
-  const [moreMenuAnchor, setMoreMenuAnchor] = useState<null | HTMLElement>(null);
-  const [selectedChatIndex, setSelectedChatIndex] = useState<null | number>(null);
-  const [editedDescription, setEditedDescription] = useState('');
+  const [moreMenuAnchor, setMoreMenuAnchor] = useState<null | HTMLElement>(
+    null
+  );
+  const [selectedChatIndex, setSelectedChatIndex] = useState<null | number>(
+    null
+  );
+  const [editedDescription, setEditedDescription] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [textFieldIsFocused, setTextFieldIsFocused] = useState(false);
 
@@ -82,17 +108,20 @@ export const DrawerMenu = ({ openDrawer, chatDescriptions, toggleDrawer, onClear
 
   const toggleToolDrawerOpen = () => {
     setToolMenuOpen(!toolMenuOpen);
-  }
+  };
 
   const toggleSelectModelMenuOpen = () => {
     setSelectModelMenuOpen(!selectModelMenuOpen);
-  }
+  };
 
   const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     handleSelectedModelChanged((event.target as HTMLInputElement).value);
   };
 
-  const handleMoreMenuClick = (event: React.MouseEvent<HTMLButtonElement>, index: number) => {
+  const handleMoreMenuClick = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    index: number
+  ) => {
     setMoreMenuAnchor(event.currentTarget);
     setSelectedChatIndex(index);
   };
@@ -102,7 +131,7 @@ export const DrawerMenu = ({ openDrawer, chatDescriptions, toggleDrawer, onClear
       handleDeleteSavedChat(selectedChatIndex);
       setMoreMenuAnchor(null);
     }
-  }
+  };
 
   const handleRenameClicked = () => {
     if (selectedChatIndex !== null && chatDescriptions[selectedChatIndex]) {
@@ -111,14 +140,14 @@ export const DrawerMenu = ({ openDrawer, chatDescriptions, toggleDrawer, onClear
     setEditingIndex(selectedChatIndex);
     setTextFieldIsFocused(true);
     setMoreMenuAnchor(null);
-  }
+  };
 
   const handleSaveEdit = () => {
     if (editingIndex !== null) {
-      renameChat(editedDescription, editingIndex)
+      renameChat(editedDescription, editingIndex);
       setEditingIndex(null);
       setSelectedChatIndex(null);
-      setEditedDescription('');
+      setEditedDescription("");
       setTextFieldIsFocused(false);
     }
   };
@@ -126,7 +155,7 @@ export const DrawerMenu = ({ openDrawer, chatDescriptions, toggleDrawer, onClear
   const handleCancelEdit = () => {
     setSelectedChatIndex(null);
     setEditingIndex(null);
-    setEditedDescription('');
+    setEditedDescription("");
     setTextFieldIsFocused(false);
   };
 
@@ -184,36 +213,50 @@ export const DrawerMenu = ({ openDrawer, chatDescriptions, toggleDrawer, onClear
     }
   }, [editingIndex]);
 
-  const tools = Object.keys(enabledTools).filter(tool => allowedToolsSet.has(tool));
+  const tools = Object.keys(enabledTools).filter((tool) =>
+    allowedToolsSet.has(tool)
+  );
   // Separate the corporate key
-  const corporateKeyIndex = tools.indexOf('corporate');
-  const corporateKey = corporateKeyIndex > -1 ? tools.splice(corporateKeyIndex, 1)[0] : null;
+  const corporateKeyIndex = tools.indexOf("corporate");
+  const corporateKey =
+    corporateKeyIndex > -1 ? tools.splice(corporateKeyIndex, 1)[0] : null;
 
   const list = () => (
-    <Box role="presentation"
+    <Box
+      role="presentation"
       sx={{
         width: 300,
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-      }}>
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+      }}
+    >
       <List>
         <ListItem key="language" disablePadding>
-          <ListItemButton onClick={() => {
-            changeLanguage(t("langlink.shorthand"));
-            setLangCookie();
-          }}>
+          <ListItemButton
+            onClick={() => {
+              changeLanguage(t("langlink.shorthand"));
+              setLangCookie();
+            }}
+          >
             <ListItemIcon>
               <LanguageIcon />
             </ListItemIcon>
             <ListItemText primary={t("langlink")} />
           </ListItemButton>
         </ListItem>
-        <Divider sx={{ margin: '5px 0px' }}>
-          <Chip label={t("drawer.header.toolsAndModels")} size="small" sx={{ backgroundColor: 'transparent' }} />
+        <Divider sx={{ margin: "5px 0px" }}>
+          <Chip
+            label={t("drawer.header.toolsAndModels")}
+            size="small"
+            sx={{ backgroundColor: "transparent" }}
+          />
         </Divider>
         <ListItem key="toolSettings" disablePadding>
-          <ListItemButton onClick={toggleToolDrawerOpen} aria-expanded={toolMenuOpen}>
+          <ListItemButton
+            onClick={toggleToolDrawerOpen}
+            aria-expanded={toolMenuOpen}
+          >
             <ListItemIcon>
               <Handyman />
             </ListItemIcon>
@@ -225,8 +268,17 @@ export const DrawerMenu = ({ openDrawer, chatDescriptions, toggleDrawer, onClear
           <Divider />
           <FormGroup>
             {corporateKey && (
-              <Box sx={{ minWidth: 120, marginLeft: '70px', marginRight: '10px', paddingTop: '5px' }}>
-                <FormLabel id="corpo-data-label">{t('corporate.data')}</FormLabel>
+              <Box
+                sx={{
+                  minWidth: 120,
+                  marginLeft: "70px",
+                  marginRight: "10px",
+                  paddingTop: "5px",
+                }}
+              >
+                <FormLabel id="corpo-data-label">
+                  {t("corporate.data")}
+                </FormLabel>
                 <RadioGroup
                   aria-labelledby="corpo-data-label"
                   name="corpo-data-group"
@@ -234,10 +286,22 @@ export const DrawerMenu = ({ openDrawer, chatDescriptions, toggleDrawer, onClear
                   value={selectedCorporateFunction}
                   defaultValue="intranet_question"
                 >
-                  <FormControlLabel key={-1} value="none" control={<Radio />} label={t('none')} />
-                  {Array.from(allowedCorporateFunctionsSet).map((name, index) => (
-                    <FormControlLabel key={index} value={name} control={<Radio />} label={t(name)} />
-                  ))}
+                  <FormControlLabel
+                    key={-1}
+                    value="none"
+                    control={<Radio />}
+                    label={t("none")}
+                  />
+                  {Array.from(allowedCorporateFunctionsSet).map(
+                    (name, index) => (
+                      <FormControlLabel
+                        key={index}
+                        value={name}
+                        control={<Radio />}
+                        label={t(name)}
+                      />
+                    )
+                  )}
                 </RadioGroup>
               </Box>
             )}
@@ -245,28 +309,34 @@ export const DrawerMenu = ({ openDrawer, chatDescriptions, toggleDrawer, onClear
             {tools.map((tool, index) => {
               return (
                 <FormControlLabel
-                  label={t(tool)} key={index}
+                  label={t(tool)}
+                  key={index}
                   control={
                     <Switch
                       checked={enabledTools[tool]}
                       onChange={handleUpdateEnabledTools}
                       name={tool}
-                      sx={{ marginLeft: '70px', marginRight: '10px', color: "primary.main" }}
+                      sx={{
+                        marginLeft: "70px",
+                        marginRight: "10px",
+                        color: "primary.main",
+                      }}
                     />
                   }
                 />
-              )
+              );
             })}
           </FormGroup>
         </Collapse>
         <ListItem key="modelSelection" disablePadding>
-          <ListItemButton onClick={toggleSelectModelMenuOpen} aria-expanded={selectModelMenuOpen}>
+          <ListItemButton
+            onClick={toggleSelectModelMenuOpen}
+            aria-expanded={selectModelMenuOpen}
+          >
             <ListItemIcon>
               <PsychologyIcon />
             </ListItemIcon>
-            <ListItemText>
-              {t("model.version.select")}
-            </ListItemText>
+            <ListItemText>{t("model.version.select")}</ListItemText>
             {selectModelMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           </ListItemButton>
         </ListItem>
@@ -276,16 +346,28 @@ export const DrawerMenu = ({ openDrawer, chatDescriptions, toggleDrawer, onClear
             defaultValue="gpt-4o"
             aria-labelledby="select-language-model-radio"
             name="model-radios"
-            sx={{ marginLeft: '70px' }}
+            sx={{ marginLeft: "70px" }}
             value={selectedModel}
             onChange={handleRadioChange}
           >
-            <FormControlLabel value="gpt-4o" control={<Radio />} label="GPT-4o" />
-            <FormControlLabel value="gpt-35-turbo-1106" control={<Radio />} label="GPT-3.5 Turbo" />
+            <FormControlLabel
+              value="gpt-4o"
+              control={<Radio />}
+              label="GPT-4o"
+            />
+            <FormControlLabel
+              value="gpt-35-turbo-1106"
+              control={<Radio />}
+              label="GPT-3.5 Turbo"
+            />
           </RadioGroup>
         </Collapse>
-        <Divider sx={{ margin: '5px 0px' }}>
-          <Chip label={t("drawer.header.conversations")} size="small" sx={{ backgroundColor: 'transparent' }} />
+        <Divider sx={{ margin: "5px 0px" }}>
+          <Chip
+            label={t("drawer.header.conversations")}
+            size="small"
+            sx={{ backgroundColor: "transparent" }}
+          />
         </Divider>
         <ListItem key="clearchat" disablePadding>
           <ListItemButton onClick={onClearChat}>
@@ -304,13 +386,14 @@ export const DrawerMenu = ({ openDrawer, chatDescriptions, toggleDrawer, onClear
           </ListItemButton>
         </ListItem>
         <ListItem key="chatSelection" disablePadding>
-          <ListItemButton onClick={() => setSelectChatMenuOpen(!selectChatMenuOpen)} aria-expanded={selectChatMenuOpen}>
+          <ListItemButton
+            onClick={() => setSelectChatMenuOpen(!selectChatMenuOpen)}
+            aria-expanded={selectChatMenuOpen}
+          >
             <ListItemIcon>
               <HistoryIcon />
             </ListItemIcon>
-            <ListItemText>
-              {t("select.conversation")}
-            </ListItemText>
+            <ListItemText>{t("select.conversation")}</ListItemText>
             {selectChatMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           </ListItemButton>
         </ListItem>
@@ -318,16 +401,18 @@ export const DrawerMenu = ({ openDrawer, chatDescriptions, toggleDrawer, onClear
           <Divider />
           {chatDescriptions.map((chatDescription, index) => {
             return (
-              <ListItem key={index}
+              <ListItem
+                key={index}
                 sx={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  padding: '2px 0px',
-                  backgroundColor: index === currentChatIndex ? 'lightgray' : 'transparent',
-                  '&:hover': {
-                    backgroundColor: 'lightgrey',
+                  display: "flex",
+                  flexDirection: "row",
+                  padding: "2px 0px",
+                  backgroundColor:
+                    index === currentChatIndex ? "lightgray" : "transparent",
+                  "&:hover": {
+                    backgroundColor: "lightgrey",
                   },
-                  transition: 'none'
+                  transition: "none",
                 }}
               >
                 <IconButton
@@ -335,32 +420,30 @@ export const DrawerMenu = ({ openDrawer, chatDescriptions, toggleDrawer, onClear
                   disableRipple
                   id="chat-history-options-button"
                   aria-label="more"
-                  aria-controls={moreMenuOpen ? 'chat-history-menu' : undefined}
-                  aria-expanded={moreMenuOpen ? 'true' : undefined}
+                  aria-controls={moreMenuOpen ? "chat-history-menu" : undefined}
+                  aria-expanded={moreMenuOpen ? "true" : undefined}
                   aria-haspopup="true"
                   sx={{
-                    '&:hover': {
-                      backgroundColor: 'transparent',
-                      color: 'black'
+                    "&:hover": {
+                      backgroundColor: "transparent",
+                      color: "black",
                     },
                   }}
                 >
                   <Tooltip
                     title="Options"
                     placement="top"
-                    PopperProps={{
-                      sx: {
-                        '& .MuiTooltip-tooltip': {
-                          backgroundColor: 'black',
-                          color: 'white',
-                        }
-                      }
-                    }}
                     slotProps={{
                       popper: {
+                        sx: {
+                          "& .MuiTooltip-tooltip": {
+                            backgroundColor: "black",
+                            color: "white",
+                          },
+                        },
                         modifiers: [
                           {
-                            name: 'offset',
+                            name: "offset",
                             options: {
                               offset: [0, 5],
                             },
@@ -375,27 +458,27 @@ export const DrawerMenu = ({ openDrawer, chatDescriptions, toggleDrawer, onClear
                 <Menu
                   id="chat-history-menu"
                   MenuListProps={{
-                    'aria-labelledby': "chat-history-options-button"
+                    "aria-labelledby": "chat-history-options-button",
                   }}
                   anchorEl={moreMenuAnchor}
                   open={moreMenuOpen}
                   onClose={() => setMoreMenuAnchor(null)}
                   transformOrigin={{
-                    vertical: 'top',
-                    horizontal: 'center',
+                    vertical: "top",
+                    horizontal: "center",
                   }}
                   sx={{
-                    '& .MuiPaper-root': {
-                      marginLeft: '-25px', // Move the menu to the left a bit
+                    "& .MuiPaper-root": {
+                      marginLeft: "-25px", // Move the menu to the left a bit
                     },
                   }}
                 >
                   <MenuItem onClick={handleDeleteChatClicked}>
-                    <DeleteIcon sx={{ color: "red", mr: '15px' }} />
+                    <DeleteIcon sx={{ color: "red", mr: "15px" }} />
                     <Typography sx={{ color: "red" }}>{t("delete")}</Typography>
                   </MenuItem>
                   <MenuItem onClick={handleRenameClicked}>
-                    <EditIcon sx={{ mr: '15px' }} />
+                    <EditIcon sx={{ mr: "15px" }} />
                     <Typography>{t("rename")}</Typography>
                   </MenuItem>
                 </Menu>
@@ -406,30 +489,30 @@ export const DrawerMenu = ({ openDrawer, chatDescriptions, toggleDrawer, onClear
                     value={editedDescription}
                     onChange={(e) => setEditedDescription(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSaveEdit();
-                      if (e.key === 'Escape') handleCancelEdit();
+                      if (e.key === "Enter") handleSaveEdit();
+                      if (e.key === "Escape") handleCancelEdit();
                     }}
                     onBlur={handleBlur}
                     sx={{
-                      flexGrow: '1',
-                      mr: '5px',
-                      '& .MuiInputBase-input': {
-                        padding: '5px 10px',
+                      flexGrow: "1",
+                      mr: "5px",
+                      "& .MuiInputBase-input": {
+                        padding: "5px 10px",
                         overflow: "hidden",
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      },
                     }}
                   />
                 )}
 
-                {(editingIndex === null || editingIndex !== index) &&
+                {(editingIndex === null || editingIndex !== index) && (
                   <ListItemButton
                     disableRipple
                     sx={{
-                      padding: '5px 10px',
-                      '&:hover': {
-                        backgroundColor: 'transparent',
+                      padding: "5px 10px",
+                      "&:hover": {
+                        backgroundColor: "transparent",
                       },
                     }}
                     onClick={() => handleLoadSavedChat(index)}
@@ -437,46 +520,51 @@ export const DrawerMenu = ({ openDrawer, chatDescriptions, toggleDrawer, onClear
                     <Typography
                       noWrap
                       sx={{
-                        width: '100%',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
+                        width: "100%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
                       }}
                     >
                       {chatDescription}
                     </Typography>
                   </ListItemButton>
-                }
-
+                )}
               </ListItem>
-            )
+            );
           })}
         </Collapse>
       </List>
-      <List sx={{ marginTop: 'auto' }}>
-        {!tutorialBubbleNumber &&
-          (<ListItem key="tutorials" disablePadding>
+      <List sx={{ marginTop: "auto" }}>
+        {!tutorialBubbleNumber && (
+          <ListItem key="tutorials" disablePadding>
             <ListItemButton onClick={() => handleToggleTutorials(true)}>
               <ListItemIcon>
                 <InfoIcon />
               </ListItemIcon>
               <ListItemText primary={t("tutorial.view")} />
             </ListItemButton>
-          </ListItem>)}
-        {isAuthenticated &&
-          (<ListItem key="logout" disablePadding>
+          </ListItem>
+        )}
+        {isAuthenticated && (
+          <ListItem key="logout" disablePadding>
             <ListItemButton onClick={logout}>
               <ListItemIcon>
                 <LogoutIcon />
               </ListItemIcon>
               <ListItemText primary={t("logout")} />
             </ListItemButton>
-          </ListItem>)}
+          </ListItem>
+        )}
       </List>
     </Box>
   );
 
   return (
-    <Drawer anchor="right" disableEnforceFocus open={openDrawer} onClose={() => toggleDrawer(false)} sx={{ zIndex: 1100 }}>
+    <Drawer
+      anchor="right"
+      open={openDrawer}
+      onClose={() => toggleDrawer(false)}
+    >
       {list()}
     </Drawer>
   );
