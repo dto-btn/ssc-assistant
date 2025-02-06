@@ -21,13 +21,13 @@ import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn";
 import CloseIcon from "@mui/icons-material/Close";
 import DirectionsIcon from "@mui/icons-material/Directions";
 import SearchIcon from "@mui/icons-material/Search";
-import AddIcon from '@mui/icons-material/Add';
+import AddIcon from "@mui/icons-material/Add";
 import UploadFileButton from "./UploadFileButton";
 import { disabledFeaturesSet } from "../allowedTools";
-import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
-import SpeedDial from '@mui/material/SpeedDial';
-import SpeedDialIcon from '@mui/material/SpeedDialIcon';
-import SpeedDialAction from '@mui/material/SpeedDialAction';
+import PhotoLibraryIcon from "@mui/icons-material/PhotoLibrary";
+import SpeedDial from "@mui/material/SpeedDial";
+import SpeedDialIcon from "@mui/material/SpeedDialIcon";
+import SpeedDialAction from "@mui/material/SpeedDialAction";
 import React from "react";
 
 interface ChatInputProps {
@@ -111,19 +111,17 @@ export const ChatInput = ({
     >
       <Paper
         component="form"
-        sx={{ p: "2px 4px",
+        sx={{
+          p: "2px 4px",
           display: "flex",
           alignItems: "center",
-          borderRadius: "20px",
+          borderRadius: "40px",
           borderColor: theme.palette.primary.main,
           borderWidth: "1px",
           borderStyle: "solid",
         }}
       >
-        <UploadFileButton
-          disabled={disabled}
-          onFileUpload={onFileUpload}
-        />
+        <UploadFileButton disabled={disabled} onFileUpload={onFileUpload} />
         <InputBase
           sx={{ ml: 1, flex: 1 }}
           placeholder={t("ask.question")}
@@ -140,27 +138,21 @@ export const ChatInput = ({
           }}
         />
         <IconButton
-            onClick={sendQuestion}
-            disabled={disabled}
-            sx={{
-              "&:hover": {
-                backgroundColor: "rgba(0, 0, 0, 0.2)",
-              },
-            }}
-            aria-label={t("send")}
-          >
-            {" "}
-            {disabled ? (
-              <CircularProgress
-                size={24}
-                aria-label={t("generating")}
-              />
-            ) : (
-              <Send
-                sx={{ color: "primary.main" }}
-                aria-label={t("send")}
-              />
-            )}
+          onClick={sendQuestion}
+          disabled={disabled}
+          sx={{
+            "&:hover": {
+              backgroundColor: "rgba(0, 0, 0, 0.2)",
+            },
+          }}
+          aria-label={t("send")}
+          size="large"
+        >
+          {disabled ? (
+            <CircularProgress size={24} aria-label={t("generating")} />
+          ) : (
+            <Send sx={{ color: "primary.main" }} aria-label={t("send")} />
+          )}
         </IconButton>
       </Paper>
       {/* <ChatInputWrapper theme={theme}>

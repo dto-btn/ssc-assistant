@@ -8,7 +8,9 @@ import { AccountInfo } from "@azure/msal-browser";
 import { useRef, useState } from "react";
 import { CircularProgress } from "@mui/material";
 import { t } from "i18next";
-import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
+import PhotoLibraryRounded from "@mui/icons-material/PhotoLibraryRounded";
+import AddPhotoAlternateOutlinedIcon from "@mui/icons-material/AddPhotoAlternateOutlined";
+import Send from "@mui/icons-material/Send";
 
 interface UploadFileButtonProps {
   disabled: boolean;
@@ -16,19 +18,6 @@ interface UploadFileButtonProps {
 }
 
 const acceptedImageTypes = ["jpg", "jpeg", "png", "webp"];
-
-const VisuallyHiddenInput = styled("input")({
-  clip: "circle(0 0 0 0)",
-  clipPath: "inset(50%)",
-  borderRadius: "50%",
-  height: 1,
-  overflow: "hidden",
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  whiteSpace: "nowrap",
-  width: 1,
-});
 
 const isValidFileType = (file: File) => {
   // only validates images for now, eventually should validate other file types
@@ -99,13 +88,16 @@ export default function InputFileUpload({
   };
 
   return (
-    <IconButton
+    <StyledIconButton
       aria-label={t("upload.image")}
       tabIndex={0}
       disabled={disabled || uploading}
       onKeyDown={handleKeyPress}
+      onClick={() => fileInputRef.current?.click()}
+      loading={uploading}
+      size="large"
     >
-      {uploading ? <CircularProgress /> : <PhotoLibraryIcon />}
+      <AddPhotoAlternateOutlinedIcon />
       <VisuallyHiddenInput
         type="file"
         key={fileInputKey}
@@ -117,6 +109,27 @@ export default function InputFileUpload({
         //accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
         //multiple
       />
-    </IconButton>
+    </StyledIconButton>
   );
 }
+
+const VisuallyHiddenInput = styled("input")({
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
+  height: 1,
+  overflow: "hidden",
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  whiteSpace: "nowrap",
+  width: 1,
+});
+
+const StyledIconButton = styled(IconButton)({
+  borderRadius: "50%", // Makes the button round
+  minWidth: 0, // Prevent default min width
+  padding: "12px",
+  "&:hover": {
+    backgroundColor: "rgba(0, 0, 0, 0.2)", // Optional hover effect
+  },
+});
