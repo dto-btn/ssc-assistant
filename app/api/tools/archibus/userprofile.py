@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class UserProfile:
     def __init__(self):
-        self.user_id = UserInfo.email
+        self.user_id = None
         self._profile = None
 
     def load_profile(self):
@@ -41,6 +41,18 @@ class UserProfile:
 
 
 user_profile = UserProfile()
+
+
+def verify_profile_is_valid():
+  verified_profile = user_profile.verify_profile()
+  if not verified_profile:
+    user_profile.set_user_id(UserInfo.email)
+    user_profile.load_profile()
+    if user_profile.get_user_id() == UserInfo.email:
+        return True
+    else:
+        return False
+  return True
 
 @tool_metadata({
 "type": "function",
@@ -79,4 +91,6 @@ user_profile = UserProfile()
 ]
 })
 def get_archibus_profile():
+    if(user_profile.user_id is None):
+        user_profile.set_user_id(UserInfo.email)
     return user_profile.get_profile_data()
