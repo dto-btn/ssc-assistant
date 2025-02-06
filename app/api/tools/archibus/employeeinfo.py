@@ -2,7 +2,7 @@ import json
 import logging
 
 from .archibus_functions import make_archibus_api_call
-from .userprofile import user_profile,verify_profile_is_valid
+from .userprofile import user_profile
 from utils.decorators import tool_metadata
 
 logger = logging.getLogger(__name__)
@@ -54,7 +54,7 @@ logger = logging.getLogger(__name__)
 def get_employee_record():
   logger.debug("getting employee record")
 
-  if verify_profile_is_valid():
+  if user_profile.verify_profile():
     emId=user_profile.get_profile_data()['employee']['emId']
     if emId:
       payload = [

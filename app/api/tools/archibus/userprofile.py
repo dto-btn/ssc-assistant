@@ -47,11 +47,6 @@ class UserProfile:
 user_profile = UserProfile()
 
 
-def verify_profile_is_valid():
-  verified_profile = user_profile.verify_profile()
-  if not verified_profile:
-    user_profile.load_profile()
-
 @tool_metadata({
 "type": "function",
 "function": {

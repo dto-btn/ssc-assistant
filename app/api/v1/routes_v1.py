@@ -42,8 +42,6 @@ from utils.openai import (
     convert_chat_with_data_response,
 )
 
-from tools.archibus.user_info import UserInfo
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -100,9 +98,6 @@ _BOUNDARY = "GPT-Interaction"
 @auth.login_required(role="chat")
 @user_ad.login_required
 def completion_chat(message_request: MessageRequest):
-    logger.info("completion chat request: %s", message_request)
-    if message_request.email != "":
-        UserInfo.set_email(message_request.email)
 
     if not message_request.query and not message_request.messages:
         return jsonify(
@@ -156,9 +151,6 @@ def completion_chat(message_request: MessageRequest):
 @auth.login_required(role="chat")
 @user_ad.login_required
 def completion_chat_stream(message_request: MessageRequest):
-    logger.info("completion chat stream message request: %s", message_request)
-    if message_request.email != "":
-        UserInfo.set_email(message_request.email)
     if not message_request.query and not message_request.messages:
         return jsonify(
             {
