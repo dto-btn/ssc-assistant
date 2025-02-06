@@ -13,6 +13,7 @@ from apiflask import APIBlueprint, abort
 from flask import Response, jsonify, stream_with_context
 from openai.types.chat import ChatCompletion
 
+from src.context.build_context import build_context
 from src.service.stats_report_service import StatsReportService
 from src.dao.chat_table_dao import ChatTableDaoImpl
 from src.repository.conversation_repository import ConversationRepository
