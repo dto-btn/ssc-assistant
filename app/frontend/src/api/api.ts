@@ -181,7 +181,7 @@ export async function uploadFile(encodedFile: string, name: string, accessToken:
   const response_url = new URL(responseData.file_url);
 
   return {
-    blob_storage_url: response_url.pathname,
+    blob_storage_url: decodeURIComponent(response_url.pathname),
     file_name: name,
     message: responseData.message
   };

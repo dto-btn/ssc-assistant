@@ -93,27 +93,26 @@ export const ChatInput = ({
             p: "2px 4px",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            borderRadius: "40px 40px 0 0",
+            justifyContent: "left",
+            borderRadius: "30px 30px 0 0",
             borderColor: theme.palette.primary.main,
             borderWidth: "1px 1px 0px 1px",
             borderStyle: "solid",
-            backgroundColor: "rgb(164, 159, 197)",
           }}
         >
           <IconButton
             onClick={handleRemoveFile}
-            sx={{
-              alignItems: "top",
-              mr: -2,
-              mt: -2,
-              backgroundColor: "white",
-              border: "1px solid black",
-              "&:hover": {
-                backgroundColor: "white", // maintain white background on hover
-              },
-            }}
-            size={"small"}
+            // sx={{
+            //   alignItems: "top",
+            //   mr: -2,
+            //   mt: -2,
+            //   backgroundColor: "white",
+            //   border: "1px solid black",
+            //   "&:hover": {
+            //     backgroundColor: "white", // maintain white background on hover
+            //   },
+            // }}
+            size="large"
             color="primary"
             aria-description={t("delete") + ": " + t("user.file.upload")}
           >
@@ -126,8 +125,8 @@ export const ChatInput = ({
               alt={t("uploaded.file.alt")}
               sx={{
                 maxWidth: "100%",
-                maxHeight: 300,
-                borderRadius: 2,
+                maxHeight: 130,
+                borderRadius: "25px",
                 padding: "8px",
               }}
             />
@@ -148,10 +147,10 @@ export const ChatInput = ({
       <Paper
         component="form"
         sx={{
-          p: "2px 4px",
+          p: "2px 5px",
           display: "flex",
           alignItems: "center",
-          borderRadius: file ? "0 0 40px 40px" : "40px",
+          borderRadius: file ? "0 0 30px 30px" : "40px",
           borderColor: theme.palette.primary.main,
           borderWidth: file ? "0 1px 1px 1px" : "1px",
           borderStyle: "solid",
