@@ -18,7 +18,7 @@ from src.service.stats_report_service import StatsReportService
 from src.dao.chat_table_dao import ChatTableDaoImpl
 from src.repository.conversation_repository import ConversationRepository
 
-from tools.archibus.archibus_functions import make_api_call,user_profile
+from tools.archibus.archibus_functions import make_api_call
 from utils.auth import auth, user_ad
 from utils.db import (
     flag_conversation,
