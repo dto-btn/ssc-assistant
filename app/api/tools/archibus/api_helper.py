@@ -17,14 +17,6 @@ logger = logging.getLogger(__name__)
 def make_api_call(uri: str, payload=None) -> requests.Response:
     auth = (api_username, api_password)
 
-    logger.info("Archibus API Helper UserInfo: %s", UserInfo.email)
-
-    auth_token = AzureAuthToken()
-    auth_token.get_user_id()
-    auth_token_mail = auth_token.user_id
-
-    logger.info("Archibus API Helper auth_token_mail: %s", auth_token_mail)
-
     headers = {
         'Accept': 'application/json',
         'Authorization': f'Bearer {archibus_token}'
