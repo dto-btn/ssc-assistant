@@ -24,6 +24,7 @@ interface Message {
   context?: Context | null;
   tools_info?: ToolInfo;
   quotedText?: string;
+  attachments?: Attachment[];
 }
 
 interface Completion {
@@ -86,4 +87,9 @@ interface BookingConfirmation {
   createdBy: string;
   assignedTo: string;
   startDate: string;
+}
+interface Attachment extends ApiAttachmentDto {
+  message: string;
+  file_name: string;
+  encoded_file: string;
 }

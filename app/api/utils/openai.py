@@ -86,7 +86,6 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
     """
     model = message_request.model
     messages = load_messages(message_request)
-
     # 1. Check if we are to use tools
     tools_info = None
 

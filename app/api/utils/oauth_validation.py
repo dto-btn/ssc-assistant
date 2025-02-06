@@ -29,8 +29,8 @@ class OAuth2TokenValidation:
         """
         try:
             unverified_header = jwt.get_unverified_header(token)
-        except Exception as e:
-            raise Exception(f"Unable to decode authorization token headers: {e}")
+        except jwt.InvalidTokenError as e:
+            raise jwt.InvalidTokenError(f"Unable to decode authorization token headers: {e}") from e
 
         try:
             rsa_key = OAuth2TokenValidation.find_rsa_key(self.jwks, unverified_header)

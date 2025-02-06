@@ -28,12 +28,23 @@ class ToolInfo:
     payload: Optional[Dict] = None
 
 @dataclass
+class Attachment:
+    """
+    Supports various attachments, type, and blob storage location.
+    example:
+    { type: 'image', blob_storage_url: "https://somestorage.azurestorage.net/hash"}
+    """
+    type: str
+    blob_storage_url: str
+
+@dataclass
 class Message:
     role: str
     quotedText: Optional[str] = None
     content: Optional[str] = None
     context: Optional[Context] = None
     tools_info: Optional[ToolInfo] = None
+    attachments: Optional[List[Attachment]] = None
 
 @dataclass
 class Completion:
@@ -75,3 +86,15 @@ class BookingConfirmation:
     createdBy: str
     assignedTo: str
     startDate: str
+
+@dataclass
+class FilePayload:
+    '''Contains the payload of the file uploaded to be fed to the OpenAI API'''
+    encoded_file: str
+    name: str
+
+@dataclass
+class SuggestionRequest:
+    '''this is a suggestion request that most likely comes from the myssc+ search feature'''
+    query: str
+    corporate_function: str = field(default='intranet_question')

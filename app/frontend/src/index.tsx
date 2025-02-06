@@ -11,28 +11,15 @@ import "@fontsource/roboto/700.css";
 import { PublicClientApplication, EventType, AccountInfo, EventMessage } from "@azure/msal-browser";
 import { msalConfig } from './authConfig.ts';
 
-import { ThemeProvider, createTheme } from "@mui/material/styles";
-
-const mainTheme = createTheme({
-  palette: {
-    primary: {
-      main: "#4b3e99" /* SSC's official colour code I found using our chatbot! XD */,
-    },
-    secondary: {
-      main: "#f33aea",
-    },
-    background: {
-      default: "white",
-    },
-  },
-});
+import { ThemeProvider } from "@mui/material/styles";
+import { theme } from "./theme.ts";
 
 export const msalInstance = new PublicClientApplication(msalConfig);
 
 msalInstance.initialize().then(() => {
   console.debug("msalInstance -> Initialisation...");
   // Default to using the first account if no account is active on page load
-  const currentAccounts = msalInstance.getAllAccounts({tenantId: import.meta.env.VITE_AZURE_AD_TENANT_ID})
+  const currentAccounts = msalInstance.getAllAccounts({ tenantId: import.meta.env.VITE_AZURE_AD_TENANT_ID })
   if (!msalInstance.getActiveAccount() && currentAccounts.length > 0) {
     // Account selection logic is app dependent. Adjust as needed for different use cases.
     msalInstance.setActiveAccount(currentAccounts[0]);
@@ -57,8 +44,8 @@ msalInstance.initialize().then(() => {
 
   root.render(
     <React.StrictMode>
-      <ThemeProvider theme={mainTheme}>
-          <App instance={msalInstance} />
+      <ThemeProvider theme={theme}>
+        <App instance={msalInstance} />
       </ThemeProvider>
     </React.StrictMode>
   );
