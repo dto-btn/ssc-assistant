@@ -13,6 +13,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import UploadFileButton from "./UploadFileButton";
+import { disabledFeaturesSet } from "../allowedTools";
 
 interface ChatInputProps {
   onSend: (question: string, files: Attachment[]) => void;
@@ -156,7 +157,9 @@ export const ChatInput = ({
           borderStyle: "solid",
         }}
       >
-        <UploadFileButton disabled={disabled} onFileUpload={onFileUpload} />
+        {!disabledFeaturesSet.has("file_upload") && (
+          <UploadFileButton disabled={disabled} onFileUpload={onFileUpload} />
+        )}
         <InputBase
           sx={{ ml: 1, flex: 1 }}
           placeholder={t("ask.question")}
