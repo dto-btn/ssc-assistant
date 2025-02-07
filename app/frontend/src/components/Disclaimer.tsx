@@ -11,7 +11,6 @@ import { useTranslation } from "react-i18next";
 import Cookies from "js-cookie";
 import { useMsal } from "@azure/msal-react";
 import { InteractionStatus } from "@azure/msal-browser";
-import { theme } from "../theme";
 
 export const Disclaimer = () => {
   const { t, i18n } = useTranslation();

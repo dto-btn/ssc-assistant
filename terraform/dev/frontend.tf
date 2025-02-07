@@ -45,7 +45,7 @@ resource "azurerm_linux_web_app" "frontend" {
   app_settings = {
     VITE_API_BACKEND         = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net/"
     VITE_API_KEY             = var.vite_api_key
-    VITE_SAS_TOKEN           = azurerm_storage_account_sas.blob_read_sas.sas
+    VITE_SAS_TOKEN           = data.azurerm_storage_account_sas.blob_read_sas.sas
     WEBSITE_RUN_FROM_PACKAGE = "1"
     MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
     PORT = 8080

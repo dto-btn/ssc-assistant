@@ -40,7 +40,6 @@ import { useTranslation } from "react-i18next";
 import React from "react";
 import { allowedToolsSet, allowedCorporateFunctionsSet } from "../allowedTools";
 import FormLabel from "@mui/material/FormLabel";
-import { theme } from "../theme";
 
 interface DrawerMenuProps {
   openDrawer: boolean;
