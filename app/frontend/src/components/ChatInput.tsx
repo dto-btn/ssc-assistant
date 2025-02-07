@@ -168,6 +168,8 @@ export const ChatInput = ({
           id="ask-question"
           onKeyDown={onEnterPress}
           value={question}
+          multiline
+          maxRows={15}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
             if (event.target.value && event.target.value.length > 24000)
               setError(true);
