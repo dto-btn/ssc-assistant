@@ -1,13 +1,12 @@
-import { styled } from "@mui/material/styles";
-import IconButton from "@mui/material/Button";
-import AttachFileIcon from "@mui/icons-material/AttachFile";
-import { uploadFile } from "../api/api";
-import { useMsal } from "@azure/msal-react";
-import { apiUse } from "../authConfig";
 import { AccountInfo } from "@azure/msal-browser";
-import { useState } from "react";
-import { CircularProgress } from "@mui/material";
+import { useMsal } from "@azure/msal-react";
+import AddPhotoAlternateOutlinedIcon from "@mui/icons-material/AddPhotoAlternateOutlined";
+import IconButton from "@mui/material/Button";
+import { styled } from "@mui/material/styles";
 import { t } from "i18next";
+import { useRef, useState } from "react";
+import { uploadFile } from "../api/api";
+import { apiUse } from "../authConfig";
 
 interface UploadFileButtonProps {
   disabled: boolean;
@@ -16,21 +15,11 @@ interface UploadFileButtonProps {
 
 const acceptedImageTypes = ["jpg", "jpeg", "png", "webp"];
 
-const VisuallyHiddenInput = styled("input")({
-  clip: "rect(0 0 0 0)",
-  clipPath: "inset(50%)",
-  height: 1,
-  overflow: "hidden",
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  whiteSpace: "nowrap",
-  width: 1,
-});
-
 const isValidFileType = (file: File) => {
   // only validates images for now, eventually should validate other file types
-  const acceptedFileTypesFormatted = acceptedImageTypes.map(type => 'image/' + type);
+  const acceptedFileTypesFormatted = acceptedImageTypes.map(
+    (type) => "image/" + type
+  );
   return acceptedFileTypesFormatted.includes(file.type);
 };
 
@@ -41,6 +30,7 @@ export default function InputFileUpload({
   const { instance } = useMsal();
   const [uploading, setUploading] = useState(false);
   const [fileInputKey, setFileInputKey] = useState(Date.now());
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const encodeAndUploadFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -87,25 +77,51 @@ export default function InputFileUpload({
     }
   };
 
+  const handleKeyPress = (ev: React.KeyboardEvent<Element>) => {
+    if (ev.key === "Enter" && !ev.shiftKey) {
+      fileInputRef.current?.click(); // Trigger file input click
+    }
+  };
+
   return (
-    <IconButton
-      component="label"
-      role={undefined}
-      variant="text"
-      tabIndex={-1}
+    <StyledIconButton
+      aria-label={t("upload.image")}
+      tabIndex={0}
       disabled={disabled || uploading}
+      onKeyDown={handleKeyPress}
+      onClick={() => fileInputRef.current?.click()}
+      loading={uploading}
+      size="large"
     >
-      {uploading ? <CircularProgress /> : <AttachFileIcon />}
+      <AddPhotoAlternateOutlinedIcon />
       <VisuallyHiddenInput
         type="file"
         key={fileInputKey}
+        ref={fileInputRef}
         onChange={encodeAndUploadFile}
-        accept={acceptedImageTypes.map(type => '.' + type).toString()} //only images for now since OpenAI API only supports images
-      // https://platform.openai.com/docs/guides/vision#what-type-of-files-can-i-upload (TLDR; png, jpeg, jpg, webp.)
-      // (and non animated gif but we will omit them for simplicity for now)
-      //accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
-      //multiple
+        accept={acceptedImageTypes.map((type) => "." + type).toString()}
       />
-    </IconButton>
+    </StyledIconButton>
   );
 }
+
+const VisuallyHiddenInput = styled("input")({
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
+  height: 1,
+  overflow: "hidden",
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  whiteSpace: "nowrap",
+  width: 1,
+});
+
+const StyledIconButton = styled(IconButton)({
+  borderRadius: "50%", // Makes the button round
+  minWidth: 0, // Prevent default min width
+  padding: "12px",
+  "&:hover": {
+    backgroundColor: "rgba(0, 0, 0, 0.2)", // Optional hover effect
+  },
+});
