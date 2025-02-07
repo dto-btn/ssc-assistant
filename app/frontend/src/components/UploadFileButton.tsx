@@ -99,11 +99,7 @@ export default function InputFileUpload({
         key={fileInputKey}
         ref={fileInputRef}
         onChange={encodeAndUploadFile}
-        accept={acceptedImageTypes.map((type) => "." + type).toString()} //only images for now since OpenAI API only supports images
-        // https://platform.openai.com/docs/guides/vision#what-type-of-files-can-i-upload (TLDR; png, jpeg, jpg, webp.)
-        // (and non animated gif but we will omit them for simplicity for now)
-        //accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
-        //multiple
+        accept={acceptedImageTypes.map((type) => "." + type).toString()}
       />
     </StyledIconButton>
   );

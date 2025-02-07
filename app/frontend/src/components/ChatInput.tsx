@@ -103,16 +103,6 @@ export const ChatInput = ({
         >
           <IconButton
             onClick={handleRemoveFile}
-            // sx={{
-            //   alignItems: "top",
-            //   mr: -2,
-            //   mt: -2,
-            //   backgroundColor: "white",
-            //   border: "1px solid black",
-            //   "&:hover": {
-            //     backgroundColor: "white", // maintain white background on hover
-            //   },
-            // }}
             size="large"
             color="primary"
             aria-description={t("delete") + ": " + t("user.file.upload")}
