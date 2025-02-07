@@ -15,7 +15,6 @@ import React from "react";
 interface TopMenuProps {
   toggleDrawer: (arg: boolean) => void;
   ref: React.RefObject<HTMLButtonElement>;
-  onClearChat: () => void;
   onNewChat: () => void;
 }
 
@@ -26,7 +25,7 @@ type TopMenuItem = {
 };
 
 export const TopMenu = forwardRef<HTMLButtonElement, TopMenuProps>(
-  ({ toggleDrawer, onClearChat, onNewChat }, ref) => {
+  ({ toggleDrawer, onNewChat }, ref) => {
     const { t } = useTranslation();
     const { graphData } = useContext(UserContext);
 
@@ -38,13 +37,6 @@ export const TopMenu = forwardRef<HTMLButtonElement, TopMenuProps>(
           onNewChat();
         },
       },
-      // {
-      //   icon: <DeleteIcon sx={{ fontSize: "1.1rem" }} />,
-      //   label: t("clear.conversation.short"),
-      //   onClick: () => {
-      //     onClearChat();
-      //   },
-      // },
     ];
 
     return (

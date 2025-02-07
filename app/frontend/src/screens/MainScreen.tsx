@@ -772,7 +772,6 @@ const MainScreen = () => {
       <TopMenu
         toggleDrawer={setOpenDrawer}
         ref={menuIconRef}
-        onClearChat={handleClearChat}
         onNewChat={handleNewChat}
       />
       <Box
