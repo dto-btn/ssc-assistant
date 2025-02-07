@@ -52,12 +52,13 @@ export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
         )}
         <UserBubbleContainer tabIndex={0}>
           {url && (
-            <ImageContainer
-              component="img"
-              // @ts-expect-error - we are using `img` component type, but `Box` doesnt know about src prop
-              src={url}
-              aria-description={t("user.file.upload")}
-            ></ImageContainer>
+            <ImageContainer>
+              <img
+                src={url}
+                aria-description={t("user.file.upload")}
+                height={550}
+              />
+            </ImageContainer>
           )}
           <Typography sx={visuallyHidden}>{t("aria.user.question")}</Typography>{" "}
           {/* Hidden div for screen reader */}

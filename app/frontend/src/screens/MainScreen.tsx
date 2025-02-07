@@ -581,14 +581,6 @@ const MainScreen = () => {
     });
   };
 
-  const handleAddQuotedText = (quotedText: string) => {
-    setQuotedText(quotedText);
-  };
-
-  const handleRemoveQuote = () => {
-    setQuotedText(undefined);
-  };
-
   const hanldeUpdateModelVersion = (modelName: string) => {
     setCurrentChatHistory((prevChatHistory) => {
       const updatedChatHistory = {
@@ -822,7 +814,6 @@ const MainScreen = () => {
               makeApiRequest(question, userData, attachments)
             }
             quotedText={quotedText}
-            handleRemoveQuote={handleRemoveQuote}
             selectedModel={currentChatHistory.model}
           />
         </Box>
