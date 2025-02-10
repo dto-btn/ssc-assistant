@@ -62,41 +62,49 @@ export const AdminMainScreen = () => {
         day: 'numeric'
     });
 
-    if (isError) {
-        return (
-            <h1>There was an error loading the data. Please try again.</h1>
-        )
-    }
-
-    if (!monthlyReport || !weeklyReport || !monthlyUserEngagementReport) {
-        return (
-            <Box>
-                <h1>SSC Assistant Reports</h1>
-                <h2>Report Date: {dateTodayHumanFormat}</h2>
-                <AdminLoadingMessage />
-            </Box>
-        )
-    }
-
     return (
         <Box>
             <CssBaseline />
             <TopMenuAdminPage />
             <Box display={"flex"} flexDirection={"column"} gap={2} p={2}>
-                <Typography variant="h1">SSC Assistant Reports</Typography>
-                <Typography variant="body1" fontWeight={"bold"}>Report Date: {dateTodayHumanFormat}</Typography>
-                <Typography variant="h2">Monthly User Engagement</Typography>
-                <Typography variant="body1">This report shows the SSC Assistant's user engagement statistics month-over-month.</Typography>
-                <UserEngagementReport data={monthlyUserEngagementReport} />
-                <Typography variant="h2">Statistics over time</Typography>
-                <Typography variant="body1">This report shows the SSC Assistant's usage statistics month-over-month.</Typography>
-                <MonthlyReport data={monthlyReport} />
-                <Typography variant="h2" fontWeight={"bold"}>Statistics by day of week</Typography>
-                <Typography variant="body1">
-                    This report compares the SSC Assistant's statistics by day of the week.
-                </Typography>
-                <WeeklyReport data={weeklyReport} />
+                {(() => {
+
+                    if (isError) {
+                        return (
+                            <h1>There was an error loading the data. Please try again.</h1>
+                        )
+                    }
+
+                    if (!monthlyReport || !weeklyReport || !monthlyUserEngagementReport) {
+                        return (
+                            <Box>
+                                <h1>SSC Assistant Reports</h1>
+                                <h2>Report Date: {dateTodayHumanFormat}</h2>
+                                <AdminLoadingMessage />
+                            </Box>
+                        )
+                    }
+
+                    return (
+                        <>
+                            <Typography variant="h1">SSC Assistant Reports</Typography>
+                            <Typography variant="body1" fontWeight={"bold"}>Report Date: {dateTodayHumanFormat}</Typography>
+                            <Typography variant="h2">Monthly User Engagement</Typography>
+                            <Typography variant="body1">This report shows the SSC Assistant's user engagement statistics month-over-month.</Typography>
+                            <UserEngagementReport data={monthlyUserEngagementReport} />
+                            <Typography variant="h2">Statistics over time</Typography>
+                            <Typography variant="body1">This report shows the SSC Assistant's usage statistics month-over-month.</Typography>
+                            <MonthlyReport data={monthlyReport} />
+                            <Typography variant="h2" fontWeight={"bold"}>Statistics by day of week</Typography>
+                            <Typography variant="body1">
+                                This report compares the SSC Assistant's statistics by day of the week.
+                            </Typography>
+                            <WeeklyReport data={weeklyReport} />
+                        </>
+                    )
+                })()}
             </Box>
         </Box>
     )
+
 }
