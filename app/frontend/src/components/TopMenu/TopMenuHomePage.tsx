@@ -34,18 +34,11 @@ export const TopMenuHomePage = forwardRef<HTMLButtonElement, TopMenuHomePageProp
   const topMenuItems: TopMenuHomePageItem[] = [
     {
       icon: <AddCommentIcon sx={{ fontSize: "1.1rem" }} />,
-      label: t("new.conversation.short"),
+      label: t("new.conversation"),
       onClick: () => {
         onNewChat()
       }
     },
-    {
-      icon: <DeleteIcon sx={{ fontSize: "1.1rem" }} />,
-      label: t("clear.conversation.short"),
-      onClick: () => {
-        onClearChat()
-      }
-    }
   ]
 
   return (

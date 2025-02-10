@@ -25,7 +25,6 @@ import { apiUse } from "../authConfig";
 import { AccountInfo, InteractionStatus } from "@azure/msal-browser";
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from "uuid";
-import QuoteTextTooltip from "../components/QuoteTextTooltip";
 import { TutorialBubble } from "../components/TutorialBubble";
 import { bookReservation } from "../api/api";
 import { allowedToolsSet } from "../allowedTools";
@@ -582,14 +581,6 @@ const MainScreen = () => {
     });
   };
 
-  const handleAddQuotedText = (quotedText: string) => {
-    setQuotedText(quotedText);
-  };
-
-  const handleRemoveQuote = () => {
-    setQuotedText(undefined);
-  };
-
   const hanldeUpdateModelVersion = (modelName: string) => {
     setCurrentChatHistory((prevChatHistory) => {
       const updatedChatHistory = {
@@ -781,7 +772,6 @@ const MainScreen = () => {
       <TopMenuHomePage
         toggleDrawer={setOpenDrawer}
         ref={menuIconRef}
-        onClearChat={handleClearChat}
         onNewChat={handleNewChat}
       />
       <Box
@@ -794,7 +784,6 @@ const MainScreen = () => {
         maxWidth="lg"
       >
         <Box sx={{ flexGrow: 1 }}></Box>
-        <QuoteTextTooltip addQuotedText={handleAddQuotedText} />
         <ChatMessagesContainer
           chatHistory={currentChatHistory}
           isLoading={isLoading}
@@ -824,7 +813,6 @@ const MainScreen = () => {
               makeApiRequest(question, userData, attachments)
             }
             quotedText={quotedText}
-            handleRemoveQuote={handleRemoveQuote}
             selectedModel={currentChatHistory.model}
           />
         </Box>

@@ -41,6 +41,41 @@ resource "azurerm_storage_container" "assistantfiles" {
   container_access_type = "private"
 }
 
+data "azurerm_storage_account_sas" "blob_read_sas" {
+  connection_string = azurerm_storage_account.dev.primary_connection_string
+  https_only        = true
+  #signed_version    = "2022-11-02"
+
+  resource_types {
+    service   = false
+    container = false
+    object    = true
+  }
+
+  services {
+    blob  = true
+    queue = false
+    table = false
+    file  = false
+  }
+
+  permissions {
+    read    = true
+    write   = false
+    delete  = false
+    list    = false
+    add     = false
+    create  = false
+    update  = false
+    process = false
+    tag     = false
+    filter  = false
+  }
+
+  start = "2025-01-01T00:00:00Z"  # Set this to the desired start time
+  expiry = "2030-12-31T23:59:59Z"  # Set this to the desired expiry time
+}
+
 data "azuread_user" "dev1" {
   user_principal_name = "guillaume.turcotte2@ssc-spc.gc.ca"
 }
