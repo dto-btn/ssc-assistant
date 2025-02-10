@@ -1,15 +1,11 @@
 import MenuIcon from "@mui/icons-material/Menu";
 import { Box, IconButton } from "@mui/material";
-import AppBar from "@mui/material/AppBar";
-import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
-import logo from "../../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { UserProfilePicture } from '../ProfilePicture';
 import { useContext } from "react";
 import { UserContext } from '../../context/UserContext';
 import { forwardRef } from "react";
-import DeleteIcon from '@mui/icons-material/Delete';
 import AddCommentIcon from '@mui/icons-material/AddComment';
 import React from "react";
 import { TopMenuFrame } from "./subcomponents/TopMenuFrame";
@@ -17,7 +13,6 @@ import { TopMenuFrame } from "./subcomponents/TopMenuFrame";
 interface TopMenuHomePageProps {
   toggleDrawer: (arg: boolean) => void;
   ref: React.RefObject<HTMLButtonElement>;
-  onClearChat: () => void;
   onNewChat: () => void;
 }
 
@@ -27,7 +22,7 @@ type TopMenuHomePageItem = {
   onClick: () => void;
 }
 
-export const TopMenuHomePage = forwardRef<HTMLButtonElement, TopMenuHomePageProps>(({ toggleDrawer, onClearChat, onNewChat }, ref) => {
+export const TopMenuHomePage = forwardRef<HTMLButtonElement, TopMenuHomePageProps>(({ toggleDrawer, onNewChat }, ref) => {
   const { t } = useTranslation();
   const { graphData } = useContext(UserContext);
 

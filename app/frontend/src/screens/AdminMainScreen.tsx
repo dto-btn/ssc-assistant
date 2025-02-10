@@ -68,7 +68,7 @@ export const AdminMainScreen = () => {
         )
     }
 
-    if (!monthlyReport || !weeklyReport) {
+    if (!monthlyReport || !weeklyReport || !monthlyUserEngagementReport) {
         return (
             <Box>
                 <h1>SSC Assistant Reports</h1>

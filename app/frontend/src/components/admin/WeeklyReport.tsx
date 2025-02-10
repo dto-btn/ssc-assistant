@@ -1,4 +1,3 @@
-import { BarChart, Bar, Rectangle, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { WeeklyReportItemModel } from "../../api/admin.models"
 import { Box } from '@mui/material';
 import { SimpleDataTable } from '../chart/SimpleDataTable';

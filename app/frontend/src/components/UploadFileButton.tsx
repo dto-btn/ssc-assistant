@@ -90,7 +90,6 @@ export default function InputFileUpload({
       disabled={disabled || uploading}
       onKeyDown={handleKeyPress}
       onClick={() => fileInputRef.current?.click()}
-      loading={uploading}
       size="large"
     >
       <AddPhotoAlternateOutlinedIcon />

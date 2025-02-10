@@ -4,7 +4,7 @@ import { SimpleDataTable } from "../chart/SimpleDataTable";
 import { Box } from "@mui/material";
 
 type Props = {
-    data: MonthlyUserEngagementModel[] | null
+    data: MonthlyUserEngagementModel[]
 }
 export const UserEngagementReport: React.FC<Props> = ({ data }) => {
     return (
