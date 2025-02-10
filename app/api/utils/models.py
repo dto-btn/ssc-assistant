@@ -1,5 +1,4 @@
 from dataclasses import field
-from enum import Enum
 from marshmallow_dataclass import dataclass
 from typing import Any, Dict, List, Literal, Optional
 
@@ -29,12 +28,23 @@ class ToolInfo:
     payload: Optional[Dict] = None
 
 @dataclass
+class Attachment:
+    """
+    Supports various attachments, type, and blob storage location.
+    example:
+    { type: 'image', blob_storage_url: "https://somestorage.azurestorage.net/hash"}
+    """
+    type: str
+    blob_storage_url: str
+
+@dataclass
 class Message:
     role: str
     quotedText: Optional[str] = None
     content: Optional[str] = None
     context: Optional[Context] = None
     tools_info: Optional[ToolInfo] = None
+    attachments: Optional[List[Attachment]] = None
 
 @dataclass
 class Completion:
@@ -56,23 +66,9 @@ class MessageRequest:
     lang: str = field(default='en')
     max: int = field(default=10)
     tools: List[str] = field(default_factory=lambda: ["corporate", "geds"])
+    corporateFunction: str = field(default='intranet_question')
     uuid: str = field(default='')
     fullName: str = field(default='')
-
-class QueryType(Enum):
-    VECTOR_SIMPLE_HYBRID = "vectorSimpleHybrid"
-
-@dataclass
-class AzureCognitiveSearchParameters:
-    endpoint: str
-    indexName: str
-    key: str
-    queryType: QueryType = QueryType.VECTOR_SIMPLE_HYBRID
-
-@dataclass
-class AzureCognitiveSearchDataSource:
-    type: str = field(init=False, default="azure_search")
-    parameters: AzureCognitiveSearchParameters
 
 @dataclass
 class Feedback:
@@ -82,10 +78,22 @@ class Feedback:
 
 @dataclass
 class BookingConfirmation:
-  bookingType: str
-  buildingId: str
-  floorId: str
-  roomId: str
-  createdBy: str
-  assignedTo: str
-  startDate: str
+    bookingType: str
+    buildingId: str
+    floorId: str
+    roomId: str
+    createdBy: str
+    assignedTo: str
+    startDate: str
+
+@dataclass
+class FilePayload:
+    '''Contains the payload of the file uploaded to be fed to the OpenAI API'''
+    encoded_file: str
+    name: str
+
+@dataclass
+class SuggestionRequest:
+    '''this is a suggestion request that most likely comes from the myssc+ search feature'''
+    query: str
+    corporate_function: str = field(default='intranet_question')

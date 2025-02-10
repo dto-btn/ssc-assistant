@@ -24,10 +24,21 @@ resource "azurerm_storage_table" "flagged" {
   storage_account_name = azurerm_storage_account.dev.name
 }
 
+resource "azurerm_storage_table" "suggest" {
+  name                 = "suggest"
+  storage_account_name = azurerm_storage_account.dev.name
+}
+
 resource "azurerm_storage_container" "archibus" {
   name                 = "archibus-floor-plans"
   storage_account_name = azurerm_storage_account.dev.name
   container_access_type = "blob"
+}
+
+resource "azurerm_storage_container" "assistantfiles" {
+  name                 = "assistant-chat-files"
+  storage_account_name = azurerm_storage_account.dev.name
+  container_access_type = "private"
 }
 
 data "azuread_user" "dev1" {
@@ -50,6 +61,11 @@ resource "azurerm_role_assignment" "storage_table_contributor_api" {
   principal_id         = azurerm_linux_web_app.api.identity.0.principal_id
 }
 
+resource "azurerm_role_assignment" "storage_blob_contributor_api" {
+  scope                = azurerm_storage_account.dev.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azurerm_linux_web_app.api.identity.0.principal_id
+}
 
 resource "azurerm_role_assignment" "storage_table_contributor" {
   for_each             = toset(local.all_dev_user_object_ids)

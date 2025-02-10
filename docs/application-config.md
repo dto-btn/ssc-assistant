@@ -7,7 +7,7 @@ and the authorization is done via OAuth2 scopes.
 
 This will demonstrate how to perform **some** of the `az cli` configuration changes needed for the App Registration.
 
-You must ensure you have `Owner` Role on the *Application registration/Application* before being able to run those 
+You must ensure you have `Owner` Role on the *Application registration/Application* before being able to run those
 commands.
 
 ### Basic configuration
@@ -19,7 +19,7 @@ Documentation [is found here](https://learn.microsoft.com/en-us/cli/azure/ad/app
 az ad app show --id 12345678-1234-1234-1234-1234567890ab
 
 # update basic flags to false
-az ad app update --id <your-app-id> --enable-id-token-issuance false
+az ad app update --id <your-app-id> --enable-id-token-issuance true
 az ad app update --id <your-app-id> --enable-access-token-issuance false
 touch api-scope.json
 uuidgen
@@ -29,7 +29,7 @@ And paste the content:
 
 ```json
 {
-  "oauth2Permissions": [
+  "oauth2PermissionScopes": [
     {
       "adminConsentDescription": "Access to the API",
       "adminConsentDisplayName": "API Access",
@@ -64,3 +64,41 @@ AZURE_AD_CLIENT_ID            = "api://<uuid>"
 ```
 
 And for the `frontend.tf` the scope requested needs to be appropriate.
+
+
+### Application specific scope
+
+This is an extra step that shows how to add an extra scope that would be used by applications only in the confidential client auth flow. For application only we use AppRoles instead of the API scopes as normal, the scopes (shown in `value`) will still be provided in the access token.
+
+
+```json
+[
+    {
+        "allowedMemberTypes": [
+            "Application"
+        ],
+        "description": "Access to the SSC Assistant API for applications",
+        "displayName": "API Access for Application",
+        "isEnabled": true,
+        "value": "api.access.app"
+    }
+]
+```
+
+And then add it `az ad app update --id <app-id> --app-roles @appRoles.json`
+
+Note: [this is validated against this schema, search for appRole](https://graph.microsoft.com/v1.0/$metadata#applications)
+
+#### Granting Application the role
+
+Now that you have this new appRole defined, you can assign it to a specific application, in order to allow it to access it.
+
+Here is one would do that using the `az` CLI.
+
+```bash
+az ad app permission add --id $CLIENT_SP_ID --api $API_SP_ID --api-permissions <your-app-role-id>=Role
+# grant might be needed after that ... (see console message)
+az ad app permission grant --id $CLIENT_SP_ID --api $API_SP_ID --scope api.access.app
+# verify and validate it has been granted
+az ad app permission list-grants --id $CLIENT_SP_ID
+```

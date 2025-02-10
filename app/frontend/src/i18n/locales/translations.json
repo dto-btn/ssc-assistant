@@ -91,6 +91,10 @@
         "en": "Clear Current Chat",
         "fr": "Effacer la conversation actuelle"
     },
+    "clear.conversation.short": {
+        "en": "Clear",
+        "fr": "Effacer"
+    },
     "toolsUsed": {
         "en": "Tools used by the assistant in the response",
         "fr": "Outils utilisés par l'assistant dans la réponse"
@@ -104,8 +108,8 @@
         "fr": "Guide d'utilisation de l'IA Générative"
     },
     "corporate": {
-        "en": "MySSC+",
-        "fr": "MonSPC+"
+        "en": "SSC's data",
+        "fr": "Données des SPC"
     },
     "langlink.shorthand": {
         "en": "fr",
@@ -488,8 +492,12 @@
         "fr": "Avertissement : Votre historique de conversation est plein. Vous devez supprimer une conversation existante pour en créer une nouvelle."
     },
     "new.conversation": {
-        "en": "New Conversarion",
+        "en": "New Conversation",
         "fr": "Nouvelle conversation"
+    },
+    "new.conversation.short": {
+        "en": "New",
+        "fr": "Nouveau"
     },
     "drawer.header.conversations": {
         "en": "Conversations",
@@ -526,5 +534,41 @@
     "archibus.floorPlan": {
         "en": "Archibus floor plan",
         "fr": "Plan d'étage Archibus"
+    },
+    "none": {
+        "en": "None",
+        "fr": "Aucun(ne)"
+    },
+    "intranet_question": {
+        "en": "MySSC+",
+        "fr": "MonSPC+"
+    },
+    "telecom_question": {
+        "en": "Telecomunication",
+        "fr": "Télécomunication"
+    },
+    "corporate.data": {
+        "en": "SSC's data",
+        "fr": "Données de SPC"
+    },
+    "pmcoe_question": {
+        "en": "PMCoE",
+        "fr": "CEGP"
+    },
+    "bits": {
+        "en": "EDR (BITS)",
+        "fr": "EDR (BITS) [FR]"
+    },
+    "uploaded.file.alt": {
+        "en": "Uploaded file preview",
+        "fr": "Aperçu du fichier téléchargé"
+    },
+    "invalid.file.type": {
+        "en": "Invalid file type. Please upload a image.",
+        "fr": "Type de fichier non valide. Veuillez télécharger une image."
+    },
+    "user.file.upload": {
+        "en": "User uploaded file.",
+        "fr": "Fichier téléchargé par l'utilisateur."
     }
 }

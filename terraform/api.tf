@@ -53,17 +53,17 @@ resource "azurerm_monitor_action_group" "alerts_group" {
 
   email_receiver {
     name          = "sendtogt"
-    email_address = data.azuread_user.dev-gt.user_principal_name
+    email_address = data.azuread_user.users["dev-gt"].user_principal_name
   }
 
   email_receiver {
     name          = "alainforcier"
-    email_address = data.azuread_user.po-af.user_principal_name
+    email_address = data.azuread_user.users["po-af"].user_principal_name
   }
 
   email_receiver {
     name          = "davidsimard"
-    email_address = data.azuread_user.tl-davids.user_principal_name
+    email_address = data.azuread_user.users["tl-davids"].user_principal_name
   }
 }
 
@@ -83,7 +83,7 @@ resource "azurerm_linux_web_app" "api" {
     api_definition_url = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net/openapi.json"
 
     application_stack {
-      python_version = "3.11"
+      python_version = "3.12"
     }
     use_32_bit_worker = false
 
@@ -116,8 +116,11 @@ resource "azurerm_linux_web_app" "api" {
     SERVER_URL_PROD               = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net"
     JWT_SECRET                    = var.jwt_secret
     DATABASE_ENDPOINT             = azurerm_storage_account.main.primary_table_endpoint
+    BLOB_ENDPOINT                 = azurerm_storage_account.main.primary_blob_endpoint 
     AZURE_AD_CLIENT_ID            = var.aad_client_id_api
     AZURE_AD_TENANT_ID            = data.azurerm_client_config.current.tenant_id
+    ARCHIBUS_API_USERNAME         = var.archibus_api_user
+    ARCHIBUS_API_PASSWORD         = var.archibus_api_password
     WEBSITE_WEBDEPLOY_USE_SCM     = true
     WEBSITE_RUN_FROM_PACKAGE      = "1"
     ALLOWED_TOOLS                 = "corporate, geds"
@@ -126,7 +129,7 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   sticky_settings { # settings that are the same regardless of deployment slot..
-    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DATABASE_ENDPOINT", "AZURE_SEARCH_INDEX_NAME", "ALLOWED_TOOLS" ]
+    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DATABASE_ENDPOINT", "BLOB_ENDPOINT", "AZURE_SEARCH_INDEX_NAME", "ALLOWED_TOOLS", "ARCHIBUS_API_USERNAME", "ARCHIBUS_API_PASSWORD"]
   }
 }
 

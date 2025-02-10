@@ -19,15 +19,37 @@ resource "azurerm_storage_table" "chat" {
   storage_account_name = azurerm_storage_account.main.name
 }
 
+resource "azurerm_storage_table" "flagged" {
+  name                 = "flagged"
+  storage_account_name = azurerm_storage_account.main.name
+}
+
+resource "azurerm_storage_table" "suggest" {
+  name                 = "suggest"
+  storage_account_name = azurerm_storage_account.main.name
+}
+
 resource "azurerm_role_assignment" "storage_table_contributor" {
   scope                = azurerm_storage_account.main.id
   role_definition_name = "Storage Table Data Contributor"
   principal_id         = azurerm_linux_web_app.api.identity.0.principal_id
 }
 
+resource "azurerm_role_assignment" "storage_blob_contributor" {
+  scope                = azurerm_storage_account.main.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = azurerm_linux_web_app.api.identity.0.principal_id
+}
+
 resource "azurerm_storage_container" "sscplus" {
   name                 = "sscplus-index-data"
   storage_account_name = azurerm_storage_account.main.name
+}
+
+resource "azurerm_storage_container" "assistantfiles" {
+  name                 = "assistant-chat-files"
+  storage_account_name = azurerm_storage_account.main.name
+  container_access_type = "blob"
 }
 
 /*
