@@ -11,7 +11,7 @@ import {
   Disclaimer,
   DrawerMenu,
   FeedbackForm,
-  TopMenu,
+  TopMenuHomePage,
 } from "../components";
 import ChatMessagesContainer from "../containers/ChatMessagesContainer";
 import { t } from "i18next";
@@ -769,7 +769,7 @@ const MainScreen = () => {
   return (
     <UserContext.Provider value={userData}>
       <CssBaseline />
-      <TopMenu
+      <TopMenuHomePage
         toggleDrawer={setOpenDrawer}
         ref={menuIconRef}
         onNewChat={handleNewChat}
