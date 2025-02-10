@@ -1,5 +1,4 @@
 import json
-
 import requests
 import logging
 
@@ -56,7 +55,7 @@ def book_specific_room(buildingId: str, floorId: str, roomId: str, bookingDate: 
 
     # Make api call to Archibus API to book room
     try:
-        # TODO Use api_helper
+        # TODO Use general book method to reserve booking
         # TODO Use verify booking for booking_dto
         url = "http://localhost:80/api/v1/reservations/"
 
