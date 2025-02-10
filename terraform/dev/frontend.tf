@@ -46,6 +46,7 @@ resource "azurerm_linux_web_app" "frontend" {
     VITE_API_BACKEND         = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net/"
     VITE_API_KEY             = var.vite_api_key
     VITE_SAS_TOKEN           = data.azurerm_storage_account_sas.blob_read_sas.sas
+    VITE_BLOB_STORAGE_URL    = azurerm_storage_account.dev.primary_blob_endpoint
     WEBSITE_RUN_FROM_PACKAGE = "1"
     MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
     PORT = 8080
@@ -53,7 +54,8 @@ resource "azurerm_linux_web_app" "frontend" {
   }
 
   sticky_settings {
-    app_setting_names = [ "VITE_API_BACKEND", "VITE_API_KEY", "WEBSITE_RUN_FROM_PACKAGE", "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET", "PORT", "VITE_SAS_TOKEN"]
+    app_setting_names = [ "VITE_API_BACKEND", "VITE_API_KEY", "WEBSITE_RUN_FROM_PACKAGE",
+    "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET", "PORT", "VITE_SAS_TOKEN", "VITE_BLOB_STORAGE_URL"]
   }
 
   identity {
