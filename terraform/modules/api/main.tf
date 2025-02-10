@@ -3,15 +3,15 @@
 *****************************************************/
 resource "azurerm_service_plan" "api" {
   name                = "${var.name_prefix}${var.project_name}-api-plan"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
+  resource_group_name = var.rg_name
+  location            = var.default_location
   sku_name            = "S1"
   os_type             = "Linux"
 }
 
 resource "azurerm_monitor_metric_alert" "http_5xx_alert" {
   name                = "SSC Assistant 5xx Alert"
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = var.rg_name
   scopes              = [azurerm_linux_web_app.api.id]
   description         = "Alert for HTTP 5xx Errors"
   severity            = 1
@@ -29,7 +29,7 @@ resource "azurerm_monitor_metric_alert" "http_5xx_alert" {
 
 resource "azurerm_monitor_metric_alert" "http_4xx_alert" {
   name                = "SSC Assistant 4xx Alert"
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = var.rg_name
   scopes              = [azurerm_linux_web_app.api.id]
   description         = "Alert for HTTP 4xx Errors"
   severity            = 2
@@ -48,32 +48,25 @@ resource "azurerm_monitor_metric_alert" "http_4xx_alert" {
 
 resource "azurerm_monitor_action_group" "alerts_group" {
   name                = "SSC Assistant Alerts group"
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = var.rg_name
   short_name          = "Alert"
 
-  email_receiver {
-    name          = "sendtogt"
-    email_address = data.azuread_user.users["dev-gt"].user_principal_name
-  }
-
-  email_receiver {
-    name          = "alainforcier"
-    email_address = data.azuread_user.users["po-af"].user_principal_name
-  }
-
-  email_receiver {
-    name          = "davidsimard"
-    email_address = data.azuread_user.users["tl-davids"].user_principal_name
+  dynamic "email_receiver" {
+    for_each = var.users
+    content {
+      name          = email_receiver.value.name
+      email_address = email_receiver.value.user_principal_name
+    }
   }
 }
 
 resource "azurerm_linux_web_app" "api" {
   name                = "${replace(var.project_name, "_", "-")}-api"
-  resource_group_name = azurerm_resource_group.main.name
+  resource_group_name = var.rg_name
   location            = azurerm_service_plan.api.location
   service_plan_id     = azurerm_service_plan.api.id
 
-  virtual_network_subnet_id = azurerm_subnet.api.id
+  virtual_network_subnet_id = var.subnet_id
 
   client_affinity_enabled = true
   https_only = true
@@ -106,25 +99,25 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   app_settings = {
-    AZURE_SEARCH_SERVICE_ENDPOINT = "https://${azurerm_search_service.main.name}.search.windows.net"
-    AZURE_SEARCH_ADMIN_KEY        = azurerm_search_service.main.primary_key
-    AZURE_OPENAI_ENDPOINT         = data.azurerm_cognitive_account.ai.endpoint
-    AZURE_OPENAI_API_KEY          = data.azurerm_cognitive_account.ai.primary_access_key
+    AZURE_SEARCH_SERVICE_ENDPOINT = "https://${var.search_service_name}.search.windows.net"
+    AZURE_SEARCH_ADMIN_KEY        = var.search_service_pk
+    AZURE_OPENAI_ENDPOINT         = var.ai_endpoint
+    AZURE_OPENAI_API_KEY          = var.ai_key
     AZURE_OPENAI_MODEL            = "gpt-4o"
     AZURE_SEARCH_INDEX_NAME       = "current"
     GEDS_API_TOKEN                = var.geds_api_token
     SERVER_URL_PROD               = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net"
     JWT_SECRET                    = var.jwt_secret
-    DATABASE_ENDPOINT             = azurerm_storage_account.main.primary_table_endpoint
-    BLOB_ENDPOINT                 = azurerm_storage_account.main.primary_blob_endpoint 
+    DATABASE_ENDPOINT             = var.table_endpoint
+    BLOB_ENDPOINT                 = var.blob_endpoint
     AZURE_AD_CLIENT_ID            = var.aad_client_id_api
-    AZURE_AD_TENANT_ID            = data.azurerm_client_config.current.tenant_id
+    AZURE_AD_TENANT_ID            = var.tenant_id
     ARCHIBUS_API_USERNAME         = var.archibus_api_user
     ARCHIBUS_API_PASSWORD         = var.archibus_api_password
     WEBSITE_WEBDEPLOY_USE_SCM     = true
     WEBSITE_RUN_FROM_PACKAGE      = "1"
     ALLOWED_TOOLS                 = join(", ", var.allowed_tools)
-    WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
+    WEBSITE_AUTH_AAD_ALLOWED_TENANTS = var.tenant_id
     #PORT = 5001
   }
 
@@ -136,7 +129,7 @@ resource "azurerm_linux_web_app" "api" {
 resource "azurerm_monitor_diagnostic_setting" "api_diagnostics" {
   name                       = "${replace(var.project_name, "_", "-")}-api-diag"
   target_resource_id         = azurerm_linux_web_app.api.id
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+  log_analytics_workspace_id = var.log_analytics_workspace_id
 
   enabled_log {
     category = "AppServiceConsoleLogs"

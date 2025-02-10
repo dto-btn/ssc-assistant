@@ -34,3 +34,34 @@ variable "enable_auth" {
     default = true
     description = "this will either enable the auth endpoint or not on the application"
 }
+
+variable "rg_name" {
+    type = string
+    description = "value of the resource group name"
+}
+
+variable "log_analytics_workspace_id" {
+    type = string
+    description = "the id of the log analytics workspace"
+}
+
+variable "tenant_id" {
+    type = string
+    description = "the tenant id"
+}
+
+variable "sas_token" {
+    type = string
+    description = "the sas token"
+    sensitive = true
+}
+
+variable "blob_endpoint" {
+    type = string
+    description = "the blob endpoint"
+}
+
+variable "subnet_id" {
+    type = string
+    description = "the subnet id"
+}
