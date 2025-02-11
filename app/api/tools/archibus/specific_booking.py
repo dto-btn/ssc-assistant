@@ -15,13 +15,13 @@ logger.setLevel(logging.DEBUG)
     "tool_type": "archibus",
     "function": {
         "name": "book_specific_room",
-        "description": "Books a selected room given the building identifier, floor identifier, room identifier, booking type, and booking date. This function should only be invoked after collecting all the necessary details from the user. It books the space directly in the system using the Archibus API. IF YOU DONT HAVE A BUILDINGID, USE GET_BUILDINGS TOOL FUNCTION FIRST. DO NOT USE THE BUILDING ADDRESS OR NAME AS THE BUILDINGID.",
+        "description": "Books a selected room given the building identifier, floor identifier, room identifier, booking type, and booking date. This function should only be invoked after collecting all the necessary details from the user. It books the space directly in the system using the Archibus API. IF YOU DONT HAVE A BUILDINGID, USE GET_BUILDING TOOL FUNCTION FIRST. DO NOT USE THE BUILDING ADDRESS OR NAME AS THE BUILDINGID.",
         "parameters": {
             "type": "object",
             "properties": {
                 "buildingId": {
                     "type": "string",
-                    "description": "The unique identifier of the building where the user wishes to book a room. Do not use the street number or address. Example: AB-BAS4. IF YOU DONT HAVE A BUILDINGID, USE GET_BUILDINGS TOOL FUNCTION FIRST. DO NOT USE THE BUILDING ADDRESS OR NAME AS THE BUILDINGID."
+                    "description": "The unique identifier of the building where the user wishes to book a room. Do not use the street number or address. Example: AB-BAS4. IF YOU DONT HAVE A BUILDINGID, USE GET_BUILDING TOOL FUNCTION FIRST. DO NOT USE THE BUILDING ADDRESS OR NAME AS THE BUILDINGID."
                 },
                 "floorId": {
                     "type": "string",
@@ -93,8 +93,18 @@ def book_specific_room(buildingId: str, floorId: str, roomId: str, bookingDate: 
     "type": "function",
     "tool_type": "archibus",
     "function": {
-        "name": "get_buildings",
+        "name": "get_building",
         "description": "Retrieves a list of all buildings and their details from the Archibus database. This function returns information such as the building identifier, name, address, and zip code, enabling comprehensive building management and easier room booking.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "description": "The address of the building where the user wishes to book a room."
+                },
+            },
+            "required": ["address"]
+        },
         "returns": {
             "description": "A list of building information objects. Each object contains a building identifier, name, address, and zip code.",
             "type": "array",
@@ -137,10 +147,40 @@ def book_specific_room(buildingId: str, floorId: str, roomId: str, bookingDate: 
         }
     }
 })
-def get_buildings():
+def get_building(address: str):
     try:
-        response = make_archibus_api_call(uri=f"v1/data?viewName=ab-sp-vw-bl.axvw&dataSource=abSpVwBl_ds_0", httptype='GET')
-        return json.loads(response.text)
+        payload = [
+            {
+                "fieldName": "address1",
+                "filterValue": address,
+                "filterOperation": "LIKE"
+            }
+        ]
+
+        response = make_archibus_api_call(uri=f"v1/data?viewName=ab-sp-vw-bl.axvw&dataSource=abSpVwBl_ds_0",
+                                          payload=payload,
+                                          httptype='GET')
+        response_json = response.json()
+
+        if response_json:
+            return response_json
+        else:
+            payload2 = [
+                {
+                    "fieldName": "address2",
+                    "filterValue": address,
+                    "filterOperation": "LIKE"
+                }
+            ]
+            response2 = make_archibus_api_call(uri=f"v1/data?viewName=ab-sp-vw-bl.axvw&dataSource=abSpVwBl_ds_0",
+                                               payload=payload2,
+                                               httptype='GET')
+            response_json2 = response2.json()
+
+            if response_json2:
+                return response_json2
+            else:
+                return False
     except requests.HTTPError as e:
         msg = "Unable to get building info"
         logger.error(msg)
