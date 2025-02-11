@@ -14,6 +14,7 @@ from .bookinginfo import get_user_bookings, get_available_rooms
 
 # Employee information
 from .employeeinfo import get_employee_record
+from .repeat_booking import create_repeat_booking, get_bookings
 from .specific_booking import book_specific_room, get_buildings
 
 # Profile Data
@@ -49,5 +50,7 @@ __all__ = [
     user_profile,
     "get_archibus_profile",
     "book_specific_room",
-    "get_buildings"
+    "get_buildings",
+    "create_repeat_booking",
+    "get_bookings"
 ]
