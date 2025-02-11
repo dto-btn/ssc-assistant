@@ -1,9 +1,10 @@
+import datetime
 import json
 import requests
 import logging
 
 from app.api.tools.archibus.api_helper import make_archibus_api_call
-from app.api.tools.archibus.userprofile import user_profile
+from .userprofile import user_profile
 from app.api.utils.auth import get_or_create_user
 from app.api.utils.decorators import tool_metadata
 
@@ -16,13 +17,13 @@ logger.setLevel(logging.DEBUG)
     "tool_type": "archibus",
     "function": {
         "name": "create_repeat_booking",
-        "description": "Creates a new booking for the user based on an existing future-dated booking or the latest booking from the user's history if no reference date is provided. The function replicates the room, building, and booking type found in the referenced booking. The booking is made directly in the system using the Archibus API. USE THE GET_BOOKINGS TOOL FUNCTION TO RETRIEVE THE USERS PREVIOUS AND FUTURE BOOKINGS, AND USE THE LATEST BOOKING IF NOT SPECIFIED",
+        "description": "Creates a new booking for the user based on an existing future-dated booking or the latest booking from the user's history if no reference date is provided. The function replicates the room, building, and booking type found in the referenced booking. The booking is made directly in the system using the Archibus API. USE THE GET_FUTURE_BOOKINGS TOOL FUNCTION TO RETRIEVE THE USER'S FUTURE BOOKINGS, AND USE THE LATEST BOOKING IF NOT SPECIFIED",
         "parameters": {
             "type": "object",
             "properties": {
                 "buildingId": {
                     "type": "string",
-                    "description": "The unique identifier of the building where the user wishes to book a room. Do not use the street number or address. Example: AB-BAS4. IF YOU DONT HAVE A BUILDINGID, USE GET_BUILDINGS TOOL FUNCTION FIRST. DO NOT USE THE BUILDING ADDRESS OR NAME AS THE BUILDINGID."
+                    "description": "The unique identifier of the building where the user wishes to book a room. Do not use the street number or address. Example: AB-BAS4. IF YOU DONT HAVE A BUILDINGID, USE GET_FUTURE_BUILDINGS TOOL FUNCTION FIRST. DO NOT USE THE BUILDING ADDRESS OR NAME AS THE BUILDINGID."
                 },
                 "floorId": {
                     "type": "string",
@@ -61,72 +62,8 @@ def create_repeat_booking(bookingDate: str, buildingId: str, floorId: str, roomI
     # Make 2 API calls, one to get future booking data, one to create a new booking
     # TODO Use General book to create new booking
     # TODO Use Verify Booking
+    # TODO Show Floor Plan
     try:
-        # get_url = f"http://localhost:80/api/v1/reservations/creator/{userId}"
-        # get_headers = {
-        #     'Accept': 'application/json'
-        # }
-        # get_response = requests.get(url=get_url, headers=get_headers)
-        #
-        # # Parse response & make into payload for repeat booking
-        # booking_history = get_response.json()
-
-        # logger.debug(f"GET Response status code: {get_response.status_code}")
-        # logger.debug(f"GET Response text: {get_response.text}")
-
-        # Gets reassigned later, is initialized like this to remember the data structure
-        # repeat_booking = {
-        #     "rm.status": "Available",
-        #     "rmpct.pct_id": -1,
-        #     "bl.bl_id": "HQ-BAS4",
-        #     "rm.rm_cat": "ABW WK POINT",
-        #     "rm.rm_id": "W080",
-        #     "rmpct.dv_id": "08_CIO",
-        #     "rm.rm_type": "WK TYPE 2",
-        #     "rmpct.dp_id": "08_BUSINESS INFO",
-        #     "bl.site_id": "HQ-1285&1303BASL",
-        #     "rmpct.date_start": "2024-11-29T00:00:00Z",
-        #     "rmpct.date_end": "2024-11-29T00:00:00Z",
-        #     "rm.fl_id": "T305",
-        #     "rm.rm_std": "ABW GCW",
-        #     "rmpct.em_id": "PAGEERATHAN, JENEERTHAN"
-        # }
-
-        # bookingType = "FULLDAY"
-        #
-        # if repeat_booking['dayPart'] == 1:
-        #     bookingType = "MORNING"
-        # elif repeat_booking['dayPart'] == 2:
-        #     bookingType = "AFTERNOON"
-        #
-        # if referenceDate != "":
-        #     repeat_booking = matching_object = next(
-        #         (obj for obj in booking_history if obj.get('dateEnd') == referenceDate), None)
-        # elif booking_history:
-        #     sorted_history = sorted(booking_history, key=lambda x: x['dateEnd'], reverse=True)
-        #     repeat_booking = sorted_history[0]
-        # else:
-        #     msg = f"No booking history found to create a repeat booking for {bookingDate}"
-        #     logger.error(msg)
-        #     return msg
-
-        # POST request to create the repeat booking based on referenced booking details
-        # if repeat_booking:
-        #     booking_dto = {
-        #         "buildingId": repeat_booking['buildingId'],
-        #         "floorId": repeat_booking['floorId'],
-        #         "roomId": repeat_booking['roomId'],
-        #         "createdBy": userId,
-        #         "assignedTo": userId,
-        #         "bookingType": bookingType,
-        #         "startDate": bookingDate
-        #     }
-        # else:
-        #     msg = f"No booking history found to create a repeat booking for {bookingDate}"
-        #     logger.error(msg)
-        #     return msg
-        #
-        # logger.debug(f"Booking DTO = {booking_dto}")
 
         booking_dto = {
             "buildingId": buildingId,
@@ -159,8 +96,8 @@ def create_repeat_booking(bookingDate: str, buildingId: str, floorId: str, roomI
     "type": "function",
     "tool_type": "archibus",
     "function": {
-        "name": "get_bookings",
-        "description": "Fetches a list of all upcoming and previous room bookings from the Archibus system. This function provides comprehensive details about each booking, including room status, category, type, booking start and end dates, and associated department and employee identifiers.",
+        "name": "get_future_bookings",
+        "description": "Fetches a list of all upcoming room bookings from the Archibus system. This function provides comprehensive details about each booking, including room status, category, type, booking start and end dates, and associated department and employee identifiers.",
         "returns": {
             "description": "An array of objects representing booking records. Each object contains detailed information about the room and the booking, such as room status, building, room category, room identifier, division and department identifiers, site identifier, booking start and end dates, floor identifier, room standard, and the employee identifier for the person who made the booking.",
             "type": "array",
@@ -242,15 +179,22 @@ def create_repeat_booking(bookingDate: str, buildingId: str, floorId: str, roomI
         }
     }
 })
-def get_bookings():
+def get_future_bookings():
     if user_profile.verify_profile():
         emId = user_profile.get_profile_data()['employee']['emId']
         if emId:
+            current_date = datetime.date.today().isoformat()
+
             payload = [
                 {
                     "fieldName": "em_id",
                     "filterValue": emId,
                     "filterOperation": "="
+                },
+                {
+                    "fieldName": "date_start",
+                    "filterValue": current_date,
+                    "filterOperation": ">"
                 }
             ]
             response = make_archibus_api_call(
