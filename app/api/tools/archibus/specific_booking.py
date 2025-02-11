@@ -57,6 +57,7 @@ def book_specific_room(buildingId: str, floorId: str, roomId: str, bookingDate: 
     try:
         # TODO Use general book method to reserve booking
         # TODO Use verify booking for booking_dto
+        # TODO Show Floor Plan
         url = "http://localhost:80/api/v1/reservations/"
 
         booking_dto = {
