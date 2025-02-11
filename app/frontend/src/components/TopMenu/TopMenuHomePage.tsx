@@ -62,6 +62,7 @@ export const TopMenuHomePage = forwardRef<
           {topMenuItems.map((item, index) => (
             <Box
               key={index}
+              tabIndex={0}
               sx={{
                 transition: "border-color 0.2s",
                 display: "flex",

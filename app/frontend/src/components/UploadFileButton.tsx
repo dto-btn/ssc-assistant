@@ -86,7 +86,7 @@ export default function InputFileUpload({
 
   return (
     <StyledIconButton
-      aria-label={t("upload.image")}
+      aria-label={uploading ? t("upload.uploading") : t("upload.image")}
       tabIndex={-1}
       disabled={disabled || uploading}
       onKeyDown={handleKeyPress}
