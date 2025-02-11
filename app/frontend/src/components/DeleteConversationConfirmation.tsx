@@ -7,7 +7,6 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  styled,
 } from "@mui/material";
 
 type Props = {
