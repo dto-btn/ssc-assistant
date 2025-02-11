@@ -574,5 +574,9 @@
     "upload.image": {
         "en": "Upload an image",
         "fr": "Téléchargez une image"
+    },
+    "upload.uploading": {
+        "en": "Upload in progress...",
+        "fr": "Téléchargement en cours..."
     }
 }
