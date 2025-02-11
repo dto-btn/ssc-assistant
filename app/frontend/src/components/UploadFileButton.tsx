@@ -79,14 +79,15 @@ export default function InputFileUpload({
 
   const handleKeyPress = (ev: React.KeyboardEvent<Element>) => {
     if (ev.key === "Enter" && !ev.shiftKey) {
-      fileInputRef.current?.click(); // Trigger file input click
+      ev.preventDefault();
+      fileInputRef.current?.click(); //Trigger file input click
     }
   };
 
   return (
     <StyledIconButton
       aria-label={t("upload.image")}
-      tabIndex={0}
+      tabIndex={-1}
       disabled={disabled || uploading}
       onKeyDown={handleKeyPress}
       onClick={() => fileInputRef.current?.click()}
