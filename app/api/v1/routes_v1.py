@@ -368,10 +368,10 @@ def suggestion(suggestion_request: SuggestionRequest):
     thread.start()
 
     # Process language
-    if message_request.lang == "fr":
+    if suggestion_request.lang == "fr":
         logger.info("Process lang --> fr")
         message_request.messages = [Message(role="system", content=SUGGEST_SYSTEM_PROMPT_FR)]
-    elif message_request.lang == "en":
+    elif suggestion_request.lang == "en":
         logger.info("Process lang --> en")
         message_request.messages = [Message(role="system", content=SUGGEST_SYSTEM_PROMPT_EN)]
     else:
@@ -381,35 +381,40 @@ def suggestion(suggestion_request: SuggestionRequest):
     if suggestion_request.system_prompt is not None:
         logger.debug("System prompt was provided: %s", suggestion_request.system_prompt)
         message_request.messages = [Message(role="system", content=suggestion_request.system_prompt)]
+
+    # Do inference
     _, completion = chat_with_data(message_request)
-    if isinstance(completion, ChatCompletion):
-        completion_response = convert_chat_with_data_response(completion)
-
-        # Post Processing: Dedupe citations
-        if completion_response.message.context and suggestion_request.dedupe_citations:
-            logger.info("Deduping citations")
-            citations: List[Citation] = completion_response.message.context.citations
-            # Track seen URLs
-            seen_urls = set()
-            unique_citations = []
-
-            # Loop through citations and filter out duplicates
-            for citation in citations:
-                if citation.url not in seen_urls:
-                    seen_urls.add(citation.url)
-                    unique_citations.append(citation)
-
-            # Update the citations list with unique citations
-            completion_response.message.context.citations = unique_citations
-        # Post Processing: Remove markdown
-        if suggestion_request.remove_markdown and completion_response.message.content:
-            logger.info("Markdown removal")
-            # Regular expression pattern to match [doc0] to [doc9999],
-            # if we get more citations than this, call the cops
-            pattern = r'\[doc[0-9]{0,4}\]'
-            completion_response.message.content = re.sub(pattern, '', completion_response.message.content)
-    else:
+    if not isinstance(completion, ChatCompletion):
         abort(500, message="Invalid completion type")
+
+    # Convert ChatCompletion to Completion
+    completion_response = convert_chat_with_data_response(completion)
+
+    # Post Processing: Dedupe citations
+    if completion_response.message.context and suggestion_request.dedupe_citations:
+        logger.info("Deduping citations")
+        citations: List[Citation] = completion_response.message.context.citations
+        # Track seen URLs
+        seen_urls = set()
+        unique_citations = []
+
+        # Loop through citations and filter out duplicates
+        for citation in citations:
+            if citation.url not in seen_urls:
+                seen_urls.add(citation.url)
+                unique_citations.append(citation)
+
+        # Update the citations list with unique citations
+        completion_response.message.context.citations = unique_citations
+    # Post Processing: Remove markdown
+    if suggestion_request.remove_markdown and completion_response.message.content:
+        logger.info("Markdown removal")
+        # Regular expression pattern to match [doc0] to [doc9999],
+        # if we get more citations than this, call the cops
+        pattern = r"\[doc[0-9]{0,4}\]"
+        completion_response.message.content = re.sub(
+            pattern, "", completion_response.message.content
+        )
 
     return completion_response
 
