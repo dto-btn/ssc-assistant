@@ -1,34 +1,62 @@
-from typing import TypedDict, List
+from enum import Enum
+from typing import Literal, TypedDict, List
 from azure.data.tables import TableClient
 
 
-class SuggestOpts(TypedDict):
+class SuggestRequestOpts(TypedDict):
     """
     Options for generating a suggestion.
     """
 
-    pass
+    language: str
 
+type SuggestionContextWithoutSuggestionsReason = Literal[
+    "INVALID_QUERY", "INVALID_LANGUAGE"
+]
 
 class SuggestionCitation(TypedDict):
     """
     A citation for a suggestion, which includes the content and source URL.
     """
 
-    content: str
+    citation_display: str
     url: str
 
+class SuggestionResponseBase(TypedDict):
+    """
+    A base response for a suggestion, which includes the has_suggestions flag.
+    """
 
-class SuggestionContext(TypedDict):
+    original_query: str
+    has_suggestions: bool
+    language: str
+    timestamp: str
+    requester: str
+
+
+class SuggestionContextWithSuggestions(SuggestionResponseBase):
     """
     A suggestion context, which includes the body and citations. This is used
     to generate a suggestion. It is also used on frontend's redirect call to
     initiate a new chat with the user that is based on the suggestion.
     """
 
-    body: str
-    citations: List[SuggestionCitation]
+    has_suggestions: Literal[True]
+    suggestion_body: str
+    suggestion_citations: List[SuggestionCitation]
 
+
+class SuggestionContextWithoutSuggestions(SuggestionResponseBase):
+    """
+    A suggestion context, which includes the body. This is used to generate a suggestion.
+    """
+
+    has_suggestions: Literal[False]
+    reason: SuggestionContextWithoutSuggestionsReason
+
+type SuggestionContext = (
+    SuggestionContextWithSuggestions | SuggestionContextWithoutSuggestions
+)
 
 class SuggestionService:
     """
@@ -39,9 +67,79 @@ class SuggestionService:
         self.suggest_client = suggest_client
         pass
 
-    def suggest(self, query: str, opts: SuggestOpts) -> SuggestionContext:
+    def suggest(self, query: str, opts: SuggestRequestOpts) -> SuggestionContext:
         """
         Generate a suggestion based on the options provided.
         """
+        query = SuggestionService._validate_and_clean_query(query)
+        opts = self._validate_and_clean_opts(opts)
 
-        pass
+        if query is False:
+            return {
+                # This will be set to False for invalid queries.
+                "has_suggestions": False,
+                "reason": "INVALID_QUERY",
+            }
+
+        if opts is False:
+            return {
+                # This will be set to False for invalid queries.
+                "has_suggestions": False,
+                "reason": "INVALID_LANGUAGE",
+            }
+
+        return {
+            # This will be set to True for valid queries.
+            "has_suggestions": True,
+            # This will be either "en" or "fr", depending on the language of the suggestion.
+            "language": opts["language"],
+            # This will be set to the query that was used to generate the suggestion.
+            "original_query": query,
+            # This will be set to the time the suggestion was generated.
+            "timestamp": "2021-10-01T00:00:00.000Z",
+            # This will be set to the application that requested the suggestion.
+            "requester": "mysscplus",
+            # This will be set to the body of the suggestion.
+            "suggestion_body": "This will be a long-ish string that contains the suggestion, with references to citations.",
+            # This will be a list of citations for the suggestion.
+            "suggestion_citations": [
+                {
+                    "citation_display": "This is what you will display to the user as the citation.",
+                    "url": "https://example.com",
+                }
+            ],
+        }
+
+    @staticmethod
+    def _validate_and_clean_query(query: str) -> str | Literal[False]:
+        """
+        Validate the query to ensure it is a valid query.
+        """
+        if not query:
+            return False
+
+        stripped_query = query.strip()
+
+        # after strip, if query is empty, return False
+        if not stripped_query:
+            return False
+
+        # if more cleaning is needed, add here
+        # for now, return the stripped query
+
+        return stripped_query
+
+    def _validate_and_clean_opts(
+        self, opts: SuggestRequestOpts
+    ) -> SuggestRequestOpts | Literal[False]:
+        """
+        Validate the options to ensure they are valid.
+        """
+        # if more validation is needed, add here
+        # for now, return the options as is
+
+        # accept only fr or en
+        if opts["language"] not in ["fr", "en"]:
+            return False
+
+        return opts

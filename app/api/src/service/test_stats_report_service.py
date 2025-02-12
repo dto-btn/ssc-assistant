@@ -10,14 +10,14 @@ from src.repository.conversation_repository import ConversationRepository
 from src.service.stats_report_service import StatsReportService
 
 
-class TestContext(TypedDict):
+class TstContext(TypedDict):
     mock_chat_table_dao: MagicMock
     conversation_repository: ConversationRepository
     stats_report_service: StatsReportService
 
 
 @fixture(scope="session", autouse=True)
-def ctx() -> TestContext:
+def ctx() -> TstContext:
     mock_chat_table_dao = MagicMock()
     mock_chat_table_dao.all.return_value = []
     mock_chat_table_dao = cast(ChatTableDaoInterface, mock_chat_table_dao)
@@ -31,7 +31,7 @@ def ctx() -> TestContext:
     }
 
 
-def test_empty_database_returns_empty_results(ctx: TestContext):
+def test_empty_database_returns_empty_results(ctx: TstContext):
     assert isinstance(ctx, dict)
     assert isinstance(ctx["conversation_repository"], ConversationRepository)
 
