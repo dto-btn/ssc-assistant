@@ -374,7 +374,10 @@ export const DrawerMenu = ({
             <ListItemIcon>
               <DeleteIcon />
             </ListItemIcon>
-            <ListItemText primary={t("clear.conversation")} />
+            <ListItemText
+              primary={t("clear.conversation")}
+              aria-label={t("clear.conversation")}
+            />
           </ListItemButton>
         </ListItem>
         <ListItem key="newChat" disablePadding>
@@ -382,7 +385,11 @@ export const DrawerMenu = ({
             <ListItemIcon>
               <AddCommentIcon />
             </ListItemIcon>
-            <ListItemText primary={t("new.conversation")} />
+            <ListItemText
+              primary={t("new.conversation")}
+              aria-description={t("tutorial.newChat")}
+              aria-label={t("new.conversation")}
+            />
           </ListItemButton>
         </ListItem>
         <ListItem key="chatSelection" disablePadding>

@@ -102,3 +102,17 @@ az ad app permission grant --id $CLIENT_SP_ID --api $API_SP_ID --scope api.acces
 # verify and validate it has been granted
 az ad app permission list-grants --id $CLIENT_SP_ID
 ```
+
+### Modifications to SPA Redirect URIS
+
+NOTE: This is not supported by the current `az app update` CLI. Need to use graph API instead:
+
+[See this thread](https://github.com/Azure/azure-cli/issues/25766)
+
+```
+az rest \
+  --method "patch" \
+  --uri "https://graph.microsoft.com/v1.0/applications/<<object-id>>" \
+  --headers "{'Content-Type': 'application/json'}" \
+  --body "{'spa': {'redirectUris': [ 'https://jwt.ms', 'https://www.example.com/callbacks' ]}}"
+  ```

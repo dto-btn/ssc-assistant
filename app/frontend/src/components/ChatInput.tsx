@@ -106,6 +106,7 @@ export const ChatInput = ({
             size="large"
             color="primary"
             aria-description={t("delete") + ": " + t("user.file.upload")}
+            aria-label={t("delete")}
           >
             <CloseIcon color="primary" />
           </IconButton>
@@ -147,7 +148,7 @@ export const ChatInput = ({
           borderStyle: "solid",
         }}
       >
-        {!disabledFeaturesSet.has("file_upload") && (
+        {!disabledFeaturesSet.has("file_upload") && !file && (
           <UploadFileButton disabled={disabled} onFileUpload={onFileUpload} />
         )}
         <InputBase

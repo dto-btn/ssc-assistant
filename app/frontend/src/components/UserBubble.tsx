@@ -56,7 +56,8 @@ export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
               <img
                 src={url}
                 aria-description={t("user.file.upload")}
-                height={550}
+                height="100%"
+                width="100%"
               />
             </ImageContainer>
           )}
