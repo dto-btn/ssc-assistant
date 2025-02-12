@@ -51,7 +51,11 @@ client = AzureOpenAI(
     azure_ad_token_provider=token_provider,
 )
 
-def _create_azure_cognitive_search_data_source(index_name: str, top: int=3) -> dict:
+def _create_azure_cognitive_search_data_source(index_name: str, top: int=3, lang_filter: str="") -> dict:
+    current_filter=""
+    if lang_filter == 'en' or lang_filter == 'fr':
+        current_filter = f"langcode eq '{lang_filter}'"
+        logger.debug("Adding langfilter to datasource query %s", current_filter)
     return {"data_sources":
             [{
             "type": "azure_search",
@@ -67,6 +71,7 @@ def _create_azure_cognitive_search_data_source(index_name: str, top: int=3) -> d
                     "type": "api_key",
                     "key": key,
                 },
+                "filter": current_filter,
                 "embedding_dependency": {
                     "type": "deployment_name",
                     "deployment_name": "text-embedding-ada-002"
@@ -126,7 +131,9 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                         return (tools_info, client.chat.completions.create(
                             messages=messages,
                             model=model,
-                            extra_body=_create_azure_cognitive_search_data_source(index_name, message_request.top),
+                            extra_body=_create_azure_cognitive_search_data_source(index_name,
+                                                                                  message_request.top,
+                                                                                  message_request.lang),
                             stream=stream
                         ))
 
