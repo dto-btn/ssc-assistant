@@ -1,3 +1,4 @@
+import datetime
 from typing import TypedDict
 from unittest.mock import MagicMock
 from pytest import fixture
@@ -113,3 +114,33 @@ def test_response_original_query_is_set_to_the_query_used_to_generate_the_sugges
         },
     )
     assert response["original_query"] == output_query
+
+
+# 4. The response has a query field set to the query that was used to generate the suggestion.
+@pytest.mark.parametrize(
+    "time_now, expected_output",
+    [
+        (datetime.datetime(2022, 1, 1, 0, 0, 0, 0), "2022-01-01T00:00:00.000Z"),
+        (datetime.datetime(2000, 1, 2, 0, 0, 0, 0), "2000-01-02T00:00:00.000Z"),
+        (datetime.datetime(2022, 1, 1, 12, 30, 0, 0), "2022-01-01T12:30:00.000Z"),
+        (datetime.datetime(2000, 1, 2, 12, 30, 0, 0), "2000-01-02T12:30:00.000Z"),
+    ],
+)
+def test_response_timestamp_is_set_to_the_time_the_suggestion_was_generated(
+    ctx: TestContext,
+    time_now: datetime.datetime,
+    expected_output: str,
+):
+    # mock the datetime module using pytest
+    with pytest.MonkeyPatch.context() as m:
+        m.setattr(
+            ctx["suggestion_service"], "_generate_datetime_object", lambda: time_now
+        )
+
+        response = ctx["suggestion_service"].suggest(
+            "cool",
+            {
+                "language": "en",
+            },
+        )
+        assert response["timestamp"] == expected_output

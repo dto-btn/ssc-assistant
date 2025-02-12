@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Literal, TypedDict, List
 from azure.data.tables import TableClient
+from datetime import datetime
 
 
 class SuggestRequestOpts(TypedDict):
@@ -71,7 +72,7 @@ class SuggestionService:
         """
         Generate a suggestion based on the options provided.
         """
-        query = SuggestionService._validate_and_clean_query(query)
+        query = self._validate_and_clean_query(query)
         opts = self._validate_and_clean_opts(opts)
 
         if query is False:
@@ -96,7 +97,7 @@ class SuggestionService:
             # This will be set to the query that was used to generate the suggestion.
             "original_query": query,
             # This will be set to the time the suggestion was generated.
-            "timestamp": "2021-10-01T00:00:00.000Z",
+            "timestamp": self._format_timestamp(self._generate_datetime_object()),
             # This will be set to the application that requested the suggestion.
             "requester": "mysscplus",
             # This will be set to the body of the suggestion.
@@ -110,8 +111,7 @@ class SuggestionService:
             ],
         }
 
-    @staticmethod
-    def _validate_and_clean_query(query: str) -> str | Literal[False]:
+    def _validate_and_clean_query(self, query: str) -> str | Literal[False]:
         """
         Validate the query to ensure it is a valid query.
         """
@@ -143,3 +143,15 @@ class SuggestionService:
             return False
 
         return opts
+
+    def _generate_datetime_object(self) -> datetime:
+        """
+        Generate a timestamp for the suggestion.
+        """
+        return datetime.now()
+
+    def _format_timestamp(self, timestamp: datetime) -> str:
+        """
+        Format the timestamp for display.
+        """
+        return timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
