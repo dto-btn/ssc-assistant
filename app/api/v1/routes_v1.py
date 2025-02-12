@@ -1,11 +1,9 @@
 import json
 import logging
+import re
 import threading
+from typing import List
 import uuid
-import os
-
-from azure.identity import DefaultAzureCredential
-from azure.data.tables import TableServiceClient
 
 import openai
 import requests
@@ -13,10 +11,8 @@ from apiflask import APIBlueprint, abort
 from flask import Response, jsonify, stream_with_context
 from openai.types.chat import ChatCompletion
 
+from utils.manage_message import SUGGEST_SYSTEM_PROMPT_FR, SUGGEST_SYSTEM_PROMPT_EN
 from src.context.build_context import build_context
-from src.service.stats_report_service import StatsReportService
-from src.dao.chat_table_dao import ChatTableDaoImpl
-from src.repository.conversation_repository import ConversationRepository
 
 from tools.archibus.archibus_functions import make_api_call
 from utils.auth import auth, user_ad
@@ -30,9 +26,11 @@ from utils.db import (
 )
 from utils.models import (
     BookingConfirmation,
+    Citation,
     Completion,
     Feedback,
     FilePayload,
+    Message,
     MessageRequest,
     SuggestionRequest,
 )
@@ -308,6 +306,9 @@ def upload_file(file: FilePayload):
     arg_name="suggestion_request",
     example={
         "query": "What is SSC's content management system?",
+        "lang": "en",
+        "dedupe_citations": True,
+        "remove_markdown": True
     },
 )
 @api_v1.output(
@@ -356,7 +357,7 @@ def suggestion(suggestion_request: SuggestionRequest):
         quotedText="",
         model="gpt-4o",
         top=10,
-        lang="en",
+        lang=suggestion_request.lang,
         tools=["corporate"],
         corporateFunction=suggestion_request.corporate_function,
         uuid=str(uuid.uuid4()),
@@ -367,9 +368,45 @@ def suggestion(suggestion_request: SuggestionRequest):
         thread = threading.Thread(target=store_suggestion, args=(message_request, user))
         thread.start()
 
+        # Process language
+        if message_request.lang == "fr":
+            message_request.messages = [Message(role="system", content=SUGGEST_SYSTEM_PROMPT_FR)]
+        elif message_request.lang == "else":
+            message_request.messages = [Message(role="system", content=SUGGEST_SYSTEM_PROMPT_EN)]
+        else:
+            abort(400, message="Language not supported, must be 'fr' or 'en'")
+
+        # Process system prompt
+        if suggestion_request.system_prompt is not None:
+            logger.debug("System prompt was provided: %s", suggestion_request.system_prompt)
+            message_request.messages = [Message(role="system", content=suggestion_request.system_prompt)]
+
         _, completion = chat_with_data(message_request)
         if isinstance(completion, ChatCompletion):
             completion_response = convert_chat_with_data_response(completion)
+
+            # Post Processing: Dedupe citations
+            if completion_response.message.context and suggestion_request.dedupe_citations:
+                citations: List[Citation] = completion_response.message.context.citations 
+                # Track seen URLs
+                seen_urls = set()
+                unique_citations = []
+
+                # Loop through citations and filter out duplicates
+                for citation in citations:
+                    if citation.url not in seen_urls:
+                        seen_urls.add(citation.url)
+                        unique_citations.append(citation)
+
+                # Update the citations list with unique citations
+                completion_response.message.context.citations = unique_citations
+            
+            # Post Processing: Remove markdown
+            if suggestion_request.remove_markdown and completion_response.message.content:
+                # Regular expression pattern to match [doc0] to [doc9999], 
+                # if we get more citations than this, call the cops
+                pattern = r'\[doc[0-9]{0,4}\]'
+                completion_response.message.content = re.sub(pattern, '', completion_response.message.content)
         else:
             raise TypeError("Expected completion to be of type ChatCompletion")
 
