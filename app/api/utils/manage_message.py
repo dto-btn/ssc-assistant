@@ -139,7 +139,7 @@ def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessage
     suitable to send to the (Azure) OpenAI API.
     """
     messages: List[ChatCompletionMessageParam] = []
-
+    logger.info("in manage messages")
     # Check if the user quoted text in their query
     if message_request.quotedText and message_request.messages and message_request.messages[-1].content:
         quote_injection = ("The user has quoted specific text in their question."
