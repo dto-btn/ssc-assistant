@@ -59,11 +59,17 @@ def test_invalid_query(ctx: TestContext, invalid_query: str | None):
 
 
 def test_valid_query(ctx: TestContext):
-    response = ctx["suggestion_service"].suggest("valid query", {})
+    response = ctx["suggestion_service"].suggest(
+        "valid query",
+        {
+            "language": "en",
+            "requester": "someone_cool",
+        },
+    )
     assert response["has_suggestions"] is True
     assert response["language"] == "en"
     assert response["original_query"] == "valid query"
-    assert response["requester"] == "mysscplus"
+    assert response["requester"] == "someone_cool"
 
 
 # language tests
@@ -82,10 +88,16 @@ def test_valid_query(ctx: TestContext):
 )
 def test_language(ctx: TestContext, expected_language: str, expected_valid: bool):
     response = ctx["suggestion_service"].suggest(
-        "Query with language ${language}", {"language": expected_language}
+        "Query with language ${language}",
+        {
+            "language": expected_language,
+            "requester": "someone_cool",
+        },
     )
 
+
     if expected_valid:
+        assert response["has_suggestions"] is True
         assert response["language"] == expected_language
     else:
         assert response["has_suggestions"] is False
@@ -111,8 +123,10 @@ def test_response_original_query_is_set_to_the_query_used_to_generate_the_sugges
         input_query,
         {
             "language": "en",
+            "requester": "someone_cool",
         },
     )
+    assert response["has_suggestions"] is True
     assert response["original_query"] == output_query
 
 
@@ -141,6 +155,20 @@ def test_response_timestamp_is_set_to_the_time_the_suggestion_was_generated(
             "cool",
             {
                 "language": "en",
+                "requester": "someone_cool",
             },
         )
         assert response["timestamp"] == expected_output
+
+
+def test_requester_field_is_set_to_the_application_that_requested_the_suggestion(
+    ctx: TestContext,
+):
+    response = ctx["suggestion_service"].suggest(
+        "cool",
+        {
+            "language": "en",
+            "requester": "someone_cool",
+        },
+    )
+    assert response["requester"] == "someone_cool"

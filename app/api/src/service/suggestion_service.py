@@ -3,6 +3,27 @@ from typing import Literal, TypedDict, List
 from azure.data.tables import TableClient
 from datetime import datetime
 
+class SuggestRequestInternalValidationSuccess[T](TypedDict):
+    """
+    A response for a failed suggestion request validation.
+    """
+
+    is_valid: Literal[True]
+    data: T
+
+
+class SuggestRequestInternalValidationFailure(TypedDict):
+    """
+    A response for a failed suggestion request validation.
+    """
+
+    is_valid: Literal[False]
+    reason: Literal["INVALID_QUERY", "INVALID_LANGUAGE"]
+
+
+type SuggestRequestInternalValidationResult[T] = (
+    SuggestRequestInternalValidationSuccess[T] | SuggestRequestInternalValidationFailure
+)
 
 class SuggestRequestOpts(TypedDict):
     """
@@ -10,6 +31,7 @@ class SuggestRequestOpts(TypedDict):
     """
 
     language: str
+    requester: str
 
 type SuggestionContextWithoutSuggestionsReason = Literal[
     "INVALID_QUERY", "INVALID_LANGUAGE"
@@ -72,34 +94,38 @@ class SuggestionService:
         """
         Generate a suggestion based on the options provided.
         """
-        query = self._validate_and_clean_query(query)
-        opts = self._validate_and_clean_opts(opts)
+        query: SuggestRequestInternalValidationResult[str] = (
+            self._validate_and_clean_query(query)
+        )
+        opts: SuggestRequestInternalValidationResult[SuggestRequestOpts] = (
+            self._validate_and_clean_opts(opts)
+        )
 
-        if query is False:
+        if query["is_valid"] is False:
             return {
                 # This will be set to False for invalid queries.
                 "has_suggestions": False,
-                "reason": "INVALID_QUERY",
+                "reason": query["reason"],
             }
 
-        if opts is False:
+        if opts["is_valid"] is False:
             return {
                 # This will be set to False for invalid queries.
                 "has_suggestions": False,
-                "reason": "INVALID_LANGUAGE",
+                "reason": opts["reason"],
             }
 
         return {
             # This will be set to True for valid queries.
             "has_suggestions": True,
             # This will be either "en" or "fr", depending on the language of the suggestion.
-            "language": opts["language"],
+            "language": opts["data"]["language"],
             # This will be set to the query that was used to generate the suggestion.
-            "original_query": query,
+            "original_query": query["data"],
             # This will be set to the time the suggestion was generated.
             "timestamp": self._format_timestamp(self._generate_datetime_object()),
             # This will be set to the application that requested the suggestion.
-            "requester": "mysscplus",
+            "requester": opts["data"]["requester"],
             # This will be set to the body of the suggestion.
             "suggestion_body": "This will be a long-ish string that contains the suggestion, with references to citations.",
             # This will be a list of citations for the suggestion.
@@ -111,38 +137,60 @@ class SuggestionService:
             ],
         }
 
-    def _validate_and_clean_query(self, query: str) -> str | Literal[False]:
+    def _validate_and_clean_query(
+        self, query: str
+    ) -> SuggestRequestInternalValidationResult[str]:
         """
         Validate the query to ensure it is a valid query.
         """
         if not query:
-            return False
+            return {
+                "is_valid": False,
+                "reason": "INVALID_QUERY",
+            }
 
         stripped_query = query.strip()
 
         # after strip, if query is empty, return False
         if not stripped_query:
-            return False
+            return {
+                "is_valid": False,
+                "reason": "INVALID_QUERY",
+            }
 
         # if more cleaning is needed, add here
         # for now, return the stripped query
 
-        return stripped_query
+        return {"is_valid": True, "data": stripped_query}
 
     def _validate_and_clean_opts(
         self, opts: SuggestRequestOpts
-    ) -> SuggestRequestOpts | Literal[False]:
+    ) -> SuggestRequestInternalValidationResult[SuggestRequestOpts]:
         """
         Validate the options to ensure they are valid.
         """
-        # if more validation is needed, add here
-        # for now, return the options as is
 
-        # accept only fr or en
+        opts_language = opts.get("language", "") or ""
+        opts["language"] = opts_language.strip().lower()
         if opts["language"] not in ["fr", "en"]:
-            return False
+            return {
+                "is_valid": False,
+                "reason": "INVALID_LANGUAGE",
+            }
 
-        return opts
+        opts_requester = opts.get("requester", "") or ""
+        opts["requester"] = opts_requester.strip()
+        if not opts["requester"]:
+            # strip
+            return {
+                "is_valid": False,
+                "reason": "REQUESTER_NOT_PROVIDED",
+            }
+
+        return {
+            "is_valid": True,
+            "data": opts,
+        }
 
     def _generate_datetime_object(self) -> datetime:
         """
