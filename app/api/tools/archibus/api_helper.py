@@ -44,6 +44,8 @@ def make_archibus_api_call(uri: str, payload=None, httptype=None) -> requests.Re
     if payload:
         if httptype == "GET":
             response = requests.get(archibus_url + uri, headers=headers, json=payload)
+        elif httptype == "PUT":
+            response = requests.put(archibus_url + uri, headers=headers, data=payload)
         else:
             response = requests.post(archibus_url + uri, headers=headers, auth=archibus_token, data=payload)
     else:

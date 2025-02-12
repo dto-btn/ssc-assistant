@@ -10,7 +10,7 @@ from .api_helper import make_api_call,make_archibus_api_call
 from .buildingInfo import get_floors, get_floor_plan
 
 # Booking information
-from .bookinginfo import get_user_bookings, get_available_rooms
+from .bookinginfo import get_user_bookings, fetch_room_availability
 
 # Employee information
 from .employeeinfo import get_employee_record
@@ -41,7 +41,6 @@ __all__ = [
     "make_archibus_api_call",
     "get_user_bookings",
     "get_floors",
-    "get_available_rooms",
     "get_floor_plan",
     "get_current_date",
     "get_employee_record",
