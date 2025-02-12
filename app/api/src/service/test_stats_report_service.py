@@ -17,7 +17,7 @@ class TestContext(TypedDict):
 
 
 @fixture(scope="session", autouse=True)
-def around_each() -> TestContext:
+def ctx() -> TestContext:
     mock_chat_table_dao = MagicMock()
     mock_chat_table_dao.all.return_value = []
     mock_chat_table_dao = cast(ChatTableDaoInterface, mock_chat_table_dao)
