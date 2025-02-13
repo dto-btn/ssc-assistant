@@ -1,10 +1,15 @@
 import datetime
 from typing import TypedDict
 from unittest.mock import MagicMock
-from pytest import fixture
+from pytest import fixture, MonkeyPatch
 import pytest
+import utils.openai
 
+import src.service.suggestion_service
 from src.service.suggestion_service import SuggestionService
+from utils.manage_message import SUGGEST_SYSTEM_PROMPT_EN, SUGGEST_SYSTEM_PROMPT_FR
+
+# always mock "from utils.openai import chat_with_data"
 
 
 class TestContext(TypedDict):
@@ -21,6 +26,13 @@ def ctx() -> TestContext:
         "mock_suggest_table_client": mock_suggest_table_client,
         "suggestion_service": suggestion_service,
     }
+
+@fixture(scope="function", autouse=True)
+def mock_chat_with_data(monkeypatch: MonkeyPatch):
+    mock_func = MagicMock()
+    mock_func.return_value = None, {}
+    monkeypatch.setattr("src.service.suggestion_service.chat_with_data", mock_func)
+    return mock_func
 
 
 def test_instantiation(ctx: TestContext):
@@ -172,3 +184,65 @@ def test_requester_field_is_set_to_the_application_that_requested_the_suggestion
         },
     )
     assert response["requester"] == "someone_cool"
+
+
+def test_store_suggestion_request(ctx: TestContext):
+    raise NotImplementedError(
+        "Need to talk to team & implement this feature after discussion"
+    )
+
+
+@pytest.mark.parametrize(
+    "language, expected_system_prompt",
+    [
+        ("en", SUGGEST_SYSTEM_PROMPT_EN),
+        ("fr", SUGGEST_SYSTEM_PROMPT_FR),
+    ],
+)
+def test_uses_the_right_language_prompt_by_default(
+    ctx: TestContext,
+    language: str,
+    expected_system_prompt: str,
+    mock_chat_with_data: MagicMock,
+):
+    ctx["suggestion_service"].suggest(
+        "cool",
+        {"language": language, "requester": "someone_cool"},
+    )
+
+    assert mock_chat_with_data.call_count == 1
+    system_prompt_message = mock_chat_with_data.call_args[0][0].messages[0]
+    assert system_prompt_message.content == expected_system_prompt
+    assert system_prompt_message.role == "system"
+
+
+@pytest.mark.parametrize(
+    "language",
+    [
+        ("en"),
+        ("fr"),
+    ],
+)
+def test_uses_the_opts_system_prompt_as_override_when_passed_in(
+    ctx: TestContext, mock_chat_with_data: MagicMock, language: str
+):
+    TEST_SYSTEM_PROMPT = "this is a test system prompt"
+
+    ctx["suggestion_service"].suggest(
+        "cool",
+        {
+            "language": language,
+            "requester": "someone_cool",
+            "system_prompt": TEST_SYSTEM_PROMPT,
+        },
+    )
+
+    assert mock_chat_with_data.call_count == 1
+    system_prompt_message = mock_chat_with_data.call_args[0][0].messages[0]
+
+    # should be the system prompt that was passed in. not the default language prompt.
+    assert system_prompt_message.content == TEST_SYSTEM_PROMPT
+    assert system_prompt_message.role == "system"
+
+    # it may have overridden the prompt, but it still returns the language setting
+    assert mock_chat_with_data.call_args[0][0].lang == language

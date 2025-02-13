@@ -1,7 +1,16 @@
 from enum import Enum
-from typing import Literal, TypedDict, List
+import logging
+import threading
+from typing import Any, Literal, TypedDict, List
+import uuid
 from azure.data.tables import TableClient
 from datetime import datetime
+import threading
+from utils.db import store_suggestion
+from utils.manage_message import SUGGEST_SYSTEM_PROMPT_EN, SUGGEST_SYSTEM_PROMPT_FR
+from utils.models import Message, MessageRequest
+from utils.openai import chat_with_data
+
 
 class SuggestRequestInternalValidationSuccess[T](TypedDict):
     """
@@ -32,6 +41,7 @@ class SuggestRequestOpts(TypedDict):
 
     language: str
     requester: str
+    system_prompt: str | None
 
 type SuggestionContextWithoutSuggestionsReason = Literal[
     "INVALID_QUERY", "INVALID_LANGUAGE"
@@ -81,6 +91,9 @@ type SuggestionContext = (
     SuggestionContextWithSuggestions | SuggestionContextWithoutSuggestions
 )
 
+logger = logging.getLogger(__name__)
+
+
 class SuggestionService:
     """
     This service is responsible for creating suggestions and storing them in the database.
@@ -94,38 +107,42 @@ class SuggestionService:
         """
         Generate a suggestion based on the options provided.
         """
-        query: SuggestRequestInternalValidationResult[str] = (
+        query_validation_result: SuggestRequestInternalValidationResult[str] = (
             self._validate_and_clean_query(query)
         )
-        opts: SuggestRequestInternalValidationResult[SuggestRequestOpts] = (
-            self._validate_and_clean_opts(opts)
+        opts_validation_result: SuggestRequestInternalValidationResult[
+            SuggestRequestOpts
+        ] = self._validate_and_clean_opts(opts)
+
+        if query_validation_result["is_valid"] is False:
+            return {
+                # This will be set to False for invalid queries.
+                "has_suggestions": False,
+                "reason": query_validation_result["reason"],
+            }
+
+        if opts_validation_result["is_valid"] is False:
+            return {
+                # This will be set to False for invalid queries.
+                "has_suggestions": False,
+                "reason": opts_validation_result["reason"],
+            }
+
+        result = self._perform_chat(
+            query_validation_result["data"], opts_validation_result["data"]
         )
-
-        if query["is_valid"] is False:
-            return {
-                # This will be set to False for invalid queries.
-                "has_suggestions": False,
-                "reason": query["reason"],
-            }
-
-        if opts["is_valid"] is False:
-            return {
-                # This will be set to False for invalid queries.
-                "has_suggestions": False,
-                "reason": opts["reason"],
-            }
 
         return {
             # This will be set to True for valid queries.
             "has_suggestions": True,
             # This will be either "en" or "fr", depending on the language of the suggestion.
-            "language": opts["data"]["language"],
+            "language": opts_validation_result["data"]["language"],
             # This will be set to the query that was used to generate the suggestion.
-            "original_query": query["data"],
+            "original_query": query_validation_result["data"],
             # This will be set to the time the suggestion was generated.
             "timestamp": self._format_timestamp(self._generate_datetime_object()),
             # This will be set to the application that requested the suggestion.
-            "requester": opts["data"]["requester"],
+            "requester": opts_validation_result["data"]["requester"],
             # This will be set to the body of the suggestion.
             "suggestion_body": "This will be a long-ish string that contains the suggestion, with references to citations.",
             # This will be a list of citations for the suggestion.
@@ -203,3 +220,55 @@ class SuggestionService:
         Format the timestamp for display.
         """
         return timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+
+    def _perform_chat(self, query: str, opts: SuggestRequestOpts) -> SuggestionContext:
+        ## build a MessageRequest in order to send to the OpenAI API.
+        message_request = MessageRequest(
+            query=query,
+            messages=[],  # we don't need messages for this
+            quotedText="",
+            model="gpt-4o",
+            top=10,
+            lang=opts["language"],
+            tools=["corporate"],
+            corporateFunction="intranet_question",  # hardcoded for now
+            uuid=str(uuid.uuid4()),
+        )
+
+        # TODO: Implement
+        # user = user_ad.current_user()
+        # thread = threading.Thread(target=store_suggestion, args=(message_request, user))
+        # thread.start()
+
+        # Process language
+        if opts["language"] == "fr":
+            logger.info("Process lang --> fr")
+            message_request.messages = [
+                Message(role="system", content=SUGGEST_SYSTEM_PROMPT_FR)
+            ]
+        elif opts["language"] == "en":
+            logger.info("Process lang --> en")
+            message_request.messages = [
+                Message(role="system", content=SUGGEST_SYSTEM_PROMPT_EN)
+            ]
+        else:
+            # this should never happen, but just in case
+            return {
+                "has_suggestions": False,
+                "reason": "INVALID_LANGUAGE",
+            }
+
+        # Override with the system_prompt option if provided
+        if opts.get("system_prompt") is not None:
+            logger.debug("System prompt was provided: %s", opts["system_prompt"])
+            message_request.messages = [
+                Message(role="system", content=opts["system_prompt"])
+            ]
+
+        # Do inference
+        _, completion = chat_with_data(message_request)
+
+        # TODO: Implement the rest of it
+        return {}
+
+        # raise NotImplementedError("Need to implement the rest of this function.")
