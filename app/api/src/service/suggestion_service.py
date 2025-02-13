@@ -1,15 +1,12 @@
-from enum import Enum
 import logging
-import threading
-from typing import Any, Literal, TypedDict, List
+from typing import Literal, TypedDict, List
 import uuid
 from azure.data.tables import TableClient
 from datetime import datetime
-import threading
-from utils.db import store_suggestion
 from utils.manage_message import SUGGEST_SYSTEM_PROMPT_EN, SUGGEST_SYSTEM_PROMPT_FR
 from utils.models import Message, MessageRequest
-from utils.openai import chat_with_data
+from utils.openai import chat_with_data, convert_chat_with_data_response
+from openai.types.chat import ChatCompletion
 
 
 class SuggestRequestInternalValidationSuccess[T](TypedDict):
@@ -132,27 +129,7 @@ class SuggestionService:
             query_validation_result["data"], opts_validation_result["data"]
         )
 
-        return {
-            # This will be set to True for valid queries.
-            "has_suggestions": True,
-            # This will be either "en" or "fr", depending on the language of the suggestion.
-            "language": opts_validation_result["data"]["language"],
-            # This will be set to the query that was used to generate the suggestion.
-            "original_query": query_validation_result["data"],
-            # This will be set to the time the suggestion was generated.
-            "timestamp": self._format_timestamp(self._generate_datetime_object()),
-            # This will be set to the application that requested the suggestion.
-            "requester": opts_validation_result["data"]["requester"],
-            # This will be set to the body of the suggestion.
-            "suggestion_body": "This will be a long-ish string that contains the suggestion, with references to citations.",
-            # This will be a list of citations for the suggestion.
-            "suggestion_citations": [
-                {
-                    "citation_display": "This is what you will display to the user as the citation.",
-                    "url": "https://example.com",
-                }
-            ],
-        }
+        return result
 
     def _validate_and_clean_query(
         self, query: str
@@ -267,8 +244,61 @@ class SuggestionService:
 
         # Do inference
         _, completion = chat_with_data(message_request)
+        if not isinstance(completion, ChatCompletion):
+            return {
+                "has_suggestions": False,
+                "reason": "INTERNAL_ERROR",
+            }
 
-        # TODO: Implement the rest of it
-        return {}
+        # # Convert ChatCompletion to Completion
+        completion_response = convert_chat_with_data_response(completion)
 
-        # raise NotImplementedError("Need to implement the rest of this function.")
+        # # Post Processing: Dedupe citations
+        # if completion_response.message.context and suggestion_request.dedupe_citations:
+        #     logger.info("Deduping citations")
+        #     citations: List[Citation] = completion_response.message.context.citations
+        #     # Track seen URLs
+        #     seen_urls = set()
+        #     unique_citations = []
+
+        #     # Loop through citations and filter out duplicates
+        #     for citation in citations:
+        #         if citation.url not in seen_urls:
+        #             seen_urls.add(citation.url)
+        #             unique_citations.append(citation)
+
+        #     # Update the citations list with unique citations
+        #     completion_response.message.context.citations = unique_citations
+        # # Post Processing: Remove markdown
+        # if suggestion_request.remove_markdown and completion_response.message.content:
+        #     logger.info("Markdown removal")
+        #     # Regular expression pattern to match [doc0] to [doc9999],
+        #     # if we get more citations than this, call the cops
+        #     pattern = r"\[doc[0-9]{0,4}\]"
+        #     completion_response.message.content = re.sub(
+        #         pattern, "", completion_response.message.content
+        #     )
+
+        # return completion_response
+
+        return {
+            # This will be set to True for valid queries.
+            "has_suggestions": True,
+            # This will be either "en" or "fr", depending on the language of the suggestion.
+            "language": opts["language"],
+            # This will be set to the query that was used to generate the suggestion.
+            "original_query": query,
+            # This will be set to the time the suggestion was generated.
+            "timestamp": self._format_timestamp(self._generate_datetime_object()),
+            # This will be set to the application that requested the suggestion.
+            "requester": opts["requester"],
+            # This will be set to the body of the suggestion.
+            "suggestion_body": completion_response.message.content,
+            # This will be a list of citations for the suggestion.
+            "suggestion_citations": [
+                {
+                    "citation_display": "This is what you will display to the user as the citation.",
+                    "url": "https://example.com",
+                }
+            ],
+        }

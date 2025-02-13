@@ -4,6 +4,8 @@ from unittest.mock import MagicMock
 from pytest import fixture, MonkeyPatch
 import pytest
 import utils.openai
+from openai.types.chat import ChatCompletion
+from openai.types.chat.chat_completion import Choice, ChatCompletionMessage
 
 import src.service.suggestion_service
 from src.service.suggestion_service import SuggestionService
@@ -30,7 +32,25 @@ def ctx() -> TestContext:
 @fixture(scope="function", autouse=True)
 def mock_chat_with_data(monkeypatch: MonkeyPatch):
     mock_func = MagicMock()
-    mock_func.return_value = None, {}
+    mock_func.return_value = (
+        None,
+        ChatCompletion(
+            id="test_id",
+            object="chat.completion",
+            created=-1,
+            model="test_model",
+            choices=[
+                Choice(
+                    finish_reason="stop",
+                    index=0,
+                    message=ChatCompletionMessage(
+                        role="assistant",
+                        content="test_content",
+                    ),
+                )
+            ],
+        ),
+    )
     monkeypatch.setattr("src.service.suggestion_service.chat_with_data", mock_func)
     return mock_func
 
@@ -98,7 +118,12 @@ def test_valid_query(ctx: TestContext):
         (None, False),
     ],
 )
-def test_language(ctx: TestContext, expected_language: str, expected_valid: bool):
+def test_language(
+    ctx: TestContext,
+    expected_language: str,
+    expected_valid: bool,
+    mock_chat_with_data: MagicMock,
+):
     response = ctx["suggestion_service"].suggest(
         "Query with language ${language}",
         {
@@ -183,6 +208,7 @@ def test_requester_field_is_set_to_the_application_that_requested_the_suggestion
             "requester": "someone_cool",
         },
     )
+    assert response["has_suggestions"] is True
     assert response["requester"] == "someone_cool"
 
 
@@ -246,3 +272,21 @@ def test_uses_the_opts_system_prompt_as_override_when_passed_in(
 
     # it may have overridden the prompt, but it still returns the language setting
     assert mock_chat_with_data.call_args[0][0].lang == language
+
+def test_returns_internal_error_if_chat_with_data_response_is_not_chat_completion(
+    ctx: TestContext, mock_chat_with_data: MagicMock
+):
+    mock_chat_with_data.return_value = (
+        None,
+        "a string is not a ChatCompletion object.",
+    )
+    response = ctx["suggestion_service"].suggest(
+        "cool",
+        {
+            "language": "en",
+            "requester": "someone_cool",
+        },
+    )
+
+    assert response["has_suggestions"] is False
+    assert response["reason"] == "INTERNAL_ERROR"
