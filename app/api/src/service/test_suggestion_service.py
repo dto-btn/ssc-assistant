@@ -11,17 +11,21 @@ from utils.manage_message import SUGGEST_SYSTEM_PROMPT_EN, SUGGEST_SYSTEM_PROMPT
 
 
 class TestContext(TypedDict):
-    mock_suggest_table_client: MagicMock
+    # mock_suggest_table_client: MagicMock
     suggestion_service: SuggestionService
 
 
 @fixture(scope="session", autouse=True)
 def ctx() -> TestContext:
-    mock_suggest_table_client = MagicMock()
-    suggestion_service = SuggestionService(mock_suggest_table_client)
+    # mock_suggest_table_client = MagicMock()
+    # suggestion_service = SuggestionService(mock_suggest_table_client)
 
+    # return {
+    #     "mock_suggest_table_client": mock_suggest_table_client,
+    #     "suggestion_service": suggestion_service,
+    # }
+    suggestion_service = SuggestionService()
     return {
-        "mock_suggest_table_client": mock_suggest_table_client,
         "suggestion_service": suggestion_service,
     }
 
@@ -57,12 +61,18 @@ def test_store_suggestion_request(ctx: TestContext):
         "Need to talk to team & implement this feature after discussion"
     )
 
+def test_dedupe_citations(ctx: TestContext):
+    raise NotImplementedError("Not yet implemented")
+
+
+def test_remove_markdown(ctx: TestContext):
+    raise NotImplementedError("Not yet implemented")
 
 def test_instantiation(ctx: TestContext):
     assert isinstance(ctx, dict)
     assert isinstance(ctx["suggestion_service"], SuggestionService)
-    assert isinstance(ctx["mock_suggest_table_client"], MagicMock)
-    assert ctx["suggestion_service"].suggest_client == ctx["mock_suggest_table_client"]
+    # assert isinstance(ctx["mock_suggest_table_client"], MagicMock)
+    # assert ctx["suggestion_service"].suggest_client == ctx["mock_suggest_table_client"]
 
 
 # Behavioural requirements:

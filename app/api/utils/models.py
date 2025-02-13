@@ -2,6 +2,13 @@ from dataclasses import field
 from marshmallow_dataclass import dataclass
 from typing import Any, Dict, List, Literal, Optional
 
+from src.service.suggestion_service_types import (
+    SuggestRequestOpts,
+    SuggestionContextWithSuggestions,
+    SuggestionContextWithoutSuggestions,
+)
+
+
 @dataclass
 class Metadata:
     chunking: str
@@ -101,3 +108,19 @@ class SuggestionRequest:
     corporate_function: str = field(default='intranet_question')
     dedupe_citations: bool = field(default=True)
     remove_markdown: bool = field(default=True)
+
+@dataclass
+class NewSuggestionRequest:
+    """this is a suggestion request that most likely comes from the myssc+ search feature"""
+
+    query: str
+    opts: SuggestRequestOpts
+
+
+@dataclass
+class NewSuggestionResponse(
+    SuggestionContextWithSuggestions, SuggestionContextWithoutSuggestions
+):
+    """this is a suggestion response that most likely comes from the myssc+ search feature"""
+
+    pass
