@@ -3,15 +3,11 @@ from typing import TypedDict
 from unittest.mock import MagicMock
 from pytest import fixture, MonkeyPatch
 import pytest
-import utils.openai
 from openai.types.chat import ChatCompletion
 from openai.types.chat.chat_completion import Choice, ChatCompletionMessage
 
-import src.service.suggestion_service
 from src.service.suggestion_service import SuggestionService
 from utils.manage_message import SUGGEST_SYSTEM_PROMPT_EN, SUGGEST_SYSTEM_PROMPT_FR
-
-# always mock "from utils.openai import chat_with_data"
 
 
 class TestContext(TypedDict):
@@ -28,6 +24,7 @@ def ctx() -> TestContext:
         "mock_suggest_table_client": mock_suggest_table_client,
         "suggestion_service": suggestion_service,
     }
+
 
 @fixture(scope="function", autouse=True)
 def mock_chat_with_data(monkeypatch: MonkeyPatch):
@@ -53,6 +50,12 @@ def mock_chat_with_data(monkeypatch: MonkeyPatch):
     )
     monkeypatch.setattr("src.service.suggestion_service.chat_with_data", mock_func)
     return mock_func
+
+
+def test_store_suggestion_request(ctx: TestContext):
+    raise NotImplementedError(
+        "Need to talk to team & implement this feature after discussion"
+    )
 
 
 def test_instantiation(ctx: TestContext):
@@ -132,7 +135,6 @@ def test_language(
         },
     )
 
-
     if expected_valid:
         assert response["has_suggestions"] is True
         assert response["language"] == expected_language
@@ -210,12 +212,6 @@ def test_requester_field_is_set_to_the_application_that_requested_the_suggestion
     )
     assert response["has_suggestions"] is True
     assert response["requester"] == "someone_cool"
-
-
-def test_store_suggestion_request(ctx: TestContext):
-    raise NotImplementedError(
-        "Need to talk to team & implement this feature after discussion"
-    )
 
 
 @pytest.mark.parametrize(
