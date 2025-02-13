@@ -111,7 +111,6 @@ class SuggestionRequest:
 
 @dataclass
 class SuggestionCitation:
-    citation_display: str
     url: str
 
 

@@ -41,10 +41,9 @@ type SuggestionContextWithoutSuggestionsReason = Literal[
 
 class SuggestionCitation(TypedDict):
     """
-    A citation for a suggestion, which includes the content and source URL.
+    A citation for a suggestion, which includes the source URL.
     """
 
-    citation_display: str
     url: str
 
 

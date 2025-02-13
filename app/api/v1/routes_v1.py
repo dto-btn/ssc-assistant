@@ -337,7 +337,6 @@ if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
             # This will be a list of citations for the suggestion.
             "suggestion_citations": [
                 {
-                    "citation_display": "Arrr, this be the Service Catalogue. It be a summary of the services SSC offers to partners and clients. Ye can find it at http://service.ssc-spc.gc.ca/en/services. Ye be needin' VPN access to view it.",
                     "url": "https://example.com",
                 }
             ],

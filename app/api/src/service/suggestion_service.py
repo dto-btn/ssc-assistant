@@ -204,6 +204,8 @@ class SuggestionService:
         #         pattern, "", completion_response.message.content
         #     )
 
+        # apply citations to response
+
         # return completion_response
 
         return {
@@ -221,9 +223,6 @@ class SuggestionService:
             "suggestion_body": completion_response.message.content,
             # This will be a list of citations for the suggestion.
             "suggestion_citations": [
-                {
-                    "citation_display": "This is what you will display to the user as the citation.",
-                    "url": "https://example.com",
-                }
+                x for x in completion_response.message.context.citations
             ],
         }
