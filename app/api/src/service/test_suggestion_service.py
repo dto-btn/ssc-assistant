@@ -1,5 +1,7 @@
 import datetime
+import json
 from typing import TypedDict
+import typing
 from unittest.mock import MagicMock
 from pytest import fixture, MonkeyPatch
 import pytest
@@ -33,25 +35,65 @@ def ctx() -> TestContext:
 @fixture(scope="function", autouse=True)
 def mock_chat_with_data(monkeypatch: MonkeyPatch):
     mock_func = MagicMock()
-    mock_func.return_value = (
-        None,
-        ChatCompletion(
-            id="test_id",
-            object="chat.completion",
-            created=-1,
-            model="test_model",
-            choices=[
-                Choice(
-                    finish_reason="stop",
-                    index=0,
-                    message=ChatCompletionMessage(
-                        role="assistant",
-                        content="test_content",
-                    ),
-                )
-            ],
-        ),
+
+    # We have to do this because the ChatCompletion object from openai does not have a context field.
+    # I think the context field only exists in Azure OpenAI, which is not fully expressed in the openai
+    # package.
+    # This subclass allows the ChatCompletionMessage to have a context field.
+    class ChatCompletionMessageWithContext(ChatCompletionMessage):
+        context: typing.Any
+
+    chat_completion = ChatCompletion(
+        id="test_id",
+        object="chat.completion",
+        created=-1,
+        model="test_model",
+        choices=[
+            Choice(
+                finish_reason="stop",
+                index=0,
+                message=ChatCompletionMessageWithContext(
+                    role="assistant",
+                    content="test_content",
+                    context={
+                        "citations": [
+                            {
+                                "content": "test citation 1 content",
+                                "title": "test citation 1 title",
+                                "url": "test citation 1 url",
+                                "filepath": None,
+                                "chunk_id": 0,
+                            },
+                            {
+                                "content": "test citation 1 content",
+                                "title": "test citation 1 title",
+                                "url": "test citation 1 url",
+                                "filepath": None,
+                                "chunk_id": 0,
+                            },
+                            {
+                                "content": "test citation 1 content",
+                                "title": "test citation 1 title",
+                                "url": "test citation 1 url",
+                                "filepath": None,
+                                "chunk_id": 0,
+                            },
+                        ],
+                        # Unexpectedly, it seems intent is passed down as a string, not a list.
+                        "intent": json.dumps(
+                            [
+                                "test_intent_1",
+                                "test_intent_2",
+                                "test_intent_3",
+                            ]
+                        ),
+                    },
+                ),
+            )
+        ],
     )
+
+    mock_func.return_value = (None, chat_completion)
     monkeypatch.setattr("src.service.suggestion_service.chat_with_data", mock_func)
     return mock_func
 
@@ -119,7 +161,6 @@ def test_valid_query(ctx: TestContext):
     assert response["language"] == "en"
     assert response["original_query"] == "valid query"
     assert response["requester"] == "someone_cool"
-
 
 # language tests
 

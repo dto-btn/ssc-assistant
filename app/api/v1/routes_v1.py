@@ -343,8 +343,8 @@ if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
         },
     )
     @api_v1.doc(security="ApiKeyAuth")
-    @auth.login_required(role="suggest")
-    @user_ad.login_required
+    # @auth.login_required(role="suggest")
+    # @user_ad.login_required
     def suggestion(suggestion_request: NewSuggestionRequest):
         """This will receive most likely search terms and will return an AI response along with citations"""
         suggestion_service = SuggestionService()
