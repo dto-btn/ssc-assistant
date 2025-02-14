@@ -68,8 +68,8 @@ class SuggestionContextWithSuggestions(SuggestionResponseBase):
     """
 
     has_suggestions: Literal[True]
-    suggestion_body: str
-    suggestion_citations: List[SuggestionCitation]
+    content: str
+    citations: List[SuggestionCitation]
 
 
 class SuggestionContextWithoutSuggestions(SuggestionResponseBase):

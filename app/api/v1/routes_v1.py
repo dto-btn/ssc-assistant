@@ -340,9 +340,9 @@ if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
             # This will be set to the application that requested the suggestion.
             "requester": "mysscplus",
             # This will be set to the body of the suggestion.
-            "suggestion_body": "Arr, ye be askin' about the content management system at SSC. Here be what I found...",
+            "content": "Arr, ye be askin' about the content management system at SSC. Here be what I found...",
             # This will be a list of citations for the suggestion.
-            "suggestion_citations": [
+            "citations": [
                 {
                     "url": "https://example.com",
                 }

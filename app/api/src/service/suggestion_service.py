@@ -205,7 +205,9 @@ class SuggestionService:
             completion_response.message.context.citations = unique_citations
 
         # # Post Processing: Remove markdown
-        # if suggestion_request.remove_markdown and completion_response.message.content:
+        # if completion_response.remove_markdown and opts.get(
+        #     "remove_citations_from_content", False
+        # ):
         #     logger.info("Markdown removal")
         #     # Regular expression pattern to match [doc0] to [doc9999],
         #     # if we get more citations than this, call the cops
@@ -213,10 +215,6 @@ class SuggestionService:
         #     completion_response.message.content = re.sub(
         #         pattern, "", completion_response.message.content
         #     )
-
-        # apply citations to response
-
-        # return completion_response
 
         return {
             # This will be set to True for valid queries.
@@ -230,9 +228,7 @@ class SuggestionService:
             # This will be set to the application that requested the suggestion.
             "requester": opts["requester"],
             # This will be set to the body of the suggestion.
-            "suggestion_body": completion_response.message.content,
+            "content": completion_response.message.content,
             # This will be a list of citations for the suggestion.
-            "suggestion_citations": [
-                x for x in completion_response.message.context.citations
-            ],
+            "citations": [x for x in completion_response.message.context.citations],
         }

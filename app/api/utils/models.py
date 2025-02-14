@@ -128,8 +128,8 @@ class NewSuggestionResponse:
     reason: Optional[Literal["INVALID_QUERY", "INVALID_LANGUAGE"]] = None
 
     # not provided if has_suggestions is False
-    suggestion_body: Optional[str] = None
-    suggestion_citations: Optional[List[NewSuggestionCitation]] = None
+    content: Optional[str] = None
+    citations: Optional[List[NewSuggestionCitation]] = None
 
 
 @dataclass

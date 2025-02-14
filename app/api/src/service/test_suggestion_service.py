@@ -138,8 +138,8 @@ def test_dedupe_citations(ctx: TestContext, mock_chat_with_data):
     )
 
     assert response["has_suggestions"] is True
-    assert len(response["suggestion_citations"]) == 1
-    assert response["suggestion_citations"][0] == {
+    assert len(response["citations"]) == 1
+    assert response["citations"][0] == {
         "content": "CONTENT 1",
         "title": "TITLE 1",
         "url": "SAME_URL",
