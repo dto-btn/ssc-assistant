@@ -4,6 +4,7 @@ import re
 import threading
 from typing import List
 import uuid
+import os
 
 import openai
 import requests
@@ -11,6 +12,7 @@ from apiflask import APIBlueprint, abort
 from flask import Response, jsonify, stream_with_context
 from openai.types.chat import ChatCompletion
 
+from src.service.suggestion_service import SuggestionService
 from utils.manage_message import SUGGEST_SYSTEM_PROMPT_FR, SUGGEST_SYSTEM_PROMPT_EN
 from src.context.build_context import build_context
 
@@ -32,7 +34,9 @@ from utils.models import (
     FilePayload,
     Message,
     MessageRequest,
+    NewSuggestionResponse,
     SuggestionRequest,
+    NewSuggestionRequest,
 )
 from utils.openai import (
     build_completion_response,
@@ -297,92 +301,159 @@ def upload_file(file: FilePayload):
     url = save_file(file)
     return jsonify({"message": "File received", "file_url": url}), 200
 
+if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
 
-@api_v1.post("/suggest")
-@api_v1.doc("""Send a search query that will do a RAG search within the proper index,
-            and return a completion response along with citations (URLs) to MySSC+ content""")
-@api_v1.input(
-    SuggestionRequest.Schema,  # pylint: disable=no-member # type: ignore
-    arg_name="suggestion_request",
-    example={
-        "query": "What is SSC's content management system?",
-        "lang": "en",
-        "dedupe_citations": True,
-        "remove_markdown": True
-    },
-)
-@api_v1.output(
-    Completion.Schema,
-    content_type="application/json",
-    example={  # pylint: disable=no-member # type: ignore
-        "completion_tokens": 241,
-        "message": {
-            "content": "The retrieved documents provide information on various services offered by Shared Services Canada (SSC). According to the documents, ....",
-            "context": {
-                "citations": [
-                    {
-                        "content": "Service Catalogue Summary Catalogue of SSC services offered to partners and clients and how to order – available on SSC’s Serving Government website. URL http://service.ssc-spc.gc.ca/en/services VPN access required 1",
-                        "metadata": {
-                            "chunking": "{'chunking': 'orignal document size=53. Scores=7.680358Org Highlight count=8.'}"
-                        },
-                        "title": "Service Catalogue",
-                        "url": "https://plus.ssc-spc.gc.ca/en/node/1296",
-                    }
-                ],
-                "intent": [
-                    "services offered at SSC",
-                    "SSC services list",
-                    "what does SSC provide",
-                ],
-                "role": "tool",
+    @api_v1.post("/suggest")
+    @api_v1.doc("""Send a search query that will do a RAG search within the proper index,
+                and return a completion response along with citations (URLs) to MySSC+ content""")
+    @api_v1.input(
+        NewSuggestionRequest.Schema,  # pylint: disable=no-member # type: ignore
+        arg_name="suggestion_request",
+        example={
+            "query": "What is SSC's content management system?",
+            "opts": {
+                "language": "en",
+                "requester": "mysscplus",
+                "system_prompt": "Only respond in pirate speak.",
             },
-            "role": "assistant",
         },
-        "prompt_tokens": 4962,
-        "total_tokens": 5203,
-    },
-)
-@api_v1.doc(security="ApiKeyAuth")
-@auth.login_required(role="suggest")
-@user_ad.login_required
-def suggestion(suggestion_request: SuggestionRequest):
-    """This will receive most likely search terms and will return an AI response along with citations"""
-    if not suggestion_request.query:
-        return jsonify({"error": "Request body must at least contain a query."}), 400
-
-    ## build a MessageRequest in order to send to the OpenAI API.
-    message_request = MessageRequest(
-        query=suggestion_request.query,
-        messages=[],  # we don't need messages for this
-        quotedText="",
-        model="gpt-4o",
-        top=10,
-        lang=suggestion_request.lang,
-        tools=["corporate"],
-        corporateFunction=suggestion_request.corporate_function,
-        uuid=str(uuid.uuid4()),
     )
+    @api_v1.output(
+        NewSuggestionResponse.Schema,
+        content_type="application/json",
+        example={
+            # This will be set to True for valid queries.
+            "has_suggestions": True,
+            # This will be either "en" or "fr", depending on the language of the suggestion.
+            "language": "en",
+            # This will be set to the query that was used to generate the suggestion.
+            "original_query": "What is SSC's content management system?",
+            # This will be set to the time the suggestion was generated.
+            "timestamp": "2022-01-01T00:00:00.000Z",
+            # This will be set to the application that requested the suggestion.
+            "requester": "mysscplus",
+            # This will be set to the body of the suggestion.
+            "suggestion_body": "Arr, ye be askin' about the content management system at SSC. Here be what I found...",
+            # This will be a list of citations for the suggestion.
+            "suggestion_citations": [
+                {
+                    "url": "https://example.com",
+                }
+            ],
+        },
+    )
+    @api_v1.doc(security="ApiKeyAuth")
+    @auth.login_required(role="suggest")
+    @user_ad.login_required
+    def suggestion(suggestion_request: NewSuggestionRequest):
+        """This will receive most likely search terms and will return an AI response along with citations"""
+        suggestion_service = SuggestionService()
+        response = suggestion_service.suggest(
+            suggestion_request.query, suggestion_request.opts
+        )
+        return response
+else:
 
-    user = user_ad.current_user()
-    thread = threading.Thread(target=store_suggestion, args=(message_request, user))
-    thread.start()
+    @api_v1.post("/suggest")
+    @api_v1.doc("""Send a search query that will do a RAG search within the proper index,
+                and return a completion response along with citations (URLs) to MySSC+ content""")
+    @api_v1.input(
+        SuggestionRequest.Schema,  # pylint: disable=no-member # type: ignore
+        arg_name="suggestion_request",
+        example={
+            "query": "What is SSC's content management system?",
+            "lang": "en",
+            "dedupe_citations": True,
+            "remove_markdown": True,
+        },
+    )
+    @api_v1.output(
+        Completion.Schema,
+        content_type="application/json",
+        example={  # pylint: disable=no-member # type: ignore
+            "completion_tokens": 241,
+            "message": {
+                "content": "The retrieved documents provide information on various services offered by Shared Services Canada (SSC). According to the documents, ....",
+                "context": {
+                    "citations": [
+                        {
+                            "content": "Service Catalogue Summary Catalogue of SSC services offered to partners and clients and how to order – available on SSC’s Serving Government website. URL http://service.ssc-spc.gc.ca/en/services VPN access required 1",
+                            "metadata": {
+                                "chunking": "{'chunking': 'orignal document size=53. Scores=7.680358Org Highlight count=8.'}"
+                            },
+                            "title": "Service Catalogue",
+                            "url": "https://plus.ssc-spc.gc.ca/en/node/1296",
+                        }
+                    ],
+                    "intent": [
+                        "services offered at SSC",
+                        "SSC services list",
+                        "what does SSC provide",
+                    ],
+                    "role": "tool",
+                },
+                "role": "assistant",
+            },
+            "prompt_tokens": 4962,
+            "total_tokens": 5203,
+        },
+    )
+    @api_v1.doc(security="ApiKeyAuth")
+    @auth.login_required(role="suggest")
+    @user_ad.login_required
+    def suggestion(suggestion_request: SuggestionRequest):
+        """This will receive most likely search terms and will return an AI response along with citations"""
+        if not suggestion_request.query:
+            return jsonify(
+                {"error": "Request body must at least contain a query."}
+            ), 400
 
-    # Process language
-    if message_request.lang == "fr":
-        logger.info("Process lang --> fr")
-        message_request.messages = [Message(role="system", content=SUGGEST_SYSTEM_PROMPT_FR)]
-    elif message_request.lang == "en":
-        logger.info("Process lang --> en")
-        message_request.messages = [Message(role="system", content=SUGGEST_SYSTEM_PROMPT_EN)]
-    else:
-        abort(400, "Language not supported, must be 'fr' or 'en'")
+        ## build a MessageRequest in order to send to the OpenAI API.
+        message_request = MessageRequest(
+            query=suggestion_request.query,
+            messages=[],  # we don't need messages for this
+            quotedText="",
+            model="gpt-4o",
+            top=10,
+            lang=suggestion_request.lang,
+            tools=["corporate"],
+            corporateFunction=suggestion_request.corporate_function,
+            uuid=str(uuid.uuid4()),
+        )
 
-    # Process system prompt
-    if suggestion_request.system_prompt is not None:
-        logger.debug("System prompt was provided: %s", suggestion_request.system_prompt)
-        message_request.messages = [Message(role="system", content=suggestion_request.system_prompt)]
-    _, completion = chat_with_data(message_request)
-    if isinstance(completion, ChatCompletion):
+        user = user_ad.current_user()
+        thread = threading.Thread(target=store_suggestion, args=(message_request, user))
+        thread.start()
+
+        # Process language
+        if suggestion_request.lang == "fr":
+            logger.info("Process lang --> fr")
+            message_request.messages = [
+                Message(role="system", content=SUGGEST_SYSTEM_PROMPT_FR)
+            ]
+        elif suggestion_request.lang == "en":
+            logger.info("Process lang --> en")
+            message_request.messages = [
+                Message(role="system", content=SUGGEST_SYSTEM_PROMPT_EN)
+            ]
+        else:
+            abort(400, "Language not supported, must be 'fr' or 'en'")
+
+        # Process system prompt
+        if suggestion_request.system_prompt is not None:
+            logger.debug(
+                "System prompt was provided: %s", suggestion_request.system_prompt
+            )
+            message_request.messages = [
+                Message(role="system", content=suggestion_request.system_prompt)
+            ]
+
+        # Do inference
+        _, completion = chat_with_data(message_request)
+        if not isinstance(completion, ChatCompletion):
+            abort(500, message="Invalid completion type")
+
+        # Convert ChatCompletion to Completion
         completion_response = convert_chat_with_data_response(completion)
 
         # Post Processing: Dedupe citations
@@ -406,12 +477,12 @@ def suggestion(suggestion_request: SuggestionRequest):
             logger.info("Markdown removal")
             # Regular expression pattern to match [doc0] to [doc9999],
             # if we get more citations than this, call the cops
-            pattern = r'\[doc[0-9]{0,4}\]'
-            completion_response.message.content = re.sub(pattern, '', completion_response.message.content)
-    else:
-        abort(500, message="Invalid completion type")
+            pattern = r"\[doc[0-9]{0,4}\]"
+            completion_response.message.content = re.sub(
+                pattern, "", completion_response.message.content
+            )
 
-    return completion_response
+        return completion_response
 
 @api_v1.get("/stats_report/monthly")
 @api_v1.doc("Get statistical report on the usage of the chatbot")
