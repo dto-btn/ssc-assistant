@@ -32,6 +32,7 @@ class SuggestRequestOpts(TypedDict):
     language: str
     requester: str
     system_prompt: str | None
+    dedupe_citations: bool | None
 
 
 type SuggestionContextWithoutSuggestionsReason = Literal[
@@ -67,8 +68,8 @@ class SuggestionContextWithSuggestions(SuggestionResponseBase):
     """
 
     has_suggestions: Literal[True]
-    suggestion_body: str
-    suggestion_citations: List[SuggestionCitation]
+    content: str
+    citations: List[SuggestionCitation]
 
 
 class SuggestionContextWithoutSuggestions(SuggestionResponseBase):

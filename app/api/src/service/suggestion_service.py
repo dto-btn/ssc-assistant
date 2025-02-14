@@ -1,4 +1,6 @@
 import logging
+import re
+from typing import List
 import uuid
 from datetime import datetime
 from src.service.suggestion_service_types import (
@@ -7,7 +9,7 @@ from src.service.suggestion_service_types import (
     SuggestionContext,
 )
 from utils.manage_message import SUGGEST_SYSTEM_PROMPT_EN, SUGGEST_SYSTEM_PROMPT_FR
-from utils.models import Message, MessageRequest
+from utils.models import Citation, Message, MessageRequest, NewSuggestionCitation
 from utils.openai import chat_with_data, convert_chat_with_data_response
 from openai.types.chat import ChatCompletion
 
@@ -179,34 +181,41 @@ class SuggestionService:
         completion_response = convert_chat_with_data_response(completion)
 
         # # Post Processing: Dedupe citations
-        # if completion_response.message.context and suggestion_request.dedupe_citations:
-        #     logger.info("Deduping citations")
-        #     citations: List[Citation] = completion_response.message.context.citations
-        #     # Track seen URLs
-        #     seen_urls = set()
-        #     unique_citations = []
+        if completion_response.message.context and opts.get("dedupe_citations", False):
+            logger.info("Deduping citations")
+            citations: List[NewSuggestionCitation] = (
+                completion_response.message.context.citations
+            )
+            # Track seen URLs
+            seen_urls = set()
+            unique_citations = []
 
-        #     # Loop through citations and filter out duplicates
-        #     for citation in citations:
-        #         if citation.url not in seen_urls:
-        #             seen_urls.add(citation.url)
-        #             unique_citations.append(citation)
+            # Loop through citations and filter out duplicates
+            for citation in citations:
+                if citation.url not in seen_urls:
+                    seen_urls.add(citation.url)
+                    unique_citations.append(
+                        {
+                            "url": citation.url,
+                            "content": citation.content,
+                            "title": citation.title,
+                        }
+                    )
 
-        #     # Update the citations list with unique citations
-        #     completion_response.message.context.citations = unique_citations
-        # # Post Processing: Remove markdown
-        # if suggestion_request.remove_markdown and completion_response.message.content:
-        #     logger.info("Markdown removal")
-        #     # Regular expression pattern to match [doc0] to [doc9999],
-        #     # if we get more citations than this, call the cops
-        #     pattern = r"\[doc[0-9]{0,4}\]"
-        #     completion_response.message.content = re.sub(
-        #         pattern, "", completion_response.message.content
-        #     )
+            # Update the citations list with unique citations
+            completion_response.message.context.citations = unique_citations
 
-        # apply citations to response
-
-        # return completion_response
+        # Post Processing: Remove markdown
+        if completion_response.message.content and opts.get(
+            "remove_citations_from_content", False
+        ):
+            logger.info("Markdown removal")
+            # Regular expression pattern to match [doc0] to [doc9999],
+            # if we get more citations than this, call the cops
+            pattern = r"\[doc[0-9]{0,4}\]"
+            completion_response.message.content = re.sub(
+                pattern, "", completion_response.message.content
+            )
 
         return {
             # This will be set to True for valid queries.
@@ -220,9 +229,7 @@ class SuggestionService:
             # This will be set to the application that requested the suggestion.
             "requester": opts["requester"],
             # This will be set to the body of the suggestion.
-            "suggestion_body": completion_response.message.content,
+            "content": completion_response.message.content,
             # This will be a list of citations for the suggestion.
-            "suggestion_citations": [
-                x for x in completion_response.message.context.citations
-            ],
+            "citations": [x for x in completion_response.message.context.citations],
         }
