@@ -1,4 +1,5 @@
 import logging
+from typing import List
 import uuid
 from datetime import datetime
 from src.service.suggestion_service_types import (
@@ -7,7 +8,7 @@ from src.service.suggestion_service_types import (
     SuggestionContext,
 )
 from utils.manage_message import SUGGEST_SYSTEM_PROMPT_EN, SUGGEST_SYSTEM_PROMPT_FR
-from utils.models import Message, MessageRequest
+from utils.models import Citation, Message, MessageRequest, NewSuggestionCitation
 from utils.openai import chat_with_data, convert_chat_with_data_response
 from openai.types.chat import ChatCompletion
 
@@ -179,21 +180,30 @@ class SuggestionService:
         completion_response = convert_chat_with_data_response(completion)
 
         # # Post Processing: Dedupe citations
-        # if completion_response.message.context and suggestion_request.dedupe_citations:
-        #     logger.info("Deduping citations")
-        #     citations: List[Citation] = completion_response.message.context.citations
-        #     # Track seen URLs
-        #     seen_urls = set()
-        #     unique_citations = []
+        if completion_response.message.context and opts.get("dedupe_citations", False):
+            logger.info("Deduping citations")
+            citations: List[NewSuggestionCitation] = (
+                completion_response.message.context.citations
+            )
+            # Track seen URLs
+            seen_urls = set()
+            unique_citations = []
 
-        #     # Loop through citations and filter out duplicates
-        #     for citation in citations:
-        #         if citation.url not in seen_urls:
-        #             seen_urls.add(citation.url)
-        #             unique_citations.append(citation)
+            # Loop through citations and filter out duplicates
+            for citation in citations:
+                if citation.url not in seen_urls:
+                    seen_urls.add(citation.url)
+                    unique_citations.append(
+                        {
+                            "url": citation.url,
+                            "content": citation.content,
+                            "title": citation.title,
+                        }
+                    )
 
-        #     # Update the citations list with unique citations
-        #     completion_response.message.context.citations = unique_citations
+            # Update the citations list with unique citations
+            completion_response.message.context.citations = unique_citations
+
         # # Post Processing: Remove markdown
         # if suggestion_request.remove_markdown and completion_response.message.content:
         #     logger.info("Markdown removal")

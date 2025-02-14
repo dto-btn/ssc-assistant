@@ -309,12 +309,19 @@ if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
     @api_v1.input(
         NewSuggestionRequest.Schema,  # pylint: disable=no-member # type: ignore
         arg_name="suggestion_request",
-        example={
-            "query": "What is SSC's content management system?",
-            "opts": {
-                "language": "en",
-                "requester": "mysscplus",
-                "system_prompt": "Only respond in pirate speak.",
+        examples={
+            "With only the required options": {
+                "query": "What is SSC's content management system?",
+                "opts": {"language": "en", "requester": "mysscplus"},
+            },
+            "With all options": {
+                "query": "What is SSC's content management system?",
+                "opts": {
+                    "language": "en",
+                    "requester": "mysscplus",
+                    "system_prompt": "Only respond in pirate speak.",
+                    "dedupe_citations": True,
+                },
             },
         },
     )

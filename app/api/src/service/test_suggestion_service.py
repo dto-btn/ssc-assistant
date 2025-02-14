@@ -103,8 +103,47 @@ def test_store_suggestion_request(ctx: TestContext):
         "Need to talk to team & implement this feature after discussion"
     )
 
-def test_dedupe_citations(ctx: TestContext):
-    raise NotImplementedError("Not yet implemented")
+def test_dedupe_citations(ctx: TestContext, mock_chat_with_data):
+    # add duplicate citations in the context
+    mock_chat_with_data.return_value[1].choices[0].message.context = {
+        "citations": [
+            {
+                "content": "CONTENT 1",
+                "title": "TITLE 1",
+                "url": "SAME_URL",
+                "filepath": None,
+                "chunk_id": 0,
+            },
+            {
+                "content": "CONTENT 2",
+                "title": "TITLE 2",
+                "url": "SAME_URL",
+                "filepath": None,
+                "chunk_id": 0,
+            },
+            {
+                "content": "CONTENT 3",
+                "title": "TITLE 3",
+                "url": "SAME_URL",
+                "filepath": None,
+                "chunk_id": 0,
+            },
+        ],
+        "intent": "[]",
+    }
+
+    response = ctx["suggestion_service"].suggest(
+        "cool",
+        {"language": "en", "requester": "someone_cool", "dedupe_citations": True},
+    )
+
+    assert response["has_suggestions"] is True
+    assert len(response["suggestion_citations"]) == 1
+    assert response["suggestion_citations"][0] == {
+        "content": "CONTENT 1",
+        "title": "TITLE 1",
+        "url": "SAME_URL",
+    }
 
 
 def test_remove_markdown(ctx: TestContext):

@@ -110,8 +110,10 @@ class SuggestionRequest:
     remove_markdown: bool = field(default=True)
 
 @dataclass
-class SuggestionCitation:
+class NewSuggestionCitation:
     url: str
+    title: str
+    content: str
 
 
 @dataclass
@@ -127,7 +129,7 @@ class NewSuggestionResponse:
 
     # not provided if has_suggestions is False
     suggestion_body: Optional[str] = None
-    suggestion_citations: Optional[List[SuggestionCitation]] = None
+    suggestion_citations: Optional[List[NewSuggestionCitation]] = None
 
 
 @dataclass

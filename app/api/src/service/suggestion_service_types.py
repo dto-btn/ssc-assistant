@@ -32,6 +32,7 @@ class SuggestRequestOpts(TypedDict):
     language: str
     requester: str
     system_prompt: str | None
+    dedupe_citations: bool | None
 
 
 type SuggestionContextWithoutSuggestionsReason = Literal[
