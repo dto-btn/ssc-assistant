@@ -138,16 +138,30 @@ def test_dedupe_citations(ctx: TestContext, mock_chat_with_data):
     )
 
     assert response["has_suggestions"] is True
-    assert len(response["citations"]) == 1
-    assert response["citations"][0] == {
+    assert len(response["suggestion_citations"]) == 1
+    assert response["suggestion_citations"][0] == {
         "content": "CONTENT 1",
         "title": "TITLE 1",
         "url": "SAME_URL",
     }
 
 
-def test_remove_markdown(ctx: TestContext):
-    raise NotImplementedError("Not yet implemented")
+def test_remove_citations_from_content(ctx: TestContext, mock_chat_with_data):
+    mock_chat_with_data.return_value[1].choices[
+        0
+    ].message.content = "This is a [doc0] test [doc1] string [doc2]."
+
+    response = ctx["suggestion_service"].suggest(
+        "cool",
+        {
+            "language": "en",
+            "requester": "someone_cool",
+            "remove_citations_from_content": True,
+        },
+    )
+
+    assert response["has_suggestions"] is True
+    assert response["content"] == "This is a  test  string ."
 
 def test_top_k_metric(ctx: TestContext):
     raise NotImplementedError("Not yet implemented")

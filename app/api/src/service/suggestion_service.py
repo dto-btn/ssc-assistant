@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import List
 import uuid
 from datetime import datetime
@@ -204,17 +205,17 @@ class SuggestionService:
             # Update the citations list with unique citations
             completion_response.message.context.citations = unique_citations
 
-        # # Post Processing: Remove markdown
-        # if completion_response.remove_markdown and opts.get(
-        #     "remove_citations_from_content", False
-        # ):
-        #     logger.info("Markdown removal")
-        #     # Regular expression pattern to match [doc0] to [doc9999],
-        #     # if we get more citations than this, call the cops
-        #     pattern = r"\[doc[0-9]{0,4}\]"
-        #     completion_response.message.content = re.sub(
-        #         pattern, "", completion_response.message.content
-        #     )
+        # Post Processing: Remove markdown
+        if completion_response.message.content and opts.get(
+            "remove_citations_from_content", False
+        ):
+            logger.info("Markdown removal")
+            # Regular expression pattern to match [doc0] to [doc9999],
+            # if we get more citations than this, call the cops
+            pattern = r"\[doc[0-9]{0,4}\]"
+            completion_response.message.content = re.sub(
+                pattern, "", completion_response.message.content
+            )
 
         return {
             # This will be set to True for valid queries.
