@@ -137,4 +137,4 @@ class NewSuggestionRequest:
     """this is a suggestion request that most likely comes from the myssc+ search feature"""
 
     query: str
-    opts: Dict[str, str]
+    opts: Dict[str, Any]
