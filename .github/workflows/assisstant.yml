@@ -48,3 +48,25 @@ jobs:
       environment: 'pilot-prod'
       app-name: 'ssc-assistant'
     secrets: inherit
+
+  ###################
+  #      PROD       #
+  ###################
+  api-prod:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/api.yml
+    with:
+      environment: 'prod'
+      app-name: 'ssc-assistant-prod-api'
+    secrets: inherit
+
+  frontend-prod:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/frontend.yml
+    with:
+      allowed-tools: 'geds,corporate'
+      allowed-corporate-functions: 'intranet_question'
+      disabled-features: ''
+      environment: 'prod'
+      app-name: 'ssc-assistant-prod'
+    secrets: inherit
