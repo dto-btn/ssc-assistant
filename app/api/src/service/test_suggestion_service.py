@@ -68,6 +68,10 @@ def test_dedupe_citations(ctx: TestContext):
 def test_remove_markdown(ctx: TestContext):
     raise NotImplementedError("Not yet implemented")
 
+def test_top_k_metric(ctx: TestContext):
+    raise NotImplementedError("Not yet implemented")
+
+
 def test_instantiation(ctx: TestContext):
     assert isinstance(ctx, dict)
     assert isinstance(ctx["suggestion_service"], SuggestionService)
