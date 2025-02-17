@@ -309,37 +309,98 @@ if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
     @api_v1.input(
         NewSuggestionRequest.Schema,  # pylint: disable=no-member # type: ignore
         arg_name="suggestion_request",
-        example={
-            "query": "What is SSC's content management system?",
-            "opts": {
-                "language": "en",
-                "requester": "mysscplus",
-                "system_prompt": "Only respond in pirate speak.",
+        examples={
+            "With all options": {
+                "summary": "With all options",
+                "value": {
+                    "query": "What is SSC's content management system?",
+                    "opts": {
+                        "language": "en",
+                        "requester": "mysscplus",
+                        "system_prompt": "Only respond in pirate speak.",
+                        "dedupe_citations": True,
+                        "remove_citations_from_content": True,
+                    },
+                },
+            },
+            "With only the required options": {
+                "summary": "With only the required options",
+                "value": {
+                    "query": "What is SSC's content management system?",
+                    "opts": {"language": "en", "requester": "mysscplus"},
+                },
             },
         },
     )
     @api_v1.output(
         NewSuggestionResponse.Schema,
         content_type="application/json",
-        example={
-            # This will be set to True for valid queries.
-            "has_suggestions": True,
-            # This will be either "en" or "fr", depending on the language of the suggestion.
-            "language": "en",
-            # This will be set to the query that was used to generate the suggestion.
-            "original_query": "What is SSC's content management system?",
-            # This will be set to the time the suggestion was generated.
-            "timestamp": "2022-01-01T00:00:00.000Z",
-            # This will be set to the application that requested the suggestion.
-            "requester": "mysscplus",
-            # This will be set to the body of the suggestion.
-            "suggestion_body": "Arr, ye be askin' about the content management system at SSC. Here be what I found...",
-            # This will be a list of citations for the suggestion.
-            "suggestion_citations": [
-                {
-                    "url": "https://example.com",
-                }
-            ],
+        examples={
+            "With all options": {
+                "summary": "With all options",
+                "value": {
+                    # This will be set to True for valid queries.
+                    "has_suggestions": True,
+                    # This will be either "en" or "fr", depending on the language of the suggestion.
+                    "language": "en",
+                    # This will be set to the query that was used to generate the suggestion.
+                    "original_query": "What is SSC's content management system?",
+                    # This will be set to the time the suggestion was generated.
+                    "timestamp": "2022-01-01T00:00:00.000Z",
+                    # This will be set to the application that requested the suggestion.
+                    "requester": "mysscplus",
+                    # This will be set to the body of the suggestion.
+                    "content": "Arr, ye be askin' about the content management system at SSC. Here be what I found... Those pesky citations be removed, but ye can still find them in the citations list.",
+                    # This will be a list of citations for the suggestion.
+                    "citations": [
+                        {
+                            "title": "Title of the citation",
+                            "content": "Example",
+                            "url": "https://example.com",
+                        },
+                        {
+                            "title": "Duplicate Example",
+                            "comment": "It can contain duplicates, but you can use the dedupe_citations option to remove them.",
+                            "url": "https://example.com/duplicate",
+                        },
+                    ],
+                },
+            },
+            "With only the required options": {
+                "summary": "With only the required options",
+                "value": {
+                    # This will be set to True for valid queries.
+                    "has_suggestions": True,
+                    # This will be either "en" or "fr", depending on the language of the suggestion.
+                    "language": "en",
+                    # This will be set to the query that was used to generate the suggestion.
+                    "original_query": "What is SSC's content management system?",
+                    # This will be set to the time the suggestion was generated.
+                    "timestamp": "2022-01-01T00:00:00.000Z",
+                    # This will be set to the application that requested the suggestion.
+                    "requester": "mysscplus",
+                    # This will be set to the body of the suggestion.
+                    "content": "The content management system at SSC is... etc. etc. This content[doc1] can have doc references[doc2], but they will be removed if the remove_citations_from_content option is set to True",
+                    # This will be a list of citations for the suggestion.
+                    "citations": [
+                        {
+                            "title": "Title of the citation",
+                            "content": "Example",
+                            "url": "https://example.com",
+                        },
+                        {
+                            "title": "Duplicate Example",
+                            "comment": "It can contain duplicates, but you can use the dedupe_citations option to remove them.",
+                            "url": "https://example.com/duplicate",
+                        },
+                        {
+                            "title": "Duplicate Example",
+                            "comment": "It can contain duplicates, but you can use the dedupe_citations option to remove them.",
+                            "url": "https://example.com/duplicate",
+                        },
+                    ],
+                },
+            },
         },
     )
     @api_v1.doc(security="ApiKeyAuth")

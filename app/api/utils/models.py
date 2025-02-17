@@ -110,8 +110,10 @@ class SuggestionRequest:
     remove_markdown: bool = field(default=True)
 
 @dataclass
-class SuggestionCitation:
+class NewSuggestionCitation:
     url: str
+    title: str
+    content: str
 
 
 @dataclass
@@ -126,8 +128,8 @@ class NewSuggestionResponse:
     reason: Optional[Literal["INVALID_QUERY", "INVALID_LANGUAGE"]] = None
 
     # not provided if has_suggestions is False
-    suggestion_body: Optional[str] = None
-    suggestion_citations: Optional[List[SuggestionCitation]] = None
+    content: Optional[str] = None
+    citations: Optional[List[NewSuggestionCitation]] = None
 
 
 @dataclass
@@ -135,4 +137,4 @@ class NewSuggestionRequest:
     """this is a suggestion request that most likely comes from the myssc+ search feature"""
 
     query: str
-    opts: Dict[str, str]
+    opts: Dict[str, Any]

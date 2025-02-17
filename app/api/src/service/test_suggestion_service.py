@@ -1,5 +1,7 @@
 import datetime
+import json
 from typing import TypedDict
+import typing
 from unittest.mock import MagicMock
 from pytest import fixture, MonkeyPatch
 import pytest
@@ -33,25 +35,65 @@ def ctx() -> TestContext:
 @fixture(scope="function", autouse=True)
 def mock_chat_with_data(monkeypatch: MonkeyPatch):
     mock_func = MagicMock()
-    mock_func.return_value = (
-        None,
-        ChatCompletion(
-            id="test_id",
-            object="chat.completion",
-            created=-1,
-            model="test_model",
-            choices=[
-                Choice(
-                    finish_reason="stop",
-                    index=0,
-                    message=ChatCompletionMessage(
-                        role="assistant",
-                        content="test_content",
-                    ),
-                )
-            ],
-        ),
+
+    # We have to do this because the ChatCompletion object from openai does not have a context field.
+    # I think the context field only exists in Azure OpenAI, which is not fully expressed in the openai
+    # package.
+    # This subclass allows the ChatCompletionMessage to have a context field.
+    class ChatCompletionMessageWithContext(ChatCompletionMessage):
+        context: typing.Any
+
+    chat_completion = ChatCompletion(
+        id="test_id",
+        object="chat.completion",
+        created=-1,
+        model="test_model",
+        choices=[
+            Choice(
+                finish_reason="stop",
+                index=0,
+                message=ChatCompletionMessageWithContext(
+                    role="assistant",
+                    content="test_content",
+                    context={
+                        "citations": [
+                            {
+                                "content": "test citation 1 content",
+                                "title": "test citation 1 title",
+                                "url": "test citation 1 url",
+                                "filepath": None,
+                                "chunk_id": 0,
+                            },
+                            {
+                                "content": "test citation 1 content",
+                                "title": "test citation 1 title",
+                                "url": "test citation 1 url",
+                                "filepath": None,
+                                "chunk_id": 0,
+                            },
+                            {
+                                "content": "test citation 1 content",
+                                "title": "test citation 1 title",
+                                "url": "test citation 1 url",
+                                "filepath": None,
+                                "chunk_id": 0,
+                            },
+                        ],
+                        # Unexpectedly, it seems intent is passed down as a string, not a list.
+                        "intent": json.dumps(
+                            [
+                                "test_intent_1",
+                                "test_intent_2",
+                                "test_intent_3",
+                            ]
+                        ),
+                    },
+                ),
+            )
+        ],
     )
+
+    mock_func.return_value = (None, chat_completion)
     monkeypatch.setattr("src.service.suggestion_service.chat_with_data", mock_func)
     return mock_func
 
@@ -61,12 +103,69 @@ def test_store_suggestion_request(ctx: TestContext):
         "Need to talk to team & implement this feature after discussion"
     )
 
-def test_dedupe_citations(ctx: TestContext):
-    raise NotImplementedError("Not yet implemented")
+def test_dedupe_citations(ctx: TestContext, mock_chat_with_data):
+    # add duplicate citations in the context
+    mock_chat_with_data.return_value[1].choices[0].message.context = {
+        "citations": [
+            {
+                "content": "CONTENT 1",
+                "title": "TITLE 1",
+                "url": "SAME_URL",
+                "filepath": None,
+                "chunk_id": 0,
+            },
+            {
+                "content": "CONTENT 2",
+                "title": "TITLE 2",
+                "url": "SAME_URL",
+                "filepath": None,
+                "chunk_id": 0,
+            },
+            {
+                "content": "CONTENT 3",
+                "title": "TITLE 3",
+                "url": "SAME_URL",
+                "filepath": None,
+                "chunk_id": 0,
+            },
+        ],
+        "intent": "[]",
+    }
+
+    response = ctx["suggestion_service"].suggest(
+        "cool",
+        {"language": "en", "requester": "someone_cool", "dedupe_citations": True},
+    )
+
+    assert response["has_suggestions"] is True
+    assert len(response["suggestion_citations"]) == 1
+    assert response["suggestion_citations"][0] == {
+        "content": "CONTENT 1",
+        "title": "TITLE 1",
+        "url": "SAME_URL",
+    }
 
 
-def test_remove_markdown(ctx: TestContext):
+def test_remove_citations_from_content(ctx: TestContext, mock_chat_with_data):
+    mock_chat_with_data.return_value[1].choices[
+        0
+    ].message.content = "This is a [doc0] test [doc1] string [doc2]."
+
+    response = ctx["suggestion_service"].suggest(
+        "cool",
+        {
+            "language": "en",
+            "requester": "someone_cool",
+            "remove_citations_from_content": True,
+        },
+    )
+
+    assert response["has_suggestions"] is True
+    assert response["content"] == "This is a  test  string ."
+
+def test_top_k_metric(ctx: TestContext):
     raise NotImplementedError("Not yet implemented")
+
 
 def test_instantiation(ctx: TestContext):
     assert isinstance(ctx, dict)
@@ -115,7 +214,6 @@ def test_valid_query(ctx: TestContext):
     assert response["language"] == "en"
     assert response["original_query"] == "valid query"
     assert response["requester"] == "someone_cool"
-
 
 # language tests
 
