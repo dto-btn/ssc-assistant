@@ -105,7 +105,7 @@ az ad app permission grant --id $CLIENT_SP_ID --api $API_SP_ID --scope api.acces
 az ad app permission list-grants --id $CLIENT_SP_ID
 ```
 
-### Modifications to SPA Redirect URIS
+### Modifications to SPA Redirect URIS (and web Redirect URIs)
 
 NOTE: This is not supported by the current `az app update` CLI. Need to use graph API instead:
 
@@ -116,5 +116,12 @@ az rest \
   --method "patch" \
   --uri "https://graph.microsoft.com/v1.0/applications/<appId>" \
   --headers "{'Content-Type': 'application/json'}" \
-  --body "{'spa': {'redirectUris': [ 'https://jwt.ms', 'https://www.example.com/callbacks' ]}}"
+  --body "{'spa': {'redirectUris': ['https://assistant.ssc-spc.gc.ca']}}"
   ```
+
+And for web ones (space separated URLs):
+
+```bash
+az ad app update --id <appId> \
+  --web-redirect-uris https://assistant.ssc-spc.gc.ca/.auth/login/aad/callback
+```
