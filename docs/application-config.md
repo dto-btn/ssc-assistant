@@ -12,6 +12,8 @@ commands.
 
 ### Basic configuration
 
+This is the configuration for the App Registration that will affect the end-users.
+
 Documentation [is found here](https://learn.microsoft.com/en-us/cli/azure/ad/app?view=azure-cli-latest)
 
 ```bash
@@ -33,7 +35,7 @@ And paste the content:
     {
       "adminConsentDescription": "Access to the API",
       "adminConsentDisplayName": "API Access",
-      "id": "<unique-uuid>",
+      "id": "<uuid-generated-above>",
       "isEnabled": true,
       "type": "User",
       "userConsentDescription": "Allow the application to access the SSC Assistant API on your behalf.",
@@ -55,7 +57,7 @@ az ad app permission grant --id <your-app-id> --api <your-app-id> --scope api.ac
 az ad app permission add --id <your-app-id> --api <your-app-id> --api-permissions <unique-uuid>=Scope
 ```
 
-### Terraform changes
+#### Terraform changes
 
 Required changes for this above update for `terraform` are all in the `api.tf` file. Client ID needs to match the api.
 
@@ -68,7 +70,7 @@ And for the `frontend.tf` the scope requested needs to be appropriate.
 
 ### Application specific scope
 
-This is an extra step that shows how to add an extra scope that would be used by applications only in the confidential client auth flow. For application only we use AppRoles instead of the API scopes as normal, the scopes (shown in `value`) will still be provided in the access token.
+This is an extra step that shows how to add an extra scope that would be used **by other applications only** (i.e. MySSC+ Drupal App) in the confidential client auth flow. For application only we use AppRoles instead of the API scopes as normal, the scopes (shown in `value`) will still be provided in the access token.
 
 
 ```json
@@ -109,10 +111,10 @@ NOTE: This is not supported by the current `az app update` CLI. Need to use grap
 
 [See this thread](https://github.com/Azure/azure-cli/issues/25766)
 
-```
+```bash
 az rest \
   --method "patch" \
-  --uri "https://graph.microsoft.com/v1.0/applications/<<object-id>>" \
+  --uri "https://graph.microsoft.com/v1.0/applications/<appId>" \
   --headers "{'Content-Type': 'application/json'}" \
   --body "{'spa': {'redirectUris': [ 'https://jwt.ms', 'https://www.example.com/callbacks' ]}}"
   ```
