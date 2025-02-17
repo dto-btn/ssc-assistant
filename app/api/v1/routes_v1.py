@@ -360,7 +360,7 @@ if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
                         },
                         {
                             "title": "Duplicate Example",
-                            "comment": "It can contain duplicates, but you can use the dedupe_citations option to remove them.",
+                            "content": "It can contain duplicates, but you can use the dedupe_citations option to remove them.",
                             "url": "https://example.com/duplicate",
                         },
                     ],
@@ -390,12 +390,12 @@ if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
                         },
                         {
                             "title": "Duplicate Example",
-                            "comment": "It can contain duplicates, but you can use the dedupe_citations option to remove them.",
+                            "content": "It can contain duplicates, but you can use the dedupe_citations option to remove them.",
                             "url": "https://example.com/duplicate",
                         },
                         {
                             "title": "Duplicate Example",
-                            "comment": "It can contain duplicates, but you can use the dedupe_citations option to remove them.",
+                            "content": "It can contain duplicates, but you can use the dedupe_citations option to remove them.",
                             "url": "https://example.com/duplicate",
                         },
                     ],

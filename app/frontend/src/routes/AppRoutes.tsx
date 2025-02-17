@@ -9,6 +9,7 @@ export const AppRoutes: FC = () => {
             <Routes>
                 <Route path="/" element={<RootRoute />} />
                 <Route path="/admin" element={<AdminRoute />} />
+                <Route path="/suggest-callback" element={<div>Suggest Callback</div>} />
             </Routes>
         </BrowserRouter>
     )
