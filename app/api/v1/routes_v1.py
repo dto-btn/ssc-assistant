@@ -319,6 +319,7 @@ if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
                         "requester": "mysscplus",
                         "system_prompt": "Only respond in pirate speak.",
                         "dedupe_citations": True,
+                        "remove_citations_from_content": True,
                     },
                 },
             },
