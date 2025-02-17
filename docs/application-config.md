@@ -111,12 +111,15 @@ NOTE: This is not supported by the current `az app update` CLI. Need to use grap
 
 [See this thread](https://github.com/Azure/azure-cli/issues/25766)
 
+Important part here is that we need the `/auth/callback` on the SPA redirect to support our code. And the web redirect
+URI needs to keep the `/.auth/login/aad/callback`.
+
 ```bash
 az rest \
   --method "patch" \
   --uri "https://graph.microsoft.com/v1.0/applications/<appId>" \
   --headers "{'Content-Type': 'application/json'}" \
-  --body "{'spa': {'redirectUris': ['https://assistant.ssc-spc.gc.ca']}}"
+  --body "{'spa': {'redirectUris': ['https://assistant.ssc-spc.gc.ca', 'https://assistant.ssc-spc.gc.ca/auth/callback']}}"
   ```
 
 And for web ones (space separated URLs):
