@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { LogLevel } from "@azure/msal-browser";
+import { Configuration, LogLevel } from "@azure/msal-browser";
 
 /**
  * Configuration object to be passed to MSAL instance on creation.
@@ -11,11 +11,12 @@ import { LogLevel } from "@azure/msal-browser";
  * https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/lib/msal-browser/docs/configuration.md
  */
 
-export const msalConfig = {
+export const msalConfig: Configuration = {
     auth: {
         clientId: import.meta.env.VITE_AZURE_AD_CLIENT_ID as string,
         authority: `https://login.microsoftonline.com/${import.meta.env.VITE_AZURE_AD_TENANT_ID}`,
-        postLogoutRedirectUri: "/"
+        postLogoutRedirectUri: "/",
+        redirectUri: window.location.origin + "/auth/callback",
     },
     cache: {
         cacheLocation: "sessionStorage", // This configures where your cache will be stored
