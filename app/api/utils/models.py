@@ -119,15 +119,15 @@ class NewSuggestionCitation:
 @dataclass
 class NewSuggestionResponse:
     original_query: str
-    has_suggestions: Literal[True, False]
+    success: Literal[True, False]
     language: str
     timestamp: str  # ISO format string expected
     requester: str
 
-    # only provided if has_suggestions is False
+    # only provided if success is False
     reason: Optional[Literal["INVALID_QUERY", "INVALID_LANGUAGE"]] = None
 
-    # not provided if has_suggestions is False
+    # not provided if success is False
     content: Optional[str] = None
     citations: Optional[List[NewSuggestionCitation]] = None
 

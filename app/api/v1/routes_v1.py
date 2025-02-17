@@ -340,7 +340,7 @@ if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
                 "summary": "With all options",
                 "value": {
                     # This will be set to True for valid queries.
-                    "has_suggestions": True,
+                    "success": True,
                     # This will be either "en" or "fr", depending on the language of the suggestion.
                     "language": "en",
                     # This will be set to the query that was used to generate the suggestion.
@@ -370,7 +370,7 @@ if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
                 "summary": "With only the required options",
                 "value": {
                     # This will be set to True for valid queries.
-                    "has_suggestions": True,
+                    "success": True,
                     # This will be either "en" or "fr", depending on the language of the suggestion.
                     "language": "en",
                     # This will be set to the query that was used to generate the suggestion.

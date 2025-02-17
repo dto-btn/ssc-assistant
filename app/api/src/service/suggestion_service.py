@@ -41,14 +41,14 @@ class SuggestionService:
         if query_validation_result["is_valid"] is False:
             return {
                 # This will be set to False for invalid queries.
-                "has_suggestions": False,
+                "success": False,
                 "reason": query_validation_result["reason"],
             }
 
         if opts_validation_result["is_valid"] is False:
             return {
                 # This will be set to False for invalid queries.
-                "has_suggestions": False,
+                "success": False,
                 "reason": opts_validation_result["reason"],
             }
 
@@ -158,7 +158,7 @@ class SuggestionService:
         else:
             # this should never happen, but just in case
             return {
-                "has_suggestions": False,
+                "success": False,
                 "reason": "INVALID_LANGUAGE",
             }
 
@@ -173,7 +173,7 @@ class SuggestionService:
         _, completion = chat_with_data(message_request)
         if not isinstance(completion, ChatCompletion):
             return {
-                "has_suggestions": False,
+                "success": False,
                 "reason": "INTERNAL_ERROR",
             }
 
@@ -219,7 +219,7 @@ class SuggestionService:
 
         return {
             # This will be set to True for valid queries.
-            "has_suggestions": True,
+            "success": True,
             # This will be either "en" or "fr", depending on the language of the suggestion.
             "language": opts["language"],
             # This will be set to the query that was used to generate the suggestion.
