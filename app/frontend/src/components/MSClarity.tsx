@@ -1,21 +1,29 @@
 import React from "react";
 import { Helmet } from "react-helmet";
 
-const ClarityScript: React.FC = () => {
-  const clarityToken = import.meta.env.VITE_CLARITY_TOKEN || "qbdn9i0kka";
+declare global {
+  interface Window {
+    clarityToken: string;
+  }
+}
 
+window.clarityToken = import.meta.env.VITE_CLARITY_TOKEN || "";
+
+const ClarityScript: React.FC = () => {
   return (
-    <Helmet>
-      <script type="text/javascript">
-        {`
+    window.clarityToken && (
+      <Helmet>
+        <script type="text/javascript">
+          {`
           (function(c,l,a,r,i,t,y){
-            c[a] = c[a] || function() { (c[a].q = c[a].q || []).push(arguments) };
-            t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/"+i;
-            y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t,y);
-          })(window, document, "clarity", "script", "${clarityToken}");
+              c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+              t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+              y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+          })(window, document, "clarity", "script", window.clarityToken);
         `}
-      </script>
-    </Helmet>
+        </script>
+      </Helmet>
+    )
   );
 };
 
