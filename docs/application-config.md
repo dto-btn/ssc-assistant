@@ -135,7 +135,6 @@ And for web ones (space separated URLs):
 az ad app update --id <appId> \
   --web-redirect-uris https://assistant.ssc-spc.gc.ca/.auth/login/aad/callback https://assistant.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca/.auth/login/aad/callback
 
-
 az ad app update --id <appId> \
   --web-redirect-uris https://localhost:8080/.auth/login/aad/callback https://assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca/.auth/login/aad/callback
 ```
