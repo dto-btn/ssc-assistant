@@ -26,7 +26,7 @@ const SuggestionContextFailureSchema = z.object({
 
 const SuggestionContextSchema = z.union([SuggestionContextSuccessSchema, SuggestionContextFailureSchema]);
 
-type SuggestionContext = z.infer<typeof SuggestionContextSchema>;
+export type SuggestionContext = z.infer<typeof SuggestionContextSchema>;
 
 // const parseContextParam = (context: string): SuggestionContext | null => {
 //     try {
