@@ -36,6 +36,7 @@ module "frontend" {
   aad_client_id = var.aad_client_id
   microsoft_provider_authentication_secret = var.microsoft_provider_authentication_secret
   aad_auth_endpoint = var.aad_auth_endpoint
+  clarity_token = var.clarity_token
 }
 
 module "api" {

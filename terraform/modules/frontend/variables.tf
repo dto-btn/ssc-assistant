@@ -65,3 +65,8 @@ variable "subnet_id" {
     type = string
     description = "the subnet id"
 }
+
+variable "clarity_token" {
+    type = string
+    sensitive = true
+}

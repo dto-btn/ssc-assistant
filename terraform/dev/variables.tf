@@ -89,3 +89,8 @@ variable "archibus_api_password" {
     type = string
     sensitive = true
 }
+
+variable "clarity_token" {
+    type = string
+    sensitive = true
+}
