@@ -44,7 +44,7 @@ jobs:
     with:
       allowed-tools: 'geds,corporate'
       allowed-corporate-functions: 'intranet_question'
-      disabled-features: 'file_upload'
+      disabled-features: ''
       environment: 'pilot-prod'
       app-name: 'ssc-assistant'
     secrets: inherit
