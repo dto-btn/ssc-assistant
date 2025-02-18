@@ -113,14 +113,20 @@ NOTE2: This is a similar configuration to what the SP in prod is at the moment u
 [See this thread](https://github.com/Azure/azure-cli/issues/25766)
 
 Important part here is that we need the `/auth/callback` on the SPA redirect to support our code. And the web redirect
-URI needs to keep the `/.auth/login/aad/callback`.
+URI needs to keep the `/.auth/login/aad/callback` for Microsoft SSO.
 
 ```bash
 az rest \
   --method "patch" \
-  --uri "https://graph.microsoft.com/v1.0/applications/<app-Id-Not-appId>" \
+  --uri "https://graph.microsoft.com/v1.0/applications/<id-Not-appId>" \
   --headers "{'Content-Type': 'application/json'}" \
-  --body '{"spa": {"redirectUris": ["https://assistant.ssc-spc.gc.ca", "https://assistant.ssc-spc.gc.ca/auth/callback", "https://assistant.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca", "https://assistant.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca/auth/callback"]}}'
+  --body '{"spa": {"redirectUris": ["https://assistant.ssc-spc.gc.ca/auth/callback", "https://assistant.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca/auth/callback"]}}'
+
+az rest \
+  --method "patch" \
+  --uri "https://graph.microsoft.com/v1.0/applications/<id-Not-appId>" \
+  --headers "{'Content-Type': 'application/json'}" \
+  --body '{"spa": {"redirectUris": ["http://localhost:8080/auth/callback","https://assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca/auth/callback"]}}'
   ```
 
 And for web ones (space separated URLs):
@@ -128,4 +134,8 @@ And for web ones (space separated URLs):
 ```bash
 az ad app update --id <appId> \
   --web-redirect-uris https://assistant.ssc-spc.gc.ca/.auth/login/aad/callback https://assistant.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca/.auth/login/aad/callback
+
+
+az ad app update --id <appId> \
+  --web-redirect-uris https://localhost:8080/.auth/login/aad/callback https://assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca/.auth/login/aad/callback
 ```
