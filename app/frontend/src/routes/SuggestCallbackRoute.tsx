@@ -1,5 +1,5 @@
 import { useParams } from "react-router";
-import { FC, useEffect } from "react"
+import { FC, useEffect, useState } from "react"
 import z from "zod";
 
 // Added schemas
@@ -28,32 +28,99 @@ const SuggestionContextSchema = z.union([SuggestionContextSuccessSchema, Suggest
 
 export type SuggestionContext = z.infer<typeof SuggestionContextSchema>;
 
-// const parseContextParam = (context: string): SuggestionContext | null => {
-//     try {
-//         const parsed = SuggestionContextSchema.parse(JSON.parse(context));
-//         if (!parsed) {
-//             return null;
-//         }
-//     } catch (e) {
-//         return null;
-//     }
-// }
+enum SuggestCallbackErrorStates {
+    REDIRECT_WITH_UNKNOWN_ERROR = "redirect_with_unknown_error",
+    REDIRECT_BECAUSE_SERVER_RETURNED_SUCCESS_FALSE = "redirect_because_server_returned_success_false",
+    REDIRECT_BECAUSE_CONTEXT_VALIDATION_FAILED = "redirect_because_context_validation_failed"
+}
 
-// const useParsedContextParam = () => {
-//     const { context } = useParams();
-//     const [contextCache, setContextCache] = useState<SuggestionContextSchema | null>(null);
+enum SuggestCallbackSuccessStates {
+    REDIRECT_WITH_SUCCESS = "redirect_with_success",
+};
 
-//     useEffect(() => {
-//         setContextCache(parseContextParam(context));
-//     }, [context]);
+export type SuggestCallbackStates = SuggestCallbackErrorStates | SuggestCallbackSuccessStates;
 
-//     return context;
-// }
+type ParsedContextParamReturn =
+    | { success: true, context: SuggestionContext }
+    | { success: false, errorReason: SuggestCallbackErrorStates };
 
-export const SuggestCallbackRoute: FC = () => {
+const parseContextParam = (context: string | undefined): ParsedContextParamReturn => {
+    if (!context) {
+        return {
+            success: false,
+            errorReason: SuggestCallbackErrorStates.REDIRECT_BECAUSE_CONTEXT_VALIDATION_FAILED
+        }
+    }
+
+    try {
+        const parsed = SuggestionContextSchema.parse(JSON.parse(context));
+        return {
+            success: true,
+            context: parsed
+        }
+    } catch (e) {
+        return {
+            success: false,
+            errorReason: SuggestCallbackErrorStates.REDIRECT_BECAUSE_CONTEXT_VALIDATION_FAILED
+        }
+    }
+}
+
+const useParsedContextParam = () => {
     const { context } = useParams();
+    const [contextCache, setContextCache] = useState<ParsedContextParamReturn | null>(null);
+
+    useEffect(() => {
+        setContextCache(parseContextParam(context));
+    }, [context]);
+
+    const massagedValue = ((): ParsedContextParamReturn => {
+        switch (contextCache?.success) {
+            case true:
+                return {
+                    success: true,
+                    context: contextCache.context
+                };
+            case false:
+                return {
+                    success: false,
+                    errorReason: contextCache.errorReason
+                };
+            default:
+                return {
+                    success: false,
+                    errorReason: SuggestCallbackErrorStates.REDIRECT_WITH_UNKNOWN_ERROR
+                };
+        }
+    })()
 
     return (
-        <div>Suggest Callback</div>
+        <div>
+            <div data-testid="val.success">
+                <div>Success:</div>
+                <div>{massagedValue.success.toString()}</div>
+            </div>
+            {massagedValue.success ? (
+                <div data-testid="val.context">
+                    <div>{JSON.stringify(massagedValue.context)}</div>
+                </div>
+            )
+                : (
+                    <div data-testid="val.errorReason">
+                        <div>{massagedValue.errorReason}</div>
+                    </div>
+                )
+            }
+        </div>
     )
 }
+
+
+
+// export const SuggestCallbackRoute: FC = () => {
+//     const { context } = useParams();
+
+//     return (
+//         <div>Suggest Callback</div>
+//     )
+// }
