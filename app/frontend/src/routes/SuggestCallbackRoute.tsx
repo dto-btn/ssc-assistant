@@ -1,4 +1,4 @@
-import { useParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import { FC, useEffect, useState } from "react"
 import z from "zod";
 
@@ -34,8 +34,9 @@ type ParsedContextParamReturn =
     | { success: true, context: SuggestionContext }
     | { success: false, errorReason: SuggestCallbackStates };
 
-const parseContextParam = (context: string | undefined): ParsedContextParamReturn => {
-    if (!context) {
+const parseContextParam = (contextBase64: string | null): ParsedContextParamReturn => {
+    if (!contextBase64) {
+        console.error("parseContextParam: context is undefined");
         return {
             success: false,
             errorReason: "redirect_because_context_validation_failed"
@@ -43,7 +44,8 @@ const parseContextParam = (context: string | undefined): ParsedContextParamRetur
     }
 
     try {
-        const parsed = SuggestionContextSchema.parse(JSON.parse(context));
+        const contextStringified = atob(contextBase64);
+        const parsed = SuggestionContextSchema.parse(JSON.parse(contextStringified));
 
         if (parsed.success) {
             return {
@@ -51,6 +53,7 @@ const parseContextParam = (context: string | undefined): ParsedContextParamRetur
                 context: parsed
             }
         } else {
+            console.error("parseContextParam: server returned success: false");
             return {
                 success: false,
                 errorReason: "redirect_because_server_returned_success_false"
@@ -58,7 +61,7 @@ const parseContextParam = (context: string | undefined): ParsedContextParamRetur
         }
     } catch (e) {
         if (e instanceof z.ZodError) {
-            console.error("SuggestionContext validation failed", e.errors);
+            console.error("parseContextParam: Zod validation failed", e.errors);
             return {
                 success: false,
                 errorReason: "redirect_because_context_validation_failed"
@@ -75,8 +78,8 @@ const parseContextParam = (context: string | undefined): ParsedContextParamRetur
 }
 
 const useParsedContextParam = () => {
-    const useParamsReturn = useParams();
-    const { suggestionContext } = useParamsReturn;
+    const [urlParams] = useSearchParams();
+    const suggestionContext = urlParams.get("suggestionContext")
     const [returnVal, setReturnVal] = useState<ParsedContextParamReturn | null>(null);
 
     useEffect(() => {
@@ -108,10 +111,38 @@ const useParsedContextParam = () => {
     return returnVal;
 }
 
+const generateTestLink = () => {
+    const suggestionContext = btoa(JSON.stringify({
+        "success": true,
+        "language": "en",
+        "original_query": "What is SSC's content management system?",
+        "timestamp": "2022-01-01T00:00:00.000Z",
+        "requester": "mysscplus",
+        "content": "Arr, ye be askin' about the content management system at SSC. Here be what I found... Those pesky citations be removed, but ye can still find them in the citations list.",
+        "citations": [
+            {
+                "title": "Title of the citation",
+                "content": "Example",
+                "url": "https://example.com",
+            },
+            {
+                "title": "Duplicate Example",
+                "content": "It can contain duplicates, but you can use the dedupe_citations option to remove them.",
+                "url": "https://example.com/duplicate",
+            },
+        ],
+    }));
+
+    const link = `http://localhost:8080/suggest-callback?suggestionContext=${suggestionContext}`;
+
+    return link;
+}
+
 
 
 export const SuggestCallbackRoute: FC = () => {
     const massagedValue = useParsedContextParam();
+    const testLink = generateTestLink();
 
     if (!massagedValue) {
         return <div>Loading...</div>
@@ -126,6 +157,7 @@ export const SuggestCallbackRoute: FC = () => {
                 <div data-testid="val.context">
                     <div>{JSON.stringify(massagedValue.context)}</div>
                 </div>
+                <a href={testLink}>Test Link</a>
             </div>
         )
     } else {
@@ -137,6 +169,7 @@ export const SuggestCallbackRoute: FC = () => {
                 <div data-testid="val.errorReason">
                     <div>{massagedValue.errorReason}</div>
                 </div>
+                <a href={testLink}>Test Link</a>
             </div>
         )
     }
