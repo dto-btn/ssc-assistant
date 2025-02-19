@@ -27,6 +27,8 @@ on:
         required: false
       VITE_AZURE_AD_TENANT_ID:
         required: false
+      VITE_CLARITY_TOKEN:
+        required: false
 
 permissions:
   id-token: write
@@ -65,6 +67,7 @@ jobs:
         VITE_ALLOWED_TOOLS: ${{ inputs.allowed-tools }}
         VITE_ALLOWED_CORPORATE_FUNCTIONS: ${{ inputs.allowed-corporate-functions }}
         VITE_DISABLED_FEATURES: ${{ inputs.disabled-features }}
+        VITE_CLARITY_TOKEN: ${{ secrets.VITE_CLARITY_TOKEN }}
 
     # This step will only run when the event is a push to the main branch
     - name: Zip artifact for deployment
