@@ -2,6 +2,8 @@ import { useParams, useSearchParams } from "react-router";
 import { FC, useEffect, useState } from "react"
 import z from "zod";
 import { Box } from "@mui/material";
+import { TopMenu } from "../components/TopMenu";
+import { TopMenuFrame } from "../components/TopMenu/subcomponents/TopMenuFrame";
 
 // Added schemas
 const CitationSchema = z.object({
@@ -154,9 +156,12 @@ export const SuggestCallbackRoute: FC = () => {
 
     if (massagedValue.success) {
         return (
+            <>
+                <TopMenuFrame />
+
             <div>
                 <div data-testid="val.success.true">
-                    Success!
+                        Success! This call will be redirected to the chatbot, and a chat will be started with the suggestions.
                 </div>
                 <div data-testid="val.context">
                     Unbase64'd Data:
@@ -170,18 +175,22 @@ export const SuggestCallbackRoute: FC = () => {
                 </div>
                 {links}
             </div>
+            </>
         )
     } else {
         return (
+            <>
+                <TopMenuFrame />
             <div>
                 <div data-testid="val.success.false">
-                    Failure. Reason...:
+                        Failure. This call will be redirected to the chatbot, and an error message will be shown that corresponds to the following reason:
                 </div>
                 <div data-testid="val.errorReason">
                     <div>{massagedValue.errorReason}</div>
                 </div>
                 {links}
             </div>
+            </>
         )
     }
 }
