@@ -785,7 +785,7 @@ const MainScreen = () => {
         conversationString += '\n\n';
         conversationString += parsedSuggestionContext.context.citations.flatMap((citation) => {
           return `
-#### ${citation.title} [🔗](${citation.url})
+#### ${citation.title} [link](${citation.url})
 
 ${citation.content}
 `;
@@ -797,8 +797,14 @@ ${citation.content}
         const newChatHistory: ChatHistory = {
           chatItems: [
             {
-              role: "assistant",
-              content: conversationString,
+              role: "user",
+              content: parsedSuggestionContext.context.original_query,
+            },
+            {
+              message: {
+                role: "assistant",
+                content: conversationString,
+              }
             },
           ],
           description: parsedSuggestionContext.context.original_query,
