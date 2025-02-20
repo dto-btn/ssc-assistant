@@ -98,11 +98,6 @@ def mock_chat_with_data(monkeypatch: MonkeyPatch):
     return mock_func
 
 
-def test_store_suggestion_request(ctx: TestContext):
-    raise NotImplementedError(
-        "Need to talk to team & implement this feature after discussion"
-    )
-
 def test_dedupe_citations(ctx: TestContext, mock_chat_with_data):
     # add duplicate citations in the context
     mock_chat_with_data.return_value[1].choices[0].message.context = {
@@ -137,9 +132,9 @@ def test_dedupe_citations(ctx: TestContext, mock_chat_with_data):
         {"language": "en", "requester": "someone_cool", "dedupe_citations": True},
     )
 
-    assert response["has_suggestions"] is True
-    assert len(response["suggestion_citations"]) == 1
-    assert response["suggestion_citations"][0] == {
+    assert response["success"] is True
+    assert len(response["citations"]) == 1
+    assert response["citations"][0] == {
         "content": "CONTENT 1",
         "title": "TITLE 1",
         "url": "SAME_URL",
@@ -160,11 +155,8 @@ def test_remove_citations_from_content(ctx: TestContext, mock_chat_with_data):
         },
     )
 
-    assert response["has_suggestions"] is True
+    assert response["success"] is True
     assert response["content"] == "This is a  test  string ."
-
-def test_top_k_metric(ctx: TestContext):
-    raise NotImplementedError("Not yet implemented")
 
 
 def test_instantiation(ctx: TestContext):
@@ -175,8 +167,8 @@ def test_instantiation(ctx: TestContext):
 
 
 # Behavioural requirements:
-# 1. When a suggestion is done with an invalid query, the response has a flag "has_suggestions" set to False and "reason" set to "INVALID_QUERY."
-# 2. When a suggestion is done with a valid query, the response has a flag "has_suggestions" set to True and a suggestion context.
+# 1. When a suggestion is done with an invalid query, the response has a flag "success" set to False and "reason" set to "INVALID_QUERY."
+# 2. When a suggestion is done with a valid query, the response has a flag "success" set to True and a suggestion context.
 # 3. The response has a language field set to the language of the suggestion response.
 # 4. The response has a query field set to the query that was used to generate the suggestion.
 # 5. The response has a timestamp field set to the time the suggestion was generated.
@@ -198,7 +190,7 @@ def test_instantiation(ctx: TestContext):
 )
 def test_invalid_query(ctx: TestContext, invalid_query: str | None):
     response = ctx["suggestion_service"].suggest(invalid_query, {})
-    assert response["has_suggestions"] is False
+    assert response["success"] is False
     assert response["reason"] == "INVALID_QUERY"
 
 
@@ -210,7 +202,7 @@ def test_valid_query(ctx: TestContext):
             "requester": "someone_cool",
         },
     )
-    assert response["has_suggestions"] is True
+    assert response["success"] is True
     assert response["language"] == "en"
     assert response["original_query"] == "valid query"
     assert response["requester"] == "someone_cool"
@@ -244,10 +236,10 @@ def test_language(
     )
 
     if expected_valid:
-        assert response["has_suggestions"] is True
+        assert response["success"] is True
         assert response["language"] == expected_language
     else:
-        assert response["has_suggestions"] is False
+        assert response["success"] is False
         assert response["reason"] == "INVALID_LANGUAGE"
 
 
@@ -273,7 +265,7 @@ def test_response_original_query_is_set_to_the_query_used_to_generate_the_sugges
             "requester": "someone_cool",
         },
     )
-    assert response["has_suggestions"] is True
+    assert response["success"] is True
     assert response["original_query"] == output_query
 
 
@@ -318,7 +310,7 @@ def test_requester_field_is_set_to_the_application_that_requested_the_suggestion
             "requester": "someone_cool",
         },
     )
-    assert response["has_suggestions"] is True
+    assert response["success"] is True
     assert response["requester"] == "someone_cool"
 
 
@@ -392,5 +384,5 @@ def test_returns_internal_error_if_chat_with_data_response_is_not_chat_completio
         },
     )
 
-    assert response["has_suggestions"] is False
+    assert response["success"] is False
     assert response["reason"] == "INTERNAL_ERROR"

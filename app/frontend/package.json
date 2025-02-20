@@ -7,7 +7,8 @@
     "dev": "node server.js",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest"
   },
   "dependencies": {
     "@azure/msal-browser": "^3.10.0",
@@ -40,12 +41,17 @@
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.0",
     "uuid": "^9.0.1",
-    "vite-express": "^0.15.0"
+    "vite-express": "^0.15.0",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@types/react": "^18.2.55",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^18.3.18",
     "@types/react-copy-to-clipboard": "^5.0.7",
-    "@types/react-dom": "^18.2.19",
+    "@types/react-dom": "^18.3.5",
     "@types/react-helmet": "^6.1.11",
     "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
@@ -55,6 +61,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
     "typescript": "^5.2.2",
-    "vite": "^5.4.14"
+    "vite": "^5.4.14",
+    "vitest": "^3.0.5"
   }
 }

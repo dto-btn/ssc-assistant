@@ -50,11 +50,11 @@ class SuggestionCitation(TypedDict):
 
 class SuggestionResponseBase(TypedDict):
     """
-    A base response for a suggestion, which includes the has_suggestions flag.
+    A base response for a suggestion, which includes the success flag.
     """
 
     original_query: str
-    has_suggestions: bool
+    success: bool
     language: str
     timestamp: str
     requester: str
@@ -67,7 +67,7 @@ class SuggestionContextWithSuggestions(SuggestionResponseBase):
     initiate a new chat with the user that is based on the suggestion.
     """
 
-    has_suggestions: Literal[True]
+    success: Literal[True]
     content: str
     citations: List[SuggestionCitation]
 
@@ -77,7 +77,7 @@ class SuggestionContextWithoutSuggestions(SuggestionResponseBase):
     A suggestion context, which includes the body. This is used to generate a suggestion.
     """
 
-    has_suggestions: Literal[False]
+    success: Literal[False]
     reason: SuggestionContextWithoutSuggestionsReason
 
 
