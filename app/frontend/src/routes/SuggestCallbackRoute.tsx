@@ -1,7 +1,7 @@
 import { useSearchParams } from "react-router";
-import { FC, useEffect, useState } from "react"
+import React, { FC, PropsWithChildren, useEffect, useState } from "react"
 import z from "zod";
-import { Box } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { TopMenuFrame } from "../components/TopMenu/subcomponents/TopMenuFrame";
 
 // Added schemas
@@ -132,6 +132,25 @@ const VALIDATION_FAILED_LINK = generateTestLink({
     but: "this is garbage data"
 });
 
+const SuggestCallbackContainer: React.FC<PropsWithChildren> = ({ children }) => {
+    return (
+        <>
+            <TopMenuFrame />
+            {children}
+            <p>This page will be removed in the final version of the app. The function bound to the following button will be automatically triggered.</p>
+            <Button variant="contained" onClick={() => alert("TODO: Redirect")}>Process Context</Button>
+            <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", my: "2rem" }}>
+                <h2>Test Links</h2>
+                <a href={GOOD_TEST_LINK}>Success Link</a>
+                <a href={NO_CONTEXT_LINK}>No Context Link</a>
+                <a href={SUCCESS_FALSE_LINK}>Success False Link</a>
+                <a href={VALIDATION_FAILED_LINK}>Validation Failed Link</a>
+            </Box>
+        </>
+    )
+}
+
+
 
 export const SuggestCallbackRoute: FC = () => {
     const massagedValue = useParsedContextParam();
@@ -141,25 +160,16 @@ export const SuggestCallbackRoute: FC = () => {
     }, [massagedValue])
 
     if (!massagedValue) {
-        return <div>Loading...</div>
+        return (
+            <SuggestCallbackContainer>
+                <div >Loading...</div>
+            </SuggestCallbackContainer>
+        )
     }
-
-    const links = (
-        <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", my: "2rem" }}>
-            <h2>Test Links</h2>
-            <a href={GOOD_TEST_LINK}>Success Link</a>
-            <a href={NO_CONTEXT_LINK}>No Context Link</a>
-            <a href={SUCCESS_FALSE_LINK}>Success False Link</a>
-            <a href={VALIDATION_FAILED_LINK}>Validation Failed Link</a>
-        </Box>
-    )
 
     if (massagedValue.success) {
         return (
-            <>
-                <TopMenuFrame />
-
-            <div>
+            <SuggestCallbackContainer>
                 <div data-testid="val.success.true">
                         Success! This call will be redirected to the chatbot, and a chat will be started with the suggestions.
                 </div>
@@ -173,24 +183,18 @@ export const SuggestCallbackRoute: FC = () => {
                         {JSON.stringify(massagedValue, null, 2)}
                     </pre>
                 </div>
-                {links}
-            </div>
-            </>
+            </SuggestCallbackContainer>
         )
     } else {
         return (
-            <>
-                <TopMenuFrame />
-            <div>
+            <SuggestCallbackContainer>
                 <div data-testid="val.success.false">
                         Failure. This call will be redirected to the chatbot, and an error message will be shown that corresponds to the following reason:
                 </div>
                 <div data-testid="val.errorReason">
                     <div>{massagedValue.errorReason}</div>
                 </div>
-                {links}
-            </div>
-            </>
+            </SuggestCallbackContainer>
         )
     }
 }
