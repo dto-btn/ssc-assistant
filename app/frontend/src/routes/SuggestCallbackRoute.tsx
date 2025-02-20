@@ -1,6 +1,7 @@
 import { useParams, useSearchParams } from "react-router";
 import { FC, useEffect, useState } from "react"
 import z from "zod";
+import { Box } from "@mui/material";
 
 // Added schemas
 const CitationSchema = z.object({
@@ -34,7 +35,7 @@ type ParsedContextParamReturn =
     | { success: true, context: SuggestionContext }
     | { success: false, errorReason: SuggestCallbackStates };
 
-const parseContextParam = (contextBase64: string | null): ParsedContextParamReturn => {
+const validateContextParam = (contextBase64: string | null): ParsedContextParamReturn => {
     if (!contextBase64) {
         console.error("parseContextParam: context is undefined");
         return {
@@ -83,36 +84,20 @@ const useParsedContextParam = () => {
     const [returnVal, setReturnVal] = useState<ParsedContextParamReturn | null>(null);
 
     useEffect(() => {
-        const contextCache = parseContextParam(suggestionContext);
-
-        const massagedValue = ((): ParsedContextParamReturn => {
-            switch (contextCache?.success) {
-                case true:
-                    return {
-                        success: true,
-                        context: contextCache.context
-                    };
-                case false:
-                    return {
-                        success: false,
-                        errorReason: contextCache.errorReason
-                    };
-                default:
-                    return {
-                        success: false,
-                        errorReason: "redirect_with_unknown_error"
-                    };
-            }
-        })();
-
-        setReturnVal(massagedValue);
-    }, []);
+        const validatedContext = validateContextParam(suggestionContext);
+        setReturnVal(validatedContext);
+    }, [suggestionContext]);
 
     return returnVal;
 }
 
-const generateTestLink = () => {
-    const suggestionContext = btoa(JSON.stringify({
+const generateTestLink = (suggestionContext: SuggestionContext) => {
+    const b64 = btoa(JSON.stringify(suggestionContext));
+    const link = `http://localhost:8080/suggest-callback?suggestionContext=${b64}`;
+    return link;
+}
+
+const GOOD_TEST_LINK = generateTestLink({
         "success": true,
         "language": "en",
         "original_query": "What is SSC's content management system?",
@@ -131,22 +116,41 @@ const generateTestLink = () => {
                 "url": "https://example.com/duplicate",
             },
         ],
-    }));
+});
 
-    const link = `http://localhost:8080/suggest-callback?suggestionContext=${suggestionContext}`;
+const NO_CONTEXT_LINK = `http://localhost:8080/suggest-callback`;
 
-    return link;
-}
+const SUCCESS_FALSE_LINK = generateTestLink({
+    success: false,
+    reason: "redirect_because_server_returned_success_false"
+});
 
+const VALIDATION_FAILED_LINK = generateTestLink({
+    success: true,
+    // @ts-expect-error we're testing the error case
+    but: "this is garbage data"
+});
 
 
 export const SuggestCallbackRoute: FC = () => {
     const massagedValue = useParsedContextParam();
-    const testLink = generateTestLink();
+
+    useEffect(() => {
+
+    }, [massagedValue])
 
     if (!massagedValue) {
         return <div>Loading...</div>
     }
+
+    const links = (
+        <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", my: "2rem" }}>
+            <a href={GOOD_TEST_LINK}>Success Link</a>
+            <a href={NO_CONTEXT_LINK}>No Context Link</a>
+            <a href={SUCCESS_FALSE_LINK}>Success False Link</a>
+            <a href={VALIDATION_FAILED_LINK}>Validation Failed Link</a>
+        </Box>
+    )
 
     if (massagedValue.success) {
         return (
@@ -155,9 +159,16 @@ export const SuggestCallbackRoute: FC = () => {
                     Success!
                 </div>
                 <div data-testid="val.context">
-                    <div>{JSON.stringify(massagedValue.context)}</div>
+                    Unbase64'd Data:
+                    <pre style={{
+                        whiteSpace: "pre-wrap",
+                        wordWrap: "break-word",
+                        fontFamily: "monospace"
+                    }}>
+                        {JSON.stringify(massagedValue, null, 2)}
+                    </pre>
                 </div>
-                <a href={testLink}>Test Link</a>
+                {links}
             </div>
         )
     } else {
@@ -169,7 +180,7 @@ export const SuggestCallbackRoute: FC = () => {
                 <div data-testid="val.errorReason">
                     <div>{massagedValue.errorReason}</div>
                 </div>
-                <a href={testLink}>Test Link</a>
+                {links}
             </div>
         )
     }
