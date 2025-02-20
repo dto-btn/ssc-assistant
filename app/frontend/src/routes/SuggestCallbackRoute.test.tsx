@@ -36,8 +36,7 @@ describe('SuggestCallbackRoute', () => {
             citations: [
                 {
                     title: 'title',
-                    url: 'url',
-                    content: 'content'
+                    url: 'url'
                 }
             ],
             language: 'en',
