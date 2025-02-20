@@ -5,7 +5,8 @@ import { SuggestCallbackRoute } from './SuggestCallbackRoute';
 
 const mocks = vi.hoisted(() => {
     return {
-        useSearchParams_get: vi.fn(),
+        reactRouter_useSearchParams_get: vi.fn(),
+        reactRouter_useNavigate_return: vi.fn()
     }
 })
 
@@ -14,10 +15,11 @@ vi.mock("react-router", () => {
         useSearchParams: () => {
             return [
                 {
-                    get: mocks.useSearchParams_get
+                    get: mocks.reactRouter_useSearchParams_get
                 }
             ]
-        }
+        },
+        useNavigate: () => mocks.reactRouter_useNavigate_return
     }
 });
 
@@ -26,7 +28,7 @@ describe('SuggestCallbackRoute', () => {
     // When the context parameter is success, it should redirect to the chat page and start a chat with the suggestions.
     it('should redirect to the chat page and start a chat with the suggestions when the context parameter is success', async () => {
         // vi.mock("react-router", mockUseParams())
-        mocks.useSearchParams_get.mockReturnValue(btoa(JSON.stringify({
+        mocks.reactRouter_useSearchParams_get.mockReturnValue(btoa(JSON.stringify({
             success: true,
             content: 'content',
             citations: [
@@ -48,7 +50,7 @@ describe('SuggestCallbackRoute', () => {
     // When the context parameter is failure, it should redirect to the chat page and show an error message.
 
     it('should redirect to the chat page and show an error message when success is false', async () => {
-        mocks.useSearchParams_get.mockReturnValue(btoa(JSON.stringify({
+        mocks.reactRouter_useSearchParams_get.mockReturnValue(btoa(JSON.stringify({
             success: false,
             reason: "redirect_because_context_validation_failed" // can be one of several values
         })));
@@ -59,7 +61,7 @@ describe('SuggestCallbackRoute', () => {
 
     // When the context parameter does not exist, it should redirect to the chat page and show an error message.
     it('should redirect to the chat page and show an error message when the context parameter does not exist', async () => {
-        mocks.useSearchParams_get.mockReturnValue(null);
+        mocks.reactRouter_useSearchParams_get.mockReturnValue(null);
         render(<SuggestCallbackRoute />);
         await screen.findByTestId('val.success.false');
     });
