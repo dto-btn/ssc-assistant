@@ -772,7 +772,59 @@ const MainScreen = () => {
     // on initial load of page, if state is not null, log the state
     const parsedSuggestionContext: ParsedSuggestionContext | null = location.state;
     if (parsedSuggestionContext) {
-      console.log("parsedSuggestionContext", location.state);
+      if (parsedSuggestionContext.success) {
+        if (!parsedSuggestionContext.context.success) {
+          // this should never happen
+          alert("An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded.");
+          console.error("ERROR: parsedSuggestionContext:", parsedSuggestionContext);
+          return;
+        }
+        // TODO: create a new conversation with the context.
+        let conversationString = '';
+        conversationString += parsedSuggestionContext.context.content;
+        conversationString += '\n\n';
+        conversationString += parsedSuggestionContext.context.citations.flatMap((citation) => {
+          return `
+#### ${citation.title} [🔗](${citation.url})
+
+${citation.content}
+`;
+        }).join('\n\n');
+
+        // now create a new conversation with the context
+        const newChatIndex = chatHistoriesDescriptions.length;
+        setCurrentChatIndex(newChatIndex);
+        const newChatHistory: ChatHistory = {
+          chatItems: [
+            {
+              role: "assistant",
+              content: conversationString,
+            },
+          ],
+          description: parsedSuggestionContext.context.original_query,
+          uuid: uuidv4(),
+          model: defaultModel,
+        };
+        setCurrentChatHistory(newChatHistory);
+        setChatHistoriesDescriptions([
+          ...chatHistoriesDescriptions,
+          parsedSuggestionContext.context.original_query,
+        ]);
+        setOpenDrawer(false);
+      } else {
+        console.error("ERROR: parsedSuggestionContext:", parsedSuggestionContext);
+        switch (parsedSuggestionContext.errorReason) {
+          case "redirect_because_context_validation_failed":
+            alert("The suggestion context was in an unknown format. Your suggestions have not been loaded.");
+            break;
+          case "redirect_because_server_returned_success_false":
+            alert("The server returned an error while parsing the suggestion context. Your suggestions have not been loaded.");
+            break;
+          case "redirect_with_unknown_error":
+          default:
+            alert("An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded.");
+        }
+      }
     }
   }, [])
 
