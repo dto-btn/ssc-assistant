@@ -100,24 +100,24 @@ const generateTestLink = (suggestionContext: SuggestionContext) => {
 }
 
 const GOOD_TEST_LINK = generateTestLink({
-        "success": true,
-        "language": "en",
-        "original_query": "What is SSC's content management system?",
-        "timestamp": "2022-01-01T00:00:00.000Z",
-        "requester": "mysscplus",
-        "content": "Arr, ye be askin' about the content management system at SSC. Here be what I found... Those pesky citations be removed, but ye can still find them in the citations list.",
-        "citations": [
-            {
-                "title": "Title of the citation",
-                "content": "Example",
-                "url": "https://example.com",
-            },
-            {
-                "title": "Duplicate Example",
-                "content": "It can contain duplicates, but you can use the dedupe_citations option to remove them.",
-                "url": "https://example.com/duplicate",
-            },
-        ],
+    "success": true,
+    "language": "en",
+    "original_query": "What is SSC's content management system?",
+    "timestamp": "2022-01-01T00:00:00.000Z",
+    "requester": "mysscplus",
+    "content": "Arr, ye be askin' about the content management system at SSC. Here be what I found... Those pesky citations be removed, but ye can still find them in the citations list.",
+    "citations": [
+        {
+            "title": "Title of the citation",
+            "content": "Example",
+            "url": "https://example.com",
+        },
+        {
+            "title": "Duplicate Example",
+            "content": "It can contain duplicates, but you can use the dedupe_citations option to remove them.",
+            "url": "https://example.com/duplicate",
+        },
+    ],
 });
 
 const NO_CONTEXT_LINK = `http://localhost:8080/suggest-callback`;
@@ -176,7 +176,7 @@ export const SuggestCallbackRoute: FC = () => {
         return (
             <SuggestCallbackContainer parsedContext={parsedContext}>
                 <div data-testid="val.success.true">
-                        Success! This call will be redirected to the chatbot, and a chat will be started with the suggestions.
+                    Success! This call will be redirected to the chatbot, and a chat will be started with the suggestions.
                 </div>
                 <div data-testid="val.context">
                     Unbase64'd Data:
@@ -194,7 +194,7 @@ export const SuggestCallbackRoute: FC = () => {
         return (
             <SuggestCallbackContainer parsedContext={parsedContext}>
                 <div data-testid="val.success.false">
-                        Failure. This call will be redirected to the chatbot, and an error message will be shown that corresponds to the following reason:
+                    Failure. This call will be redirected to the chatbot, and an error message will be shown that corresponds to the following reason:
                 </div>
                 <div data-testid="val.errorReason">
                     <div>{parsedContext.errorReason}</div>

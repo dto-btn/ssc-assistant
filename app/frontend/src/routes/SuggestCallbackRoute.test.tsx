@@ -51,7 +51,7 @@ describe('SuggestCallbackRoute', () => {
         });
         // When the context parameter is success, it should redirect to the chat page and start a chat with the suggestions.
         it('should redirect to the chat page and start a chat with the suggestions when the context parameter is success', async () => {
-        // vi.mock("react-router", mockUseParams())
+            // vi.mock("react-router", mockUseParams())
             await screen.findByTestId('val.success.true');
         });
         it('should redirect with the context when doNavigate is called.', async () => {
@@ -90,7 +90,7 @@ describe('SuggestCallbackRoute', () => {
         });
 
         it('should redirect to the chat page and show an error message when the context parameter does not exist', async () => {
-        // When the context parameter does not exist, it should redirect to the chat page and show an error message.
+            // When the context parameter does not exist, it should redirect to the chat page and show an error message.
             await screen.findByTestId('val.success.false');
         });
         it('should redirect with the context when doNavigate is called.', async () => {
