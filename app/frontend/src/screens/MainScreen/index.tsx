@@ -1,6 +1,5 @@
 import {
   Box,
-  CssBaseline,
   Dialog,
   DialogContent,
   useMediaQuery,
@@ -31,6 +30,8 @@ import { allowedToolsSet } from "../../allowedTools";
 import { callMsGraph } from "../../graph";
 import { UserContext } from "../../context/UserContext";
 import { DeleteConversationConfirmation } from "../../components/DeleteConversationConfirmation";
+import { useLocation } from "react-router";
+import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
 
 const MainScreen = () => {
   const defaultEnabledTools: { [key: string]: boolean } = {};
@@ -58,6 +59,7 @@ const MainScreen = () => {
     return 0;
   };
 
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
@@ -765,6 +767,14 @@ const MainScreen = () => {
       });
     }
   }, [isAuthenticated, inProgress, userData]);
+
+  useEffect(() => {
+    // on initial load of page, if state is not null, log the state
+    const parsedSuggestionContext: ParsedSuggestionContext | null = location.state;
+    if (parsedSuggestionContext) {
+      console.log("parsedSuggestionContext", location.state);
+    }
+  }, [])
 
   return (
     <UserContext.Provider value={userData}>

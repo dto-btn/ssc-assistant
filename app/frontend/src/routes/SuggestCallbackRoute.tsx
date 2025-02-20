@@ -33,11 +33,11 @@ export type SuggestionContext = z.infer<typeof SuggestionContextSchema>;
 
 export type SuggestCallbackStates = "redirect_with_unknown_error" | "redirect_because_server_returned_success_false" | "redirect_because_context_validation_failed" | "redirect_with_success";
 
-type ParsedContextParamReturn =
+export type ParsedSuggestionContext =
     | { success: true, context: SuggestionContext }
     | { success: false, errorReason: SuggestCallbackStates };
 
-const validateContextParam = (contextBase64: string | null): ParsedContextParamReturn => {
+const validateContextParam = (contextBase64: string | null): ParsedSuggestionContext => {
     if (!contextBase64) {
         console.error("parseContextParam: context is undefined");
         return {
@@ -83,7 +83,7 @@ const validateContextParam = (contextBase64: string | null): ParsedContextParamR
 const useParsedContextParam = () => {
     const [urlParams] = useSearchParams();
     const suggestionContext = urlParams.get("suggestionContext")
-    const [returnVal, setReturnVal] = useState<ParsedContextParamReturn | null>(null);
+    const [returnVal, setReturnVal] = useState<ParsedSuggestionContext | null>(null);
 
     useEffect(() => {
         const validatedContext = validateContextParam(suggestionContext);
@@ -133,12 +133,12 @@ const VALIDATION_FAILED_LINK = generateTestLink({
     but: "this is garbage data"
 });
 
-const SuggestCallbackContainer: React.FC<PropsWithChildren<{ parsedContext: ParsedContextParamReturn | null }>> = ({ children, parsedContext }) => {
+const SuggestCallbackContainer: React.FC<PropsWithChildren<{ parsedContext: ParsedSuggestionContext | null }>> = ({ children, parsedContext: parsedSuggestionContext }) => {
     const navigate = useNavigate();
 
     const doNavigate = () => {
         navigate('/', {
-            state: parsedContext
+            state: parsedSuggestionContext
         })
     }
 
