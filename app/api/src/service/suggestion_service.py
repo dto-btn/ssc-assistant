@@ -180,12 +180,15 @@ class SuggestionService:
         # # Convert ChatCompletion to Completion
         completion_response = convert_chat_with_data_response(completion)
 
+        # Generate list of citations, for later use
+        citations: List[NewSuggestionCitation] = [
+            NewSuggestionCitation(url=x.url, title=x.title)
+            for x in completion_response.message.context.citations
+        ]
+
         # # Post Processing: Dedupe citations
         if completion_response.message.context and opts.get("dedupe_citations", False):
             logger.info("Deduping citations")
-            citations: List[NewSuggestionCitation] = (
-                completion_response.message.context.citations
-            )
             # Track seen URLs
             seen_urls = set()
             unique_citations = []
@@ -195,15 +198,14 @@ class SuggestionService:
                 if citation.url not in seen_urls:
                     seen_urls.add(citation.url)
                     unique_citations.append(
-                        {
-                            "url": citation.url,
-                            "content": citation.content,
-                            "title": citation.title,
-                        }
+                        NewSuggestionCitation(
+                            url=citation.url,
+                            title=citation.title,
+                        )
                     )
 
             # Update the citations list with unique citations
-            completion_response.message.context.citations = unique_citations
+            citations = unique_citations
 
         # Post Processing: Remove markdown
         if completion_response.message.content and opts.get(
@@ -231,5 +233,5 @@ class SuggestionService:
             # This will be set to the body of the suggestion.
             "content": completion_response.message.content,
             # This will be a list of citations for the suggestion.
-            "citations": [x for x in completion_response.message.context.citations],
+            "citations": [{"url": c.url, "title": c.title} for c in citations],
         }
