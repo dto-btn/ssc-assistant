@@ -12,25 +12,25 @@ import {
   DrawerMenu,
   FeedbackForm,
   TopMenuHomePage,
-} from "../components";
-import ChatMessagesContainer from "../containers/ChatMessagesContainer";
+} from "../../components";
+import ChatMessagesContainer from "../../containers/ChatMessagesContainer";
 import { t } from "i18next";
 import React, { useEffect, useRef, useState } from "react";
-import i18n from "../i18n";
+import i18n from "../../i18n";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
-import { isACompletion, isAMessage, isAToastMessage } from "../utils";
-import { isTokenExpired } from "../util/token";
-import { completionMySSC, sendFeedback } from "../api/api";
-import { apiUse } from "../authConfig";
+import { isACompletion, isAMessage, isAToastMessage } from "../../utils";
+import { isTokenExpired } from "../../util/token";
+import { completionMySSC, sendFeedback } from "../../api/api";
+import { apiUse } from "../../authConfig";
 import { AccountInfo, InteractionStatus } from "@azure/msal-browser";
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from "uuid";
-import { TutorialBubble } from "../components/TutorialBubble";
-import { bookReservation } from "../api/api";
-import { allowedToolsSet } from "../allowedTools";
-import { callMsGraph } from "../graph";
-import { UserContext } from "../context/UserContext";
-import { DeleteConversationConfirmation } from "../components/DeleteConversationConfirmation";
+import { TutorialBubble } from "../../components/TutorialBubble";
+import { bookReservation } from "../../api/api";
+import { allowedToolsSet } from "../../allowedTools";
+import { callMsGraph } from "../../graph";
+import { UserContext } from "../../context/UserContext";
+import { DeleteConversationConfirmation } from "../../components/DeleteConversationConfirmation";
 
 const MainScreen = () => {
   const defaultEnabledTools: { [key: string]: boolean } = {};
@@ -745,10 +745,10 @@ const MainScreen = () => {
   useEffect(() => {
     console.debug(
       "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-        isAuthenticated +
-        ", InProgress? " +
-        inProgress +
-        ")"
+      isAuthenticated +
+      ", InProgress? " +
+      inProgress +
+      ")"
     );
     if (
       isAuthenticated &&
@@ -768,7 +768,6 @@ const MainScreen = () => {
 
   return (
     <UserContext.Provider value={userData}>
-      <CssBaseline />
       <TopMenuHomePage
         toggleDrawer={setOpenDrawer}
         ref={menuIconRef}
