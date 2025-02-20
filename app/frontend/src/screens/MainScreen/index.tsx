@@ -787,7 +787,6 @@ const MainScreen = () => {
           return `
 #### ${citation.title} [link](${citation.url})
 
-${citation.content}
 `;
         }).join('\n\n');
 

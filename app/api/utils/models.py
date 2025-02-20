@@ -113,7 +113,6 @@ class SuggestionRequest:
 class NewSuggestionCitation:
     url: str
     title: str
-    content: str
 
 
 @dataclass

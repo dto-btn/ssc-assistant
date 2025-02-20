@@ -355,12 +355,10 @@ if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
                     "citations": [
                         {
                             "title": "Title of the citation",
-                            "content": "Example",
                             "url": "https://example.com",
                         },
                         {
                             "title": "Duplicate Example",
-                            "content": "It can contain duplicates, but you can use the dedupe_citations option to remove them.",
                             "url": "https://example.com/duplicate",
                         },
                     ],
@@ -385,17 +383,14 @@ if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
                     "citations": [
                         {
                             "title": "Title of the citation",
-                            "content": "Example",
                             "url": "https://example.com",
                         },
                         {
                             "title": "Duplicate Example",
-                            "content": "It can contain duplicates, but you can use the dedupe_citations option to remove them.",
                             "url": "https://example.com/duplicate",
                         },
                         {
                             "title": "Duplicate Example",
-                            "content": "It can contain duplicates, but you can use the dedupe_citations option to remove them.",
                             "url": "https://example.com/duplicate",
                         },
                     ],
@@ -438,7 +433,6 @@ else:
                 "context": {
                     "citations": [
                         {
-                            "content": "Service Catalogue Summary Catalogue of SSC services offered to partners and clients and how to order – available on SSC’s Serving Government website. URL http://service.ssc-spc.gc.ca/en/services VPN access required 1",
                             "metadata": {
                                 "chunking": "{'chunking': 'orignal document size=53. Scores=7.680358Org Highlight count=8.'}"
                             },

@@ -1,15 +1,13 @@
-import { useSearchParams } from "react-router";
+import { useSearchParams, useNavigate } from "react-router";
 import React, { FC, PropsWithChildren, useEffect, useState } from "react"
 import z from "zod";
 import { Box, Button } from "@mui/material";
 import { TopMenuFrame } from "../components/TopMenu/subcomponents/TopMenuFrame";
-import { useNavigate } from "react-router";
 
 // Added schemas
 const CitationSchema = z.object({
     title: z.string(),
     url: z.string(),
-    content: z.string()
 });
 
 const SuggestionContextSuccessSchema = z.object({
@@ -109,12 +107,10 @@ const GOOD_TEST_LINK = generateTestLink({
     "citations": [
         {
             "title": "Title of the citation",
-            "content": "Example",
             "url": "https://example.com",
         },
         {
             "title": "Duplicate Example",
-            "content": "It can contain duplicates, but you can use the dedupe_citations option to remove them.",
             "url": "https://example.com/duplicate",
         },
     ],

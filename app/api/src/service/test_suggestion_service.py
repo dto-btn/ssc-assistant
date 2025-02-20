@@ -97,6 +97,57 @@ def mock_chat_with_data(monkeypatch: MonkeyPatch):
     monkeypatch.setattr("src.service.suggestion_service.chat_with_data", mock_func)
     return mock_func
 
+def test_remove_citation_content(ctx: TestContext, mock_chat_with_data):
+    """
+    Test that the citations are removed from the content at all times.
+    """
+    mock_chat_with_data.return_value[1].choices[0].message.context = {
+        "citations": [
+            {
+                "content": "CONTENT 1",
+                "title": "TITLE 1",
+                "url": "URL 1",
+                "filepath": None,
+                "chunk_id": 0,
+            },
+            {
+                "content": "CONTENT 2",
+                "title": "TITLE 2",
+                "url": "URL 2",
+                "filepath": None,
+                "chunk_id": 0,
+            },
+            {
+                "content": "CONTENT 3",
+                "title": "TITLE 3",
+                "url": "URL 3",
+                "filepath": None,
+                "chunk_id": 0,
+            },
+        ],
+        "intent": "[]",
+    }
+
+    response = ctx["suggestion_service"].suggest(
+        "cool",
+        {"language": "en", "requester": "someone_cool"},
+    )
+
+    assert response["success"] is True
+    assert len(response["citations"]) == 3
+    assert response["citations"][0] == {
+        "title": "TITLE 1",
+        "url": "URL 1",
+    }
+    assert response["citations"][1] == {
+        "title": "TITLE 2",
+        "url": "URL 2",
+    }
+    assert response["citations"][2] == {
+        "title": "TITLE 3",
+        "url": "URL 3",
+    }
+
 
 def test_dedupe_citations(ctx: TestContext, mock_chat_with_data):
     # add duplicate citations in the context
@@ -135,7 +186,6 @@ def test_dedupe_citations(ctx: TestContext, mock_chat_with_data):
     assert response["success"] is True
     assert len(response["citations"]) == 1
     assert response["citations"][0] == {
-        "content": "CONTENT 1",
         "title": "TITLE 1",
         "url": "SAME_URL",
     }
