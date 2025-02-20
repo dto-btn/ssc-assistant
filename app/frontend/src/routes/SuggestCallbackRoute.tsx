@@ -147,7 +147,7 @@ const SuggestCallbackContainer: React.FC<PropsWithChildren<{ parsedContext: Pars
             <TopMenuFrame />
             {children}
             <p>This page will be removed in the final version of the app. The function bound to the following button will be automatically triggered.</p>
-            <Button variant="contained" onClick={() => doNavigate()}>Process Context</Button>
+            <Button data-testid="processContextBtn" variant="contained" onClick={() => doNavigate()}>Process Context</Button>
             <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", my: "2rem" }}>
                 <h2>Test Links</h2>
                 <a href={GOOD_TEST_LINK}>Success Link</a>
