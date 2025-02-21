@@ -1,9 +1,9 @@
 import { Alert, IconButton, Snackbar } from "@mui/material";
 import { useAppStore } from "../context/AppStore";
-import Grow, { GrowProps } from '@mui/material/Grow';
+import Slide, { SlideProps } from '@mui/material/Slide';
 
-function GrowTransition(props: GrowProps) {
-    return <Grow {...props} />;
+function SlideTransition(props: SlideProps) {
+    return <Slide {...props} />;
 }
 
 export const AppSnackbars = () => {
@@ -18,24 +18,23 @@ export const AppSnackbars = () => {
                         key={datum.id}
                         open={datum.isOpen}
                         message={datum.message}
-                        TransitionComponent={GrowTransition}
+                        TransitionComponent={SlideTransition}
                         style={{
                             maxWidth: "50%",
                         }}
-                        action={
-                            <IconButton
-                                size="small"
-                                aria-label="close"
-                                color="inherit"
-                                onClick={() => appStore.snackbars._hide(datum.id)}
-                            >
-                                X
-                            </IconButton>
-                        }
-                        onClose={() => appStore.snackbars._hide(datum.id)}
+                        onClose={() => {
+                            // This onClose handles the escape key press, which is
+                            // necessary for accessibility.
+                            appStore.snackbars._hide(datum.id)
+                        }}
                     >
                         <Alert
-                            onClose={() => appStore.snackbars._hide(datum.id)}
+                            onClose={() => {
+                                // This onClose handles the close button, which is
+                                // only displayed if this onClose property is set
+                                // on the Alert component.
+                                appStore.snackbars._hide(datum.id)
+                            }}
                             severity="error"
                             variant="filled"
                             sx={{ width: '100%' }}
