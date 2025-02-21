@@ -1,8 +1,6 @@
 import { useSearchParams, useNavigate } from "react-router";
-import React, { FC, PropsWithChildren, useEffect, useState } from "react"
+import { FC, useEffect, useState } from "react"
 import z from "zod";
-import { Box, Button } from "@mui/material";
-import { TopMenuFrame } from "../components/TopMenu/subcomponents/TopMenuFrame";
 
 // Test links
 
@@ -10,7 +8,7 @@ import { TopMenuFrame } from "../components/TopMenu/subcomponents/TopMenuFrame";
 // http://localhost:8080/suggest-callback?suggestionContext=eyJzdWNjZXNzIjp0cnVlLCJsYW5ndWFnZSI6ImVuIiwib3JpZ2luYWxfcXVlcnkiOiJXaGF0IGlzIFNTQydzIGNvbnRlbnQgbWFuYWdlbWVudCBzeXN0ZW0/IiwidGltZXN0YW1wIjoiMjAyMi0wMS0wMVQwMDowMDowMC4wMDBaIiwicmVxdWVzdGVyIjoibXlzc2NwbHVzIiwiY29udGVudCI6IkFyciwgeWUgYmUgYXNraW4nIGFib3V0IHRoZSBjb250ZW50IG1hbmFnZW1lbnQgc3lzdGVtIGF0IFNTQy4gSGVyZSBiZSB3aGF0IEkgZm91bmQuLi4gVGhvc2UgcGVza3kgY2l0YXRpb25zIGJlIHJlbW92ZWQsIGJ1dCB5ZSBjYW4gc3RpbGwgZmluZCB0aGVtIGluIHRoZSBjaXRhdGlvbnMgbGlzdC4iLCJjaXRhdGlvbnMiOlt7InRpdGxlIjoiVGl0bGUgb2YgdGhlIGNpdGF0aW9uIiwidXJsIjoiaHR0cHM6Ly9leGFtcGxlLmNvbSJ9LHsidGl0bGUiOiJEdXBsaWNhdGUgRXhhbXBsZSIsInVybCI6Imh0dHBzOi8vZXhhbXBsZS5jb20vZHVwbGljYXRlIn1dfQ==
 
 // NO CONTEXT
-// http://localhost:8080/sugget-callback
+// http://localhost:8080/suggest-callback
 
 // SUCCESS FALSE
 // http://localhost:8080/suggest-callback?suggestionContext=eyJzdWNjZXNzIjpmYWxzZSwicmVhc29uIjoicmVkaXJlY3RfYmVjYXVzZV9zZXJ2ZXJfcmV0dXJuZWRfc3VjY2Vzc19mYWxzZSJ9
