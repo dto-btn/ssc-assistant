@@ -32,8 +32,10 @@ import { UserContext } from "../../context/UserContext";
 import { DeleteConversationConfirmation } from "../../components/DeleteConversationConfirmation";
 import { useLocation } from "react-router";
 import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
+import { useAppStore } from "../../context/AppStore";
 
 const MainScreen = () => {
+  const appStore = useAppStore();
   const defaultEnabledTools: { [key: string]: boolean } = {};
   allowedToolsSet.forEach((tool) => {
     if (tool == "archibus") defaultEnabledTools[tool] = false;
@@ -860,6 +862,7 @@ const MainScreen = () => {
           handleRemoveToastMessage={handleRemoveToastMessage}
           handleBookReservation={handleBookReservation}
         />
+        <button onClick={() => appStore.snackbars.show("Hello, World!")}>Activate Snackbar</button>
         <div ref={chatMessageStreamEnd} style={{ height: "50px" }} />
         <Box
           sx={{
