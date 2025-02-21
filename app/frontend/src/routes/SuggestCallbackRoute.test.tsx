@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 
 import { SuggestCallbackRoute } from './SuggestCallbackRoute';
 
@@ -50,13 +50,7 @@ describe('SuggestCallbackRoute', () => {
         });
         // When the context parameter is success, it should redirect to the chat page and start a chat with the suggestions.
         it('should redirect to the chat page and start a chat with the suggestions when the context parameter is success', async () => {
-            // vi.mock("react-router", mockUseParams())
-            await screen.findByTestId('val.success.true');
-        });
-        it('should redirect with the context when doNavigate is called.', async () => {
-            const btn = await screen.findByTestId('processContextBtn');
-            btn.click();
-            expect(mocks.reactRouter_useNavigate_return).toHaveBeenCalledWith('/', { state: { success: true, context: successSuggestionContext } });
+            expect(mocks.reactRouter_useNavigate_return).toHaveBeenCalledWith('/', { state: { success: true, context: successSuggestionContext } }); 
         });
     });
 
@@ -72,14 +66,8 @@ describe('SuggestCallbackRoute', () => {
             render(<SuggestCallbackRoute />);
         });
         it('should redirect to the chat page and show an error message when success is false', async () => {
-            await screen.findByTestId('val.success.false');
-            expect(screen.getByTestId('val.errorReason')).toHaveTextContent('redirect_because_server_returned_success_false');
-        })
-        it('should redirect with the context when doNavigate is called.', async () => {
-            const btn = await screen.findByTestId('processContextBtn');
-            btn.click();
             expect(mocks.reactRouter_useNavigate_return).toHaveBeenCalledWith('/', { state: { success: false, errorReason: "redirect_because_server_returned_success_false" } });
-        });
+        })
     });
 
     describe('with null suggestionContext', () => {
@@ -89,20 +77,20 @@ describe('SuggestCallbackRoute', () => {
         });
 
         it('should redirect to the chat page and show an error message when the context parameter does not exist', async () => {
-            // When the context parameter does not exist, it should redirect to the chat page and show an error message.
-            await screen.findByTestId('val.success.false');
-        });
-        it('should redirect with the context when doNavigate is called.', async () => {
-            const btn = await screen.findByTestId('processContextBtn');
-            btn.click();
             expect(mocks.reactRouter_useNavigate_return).toHaveBeenCalledWith('/', { state: { success: false, errorReason: "redirect_because_context_validation_failed" } });
         });
     });
 
+    describe('with invalid suggestionContext body', () => {
+        beforeEach(() => {
+            mocks.reactRouter_useSearchParams_get.mockReturnValue({
+                some: 'nonsense-body'
+            });
+            render(<SuggestCallbackRoute />);
+        });
 
-
-    // When context parameter is badly formatted, it should redirect to the chat page and show an error message.
-    // it('should redirect to the chat page and show an error message when the context parameter is badly formatted', async () => {
-    //     throw new Error('Not implemented');
-    // });
+        it('should redirect to the chat page and show an error message when the context parameter is invalid', async () => {
+            expect(mocks.reactRouter_useNavigate_return).toHaveBeenCalledWith('/', { state: { success: false, errorReason: "redirect_because_context_validation_failed" } });
+        });
+    });
 });

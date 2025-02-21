@@ -32,8 +32,10 @@ import { UserContext } from "../../context/UserContext";
 import { DeleteConversationConfirmation } from "../../components/DeleteConversationConfirmation";
 import { useLocation } from "react-router";
 import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
+import { useAppStore } from "../../context/AppStore";
 
 const MainScreen = () => {
+  const appStore = useAppStore();
   const defaultEnabledTools: { [key: string]: boolean } = {};
   allowedToolsSet.forEach((tool) => {
     if (tool == "archibus") defaultEnabledTools[tool] = false;
@@ -768,9 +770,9 @@ const MainScreen = () => {
     }
   }, [isAuthenticated, inProgress, userData]);
 
+  const parsedSuggestionContext: ParsedSuggestionContext | null = location.state;
   useEffect(() => {
     // on initial load of page, if state is not null, log the state
-    const parsedSuggestionContext: ParsedSuggestionContext | null = location.state;
     if (parsedSuggestionContext) {
       if (parsedSuggestionContext.success) {
         if (!parsedSuggestionContext.context.success) {
@@ -817,21 +819,31 @@ const MainScreen = () => {
         ]);
         setOpenDrawer(false);
       } else {
-        console.error("ERROR: parsedSuggestionContext:", parsedSuggestionContext);
+        const showError = (msg: string) => {
+          /**
+           * The suggest context error gets triggered multiple times upon rendering the page.
+           * This debounce key is used to prevent multiple snackbars from showing in quick succession.
+           */
+          const suggestContextErrorDebounceKey = "SUGGEST_CONTEXT_ERROR";
+          appStore.snackbars.show(msg,
+            suggestContextErrorDebounceKey
+          );
+          console.error("ERROR: parsedSuggestionContext", msg);
+        }
         switch (parsedSuggestionContext.errorReason) {
           case "redirect_because_context_validation_failed":
-            alert("The suggestion context was in an unknown format. Your suggestions have not been loaded.");
+            showError("The suggestion context was in an unknown format. Your suggestions have not been loaded.");
             break;
           case "redirect_because_server_returned_success_false":
-            alert("The server returned an error while parsing the suggestion context. Your suggestions have not been loaded.");
+            showError("The server returned an error while parsing the suggestion context. Your suggestions have not been loaded.");
             break;
           case "redirect_with_unknown_error":
           default:
-            alert("An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded.");
+            showError("An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded.");
         }
       }
     }
-  }, [])
+  }, [parsedSuggestionContext])
 
   return (
     <UserContext.Provider value={userData}>

@@ -9,6 +9,7 @@ import { AppErrorBoundary } from ".//AppErrorBoundary";
 import { CssBaseline } from "@mui/material";
 import { AppRoutes } from "./routes/AppRoutes";
 import MSClarity from "./components/MSClarity";
+import { AppSnackbars } from "./components/AppSnackbar";
 
 interface AppProps {
   instance: PublicClientApplication;
@@ -29,6 +30,7 @@ export const App = ({ instance }: AppProps) => {
           </AuthenticatedTemplate>
         </MsalProvider>
       </AppErrorBoundary>
+      <AppSnackbars />
     </>
   );
 };

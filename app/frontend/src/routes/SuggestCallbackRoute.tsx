@@ -1,8 +1,30 @@
 import { useSearchParams, useNavigate } from "react-router";
-import React, { FC, PropsWithChildren, useEffect, useState } from "react"
+import { FC, useEffect, useState } from "react"
 import z from "zod";
-import { Box, Button } from "@mui/material";
-import { TopMenuFrame } from "../components/TopMenu/subcomponents/TopMenuFrame";
+
+
+// This component is a route that is used to parse the suggestionContext parameter from the URL.
+// The suggestionContext parameter is a base64 encoded JSON string that contains information about
+// the suggestion that was made. The suggestionContext parameter is used to continue chatting with
+// the user after they have received a suggestion from a 3rd party service. 
+// Currently, MySSC++ is the only 3rd party service that uses this route.
+// The format of the suggestion is used in the /suggest endpoint. The rreturned body of the /suggest
+// endpoint can be base64 encoded as-is, and passed as the suggestionContext parameter to this route
+
+// Test links
+
+// SUCCESS
+// http://localhost:8080/suggest-callback?suggestionContext=eyJzdWNjZXNzIjp0cnVlLCJsYW5ndWFnZSI6ImVuIiwib3JpZ2luYWxfcXVlcnkiOiJXaGF0IGlzIFNTQydzIGNvbnRlbnQgbWFuYWdlbWVudCBzeXN0ZW0/IiwidGltZXN0YW1wIjoiMjAyMi0wMS0wMVQwMDowMDowMC4wMDBaIiwicmVxdWVzdGVyIjoibXlzc2NwbHVzIiwiY29udGVudCI6IkFyciwgeWUgYmUgYXNraW4nIGFib3V0IHRoZSBjb250ZW50IG1hbmFnZW1lbnQgc3lzdGVtIGF0IFNTQy4gSGVyZSBiZSB3aGF0IEkgZm91bmQuLi4gVGhvc2UgcGVza3kgY2l0YXRpb25zIGJlIHJlbW92ZWQsIGJ1dCB5ZSBjYW4gc3RpbGwgZmluZCB0aGVtIGluIHRoZSBjaXRhdGlvbnMgbGlzdC4iLCJjaXRhdGlvbnMiOlt7InRpdGxlIjoiVGl0bGUgb2YgdGhlIGNpdGF0aW9uIiwidXJsIjoiaHR0cHM6Ly9leGFtcGxlLmNvbSJ9LHsidGl0bGUiOiJEdXBsaWNhdGUgRXhhbXBsZSIsInVybCI6Imh0dHBzOi8vZXhhbXBsZS5jb20vZHVwbGljYXRlIn1dfQ==
+
+// NO CONTEXT
+// http://localhost:8080/suggest-callback
+
+// SUCCESS FALSE
+// http://localhost:8080/suggest-callback?suggestionContext=eyJzdWNjZXNzIjpmYWxzZSwicmVhc29uIjoicmVkaXJlY3RfYmVjYXVzZV9zZXJ2ZXJfcmV0dXJuZWRfc3VjY2Vzc19mYWxzZSJ9
+
+// VALIDATION FAILED
+// http://localhost:8080/suggest-callback?suggestionContext=eyJzdWNjZXNzIjp0cnVlLCJidXQiOiJ0aGlzIGlzIGdhcmJhZ2UgZGF0YSJ9
+
 
 // Added schemas
 const CitationSchema = z.object({
@@ -91,111 +113,21 @@ const useParsedContextParam = () => {
     return returnVal;
 }
 
-const generateTestLink = (suggestionContext: SuggestionContext) => {
-    const b64 = btoa(JSON.stringify(suggestionContext));
-    const link = `http://localhost:8080/suggest-callback?suggestionContext=${b64}`;
-    return link;
-}
-
-const GOOD_TEST_LINK = generateTestLink({
-    "success": true,
-    "language": "en",
-    "original_query": "What is SSC's content management system?",
-    "timestamp": "2022-01-01T00:00:00.000Z",
-    "requester": "mysscplus",
-    "content": "Arr, ye be askin' about the content management system at SSC. Here be what I found... Those pesky citations be removed, but ye can still find them in the citations list.",
-    "citations": [
-        {
-            "title": "Title of the citation",
-            "url": "https://example.com",
-        },
-        {
-            "title": "Duplicate Example",
-            "url": "https://example.com/duplicate",
-        },
-    ],
-});
-
-const NO_CONTEXT_LINK = `http://localhost:8080/suggest-callback`;
-
-const SUCCESS_FALSE_LINK = generateTestLink({
-    success: false,
-    reason: "redirect_because_server_returned_success_false"
-});
-
-const VALIDATION_FAILED_LINK = generateTestLink({
-    success: true,
-    // @ts-expect-error we're testing the error case
-    but: "this is garbage data"
-});
-
-const SuggestCallbackContainer: React.FC<PropsWithChildren<{ parsedContext: ParsedSuggestionContext | null }>> = ({ children, parsedContext: parsedSuggestionContext }) => {
-    const navigate = useNavigate();
-
-    const doNavigate = () => {
-        navigate('/', {
-            state: parsedSuggestionContext
-        })
-    }
-
-    return (
-        <>
-            <TopMenuFrame />
-            {children}
-            <p>This page will be removed in the final version of the app. The function bound to the following button will be automatically triggered.</p>
-            <Button data-testid="processContextBtn" variant="contained" onClick={() => doNavigate()}>Process Context</Button>
-            <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", my: "2rem" }}>
-                <h2>Test Links</h2>
-                <a href={GOOD_TEST_LINK}>Success Link</a>
-                <a href={NO_CONTEXT_LINK}>No Context Link</a>
-                <a href={SUCCESS_FALSE_LINK}>Success False Link</a>
-                <a href={VALIDATION_FAILED_LINK}>Validation Failed Link</a>
-            </Box>
-        </>
-    )
-}
-
-
-
 export const SuggestCallbackRoute: FC = () => {
     const parsedContext = useParsedContextParam();
 
-    if (!parsedContext) {
-        return (
-            <SuggestCallbackContainer parsedContext={parsedContext}>
-                <div >Loading...</div>
-            </SuggestCallbackContainer>
-        )
-    }
+    const navigate = useNavigate();
 
-    if (parsedContext.success) {
-        return (
-            <SuggestCallbackContainer parsedContext={parsedContext}>
-                <div data-testid="val.success.true">
-                    Success! This call will be redirected to the chatbot, and a chat will be started with the suggestions.
-                </div>
-                <div data-testid="val.context">
-                    Unbase64'd Data:
-                    <pre style={{
-                        whiteSpace: "pre-wrap",
-                        wordWrap: "break-word",
-                        fontFamily: "monospace"
-                    }}>
-                        {JSON.stringify(parsedContext, null, 2)}
-                    </pre>
-                </div>
-            </SuggestCallbackContainer>
-        )
-    } else {
-        return (
-            <SuggestCallbackContainer parsedContext={parsedContext}>
-                <div data-testid="val.success.false">
-                    Failure. This call will be redirected to the chatbot, and an error message will be shown that corresponds to the following reason:
-                </div>
-                <div data-testid="val.errorReason">
-                    <div>{parsedContext.errorReason}</div>
-                </div>
-            </SuggestCallbackContainer>
-        )
-    }
+    useEffect(() => {
+        if (!parsedContext) {
+            return;
+        }
+        navigate('/', {
+            state: parsedContext
+        })
+    }, [parsedContext])
+
+    return (
+        <></>
+    )
 }
