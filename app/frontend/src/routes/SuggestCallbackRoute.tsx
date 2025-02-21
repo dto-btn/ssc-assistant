@@ -93,7 +93,7 @@ const useParsedContextParam = () => {
 
 const generateTestLink = (suggestionContext: SuggestionContext) => {
     const b64 = btoa(JSON.stringify(suggestionContext));
-    const link = `http://localhost:8080/suggest-callback?suggestionContext=${b64}`;
+    const link = `${window.location.origin}/suggest-callback?suggestionContext=${b64}`;
     return link;
 }
 
@@ -116,7 +116,7 @@ const GOOD_TEST_LINK = generateTestLink({
     ],
 });
 
-const NO_CONTEXT_LINK = `http://localhost:8080/suggest-callback`;
+const NO_CONTEXT_LINK = `${window.location.origin}/suggest-callback`;
 
 const SUCCESS_FALSE_LINK = generateTestLink({
     success: false,
