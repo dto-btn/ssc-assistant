@@ -2,6 +2,15 @@ import { useSearchParams, useNavigate } from "react-router";
 import { FC, useEffect, useState } from "react"
 import z from "zod";
 
+
+// This component is a route that is used to parse the suggestionContext parameter from the URL.
+// The suggestionContext parameter is a base64 encoded JSON string that contains information about
+// the suggestion that was made. The suggestionContext parameter is used to continue chatting with
+// the user after they have received a suggestion from a 3rd party service. 
+// Currently, MySSC++ is the only 3rd party service that uses this route.
+// The format of the suggestion is used in the /suggest endpoint. The rreturned body of the /suggest
+// endpoint can be base64 encoded as-is, and passed as the suggestionContext parameter to this route
+
 // Test links
 
 // SUCCESS
