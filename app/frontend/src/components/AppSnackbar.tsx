@@ -32,6 +32,7 @@ export const AppSnackbars = () => {
                                 X
                             </IconButton>
                         }
+                        onClose={() => appStore.snackbars._hide(datum.id)}
                     >
                         <Alert
                             onClose={() => appStore.snackbars._hide(datum.id)}
