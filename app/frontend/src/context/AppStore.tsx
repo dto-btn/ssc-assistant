@@ -6,13 +6,25 @@ import { AppContext } from './AppStore.types';
 // automatically hide itself.
 const SNACKBAR_TTL_MS = 6000;
 
+// This debounces the snackbar so that we don't show multiple snackbars in quick succession.
+// This is only used if a debounceKey is passed to the show function.
+const SNACKBAR_DEBOUNCE_MS = 100;
+
 const useAppStore = create<AppContext>((set, get) => ({
     snackbars: {
         data: [],
+        debounceKeys: [],
         /**
          * This function shows a snackbar with a message. It will automatically hide after 6 seconds.
+         * The debounceKey is used to prevent multiple snackbars from showing in quick succession. It
+         * is optional, and if it is not provided, the snackbar will not be debounced.
          */
-        show: (message: string) => {
+        show: (message: string, debounceKey?: string) => {
+            // If the debounce key is provided and is in the list of debounce keys, we don't show the snackbar.
+            if (debounceKey && get().snackbars.debounceKeys.includes(debounceKey)) {
+                return;
+            }
+
             // generate unique id
             const id = Math.random();
 
@@ -29,6 +41,21 @@ const useAppStore = create<AppContext>((set, get) => ({
                     isOpen: true
                 });
             }));
+
+            // debounce the snackbar if a debounce key is provided.
+            set((state) => produce(state, (draft) => {
+                // If a debounce key is provided, we add it to the list of debounce keys.
+                if (debounceKey) {
+                    draft.snackbars.debounceKeys.push(debounceKey);
+                }
+
+                // We remove the debounce key after 2 seconds. This is to prevent the debounce key
+                setTimeout(() => {
+                    set((state) => produce(state, (draft) => {
+                        draft.snackbars.debounceKeys = draft.snackbars.debounceKeys.filter((key) => key !== debounceKey);
+                    }));
+                }, SNACKBAR_DEBOUNCE_MS);
+            }))
         },
         /**
          * This is a private function that hides a snackbar by id. It can easily be made

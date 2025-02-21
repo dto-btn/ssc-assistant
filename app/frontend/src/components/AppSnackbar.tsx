@@ -1,4 +1,4 @@
-import { IconButton, Snackbar } from "@mui/material";
+import { Alert, IconButton, Snackbar } from "@mui/material";
 import { useAppStore } from "../context/AppStore";
 import Grow, { GrowProps } from '@mui/material/Grow';
 
@@ -19,6 +19,9 @@ export const AppSnackbars = () => {
                         open={datum.isOpen}
                         message={datum.message}
                         TransitionComponent={GrowTransition}
+                        style={{
+                            maxWidth: "50%",
+                        }}
                         action={
                             <IconButton
                                 size="small"
@@ -29,7 +32,16 @@ export const AppSnackbars = () => {
                                 X
                             </IconButton>
                         }
-                    />
+                    >
+                        <Alert
+                            onClose={() => appStore.snackbars._hide(datum.id)}
+                            severity="error"
+                            variant="filled"
+                            sx={{ width: '100%' }}
+                        >
+                            {datum.message}
+                        </Alert>
+                    </Snackbar>
                 )
             })}
         </>

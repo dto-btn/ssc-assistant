@@ -7,7 +7,8 @@ type SnackbarDatum = {
 export type AppContext = {
     snackbars: {
         data: SnackbarDatum[];
-        show: (message: string) => void;
+        debounceKeys: string[];
+        show: (message: string, debounceKey: string) => void;
         _hide: (id: number) => void;
     };
 };
