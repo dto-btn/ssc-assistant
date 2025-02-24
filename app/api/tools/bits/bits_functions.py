@@ -3,7 +3,7 @@ import logging
 import os
 from datetime import datetime
 
-import pymssql
+from pymssql import 
 from utils.decorators import tool_metadata
 
 logger = logging.getLogger(__name__)
@@ -37,9 +37,7 @@ def get_br_information(br_number: str = ""):
     conn = pymssql.connect(server,username,password,database)
     cursor = conn.cursor()
     # Define your query
-    query = f"SELECT * FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR = {br_number};"
-    # Execute the query
-    cursor.execute(query)
+    cursor.execute("SELECT * FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR = %;", br_number)
     # Fetch all rows from the executed query
     result = cursor.fetchall()
     print(result)
