@@ -34,7 +34,7 @@ resource "azurerm_linux_web_app" "frontend" {
     }
     use_32_bit_worker = false
 
-    app_command_line = "NODE_ENV=production node server.js"
+    app_command_line = "NODE_ENV=production node --max-http-header-size=65536 server.js"
 
     cors {
       allowed_origins     = ["https://assistant.ssc-spc.gc.ca"]

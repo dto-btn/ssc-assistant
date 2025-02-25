@@ -101,4 +101,17 @@ variable "ai_key" {
 variable "log_analytics_workspace_id" {
     type = string
     description = "the id of the log analytics workspace"
+    default = null
+}
+
+variable "bits_database_config" {
+  description = "Configuration for the database connection"
+  type = object({
+    URL      = string
+    DB_NAME  = string
+    USERNAME = string
+    PASSWORD = string
+  })
+  default = null
+  sensitive = true
 }
