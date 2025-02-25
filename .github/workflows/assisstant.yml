@@ -20,7 +20,7 @@ jobs:
   frontend-dev:
     uses: ./.github/workflows/frontend.yml
     with:
-      allowed-tools: 'geds,corporate,archibus'
+      allowed-tools: 'geds,corporate,archibus,bits'
       allowed-corporate-functions: 'intranet_question,telecom_question,pmcoe_question'
       disabled-features: ''
       environment: 'dev'

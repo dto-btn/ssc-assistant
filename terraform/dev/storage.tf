@@ -93,13 +93,15 @@ locals {
 resource "azurerm_role_assignment" "storage_table_contributor_api" {
   scope                = azurerm_storage_account.dev.id
   role_definition_name = "Storage Table Data Contributor"
-  principal_id         = azurerm_linux_web_app.api.identity.0.principal_id
+  #principal_id         = module.api.api_principal_id
+  principal_id = azurerm_linux_web_app.api.identity[0].principal_id
 }
 
 resource "azurerm_role_assignment" "storage_blob_contributor_api" {
   scope                = azurerm_storage_account.dev.id
   role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = azurerm_linux_web_app.api.identity.0.principal_id
+  #principal_id         = module.api.api_principal_id
+  principal_id = azurerm_linux_web_app.api.identity[0].principal_id
 }
 
 resource "azurerm_role_assignment" "storage_table_contributor" {

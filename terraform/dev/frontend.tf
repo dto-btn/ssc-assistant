@@ -34,7 +34,7 @@ resource "azurerm_linux_web_app" "frontend" {
     }
     use_32_bit_worker = false
 
-    app_command_line = "NODE_ENV=production node server.js"
+    app_command_line = "NODE_ENV=production node --max-http-header-size=65536 server.js"
 
     cors {
       allowed_origins     = ["https://assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"]
@@ -51,7 +51,6 @@ resource "azurerm_linux_web_app" "frontend" {
     MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
     PORT = 8080
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
-    VITE_CLARITY_TOKEN      = "qbdn9i0kka"
   }
 
   sticky_settings {
