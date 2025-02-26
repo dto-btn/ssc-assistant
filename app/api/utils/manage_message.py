@@ -103,7 +103,7 @@ Lorsque vous répondez aux requêtes, vous devriez prioriser la fourniture d'inf
 
 Lorsqu'une fonction ne produit pas les résultats attendus, comme lorsqu'il peut y avoir une faute de frappe ou des détails insuffisants fournis, vous devriez poliment demander des informations supplémentaires ou des éclaircissements à l'utilisateur pour améliorer la précision des réponses ultérieures."""
 
-SUGGEST_SYSTEM_PROMPT_EN = """You are a versatile assistant for Shared Services Canada (SSC) employees, 
+SUGGEST_SYSTEM_PROMPT_EN = """You are a versatile assistant for Shared Services Canada (SSC) employees,
 designed to provide comprehensive support for both work-related requests and general knowledge questions.
 
 When a query is received, interpret the user's intent and retrieve the most pertinent information from the MySSC+ intranet content.
@@ -131,6 +131,10 @@ Exemples de requêtes utilisateur :
 "Quelles sont les étapes pour demander un support informatique?"
 
 Votre objectif est de garantir que les utilisateurs puissent trouver facilement les informations dont ils ont besoin à partir du contenu de l'intranet MonSPC+ en fournissant des réponses précises et utiles basées sur les données disponibles dans la base de données vectorielle."""
+
+BITS_SYSTEM_PROMPT_EN = """You are an AI assistant that helps Shared Services Canada (SSC) employees with information regarding Business Requests (BR) stored in the Business Intake and Tracking System (BITS). Each BR is identified by a unique number (e.g., 34913). You have access to the BITS database and can provide information such as the status of a BR, the user assigned to it, and other relevant details."""
+
+BITS_SYSTEM_PROMPT_FR = """Vous êtes un assistant IA qui aide les employés de Services Partagés Canada (SPC) avec des informations concernant les Demandes Opérationnelles (DO) stockées dans le Système de Suivi de l'Intégration Opérationnelle (SSIO). Chaque DO est identifiée par un numéro unique (par exemple, 34913). Vous avez accès à la base de données du SSIO et pouvez fournir des informations telles que le statut d'une DO, l'utilisateur assigné à celle-ci, et d'autres détails pertinents."""
 # pylint: enable=line-too-long
 
 def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessageParam]:
@@ -160,6 +164,16 @@ def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessage
             else:
                 system_msg += (f"\n Le nom complet de l'usager est: {message_request.fullName}."
                               " Utilisez ce nom si l'utilisateur essaie de faire une réservation pour lui-même.")
+        messages.append(ChatCompletionSystemMessageParam(content=system_msg, role="system"))
+    elif 'bits' in message_request.tools:
+        system_msg = BITS_SYSTEM_PROMPT_EN if message_request.lang == 'en' else BITS_SYSTEM_PROMPT_FR
+        if message_request.fullName:
+            if message_request.lang == 'en':
+                system_msg += (f"\n The current user full name is: {message_request.fullName}."
+                               " Use this name if the user is trying to find BR assigned to himself.")
+            else:
+                system_msg += (f"\n Le nom complet de l'usager est: {message_request.fullName}."
+                              " Utilisez ce nom si l'utilisateur essaie de trouver des DO pour lui-même.")
         messages.append(ChatCompletionSystemMessageParam(content=system_msg, role="system"))
     elif not message_request.messages or message_request.messages[0].role != "system":
         messages.append(ChatCompletionSystemMessageParam(

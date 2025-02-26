@@ -3,18 +3,16 @@ import logging
 import os
 from datetime import datetime
 
-import pymssql
-
+from tools.bits.bits_utils import DatabaseConnection
 from utils.decorators import tool_metadata
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-# Define the connection string
-server: str      = os.getenv("BITS_DB_SERVER", "missing.domain")
-database: str    = os.getenv("BITS_DB_DATABASE", "missing.dbname")
-username: str    = os.getenv("BITS_DB_USERNAME", "missing.username")
-password: str    = os.getenv("BITS_DB_PWD", "missing.password")
+db = DatabaseConnection(os.getenv("BITS_DB_SERVER", "missing.domain"),
+                        os.getenv("BITS_DB_USERNAME", "missing.username"),
+                        os.getenv("BITS_DB_PWD", "missing.password"),
+                        os.getenv("BITS_DB_DATABASE", "missing.dbname"))
 
 @tool_metadata({
     "type": "function",
@@ -25,7 +23,7 @@ password: str    = os.getenv("BITS_DB_PWD", "missing.password")
             "type": "object",
             "properties": {
                 "br_number": {
-                    "type": "string",
+                    "type": "integer",
                     "description": "A BR number."
                 }
             },
@@ -33,15 +31,14 @@ password: str    = os.getenv("BITS_DB_PWD", "missing.password")
       }
     }
   })
-def get_br_information(br_number: str = ""):
+def get_br_information(br_number: int):
     """gets br information"""
-    conn = pymssql.connect(server, username, password, database)  # pylint: disable=no-member
+    conn = db.get_conn()
     cursor = conn.cursor()
     # Define your query
-    cursor.execute("SELECT * FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR = %;", br_number)
+    cursor.execute("SELECT * FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR = %s;", br_number)
     # Fetch all rows from the executed query
     result = cursor.fetchall()
-    print(result)
     json_result = json.dumps(result, default=_datetime_serializer, indent=4)
     conn.close()
     logger.debug(json_result)
