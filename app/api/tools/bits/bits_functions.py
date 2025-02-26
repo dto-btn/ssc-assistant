@@ -3,7 +3,8 @@ import logging
 import os
 from datetime import datetime
 
-from pymssql import 
+import pymssql
+
 from utils.decorators import tool_metadata
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ password: str    = os.getenv("BITS_DB_PWD", "missing.password")
   })
 def get_br_information(br_number: str = ""):
     """gets br information"""
-    conn = pymssql.connect(server,username,password,database)
+    conn = pymssql.connect(server, username, password, database)  # pylint: disable=no-member
     cursor = conn.cursor()
     # Define your query
     cursor.execute("SELECT * FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR = %;", br_number)
