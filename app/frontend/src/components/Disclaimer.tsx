@@ -41,7 +41,7 @@ export const Disclaimer = () => {
 
   const setDisclaimerCookie = () => {
     Cookies.set("disclaimer_accepted", "true", {
-      expires: 1, // expires after 1 day (24 hours)
+      expires: 30 // 30 days
     });
   };
 
