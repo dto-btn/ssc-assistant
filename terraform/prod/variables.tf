@@ -79,3 +79,9 @@ variable "archibus_api_password" {
     type = string
     sensitive = true
 }
+
+variable "clarity_token" {
+    type = string
+    description = "the token for CA clarity"
+    sensitive = true
+}

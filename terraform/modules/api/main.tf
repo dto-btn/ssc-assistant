@@ -98,7 +98,7 @@ resource "azurerm_linux_web_app" "api" {
     type = "SystemAssigned"
   }
 
-  app_settings = {
+  app_settings = merge({
     AZURE_SEARCH_SERVICE_ENDPOINT = "https://${var.search_service_name}.search.windows.net"
     AZURE_SEARCH_ADMIN_KEY        = var.search_service_pk
     AZURE_OPENAI_ENDPOINT         = var.ai_endpoint
@@ -120,7 +120,13 @@ resource "azurerm_linux_web_app" "api" {
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS = var.tenant_id
     #PORT = 5001
     FF_USE_NEW_SUGGESTION_SERVICE = true
-  }
+  },
+  var.bits_database_config != null ? {
+    BITS_DB_SERVER                = var.bits_database_config.URL
+    BITS_DB_DATABASE              = var.bits_database_config.DB_NAME
+    BITS_DB_USERNAME              = var.bits_database_config.USERNAME
+    BITS_DB_PWD                   = var.bits_database_config.PASSWORD
+  } : {})
 
   sticky_settings { # settings that are the same regardless of deployment slot..
     app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DATABASE_ENDPOINT", "BLOB_ENDPOINT", "AZURE_SEARCH_INDEX_NAME", "ALLOWED_TOOLS", "ARCHIBUS_API_USERNAME", "ARCHIBUS_API_PASSWORD", "FF_USE_NEW_SUGGESTION_SERVICE" ]
@@ -128,6 +134,8 @@ resource "azurerm_linux_web_app" "api" {
 }
 
 resource "azurerm_monitor_diagnostic_setting" "api_diagnostics" {
+  count = var.log_analytics_workspace_id != null ? 1 : 0
+
   name                       = "${replace(var.project_name, "_", "-")}-api-diag"
   target_resource_id         = azurerm_linux_web_app.api.id
   log_analytics_workspace_id = var.log_analytics_workspace_id
