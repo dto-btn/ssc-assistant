@@ -1,0 +1,2 @@
+class SuggestionContextDao:
+    pass

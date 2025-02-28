@@ -12,13 +12,13 @@ from src.service.suggestion_service import SuggestionService
 from utils.manage_message import SUGGEST_SYSTEM_PROMPT_EN, SUGGEST_SYSTEM_PROMPT_FR
 
 
-class TestContext(TypedDict):
+class LocalTestContext(TypedDict):
     # mock_suggest_table_client: MagicMock
     suggestion_service: SuggestionService
 
 
 @fixture(scope="session", autouse=True)
-def ctx() -> TestContext:
+def ctx() -> LocalTestContext:
     # mock_suggest_table_client = MagicMock()
     # suggestion_service = SuggestionService(mock_suggest_table_client)
 
@@ -97,7 +97,7 @@ def mock_chat_with_data(monkeypatch: MonkeyPatch):
     monkeypatch.setattr("src.service.suggestion_service.chat_with_data", mock_func)
     return mock_func
 
-def test_remove_citation_content(ctx: TestContext, mock_chat_with_data):
+def test_remove_citation_content(ctx: LocalTestContext, mock_chat_with_data):
     """
     Test that the citations are removed from the content at all times.
     """
@@ -149,7 +149,7 @@ def test_remove_citation_content(ctx: TestContext, mock_chat_with_data):
     }
 
 
-def test_dedupe_citations(ctx: TestContext, mock_chat_with_data):
+def test_dedupe_citations(ctx: LocalTestContext, mock_chat_with_data):
     # add duplicate citations in the context
     mock_chat_with_data.return_value[1].choices[0].message.context = {
         "citations": [
@@ -191,7 +191,7 @@ def test_dedupe_citations(ctx: TestContext, mock_chat_with_data):
     }
 
 
-def test_remove_citations_from_content(ctx: TestContext, mock_chat_with_data):
+def test_remove_citations_from_content(ctx: LocalTestContext, mock_chat_with_data):
     mock_chat_with_data.return_value[1].choices[
         0
     ].message.content = "This is a [doc0] test [doc1] string [doc2]."
@@ -209,7 +209,7 @@ def test_remove_citations_from_content(ctx: TestContext, mock_chat_with_data):
     assert response["content"] == "This is a  test  string ."
 
 
-def test_instantiation(ctx: TestContext):
+def test_instantiation(ctx: LocalTestContext):
     assert isinstance(ctx, dict)
     assert isinstance(ctx["suggestion_service"], SuggestionService)
     # assert isinstance(ctx["mock_suggest_table_client"], MagicMock)
@@ -238,13 +238,13 @@ def test_instantiation(ctx: TestContext):
         "  ",
     ],
 )
-def test_invalid_query(ctx: TestContext, invalid_query: str | None):
+def test_invalid_query(ctx: LocalTestContext, invalid_query: str | None):
     response = ctx["suggestion_service"].suggest(invalid_query, {})
     assert response["success"] is False
     assert response["reason"] == "INVALID_QUERY"
 
 
-def test_valid_query(ctx: TestContext):
+def test_valid_query(ctx: LocalTestContext):
     response = ctx["suggestion_service"].suggest(
         "valid query",
         {
@@ -272,7 +272,7 @@ def test_valid_query(ctx: TestContext):
     ],
 )
 def test_language(
-    ctx: TestContext,
+    ctx: LocalTestContext,
     expected_language: str,
     expected_valid: bool,
     mock_chat_with_data: MagicMock,
@@ -304,7 +304,7 @@ def test_language(
     ],
 )
 def test_response_original_query_is_set_to_the_query_used_to_generate_the_suggestion(
-    ctx: TestContext,
+    ctx: LocalTestContext,
     input_query: str,
     output_query: str,
 ):
@@ -330,7 +330,7 @@ def test_response_original_query_is_set_to_the_query_used_to_generate_the_sugges
     ],
 )
 def test_response_timestamp_is_set_to_the_time_the_suggestion_was_generated(
-    ctx: TestContext,
+    ctx: LocalTestContext,
     time_now: datetime.datetime,
     expected_output: str,
 ):
@@ -351,7 +351,7 @@ def test_response_timestamp_is_set_to_the_time_the_suggestion_was_generated(
 
 
 def test_requester_field_is_set_to_the_application_that_requested_the_suggestion(
-    ctx: TestContext,
+    ctx: LocalTestContext,
 ):
     response = ctx["suggestion_service"].suggest(
         "cool",
@@ -372,7 +372,7 @@ def test_requester_field_is_set_to_the_application_that_requested_the_suggestion
     ],
 )
 def test_uses_the_right_language_prompt_by_default(
-    ctx: TestContext,
+    ctx: LocalTestContext,
     language: str,
     expected_system_prompt: str,
     mock_chat_with_data: MagicMock,
@@ -396,7 +396,7 @@ def test_uses_the_right_language_prompt_by_default(
     ],
 )
 def test_uses_the_opts_system_prompt_as_override_when_passed_in(
-    ctx: TestContext, mock_chat_with_data: MagicMock, language: str
+    ctx: LocalTestContext, mock_chat_with_data: MagicMock, language: str
 ):
     TEST_SYSTEM_PROMPT = "this is a test system prompt"
 
@@ -420,7 +420,7 @@ def test_uses_the_opts_system_prompt_as_override_when_passed_in(
     assert mock_chat_with_data.call_args[0][0].lang == language
 
 def test_returns_internal_error_if_chat_with_data_response_is_not_chat_completion(
-    ctx: TestContext, mock_chat_with_data: MagicMock
+    ctx: LocalTestContext, mock_chat_with_data: MagicMock
 ):
     mock_chat_with_data.return_value = (
         None,
