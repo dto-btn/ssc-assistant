@@ -25,13 +25,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({ data, lang }) => 
           <strong>Priority: </strong>{isEnglish ? data.PRIORITY_EN : data.PRIORITY_FR}
         </Typography>
         <Typography variant="body2" color="textSecondary">
-          <strong>Sub Priority: </strong>{data.SUB_PRIORITY || 'None'}
-        </Typography>
-        <Typography variant="body2" color="textSecondary">
           <strong>Client Name: </strong>{data.CLIENT_NAME_SRC}
-        </Typography>
-        <Typography variant="body2" color="textSecondary">
-          <strong>Organization Number: </strong>{data.GC_ORG_NMBR}
         </Typography>
         <Typography variant="body2" color="textSecondary">
           <strong>Client Subgroup: </strong>{isEnglish ? data.CLIENT_SUBGRP_EN : data.CLIENT_SUBGRP_FR}
