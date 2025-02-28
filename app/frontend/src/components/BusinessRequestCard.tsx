@@ -9,6 +9,8 @@ interface BusinessRequestProps {
 const BusinessRequestCard: React.FC<BusinessRequestProps> = ({ data, lang }) => {
   const isEnglish = lang === 'en';
 
+  console.log("YO YO CARD", data);
+
   return (
     <Card>
       <CardContent>

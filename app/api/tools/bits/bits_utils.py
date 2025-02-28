@@ -39,7 +39,8 @@ class DatabaseConnection:
             print(columns)
 
             # Create a list of lists of dictionaries with one key-value pair each
-            result = [[{columns[i]: row[i]} for i in range(len(columns))] for row in rows] # type: ignore
+            #result = [[{columns[i]: row[i]} for i in range(len(columns))] for row in rows] # type: ignore
+            result = [{columns[i]: row[i] for i in range(len(columns))} for row in rows] # type: ignore
 
             # Convert the result to JSON
             json_result = json.dumps(result, default=_datetime_serializer, indent=4)

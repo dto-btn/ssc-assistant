@@ -96,6 +96,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
   }
 
   const transformToBusinessRequest = (data: any) => {
+    console.log(data);
     return {
       BR_NMBR: data.BR_NMBR,
       BR_TITLE: data.BR_TITLE,
@@ -189,6 +190,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
 
     if (toolsInfo) {
       if (toolsInfo.payload && Object.prototype.hasOwnProperty.call(toolsInfo.payload, "get_br_information")){
+        console.log("transforming the data of bits raw json to interface");
         setBrData(transformToBusinessRequest(toolsInfo.payload.get_br_information));
       }
 
