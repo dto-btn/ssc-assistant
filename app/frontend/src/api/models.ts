@@ -106,3 +106,45 @@ interface SuggestionContext {
   body: string;
   citations: SuggestionCitation[];
 }
+
+interface BusinessRequest {
+  BR_NMBR: number;
+  BR_TITLE: string;
+  BR_SHORT_TITLE: string;
+  PRIORITY_EN: string;
+  PRIORITY_FR: string;
+  SUB_PRIORITY: string | null;
+  CLIENT_NAME_SRC: string;
+  GC_ORG_NMBR: number;
+  RPT_GC_ORG_NAME_EN: string;
+  RPT_GC_ORG_NAME_FR: string;
+  ORG_TYPE_EN: string;
+  ORG_TYPE_FR: string;
+  CLIENT_SUBGRP_ID: string;
+  CLIENT_SUBGRP_EN: string;
+  CLIENT_SUBGRP_FR: string;
+  CREATE_DATE: string;
+  SUBMIT_DATE: string;
+  DAYS_SINCE_SUBMIT: number;
+  REQST_IMPL_DATE: string;
+  TARGET_IMPL_DATE: string;
+  RVSD_TARGET_IMPL_DATE: string | null;
+  ACTUAL_IMPL_DATE: string;
+  DAYS_TO_IMPL: number;
+  AGRMT_START_DATE: string;
+  AGRMT_END_DATE: string;
+  AGRMT_TYPE_ID: string;
+  PREHLD_STATUS_ID: string | null;
+  CANCEL_REASON_EN: string | null;
+  CANCEL_REASON_FR: string | null;
+  HOLD_REASON_EN: string | null;
+  HOLD_REASON_FR: string | null;
+  GROUP_ID: number;
+  GROUP_EN: string;
+  GROUP_FR: string;
+  REGION_ACRN_EN: string;
+  REGION_ACRN_FR: string;
+  REGION_EN: string;
+  REGION_FR: string;
+  BR_DEP: string | null;
+}

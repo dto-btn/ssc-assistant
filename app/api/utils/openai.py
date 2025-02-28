@@ -178,7 +178,7 @@ def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: Lis
                     if content is not None:
                         try:
                             # Parse the JSON string to a dictionary
-                            tools_info.payload = json.loads(content)
+                            tools_info.payload = {function_name : json.loads(content)}
                         except json.JSONDecodeError:
                             # Handle the case where the JSON is invalid
                             tools_info.payload = {}

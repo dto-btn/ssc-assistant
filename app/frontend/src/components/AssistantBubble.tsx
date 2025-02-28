@@ -13,6 +13,7 @@ import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { visuallyHidden } from '@mui/utils';
 import Draggable from 'react-draggable';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
+import BusinessRequestCard from './BusinessRequestCard';
 
 interface AssistantBubbleProps {
   text: string;
@@ -52,6 +53,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
   const [isFloorPlanExpanded, setFloorPlanExpanded] = useState(false);
   const isMostRecent = index === total - 1;
   const toolsUsed = toolsInfo && toolsInfo.tool_type.length > 0
+  const [brData, setBrData] = useState<BusinessRequest | undefined>(undefined);
 
   const components = {
     a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <Link target="_blank" rel="noopener noreferrer" {...props} />,
@@ -123,6 +125,10 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
     };
 
     if (toolsInfo) {
+      if (toolsInfo.payload && Object.prototype.hasOwnProperty.call(toolsInfo.payload, "get_br_information")){
+        setBrData(toolsInfo.payload.get_br_information);
+      }
+
       if (toolsInfo.payload && Object.prototype.hasOwnProperty.call(toolsInfo.payload, "profiles") && toolsInfo.payload.profiles !== null) {
         const processedProfiles = processProfiles(toolsInfo.payload.profiles);
         setProfiles(processedProfiles);
@@ -329,6 +335,10 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
                   {t('booking.complete')}
                 </Button>
               </ConfirmBookingBox>
+            }
+
+            {!isLoading && brData &&
+              <BusinessRequestCard data={brData} lang={i18n.language}/>
             }
           </ChatBubbleInner>
         </Box>
