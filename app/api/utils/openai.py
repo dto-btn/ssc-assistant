@@ -106,6 +106,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                     messages=messages,
                     model=model,
                     tools=tools, # type: ignore
+                    #https://platform.openai.com/docs/guides/function-calling#additional-configurations
                     tool_choice='auto',
                     stream=False
                 ) # type: ignore
@@ -170,6 +171,19 @@ def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: Lis
                     content = message.get("content", "")
                     profiles = extract_geds_profiles(content)
                     tools_info.payload = {"profiles": profiles}
+
+                if tool_name == "bits":
+                    # all bits response are in json, so just convert them
+                    content = message.get("content", "{}")  # Default to an empty JSON object string
+                    if content is not None:
+                        try:
+                            # Parse the JSON string to a dictionary
+                            tools_info.payload = json.loads(content)
+                        except json.JSONDecodeError:
+                            # Handle the case where the JSON is invalid
+                            tools_info.payload = {}
+                    else:
+                        tools_info.payload = {}
 
             if function_name == "get_available_rooms":
                 content = message.get("content", "")
