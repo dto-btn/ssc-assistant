@@ -27,3 +27,11 @@ resource "azurerm_monitor_diagnostic_setting" "search_service_diagnostics" {
     enabled  = false
   }
 }
+
+# TEMPORARY DATA LINK TO PILOT PROD INSTANCE
+# TODO: when this is removed also remove the secondary provider from terraform.tf
+data "azurerm_search_service" "pilot-prod" {
+  provider            = azurerm.pilot-prod
+  name                = "ssc-assistant-search-service"
+  resource_group_name = "ScSc-CIO_ECT_ssc_assistant-rg"
+}
