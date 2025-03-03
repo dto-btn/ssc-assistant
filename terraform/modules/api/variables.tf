@@ -114,3 +114,8 @@ variable "bits_database_config" {
   default = null
   sensitive = true
 }
+
+variable "openai_api_version" {
+    type = string
+    default = "2024-05-01-preview"
+}
