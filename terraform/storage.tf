@@ -19,6 +19,11 @@ resource "azurerm_storage_table" "chat" {
   storage_account_name = azurerm_storage_account.main.name
 }
 
+resource "azurerm_storage_table" "suggestioncontext" {
+  name                 = "suggestioncontext"
+  storage_account_name = azurerm_storage_account.main.name
+}
+
 resource "azurerm_storage_table" "flagged" {
   name                 = "flagged"
   storage_account_name = azurerm_storage_account.main.name
