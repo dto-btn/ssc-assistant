@@ -34,7 +34,6 @@ variable "jwt_secret" {
 
 variable "aad_client_id_api" {
     type = string
-    default = ""
 }
 
 variable "allowed_tools"  {

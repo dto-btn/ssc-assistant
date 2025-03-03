@@ -22,3 +22,9 @@ provider "azurerm" {
   features {}
   subscription_id = "852f39b8-db15-44dc-bc7a-bfa5ace7bce3"
 }
+
+provider "azurerm" {
+  alias = "pilot-prod"
+  features {}
+  subscription_id = "f5fb90f1-6d1e-4a21-8935-6968d811afd8"
+}
