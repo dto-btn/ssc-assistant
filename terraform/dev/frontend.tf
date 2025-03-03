@@ -30,11 +30,11 @@ resource "azurerm_linux_web_app" "frontend" {
     ftps_state = "FtpsOnly"
 
     application_stack {
-      node_version = "18-lts"
+      node_version = "20-lts"
     }
     use_32_bit_worker = false
 
-    app_command_line = "NODE_ENV=production node server.js"
+    app_command_line = "NODE_ENV=production node --max-http-header-size=65536 server.js"
 
     cors {
       allowed_origins     = ["https://assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca"]
@@ -45,6 +45,8 @@ resource "azurerm_linux_web_app" "frontend" {
   app_settings = {
     VITE_API_BACKEND         = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net/"
     VITE_API_KEY             = var.vite_api_key
+    VITE_SAS_TOKEN           = data.azurerm_storage_account_sas.blob_read_sas.sas
+    VITE_BLOB_STORAGE_URL    = azurerm_storage_account.dev.primary_blob_endpoint
     WEBSITE_RUN_FROM_PACKAGE = "1"
     MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
     PORT = 8080
@@ -52,7 +54,8 @@ resource "azurerm_linux_web_app" "frontend" {
   }
 
   sticky_settings {
-    app_setting_names = [ "VITE_API_BACKEND", "VITE_API_KEY", "WEBSITE_RUN_FROM_PACKAGE", "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET", "PORT"]
+    app_setting_names = [ "VITE_API_BACKEND", "VITE_API_KEY", "WEBSITE_RUN_FROM_PACKAGE",
+    "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET", "PORT", "VITE_SAS_TOKEN", "VITE_BLOB_STORAGE_URL"]
   }
 
   identity {

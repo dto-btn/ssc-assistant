@@ -1,6 +1,5 @@
 import {
   Box,
-  CssBaseline,
   Dialog,
   DialogContent,
   useMediaQuery,
@@ -11,29 +10,32 @@ import {
   Disclaimer,
   DrawerMenu,
   FeedbackForm,
-  TopMenu,
-} from "../components";
-import ChatMessagesContainer from "../containers/ChatMessagesContainer";
+  TopMenuHomePage,
+} from "../../components";
+import ChatMessagesContainer from "../../containers/ChatMessagesContainer";
 import { t } from "i18next";
 import React, { useEffect, useRef, useState } from "react";
-import i18n from "../i18n";
+import i18n from "../../i18n";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
-import { isACompletion, isAMessage, isAToastMessage } from "../utils";
-import { isTokenExpired } from "../util/token";
-import { completionMySSC, sendFeedback } from "../api/api";
-import { apiUse } from "../authConfig";
+import { isACompletion, isAMessage, isAToastMessage } from "../../utils";
+import { isTokenExpired } from "../../util/token";
+import { completionMySSC, sendFeedback } from "../../api/api";
+import { apiUse } from "../../authConfig";
 import { AccountInfo, InteractionStatus } from "@azure/msal-browser";
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from "uuid";
-import QuoteTextTooltip from "../components/QuoteTextTooltip";
-import { TutorialBubble } from "../components/TutorialBubble";
-import { bookReservation } from "../api/api";
-import { allowedToolsSet } from "../allowedTools";
-import { callMsGraph } from "../graph";
-import { UserContext } from "../context/UserContext";
-import { DeleteConversationConfirmation } from "../components/DeleteConversationConfirmation";
+import { TutorialBubble } from "../../components/TutorialBubble";
+import { bookReservation } from "../../api/api";
+import { allowedToolsSet } from "../../allowedTools";
+import { callMsGraph } from "../../graph";
+import { UserContext } from "../../context/UserContext";
+import { DeleteConversationConfirmation } from "../../components/DeleteConversationConfirmation";
+import { useLocation } from "react-router";
+import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
+import { useAppStore } from "../../context/AppStore";
 
 const MainScreen = () => {
+  const appStore = useAppStore();
   const defaultEnabledTools: { [key: string]: boolean } = {};
   allowedToolsSet.forEach((tool) => {
     if (tool == "archibus") defaultEnabledTools[tool] = false;
@@ -59,6 +61,7 @@ const MainScreen = () => {
     return 0;
   };
 
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
@@ -582,14 +585,6 @@ const MainScreen = () => {
     });
   };
 
-  const handleAddQuotedText = (quotedText: string) => {
-    setQuotedText(quotedText);
-  };
-
-  const handleRemoveQuote = () => {
-    setQuotedText(undefined);
-  };
-
   const hanldeUpdateModelVersion = (modelName: string) => {
     setCurrentChatHistory((prevChatHistory) => {
       const updatedChatHistory = {
@@ -754,10 +749,10 @@ const MainScreen = () => {
   useEffect(() => {
     console.debug(
       "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-        isAuthenticated +
-        ", InProgress? " +
-        inProgress +
-        ")"
+      isAuthenticated +
+      ", InProgress? " +
+      inProgress +
+      ")"
     );
     if (
       isAuthenticated &&
@@ -775,13 +770,86 @@ const MainScreen = () => {
     }
   }, [isAuthenticated, inProgress, userData]);
 
+  const parsedSuggestionContext: ParsedSuggestionContext | null = location.state;
+  useEffect(() => {
+    // on initial load of page, if state is not null, log the state
+    if (parsedSuggestionContext) {
+      if (parsedSuggestionContext.success) {
+        if (!parsedSuggestionContext.context.success) {
+          // this should never happen
+          alert("An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded.");
+          console.error("ERROR: parsedSuggestionContext:", parsedSuggestionContext);
+          return;
+        }
+        // TODO: create a new conversation with the context.
+        let conversationString = '';
+        conversationString += parsedSuggestionContext.context.content;
+        conversationString += '\n\n';
+        conversationString += parsedSuggestionContext.context.citations.flatMap((citation) => {
+          return `
+#### ${citation.title} [link](${citation.url})
+
+`;
+        }).join('\n\n');
+
+        // now create a new conversation with the context
+        const newChatIndex = chatHistoriesDescriptions.length;
+        setCurrentChatIndex(newChatIndex);
+        const newChatHistory: ChatHistory = {
+          chatItems: [
+            {
+              role: "user",
+              content: parsedSuggestionContext.context.original_query,
+            },
+            {
+              message: {
+                role: "assistant",
+                content: conversationString,
+              }
+            },
+          ],
+          description: parsedSuggestionContext.context.original_query,
+          uuid: uuidv4(),
+          model: defaultModel,
+        };
+        setCurrentChatHistory(newChatHistory);
+        setChatHistoriesDescriptions([
+          ...chatHistoriesDescriptions,
+          parsedSuggestionContext.context.original_query,
+        ]);
+        setOpenDrawer(false);
+      } else {
+        const showError = (msg: string) => {
+          /**
+           * The suggest context error gets triggered multiple times upon rendering the page.
+           * This debounce key is used to prevent multiple snackbars from showing in quick succession.
+           */
+          const suggestContextErrorDebounceKey = "SUGGEST_CONTEXT_ERROR";
+          appStore.snackbars.show(msg,
+            suggestContextErrorDebounceKey
+          );
+          console.error("ERROR: parsedSuggestionContext", msg);
+        }
+        switch (parsedSuggestionContext.errorReason) {
+          case "redirect_because_context_validation_failed":
+            showError("The suggestion context was in an unknown format. Your suggestions have not been loaded.");
+            break;
+          case "redirect_because_server_returned_success_false":
+            showError("The server returned an error while parsing the suggestion context. Your suggestions have not been loaded.");
+            break;
+          case "redirect_with_unknown_error":
+          default:
+            showError("An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded.");
+        }
+      }
+    }
+  }, [parsedSuggestionContext])
+
   return (
     <UserContext.Provider value={userData}>
-      <CssBaseline />
-      <TopMenu
+      <TopMenuHomePage
         toggleDrawer={setOpenDrawer}
         ref={menuIconRef}
-        onClearChat={handleClearChat}
         onNewChat={handleNewChat}
       />
       <Box
@@ -794,7 +862,6 @@ const MainScreen = () => {
         maxWidth="lg"
       >
         <Box sx={{ flexGrow: 1 }}></Box>
-        <QuoteTextTooltip addQuotedText={handleAddQuotedText} />
         <ChatMessagesContainer
           chatHistory={currentChatHistory}
           isLoading={isLoading}
@@ -824,7 +891,6 @@ const MainScreen = () => {
               makeApiRequest(question, userData, attachments)
             }
             quotedText={quotedText}
-            handleRemoveQuote={handleRemoveQuote}
             selectedModel={currentChatHistory.model}
           />
         </Box>

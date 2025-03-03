@@ -12,6 +12,8 @@ commands.
 
 ### Basic configuration
 
+This is the configuration for the App Registration that will affect the end-users.
+
 Documentation [is found here](https://learn.microsoft.com/en-us/cli/azure/ad/app?view=azure-cli-latest)
 
 ```bash
@@ -33,7 +35,7 @@ And paste the content:
     {
       "adminConsentDescription": "Access to the API",
       "adminConsentDisplayName": "API Access",
-      "id": "<unique-uuid>",
+      "id": "<uuid-generated-above>",
       "isEnabled": true,
       "type": "User",
       "userConsentDescription": "Allow the application to access the SSC Assistant API on your behalf.",
@@ -55,7 +57,7 @@ az ad app permission grant --id <your-app-id> --api <your-app-id> --scope api.ac
 az ad app permission add --id <your-app-id> --api <your-app-id> --api-permissions <unique-uuid>=Scope
 ```
 
-### Terraform changes
+#### Terraform changes
 
 Required changes for this above update for `terraform` are all in the `api.tf` file. Client ID needs to match the api.
 
@@ -68,7 +70,7 @@ And for the `frontend.tf` the scope requested needs to be appropriate.
 
 ### Application specific scope
 
-This is an extra step that shows how to add an extra scope that would be used by applications only in the confidential client auth flow. For application only we use AppRoles instead of the API scopes as normal, the scopes (shown in `value`) will still be provided in the access token.
+This is an extra step that shows how to add an extra scope that would be used **by other applications only** (i.e. MySSC+ Drupal App) in the confidential client auth flow. For application only we use AppRoles instead of the API scopes as normal, the scopes (shown in `value`) will still be provided in the access token.
 
 
 ```json
@@ -101,4 +103,38 @@ az ad app permission add --id $CLIENT_SP_ID --api $API_SP_ID --api-permissions <
 az ad app permission grant --id $CLIENT_SP_ID --api $API_SP_ID --scope api.access.app
 # verify and validate it has been granted
 az ad app permission list-grants --id $CLIENT_SP_ID
+```
+
+### Modifications to SPA Redirect URIS (and web Redirect URIs)
+
+NOTE: This is not supported by the current `az app update` CLI. Need to use graph API instead:
+NOTE2: This is a similar configuration to what the SP in prod is at the moment until we remove `pilot-prod`.
+
+[See this thread](https://github.com/Azure/azure-cli/issues/25766)
+
+Important part here is that we need the `/auth/callback` on the SPA redirect to support our code. And the web redirect
+URI needs to keep the `/.auth/login/aad/callback` for Microsoft SSO.
+
+```bash
+az rest \
+  --method "patch" \
+  --uri "https://graph.microsoft.com/v1.0/applications/<id-Not-appId>" \
+  --headers "{'Content-Type': 'application/json'}" \
+  --body '{"spa": {"redirectUris": ["https://assistant.ssc-spc.gc.ca/auth/callback", "https://assistant.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca/auth/callback"]}}'
+
+az rest \
+  --method "patch" \
+  --uri "https://graph.microsoft.com/v1.0/applications/<id-Not-appId>" \
+  --headers "{'Content-Type': 'application/json'}" \
+  --body '{"spa": {"redirectUris": ["http://localhost:8080/auth/callback","https://assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca/auth/callback"]}}'
+  ```
+
+And for web ones (space separated URLs):
+
+```bash
+az ad app update --id <appId> \
+  --web-redirect-uris https://assistant.ssc-spc.gc.ca/.auth/login/aad/callback https://assistant.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca/.auth/login/aad/callback
+
+az ad app update --id <appId> \
+  --web-redirect-uris https://localhost:8080/.auth/login/aad/callback https://assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca/.auth/login/aad/callback
 ```

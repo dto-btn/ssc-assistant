@@ -7,7 +7,8 @@ import uuid
 
 from azure.data.tables import TableServiceClient
 from azure.identity import DefaultAzureCredential
-from azure.storage.blob import BlobServiceClient
+
+from utils.azure_clients import get_blob_service_client
 
 from .auth import User
 from .models import Completion, Feedback, FilePayload, MessageRequest
@@ -24,7 +25,6 @@ chat_table_client = table_service_client.get_table_client(table_name="chat")
 feedback_table_client = table_service_client.get_table_client(table_name="feedback")
 flagged_client = table_service_client.get_table_client(table_name="flagged")
 suggest_client = table_service_client.get_table_client(table_name="suggest")
-blob_service_client = BlobServiceClient(account_url=os.getenv("BLOB_ENDPOINT") or "", credential=credential)
 
 def create_entity(data, partition_key: str, row_key_prefix: str, user: User | None):
     '''
@@ -125,11 +125,11 @@ def save_file(file: FilePayload) -> str:
     Returns the blob storage url if successful
     '''
     file_name_uuid = str(uuid.uuid4()) + '-' + file.name
-    blob_client = blob_service_client.get_blob_client(container="assistant-chat-files", blob=file_name_uuid)
+    blob_client = get_blob_service_client().get_blob_client(container="assistant-chat-files", blob=file_name_uuid)
     logger.info("Blob client created for container 'assistant-chat-files' and blob '%s'.", file_name_uuid)
     # encode file to bytes
     file_as_byte = base64.b64decode(file.encoded_file.split(",")[1])
-    blob_client.upload_blob(file_as_byte, blob_type="BlockBlob", overwrite=True)
+    blob_client.upload_blob(file_as_byte, blob_type="BlockBlob", overwrite=False)
     return blob_client.url
 
 def store_suggestion(message_request: MessageRequest, user: User):

@@ -1,22 +1,18 @@
 import base64
 import logging
-import os
 from io import BytesIO
-from typing import Iterable
+import time
+from typing import Iterable, Optional
 from urllib.parse import urlparse
 
-from azure.identity import DefaultAzureCredential
-from azure.storage.blob import BlobServiceClient
 from openai.types.chat.chat_completion_content_part_param import \
     ChatCompletionContentPartParam
 from PIL import Image
+from utils.azure_clients import get_blob_service_client
 from utils.models import Message
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
-default_credential = DefaultAzureCredential()
-blob_service_client = BlobServiceClient(account_url=os.getenv("BLOB_ENDPOINT") or "", credential=default_credential)
+logger.setLevel(logging.DEBUG)
 
 __all__ = ["map_attachments"]
 
@@ -76,16 +72,17 @@ def map_attachments(message: Message):
             processed_url = attachment.blob_storage_url
             try:
                 image_bytes = _download_attachment(processed_url)
-                encoded_image = _encode_image_to_base64(image_bytes)
-                if attachment.type == "image":
-                    content.append(
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": encoded_image,
-                                "detail": "auto" # would be interesting to parameterize this.
-                            }
-                        })
+                if isinstance(image_bytes, bytes):
+                    encoded_image = _encode_image_to_base64(image_bytes)
+                    if attachment.type == "image":
+                        content.append(
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": encoded_image,
+                                    "detail": "auto" # would be interesting to parameterize this.
+                                }
+                            })
             except Exception as e:
                 logger.error("Error processing attachment skipping: %s", e)
 
@@ -104,13 +101,25 @@ def _encode_image_to_base64(image_data: bytes, img_format: str = "JPEG") -> str:
     base64_encoded = base64.b64encode(jpeg_image).decode('utf-8')
     return f"data:image/jpeg;base64,{base64_encoded}"
 
-def _download_attachment(url: str) -> bytes:
+def _download_attachment(url: str, max_retries: int = 5, backoff_factor: float = 1.0) -> Optional[bytes]:
     """Download the attachment from the given URL and return the bytes"""
     _, container_name, blob_name = _parse_blob_url(url)
-    blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
-    blob_data = blob_client.download_blob()
-    image_data = blob_data.readall()
-    return image_data
+    for attempt in range(max_retries):
+        try:
+            logger.debug("Downloading attachment from container: %s, blob: %s", container_name, blob_name)
+            blob_client = get_blob_service_client().get_blob_client(container=container_name, blob=blob_name)
+            logger.debug(blob_client.url)
+            blob_data = blob_client.download_blob()
+            image_data = blob_data.readall()
+            return image_data
+        except Exception as e:
+            logger.error("Error downloading attachment: %s (%s)", url, e)
+            if attempt < max_retries - 1:
+                wait_time = backoff_factor * (2 ** attempt)  # Exponential backoff
+                logger.info("Retrying in %d seconds...", wait_time)
+                time.sleep(wait_time)
+            else:
+                raise e
 
 def _parse_blob_url(blob_url):
     """Extracts the storage account, container, and blob name from the blob URL."""

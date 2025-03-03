@@ -1,13 +1,15 @@
 import { PublicClientApplication } from "@azure/msal-browser";
 import {
   AuthenticatedTemplate,
-  UnauthenticatedTemplate
+  UnauthenticatedTemplate,
 } from "@azure/msal-react";
 import ConnectingScreen from "./screens/ConnectingScreen";
 import { MsalProvider } from "@azure/msal-react";
 import { AppErrorBoundary } from ".//AppErrorBoundary";
 import { CssBaseline } from "@mui/material";
 import { AppRoutes } from "./routes/AppRoutes";
+import MSClarity from "./components/MSClarity";
+import { AppSnackbars } from "./components/AppSnackbar";
 
 interface AppProps {
   instance: PublicClientApplication;
@@ -16,6 +18,7 @@ interface AppProps {
 export const App = ({ instance }: AppProps) => {
   return (
     <>
+      <MSClarity />
       <CssBaseline />
       <AppErrorBoundary>
         <MsalProvider instance={instance}>
@@ -27,6 +30,7 @@ export const App = ({ instance }: AppProps) => {
           </AuthenticatedTemplate>
         </MsalProvider>
       </AppErrorBoundary>
+      <AppSnackbars />
     </>
   );
 };

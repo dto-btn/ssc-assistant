@@ -90,5 +90,19 @@ interface BookingConfirmation {
 interface Attachment extends ApiAttachmentDto {
   message: string;
   file_name: string;
-  encoded_file: string;
+}
+
+/**
+ * An API model returned by the /suggest endpoint. This includes the citation text and link.
+ */
+interface SuggestionCitation {
+  content: string;
+  url: string;
+}
+/**
+ * An API model returned by the /suggest endpoint. This includes the suggestion text and the list of citations.
+ */
+interface SuggestionContext {
+  body: string;
+  citations: SuggestionCitation[];
 }
