@@ -1,16 +1,13 @@
 import logging
-from datetime import datetime
-
-from utils.decorators import tool_metadata
 
 # Basic api helper function
 from .api_helper import make_api_call,make_archibus_api_call
 
 # Building information
-from .buildingInfo import get_floors, get_floor_plan
+from .buildingInfo import get_floor_plan, get_building_info,get_floor_info
 
 # Booking information
-from .bookinginfo import get_user_bookings, fetch_room_availability
+from .bookinginfo import fetch_room_availability,create_users_booking,fetch_first_available_room,get_current_reservations,get_historical_bookings,cancel_bookings,verify_booking_details
 
 # Employee information
 from .employeeinfo import get_employee_record
@@ -18,32 +15,33 @@ from .employeeinfo import get_employee_record
 # Profile Data
 from .userprofile import user_profile, get_archibus_profile
 
+# Basic helper functions
+from .archibus_utilities import get_current_date, get_current_date_and_time,get_google_maps_link
+
+# Analytical Reporting
+from .archibus_analytical import generate_analytical_report_on_locations
+
 logger = logging.getLogger(__name__)
-
-
-@tool_metadata({
-    "type": "function",
-    "function": {
-        "name": "get_current_date",
-        "description": "This function is used to know what is the current date and time. It returns the current date and time in text format. Use this if you are unsure of what is the current date, do not make assumptions about the current date and time."
-    }
-})
-def get_current_date():
-    """
-    TODO: this perhaps should be moved into a more generic tools folder.
-    """
-    current_date_time = datetime.now()
-    return "Formatted date and time: " + current_date_time.strftime("%Y-%m-%d %H:%M:%S")
 
 
 __all__ = [
     "make_api_call",
     "make_archibus_api_call",
-    "get_user_bookings",
-    "get_floors",
     "get_floor_plan",
-    "get_current_date",
     "get_employee_record",
     user_profile,
-    "get_archibus_profile"
+    "get_archibus_profile",
+    "fetch_room_availability",
+    "get_building_info",
+    "get_floor_info",
+    "create_users_booking",
+    "get_current_date",
+    "get_current_date_and_time",
+    "fetch_first_available_room",
+    "get_current_reservations",
+    "get_historical_bookings",
+    "cancel_bookings",
+    "verify_booking_details",
+    "get_google_maps_link",
+    "generate_analytical_report_on_locations"
 ]

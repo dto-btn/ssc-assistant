@@ -137,23 +137,23 @@ export async function sendFeedback(feedback: string, isGoodResponse: boolean, uu
   return response;
 }
 
-export async function bookReservation(bookingDetails: BookingConfirmation): Promise<Response> {
-  const url = "/api/1.0/book_reservation";
-
-  const bookingResponse = await fetch(url, {
-    method: "POST",
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(bookingDetails)
-  })
-
-  if (!bookingResponse.ok) {
-    throw new Error("Failed to book reservation");
-  }
-
-  return bookingResponse;
-}
+// export async function bookReservation(bookingDetails: BookingConfirmation): Promise<Response> {
+//   const url = "/api/1.0/book_reservation";
+//
+//   const bookingResponse = await fetch(url, {
+//     method: "POST",
+//     headers: {
+//       'Content-Type': 'application/json'
+//     },
+//     body: JSON.stringify(bookingDetails)
+//   })
+//
+//   if (!bookingResponse.ok) {
+//     throw new Error("Failed to book reservation");
+//   }
+//
+//   return bookingResponse;
+// }
 
 export async function uploadFile(encodedFile: string, name: string, accessToken: string): Promise<Attachment> {
   const url = "/api/1.0/upload";
