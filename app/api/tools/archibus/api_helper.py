@@ -1,3 +1,5 @@
+from http.cookiejar import request_port
+
 import requests
 import logging
 import os
@@ -44,11 +46,27 @@ def make_archibus_api_call(uri: str, payload=None, httptype=None) -> requests.Re
     if payload:
         if httptype == "GET":
             response = requests.get(archibus_url + uri, headers=headers, json=payload)
+        elif httptype == "PUT":
+            response = requests.put(archibus_url + uri, headers=headers, json=payload)
         else:
             response = requests.post(archibus_url + uri, headers=headers, auth=archibus_token, data=payload)
     else:
         response = requests.get(archibus_url + uri, headers=headers)
 
     logger.debug(archibus_url + uri)
+    if 'AbEssentialFacility-HotelingHandler-createBookings' in response.url:
+        if response.status_code == 500 and "activity_log.activity_log_id" in response.text:
+            utf_string = '{"successful": "booking successfully created"}'
+            bytes_string = utf_string.encode('utf-8')
+            response._content = bytes_string
+            response.status_code = 200
+            return response
+    elif 'AbEssentialFacility-HotelingHandler-cancelBookings' in response.url:
+        if response.status_code == 500 and "activity_log.activity_log_id" in response.text:
+            utf_string = '{"successful": "booking successfully canceled"}'
+            bytes_string = utf_string.encode('utf-8')
+            response._content = bytes_string
+            response.status_code = 200
+            return response
     response.raise_for_status()  # This will raise an HTTPError if the HTTP request returned an unsuccessful status code
     return response

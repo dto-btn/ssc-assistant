@@ -1,4 +1,4 @@
-import { Box, Paper, Divider, Chip, Stack, Typography, Link, Tooltip, Button, Dialog, DialogTitle, IconButton, PaperProps } from '@mui/material';
+import { Box, Paper, Divider, Chip, Stack, Typography, Link, Tooltip, Dialog, DialogTitle, IconButton, PaperProps } from '@mui/material';
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -25,7 +25,6 @@ interface AssistantBubbleProps {
   total: number;
   setIsFeedbackVisible: React.Dispatch<React.SetStateAction<boolean>>;
   setIsGoodResponse: React.Dispatch<React.SetStateAction<boolean>>;
-  handleBookReservation: (bookingDetails: BookingConfirmation) => void;
 }
 
 function DraggablePaperComponent(props: PaperProps) {
@@ -39,7 +38,7 @@ function DraggablePaperComponent(props: PaperProps) {
   );
 }
 
-export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse, handleBookReservation }: AssistantBubbleProps) => {
+export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse }: AssistantBubbleProps) => {
   const { t, i18n } = useTranslation();
   const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
   const [processingComplete, setProcessingComplete] = useState(false);
@@ -47,8 +46,6 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
   const [profiles, setProfiles] = useState<EmployeeProfile[]>([]);
   const [profilesExpanded, setExpandProfiles] = useState(false);
   const [floorPlanFilename, setFloorPlanFilename] = useState("");
-  const [bookingDetails, setBookingDetails] = useState<BookingConfirmation | undefined>(undefined);
-  const [confirmButtonDisabled, setConfirmButtonDisabled] = useState(false);
   const [isFloorPlanExpanded, setFloorPlanExpanded] = useState(false);
   const isMostRecent = index === total - 1;
   const toolsUsed = toolsInfo && toolsInfo.tool_type.length > 0
@@ -132,10 +129,6 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
         const floorPlanFile = toolsInfo.payload.floorPlan;
         setFloorPlanFilename(floorPlanFile)
       }
-
-      if (toolsInfo.payload && Object.prototype.hasOwnProperty.call(toolsInfo.payload, "bookingDetails")) {
-        setBookingDetails(toolsInfo.payload.bookingDetails);
-      }
     }
   }, [toolsInfo, text]);
 
@@ -150,13 +143,6 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
   const handleToggleShowProfiles = () => {
     setExpandProfiles(!profilesExpanded)
   }
-
-  const handleConfirmButtonClicked = () => {
-    setConfirmButtonDisabled(true);
-    if (bookingDetails) {
-      handleBookReservation(bookingDetails);
-    }
-  };
 
   return (
     <ChatBubbleWrapper tabIndex={0}>
@@ -301,35 +287,6 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
                 </Dialog>
               </>
             }
-
-            {bookingDetails &&
-              <ConfirmBookingBox >
-                <Button
-                  disabled={confirmButtonDisabled}
-                  sx={{
-                    fontSize: '20px',
-                    color: 'white',
-                    borderRadius: '5px',
-                    backgroundColor: 'primary.main',
-                    height: '40px',
-                    width: '80%',
-                    maxWidth: '400px',
-                    padding: '40px',
-                    '&:hover': {
-                      boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.3)',
-                      backgroundColor: '#261F4C'
-                    },
-                    '&:disabled': {
-                      backgroundColor: 'grey',
-                      color: 'white',
-                    }
-                  }}
-                  onClick={handleConfirmButtonClicked}
-                >
-                  {t('booking.complete')}
-                </Button>
-              </ConfirmBookingBox>
-            }
           </ChatBubbleInner>
         </Box>
         <Box>
@@ -401,10 +358,3 @@ const TextComponentsBox = styled(Box)`
 const FloorPlanView = styled(Box)({
   margin: '20px 30px',
 });
-
-const ConfirmBookingBox = styled(Box)`
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 30px;
-`;

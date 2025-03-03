@@ -25,7 +25,6 @@ import { AccountInfo, InteractionStatus } from "@azure/msal-browser";
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from "uuid";
 import { TutorialBubble } from "../../components/TutorialBubble";
-import { bookReservation } from "../../api/api";
 import { allowedToolsSet } from "../../allowedTools";
 import { callMsGraph } from "../../graph";
 import { UserContext } from "../../context/UserContext";
@@ -721,31 +720,6 @@ const MainScreen = () => {
     );
   };
 
-  const handleBookReservation = async (bookingDetails: BookingConfirmation) => {
-    let toast: ToastMessage;
-    try {
-      await bookReservation(bookingDetails);
-      toast = {
-        toastMessage: `${t("booking.success")} ${bookingDetails.startDate}`,
-        isError: false,
-      };
-    } catch (error) {
-      toast = {
-        toastMessage: `${t("booking.fail")} ${error}`,
-        isError: true,
-      };
-    }
-
-    setCurrentChatHistory((prevChatHistory) => {
-      const updatedChatHistory = {
-        ...prevChatHistory,
-        chatItems: [...prevChatHistory.chatItems, toast],
-      };
-      saveChatHistories(updatedChatHistory);
-      return updatedChatHistory;
-    });
-  };
-
   useEffect(() => {
     console.debug(
       "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
@@ -870,7 +844,6 @@ const MainScreen = () => {
           setIsFeedbackVisible={setIsFeedbackVisible}
           setIsGoodResponse={setIsGoodResponse}
           handleRemoveToastMessage={handleRemoveToastMessage}
-          handleBookReservation={handleBookReservation}
         />
         <div ref={chatMessageStreamEnd} style={{ height: "50px" }} />
         <Box
