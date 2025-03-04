@@ -58,12 +58,21 @@ module "api" {
   geds_api_token = var.geds_api_token
   jwt_secret = var.jwt_secret
 
+  aad_client_id_api = var.aad_client_id_api
+
   log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
 
-  search_service_name = azurerm_search_service.main.name
-  search_service_pk = azurerm_search_service.main.primary_key
-  ai_endpoint = azurerm_cognitive_account.ai.endpoint
-  ai_key = azurerm_cognitive_account.ai.primary_access_key
+  # Temporary until we move prod data to this location
+  #search_service_name = azurerm_search_service.main.name
+  #search_service_pk = azurerm_search_service.main.primary_key
+  search_service_name = data.azurerm_search_service.pilot-prod.name
+  search_service_pk = data.azurerm_search_service.pilot-prod.primary_key
+
+  # Temporary until we fix code to support newer model version
+  #ai_endpoint = azurerm_cognitive_account.ai.endpoint
+  #ai_key = azurerm_cognitive_account.ai.primary_access_key
+  ai_endpoint = data.azurerm_cognitive_account.ai-pilot-prod.endpoint
+  ai_key = data.azurerm_cognitive_account.ai-pilot-prod.primary_access_key
 }
 
 /****************************************************

@@ -38,3 +38,7 @@ data "azuread_user" "devs" {
     }
   user_principal_name = each.value.user_principal_name
 }
+
+#######################################################
+#                     SERVICES                        #
+#######################################################
