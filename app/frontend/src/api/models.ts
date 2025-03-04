@@ -166,4 +166,21 @@ interface BusinessRequest {
   ACCT_MGR_OPI: string;
   SDM_TL_OPI: string;
   REQMT_OVRVW: string;
+  ASSOC_BRS: string;
+}
+
+interface BusinessRequestUpdate {
+  BR_NMBR: number;
+  PERIOD_END_DATE: string;
+  DAYS_SINCE_SUBMIT: string;
+  LAST_STATUS_DATE: string;
+  DAYS_IN_STATUS: string;
+  AGE_IN_STATUS_EN: string;
+  AGE_IN_STATUS_FR: string;
+  IMPL_FLAG_EN: string;
+  IMPL_FLAG_FR: string;
+  BITS_STATUS_EN: string;
+  BITS_STATUS_FR: string;
+  BR_ACTIVE_EN: string;
+  BR_ACTIVE_FR: string;
 }
