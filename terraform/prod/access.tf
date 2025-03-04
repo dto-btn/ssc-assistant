@@ -46,5 +46,5 @@ resource "azurerm_role_assignment" "sub-read" {
   for_each             = data.azuread_user.users
   scope                = azurerm_resource_group.main.id
   role_definition_name = "Reader"
-  principal_id         = each.value.id
+  principal_id         = each.value.object_id
 }

@@ -34,3 +34,22 @@ resource "azurerm_role_assignment" "api_read_openai" {
   scope = azurerm_resource_group.ai.id
   principal_id = module.api.api_principal_id
 }
+
+
+# TEMPORARY REMOVE WHEN THE CODE SUPPORTS THE NEW 2024-11-20 deployed model version
+data "azurerm_resource_group" "ai-pilot-prod" {
+  provider = azurerm.pilot-prod
+  name = "ScSc-CIO-ECT-OpenAI-rg"
+}
+
+data "azurerm_cognitive_account" "ai-pilot-prod" {
+  provider = azurerm.pilot-prod
+  name                = "ScSc-CIO-ECT-OpenAI-oai"
+  resource_group_name = "ScSc-CIO-ECT-OpenAI-rg"
+}
+
+resource "azurerm_role_assignment" "api_read_openai-old-prod" {
+  role_definition_name = "Cognitive Services User"
+  scope = data.azurerm_resource_group.ai-pilot-prod.id
+  principal_id = module.api.api_principal_id
+}

@@ -104,6 +104,7 @@ resource "azurerm_linux_web_app" "api" {
     AZURE_OPENAI_ENDPOINT         = var.ai_endpoint
     AZURE_OPENAI_API_KEY          = var.ai_key
     AZURE_OPENAI_MODEL            = "gpt-4o"
+    AZURE_OPENAI_VERSION          = var.openai_api_version
     AZURE_SEARCH_INDEX_NAME       = "current"
     GEDS_API_TOKEN                = var.geds_api_token
     SERVER_URL_PROD               = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net"
