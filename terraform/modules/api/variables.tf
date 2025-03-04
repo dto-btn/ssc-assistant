@@ -38,7 +38,7 @@ variable "aad_client_id_api" {
 
 variable "allowed_tools"  {
     type = list(string)
-    default = ["coporate", "geds"]
+    default = ["corporate", "geds"]
 }
 
 variable "rg_name" {

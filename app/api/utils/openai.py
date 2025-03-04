@@ -101,7 +101,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
         additional_tools_required = True
         tools_used = False
 
-        while additional_tools_required:
+        while additional_tools_required and tools:
             completion_tools = client.chat.completions.create(
                     messages=messages,
                     model=model,
