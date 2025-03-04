@@ -86,9 +86,9 @@ export const AssistantBubble = ({
   const isMostRecent = index === total - 1;
   const toolsUsed = toolsInfo && toolsInfo.tool_type.length > 0;
   const [brData, setBrData] = useState<BusinessRequest | undefined>(undefined);
-  const [brUpdates, setBrUpdates] = useState<BusinessRequestUpdate | undefined>(
-    undefined
-  );
+  const [brUpdates, setBrUpdates] = useState<
+    BusinessRequestUpdate[] | undefined
+  >(undefined);
 
   const components = {
     a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
@@ -235,25 +235,13 @@ export const AssistantBubble = ({
     };
 
     if (toolsInfo) {
-      if (
-        toolsInfo.payload &&
-        Object.prototype.hasOwnProperty.call(
-          toolsInfo.payload,
-          "get_br_information"
-        )
-      ) {
+      if (toolsInfo?.payload?.get_br_information) {
         setBrData(
           transformToBusinessRequest(toolsInfo.payload.get_br_information[0])
         );
       }
 
-      if (
-        toolsInfo.payload &&
-        Object.prototype.hasOwnProperty.call(
-          toolsInfo.payload,
-          "get_br_updates"
-        )
-      ) {
+      if (toolsInfo?.payload?.get_br_updates?.length) {
         setBrUpdates(toolsInfo.payload.get_br_updates);
       }
 

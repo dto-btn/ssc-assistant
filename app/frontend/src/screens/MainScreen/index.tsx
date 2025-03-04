@@ -749,10 +749,10 @@ const MainScreen = () => {
   useEffect(() => {
     console.debug(
       "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-      isAuthenticated +
-      ", InProgress? " +
-      inProgress +
-      ")"
+        isAuthenticated +
+        ", InProgress? " +
+        inProgress +
+        ")"
     );
     if (
       isAuthenticated &&
@@ -770,27 +770,35 @@ const MainScreen = () => {
     }
   }, [isAuthenticated, inProgress, userData]);
 
-  const parsedSuggestionContext: ParsedSuggestionContext | null = location.state;
+  const parsedSuggestionContext: ParsedSuggestionContext | null =
+    location.state;
   useEffect(() => {
     // on initial load of page, if state is not null, log the state
     if (parsedSuggestionContext) {
       if (parsedSuggestionContext.success) {
         if (!parsedSuggestionContext.context.success) {
           // this should never happen
-          alert("An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded.");
-          console.error("ERROR: parsedSuggestionContext:", parsedSuggestionContext);
+          alert(
+            "An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded."
+          );
+          console.error(
+            "ERROR: parsedSuggestionContext:",
+            parsedSuggestionContext
+          );
           return;
         }
         // TODO: create a new conversation with the context.
-        let conversationString = '';
+        let conversationString = "";
         conversationString += parsedSuggestionContext.context.content;
-        conversationString += '\n\n';
-        conversationString += parsedSuggestionContext.context.citations.flatMap((citation) => {
-          return `
+        conversationString += "\n\n";
+        conversationString += parsedSuggestionContext.context.citations
+          .flatMap((citation) => {
+            return `
 #### ${citation.title} [link](${citation.url})
 
 `;
-        }).join('\n\n');
+          })
+          .join("\n\n");
 
         // now create a new conversation with the context
         const newChatIndex = chatHistoriesDescriptions.length;
@@ -805,7 +813,7 @@ const MainScreen = () => {
               message: {
                 role: "assistant",
                 content: conversationString,
-              }
+              },
             },
           ],
           description: parsedSuggestionContext.context.original_query,
@@ -825,25 +833,29 @@ const MainScreen = () => {
            * This debounce key is used to prevent multiple snackbars from showing in quick succession.
            */
           const suggestContextErrorDebounceKey = "SUGGEST_CONTEXT_ERROR";
-          appStore.snackbars.show(msg,
-            suggestContextErrorDebounceKey
-          );
+          appStore.snackbars.show(msg, suggestContextErrorDebounceKey);
           console.error("ERROR: parsedSuggestionContext", msg);
-        }
+        };
         switch (parsedSuggestionContext.errorReason) {
           case "redirect_because_context_validation_failed":
-            showError("The suggestion context was in an unknown format. Your suggestions have not been loaded.");
+            showError(
+              "The suggestion context was in an unknown format. Your suggestions have not been loaded."
+            );
             break;
           case "redirect_because_server_returned_success_false":
-            showError("The server returned an error while parsing the suggestion context. Your suggestions have not been loaded.");
+            showError(
+              "The server returned an error while parsing the suggestion context. Your suggestions have not been loaded."
+            );
             break;
           case "redirect_with_unknown_error":
           default:
-            showError("An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded.");
+            showError(
+              "An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded."
+            );
         }
       }
     }
-  }, [parsedSuggestionContext])
+  }, [parsedSuggestionContext]);
 
   return (
     <UserContext.Provider value={userData}>
