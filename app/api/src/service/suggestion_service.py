@@ -58,6 +58,8 @@ class SuggestionService:
             query_validation_result["data"], opts_validation_result["data"]
         )
 
+        self.suggestion_context_dao.insert_suggestion_context(result)
+
         return result
 
     def _validate_and_clean_query(

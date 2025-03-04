@@ -461,6 +461,7 @@ def test_suggestioncontext_is_saved_to_the_database(ctx: LocalTestContext):
     assert response["success"] is True
     assert response["content"] == "test_content"
     assert len(suggestion_context_dao._suggestions) == 1
+    assert suggestion_context_dao._suggestions[0]["content"] == "test_content"
 
     # check that the suggestioncontext is saved to the database
     # ctx["mock_suggest_table_client"].store_suggestion.assert_called_once_with(

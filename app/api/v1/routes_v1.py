@@ -403,7 +403,7 @@ if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
     @user_ad.login_required
     def suggestion(suggestion_request: NewSuggestionRequest):
         """This will receive most likely search terms and will return an AI response along with citations"""
-        suggestion_service = SuggestionService()
+        suggestion_service = build_context()["suggestion_service"]
         response = suggestion_service.suggest(
             suggestion_request.query, suggestion_request.opts
         )
