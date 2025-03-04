@@ -36,8 +36,8 @@ def build_mock_suggestion_context_entity():
 
 @pytest.fixture(scope="function")
 def suggestion_context_dao() -> SuggestionContextDao:
-    suggestion_context_dao = SuggestionContextDao()
-    return suggestion_context_dao
+    suggestion_context_dao_instance = SuggestionContextDao()
+    return suggestion_context_dao_instance
 
 
 def test_suggestion_context_can_instantiate(

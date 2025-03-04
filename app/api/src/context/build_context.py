@@ -27,7 +27,7 @@ def build_context() -> AppContext:
         )
         conversation_repo = ConversationRepository(chat_table_dao)
         stats_report_service = StatsReportService(conversation_repo)
-        suggestion_context_dao = SuggestionContextDao(table_service_client)
+        suggestion_context_dao = SuggestionContextDao()
         suggestion_service = SuggestionService(suggestion_context_dao)
 
         instance = AppContext(

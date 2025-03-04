@@ -7,6 +7,7 @@ from pytest import fixture, MonkeyPatch
 import pytest
 from openai.types.chat import ChatCompletion
 from openai.types.chat.chat_completion import Choice, ChatCompletionMessage
+from src.context.build_context import build_context
 from src.dao.suggestion_context_dao import SuggestionContextDao
 
 from src.service.suggestion_service import SuggestionService
@@ -16,6 +17,7 @@ from utils.manage_message import SUGGEST_SYSTEM_PROMPT_EN, SUGGEST_SYSTEM_PROMPT
 class LocalTestContext(TypedDict):
     # mock_suggest_table_client: MagicMock
     suggestion_service: SuggestionService
+    suggestion_context_dao: SuggestionContextDao
 
 
 @fixture(scope="session", autouse=True)
@@ -27,9 +29,11 @@ def ctx() -> LocalTestContext:
     #     "mock_suggest_table_client": mock_suggest_table_client,
     #     "suggestion_service": suggestion_service,
     # }
-    suggestion_context_dao = SuggestionContextDao()
-    suggestion_service = SuggestionService()
+    ctx = build_context()
+    suggestion_context_dao = ctx["suggestion_context_dao"]
+    suggestion_service = ctx["suggestion_service"]
     return {
+        "suggestion_context_dao": suggestion_context_dao,
         "suggestion_service": suggestion_service,
     }
 
@@ -443,8 +447,9 @@ def test_returns_internal_error_if_chat_with_data_response_is_not_chat_completio
 # suggestioncontext is saved to the database
 def test_suggestioncontext_is_saved_to_the_database(ctx: LocalTestContext):
     # spy on suggestion_context_dao
-    suggestion_context_dao = ctx[]
+    suggestion_context_dao = ctx["suggestion_context_dao"]
 
+    assert len(suggestion_context_dao._suggestions) == 0
     response = ctx["suggestion_service"].suggest(
         "cool",
         {
@@ -454,7 +459,8 @@ def test_suggestioncontext_is_saved_to_the_database(ctx: LocalTestContext):
     )
 
     assert response["success"] is True
-    assert response["suggestioncontext"] is not None
+    assert response["content"] == "test_content"
+    assert len(suggestion_context_dao._suggestions) == 1
 
     # check that the suggestioncontext is saved to the database
     # ctx["mock_suggest_table_client"].store_suggestion.assert_called_once_with(
