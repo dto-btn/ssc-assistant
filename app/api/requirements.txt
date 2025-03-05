@@ -17,3 +17,4 @@ urllib3==1.26.19 # this version is required for the GEDS API to work
 cryptography==43.0.3 #https://github.com/pyca/cryptography/issues/12064
 Pillow>=11.1.0
 pymssql>=2.3.2 #https://pymssql.readthedocs.io/en/stable/intro.html#getting-started
+psycopg2-binary
