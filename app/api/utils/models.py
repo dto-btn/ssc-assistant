@@ -129,6 +129,7 @@ class NewSuggestionResponse:
     # not provided if success is False
     content: Optional[str] = None
     citations: Optional[List[NewSuggestionCitation]] = None
+    suggestion_id: Optional[str] = None
 
 
 @dataclass

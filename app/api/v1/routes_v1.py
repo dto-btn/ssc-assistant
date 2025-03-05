@@ -9,7 +9,7 @@ import os
 import openai
 import requests
 from apiflask import APIBlueprint, abort
-from flask import Response, jsonify, stream_with_context
+from flask import Response, jsonify, stream_with_context, request
 from openai.types.chat import ChatCompletion
 
 from src.service.suggestion_service import SuggestionService
@@ -302,6 +302,66 @@ def upload_file(file: FilePayload):
     return jsonify({"message": "File received", "file_url": url}), 200
 
 if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
+    # the GET endpoint with the ?suggestion_id= parameter.
+    @api_v1.get("/suggest")
+    @api_v1.doc("""Get a suggestion by its ID""")
+    # @api_v1.input(
+    #     {"name": "suggestion_id", "in": "query", "type": "string"},
+    # )
+    @api_v1.output(
+        NewSuggestionResponse.Schema,
+        content_type="application/json",
+        examples={
+            "With all options": {
+                "summary": "With all options",
+                "value": {
+                    # This will be set to True for valid queries.
+                    "success": True,
+                    # This will be either "en" or "fr", depending on the language of the suggestion.
+                    "language": "en",
+                    # This will be set to the query that was used to generate the suggestion.
+                    "original_query": "What is SSC's content management system?",
+                    # This will be set to the time the suggestion was generated.
+                    "timestamp": "2022-01-01T00:00:00.000Z",
+                    # This will be set to the application that requested the suggestion.
+                    "requester": "mysscplus",
+                    # This will be set to the body of the suggestion.
+                    "content": "Arr, ye be askin' about the content management system at SSC. Here be what I found... Those pesky citations be removed, but ye can still find them in the citations list.",
+                    # This will be a list of citations for the suggestion.
+                    "citations": [
+                        {
+                            "title": "Title of the citation",
+                            "url": "https://example.com",
+                        },
+                        {
+                            "title": "Duplicate Example",
+                            "url": "https://example.com/duplicate",
+                        },
+                    ],
+                },
+            },
+        },
+    )
+    @api_v1.doc(security="ApiKeyAuth")
+    @auth.login_required(role="suggest")
+    @user_ad.login_required
+    def get_suggestion_by_id():
+        suggestion_id = request.args.get("suggestion_id")
+        """Get a suggestion by its ID"""
+        if not suggestion_id:
+            abort(400, "Missing suggestion_id parameter")
+        stripped_suggestion_id = suggestion_id.strip()
+        if not stripped_suggestion_id:
+            abort(400, "Empty suggestion_id parameter")
+
+        suggestion_service = build_context()["suggestion_service"]
+        suggestion = suggestion_service.get_suggestioncontext_by_id(
+            stripped_suggestion_id
+        )
+        if suggestion:
+            return suggestion
+        else:
+            abort(404, "Suggestion not found")
 
     @api_v1.post("/suggest")
     @api_v1.doc("""Send a search query that will do a RAG search within the proper index,
@@ -403,7 +463,7 @@ if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
     @user_ad.login_required
     def suggestion(suggestion_request: NewSuggestionRequest):
         """This will receive most likely search terms and will return an AI response along with citations"""
-        suggestion_service = build_context(False)["suggestion_service"]
+        suggestion_service = build_context()["suggestion_service"]
         response = suggestion_service.suggest(
             suggestion_request.query, suggestion_request.opts
         )
@@ -544,7 +604,7 @@ else:
 @api_v1.doc(security="ApiKeyAuth")
 # @auth.login_required(role='chat') # does this need to change?
 def generate_stats_report_monthly():
-    ctx = build_context(False)
+    ctx = build_context()
     monthly_report = ctx["stats_report_service"].get_statistics_by_month_of_year()
     return jsonify(monthly_report), 200
 
@@ -554,7 +614,7 @@ def generate_stats_report_monthly():
 @api_v1.doc(security="ApiKeyAuth")
 # @auth.login_required(role='chat') # does this need to change?
 def generate_stats_report_weekly():
-    ctx = build_context(False)
+    ctx = build_context()
     weekly_report = ctx["stats_report_service"].get_statistics_by_day_of_week()
     return jsonify(weekly_report), 200
 
@@ -564,7 +624,7 @@ def generate_stats_report_weekly():
 @api_v1.doc(security="ApiKeyAuth")
 # @auth.login_required(role='chat') # does this need to change?
 def generate_stats_report_top_users_90_days():
-    ctx = build_context(False)
+    ctx = build_context()
     weekly_report = ctx["stats_report_service"].get_top_users_past_90_days()
     return jsonify(weekly_report), 200
 
@@ -573,6 +633,6 @@ def generate_stats_report_top_users_90_days():
 @api_v1.doc(security="ApiKeyAuth")
 # @auth.login_required(role='chat') # does this need to change?
 def generate_monthly_user_engagement_report():
-    ctx = build_context(False)
+    ctx = build_context()
     weekly_report = ctx["stats_report_service"].get_monthly_user_engagement_report()
     return jsonify(weekly_report), 200
