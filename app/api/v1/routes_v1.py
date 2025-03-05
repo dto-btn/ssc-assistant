@@ -403,7 +403,7 @@ if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
     @user_ad.login_required
     def suggestion(suggestion_request: NewSuggestionRequest):
         """This will receive most likely search terms and will return an AI response along with citations"""
-        suggestion_service = build_context()["suggestion_service"]
+        suggestion_service = build_context(False)["suggestion_service"]
         response = suggestion_service.suggest(
             suggestion_request.query, suggestion_request.opts
         )
@@ -544,7 +544,7 @@ else:
 @api_v1.doc(security="ApiKeyAuth")
 # @auth.login_required(role='chat') # does this need to change?
 def generate_stats_report_monthly():
-    ctx = build_context()
+    ctx = build_context(False)
     monthly_report = ctx["stats_report_service"].get_statistics_by_month_of_year()
     return jsonify(monthly_report), 200
 
@@ -554,7 +554,7 @@ def generate_stats_report_monthly():
 @api_v1.doc(security="ApiKeyAuth")
 # @auth.login_required(role='chat') # does this need to change?
 def generate_stats_report_weekly():
-    ctx = build_context()
+    ctx = build_context(False)
     weekly_report = ctx["stats_report_service"].get_statistics_by_day_of_week()
     return jsonify(weekly_report), 200
 
@@ -564,7 +564,7 @@ def generate_stats_report_weekly():
 @api_v1.doc(security="ApiKeyAuth")
 # @auth.login_required(role='chat') # does this need to change?
 def generate_stats_report_top_users_90_days():
-    ctx = build_context()
+    ctx = build_context(False)
     weekly_report = ctx["stats_report_service"].get_top_users_past_90_days()
     return jsonify(weekly_report), 200
 
@@ -573,6 +573,6 @@ def generate_stats_report_top_users_90_days():
 @api_v1.doc(security="ApiKeyAuth")
 # @auth.login_required(role='chat') # does this need to change?
 def generate_monthly_user_engagement_report():
-    ctx = build_context()
+    ctx = build_context(False)
     weekly_report = ctx["stats_report_service"].get_monthly_user_engagement_report()
     return jsonify(weekly_report), 200

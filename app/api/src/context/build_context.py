@@ -15,9 +15,9 @@ from src.service.suggestion_service import SuggestionService
 instance: Union[AppContext, None] = None
 
 
-def build_context() -> AppContext:
+def build_context(use_cache: bool = True) -> AppContext:
     global instance
-    if instance is None:
+    if instance is None or not use_cache:
         credential = DefaultAzureCredential()
         table_service_client = TableServiceClient(
             endpoint=os.getenv("DATABASE_ENDPOINT") or "", credential=credential

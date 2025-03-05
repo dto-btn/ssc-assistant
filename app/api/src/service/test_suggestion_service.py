@@ -20,22 +20,9 @@ class LocalTestContext(TypedDict):
     suggestion_context_dao: SuggestionContextDao
 
 
-@fixture(scope="session", autouse=True)
+@fixture(scope="function", autouse=True)
 def ctx() -> LocalTestContext:
-    # mock_suggest_table_client = MagicMock()
-    # suggestion_service = SuggestionService(mock_suggest_table_client)
-
-    # return {
-    #     "mock_suggest_table_client": mock_suggest_table_client,
-    #     "suggestion_service": suggestion_service,
-    # }
-    ctx = build_context()
-    suggestion_context_dao = ctx["suggestion_context_dao"]
-    suggestion_service = ctx["suggestion_service"]
-    return {
-        "suggestion_context_dao": suggestion_context_dao,
-        "suggestion_service": suggestion_service,
-    }
+    return build_context(False)
 
 
 @fixture(scope="function", autouse=True)
@@ -354,7 +341,6 @@ def test_response_timestamp_is_set_to_the_time_the_suggestion_was_generated(
             },
         )
         assert response["timestamp"] == expected_output
-
 
 def test_requester_field_is_set_to_the_application_that_requested_the_suggestion(
     ctx: LocalTestContext,
