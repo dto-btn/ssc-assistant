@@ -62,9 +62,7 @@ class SuggestionService:
         if result["success"]:
             # Store the suggestion in the database only if it was successful.
             # (Otherwise, why bother? It won't be used as a redirect.)
-            return self.suggestion_context_dao.insert_suggestion_context(
-                result
-            ).model_dump()
+            return self.suggestion_context_dao.insert_suggestion_context(result)
         else:
             return result
 

@@ -1,29 +1,25 @@
 from datetime import datetime
 import pytest
 from src.dao.suggestion_context_dao import SuggestionContextDao
-from src.entity.suggestion_context_entity import (
-    SuggestionContextCitationEntity,
-    SuggestionContextEntity,
-)
 from uuid import uuid4
 
+from src.service.suggestion_service_types import (
+    SuggestionContextWithSuggestions,
+    SuggestionContextWithSuggestionsAndId,
+)
 
-def build_mock_suggestion_context_entity():
+
+def build_mock_suggestion_context_entity() -> SuggestionContextWithSuggestionsAndId:
     uuid = str(uuid4())
 
-    citation_1 = SuggestionContextCitationEntity(
-        title="Some citation",
-        url="https://example.com/some-citation",
-    )
-    citation_2 = SuggestionContextCitationEntity(
-        title="Another citation",
-        url="https://example.com/another-citation",
-    )
-    return SuggestionContextEntity(
+    return SuggestionContextWithSuggestionsAndId(
         suggestion_id=uuid,
         citations=[
-            citation_1,
-            citation_2,
+            {"title": "Some citation", "url": "https://example.com/some-citation"},
+            {
+                "title": "Another citation",
+                "url": "https://example.com/another-citation",
+            },
         ],
         content="this is a test suggestion",
         language="en",
@@ -59,11 +55,11 @@ def test_get_suggestion_context_by_id_returns_suggestion(
 ):
     TEST_ID = "this-id-will-exist-in-db"
     suggestion = build_mock_suggestion_context_entity()
-    suggestion.suggestion_id = TEST_ID
+    suggestion["suggestion_id"] = TEST_ID
     suggestion_context_dao._suggestions = [suggestion]
     suggestions = suggestion_context_dao.get_suggestion_context_by_id(TEST_ID)
     assert suggestions is not None
-    assert suggestions.suggestion_id == TEST_ID
+    assert suggestions["suggestion_id"] == TEST_ID
 
 # can insert new suggestion
 
@@ -72,9 +68,20 @@ def test_insert_suggestion_context_inserts_suggestion(
     suggestion_context_dao: SuggestionContextDao,
 ):
     suggestion = build_mock_suggestion_context_entity()
-    suggestion_context_dao.insert_suggestion_context(suggestion.model_dump())
+    suggestion_context_dao.insert_suggestion_context(
+        SuggestionContextWithSuggestions(
+            citations=suggestion["citations"],
+            content=suggestion["content"],
+            language=suggestion["language"],
+            original_query=suggestion["original_query"],
+            requester=suggestion["requester"],
+            success=suggestion["success"],
+            timestamp=suggestion["timestamp"],
+        )
+    )
     assert len(suggestion_context_dao._suggestions) == 1
-    assert suggestion_context_dao._suggestions[0].content == suggestion.content
+    assert suggestion_context_dao._suggestions[0]["content"] == suggestion["content"]
+    assert type(suggestion_context_dao._suggestions[0].get("suggestion_id")) is str
 
 
 # can delete suggestion by oldest_timestamp
@@ -85,13 +92,13 @@ def test_delete_suggestion_context_older_than_deletes_suggestions(
     suggestion_context_dao: SuggestionContextDao,
 ):
     suggestion1 = build_mock_suggestion_context_entity()
-    suggestion1.timestamp = datetime(2021, 1, 1)  # will be gone
+    suggestion1["timestamp"] = datetime(2021, 1, 1)  # will be gone
     suggestion2 = build_mock_suggestion_context_entity()
-    suggestion2.timestamp = datetime(2021, 1, 2)  # will be gone
+    suggestion2["timestamp"] = datetime(2021, 1, 2)  # will be gone
     suggestion3 = build_mock_suggestion_context_entity()
-    suggestion3.timestamp = datetime(2021, 1, 3)
+    suggestion3["timestamp"] = datetime(2021, 1, 3)
     suggestion4 = build_mock_suggestion_context_entity()
-    suggestion4.timestamp = datetime(2021, 1, 4)
+    suggestion4["timestamp"] = datetime(2021, 1, 4)
 
     suggestion_context_dao._suggestions = [
         suggestion1,
