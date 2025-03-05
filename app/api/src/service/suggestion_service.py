@@ -8,6 +8,7 @@ from src.service.suggestion_service_types import (
     SuggestRequestInternalValidationResult,
     SuggestRequestOpts,
     SuggestionContext,
+    SuggestionContextWithSuggestionsAndId,
 )
 from utils.manage_message import SUGGEST_SYSTEM_PROMPT_EN, SUGGEST_SYSTEM_PROMPT_FR
 from utils.models import Citation, Message, MessageRequest, NewSuggestionCitation
@@ -58,9 +59,14 @@ class SuggestionService:
             query_validation_result["data"], opts_validation_result["data"]
         )
 
-        self.suggestion_context_dao.insert_suggestion_context(result)
-
-        return result
+        if result["success"]:
+            # Store the suggestion in the database only if it was successful.
+            # (Otherwise, why bother? It won't be used as a redirect.)
+            return self.suggestion_context_dao.insert_suggestion_context(
+                result
+            ).model_dump()
+        else:
+            return result
 
     def _validate_and_clean_query(
         self, query: str
@@ -239,3 +245,12 @@ class SuggestionService:
             # This will be a list of citations for the suggestion.
             "citations": [{"url": c.url, "title": c.title} for c in citations],
         }
+
+    def get_suggestioncontext_by_id(
+        self,
+        suggestion_id: str,
+    ) -> SuggestionContextWithSuggestionsAndId | None:
+        """
+        Get a suggestion context by its ID.
+        """
+        return self.suggestion_context_dao.get_suggestion_context_by_id(suggestion_id)

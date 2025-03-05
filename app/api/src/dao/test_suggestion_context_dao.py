@@ -20,7 +20,7 @@ def build_mock_suggestion_context_entity():
         url="https://example.com/another-citation",
     )
     return SuggestionContextEntity(
-        id=uuid,
+        suggestion_id=uuid,
         citations=[
             citation_1,
             citation_2,
@@ -59,11 +59,11 @@ def test_get_suggestion_context_by_id_returns_suggestion(
 ):
     TEST_ID = "this-id-will-exist-in-db"
     suggestion = build_mock_suggestion_context_entity()
-    suggestion.id = TEST_ID
+    suggestion.suggestion_id = TEST_ID
     suggestion_context_dao._suggestions = [suggestion]
     suggestions = suggestion_context_dao.get_suggestion_context_by_id(TEST_ID)
     assert suggestions is not None
-    assert suggestions.id == TEST_ID
+    assert suggestions.suggestion_id == TEST_ID
 
 # can insert new suggestion
 
@@ -72,9 +72,9 @@ def test_insert_suggestion_context_inserts_suggestion(
     suggestion_context_dao: SuggestionContextDao,
 ):
     suggestion = build_mock_suggestion_context_entity()
-    suggestion_context_dao.insert_suggestion_context(suggestion)
+    suggestion_context_dao.insert_suggestion_context(suggestion.model_dump())
     assert len(suggestion_context_dao._suggestions) == 1
-    assert suggestion_context_dao._suggestions[0] == suggestion
+    assert suggestion_context_dao._suggestions[0].content == suggestion.content
 
 
 # can delete suggestion by oldest_timestamp

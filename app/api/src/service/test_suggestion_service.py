@@ -456,3 +456,27 @@ def test_suggestioncontext_is_saved_to_the_database(ctx: LocalTestContext):
 
 
 # suggestioncontext expiration is set to 3 days
+
+def test_get_suggestioncontext_by_id(ctx: LocalTestContext):
+    suggestion_service = ctx["suggestion_service"]
+
+    response = suggestion_service.suggest(
+        "cool",
+        {
+            "language": "en",
+            "requester": "someone_cool",
+        },
+    )
+
+    assert response["success"] is True
+    suggestion_id = response["suggestion_id"]
+    assert type(suggestion_id) is str
+    assert len(suggestion_id) > 0
+    suggestion_context = suggestion_service.get_suggestioncontext_by_id(suggestion_id)
+
+    assert suggestion_context is not None
+    assert suggestion_context["success"] is True
+    assert suggestion_context["suggestion_id"] == suggestion_id
+    assert suggestion_context["content"] == "test_content"
+    assert suggestion_context["language"] == "en"
+    assert suggestion_context["requester"] == "someone_cool"
