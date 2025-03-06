@@ -455,18 +455,36 @@ export const AssistantBubble = ({
               </ConfirmBookingBox>
             )}
 
-            {!isLoading &&
-              brData &&
-              brData.map((item, index) => (
-                <BusinessRequestCard
-                  key={index}
-                  data={item}
-                  lang={i18n.language}
-                />
-              ))}
+            {!isLoading && (brData || brUpdates) && (
+              <>
+                <Divider />
+                <Box
+                  sx={{
+                    width: "100%",
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fill, minmax(min(500px, 100%), 1fr))",
+                    gap: 1,
+                    marginTop: 2,
+                  }}
+                >
+                  {brData &&
+                    brData.map((item, index) => (
+                      <BusinessRequestCard
+                        key={index}
+                        data={item}
+                        lang={i18n.language}
+                      />
+                    ))}
 
-            {!isLoading && brUpdates && (
-              <BusinessRequestUpdates data={brUpdates} lang={i18n.language} />
+                  {brUpdates && (
+                    <BusinessRequestUpdates
+                      data={brUpdates}
+                      lang={i18n.language}
+                    />
+                  )}
+                </Box>
+              </>
             )}
           </ChatBubbleInner>
         </Box>

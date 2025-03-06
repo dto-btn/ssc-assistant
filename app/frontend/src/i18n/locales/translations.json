@@ -610,5 +610,9 @@
     "last.status.date": {
         "en": "Last Status date",
         "fr": "Date du dernier statut"
+    },
+    "business.request.updates": {
+        "en": "Business Request Updates",
+        "fr": "Mises à jour des demandes opérationnelles"
     }
 }
