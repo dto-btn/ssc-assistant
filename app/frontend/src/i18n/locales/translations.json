@@ -578,5 +578,9 @@
     "upload.uploading": {
         "en": "Upload in progress...",
         "fr": "Téléchargement en cours..."
+    },
+    "button.joinchat": {
+        "en": "Chat with us",
+        "fr": "Discutez avec nous"
     }
 }
