@@ -32,7 +32,7 @@ class Context:
 class ToolInfo:
     tool_type: List[str] = field(default_factory=list)
     function_names: List[str] = field(default_factory=list)
-    payload: Dict[str, Union[dict, list, None]] = field(default_factory=dict)
+    payload: Dict[str, Union[dict, list]] = field(default_factory=dict)
 
 @dataclass
 class Attachment:

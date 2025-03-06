@@ -86,7 +86,9 @@ export const AssistantBubble = ({
   const [isFloorPlanExpanded, setFloorPlanExpanded] = useState(false);
   const isMostRecent = index === total - 1;
   const toolsUsed = toolsInfo && toolsInfo.tool_type.length > 0;
-  const [brData, setBrData] = useState<BusinessRequest | undefined>(undefined);
+  const [brData, setBrData] = useState<BusinessRequest[] | undefined>(
+    undefined
+  );
   const [brUpdates, setBrUpdates] = useState<
     BusinessRequestUpdate[] | undefined
   >(undefined);
@@ -174,7 +176,9 @@ export const AssistantBubble = ({
     if (toolsInfo) {
       if (toolsInfo?.payload?.get_br_information) {
         setBrData(
-          transformToBusinessRequest(toolsInfo.payload.get_br_information[0])
+          toolsInfo.payload.get_br_information.map((item: any) =>
+            transformToBusinessRequest(item)
+          )
         );
       }
 
@@ -451,9 +455,15 @@ export const AssistantBubble = ({
               </ConfirmBookingBox>
             )}
 
-            {!isLoading && brData && (
-              <BusinessRequestCard data={brData} lang={i18n.language} />
-            )}
+            {!isLoading &&
+              brData &&
+              brData.map((item, index) => (
+                <BusinessRequestCard
+                  key={index}
+                  data={item}
+                  lang={i18n.language}
+                />
+              ))}
 
             {!isLoading && brUpdates && (
               <BusinessRequestUpdates data={brUpdates} lang={i18n.language} />
