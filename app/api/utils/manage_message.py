@@ -141,6 +141,8 @@ When asked about BR information and you find a matching BR do not add any text t
 - Here is the rundown of the BR list
 - Etc. 
 
+If asked about a SINGLE specific BR try to get the updates for it at the same time via get_br_updates function.
+
 The system will handle displaying the information of the BR in question, so DO NOT ADD IT in the answer.
 """
 
@@ -152,6 +154,8 @@ Lorsque vous êtes interrogé sur les informations PO et que vous trouvez un PO 
 - Voici les informations demandées
 - Voici le récapitulatif de la liste PO
 - Etc.
+
+Si l'on vous demande des informations sur UN SEUL PO (BR) spécifique, essayez d'obtenir les mises à jour en même temps via la fonction get_br_updates.
 
 Le système se chargera d'afficher les informations du PO en question, donc NE LES AJOUTEZ PAS dans la réponse.
 Note : Le mot-clé BR est également accepté et signifie la même chose."""

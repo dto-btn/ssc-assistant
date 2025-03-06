@@ -1,10 +1,11 @@
-from datetime import datetime
-import pymssql
 import json
 import logging
+from datetime import datetime
+
+import pymssql
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 class DatabaseConnection:
     """Database connection class."""
@@ -36,7 +37,6 @@ class DatabaseConnection:
 
             # Fetch column names
             columns = [desc[0] for desc in cursor.description]
-            print(columns)
 
             # Create a list of lists of dictionaries with one key-value pair each
             #result = [[{columns[i]: row[i]} for i in range(len(columns))] for row in rows] # type: ignore

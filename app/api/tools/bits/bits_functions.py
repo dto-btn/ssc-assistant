@@ -50,18 +50,23 @@ def get_br_information(br_number: int):
                 "br_number": {
                     "type": "integer",
                     "description": "A BR number."
+                },
+                "top": {
+                    "type": "integer",
+                    "description": "The number of rows to return. Defaults to 5 if not specified."
                 }
             },
             "required": ["br_number"]
       }
     }
   })
-def get_br_updates(br_number: int):
+def get_br_updates(br_number: int, top: int = 5):
     """
     gets br updates from snapshot table
     """
     query = """
     SELECT
+        TOP(%s)
         f.BR_NMBR,
         f.PERIOD_END_DATE,
         f.DAYS_SINCE_SUBMIT,
@@ -82,5 +87,6 @@ def get_br_updates(br_number: int):
     ON
         f.STATUS_ID = d.STATUS_ID
     WHERE
-        f.BR_NMBR = %s;"""
-    return db.execute_query(query, br_number)
+        f.BR_NMBR = %s
+     ORDER BY f.LAST_STATUS_DATE DESC;"""
+    return db.execute_query(query, top, br_number)

@@ -556,8 +556,8 @@
         "fr": "CEGP"
     },
     "bits": {
-        "en": "EDR (BITS)",
-        "fr": "EDR (BITS) [FR]"
+        "en": "Business Request",
+        "fr": "Demande opérationnelle"
     },
     "business.request.number": {
         "en": "Business Request #",

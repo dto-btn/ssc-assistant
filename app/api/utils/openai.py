@@ -154,9 +154,12 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
     ))
 
 def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: List[Any]) -> ToolInfo:
+    """
+    Adds tool info if tools were used in the completion
+    """
     tools_info = ToolInfo()
-    function_to_tool_type = {tool['function']['name']: tool['tool_type'] for tool in tools if tool.get('type') == 'function'}
-
+    function_to_tool_type = {tool['function']['name']: tool['tool_type']
+                             for tool in tools if tool.get('type') == 'function'}
     for message in messages:
         if message["role"] == "function":
             function_name = message["name"]
@@ -178,7 +181,7 @@ def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: Lis
                     if content is not None:
                         try:
                             # Parse the JSON string to a dictionary
-                            tools_info.payload = {function_name : json.loads(content)}
+                             tools_info.payload[function_name] = json.loads(content)
                         except json.JSONDecodeError:
                             # Handle the case where the JSON is invalid
                             tools_info.payload = {}

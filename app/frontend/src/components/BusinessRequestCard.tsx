@@ -22,7 +22,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
   const isEnglish = lang === "en";
   const { t } = useTranslation();
   return (
-    <Box sx={{ maxWidth: 500, marginLeft: 5 }}>
+    <Box sx={{ maxWidth: 500, marginLeft: 5, marginBottom: 3 }}>
       <Card variant="outlined">
         <CardContent>
           <Typography
