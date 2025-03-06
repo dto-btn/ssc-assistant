@@ -8,6 +8,7 @@ import {
   Link,
   Typography,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 interface BusinessRequestProps {
   data: BusinessRequest;
@@ -19,6 +20,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
   lang,
 }) => {
   const isEnglish = lang === "en";
+  const { t } = useTranslation();
   return (
     <Box sx={{ maxWidth: 500, marginLeft: 5 }}>
       <Card variant="outlined">
@@ -27,7 +29,8 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
             gutterBottom
             sx={{ color: "text.secondary", fontSize: 14 }}
           >
-            Business Request #{data.BR_NMBR}
+            {t("business.request.number")}
+            {data.BR_NMBR}
           </Typography>
           <Typography
             variant="h5"
@@ -37,32 +40,32 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
             {data.BR_SHORT_TITLE}
           </Typography>
           <Typography variant="body2" color="textPrimary">
-            <strong>Priority: </strong>
+            <strong>{t("priority")}: </strong>
             {isEnglish ? data.PRIORITY_EN : data.PRIORITY_FR}
           </Typography>
           <Typography variant="body2" color="textPrimary">
-            <strong>Client Name: </strong>
+            <strong>{t("client.name")}: </strong>
             {data.CLIENT_NAME_SRC}
           </Typography>
           {isEnglish
             ? data.CLIENT_SUBGRP_EN
             : data.CLIENT_SUBGRP_FR && (
                 <Typography variant="body2" color="textPrimary">
-                  <strong>Client Subgroup: </strong>
+                  <strong>{t("client.subgroup")}: </strong>
                   {isEnglish ? data.CLIENT_SUBGRP_EN : data.CLIENT_SUBGRP_FR}
                 </Typography>
               )}
           <Typography variant="body2" color="textPrimary">
-            <strong>Create Date: </strong>
+            <strong>{t("create.date")}: </strong>
             {new Date(data.CREATE_DATE).toLocaleDateString()}
           </Typography>
           <Typography variant="body2" color="textPrimary">
-            <strong>Submit Date: </strong>
+            <strong>{t("submit.date")}: </strong>
             {new Date(data.SUBMIT_DATE).toLocaleDateString()}
           </Typography>
           {data.ASSOC_BRS && (
             <Typography variant="body2" color="textPrimary">
-              <strong>Associated Business Request(s): </strong>
+              <strong>{t("associated.business.requests")}: </strong>
               <Link
                 href={"https://bitsprod.ssc-spc.gc.ca/BR/" + data.ASSOC_BRS}
               >
@@ -75,7 +78,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
               size="small"
               href={"https://bitsprod.ssc-spc.gc.ca/BR/" + data.BR_NMBR}
             >
-              VIEW IN BITS
+              {t("view.in.bits")}
             </Button>
           </CardActions>
         </CardContent>

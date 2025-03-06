@@ -559,24 +559,56 @@
         "en": "EDR (BITS)",
         "fr": "EDR (BITS) [FR]"
     },
-    "uploaded.file.alt": {
-        "en": "Uploaded file preview",
-        "fr": "Aperçu du fichier téléchargé"
+    "business.request.number": {
+        "en": "Business Request #",
+        "fr": "Demande opérationnelles n°"
     },
-    "invalid.file.type": {
-        "en": "Invalid file type. Please upload a image.",
-        "fr": "Type de fichier non valide. Veuillez télécharger une image."
+    "priority": {
+        "en": "Priority",
+        "fr": "Priorité"
     },
-    "user.file.upload": {
-        "en": "User uploaded file.",
-        "fr": "Fichier téléchargé par l'utilisateur."
+    "client.name": {
+        "en": "Client Name",
+        "fr": "Nom du client"
     },
-    "upload.image": {
-        "en": "Upload an image",
-        "fr": "Téléchargez une image"
+    "client.subgroup": {
+        "en": "Client Subgroup",
+        "fr": "Sous-groupe du client"
     },
-    "upload.uploading": {
-        "en": "Upload in progress...",
-        "fr": "Téléchargement en cours..."
+    "create.date": {
+        "en": "Create Date",
+        "fr": "Date de création"
+    },
+    "submit.date": {
+        "en": "Submit Date",
+        "fr": "Date de soumission"
+    },
+    "associated.business.requests": {
+        "en": "Associated Business Request(s)",
+        "fr": "Demande(s) opérationnelles associée(s)"
+    },
+    "view.in.bits": {
+        "en": "VIEW IN BITS",
+        "fr": "VOIR DANS SSIO"
+    },
+    "status": {
+        "en": "Status",
+        "fr": "Statut"
+    },
+    "active": {
+        "en": "Active",
+        "fr": "Actif"
+    },
+    "implementation.flag": {
+        "en": "Impl. Flag",
+        "fr": "Drapeau d'implémentation"
+    },
+    "days.in.status": {
+        "en": "Days in status",
+        "fr": "Nombre de jours en statut"
+    },
+    "last.status.date": {
+        "en": "Last Status date",
+        "fr": "Date du dernier statut"
     }
 }

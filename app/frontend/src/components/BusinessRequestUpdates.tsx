@@ -9,6 +9,7 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 interface BusinessRequestUpdatesProps {
   data: Array<BusinessRequestUpdate>;
@@ -20,17 +21,18 @@ const BusinessRequestUpdates: React.FC<BusinessRequestUpdatesProps> = ({
   lang,
 }) => {
   const isEnglish = lang === "en";
+  const { t } = useTranslation();
   return (
     <Box sx={{ marginLeft: 5 }}>
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }} aria-label="simple table">
           <TableHead>
             <TableRow>
-              <TableCell>Status</TableCell>
-              <TableCell align="right">Active</TableCell>
-              <TableCell align="right">Impl. Flag</TableCell>
-              <TableCell align="right">Days in status</TableCell>
-              <TableCell align="right">Last Status date</TableCell>
+              <TableCell>{t("status")}</TableCell>
+              <TableCell align="right">{t("active")}</TableCell>
+              <TableCell align="right">{t("implementation.flag")}</TableCell>
+              <TableCell align="right">{t("days.in.status")}</TableCell>
+              <TableCell align="right">{t("last.status.date")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
