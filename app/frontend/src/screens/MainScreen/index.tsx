@@ -397,27 +397,20 @@ const MainScreen = () => {
   };
 
   const setWelcomeMessage = async (graphData: any) => {
-    setIsLoading(true);
-
     if (!currentChatHistory.uuid) {
       currentChatHistory.uuid = uuidv4();
     }
 
-    const systemMessage: Message = {
-      role: "system",
-      content: t("welcome.prompt.system"),
-    };
 
-    const welcomeMessageRequest: Message = {
-      role: "user",
-      content: t("welcome.prompt.user", { givenName: graphData["givenName"] }),
-    };
 
-    const messages = [systemMessage, welcomeMessageRequest];
+    const content = i18n.language == 'en' ? 
+    "Hello **" + graphData["givenName"] + "**! 👋 Welcome! I'm here to assist you with **general knowledge**, employee information via **GEDS**, and **corporate SSC** (Shared Services Canada) information through the **MySSC+ intranet**. How can I help you today?" 
+    : "Bienvenue, **" + graphData["givenName"] + "**! 👋 Je suis là pour vous aider avec des **connaissances générales**, des informations sur les employés via **SAGE** et des informations corporatives SPC (Services partagés Canada) à travers **l'intranet MonSPC+**.";
+
     const responsePlaceholder: Completion = {
       message: {
         role: "assistant",
-        content: "",
+        content: content,
       },
     };
 
@@ -429,18 +422,6 @@ const MainScreen = () => {
       };
       return updatedChatHistory;
     });
-
-    // prepare request bundle
-    const request: MessageRequest = {
-      messages: messages,
-      max: maxMessagesSent,
-      top: 5,
-      tools: [],
-      uuid: currentChatHistory.uuid,
-      model: currentChatHistory.model,
-    };
-
-    sendApiRequest(request);
   };
 
   // Effect for setting the welcome message whenever the current chat is empty
