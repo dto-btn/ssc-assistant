@@ -1,11 +1,12 @@
 import json
 import logging
+import time
 from datetime import datetime
 
 import pymssql
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 class DatabaseConnection:
     """Database connection class."""
@@ -31,9 +32,19 @@ class DatabaseConnection:
         cursor = conn.cursor()
 
         try:
-            logger.debug("About to run this query %s", query)
+            logger.debug("About to run this query %s \nWith those params: %s", query, args)
+            # Start timing the query execution
+            start_time = time.time()
+
             cursor.execute(query, args)
             rows = cursor.fetchall()
+
+            # End timing the query execution
+            end_time = time.time()
+            execution_time = end_time - start_time
+
+            # Log the query execution time
+            logger.info("Query executed in %s seconds", execution_time)
 
             # Fetch column names
             columns = [desc[0] for desc in cursor.description]
@@ -41,13 +52,10 @@ class DatabaseConnection:
             # Create a list of lists of dictionaries with one key-value pair each
             #result = [[{columns[i]: row[i]} for i in range(len(columns))] for row in rows] # type: ignore
             result = [{columns[i]: row[i] for i in range(len(columns))} for row in rows] # type: ignore
+            logger.debug("Found %s results!", len(result))
 
             # Convert the result to JSON
             json_result = json.dumps(result, default=_datetime_serializer, indent=4)
-
-            # Log the result
-            logger.debug(json_result)
-
             return json_result
 
         finally:

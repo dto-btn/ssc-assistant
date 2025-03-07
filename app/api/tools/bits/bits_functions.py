@@ -5,7 +5,7 @@ from tools.bits.bits_utils import DatabaseConnection
 from utils.decorators import tool_metadata
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 db = DatabaseConnection(os.getenv("BITS_DB_SERVER", "missing.domain"),
                         os.getenv("BITS_DB_USERNAME", "missing.username"),
@@ -33,7 +33,7 @@ def get_br_information(br_number: int):
     """
     gets br information
 
-    SELECT BR_NMBR, BR_TITLE, BR_SHORT_TITLE, PRIORITY_EN, PRIORITY_FR, CLIENT_NAME_SRC, CREATE_DATE, 
+    SELECT BR_NMBR, BR_TITLE, BR_SHORT_TITLE, PRIORITY_EN, PRIORITY_FR, CLIENT_NAME_SRC, CREATE_DATE,
     SUBMIT_DATE, REQST_IMPL_DATE FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR = 123456;
     """
     query = "SELECT * FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR = %s;"
@@ -90,3 +90,42 @@ def get_br_updates(br_number: int, top: int = 5):
         f.BR_NMBR = %s
      ORDER BY f.LAST_STATUS_DATE DESC;"""
     return db.execute_query(query, top, br_number)
+
+@tool_metadata({
+    "type": "function",
+    "function": {
+        "name": "get_br_assigned_to",
+        "description": "Gets information about BRs assigned to a given name. If no limit is specified, it returns the top 15 items by default.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name to search for in the BR records. This can be the BR owner, initiator, last editor, or other specified roles."
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "The maximum number of BR items to return. Defaults to 15.",
+                    "default": 10
+                }
+            },
+            "required": ["name"]
+        }
+    }
+})
+def get_br_assigned_to(name: str, limit: int = 10):
+    """
+    Gets BR information assigned to a given name.
+    """
+    query = """
+    SELECT TOP(%d) *
+    FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS
+    WHERE BR_OWNER LIKE %s OR BR_INITR LIKE %s OR BR_LAST_EDITOR LIKE %s OR CSM_OPI LIKE %s
+    OR TL_OPI LIKE %s OR CSM_DIRTR LIKE %s OR SOL_OPI LIKE %s OR ENGN_OPI LIKE %s
+    OR BA_OPI LIKE %s OR BA_TL LIKE %s OR PM_OPI LIKE %s OR BA_PRICE_OPI LIKE %s
+    OR QA_OPI LIKE %s OR SL_COORD LIKE %s OR AGRMT_OPI LIKE %s OR ACCT_MGR_OPI LIKE %s
+    OR SDM_TL_OPI LIKE %s;
+    """
+    name_pattern = f"{name}%"
+    params = [limit] + [name_pattern] * 17
+    return db.execute_query(query, *params)

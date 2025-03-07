@@ -182,6 +182,7 @@ def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: Lis
                     if content is not None:
                         try:
                             json_content = json.loads(content)
+                            print(json_content)
                             if function_name not in tools_info.payload:
                                 # Initialize as an empty list if the key doesn't exist
                                 tools_info.payload[function_name] = []

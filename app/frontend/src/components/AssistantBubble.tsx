@@ -174,12 +174,16 @@ export const AssistantBubble = ({
     };
 
     if (toolsInfo) {
-      if (toolsInfo?.payload?.get_br_information) {
-        setBrData(
-          toolsInfo.payload.get_br_information.map((item: any) =>
-            transformToBusinessRequest(item)
-          )
-        );
+      if (toolsInfo?.payload?.get_br_information || toolsInfo?.payload?.get_br_assigned_to) {
+        const brInformation = toolsInfo.payload.get_br_information || [];
+        const brAssignedTo = toolsInfo.payload.get_br_assigned_to || [];
+
+        const transformedBrInformation = brInformation.map((item: any) => transformToBusinessRequest(item));
+        const transformedBrAssignedTo = brAssignedTo.map((item: any) => transformToBusinessRequest(item));
+
+        const mergedBrData = [...transformedBrInformation, ...transformedBrAssignedTo];
+
+        setBrData(mergedBrData);
       }
 
       if (toolsInfo?.payload?.get_br_updates?.length) {
