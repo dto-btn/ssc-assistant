@@ -290,25 +290,33 @@ export const AssistantBubble = ({
                   <HandymanIcon
                     style={{
                       fontSize: 16,
-                      margin: "0px 8px 3px 0px",
+                      margin: "0px 0px 3px 0px",
                       color: "#4b3e99",
                     }}
                   />
                 </Tooltip>
-                <Typography
-                  sx={{
-                    fontSize: "15px",
-                    padding: "0px 22px 3px 0px",
-                    color: "primary.main",
-                  }}
-                >
-                  {toolsInfo.tool_type.map((tool, index) => (
-                    <span key={index}>
-                      {t(tool)}
-                      {index < toolsInfo.tool_type.length - 1 && ", "}
-                    </span>
+                {toolsInfo.tool_type.map((tool, index) => (
+                  <Box
+                    component="span"
+                    sx={(theme) => ({
+                      display: 'block',
+                      p: 1,
+                      m: 1,
+                      bgcolor: '#fff',
+                      color: 'grey.800',
+                      border: '1px solid',
+                      borderColor: 'grey.300',
+                      borderRadius: 2,
+                      fontSize: '0.875rem',
+                      fontWeight: '700',
+                      ...theme.applyStyles('dark', {
+                        bgcolor: '#101010',
+                        color: 'grey.300',
+                        borderColor: 'grey.800',
+                      }),
+                    })}
+                  >{t(tool)}.{toolsInfo.function_names[index]}()</Box>
                   ))}
-                </Typography>
               </ToolsUsedBox>
             )}
 
