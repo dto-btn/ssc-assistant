@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  Avatar,
   Card,
   CardActions,
   CardContent,
@@ -15,7 +14,6 @@ import {
 import { useTranslation } from "react-i18next";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import IconButton, { IconButtonProps } from '@mui/material/IconButton';
-import { red } from '@mui/material/colors';
 
 interface BusinessRequestProps {
   data: BusinessRequest;
