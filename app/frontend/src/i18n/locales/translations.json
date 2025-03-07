@@ -694,5 +694,13 @@
     "long.title": {
         "en":"Full name",
         "fr":"Nom complet"
+    },
+    "upload.uploading": {
+        "en": "Upload in progress...",
+        "fr": "Téléchargement en cours..."
+    },
+    "button.joinchat": {
+        "en": "Chat with us!",
+        "fr": "Discutez avec nous!"
     }
 }
