@@ -67,8 +67,16 @@ resource "azurerm_role_assignment" "sub-read" {
   for_each             = data.azuread_user.users
   scope                = azurerm_resource_group.dev.id
   role_definition_name = "Reader"
-  principal_id         = each.value.id
+  principal_id         = each.value.object_id
 }
+
+resource "azurerm_role_assignment" "sub-contrib" {
+  for_each             = data.azuread_user.devs
+  scope                = azurerm_resource_group.dev.id
+  role_definition_name = "Contributor"
+  principal_id         = each.value.object_id
+}
+
 resource "azurerm_role_assignment" "openai_user" {
   for_each             = data.azuread_user.users
   role_definition_name = "Cognitive Services User"
