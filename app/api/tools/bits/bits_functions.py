@@ -1,7 +1,8 @@
 import logging
 import os
+from typing import List, Optional
 
-from tools.bits.bits_utils import DatabaseConnection
+from tools.bits.bits_utils import DatabaseConnection, extract_fields_from_query
 from utils.decorators import tool_metadata
 
 logger = logging.getLogger(__name__)
@@ -11,6 +12,12 @@ db = DatabaseConnection(os.getenv("BITS_DB_SERVER", "missing.domain"),
                         os.getenv("BITS_DB_USERNAME", "missing.username"),
                         os.getenv("BITS_DB_PWD", "missing.password"),
                         os.getenv("BITS_DB_DATABASE", "missing.dbname"))
+
+valid_assigned_to_fields = [
+        'BR_OWNER', 'BR_INITR', 'BR_LAST_EDITOR', 'CSM_OPI', 'TL_OPI', 'CSM_DIRTR', 'SOL_OPI',
+        'ENGN_OPI', 'BA_OPI', 'BA_TL', 'PM_OPI', 'BA_PRICE_OPI', 'QA_OPI', 'SL_COORD', 'AGRMT_OPI',
+        'ACCT_MGR_OPI', 'SDM_TL_OPI'
+    ]
 
 @tool_metadata({
     "type": "function",
@@ -95,7 +102,7 @@ def get_br_updates(br_number: int, top: int = 5):
     "type": "function",
     "function": {
         "name": "get_br_assigned_to",
-        "description": "Gets information about BRs assigned to a given name. If no limit is specified, it returns the top 15 items by default.",
+        "description": "Gets information about BRs assigned to a given name. If no limit is specified, it returns the top 10 items by default. List of fields a user can specify in assigned_to_fields: {fields}".replace("{fields}", ", ".join(valid_assigned_to_fields)),
         "parameters": {
             "type": "object",
             "properties": {
@@ -107,25 +114,38 @@ def get_br_updates(br_number: int, top: int = 5):
                     "type": "integer",
                     "description": "The maximum number of BR items to return. Defaults to 15.",
                     "default": 10
+                },
+                "assigned_to_fields": {
+                    "type": "string",
+                    "description": "This is a list of comma separated fields that the user wants to filter this request on."
                 }
             },
             "required": ["name"]
         }
     }
 })
-def get_br_assigned_to(name: str, limit: int = 10):
+def get_br_assigned_to(name: str, limit: int = 10, assigned_to_fields: str = ""):
     """
     Gets BR information assigned to a given name.
     """
-    query = """
+    fields = []
+    # If no specific fields are provided, use all valid fields
+    if assigned_to_fields:
+        assigned_to_fields_list = [field.strip() for field in assigned_to_fields.split(',')]
+        fields = extract_fields_from_query(assigned_to_fields_list, valid_assigned_to_fields)
+        # If no valid specific fields are provided, default to all valid fields
+        if not fields:
+            fields = valid_assigned_to_fields
+    else:
+        fields = valid_assigned_to_fields
+
+    query = f"""
     SELECT TOP(%d) *
     FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS
-    WHERE BR_OWNER LIKE %s OR BR_INITR LIKE %s OR BR_LAST_EDITOR LIKE %s OR CSM_OPI LIKE %s
-    OR TL_OPI LIKE %s OR CSM_DIRTR LIKE %s OR SOL_OPI LIKE %s OR ENGN_OPI LIKE %s
-    OR BA_OPI LIKE %s OR BA_TL LIKE %s OR PM_OPI LIKE %s OR BA_PRICE_OPI LIKE %s
-    OR QA_OPI LIKE %s OR SL_COORD LIKE %s OR AGRMT_OPI LIKE %s OR ACCT_MGR_OPI LIKE %s
-    OR SDM_TL_OPI LIKE %s;
+    WHERE {" OR ".join([f"{field} LIKE %s" for field in fields])};
     """
+
     name_pattern = f"{name}%"
-    params = [limit] + [name_pattern] * 17
+    params = [limit] + [name_pattern] * len(fields)
+
     return db.execute_query(query, *params)

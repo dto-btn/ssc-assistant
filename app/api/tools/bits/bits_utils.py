@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 import time
 from datetime import datetime
 
@@ -67,3 +68,23 @@ def _datetime_serializer(obj):
     if isinstance(obj, datetime):
         return obj.isoformat()
     raise TypeError(f"Type {type(obj)} not serializable")
+
+
+def extract_fields_from_query(query: list, valid_fields: list):
+    """
+    Extract fields from the user's query based on the valid fields.
+
+    Parameters:
+        query (str): The user's query.
+        valid_fields (list): A list of valid fields.
+
+    Returns:
+        list: A list of fields extracted from the query.
+    """
+    fields = []
+    for field in valid_fields:
+        # Check if the field is mentioned in the query
+        for user_field in query:
+            if re.search(rf"\b{field}\b", user_field, re.IGNORECASE):
+                fields.append(user_field)
+    return fields
