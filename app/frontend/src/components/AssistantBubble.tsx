@@ -174,7 +174,7 @@ export const AssistantBubble = ({
     };
 
     if (toolsInfo) {
-      if (toolsInfo?.payload?.get_br_information || toolsInfo?.payload?.get_br_assigned_to) {
+      if (toolsInfo?.payload?.get_br_information?.length || toolsInfo?.payload?.get_br_assigned_to?.length) {
         const brInformation = toolsInfo.payload.get_br_information || [];
         const brAssignedTo = toolsInfo.payload.get_br_assigned_to || [];
 
