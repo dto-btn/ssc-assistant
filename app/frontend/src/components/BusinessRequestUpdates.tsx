@@ -9,6 +9,7 @@ import {
   TableHead,
   TableRow,
   Tooltip,
+  useTheme,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import CheckCircle from "@mui/icons-material/CheckCircle";
@@ -25,9 +26,11 @@ const BusinessRequestUpdates: React.FC<BusinessRequestUpdatesProps> = ({
 }) => {
   const isEnglish = lang === "en";
   const { t } = useTranslation();
+  const theme = useTheme();
+
   return (
     <Box sx={{ marginLeft: 5 }}>
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{ backgroundColor: theme.palette.secondary.contrastText}}>
         <Table
           // Styling for all the table cells
           sx={{

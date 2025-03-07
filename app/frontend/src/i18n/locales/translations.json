@@ -614,5 +614,85 @@
     "business.request.updates": {
         "en": "Business Request Updates",
         "fr": "Mises à jour des demandes opérationnelles"
+    },
+    "br.owner": {
+        "en": "Business Request Owner",
+        "fr": "Propriétaire de la demande opérationnelle"
+    },
+    "br.initr": {
+        "en": "Business Request Initiator",
+        "fr": "Initiateur de la demande opérationnelle"
+    },
+    "br.last_editor": {
+        "en": "Last Editor of Business Request",
+        "fr": "Dernier éditeur de la demande opérationnelle"
+    },
+    "csm.opi": {
+        "en": "Customer Success Manager OPI",
+        "fr": "OPI du gestionnaire de la réussite client"
+    },
+    "tl.opi": {
+        "en": "Team Lead OPI",
+        "fr": "OPI du chef d'équipe"
+    },
+    "csm.dirtr": {
+        "en": "Customer Success Director",
+        "fr": "Directeur de la réussite client"
+    },
+    "sol.opi": {
+        "en": "Solution OPI",
+        "fr": "OPI sur la solution"
+    },
+    "engn.opi": {
+        "en": "Engineer OPI",
+        "fr": "OPI de l'ingénieur"
+    },
+    "ba.opi": {
+        "en": "Business Analyst OPI",
+        "fr": "OPI de l'analyste opérationnel"
+    },
+    "ba.tl": {
+        "en": "Business Analyst Team Lead",
+        "fr": "Chef d'équipe des analystes opérationnels"
+    },
+    "pm.opi": {
+        "en": "Project Manager OPI",
+        "fr": "OPI du chef de projet"
+    },
+    "ba.price_opi": {
+        "en": "Business Analyst Pricing OPI",
+        "fr": "OPI sur le prix de l'analyste opérationnel"
+    },
+    "qa.opi": {
+        "en": "Quality Assurance OPI",
+        "fr": "OPI de l'assurance qualité"
+    },
+    "sl.coord": {
+        "en": "Sales Coordinator",
+        "fr": "Coordinateur des ventes"
+    },
+    "agrmt.opi": {
+        "en": "Agreement OPI",
+        "fr": "OPI sur l'accord"
+    },
+    "acct_mgr.opi": {
+        "en": "Account Manager OPI",
+        "fr": "OPI du gestionnaire de compte"
+    },
+    "sdm.tl_opi": {
+        "en": "Service Delivery Manager Team Lead OPI",
+        "fr": "OPI du chef d'équipe du gestionnaire de la prestation de services"
+    },
+    "reqmt.ovrvw": {
+        "en": "Requirement Overview",
+        "fr": "Aperçu des exigences"
+    },
+    "assoc.brs": {
+        "en": "Associated Business Requests",
+        "fr": "Demandes opérationnelles associées"
+    },
+    "long.title": {
+        "en":"Full name",
+        "fr":"Nom complet"
     }
 }

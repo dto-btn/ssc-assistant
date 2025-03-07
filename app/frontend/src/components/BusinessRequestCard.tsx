@@ -1,17 +1,54 @@
 import React from "react";
 import {
+  Avatar,
   Card,
   CardActions,
   CardContent,
+  CardHeader,
+  Collapse,
+  Divider,
   Link,
+  styled,
   Typography,
+  useTheme,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import IconButton, { IconButtonProps } from '@mui/material/IconButton';
+import { red } from '@mui/material/colors';
 
 interface BusinessRequestProps {
   data: BusinessRequest;
   lang: string;
 }
+
+interface ExpandMoreProps extends IconButtonProps {
+  expand: boolean;
+}
+
+const ExpandMore = styled((props: ExpandMoreProps) => {
+  const { expand, ...other } = props;
+  return <IconButton {...other} />;
+})(({ theme }) => ({
+  marginLeft: 'auto',
+  transition: theme.transitions.create('transform', {
+    duration: theme.transitions.duration.shortest,
+  }),
+  variants: [
+    {
+      props: ({ expand }) => !expand,
+      style: {
+        transform: 'rotate(0deg)',
+      },
+    },
+    {
+      props: ({ expand }) => !!expand,
+      style: {
+        transform: 'rotate(180deg)',
+      },
+    },
+  ],
+}));
 
 const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
   data,
@@ -19,26 +56,30 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
 }) => {
   const isEnglish = lang === "en";
   const { t } = useTranslation();
+  const [expanded, setExpanded] = React.useState(false);
+  const theme = useTheme();
+
+  const handleExpandClick = () => {
+    setExpanded(!expanded);
+  };
   return (
-    <Card variant="outlined">
-      <CardContent>
-        <Typography gutterBottom sx={{ color: "text.secondary", fontSize: 14 }}>
-          {t("business.request.number")}
-          <Link
+    <Card variant="outlined" sx={{ backgroundColor: theme.palette.secondary.contrastText}}>
+      <CardHeader 
+          // avatar={
+          //   <Avatar sx={{ bgcolor: red[500] }} aria-label="BR #" variant="square">
+          //     #
+          //   </Avatar>}
+          title={data.BR_SHORT_TITLE}
+          subheader={<Link
             href={`https://bitsprod.ssc-spc.gc.ca/BR/${data.BR_NMBR}`}
             rel="noopener"
             target="_blank"
           >
-            {data.BR_NMBR}
-          </Link>
-        </Typography>
-        <Typography
-          variant="h5"
-          component="div"
-          aria-description={data.BR_TITLE}
+            BR # {data.BR_NMBR}
+          </Link>}
         >
-          {data.BR_SHORT_TITLE}
-        </Typography>
+      </CardHeader>
+      <CardContent>
         <Typography variant="body2" color="textPrimary">
           <strong>{t("priority")}: </strong>
           {isEnglish ? data.PRIORITY_EN : data.PRIORITY_FR}
@@ -91,15 +132,159 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
             )}
           </Typography>
         )}
-        <CardActions>
+
+        <Divider sx={{ marginTop: 2, marginBottom: 2}}/>
+        {data.BR_OWNER && (
+          <Typography variant="body2">
+            <strong>{t("br.owner")}: </strong>
+            {data.BR_OWNER}
+          </Typography>
+        )}
+
+        {data.BR_INITR && (
+          <Typography variant="body2">
+            <strong>{t("br.initr")}: </strong>
+            {data.BR_INITR}
+          </Typography>
+        )}
+
+        {data.BR_LAST_EDITOR && (
+          <Typography variant="body2">
+            <strong>{t("br.last_editor")}: </strong>
+            {data.BR_LAST_EDITOR}
+          </Typography>
+        )}
+
+        {data.CSM_OPI && (
+          <Typography variant="body2">
+            <strong>{t("csm.opi")}: </strong>
+            {data.CSM_OPI}
+          </Typography>
+        )}
+
+        {data.TL_OPI && (
+          <Typography variant="body2">
+            <strong>{t("tl.opi")}: </strong>
+            {data.TL_OPI}
+          </Typography>
+        )}
+
+        {data.CSM_DIRTR && (
+          <Typography variant="body2">
+            <strong>{t("csm.dirtr")}: </strong>
+            {data.CSM_DIRTR}
+          </Typography>
+        )}
+
+        {data.SOL_OPI && (
+          <Typography variant="body2">
+            <strong>{t("sol.opi")}: </strong>
+            {data.SOL_OPI}
+          </Typography>
+        )}
+
+        {data.ENGN_OPI && (
+          <Typography variant="body2">
+            <strong>{t("engn.opi")}: </strong>
+            {data.ENGN_OPI}
+          </Typography>
+        )}
+
+        {data.BA_OPI && (
+          <Typography variant="body2">
+            <strong>{t("ba.opi")}: </strong>
+            {data.BA_OPI}
+          </Typography>
+        )}
+
+        {data.BA_TL && (
+          <Typography variant="body2">
+            <strong>{t("ba.tl")}: </strong>
+            {data.BA_TL}
+          </Typography>
+        )}
+
+        {data.PM_OPI && (
+          <Typography variant="body2">
+            <strong>{t("pm.opi")}: </strong>
+            {data.PM_OPI}
+          </Typography>
+        )}
+
+        {data.BA_PRICE_OPI && (
+          <Typography variant="body2">
+            <strong>{t("ba.price_opi")}: </strong>
+            {data.BA_PRICE_OPI}
+          </Typography>
+        )}
+
+        {data.QA_OPI && (
+          <Typography variant="body2">
+            <strong>{t("qa.opi")}: </strong>
+            {data.QA_OPI}
+          </Typography>
+        )}
+
+        {data.SL_COORD && (
+          <Typography variant="body2">
+            <strong>{t("sl.coord")}: </strong>
+            {data.SL_COORD}
+          </Typography>
+        )}
+
+        {data.AGRMT_OPI && (
+          <Typography variant="body2">
+            <strong>{t("agrmt.opi")}: </strong>
+            {data.AGRMT_OPI}
+          </Typography>
+        )}
+
+        {data.ACCT_MGR_OPI && (
+          <Typography variant="body2">
+            <strong>{t("acct_mgr.opi")}: </strong>
+            {data.ACCT_MGR_OPI}
+          </Typography>
+        )}
+
+        {data.SDM_TL_OPI && (
+          <Typography variant="body2">
+            <strong>{t("sdm.tl_opi")}: </strong>
+            {data.SDM_TL_OPI}
+          </Typography>
+        )}
+        <CardActions disableSpacing>
           {/* <Button
             size="small"
             href={"https://bitsprod.ssc-spc.gc.ca/BR/" + data.BR_NMBR}
           >
             {t("view.in.bits")}
           </Button> */}
+          <ExpandMore
+            expand={expanded}
+            onClick={handleExpandClick}
+            aria-expanded={expanded}
+            aria-label="show more"
+          >
+          <ExpandMoreIcon />
+        </ExpandMore>
         </CardActions>
       </CardContent>
+      <Collapse in={expanded} timeout="auto" unmountOnExit>
+        <CardContent>
+          <Typography variant="body2" sx={{ marginBottom: 2 }}><strong>{t("long.title")}: </strong></Typography>
+              <Typography variant="body2" sx={{ marginBottom: 2 }}>
+              {data.BR_TITLE}
+              </Typography>
+          {data.REQMT_OVRVW && (
+            <>
+              <Typography variant="body2" sx={{ marginBottom: 2 }}><strong>{t("reqmt.ovrvw")}: </strong></Typography>
+              <Typography variant="body2" sx={{ marginBottom: 2 }}>
+              {data.REQMT_OVRVW}
+              </Typography>
+            </>
+          )}
+        </CardContent>
+      </Collapse>
     </Card>
   );
 };
