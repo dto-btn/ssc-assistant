@@ -139,13 +139,18 @@ def get_br_assigned_to(name: str, limit: int = 10, assigned_to_fields: str = "")
     else:
         fields = valid_assigned_to_fields
 
+    condition = " OR ".join([f"{field} LIKE %s" for field in fields])
     query = f"""
-    SELECT TOP(%d) *
-    FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS
-    WHERE {" OR ".join([f"{field} LIKE %s" for field in fields])};
+    WITH MatchedRows AS (
+        SELECT *
+        FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS
+        WHERE {condition}
+    )
+    SELECT TOP(%d) *, (SELECT COUNT(*) FROM MatchedRows) AS TotalCount
+    FROM MatchedRows;
     """
 
     name_pattern = f"{name}%"
-    params = [limit] + [name_pattern] * len(fields)
+    params = [name_pattern] * len(fields) + [limit]
 
     return db.execute_query(query, *params)
