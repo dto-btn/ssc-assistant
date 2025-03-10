@@ -7,8 +7,12 @@ Create Date: ${create_date}
 """
 from typing import Sequence, Union
 
-from alembic import op
+from alembic.operations import Operations
+from alembic import op as _op
 import sqlalchemy as sa
+
+# from https://github.com/sqlalchemy/alembic/issues/573#issuecomment-498672649
+op = Operations(_op._proxy.migration_context, _op._proxy.impl)  # pylint:disable=W0212,E1101
 ${imports if imports else ""}
 
 # revision identifiers, used by Alembic.
