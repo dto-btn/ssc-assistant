@@ -2,11 +2,6 @@ from dataclasses import field
 from marshmallow_dataclass import dataclass
 from typing import Any, Dict, List, Literal, Optional
 
-from src.service.suggestion_service_types import (
-    SuggestRequestOpts,
-    SuggestionContextWithSuggestions,
-    SuggestionContextWithoutSuggestions,
-)
 
 
 @dataclass

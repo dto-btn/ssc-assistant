@@ -46,6 +46,7 @@ class SuggestionCitation(TypedDict):
     """
 
     url: str
+    title: str
 
 
 class SuggestionResponseBase(TypedDict):

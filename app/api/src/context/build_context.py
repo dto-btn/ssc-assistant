@@ -11,6 +11,7 @@ from src.service.stats_report_service import StatsReportService
 from src.dao.chat_table_dao import ChatTableDaoImpl
 from src.repository.conversation_repository import ConversationRepository
 from src.service.suggestion_service import SuggestionService
+from src.db.sql_session_provider import SqlSessionProvider
 
 instance: Union[AppContext, None] = None
 
@@ -27,7 +28,11 @@ def build_context(use_cache: bool = True) -> AppContext:
         )
         conversation_repo = ConversationRepository(chat_table_dao)
         stats_report_service = StatsReportService(conversation_repo)
-        suggestion_context_dao = SuggestionContextDao()
+        SQL_CONNECTION_STRING: str | None = os.getenv("SQL_CONNECTION_STRING")
+        if not SQL_CONNECTION_STRING:
+            raise ValueError("SQL_CONNECTION_STRING environment variable is not set")
+        sql_session_provider = SqlSessionProvider(SQL_CONNECTION_STRING)
+        suggestion_context_dao = SuggestionContextDao(sql_session_provider)
         suggestion_service = SuggestionService(suggestion_context_dao)
 
         instance = AppContext(
