@@ -2,10 +2,6 @@ import { useSearchParams, useNavigate } from "react-router";
 import { FC, useEffect, useState } from "react"
 import z from "zod";
 import { getSuggestionContext } from "../api/suggestionContext.api";
-import { useMsal } from "@azure/msal-react";
-import { AccountInfo, IPublicClientApplication } from "@azure/msal-browser";
-import { t } from "i18next";
-import { apiUse } from "../authConfig";
 import { SuggestionContextResponseModel } from "../api/suggestionContext.models";
 
 
