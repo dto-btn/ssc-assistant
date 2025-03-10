@@ -2,7 +2,7 @@ import logging
 import re
 from typing import List
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from src.dao.suggestion_context.suggestion_context_dao_types import (
     BaseSuggestionContextDao,
 )
@@ -254,3 +254,10 @@ class SuggestionService:
         Get a suggestion context by its ID.
         """
         return self.suggestion_context_dao.get_suggestion_context_by_id(suggestion_id)
+
+    def clear_stale_suggestions(self) -> None:
+        """
+        Clears all suggestions older than 3 days.
+        """
+        cutoff = datetime.now() - timedelta(days=3)
+        return self.suggestion_context_dao.delete_suggestion_context_older_than(cutoff)

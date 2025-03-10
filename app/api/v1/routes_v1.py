@@ -302,12 +302,9 @@ def upload_file(file: FilePayload):
     return jsonify({"message": "File received", "file_url": url}), 200
 
 if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
-    # the GET endpoint with the ?suggestion_id= parameter.
+    # the GET endpoint with the ?suggestion_context_id= parameter.
     @api_v1.get("/suggest")
-    @api_v1.doc("""Get a suggestion by its ID""")
-    # @api_v1.input(
-    #     {"name": "suggestion_id", "in": "query", "type": "string"},
-    # )
+    @api_v1.doc("""A public route that attempts to get a suggestion by its ID""")
     @api_v1.output(
         NewSuggestionResponse.Schema,
         content_type="application/json",
@@ -343,21 +340,30 @@ if os.getenv("FF_USE_NEW_SUGGESTION_SERVICE", "").strip().lower() == "true":
         },
     )
     @api_v1.doc(security="ApiKeyAuth")
-    @auth.login_required(role="suggest")
-    @user_ad.login_required
     def get_suggestion_by_id():
-        suggestion_id = request.args.get("suggestion_id")
+        """
+        A public route that attempts to get a suggestion by its ID
+        """
+        suggestion_context_id = request.args.get("suggestionContextId")
         """Get a suggestion by its ID"""
-        if not suggestion_id:
-            abort(400, "Missing suggestion_id parameter")
-        stripped_suggestion_id = suggestion_id.strip()
-        if not stripped_suggestion_id:
-            abort(400, "Empty suggestion_id parameter")
+        if not suggestion_context_id:
+            abort(400, "Missing suggestion_context_id parameter")
+        stripped_suggestion_context_id = suggestion_context_id.strip()
+        if not stripped_suggestion_context_id:
+            abort(400, "Empty suggestion_context_id parameter")
 
         suggestion_service = build_prod_context()["suggestion_service"]
         suggestion = suggestion_service.get_suggestioncontext_by_id(
-            stripped_suggestion_id
+            stripped_suggestion_context_id
         )
+
+        # thread to clear old suggestions
+        def clear_old_suggestions():
+            suggestion_service.clear_stale_suggestions()
+
+        thread = threading.Thread(target=clear_old_suggestions)
+        thread.start()
+
         if suggestion:
             return suggestion
         else:
