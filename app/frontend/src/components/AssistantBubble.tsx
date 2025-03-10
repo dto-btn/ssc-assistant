@@ -174,14 +174,24 @@ export const AssistantBubble = ({
     };
 
     if (toolsInfo) {
-      if (toolsInfo?.payload?.get_br_information?.length || toolsInfo?.payload?.get_br_assigned_to?.length) {
+      if (
+        toolsInfo?.payload?.get_br_information?.length ||
+        toolsInfo?.payload?.get_br_assigned_to?.length
+      ) {
         const brInformation = toolsInfo.payload.get_br_information || [];
         const brAssignedTo = toolsInfo.payload.get_br_assigned_to || [];
 
-        const transformedBrInformation = brInformation.map((item: any) => transformToBusinessRequest(item));
-        const transformedBrAssignedTo = brAssignedTo.map((item: any) => transformToBusinessRequest(item));
+        const transformedBrInformation = brInformation.map((item: any) =>
+          transformToBusinessRequest(item)
+        );
+        const transformedBrAssignedTo = brAssignedTo.map((item: any) =>
+          transformToBusinessRequest(item)
+        );
 
-        const mergedBrData = [...transformedBrInformation, ...transformedBrAssignedTo];
+        const mergedBrData = [
+          ...transformedBrInformation,
+          ...transformedBrAssignedTo,
+        ];
 
         setBrData(mergedBrData);
       }
@@ -290,33 +300,18 @@ export const AssistantBubble = ({
                   <HandymanIcon
                     style={{
                       fontSize: 16,
-                      margin: "0px 0px 3px 0px",
+                      margin: "0px 3px 0px 0px",
                       color: "#4b3e99",
                     }}
                   />
                 </Tooltip>
-                {toolsInfo.tool_type.map((tool, index) => (
-                  <Box
-                    component="span"
-                    sx={(theme) => ({
-                      display: 'block',
-                      p: 1,
-                      m: 1,
-                      bgcolor: '#fff',
-                      color: 'grey.800',
-                      border: '1px solid',
-                      borderColor: 'grey.300',
-                      borderRadius: 2,
-                      fontSize: '0.875rem',
-                      fontWeight: '700',
-                      ...theme.applyStyles('dark', {
-                        bgcolor: '#101010',
-                        color: 'grey.300',
-                        borderColor: 'grey.800',
-                      }),
-                    })}
-                  >{t(tool)}.{toolsInfo.function_names[index]}()</Box>
+                <Stack direction="row" spacing={1}>
+                  {toolsInfo.tool_type.map((tool, index) => (
+                    <Tooltip title={t(tool)} key={index} arrow>
+                      <Chip label={toolsInfo.function_names[index] + "()"} />
+                    </Tooltip>
                   ))}
+                </Stack>
               </ToolsUsedBox>
             )}
 
@@ -549,6 +544,7 @@ const ToolsUsedBox = styled(Box)`
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  padding: 10px 15px;
 `;
 
 const MainContentWrapper = styled(Box)`
