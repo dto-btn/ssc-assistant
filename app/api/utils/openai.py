@@ -101,11 +101,12 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
         additional_tools_required = True
         tools_used = False
 
-        while additional_tools_required:
+        while additional_tools_required and tools:
             completion_tools = client.chat.completions.create(
                     messages=messages,
                     model=model,
                     tools=tools, # type: ignore
+                    #https://platform.openai.com/docs/guides/function-calling#additional-configurations
                     tool_choice='auto',
                     stream=False
                 ) # type: ignore
@@ -153,9 +154,12 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
     ))
 
 def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: List[Any]) -> ToolInfo:
+    """
+    Adds tool info if tools were used in the completion
+    """
     tools_info = ToolInfo()
-    function_to_tool_type = {tool['function']['name']: tool['tool_type'] for tool in tools if tool.get('type') == 'function'}
-
+    function_to_tool_type = {tool['function']['name']: tool['tool_type']
+                             for tool in tools if tool.get('type') == 'function'}
     for message in messages:
         if message["role"] == "function":
             function_name = message["name"]
@@ -169,7 +173,28 @@ def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: Lis
                 if tool_name == "geds":
                     content = message.get("content", "")
                     profiles = extract_geds_profiles(content)
-                    tools_info.payload = {"profiles": profiles}
+                    if profiles:
+                        tools_info.payload = {"profiles": profiles}
+
+                if tool_name == "bits":
+                    # all bits response are in json, so just convert them
+                    content = message.get("content", "[]")  # Default to an empty JSON object string
+                    if content is not None:
+                        try:
+                            json_content = json.loads(content)
+                            if function_name not in tools_info.payload:
+                                # Initialize as an empty list if the key doesn't exist
+                                tools_info.payload[function_name] = []
+                            if isinstance(json_content, list):
+                                tools_info.payload[function_name].extend(json_content) # type: ignore
+                            else:
+                                 # If tools_info.payload[function_name] is not a list, handle appropriately
+                                tools_info.payload[function_name] = [json_content]
+                        except json.JSONDecodeError:
+                            # Handle the case where the JSON is invalid
+                            tools_info.payload = {}
+                    else:
+                        tools_info.payload = {}
 
             if function_name == "get_available_rooms":
                 content = message.get("content", "")
@@ -177,18 +202,19 @@ def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: Lis
                     try:
                         data = json.loads(content)
                     except json.JSONDecodeError:
-                        logger.warning(f"Content is not valid JSON: {content}")
+                        logger.warning("Content is not valid JSON: %s", content)
                         data = {}
                     if data.get("floorPlan") is not None:
                         floor_plan = data.get("floorPlan")
-                        logger.debug(f"FLOOR PLAN: {floor_plan}")
-                        tools_info.payload = {"floorPlan": floor_plan}
+                        logger.debug("FLOOR PLAN: %s", floor_plan)
+                        if floor_plan:
+                            tools_info.payload = {"floorPlan": floor_plan}
 
             if function_name == "verify_booking_details":
                 content = message.get("content", "")
                 if content is not None:
                     booking_details = json.loads(content)
-                    logger.debug(f"BOOKING DETAILS {booking_details}")
+                    logger.debug("BOOKING DETAILS %s", booking_details)
                     tools_info.payload = {"bookingDetails": booking_details}
 
     return tools_info

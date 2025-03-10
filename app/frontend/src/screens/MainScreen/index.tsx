@@ -397,27 +397,20 @@ const MainScreen = () => {
   };
 
   const setWelcomeMessage = async (graphData: any) => {
-    setIsLoading(true);
-
     if (!currentChatHistory.uuid) {
       currentChatHistory.uuid = uuidv4();
     }
 
-    const systemMessage: Message = {
-      role: "system",
-      content: t("welcome.prompt.system"),
-    };
 
-    const welcomeMessageRequest: Message = {
-      role: "user",
-      content: t("welcome.prompt.user", { givenName: graphData["givenName"] }),
-    };
 
-    const messages = [systemMessage, welcomeMessageRequest];
+    const content = i18n.language == 'en' ? 
+    "Hello **" + graphData["givenName"] + "**! 👋 Welcome! I'm here to assist you with **general knowledge**, employee information via **GEDS**, and **corporate SSC** (Shared Services Canada) information through the **MySSC+ intranet**. How can I help you today?" 
+    : "Bienvenue, **" + graphData["givenName"] + "**! 👋 Je suis là pour vous aider avec des **connaissances générales**, des informations sur les employés via **SAGE** et des informations corporatives SPC (Services partagés Canada) à travers **l'intranet MonSPC+**.";
+
     const responsePlaceholder: Completion = {
       message: {
         role: "assistant",
-        content: "",
+        content: content,
       },
     };
 
@@ -429,18 +422,6 @@ const MainScreen = () => {
       };
       return updatedChatHistory;
     });
-
-    // prepare request bundle
-    const request: MessageRequest = {
-      messages: messages,
-      max: maxMessagesSent,
-      top: 5,
-      tools: [],
-      uuid: currentChatHistory.uuid,
-      model: currentChatHistory.model,
-    };
-
-    sendApiRequest(request);
   };
 
   // Effect for setting the welcome message whenever the current chat is empty
@@ -749,10 +730,10 @@ const MainScreen = () => {
   useEffect(() => {
     console.debug(
       "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-      isAuthenticated +
-      ", InProgress? " +
-      inProgress +
-      ")"
+        isAuthenticated +
+        ", InProgress? " +
+        inProgress +
+        ")"
     );
     if (
       isAuthenticated &&
@@ -770,27 +751,35 @@ const MainScreen = () => {
     }
   }, [isAuthenticated, inProgress, userData]);
 
-  const parsedSuggestionContext: ParsedSuggestionContext | null = location.state;
+  const parsedSuggestionContext: ParsedSuggestionContext | null =
+    location.state;
   useEffect(() => {
     // on initial load of page, if state is not null, log the state
     if (parsedSuggestionContext) {
       if (parsedSuggestionContext.success) {
         if (!parsedSuggestionContext.context.success) {
           // this should never happen
-          alert("An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded.");
-          console.error("ERROR: parsedSuggestionContext:", parsedSuggestionContext);
+          alert(
+            "An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded."
+          );
+          console.error(
+            "ERROR: parsedSuggestionContext:",
+            parsedSuggestionContext
+          );
           return;
         }
         // TODO: create a new conversation with the context.
-        let conversationString = '';
+        let conversationString = "";
         conversationString += parsedSuggestionContext.context.content;
-        conversationString += '\n\n';
-        conversationString += parsedSuggestionContext.context.citations.flatMap((citation) => {
-          return `
+        conversationString += "\n\n";
+        conversationString += parsedSuggestionContext.context.citations
+          .flatMap((citation) => {
+            return `
 #### ${citation.title} [link](${citation.url})
 
 `;
-        }).join('\n\n');
+          })
+          .join("\n\n");
 
         // now create a new conversation with the context
         const newChatIndex = chatHistoriesDescriptions.length;
@@ -805,7 +794,7 @@ const MainScreen = () => {
               message: {
                 role: "assistant",
                 content: conversationString,
-              }
+              },
             },
           ],
           description: parsedSuggestionContext.context.original_query,
@@ -825,25 +814,29 @@ const MainScreen = () => {
            * This debounce key is used to prevent multiple snackbars from showing in quick succession.
            */
           const suggestContextErrorDebounceKey = "SUGGEST_CONTEXT_ERROR";
-          appStore.snackbars.show(msg,
-            suggestContextErrorDebounceKey
-          );
+          appStore.snackbars.show(msg, suggestContextErrorDebounceKey);
           console.error("ERROR: parsedSuggestionContext", msg);
-        }
+        };
         switch (parsedSuggestionContext.errorReason) {
           case "redirect_because_context_validation_failed":
-            showError("The suggestion context was in an unknown format. Your suggestions have not been loaded.");
+            showError(
+              "The suggestion context was in an unknown format. Your suggestions have not been loaded."
+            );
             break;
           case "redirect_because_server_returned_success_false":
-            showError("The server returned an error while parsing the suggestion context. Your suggestions have not been loaded.");
+            showError(
+              "The server returned an error while parsing the suggestion context. Your suggestions have not been loaded."
+            );
             break;
           case "redirect_with_unknown_error":
           default:
-            showError("An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded.");
+            showError(
+              "An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded."
+            );
         }
       }
     }
-  }, [parsedSuggestionContext])
+  }, [parsedSuggestionContext]);
 
   return (
     <UserContext.Provider value={userData}>
