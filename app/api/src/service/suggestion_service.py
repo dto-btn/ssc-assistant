@@ -3,7 +3,9 @@ import re
 from typing import List
 import uuid
 from datetime import datetime
-from src.dao.suggestion_context_dao import SuggestionContextDao
+from src.dao.suggestion_context.suggestion_context_dao_types import (
+    BaseSuggestionContextDao,
+)
 from src.service.suggestion_service_types import (
     SuggestRequestInternalValidationResult,
     SuggestRequestOpts,
@@ -26,7 +28,7 @@ class SuggestionService:
     # def __init__(self, suggest_client: TableClient):
     #     self.suggest_client = suggest_client
 
-    def __init__(self, suggestion_context_dao: SuggestionContextDao):
+    def __init__(self, suggestion_context_dao: BaseSuggestionContextDao):
         self.suggestion_context_dao = suggestion_context_dao
         pass
 

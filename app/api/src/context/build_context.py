@@ -6,7 +6,10 @@ from azure.data.tables import TableServiceClient
 
 from src.dao.chat_table_dao_memory_cache_adapter import ChatTableDaoMemoryCacheAdapter
 from src.context.context_types import AppContext, EnvSpecificDependencies
-from src.dao.suggestion_context_dao import SuggestionContextDao
+from src.dao.suggestion_context.mock_suggestion_context_dao import (
+    MockSuggestionContextDao,
+)
+from src.dao.suggestion_context.suggestion_context_dao import SuggestionContextDao
 from src.service.stats_report_service import StatsReportService
 from src.dao.chat_table_dao import ChatTableDaoImpl
 from src.repository.conversation_repository import ConversationRepository
@@ -32,7 +35,7 @@ def _build_context(
 
         sql_session_provider = env_specific_dependencies["sql_session_provider"]
 
-        suggestion_context_dao = SuggestionContextDao(sql_session_provider)
+        suggestion_context_dao = env_specific_dependencies["suggestion_context_dao"]
         suggestion_service = SuggestionService(suggestion_context_dao)
 
         instance = AppContext(
@@ -54,15 +57,19 @@ def build_prod_context() -> AppContext:
     sql_session_provider = SqlSessionProvider(SQL_CONNECTION_STRING)
 
     return _build_context(
-        EnvSpecificDependencies(sql_session_provider=sql_session_provider),
-        use_cache=False,
+        EnvSpecificDependencies(
+            sql_session_provider=sql_session_provider,
+            suggestion_context_dao=SuggestionContextDao(sql_session_provider),
+        ),
+        use_cache=True,
     )
 
 
-def build_test_context(use_cache: bool = True) -> AppContext:
+def build_test_context() -> AppContext:
     return _build_context(
         EnvSpecificDependencies(
-            sql_session_provider=TestSqlSessionProvider("not-a-real-connection-string")
+            sql_session_provider=TestSqlSessionProvider("not-a-real-connection-string"),
+            suggestion_context_dao=MockSuggestionContextDao(),
         ),
-        use_cache=use_cache,
+        use_cache=False,
     )
