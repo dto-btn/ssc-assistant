@@ -5,18 +5,19 @@ from azure.identity import DefaultAzureCredential
 from azure.data.tables import TableServiceClient
 
 from src.dao.chat_table_dao_memory_cache_adapter import ChatTableDaoMemoryCacheAdapter
-from src.context.context_types import AppContext
+from src.context.context_types import AppContext, EnvSpecificDependencies
 from src.dao.suggestion_context_dao import SuggestionContextDao
 from src.service.stats_report_service import StatsReportService
 from src.dao.chat_table_dao import ChatTableDaoImpl
 from src.repository.conversation_repository import ConversationRepository
 from src.service.suggestion_service import SuggestionService
-from src.db.sql_session_provider import SqlSessionProvider
+from src.db.sql_session_provider import SqlSessionProvider, TestSqlSessionProvider
 
 instance: Union[AppContext, None] = None
 
-
-def build_context(use_cache: bool = True) -> AppContext:
+def _build_context(
+    env_specific_dependencies: EnvSpecificDependencies, use_cache: bool = True
+) -> AppContext:
     global instance
     if instance is None or not use_cache:
         credential = DefaultAzureCredential()
@@ -28,10 +29,9 @@ def build_context(use_cache: bool = True) -> AppContext:
         )
         conversation_repo = ConversationRepository(chat_table_dao)
         stats_report_service = StatsReportService(conversation_repo)
-        SQL_CONNECTION_STRING: str | None = os.getenv("SQL_CONNECTION_STRING")
-        if not SQL_CONNECTION_STRING:
-            raise ValueError("SQL_CONNECTION_STRING environment variable is not set")
-        sql_session_provider = SqlSessionProvider(SQL_CONNECTION_STRING)
+
+        sql_session_provider = env_specific_dependencies["sql_session_provider"]
+
         suggestion_context_dao = SuggestionContextDao(sql_session_provider)
         suggestion_service = SuggestionService(suggestion_context_dao)
 
@@ -46,3 +46,23 @@ def build_context(use_cache: bool = True) -> AppContext:
         )
 
     return instance
+
+def build_prod_context() -> AppContext:
+    SQL_CONNECTION_STRING: str | None = os.getenv("SQL_CONNECTION_STRING")
+    if not SQL_CONNECTION_STRING:
+        raise ValueError("SQL_CONNECTION_STRING environment variable is not set")
+    sql_session_provider = SqlSessionProvider(SQL_CONNECTION_STRING)
+
+    return _build_context(
+        EnvSpecificDependencies(sql_session_provider=sql_session_provider),
+        use_cache=False,
+    )
+
+
+def build_test_context(use_cache: bool = True) -> AppContext:
+    return _build_context(
+        EnvSpecificDependencies(
+            sql_session_provider=TestSqlSessionProvider("not-a-real-connection-string")
+        ),
+        use_cache=use_cache,
+    )

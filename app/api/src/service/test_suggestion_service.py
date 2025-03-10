@@ -7,7 +7,7 @@ from pytest import fixture, MonkeyPatch
 import pytest
 from openai.types.chat import ChatCompletion
 from openai.types.chat.chat_completion import Choice, ChatCompletionMessage
-from src.context.build_context import build_context
+from src.context.build_context import build_test_context
 from src.dao.suggestion_context_dao import SuggestionContextDao
 
 from src.service.suggestion_service import SuggestionService
@@ -22,7 +22,7 @@ class LocalTestContext(TypedDict):
 
 @fixture(scope="function", autouse=True)
 def ctx() -> LocalTestContext:
-    return build_context(False)
+    return build_test_context(False)
 
 
 @fixture(scope="function", autouse=True)
