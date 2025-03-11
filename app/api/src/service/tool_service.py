@@ -1,10 +1,10 @@
 import json
 import logging
 import os
-from typing import Any, List
+from typing import List
 
 from openai.types.chat import ChatCompletionMessageParam, ChatCompletionMessageToolCallParam
-from src.constants.tools import TOOL_CORPORATE, TOOL_GEDS
+from src.constants.tools import TOOL_CORPORATE, TOOL_GEDS, TOOL_ARCHIBUS, TOOL_BR
 from tools.geds.geds_functions import extract_geds_profiles
 from utils.decorators import discover_functions_with_metadata
 from utils.models import ToolInfo
@@ -15,116 +15,35 @@ logger.setLevel(logging.DEBUG)
 _DISCOVERED_FUNCTIONS_WITH_METADATA = discover_functions_with_metadata("tools")
 
 class ToolService:
-    """ Tool Service responsible for handling logic for tools, 
+    """ Tool Service responsible for handling logic for tools,
     such as adding tools payload to messages returned to the consumer of the API
     """
     def __init__(self, requested_tools: List[str]):
         _allowed_tools_str: str = os.getenv("ALLOWED_TOOLS") or ",".join([TOOL_CORPORATE, TOOL_GEDS])
         self.allowed_tools = [tool.strip() for tool in _allowed_tools_str.split(",")]
         self.tools = self._load_tools(requested_tools)
+        self.tools_info = ToolInfo()
 
-    def process_messages(self, messages: List[ChatCompletionMessageParam], tools: List[Any]) -> ToolInfo:
+    def get_functions_by_type(self, tool_type: str) -> List[str]:
         """
-        Process the message and create an appropriate ToolInfo object based on the content of the messages
+        Return function name by module type
         """
-        tools_info = ToolInfo()
-        function_to_tool_type = {tool['function']['name']: tool['tool_type']
-                                for tool in tools if tool.get('type') == 'function'}
-        for message in messages:
-            if message["role"] == "function":
-                function_name = message["name"]
-                tools_info.function_names.append(function_name)
+        tools = []
+        for _, value in _DISCOVERED_FUNCTIONS_WITH_METADATA.items():
+            # Ensure BOTH function type is in requested types and ALLOWED types by the system.
+            if tool_type == value['tool_type']:
+                tools.append(value['metadata']['function']['name'])
+        return tools
 
-                if function_name in function_to_tool_type:
-                    tool_name = function_to_tool_type[function_name]
-                    tools_info.tool_type.append(tool_name)
-
-                    # extract profiles if it's a geds function
-                    if tool_name == "geds":
-                        content = message.get("content", "")
-                        profiles = extract_geds_profiles(content)
-                        if profiles:
-                            tools_info.payload = {"profiles": profiles}
-
-                    if tool_name == "bits":
-                        # all bits response are in json, so just convert them
-                        content = message.get("content", "[]")  # Default to an empty JSON object string
-                        if content is not None:
-                            try:
-                                json_content = json.loads(content)
-                                if function_name not in tools_info.payload:
-                                    # Initialize as an empty list if the key doesn't exist
-                                    tools_info.payload[function_name] = []
-                                if isinstance(json_content, list):
-                                    tools_info.payload[function_name].extend(json_content) # type: ignore
-                                else:
-                                    # If tools_info.payload[function_name] is not a list, handle appropriately
-                                    tools_info.payload[function_name] = [json_content]
-                            except json.JSONDecodeError:
-                                # Handle the case where the JSON is invalid
-                                tools_info.payload = {}
-                        else:
-                            tools_info.payload = {}
-
-                if function_name == "get_available_rooms":
-                    content = message.get("content", "")
-                    if content is not None:
-                        try:
-                            data = json.loads(content)
-                        except json.JSONDecodeError:
-                            logger.warning("Content is not valid JSON: %s", content)
-                            data = {}
-                        if data.get("floorPlan") is not None:
-                            floor_plan = data.get("floorPlan")
-                            logger.debug("FLOOR PLAN: %s", floor_plan)
-                            if floor_plan:
-                                tools_info.payload = {"floorPlan": floor_plan}
-
-                if function_name == "verify_booking_details":
-                    content = message.get("content", "")
-                    if content is not None:
-                        booking_details = json.loads(content)
-                        logger.debug("BOOKING DETAILS %s", booking_details)
-                        tools_info.payload = {"bookingDetails": booking_details}
-
-        return tools_info
-
-    #
-    # Phasing this out of the code for now, keeping it for a bit un case we need to revert in the coming months.
-    #
-    # def get_functions_by_type(self, tool_type: str) -> List[str]:
-    #     """
-    #     Return function name by module type
-    #     """
-    #     tools = []
-    #     for _, value in _DISCOVERED_FUNCTIONS_WITH_METADATA.items():
-    #         # Ensure BOTH function type is in requested types and ALLOWED types by the system.
-    #         if tool_type == value['tool_type']:
-    #             tools.append(value['metadata']['function']['name'])
-    #     return tools
-
-    # def invoke_corporate_function(self, function_name: str) -> str:
-    #     """invokes a corporate functions to retreive the index name"""
-    #     try:
-    #         logger.debug("Invoking corporate function --> %s", function_name)
-    #         module = _DISCOVERED_FUNCTIONS_WITH_METADATA[function_name]['module']
-    #         function_to_call = getattr(module, function_name)
-    #         function_response = function_to_call()
-    #     except Exception as exception:
-    #         e = "Unable to call function"
-    #         logger.error(e, exception)
-    #         function_response = e
-    #     return function_response
-
-    def call_tools(self, tool_calls: List[ChatCompletionMessageToolCallParam], messages: List[ChatCompletionMessageParam]) -> List[ChatCompletionMessageParam]:
+    def call_tools(self, tool_calls: List[ChatCompletionMessageToolCallParam], messages: List[ChatCompletionMessageParam]) -> List[ChatCompletionMessageParam]: # pylint: disable=line-too-long
         """
         Call the tool functions and return a new completion with the results
         """
-
+        returned_messages = messages
         # Send the info for each function call and function response to the model
-        for tool_call in self.tools:
-            function_name = tool_call.function.name
-            function_args = json.loads(tool_call.function.arguments)
+        for tool_call in tool_calls:
+            function_name = tool_call["function"]["name"]
+            function_args = json.loads(tool_call["function"]["arguments"])
 
             logger.debug("Func to call:%s and the args; %s", function_name, function_args)
 
@@ -141,7 +60,7 @@ class ToolService:
                 logger.error(e, exception)
                 function_response = e
 
-            messages.append({
+            returned_messages.append({
                 "role": "assistant",
                 "content": None,
                 "function_call": {
@@ -157,39 +76,100 @@ class ToolService:
                 response_as_string = str(function_response)
 
             # Add the function response to the messages
-            messages.append({
+            returned_messages.append({
                 "role": "function",
                 "name": function_name,
                 "content": response_as_string
             })
+
+            # Here we process the "message" so we can collect the function called and return it in a different format.
+            self._process_function_for_payload(function_name,response_as_string)
+
             # reworking with this example to refine a bit:
             # https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling?tabs=python#working-with-function-calling
-        return messages
+        return returned_messages
 
-    def _process_message_for_geds(self, tool: str,
-                                  messages: List[ChatCompletionMessageParam],
-                                  tools_info: ToolInfo):
+    def _process_function_for_payload(self, function_name: str, response_as_string: str):
+        """
+        Process the function response for payload
+        """
+        for tool in self.tools:
+            if function_name is not None and tool['function']['name'] == function_name:
+                tool_type = tool['tool_type']
+                # we add the information to the tools_info object regardless if we got data or not with it.
+                self.tools_info.function_names.append(function_name)
+                self.tools_info.tool_type.append(tool_type)
+                data = {}
+                if tool_type == TOOL_GEDS:
+                    data = self._process_geds_function_for_payload(function_name, response_as_string)
+                elif tool_type == TOOL_CORPORATE:
+                    pass
+                elif tool_type == TOOL_ARCHIBUS:
+                    data = self._process_archibus_function_for_payload(function_name, response_as_string)
+                elif tool_type == TOOL_BR:
+                    data = self._process_br_function_for_payload(function_name, response_as_string)
+
+                if data:
+                    # here we will update the payload dictionary with some logic
+                    for key, value in data.items():
+                        if key in self.tools_info.payload:
+                            if isinstance(self.tools_info.payload[key], list) and isinstance(value, list):
+                                self.tools_info.payload[key].extend(value) # type: ignore
+                            elif isinstance(self.tools_info.payload[key], dict) and isinstance(value, dict):
+                                self.tools_info.payload[key].update(value) # type: ignore
+                            else:
+                                # Handle potential type conflicts or other logic
+                                pass
+                        else:
+                            self.tools_info.payload[key] = value
+
+
+    def _process_geds_function_for_payload(self, function_name: str, response_as_string: str) -> dict | None:
         """
         Process the message for geds tool
         """
+        if function_name == "get_employee_information":
+            if response_as_string is not None:
+                profiles = extract_geds_profiles(response_as_string)
+                if profiles:
+                    return {"profiles": profiles}
 
-
-    def _process_message_for_archibus(self, tool: str,
-                                  messages: List[ChatCompletionMessageParam],
-                                  tools_info: ToolInfo):
+    def _process_archibus_function_for_payload(self, function_name: str, response_as_string: str) -> dict | None:
         """
         Process the message for archibus tool
         """
+        if function_name == "get_available_rooms":
+            if response_as_string is not None:
+                try:
+                    data = json.loads(response_as_string)
+                except json.JSONDecodeError:
+                    logger.warning("Content is not valid JSON: %s", response_as_string)
+                    data = {}
+                if data.get("floorPlan") is not None:
+                    floor_plan = data.get("floorPlan")
+                    logger.debug("FLOOR PLAN: %s", floor_plan)
+                    if floor_plan:
+                        return {"floorPlan": floor_plan}
+
+        if function_name == "verify_booking_details":
+            if response_as_string is not None:
+                booking_details = json.loads(response_as_string)
+                logger.debug("BOOKING DETAILS %s", booking_details)
+                return {"bookingDetails": booking_details}
 
 
-    def _process_message_for_bits(self, tool: str,
-                                  messages: List[ChatCompletionMessageParam],
-                                  tools_info: ToolInfo):
+    def _process_br_function_for_payload(self, function_name: str, response_as_string: str) -> dict | None:
         """
         Process the message for bits (br) tool
         """
+        if response_as_string is not None:
+            try:
+                json_content = json.loads(response_as_string)
+                return json_content
+            except json.JSONDecodeError:
+                logger.warning("Content is not valid JSON: %s", response_as_string)
 
-    def _load_tools(self, tools_requested: List[str]) -> List[ChatCompletionMessageToolCallParam]:
+    def _load_tools(self, tools_requested: List[str]) -> List[dict]:
         """
         ONLY load tools if they are:
             1) requested for (tools_requested) AND

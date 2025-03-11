@@ -44,7 +44,7 @@ def get_br_information(br_number: int):
     SUBMIT_DATE, REQST_IMPL_DATE FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR = 123456;
     """
     query = "SELECT * FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR = %s;"
-    result = db.execute_query(query, br_number)  
+    result = db.execute_query(query, br_number)
     return {"br": result}
 
 @tool_metadata({
