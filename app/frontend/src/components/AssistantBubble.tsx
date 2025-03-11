@@ -174,13 +174,15 @@ export const AssistantBubble = ({
     };
 
     if (toolsInfo) {
-      if (toolsInfo?.payload?.br?.length) {
-        const brInformation = toolsInfo.payload.br;
-        if (Array.isArray(brInformation) && brInformation.length) {
-          const transformedBrInformation = brInformation.map((item) =>
-            transformToBusinessRequest(item)
-          );
-          setBrData(transformedBrInformation);
+      if (toolsInfo?.payload?.br) {
+        const brInformation = JSON.parse(toolsInfo.payload.br);
+        console.log("brInformation:" + brInformation);
+        console.log("Type of brInformation:", typeof brInformation);
+        if (brInformation.length) {
+          toolsInfo.payload.br.forEach((br: any) => {
+            const brData = transformToBusinessRequest(br);
+            setBrData((prev) => (prev ? [...prev, brData] : [brData]));
+          });
         } else {
           setBrData([transformToBusinessRequest(brInformation)]);
         }

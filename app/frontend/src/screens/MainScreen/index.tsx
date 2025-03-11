@@ -357,7 +357,8 @@ const MainScreen = () => {
 
   const loadChatHistoriesFromStorage = () => {
     const chatHistories = localStorage.getItem("chatHistories");
-    if (chatHistories) {
+    if (chatHistories && chatHistories.length > 0) {
+      console.log("Loading chat histories from local storage");
       const parsedChatHistories = JSON.parse(chatHistories) as ChatHistory[];
       const currentIndex = loadCurrentChatIndexIfAble();
       _setCurrentChatIndex(currentIndex); //just need to set the state here, no need to modify local storage.
@@ -368,6 +369,9 @@ const MainScreen = () => {
             chatHistory.description || "Conversation " + (index + 1)
         )
       );
+    } else {
+      // If there are no chat histories, set the current chat to the default
+      setCurrentChatHistory(defaultChatHistory);
     }
   };
 
@@ -397,15 +401,19 @@ const MainScreen = () => {
   };
 
   const setWelcomeMessage = async (graphData: any) => {
+    setIsLoading(true);
     if (!currentChatHistory.uuid) {
       currentChatHistory.uuid = uuidv4();
     }
 
-
-
-    const content = i18n.language == 'en' ? 
-    "Hello **" + graphData["givenName"] + "**! 👋 Welcome! I'm here to assist you with **general knowledge**, employee information via **GEDS**, and **corporate SSC** (Shared Services Canada) information through the **MySSC+ intranet**. How can I help you today?" 
-    : "Bienvenue, **" + graphData["givenName"] + "**! 👋 Je suis là pour vous aider avec des **connaissances générales**, des informations sur les employés via **SAGE** et des informations corporatives SPC (Services partagés Canada) à travers **l'intranet MonSPC+**.";
+    const content =
+      i18n.language == "en"
+        ? "Hello **" +
+          graphData["givenName"] +
+          "**! 👋 Welcome! I'm here to assist you with **general knowledge**, employee information via **GEDS**, and **corporate SSC** (Shared Services Canada) information through the **MySSC+ intranet**. How can I help you today?"
+        : "Bienvenue, **" +
+          graphData["givenName"] +
+          "**! 👋 Je suis là pour vous aider avec des **connaissances générales**, des informations sur les employés via **SAGE** et des informations corporatives SPC (Services partagés Canada) à travers **l'intranet MonSPC+**.";
 
     const responsePlaceholder: Completion = {
       message: {
@@ -422,6 +430,7 @@ const MainScreen = () => {
       };
       return updatedChatHistory;
     });
+    setIsLoading(false);
   };
 
   // Effect for setting the welcome message whenever the current chat is empty
@@ -438,7 +447,7 @@ const MainScreen = () => {
     isAuthenticated,
     userData.graphData,
     inProgress,
-    currentChatHistory.chatItems.length,
+    currentChatHistory?.chatItems.length,
   ]);
 
   useEffect(() => {
@@ -449,7 +458,7 @@ const MainScreen = () => {
   // Scrolls the last updated message (if its streaming, or once done) into view
   useEffect(() => {
     chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" });
-  }, [currentChatHistory.chatItems]);
+  }, [currentChatHistory?.chatItems]);
 
   // Load chat histories if present
   useEffect(() => {
