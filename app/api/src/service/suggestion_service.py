@@ -2,14 +2,23 @@ import logging
 import re
 from typing import List
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
+from src.dao.suggestion_context.suggestion_context_dao_types import (
+    BaseSuggestionContextDao,
+)
 from src.service.suggestion_service_types import (
     SuggestRequestInternalValidationResult,
     SuggestRequestOpts,
     SuggestionContext,
+    SuggestionContextWithSuggestionsAndId,
 )
 from utils.manage_message import SUGGEST_SYSTEM_PROMPT_EN, SUGGEST_SYSTEM_PROMPT_FR
-from utils.models import Citation, Message, MessageRequest, NewSuggestionCitation
+from utils.models import (
+    Citation,
+    Message,
+    MessageRequest,
+    SuggestionCitationApiResponse,
+)
 from utils.openai import chat_with_data, convert_chat_with_data_response
 from openai.types.chat import ChatCompletion
 
@@ -24,7 +33,8 @@ class SuggestionService:
     # def __init__(self, suggest_client: TableClient):
     #     self.suggest_client = suggest_client
 
-    def __init__(self):
+    def __init__(self, suggestion_context_dao: BaseSuggestionContextDao):
+        self.suggestion_context_dao = suggestion_context_dao
         pass
 
     def suggest(self, query: str, opts: SuggestRequestOpts) -> SuggestionContext:
@@ -56,7 +66,12 @@ class SuggestionService:
             query_validation_result["data"], opts_validation_result["data"]
         )
 
-        return result
+        if result["success"]:
+            # Store the suggestion in the database only if it was successful.
+            # (Otherwise, why bother? It won't be used as a redirect.)
+            return self.suggestion_context_dao.insert_suggestion_context(result)
+        else:
+            return result
 
     def _validate_and_clean_query(
         self, query: str
@@ -181,8 +196,8 @@ class SuggestionService:
         completion_response = convert_chat_with_data_response(completion)
 
         # Generate list of citations, for later use
-        citations: List[NewSuggestionCitation] = [
-            NewSuggestionCitation(url=x.url, title=x.title)
+        citations: List[SuggestionCitationApiResponse] = [
+            SuggestionCitationApiResponse(url=x.url, title=x.title)
             for x in completion_response.message.context.citations
         ]
 
@@ -198,7 +213,7 @@ class SuggestionService:
                 if citation.url not in seen_urls:
                     seen_urls.add(citation.url)
                     unique_citations.append(
-                        NewSuggestionCitation(
+                        SuggestionCitationApiResponse(
                             url=citation.url,
                             title=citation.title,
                         )
@@ -235,3 +250,19 @@ class SuggestionService:
             # This will be a list of citations for the suggestion.
             "citations": [{"url": c.url, "title": c.title} for c in citations],
         }
+
+    def get_suggestioncontext_by_id(
+        self,
+        suggestion_id: str,
+    ) -> SuggestionContextWithSuggestionsAndId | None:
+        """
+        Get a suggestion context by its ID.
+        """
+        return self.suggestion_context_dao.get_suggestion_context_by_id(suggestion_id)
+
+    def clear_stale_suggestions(self) -> None:
+        """
+        Clears all suggestions older than 3 days.
+        """
+        cutoff = datetime.now() - timedelta(days=3)
+        return self.suggestion_context_dao.delete_suggestion_context_older_than(cutoff)

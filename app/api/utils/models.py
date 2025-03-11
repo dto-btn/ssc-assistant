@@ -2,11 +2,6 @@ from dataclasses import field
 from marshmallow_dataclass import dataclass
 from typing import Any, Dict, List, Literal, Optional
 
-from src.service.suggestion_service_types import (
-    SuggestRequestOpts,
-    SuggestionContextWithSuggestions,
-    SuggestionContextWithoutSuggestions,
-)
 
 
 @dataclass
@@ -100,23 +95,13 @@ class FilePayload:
     name: str
 
 @dataclass
-class SuggestionRequest:
-    '''this is a suggestion request that most likely comes from the myssc+ search feature'''
-    query: str
-    lang: str
-    system_prompt: Optional[str]
-    corporate_function: str = field(default='intranet_question')
-    dedupe_citations: bool = field(default=True)
-    remove_markdown: bool = field(default=True)
-
-@dataclass
-class NewSuggestionCitation:
+class SuggestionCitationApiResponse:
     url: str
     title: str
 
 
 @dataclass
-class NewSuggestionResponse:
+class SuggestionApiResponse:
     original_query: str
     success: Literal[True, False]
     language: str
@@ -128,11 +113,12 @@ class NewSuggestionResponse:
 
     # not provided if success is False
     content: Optional[str] = None
-    citations: Optional[List[NewSuggestionCitation]] = None
+    citations: Optional[List[SuggestionCitationApiResponse]] = None
+    suggestion_id: Optional[str] = None
 
 
 @dataclass
-class NewSuggestionRequest:
+class SuggestionApiRequest:
     """this is a suggestion request that most likely comes from the myssc+ search feature"""
 
     query: str
