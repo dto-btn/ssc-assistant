@@ -34,9 +34,8 @@ from utils.models import (
     FilePayload,
     Message,
     MessageRequest,
-    NewSuggestionResponse,
-    SuggestionRequest,
-    NewSuggestionRequest,
+    SuggestionApiResponse,
+    SuggestionApiRequest,
 )
 from utils.openai import (
     build_completion_response,
@@ -306,7 +305,7 @@ def upload_file(file: FilePayload):
 @api_v1.get("/suggest")
 @api_v1.doc("""A public route that attempts to get a suggestion by its ID""")
 @api_v1.output(
-    NewSuggestionResponse.Schema,
+    SuggestionApiResponse.Schema,
     content_type="application/json",
     examples={
         "With all options": {
@@ -373,7 +372,7 @@ def get_suggestion_by_id():
 @api_v1.doc("""Send a search query that will do a RAG search within the proper index,
             and return a completion response along with citations (URLs) to MySSC+ content""")
 @api_v1.input(
-    NewSuggestionRequest.Schema,  # pylint: disable=no-member # type: ignore
+    SuggestionApiRequest.Schema,  # pylint: disable=no-member # type: ignore
     arg_name="suggestion_request",
     examples={
         "With all options": {
@@ -399,7 +398,7 @@ def get_suggestion_by_id():
     },
 )
 @api_v1.output(
-    NewSuggestionResponse.Schema,
+    SuggestionApiResponse.Schema,
     content_type="application/json",
     examples={
         "With all options": {
@@ -467,7 +466,7 @@ def get_suggestion_by_id():
 @api_v1.doc(security="ApiKeyAuth")
 @auth.login_required(role="suggest")
 @user_ad.login_required
-def suggestion(suggestion_request: NewSuggestionRequest):
+def suggestion(suggestion_request: SuggestionApiRequest):
     """This will receive most likely search terms and will return an AI response along with citations"""
     suggestion_service = build_prod_context()["suggestion_service"]
     response = suggestion_service.suggest(
