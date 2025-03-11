@@ -556,8 +556,8 @@
         "fr": "CEGP"
     },
     "bits": {
-        "en": "Business Request",
-        "fr": "Demande opérationnelle"
+        "en": "Business Request (BR)",
+        "fr": "Demande opérationnelle (DO)"
     },
     "business.request.number": {
         "en": "Business Request #",
@@ -702,5 +702,17 @@
     "button.joinchat": {
         "en": "Chat with us!",
         "fr": "Discutez avec nous!"
+    },
+    "cancel.reason": {
+        "en": "Reason for cancellation",
+        "fr": "Raison de l'annulation"
+    },
+    "role": {
+        "en": "Role",
+        "fr": "Rôle"
+    },
+    "assignee": {
+        "en": "Assignee",
+        "fr": "Assigné"
     }
 }

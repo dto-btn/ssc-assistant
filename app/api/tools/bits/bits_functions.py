@@ -44,7 +44,8 @@ def get_br_information(br_number: int):
     SUBMIT_DATE, REQST_IMPL_DATE FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR = 123456;
     """
     query = "SELECT * FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR = %s;"
-    return db.execute_query(query, br_number)
+    result = db.execute_query(query, br_number)  
+    return {"br": result}
 
 @tool_metadata({
     "type": "function",
@@ -96,7 +97,8 @@ def get_br_updates(br_number: int, top: int = 5):
     WHERE
         f.BR_NMBR = %s
      ORDER BY f.LAST_STATUS_DATE DESC;"""
-    return db.execute_query(query, top, br_number)
+    result = db.execute_query(query, top, br_number)
+    return {"br_updates": result}
 
 @tool_metadata({
     "type": "function",
@@ -152,5 +154,5 @@ def get_br_assigned_to(name: str, limit: int = 10, assigned_to_fields: str = "")
 
     name_pattern = f"{name}%"
     params = [name_pattern] * len(fields) + [limit]
-
-    return db.execute_query(query, *params)
+    result = db.execute_query(query, *params)
+    return {"br": result}
