@@ -92,15 +92,10 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
             if completion_tools.choices[0].message.tool_calls:
                 if any(f.function.name in tool_service.get_functions_by_type(TOOL_CORPORATE) for f in completion_tools.choices[0].message.tool_calls): # pylint: disable=line-too-long
                     logger.debug("This corporate function was passed -> %s", message_request.corporateFunction)
-
-                    # TODO: yuck, this is a bit of a hack, should still be part of tool_service..
-                    tools_info = ToolInfo()
-                    tools_info.tool_type.append("corporate")
-                    tools_info.function_names.append(message_request.corporateFunction)
+                    _ = tool_service.call_tools(completion_tools.choices[0].message.tool_calls, messages)
 
                     index_name = intranet_question()
-                    logger.debug("Invoking index named --> %s", index_name)
-                    return (tools_info, client.chat.completions.create(
+                    return (tool_service.tools_info, client.chat.completions.create(
                         messages=messages,
                         model=model,
                         extra_body=_create_azure_cognitive_search_data_source(index_name,

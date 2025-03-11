@@ -3,7 +3,7 @@ import logging
 import os
 from typing import List
 
-from openai.types.chat import ChatCompletionMessageParam, ChatCompletionMessageToolCallParam
+from openai.types.chat import ChatCompletionMessageParam, ChatCompletionMessageToolCall
 from src.constants.tools import TOOL_CORPORATE, TOOL_GEDS, TOOL_ARCHIBUS, TOOL_BR
 from tools.geds.geds_functions import extract_geds_profiles
 from utils.decorators import discover_functions_with_metadata
@@ -35,15 +35,15 @@ class ToolService:
                 tools.append(value['metadata']['function']['name'])
         return tools
 
-    def call_tools(self, tool_calls: List[ChatCompletionMessageToolCallParam], messages: List[ChatCompletionMessageParam]) -> List[ChatCompletionMessageParam]: # pylint: disable=line-too-long
+    def call_tools(self, tool_calls: List[ChatCompletionMessageToolCall], messages: List[ChatCompletionMessageParam]) -> List[ChatCompletionMessageParam]: # pylint: disable=line-too-long
         """
         Call the tool functions and return a new completion with the results
         """
         returned_messages = messages
         # Send the info for each function call and function response to the model
         for tool_call in tool_calls:
-            function_name = tool_call["function"]["name"]
-            function_args = json.loads(tool_call["function"]["arguments"])
+            function_name = tool_call.function.name
+            function_args = json.loads(tool_call.function.arguments)
 
             logger.debug("Func to call:%s and the args; %s", function_name, function_args)
 

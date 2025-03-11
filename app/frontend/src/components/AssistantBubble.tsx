@@ -174,26 +174,16 @@ export const AssistantBubble = ({
     };
 
     if (toolsInfo) {
-      if (
-        toolsInfo?.payload?.get_br_information?.length ||
-        toolsInfo?.payload?.get_br_assigned_to?.length
-      ) {
-        const brInformation = toolsInfo.payload.get_br_information || [];
-        const brAssignedTo = toolsInfo.payload.get_br_assigned_to || [];
-
-        const transformedBrInformation = brInformation.map((item: any) =>
-          transformToBusinessRequest(item)
-        );
-        const transformedBrAssignedTo = brAssignedTo.map((item: any) =>
-          transformToBusinessRequest(item)
-        );
-
-        const mergedBrData = [
-          ...transformedBrInformation,
-          ...transformedBrAssignedTo,
-        ];
-
-        setBrData(mergedBrData);
+      if (toolsInfo?.payload?.br?.length) {
+        const brInformation = toolsInfo.payload.br;
+        if (Array.isArray(brInformation) && brInformation.length) {
+          const transformedBrInformation = brInformation.map((item) =>
+            transformToBusinessRequest(item)
+          );
+          setBrData(transformedBrInformation);
+        } else {
+          setBrData([transformToBusinessRequest(brInformation)]);
+        }
       }
 
       if (toolsInfo?.payload?.get_br_updates?.length) {
