@@ -13,7 +13,12 @@ from src.service.suggestion_service_types import (
     SuggestionContextWithSuggestionsAndId,
 )
 from utils.manage_message import SUGGEST_SYSTEM_PROMPT_EN, SUGGEST_SYSTEM_PROMPT_FR
-from utils.models import Citation, Message, MessageRequest, NewSuggestionCitation
+from utils.models import (
+    Citation,
+    Message,
+    MessageRequest,
+    SuggestionCitationApiResponse,
+)
 from utils.openai import chat_with_data, convert_chat_with_data_response
 from openai.types.chat import ChatCompletion
 
@@ -191,8 +196,8 @@ class SuggestionService:
         completion_response = convert_chat_with_data_response(completion)
 
         # Generate list of citations, for later use
-        citations: List[NewSuggestionCitation] = [
-            NewSuggestionCitation(url=x.url, title=x.title)
+        citations: List[SuggestionCitationApiResponse] = [
+            SuggestionCitationApiResponse(url=x.url, title=x.title)
             for x in completion_response.message.context.citations
         ]
 
@@ -208,7 +213,7 @@ class SuggestionService:
                 if citation.url not in seen_urls:
                     seen_urls.add(citation.url)
                     unique_citations.append(
-                        NewSuggestionCitation(
+                        SuggestionCitationApiResponse(
                             url=citation.url,
                             title=citation.title,
                         )
