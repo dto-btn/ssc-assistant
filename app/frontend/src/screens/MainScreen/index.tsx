@@ -360,8 +360,14 @@ const MainScreen = () => {
     if (chatHistories) {
       const parsedChatHistories = JSON.parse(chatHistories) as ChatHistory[];
       const currentIndex = loadCurrentChatIndexIfAble();
+      const loadedChatHistory = parsedChatHistories[currentIndex];
+      if (!loadedChatHistory) {
+        // if the chat history is empty, just set the current chat history to the default
+        setCurrentChatHistory(defaultChatHistory);
+        return;
+      }
       _setCurrentChatIndex(currentIndex); //just need to set the state here, no need to modify local storage.
-      setCurrentChatHistory(parsedChatHistories[currentIndex]);
+      setCurrentChatHistory(loadedChatHistory);
       setChatHistoriesDescriptions(
         parsedChatHistories.map(
           (chatHistory, index) =>
@@ -396,70 +402,6 @@ const MainScreen = () => {
     });
   };
 
-  const setWelcomeMessage = async (graphData: any) => {
-    setIsLoading(true);
-
-    if (!currentChatHistory.uuid) {
-      currentChatHistory.uuid = uuidv4();
-    }
-
-    const systemMessage: Message = {
-      role: "system",
-      content: t("welcome.prompt.system"),
-    };
-
-    const welcomeMessageRequest: Message = {
-      role: "user",
-      content: t("welcome.prompt.user", { givenName: graphData["givenName"] }),
-    };
-
-    const messages = [systemMessage, welcomeMessageRequest];
-    const responsePlaceholder: Completion = {
-      message: {
-        role: "assistant",
-        content: "",
-      },
-    };
-
-    // update current chat window with the message sent..
-    setCurrentChatHistory((prevChatHistory) => {
-      const updatedChatHistory = {
-        ...prevChatHistory,
-        chatItems: [responsePlaceholder],
-      };
-      return updatedChatHistory;
-    });
-
-    // prepare request bundle
-    const request: MessageRequest = {
-      messages: messages,
-      max: maxMessagesSent,
-      top: 5,
-      tools: [],
-      uuid: currentChatHistory.uuid,
-      model: currentChatHistory.model,
-    };
-
-    sendApiRequest(request);
-  };
-
-  // Effect for setting the welcome message whenever the current chat is empty
-  useEffect(() => {
-    if (
-      isAuthenticated &&
-      userData.graphData &&
-      inProgress === InteractionStatus.None &&
-      currentChatHistory.chatItems.length === 0
-    ) {
-      setWelcomeMessage(userData.graphData);
-    }
-  }, [
-    isAuthenticated,
-    userData.graphData,
-    inProgress,
-    currentChatHistory.chatItems.length,
-  ]);
-
   useEffect(() => {
     // Set the `lang` attribute whenever the language changes
     document.documentElement.lang = i18n.language;
@@ -468,7 +410,7 @@ const MainScreen = () => {
   // Scrolls the last updated message (if its streaming, or once done) into view
   useEffect(() => {
     chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" });
-  }, [currentChatHistory.chatItems]);
+  }, [currentChatHistory?.chatItems]);
 
   // Load chat histories if present
   useEffect(() => {
