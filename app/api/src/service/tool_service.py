@@ -167,7 +167,6 @@ class ToolService:
         if response_as_string is not None:
             try:
                 json_content = json.loads(response_as_string)
-                print(json_content)
                 return json_content
             except json.JSONDecodeError:
                 logger.warning("Content is not valid JSON: %s", response_as_string)

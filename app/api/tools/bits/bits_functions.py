@@ -20,6 +20,11 @@ valid_assigned_to_fields = [
         'ACCT_MGR_OPI', 'SDM_TL_OPI'
     ]
 
+valid_search_fields = [
+    'BR_TITLE', 'BR_SHORT_TITLE', 'PRIORITY_EN', 'PRIORITY_FR', 'CLIENT_NAME_SRC',
+    'RPT_GC_ORG_NAME_EN', 'RPT_GC_ORG_NAME_FR', 'GROUP_ID', 'GROUP_EN', 'GROUP_FR'
+]
+
 @tool_metadata({
     "type": "function",
     "function": {
@@ -157,3 +162,45 @@ def get_br_assigned_to(name: str, limit: int = 10, assigned_to_fields: str = "")
     params = [name_pattern] * len(fields) + [limit]
     result = db.execute_query(query, *params)
     return {'br': result}
+
+@tool_metadata({
+    "type": "function",
+    "function": {
+        "name": "search_br_by_field",
+        "description": "Gets information about a BR given a specific BR field. If multiple fields are needed, invoke this function multiple times. The fields availables are: {fields}. If the user doesn't provide a field let him know what are the field names. Else use best guest.".replace("{fields}", ", ".join(valid_search_fields)),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "field_name": {
+                    "type": "string",
+                    "description": "A field name to filter BRs by."
+                },
+                "field_value": {
+                    "type": "string",
+                    "description": "A field value to filter BRs by."
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "The maximum number of BR items to return. Defaults to 15.",
+                    "default": 10
+                }
+            },
+            "required": ["field_name", "field_value"]
+      }
+    }
+  })
+def search_br_by_field(field_name: str, field_value: str, limit: int = 10):
+    """
+    search_br_by_field
+
+    Search BRs via a specific field:
+    """
+    if field_name:
+        fields = extract_fields_from_query([field_name], valid_search_fields)
+        if fields:
+            query = """SELECT TOP(%d) *
+                       FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS 
+                       WHERE {field} LIKE %s;""".replace("{field}", fields[0])
+            result = db.execute_query(query, limit, f"%{field_value}%")
+            return {'br': result}
+    return "Try using one of the following fields: " + ", ".join(valid_search_fields)
