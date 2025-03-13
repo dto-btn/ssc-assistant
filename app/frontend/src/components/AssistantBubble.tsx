@@ -176,10 +176,9 @@ export const AssistantBubble = ({
     if (toolsInfo) {
       if (toolsInfo?.payload?.br) {
         const brInformation = JSON.parse(toolsInfo.payload.br);
-        console.log("brInformation:" + brInformation);
-        console.log("Type of brInformation:", typeof brInformation);
         if (brInformation.length) {
-          toolsInfo.payload.br.forEach((br: any) => {
+          brInformation.map((br: any) => {
+            console.log("SOME BR ... ???" + br);
             const brData = transformToBusinessRequest(br);
             setBrData((prev) => (prev ? [...prev, brData] : [brData]));
           });
@@ -188,8 +187,9 @@ export const AssistantBubble = ({
         }
       }
 
-      if (toolsInfo?.payload?.get_br_updates?.length) {
-        setBrUpdates(toolsInfo.payload.get_br_updates);
+      if (toolsInfo?.payload?.br_updates) {
+        const brUpdates = JSON.parse(toolsInfo.payload.br_updates);
+        setBrUpdates(brUpdates);
       }
 
       if (

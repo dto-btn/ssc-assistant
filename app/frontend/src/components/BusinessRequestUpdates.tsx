@@ -29,37 +29,42 @@ const BusinessRequestUpdates: React.FC<BusinessRequestUpdatesProps> = ({
   const theme = useTheme();
 
   return (
-    <Box sx={{ marginLeft: 5 }}>
-      <TableContainer component={Paper} sx={{ backgroundColor: theme.palette.secondary.contrastText}}>
+    <Box>
+      <TableContainer
+        component={Paper}
+        sx={{ backgroundColor: theme.palette.secondary.contrastText }}
+      >
         <Table
           // Styling for all the table cells
           sx={{
             width: "100%",
             "& th, & td": {
-              "padding": 0
+              padding: 0,
             },
             "& th:first-child": {
-              paddingLeft: "10px"
+              paddingLeft: "10px",
             },
             "& td:last-child": {
-              paddingRight: "10px"
+              paddingRight: "10px",
             },
           }}
           aria-label={t("business.request.updates")}
           size="small"
         >
           <TableHead>
-            <TableRow sx={{
-              "& th": {
-                padding: "3px 2px"
-              }
-            }}>
-              <TableCell >{t("active")}</TableCell>
-              <TableCell >{t("status")}</TableCell>
+            <TableRow
+              sx={{
+                "& th": {
+                  padding: "3px 2px",
+                },
+              }}
+            >
+              <TableCell>{t("active")}</TableCell>
+              <TableCell>{t("status")}</TableCell>
               {/* <TableCell align="right">{t("active")}</TableCell> */}
-              <TableCell align="right" >{t("implementation.flag")}</TableCell>
-              <TableCell align="right" >{t("days.in.status")}</TableCell>
-              <TableCell align="right" >{t("last.status.date")}</TableCell>
+              <TableCell align="right">{t("implementation.flag")}</TableCell>
+              <TableCell align="right">{t("days.in.status")}</TableCell>
+              <TableCell align="right">{t("last.status.date")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -69,31 +74,46 @@ const BusinessRequestUpdates: React.FC<BusinessRequestUpdatesProps> = ({
                 <TableRow
                   key={index}
                   sx={{
-                    "padding": 0
+                    padding: 0,
                   }}
                 >
-                  <TableCell align="right" >
-
+                  <TableCell align="right">
                     {
                       <Tooltip
-                        title={isEnglish ? row.BR_ACTIVE_EN : row.BR_ACTIVE_FR} sx={{ "cursor": "help" }} followCursor>
-                        {isRowActive
-                          ? <CheckCircle sx={{ "marginRight": 2 }} color="info" aria-label={isEnglish ? row.BR_ACTIVE_EN : row.BR_ACTIVE_FR} />
-                          : <RemoveCircleOutline sx={{ "marginRight": 2 }} color="disabled" aria-label={isEnglish ? row.BR_ACTIVE_EN : row.BR_ACTIVE_FR} />
-                        }
+                        title={isEnglish ? row.BR_ACTIVE_EN : row.BR_ACTIVE_FR}
+                        sx={{ cursor: "help" }}
+                        followCursor
+                      >
+                        {isRowActive ? (
+                          <CheckCircle
+                            sx={{ marginRight: 2 }}
+                            color="info"
+                            aria-label={
+                              isEnglish ? row.BR_ACTIVE_EN : row.BR_ACTIVE_FR
+                            }
+                          />
+                        ) : (
+                          <RemoveCircleOutline
+                            sx={{ marginRight: 2 }}
+                            color="disabled"
+                            aria-label={
+                              isEnglish ? row.BR_ACTIVE_EN : row.BR_ACTIVE_FR
+                            }
+                          />
+                        )}
                       </Tooltip>
                     }
                   </TableCell>
-                  <TableCell >
+                  <TableCell>
                     {isEnglish ? row.BITS_STATUS_EN : row.BITS_STATUS_FR}
                   </TableCell>
-                  <TableCell align="right" >
+                  <TableCell align="right">
                     {isEnglish ? row.IMPL_FLAG_EN : row.IMPL_FLAG_FR}
                   </TableCell>
-                  <TableCell align="right" >
+                  <TableCell align="right">
                     {Math.floor(Number(row.DAYS_IN_STATUS))}
                   </TableCell>
-                  <TableCell align="right" >
+                  <TableCell align="right">
                     {new Date(row.LAST_STATUS_DATE).toLocaleDateString()}
                   </TableCell>
                 </TableRow>
