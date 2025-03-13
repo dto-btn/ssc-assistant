@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from typing import List, Optional
@@ -45,7 +46,7 @@ def get_br_information(br_number: int):
     """
     query = "SELECT * FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR = %s;"
     result = db.execute_query(query, br_number)
-    return {"br": result}
+    return {'br': result}
 
 @tool_metadata({
     "type": "function",
@@ -98,7 +99,7 @@ def get_br_updates(br_number: int, top: int = 5):
         f.BR_NMBR = %s
      ORDER BY f.LAST_STATUS_DATE DESC;"""
     result = db.execute_query(query, top, br_number)
-    return {"br_updates": result}
+    return {'br_updates': result}
 
 @tool_metadata({
     "type": "function",
@@ -155,4 +156,4 @@ def get_br_assigned_to(name: str, limit: int = 10, assigned_to_fields: str = "")
     name_pattern = f"{name}%"
     params = [name_pattern] * len(fields) + [limit]
     result = db.execute_query(query, *params)
-    return {"br": result}
+    return {'br': result}

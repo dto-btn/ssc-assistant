@@ -84,7 +84,6 @@ class ToolService:
 
             # Here we process the "message" so we can collect the function called and return it in a different format.
             self._process_function_for_payload(function_name,response_as_string)
-
             # reworking with this example to refine a bit:
             # https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling?tabs=python#working-with-function-calling
         return returned_messages
@@ -113,9 +112,12 @@ class ToolService:
                     # here we will update the payload dictionary with some logic
                     for key, value in data.items():
                         if key in self.tools_info.payload:
+                            logger.debug("Key Found!: %s", key)
                             if isinstance(self.tools_info.payload[key], list) and isinstance(value, list):
+                                logger.debug("Extending List: %s", key)
                                 self.tools_info.payload[key].extend(value) # type: ignore
                             elif isinstance(self.tools_info.payload[key], dict) and isinstance(value, dict):
+                                logger.debug("Updating Dict: %s", key)
                                 self.tools_info.payload[key].update(value) # type: ignore
                             else:
                                 # Handle potential type conflicts or other logic
@@ -165,6 +167,7 @@ class ToolService:
         if response_as_string is not None:
             try:
                 json_content = json.loads(response_as_string)
+                print(json_content)
                 return json_content
             except json.JSONDecodeError:
                 logger.warning("Content is not valid JSON: %s", response_as_string)

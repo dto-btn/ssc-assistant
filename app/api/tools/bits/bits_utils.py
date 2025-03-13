@@ -56,8 +56,8 @@ class DatabaseConnection:
             logger.debug("Found %s results!", len(result))
 
             # Convert the result to JSON
-            json_result = json.dumps(result, default=_datetime_serializer, indent=4)
-            return json_result
+            json_result = json.dumps(result, default=_datetime_serializer, indent=4)#needed for the date serialization
+            return json.loads(json_result)
 
         finally:
             # Ensure the connection is closed

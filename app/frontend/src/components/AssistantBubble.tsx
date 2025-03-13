@@ -175,21 +175,26 @@ export const AssistantBubble = ({
 
     if (toolsInfo) {
       if (toolsInfo?.payload?.br) {
-        const brInformation = JSON.parse(toolsInfo.payload.br);
-        if (brInformation.length) {
-          brInformation.map((br: any) => {
-            console.log("SOME BR ... ???" + br);
-            const brData = transformToBusinessRequest(br);
-            setBrData((prev) => (prev ? [...prev, brData] : [brData]));
-          });
-        } else {
-          setBrData([transformToBusinessRequest(brInformation)]);
+        try {
+          const brInformation = toolsInfo.payload.br;
+          if (brInformation.length) {
+            brInformation.map((br: any) => {
+              const brData = transformToBusinessRequest(br);
+              setBrData((prev) => (prev ? [...prev, brData] : [brData]));
+            });
+          }
+        } catch (error) {
+          console.error("Error transforming BR data", error);
         }
       }
 
       if (toolsInfo?.payload?.br_updates) {
-        const brUpdates = JSON.parse(toolsInfo.payload.br_updates);
-        setBrUpdates(brUpdates);
+        try {
+          const brUpdates = toolsInfo.payload.br_updates;
+          setBrUpdates(brUpdates);
+        } catch (error) {
+          console.error("Error transforming BR update data", error);
+        }
       }
 
       if (
