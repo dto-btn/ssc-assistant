@@ -50,7 +50,7 @@ export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
             </Typography>
           </QuoteContainer>
         )}
-        <UserBubbleContainer tabIndex={0}>
+        <UserBubbleContainer tabIndex={2}>
           {url && (
             <ImageContainer>
               <img
