@@ -212,7 +212,7 @@ export const TutorialBubble = ({
             role="dialog"
             aria-modal="false"
             aria-label="Tutorial bubble"
-            tabIndex={0}
+            tabIndex={2}
           >
             <Typography variant="h6" sx={{ color: "white", mb: "5px" }}>
               {t(tipTitles[tipNumber - 1])}

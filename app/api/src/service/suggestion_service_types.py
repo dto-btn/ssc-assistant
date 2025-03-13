@@ -46,6 +46,7 @@ class SuggestionCitation(TypedDict):
     """
 
     url: str
+    title: str
 
 
 class SuggestionResponseBase(TypedDict):
@@ -63,14 +64,20 @@ class SuggestionResponseBase(TypedDict):
 class SuggestionContextWithSuggestions(SuggestionResponseBase):
     """
     A suggestion context, which includes the body and citations. This is used
-    to generate a suggestion. It is also used on frontend's redirect call to
-    initiate a new chat with the user that is based on the suggestion.
+    internally.
     """
 
     success: Literal[True]
     content: str
     citations: List[SuggestionCitation]
 
+class SuggestionContextWithSuggestionsAndId(SuggestionContextWithSuggestions):
+    """
+    A suggestion context with an added id. This is used on MySSCPlus's redirect call to
+    initiate a new chat with the user that is based on the suggestion.
+    """
+
+    suggestion_id: str
 
 class SuggestionContextWithoutSuggestions(SuggestionResponseBase):
     """
@@ -82,5 +89,7 @@ class SuggestionContextWithoutSuggestions(SuggestionResponseBase):
 
 
 type SuggestionContext = (
-    SuggestionContextWithSuggestions | SuggestionContextWithoutSuggestions
+    SuggestionContextWithSuggestions
+    | SuggestionContextWithSuggestionsAndId
+    | SuggestionContextWithoutSuggestions
 )

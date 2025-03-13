@@ -16,7 +16,6 @@ Flask-HTTPAuth
 urllib3==1.26.19 # this version is required for the GEDS API to work
 cryptography==43.0.3 #https://github.com/pyca/cryptography/issues/12064
 Pillow>=11.1.0
-# if this lib is already installed and not working on mac pip uninstall pymssql then
-# pip install --no-binary=pymssql pymssql
-# https://pymssql.readthedocs.io/en/stable/intro.html#getting-started
-pymssql>=2.3.2
+pymssql>=2.3.2 #https://pymssql.readthedocs.io/en/stable/intro.html#getting-started
+psycopg[binary]
+SQLAlchemy

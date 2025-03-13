@@ -89,7 +89,7 @@ export const TopMenu = forwardRef<HTMLButtonElement, TopMenuProps>(
               </Typography>
               {topMenuItems.map((item, index) => (
                 <Box
-                  tabIndex={0}
+                  tabIndex={2}
                   key={index}
                   sx={{
                     transition: "border-color 0.2s",

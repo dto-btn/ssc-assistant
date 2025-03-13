@@ -33,6 +33,7 @@ import { DeleteConversationConfirmation } from "../../components/DeleteConversat
 import { useLocation } from "react-router";
 import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
 import { useAppStore } from "../../context/AppStore";
+import Typography from "@mui/material/Typography";
 
 const MainScreen = () => {
   const appStore = useAppStore();
@@ -361,8 +362,14 @@ const MainScreen = () => {
       console.log("Loading chat histories from local storage");
       const parsedChatHistories = JSON.parse(chatHistories) as ChatHistory[];
       const currentIndex = loadCurrentChatIndexIfAble();
+      const loadedChatHistory = parsedChatHistories[currentIndex];
+      if (!loadedChatHistory) {
+        // if the chat history is empty, just set the current chat history to the default
+        setCurrentChatHistory(defaultChatHistory);
+        return;
+      }
       _setCurrentChatIndex(currentIndex); //just need to set the state here, no need to modify local storage.
-      setCurrentChatHistory(parsedChatHistories[currentIndex]);
+      setCurrentChatHistory(loadedChatHistory);
       setChatHistoriesDescriptions(
         parsedChatHistories.map(
           (chatHistory, index) =>
@@ -399,56 +406,6 @@ const MainScreen = () => {
       postLogoutRedirectUri: "/",
     });
   };
-
-  const setWelcomeMessage = async (graphData: any) => {
-    setIsLoading(true);
-    if (!currentChatHistory.uuid) {
-      currentChatHistory.uuid = uuidv4();
-    }
-
-    const content =
-      i18n.language == "en"
-        ? "Hello **" +
-          graphData["givenName"] +
-          "**! 👋 Welcome! I'm here to assist you with **general knowledge**, employee information via **GEDS**, and **corporate SSC** (Shared Services Canada) information through the **MySSC+ intranet**. How can I help you today?"
-        : "Bienvenue, **" +
-          graphData["givenName"] +
-          "**! 👋 Je suis là pour vous aider avec des **connaissances générales**, des informations sur les employés via **SAGE** et des informations corporatives SPC (Services partagés Canada) à travers **l'intranet MonSPC+**.";
-
-    const responsePlaceholder: Completion = {
-      message: {
-        role: "assistant",
-        content: content,
-      },
-    };
-
-    // update current chat window with the message sent..
-    setCurrentChatHistory((prevChatHistory) => {
-      const updatedChatHistory = {
-        ...prevChatHistory,
-        chatItems: [responsePlaceholder],
-      };
-      return updatedChatHistory;
-    });
-    setIsLoading(false);
-  };
-
-  // Effect for setting the welcome message whenever the current chat is empty
-  useEffect(() => {
-    if (
-      isAuthenticated &&
-      userData.graphData &&
-      inProgress === InteractionStatus.None &&
-      currentChatHistory.chatItems.length === 0
-    ) {
-      setWelcomeMessage(userData.graphData);
-    }
-  }, [
-    isAuthenticated,
-    userData.graphData,
-    inProgress,
-    currentChatHistory?.chatItems.length,
-  ]);
 
   useEffect(() => {
     // Set the `lang` attribute whenever the language changes
@@ -854,49 +811,101 @@ const MainScreen = () => {
         ref={menuIconRef}
         onNewChat={handleNewChat}
       />
-      <Box
-        sx={{
-          display: "flex",
-          flexFlow: "column",
-          minHeight: "100vh",
-          margin: "auto",
-        }}
-        maxWidth="lg"
-      >
-        <Box sx={{ flexGrow: 1 }}></Box>
-        <ChatMessagesContainer
-          chatHistory={currentChatHistory}
-          isLoading={isLoading}
-          chatMessageStreamEnd={chatMessageStreamEnd}
-          replayChat={replayChat}
-          setIsFeedbackVisible={setIsFeedbackVisible}
-          setIsGoodResponse={setIsGoodResponse}
-          handleRemoveToastMessage={handleRemoveToastMessage}
-          handleBookReservation={handleBookReservation}
-        />
-        <div ref={chatMessageStreamEnd} style={{ height: "50px" }} />
+      {currentChatHistory.chatItems.length === 0 ? (
+        // if 0 chat history
         <Box
           sx={{
-            position: "sticky",
-            bottom: 0,
+            position: "fixed",
+            top: 0,
             left: 0,
             right: 0,
-            zIndex: 1100,
-            bgcolor: "background.default",
+            bottom: 0,
+            display: "flex",
+            flexFlow: "column",
+            minHeight: "100vh",
+            margin: "auto",
+            justifyContent: "center",
+            alignItems: "center",
           }}
+          maxWidth="lg"
         >
-          <ChatInput
-            clearOnSend
-            placeholder={t("placeholder")}
-            disabled={isLoading}
-            onSend={(question, attachments) =>
-              makeApiRequest(question, userData, attachments)
-            }
-            quotedText={quotedText}
-            selectedModel={currentChatHistory.model}
-          />
+          <Box
+            sx={{
+              minWidth: "700px",
+              zIndex: 1100,
+              bgcolor: "background.default",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "2rem",
+            }}
+          >
+            <Typography
+              variant="h1"
+              component="h1"
+              gutterBottom
+              sx={{ fontSize: "3.5rem" }}
+            >
+              How can I help?
+            </Typography>
+            <ChatInput
+              clearOnSend
+              placeholder={t("placeholder")}
+              disabled={isLoading}
+              onSend={(question, attachments) =>
+                makeApiRequest(question, userData, attachments)
+              }
+              quotedText={quotedText}
+              selectedModel={currentChatHistory.model}
+            />
+          </Box>
         </Box>
-      </Box>
+      ) : (
+        // If 1 chat history
+        <Box
+          sx={{
+            display: "flex",
+            flexFlow: "column",
+            minHeight: "100vh",
+            margin: "auto",
+          }}
+          maxWidth="lg"
+        >
+          <Box sx={{ flexGrow: 1 }}></Box>
+          <ChatMessagesContainer
+            chatHistory={currentChatHistory}
+            isLoading={isLoading}
+            chatMessageStreamEnd={chatMessageStreamEnd}
+            replayChat={replayChat}
+            setIsFeedbackVisible={setIsFeedbackVisible}
+            setIsGoodResponse={setIsGoodResponse}
+            handleRemoveToastMessage={handleRemoveToastMessage}
+            handleBookReservation={handleBookReservation}
+          />
+          <div ref={chatMessageStreamEnd} style={{ height: "50px" }} />
+          <Box
+            sx={{
+              position: "sticky",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 1100,
+              bgcolor: "background.default",
+            }}
+          >
+            <ChatInput
+              clearOnSend
+              placeholder={t("placeholder")}
+              disabled={isLoading}
+              onSend={(question, attachments) =>
+                makeApiRequest(question, userData, attachments)
+              }
+              quotedText={quotedText}
+              selectedModel={currentChatHistory.model}
+            />
+          </Box>
+        </Box>
+      )}
       <Disclaimer />
       <DrawerMenu
         openDrawer={
