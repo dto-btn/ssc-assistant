@@ -33,6 +33,8 @@ import { DeleteConversationConfirmation } from "../../components/DeleteConversat
 import { useLocation } from "react-router";
 import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
 import { useAppStore } from "../../context/AppStore";
+import Typography from '@mui/material/Typography';
+
 
 const MainScreen = () => {
   const appStore = useAppStore();
@@ -794,49 +796,101 @@ const MainScreen = () => {
         ref={menuIconRef}
         onNewChat={handleNewChat}
       />
-      <Box
-        sx={{
-          display: "flex",
-          flexFlow: "column",
-          minHeight: "100vh",
-          margin: "auto",
-        }}
-        maxWidth="lg"
-      >
-        <Box sx={{ flexGrow: 1 }}></Box>
-        <ChatMessagesContainer
-          chatHistory={currentChatHistory}
-          isLoading={isLoading}
-          chatMessageStreamEnd={chatMessageStreamEnd}
-          replayChat={replayChat}
-          setIsFeedbackVisible={setIsFeedbackVisible}
-          setIsGoodResponse={setIsGoodResponse}
-          handleRemoveToastMessage={handleRemoveToastMessage}
-          handleBookReservation={handleBookReservation}
-        />
-        <div ref={chatMessageStreamEnd} style={{ height: "50px" }} />
-        <Box
-          sx={{
-            position: "sticky",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            zIndex: 1100,
-            bgcolor: "background.default",
-          }}
-        >
-          <ChatInput
-            clearOnSend
-            placeholder={t("placeholder")}
-            disabled={isLoading}
-            onSend={(question, attachments) =>
-              makeApiRequest(question, userData, attachments)
-            }
-            quotedText={quotedText}
-            selectedModel={currentChatHistory.model}
-          />
-        </Box>
-      </Box>
+      {
+        currentChatHistory.chatItems.length === 0
+          // if 0 chat history
+          ? (
+            <Box
+              sx={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: "flex",
+                flexFlow: "column",
+                minHeight: "100vh",
+                margin: "auto",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+              maxWidth="lg"
+            >
+              <Box
+                sx={{
+                  minWidth: "700px",
+                  zIndex: 1100,
+                  bgcolor: "background.default",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "2rem",
+                }}
+              >
+                <Typography variant="h1" component="h1" gutterBottom sx={{ fontSize: "3.5rem" }}>
+                  How can I help?
+                </Typography>
+                <ChatInput
+                  clearOnSend
+                  placeholder={t("placeholder")}
+                  disabled={isLoading}
+                  onSend={(question, attachments) =>
+                    makeApiRequest(question, userData, attachments)
+                  }
+                  quotedText={quotedText}
+                  selectedModel={currentChatHistory.model}
+                />
+              </Box>
+            </Box>
+          )
+
+          // If 1 chat history
+          : (
+            <Box
+              sx={{
+                display: "flex",
+                flexFlow: "column",
+                minHeight: "100vh",
+                margin: "auto",
+              }}
+              maxWidth="lg"
+            >
+              <Box sx={{ flexGrow: 1 }}></Box>
+              <ChatMessagesContainer
+                chatHistory={currentChatHistory}
+                isLoading={isLoading}
+                chatMessageStreamEnd={chatMessageStreamEnd}
+                replayChat={replayChat}
+                setIsFeedbackVisible={setIsFeedbackVisible}
+                setIsGoodResponse={setIsGoodResponse}
+                handleRemoveToastMessage={handleRemoveToastMessage}
+                handleBookReservation={handleBookReservation}
+              />
+              <div ref={chatMessageStreamEnd} style={{ height: "50px" }} />
+              <Box
+                sx={{
+                  position: "sticky",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  zIndex: 1100,
+                  bgcolor: "background.default",
+                }}
+              >
+                <ChatInput
+                  clearOnSend
+                  placeholder={t("placeholder")}
+                  disabled={isLoading}
+                  onSend={(question, attachments) =>
+                    makeApiRequest(question, userData, attachments)
+                  }
+                  quotedText={quotedText}
+                  selectedModel={currentChatHistory.model}
+                />
+              </Box>
+            </Box>
+          )
+      }
       <Disclaimer />
       <DrawerMenu
         openDrawer={

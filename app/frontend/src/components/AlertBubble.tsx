@@ -19,7 +19,7 @@ export const AlertBubble = ({ toast, index, removeMessageHandler }: AlterBubbleP
     }
 
     return (
-        <AlertView tabIndex={0}>
+        <AlertView tabIndex={2}>
             <Box sx={visuallyHidden}>{t("aria.alert.message")}</Box> {/* Hidden div for screen reader */}
             <Alert 
                 severity={alertSeverity} 
