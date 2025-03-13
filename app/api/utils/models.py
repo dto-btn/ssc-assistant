@@ -1,6 +1,6 @@
 from dataclasses import field
 from marshmallow_dataclass import dataclass
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 
 
 
@@ -27,7 +27,7 @@ class Context:
 class ToolInfo:
     tool_type: List[str] = field(default_factory=list)
     function_names: List[str] = field(default_factory=list)
-    payload: Optional[Dict] = None
+    payload: Dict[str, Union[Dict, list]] = field(default_factory=lambda: {})
 
 @dataclass
 class Attachment:

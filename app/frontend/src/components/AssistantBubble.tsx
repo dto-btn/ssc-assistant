@@ -1,24 +1,41 @@
-import { Box, Paper, Divider, Chip, Stack, Typography, Link, Tooltip, Button, Dialog, DialogTitle, IconButton, PaperProps } from '@mui/material';
-import Markdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import rehypeHighlight from 'rehype-highlight'
-import 'highlight.js/styles/github.css'
-import { useEffect, useState, Fragment } from 'react';
+import {
+  Box,
+  Paper,
+  Divider,
+  Chip,
+  Stack,
+  Typography,
+  Link,
+  Tooltip,
+  Button,
+  Dialog,
+  DialogTitle,
+  IconButton,
+  PaperProps,
+} from "@mui/material";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import "highlight.js/styles/github.css";
+import { useEffect, useState, Fragment } from "react";
 import { useTranslation } from "react-i18next";
-import { BubbleButtons } from './BubbleButtons';
-import { styled } from '@mui/system';
-import ProfileCardsContainer from '../containers/ProfileCardsContainer';
-import HandymanIcon from '@mui/icons-material/Handyman';
+import { BubbleButtons } from "./BubbleButtons";
+import { styled } from "@mui/system";
+import ProfileCardsContainer from "../containers/ProfileCardsContainer";
+import HandymanIcon from "@mui/icons-material/Handyman";
 import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
-import { visuallyHidden } from '@mui/utils';
-import Draggable from 'react-draggable';
-import FitScreenIcon from '@mui/icons-material/FitScreen';
+import { visuallyHidden } from "@mui/utils";
+import Draggable from "react-draggable";
+import FitScreenIcon from "@mui/icons-material/FitScreen";
+import BusinessRequestCard from "./BusinessRequestCard";
+import BusinessRequestUpdates from "./BusinessRequestUpdates";
+import { transformToBusinessRequest } from "../util/bits_utils";
 
 interface AssistantBubbleProps {
   text: string;
   isLoading: boolean;
   context?: Context | null;
-  toolsInfo?: ToolInfo
+  toolsInfo?: ToolInfo;
   scrollRef?: React.RefObject<HTMLDivElement>;
   replayChat: () => void;
   index: number;
@@ -39,24 +56,51 @@ function DraggablePaperComponent(props: PaperProps) {
   );
 }
 
-export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef, replayChat, index, total, setIsFeedbackVisible, setIsGoodResponse, handleBookReservation }: AssistantBubbleProps) => {
+export const AssistantBubble = ({
+  text,
+  isLoading,
+  context,
+  toolsInfo,
+  scrollRef,
+  replayChat,
+  index,
+  total,
+  setIsFeedbackVisible,
+  setIsGoodResponse,
+  handleBookReservation,
+}: AssistantBubbleProps) => {
   const { t, i18n } = useTranslation();
-  const [processedContent, setProcessedContent] = useState({ processedText: '', citedCitations: [] as Citation[] });
+  const [processedContent, setProcessedContent] = useState({
+    processedText: "",
+    citedCitations: [] as Citation[],
+  });
   const [processingComplete, setProcessingComplete] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [profiles, setProfiles] = useState<EmployeeProfile[]>([]);
   const [profilesExpanded, setExpandProfiles] = useState(false);
   const [floorPlanFilename, setFloorPlanFilename] = useState("");
-  const [bookingDetails, setBookingDetails] = useState<BookingConfirmation | undefined>(undefined);
+  const [bookingDetails, setBookingDetails] = useState<
+    BookingConfirmation | undefined
+  >(undefined);
   const [confirmButtonDisabled, setConfirmButtonDisabled] = useState(false);
   const [isFloorPlanExpanded, setFloorPlanExpanded] = useState(false);
   const isMostRecent = index === total - 1;
-  const toolsUsed = toolsInfo && toolsInfo.tool_type.length > 0
+  const toolsUsed = toolsInfo && toolsInfo.tool_type.length > 0;
+  const [brData, setBrData] = useState<BusinessRequest[] | undefined>(
+    undefined
+  );
+  const [brUpdates, setBrUpdates] = useState<
+    BusinessRequestUpdate[] | undefined
+  >(undefined);
 
   const components = {
-    a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => <Link target="_blank" rel="noopener noreferrer" {...props} />,
+    a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+      <Link target="_blank" rel="noopener noreferrer" {...props} />
+    ),
   };
-  const [citationNumberMapping, setCitationNumberMapping] = useState<{ [key: number]: number }>({});
+  const [citationNumberMapping, setCitationNumberMapping] = useState<{
+    [key: number]: number;
+  }>({});
 
   function processText(text: string, citations: Citation[]) {
     // Regular expression to find all citation references like [doc1], [doc3], etc.
@@ -68,9 +112,11 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
     // Identify the cited citations and create the citationNumberMapping
     citations.forEach((_, index) => {
       const docNumber = index + 1; // Convert index to docNumber
-      if (text.includes(`[doc${docNumber}]`)) { // Check if the citation is in the text
+      if (text.includes(`[doc${docNumber}]`)) {
+        // Check if the citation is in the text
         // The new citation number is the current size of citationNumberMapping + 1
-        citationNumberMapping[docNumber] = Object.keys(citationNumberMapping).length + 1;
+        citationNumberMapping[docNumber] =
+          Object.keys(citationNumberMapping).length + 1;
       }
     });
 
@@ -84,10 +130,11 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
     const processedText = text.replace(citationRefRegex, (_, docNumber) => {
       const citation = citations[parseInt(docNumber, 10) - 1]; // Access the citation by index
       if (citation) {
-        const newCitationNumber = citationNumberMapping[parseInt(docNumber, 10)]; // Get the new citation number
+        const newCitationNumber =
+          citationNumberMapping[parseInt(docNumber, 10)]; // Get the new citation number
         return ` [${newCitationNumber}](${citation.url})`; // Replace with Markdown link
       }
-      return '';
+      return "";
     });
 
     return { processedText, citedCitations, citationNumberMapping };
@@ -95,7 +142,8 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
 
   useEffect(() => {
     if (context?.citations) {
-      const { processedText, citedCitations, citationNumberMapping } = processText(text, context.citations);
+      const { processedText, citedCitations, citationNumberMapping } =
+        processText(text, context.citations);
       setProcessedContent({ processedText, citedCitations });
       setCitationNumberMapping(citationNumberMapping); // store the citationNumberMapping in state
       setProcessingComplete(true);
@@ -111,7 +159,10 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
       const processedProfiles: EmployeeProfile[] = [];
 
       employeeProfiles.forEach((profile) => {
-        if (text.includes(profile.email) || (profile.phone && text.includes(profile.phone))) {
+        if (
+          text.includes(profile.email) ||
+          (profile.phone && text.includes(profile.phone))
+        ) {
           profile.matchedProfile = true;
         } else {
           profile.matchedProfile = false;
@@ -123,24 +174,65 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
     };
 
     if (toolsInfo) {
-      if (toolsInfo.payload && Object.prototype.hasOwnProperty.call(toolsInfo.payload, "profiles") && toolsInfo.payload.profiles !== null) {
+      if (toolsInfo?.payload?.br) {
+        try {
+          const brInformation = toolsInfo.payload.br;
+          if (brInformation.length) {
+            brInformation.map((br: any) => {
+              const brData = transformToBusinessRequest(br);
+              setBrData((prev) => (prev ? [...prev, brData] : [brData]));
+            });
+          }
+        } catch (error) {
+          console.error("Error transforming BR data", error);
+        }
+      }
+
+      if (toolsInfo?.payload?.br_updates) {
+        try {
+          const brUpdates = toolsInfo.payload.br_updates;
+          setBrUpdates(brUpdates);
+        } catch (error) {
+          console.error("Error transforming BR update data", error);
+        }
+      }
+
+      if (
+        toolsInfo.payload &&
+        Object.prototype.hasOwnProperty.call(toolsInfo.payload, "profiles") &&
+        toolsInfo.payload.profiles !== null
+      ) {
         const processedProfiles = processProfiles(toolsInfo.payload.profiles);
         setProfiles(processedProfiles);
       }
 
-      if (toolsInfo.payload && Object.prototype.hasOwnProperty.call(toolsInfo.payload, "floorPlan")) {
+      if (
+        toolsInfo.payload &&
+        Object.prototype.hasOwnProperty.call(toolsInfo.payload, "floorPlan")
+      ) {
         const floorPlanFile = toolsInfo.payload.floorPlan;
-        setFloorPlanFilename(floorPlanFile)
+        setFloorPlanFilename(floorPlanFile);
       }
 
-      if (toolsInfo.payload && Object.prototype.hasOwnProperty.call(toolsInfo.payload, "bookingDetails")) {
+      if (
+        toolsInfo.payload &&
+        Object.prototype.hasOwnProperty.call(
+          toolsInfo.payload,
+          "bookingDetails"
+        )
+      ) {
         setBookingDetails(toolsInfo.payload.bookingDetails);
       }
     }
   }, [toolsInfo, text]);
 
-
-  useEffect(() => processingComplete ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" }) : undefined, [processingComplete, scrollRef]);
+  useEffect(
+    () =>
+      processingComplete
+        ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" })
+        : undefined,
+    [processingComplete, scrollRef]
+  );
 
   useEffect(() => {
     // Set the `lang` attribute whenever the language changes
@@ -148,8 +240,8 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
   }, [i18n.language]);
 
   const handleToggleShowProfiles = () => {
-    setExpandProfiles(!profilesExpanded)
-  }
+    setExpandProfiles(!profilesExpanded);
+  };
 
   const handleConfirmButtonClicked = () => {
     setConfirmButtonDisabled(true);
@@ -166,29 +258,35 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
         onMouseLeave={() => setIsHovering(false)}
       >
         <Box>
-          <ChatBubbleInner
-            elevation={4}
-            className={"assistant-bubble-paper"}
-          >
-            <MainContentWrapper
-            >
+          <ChatBubbleInner elevation={4} className={"assistant-bubble-paper"}>
+            <MainContentWrapper>
               <IconWrapper>
-                <img src={logo} style={{
-                  width: "35px",
-                  height: "auto",
-                  cursor: "pointer",
-                }} alt="logo of SSC" />
+                <img
+                  src={logo}
+                  style={{
+                    width: "35px",
+                    height: "auto",
+                    cursor: "pointer",
+                  }}
+                  alt="logo of SSC"
+                />
                 {/* <AutoAwesome sx={{ color: "primary.main", fontSize: 24 }} /> */}
               </IconWrapper>
-              <TextComponentsBox className='textCompBox'>
-                <Typography sx={visuallyHidden}>{t("aria.assistant.message")}</Typography> {/* Hidden div for screen reader */}
+              <TextComponentsBox className="textCompBox">
+                <Typography sx={visuallyHidden}>
+                  {t("aria.assistant.message")}
+                </Typography>{" "}
+                {/* Hidden div for screen reader */}
                 <Markdown
                   components={components}
                   rehypePlugins={[rehypeHighlight]}
-                  remarkPlugins={[remarkGfm]}>
+                  remarkPlugins={[remarkGfm]}
+                >
                   {isLoading
-                    ? `${text.replace(/\[doc(\d+)\]/g, '')}_`
-                    : (processedContent.processedText !== "" ? processedContent.processedText : text)}
+                    ? `${text.replace(/\[doc(\d+)\]/g, "")}_`
+                    : processedContent.processedText !== ""
+                    ? processedContent.processedText
+                    : text}
                 </Markdown>
               </TextComponentsBox>
             </MainContentWrapper>
@@ -196,82 +294,103 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
             {toolsUsed && toolsInfo.tool_type && (
               <ToolsUsedBox>
                 <Tooltip title={t("toolsUsed")} arrow>
-                  <HandymanIcon style={{ fontSize: 16, margin: '0px 8px 3px 0px', color: '#4b3e99' }} />
+                  <HandymanIcon
+                    style={{
+                      fontSize: 16,
+                      margin: "0px 3px 0px 0px",
+                      color: "#4b3e99",
+                    }}
+                  />
                 </Tooltip>
-                <Typography sx={{ fontSize: '15px', padding: '0px 22px 3px 0px', color: 'primary.main' }}>
+                <Stack direction="row" spacing={1}>
                   {toolsInfo.tool_type.map((tool, index) => (
-                    <span key={index}>
-                      {t(tool)}
-                      {index < toolsInfo.tool_type.length - 1 && ', '}
-                    </span>
+                    <Tooltip title={t(tool)} key={index} arrow>
+                      <Chip label={toolsInfo.function_names[index] + "()"} />
+                    </Tooltip>
                   ))}
-                </Typography>
-
+                </Stack>
               </ToolsUsedBox>
             )}
 
-            {!isLoading && processedContent.citedCitations && processedContent.citedCitations.length > 0 && (
-              <>
-                <Divider />
-                <Box sx={{ m: 2, maxWidth: '100%' }}>
-                  <Typography gutterBottom variant="subtitle2">
-                    Citation(s):
-                  </Typography>
-                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                    {context?.citations.map((citation, index) => {
-                      const docNumber = index + 1; // Convert index to docNumber
-                      const newCitationNumber = citationNumberMapping[docNumber]; // Get the new citation number
-                      return (
-                        processedContent.citedCitations.includes(citation) && (
-                          <Fragment key={index}>
-                            <Chip
-                              label={newCitationNumber + " - " + citation.title} // Use new citation number
-                              component="a"
-                              href={citation.url}
-                              target='_blank'
-                              variant="filled"
-                              clickable
-                              color="primary"
-                            />
-                          </Fragment>
-                        )
-                      );
-                    })}
-                  </Stack>
-                </Box>
-              </>
-            )}
+            {!isLoading &&
+              processedContent.citedCitations &&
+              processedContent.citedCitations.length > 0 && (
+                <>
+                  <Divider />
+                  <Box sx={{ m: 2, maxWidth: "100%" }}>
+                    <Typography gutterBottom variant="subtitle2">
+                      Citation(s):
+                    </Typography>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      useFlexGap
+                      flexWrap="wrap"
+                    >
+                      {context?.citations.map((citation, index) => {
+                        const docNumber = index + 1; // Convert index to docNumber
+                        const newCitationNumber =
+                          citationNumberMapping[docNumber]; // Get the new citation number
+                        return (
+                          processedContent.citedCitations.includes(
+                            citation
+                          ) && (
+                            <Fragment key={index}>
+                              <Chip
+                                label={
+                                  newCitationNumber + " - " + citation.title
+                                } // Use new citation number
+                                component="a"
+                                href={citation.url}
+                                target="_blank"
+                                variant="filled"
+                                clickable
+                                color="primary"
+                              />
+                            </Fragment>
+                          )
+                        );
+                      })}
+                    </Stack>
+                  </Box>
+                </>
+              )}
 
-            {!isLoading && profiles.length > 0 &&
+            {!isLoading && profiles.length > 0 && (
               <ProfileCardsContainer
                 profiles={profiles}
                 isExpanded={profilesExpanded}
                 toggleShowProfileHandler={handleToggleShowProfiles}
               />
-            }
+            )}
 
-            {floorPlanFilename &&
+            {floorPlanFilename && (
               <>
                 <FloorPlanView
                   sx={{
-                    display: 'flex',
-                    flex: '1',
-                    width: { 'xs': '300px', 'sm': '450px', 'md': '600px', 'lg': '800px' },
-                    position: 'relative',
+                    display: "flex",
+                    flex: "1",
+                    width: {
+                      xs: "300px",
+                      sm: "450px",
+                      md: "600px",
+                      lg: "800px",
+                    },
+                    position: "relative",
                   }}
                 >
                   <IconButton
                     sx={{
-                      position: 'absolute',
-                      top: '0px',
-                      right: '0px',
+                      position: "absolute",
+                      top: "0px",
+                      right: "0px",
                       zIndex: 10,
-                      color: 'black',
+                      color: "black",
                     }}
                     aria-label={t("aria.expand.floorPlan")}
                     onClick={() => setFloorPlanExpanded(true)}
                   >
-                    <FitScreenIcon sx={{ fontSize: '30px' }} />
+                    <FitScreenIcon sx={{ fontSize: "30px" }} />
                   </IconButton>
                   <img src={floorPlanFilename} alt={t("archibus.floorPlan")} />
                 </FloorPlanView>
@@ -281,60 +400,108 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
                   onClose={() => setFloorPlanExpanded(false)}
                   PaperComponent={DraggablePaperComponent}
                   aria-labelledby="draggable-dialog-title"
-                  fullWidth maxWidth="md"
+                  fullWidth
+                  maxWidth="md"
                   disableScrollLock
                 >
-                  <DialogTitle style={{ cursor: 'move', height: '50px' }} id="draggable-dialog-title">
-                  </DialogTitle>
-                  <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                  <DialogTitle
+                    style={{ cursor: "move", height: "50px" }}
+                    id="draggable-dialog-title"
+                  ></DialogTitle>
+                  <div
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      height: "100%",
+                    }}
+                  >
                     <img
                       src={floorPlanFilename}
                       alt={t("archibus.floorPlan")}
                       style={{
-                        width: '100%',
-                        height: 'auto',
-                        display: 'block',
-                        padding: '0px 50px 50px 50px'
+                        width: "100%",
+                        height: "auto",
+                        display: "block",
+                        padding: "0px 50px 50px 50px",
                       }}
                     />
                   </div>
                 </Dialog>
               </>
-            }
+            )}
 
-            {bookingDetails &&
-              <ConfirmBookingBox >
+            {bookingDetails && (
+              <ConfirmBookingBox>
                 <Button
                   disabled={confirmButtonDisabled}
                   sx={{
-                    fontSize: '20px',
-                    color: 'white',
-                    borderRadius: '5px',
-                    backgroundColor: 'primary.main',
-                    height: '40px',
-                    width: '80%',
-                    maxWidth: '400px',
-                    padding: '40px',
-                    '&:hover': {
-                      boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.3)',
-                      backgroundColor: '#261F4C'
+                    fontSize: "20px",
+                    color: "white",
+                    borderRadius: "5px",
+                    backgroundColor: "primary.main",
+                    height: "40px",
+                    width: "80%",
+                    maxWidth: "400px",
+                    padding: "40px",
+                    "&:hover": {
+                      boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.3)",
+                      backgroundColor: "#261F4C",
                     },
-                    '&:disabled': {
-                      backgroundColor: 'grey',
-                      color: 'white',
-                    }
+                    "&:disabled": {
+                      backgroundColor: "grey",
+                      color: "white",
+                    },
                   }}
                   onClick={handleConfirmButtonClicked}
                 >
-                  {t('booking.complete')}
+                  {t("booking.complete")}
                 </Button>
               </ConfirmBookingBox>
-            }
+            )}
+
+            {!isLoading && (brData || brUpdates) && (
+              <>
+                <Divider />
+                <Box
+                  sx={{
+                    width: "100%",
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fill, minmax(min(500px, 100%), 1fr))",
+                    gap: 1,
+                    marginTop: 2,
+                  }}
+                >
+                  {brData &&
+                    brData.map((item, index) => (
+                      <BusinessRequestCard
+                        key={index}
+                        data={item}
+                        lang={i18n.language}
+                      />
+                    ))}
+
+                  {brUpdates && (
+                    <BusinessRequestUpdates
+                      data={brUpdates}
+                      lang={i18n.language}
+                    />
+                  )}
+                </Box>
+              </>
+            )}
           </ChatBubbleInner>
         </Box>
         <Box>
-          {total > 1 && index! != 0 &&
-            <Paper sx={{ backgroundColor: 'transparent', boxShadow: 'none', mt: 1, ml: 2 }}>
+          {total > 1 && index! != 0 && (
+            <Paper
+              sx={{
+                backgroundColor: "transparent",
+                boxShadow: "none",
+                mt: 1,
+                ml: 2,
+              }}
+            >
               <BubbleButtons
                 setIsFeedbackVisible={setIsFeedbackVisible}
                 setIsGoodResponse={setIsGoodResponse}
@@ -344,7 +511,7 @@ export const AssistantBubble = ({ text, isLoading, context, toolsInfo, scrollRef
                 text={text}
               />
             </Paper>
-          }
+          )}
         </Box>
       </ChatBubbleView>
     </ChatBubbleWrapper>
@@ -361,29 +528,30 @@ const ChatBubbleView = styled(Box)`
   width: 100%;
   flex-direction: column;
   justify-content: flex-start;
-`
+`;
 
 const ChatBubbleInner = styled(Paper)(() => ({
   borderRadius: 0,
-  boxShadow: 'none',
-  flexDirection: 'row',
-  maxWidth: '95%',
+  boxShadow: "none",
+  flexDirection: "row",
+  maxWidth: "95%",
 }));
 
 const ToolsUsedBox = styled(Box)`
   display: flex;
   justify-content: flex-end;
   align-items: center;
-`
+  padding: 10px 15px;
+`;
 
 const MainContentWrapper = styled(Box)`
   display: flex;
   padding: 0px 15px;
-`
+`;
 
 const IconWrapper = styled(Box)`
   margin: 18px 12px 8px 0px;
-`
+`;
 
 const TextComponentsBox = styled(Box)`
   max-width: 95%;
@@ -399,12 +567,12 @@ const TextComponentsBox = styled(Box)`
 `;
 
 const FloorPlanView = styled(Box)({
-  margin: '20px 30px',
+  margin: "20px 30px",
 });
 
 const ConfirmBookingBox = styled(Box)`
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 30px;
 `;

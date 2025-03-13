@@ -33,8 +33,7 @@ import { DeleteConversationConfirmation } from "../../components/DeleteConversat
 import { useLocation } from "react-router";
 import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
 import { useAppStore } from "../../context/AppStore";
-import Typography from '@mui/material/Typography';
-
+import Typography from "@mui/material/Typography";
 
 const MainScreen = () => {
   const appStore = useAppStore();
@@ -359,7 +358,8 @@ const MainScreen = () => {
 
   const loadChatHistoriesFromStorage = () => {
     const chatHistories = localStorage.getItem("chatHistories");
-    if (chatHistories) {
+    if (chatHistories && chatHistories.length > 0) {
+      console.log("Loading chat histories from local storage");
       const parsedChatHistories = JSON.parse(chatHistories) as ChatHistory[];
       const currentIndex = loadCurrentChatIndexIfAble();
       const loadedChatHistory = parsedChatHistories[currentIndex];
@@ -376,6 +376,9 @@ const MainScreen = () => {
             chatHistory.description || "Conversation " + (index + 1)
         )
       );
+    } else {
+      // If there are no chat histories, set the current chat to the default
+      setCurrentChatHistory(defaultChatHistory);
     }
   };
 
@@ -693,10 +696,10 @@ const MainScreen = () => {
   useEffect(() => {
     console.debug(
       "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-      isAuthenticated +
-      ", InProgress? " +
-      inProgress +
-      ")"
+        isAuthenticated +
+        ", InProgress? " +
+        inProgress +
+        ")"
     );
     if (
       isAuthenticated &&
@@ -714,27 +717,35 @@ const MainScreen = () => {
     }
   }, [isAuthenticated, inProgress, userData]);
 
-  const parsedSuggestionContext: ParsedSuggestionContext | null = location.state;
+  const parsedSuggestionContext: ParsedSuggestionContext | null =
+    location.state;
   useEffect(() => {
     // on initial load of page, if state is not null, log the state
     if (parsedSuggestionContext) {
       if (parsedSuggestionContext.success) {
         if (!parsedSuggestionContext.context.success) {
           // this should never happen
-          alert("An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded.");
-          console.error("ERROR: parsedSuggestionContext:", parsedSuggestionContext);
+          alert(
+            "An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded."
+          );
+          console.error(
+            "ERROR: parsedSuggestionContext:",
+            parsedSuggestionContext
+          );
           return;
         }
         // TODO: create a new conversation with the context.
-        let conversationString = '';
+        let conversationString = "";
         conversationString += parsedSuggestionContext.context.content;
-        conversationString += '\n\n';
-        conversationString += parsedSuggestionContext.context.citations.flatMap((citation) => {
-          return `
+        conversationString += "\n\n";
+        conversationString += parsedSuggestionContext.context.citations
+          .flatMap((citation) => {
+            return `
 #### ${citation.title} [link](${citation.url})
 
 `;
-        }).join('\n\n');
+          })
+          .join("\n\n");
 
         // now create a new conversation with the context
         const newChatIndex = chatHistoriesDescriptions.length;
@@ -749,7 +760,7 @@ const MainScreen = () => {
               message: {
                 role: "assistant",
                 content: conversationString,
-              }
+              },
             },
           ],
           description: parsedSuggestionContext.context.original_query,
@@ -769,25 +780,29 @@ const MainScreen = () => {
            * This debounce key is used to prevent multiple snackbars from showing in quick succession.
            */
           const suggestContextErrorDebounceKey = "SUGGEST_CONTEXT_ERROR";
-          appStore.snackbars.show(msg,
-            suggestContextErrorDebounceKey
-          );
+          appStore.snackbars.show(msg, suggestContextErrorDebounceKey);
           console.error("ERROR: parsedSuggestionContext", msg);
-        }
+        };
         switch (parsedSuggestionContext.errorReason) {
           case "redirect_because_context_validation_failed":
-            showError("The suggestion context was in an unknown format. Your suggestions have not been loaded.");
+            showError(
+              "The suggestion context was in an unknown format. Your suggestions have not been loaded."
+            );
             break;
           case "redirect_because_server_returned_success_false":
-            showError("The server returned an error while parsing the suggestion context. Your suggestions have not been loaded.");
+            showError(
+              "The server returned an error while parsing the suggestion context. Your suggestions have not been loaded."
+            );
             break;
           case "redirect_with_unknown_error":
           default:
-            showError("An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded.");
+            showError(
+              "An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded."
+            );
         }
       }
     }
-  }, [parsedSuggestionContext])
+  }, [parsedSuggestionContext]);
 
   return (
     <UserContext.Provider value={userData}>
@@ -796,101 +811,101 @@ const MainScreen = () => {
         ref={menuIconRef}
         onNewChat={handleNewChat}
       />
-      {
-        currentChatHistory.chatItems.length === 0
-          // if 0 chat history
-          ? (
-            <Box
-              sx={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                display: "flex",
-                flexFlow: "column",
-                minHeight: "100vh",
-                margin: "auto",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-              maxWidth="lg"
+      {currentChatHistory.chatItems.length === 0 ? (
+        // if 0 chat history
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: "flex",
+            flexFlow: "column",
+            minHeight: "100vh",
+            margin: "auto",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+          maxWidth="lg"
+        >
+          <Box
+            sx={{
+              minWidth: "700px",
+              zIndex: 1100,
+              bgcolor: "background.default",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "2rem",
+            }}
+          >
+            <Typography
+              variant="h1"
+              component="h1"
+              gutterBottom
+              sx={{ fontSize: "3.5rem" }}
             >
-              <Box
-                sx={{
-                  minWidth: "700px",
-                  zIndex: 1100,
-                  bgcolor: "background.default",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "2rem",
-                }}
-              >
-                <Typography variant="h1" component="h1" gutterBottom sx={{ fontSize: "3.5rem" }}>
-                  How can I help?
-                </Typography>
-                <ChatInput
-                  clearOnSend
-                  placeholder={t("placeholder")}
-                  disabled={isLoading}
-                  onSend={(question, attachments) =>
-                    makeApiRequest(question, userData, attachments)
-                  }
-                  quotedText={quotedText}
-                  selectedModel={currentChatHistory.model}
-                />
-              </Box>
-            </Box>
-          )
-
-          // If 1 chat history
-          : (
-            <Box
-              sx={{
-                display: "flex",
-                flexFlow: "column",
-                minHeight: "100vh",
-                margin: "auto",
-              }}
-              maxWidth="lg"
-            >
-              <Box sx={{ flexGrow: 1 }}></Box>
-              <ChatMessagesContainer
-                chatHistory={currentChatHistory}
-                isLoading={isLoading}
-                chatMessageStreamEnd={chatMessageStreamEnd}
-                replayChat={replayChat}
-                setIsFeedbackVisible={setIsFeedbackVisible}
-                setIsGoodResponse={setIsGoodResponse}
-                handleRemoveToastMessage={handleRemoveToastMessage}
-                handleBookReservation={handleBookReservation}
-              />
-              <div ref={chatMessageStreamEnd} style={{ height: "50px" }} />
-              <Box
-                sx={{
-                  position: "sticky",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  zIndex: 1100,
-                  bgcolor: "background.default",
-                }}
-              >
-                <ChatInput
-                  clearOnSend
-                  placeholder={t("placeholder")}
-                  disabled={isLoading}
-                  onSend={(question, attachments) =>
-                    makeApiRequest(question, userData, attachments)
-                  }
-                  quotedText={quotedText}
-                  selectedModel={currentChatHistory.model}
-                />
-              </Box>
-            </Box>
-          )
-      }
+              How can I help?
+            </Typography>
+            <ChatInput
+              clearOnSend
+              placeholder={t("placeholder")}
+              disabled={isLoading}
+              onSend={(question, attachments) =>
+                makeApiRequest(question, userData, attachments)
+              }
+              quotedText={quotedText}
+              selectedModel={currentChatHistory.model}
+            />
+          </Box>
+        </Box>
+      ) : (
+        // If 1 chat history
+        <Box
+          sx={{
+            display: "flex",
+            flexFlow: "column",
+            minHeight: "100vh",
+            margin: "auto",
+          }}
+          maxWidth="lg"
+        >
+          <Box sx={{ flexGrow: 1 }}></Box>
+          <ChatMessagesContainer
+            chatHistory={currentChatHistory}
+            isLoading={isLoading}
+            chatMessageStreamEnd={chatMessageStreamEnd}
+            replayChat={replayChat}
+            setIsFeedbackVisible={setIsFeedbackVisible}
+            setIsGoodResponse={setIsGoodResponse}
+            handleRemoveToastMessage={handleRemoveToastMessage}
+            handleBookReservation={handleBookReservation}
+          />
+          <div ref={chatMessageStreamEnd} style={{ height: "50px" }} />
+          <Box
+            sx={{
+              position: "sticky",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 1100,
+              bgcolor: "background.default",
+            }}
+          >
+            <ChatInput
+              clearOnSend
+              placeholder={t("placeholder")}
+              disabled={isLoading}
+              onSend={(question, attachments) =>
+                makeApiRequest(question, userData, attachments)
+              }
+              quotedText={quotedText}
+              selectedModel={currentChatHistory.model}
+            />
+          </Box>
+        </Box>
+      )}
       <Disclaimer />
       <DrawerMenu
         openDrawer={
