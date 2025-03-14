@@ -181,7 +181,7 @@ def get_br_assigned_to(name: str, limit: int = 10, assigned_to_fields: str = "")
                 },
                 "limit": {
                     "type": "integer",
-                    "description": "The maximum number of BR items to return. Defaults to 15.",
+                    "description": "The maximum number of BR items to return. Defaults to 10.",
                     "default": 10
                 }
             },
