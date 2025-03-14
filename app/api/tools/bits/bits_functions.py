@@ -1,10 +1,10 @@
 import json
 import logging
 import os
-from typing import List, Optional
 
+from src.constants.tools import TOOL_BR
 from tools.bits.bits_utils import DatabaseConnection, extract_fields_from_query
-from utils.decorators import tool_metadata
+from utils.decorators import discover_subfolder_functions_with_metadata, tool_metadata
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -19,6 +19,11 @@ valid_assigned_to_fields = [
         'ENGN_OPI', 'BA_OPI', 'BA_TL', 'PM_OPI', 'BA_PRICE_OPI', 'QA_OPI', 'SL_COORD', 'AGRMT_OPI',
         'ACCT_MGR_OPI', 'SDM_TL_OPI'
     ]
+
+valid_search_fields = [
+    'BR_TITLE', 'BR_SHORT_TITLE', 'PRIORITY_EN', 'PRIORITY_FR', 'CLIENT_NAME_SRC',
+    'RPT_GC_ORG_NAME_EN', 'RPT_GC_ORG_NAME_FR', 'GROUP_ID', 'GROUP_EN', 'GROUP_FR'
+]
 
 @tool_metadata({
     "type": "function",
@@ -157,3 +162,76 @@ def get_br_assigned_to(name: str, limit: int = 10, assigned_to_fields: str = "")
     params = [name_pattern] * len(fields) + [limit]
     result = db.execute_query(query, *params)
     return {'br': result}
+
+@tool_metadata({
+    "type": "function",
+    "function": {
+        "name": "search_br_by_field",
+        "description": "A 'BR' is a 'Business Request', which includes information about purchase orders inside the Government of Canada. This function searches information about BRs given a specific BR field (labelled `field_name`). If multiple fields are needed, invoke this function multiple times... once for each field. The fields available are: {fields}. If the user doesn't provide a `field_name` then let them know what the field names are. Otherwise use best guess.".replace("{fields}", ", ".join(valid_search_fields)),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "field_name": {
+                    "type": "string",
+                    "description": "A field name to filter BRs by."
+                },
+                "field_value": {
+                    "type": "string",
+                    "description": "A field value to filter BRs by."
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "The maximum number of BR items to return. Defaults to 10.",
+                    "default": 10
+                }
+            },
+            "required": ["field_name", "field_value"]
+      }
+    }
+  })
+def search_br_by_field(field_name: str, field_value: str, limit: int = 10):
+    """
+    search_br_by_field
+
+    Search BRs via a specific field:
+    """
+    if field_name:
+        fields = extract_fields_from_query([field_name], valid_search_fields)
+        if fields:
+            query = """SELECT TOP(%d) *
+                       FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS 
+                       WHERE {field} LIKE %s;""".replace("{field}", fields[0])
+            result = db.execute_query(query, limit, f"%{field_value}%")
+            return {'br': result}
+    return "Try using one of the following fields: " + ", ".join(valid_search_fields)
+
+@tool_metadata({
+    "type": "function",
+    "function": {
+        "name": "how_to_search_brs",
+        "description": "Use this function to help guide the user in their search for BRs. It will list all the functions here and their paremeter to help the AI guide the user in their search. If the question is asked in french please try to translate everything in french.",
+        "parameters": {
+            "type": "object",
+            "properties": {},
+            "required": []
+      }
+    }
+  })
+def how_to_search_brs():
+    """
+    This is a metadata function that will list all the functions 
+    here and their paremeter to help the AI guide the user in their search
+    """
+    functions = discover_subfolder_functions_with_metadata("tools.bits.bits_functions",
+                                                           "tools/bits/bits_functions.py",
+                                                           TOOL_BR)
+    # filter out this function right here
+    for key in list(functions.keys()):
+        if key == "how_to_search_brs":
+            del functions[key]
+
+    metadata = {}
+    for key, value in functions.items():
+        metadata[key] = value['metadata']
+    print(metadata)
+    return json.dumps(metadata)
