@@ -94,11 +94,12 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                     logger.debug("This corporate function was passed -> %s", message_request.corporateFunction)
                     _ = tool_service.call_tools(completion_tools.choices[0].message.tool_calls, messages)
 
-                    index_name = intranet_question()
+                    # this part ensures that we query only MySSC+ index ... for now.
+                    index_name = intranet_question("")
                     return (tool_service.tools_info, client.chat.completions.create(
                         messages=messages,
                         model=model,
-                        extra_body=_create_azure_cognitive_search_data_source(index_name,
+                        extra_body=_create_azure_cognitive_search_data_source(index_name['index_name'],
                                                                                 message_request.top,
                                                                                 message_request.lang),
                         stream=stream

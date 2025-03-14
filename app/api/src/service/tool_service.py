@@ -1,3 +1,4 @@
+import copy
 import json
 import logging
 import os
@@ -39,7 +40,7 @@ class ToolService:
         """
         Call the tool functions and return a new completion with the results
         """
-        returned_messages = messages
+        returned_messages = copy.deepcopy(messages)# deep copy to avoid modifying the original messages
         # Send the info for each function call and function response to the model
         for tool_call in tool_calls:
             function_name = tool_call.function.name
