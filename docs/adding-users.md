@@ -14,3 +14,19 @@ groupId=$(az ad group list --filter "displayname eq 'SEC SSC-Assistant-Dev Enter
 memberId=$(az ad user show --id some.one@ssc-spc.gc.ca -o tsv --query id)
 az ad group member add --group $groupId --member-id $memberId
 ```
+
+### Finding group by ownership
+
+With AZ Cli you can find groups for which you are member of by using this: 
+
+```bash
+az ad user get-member-groups --id user@domain.com --query "[].displayName" -o tsv
+```
+
+### Finding the names of SSC Assistant apps
+
+```bash
+az ad app list --filter "startsWith(displayName, 'SSC-Assistant')" --query "[displayName, id]" -o tsv
+# OR 
+az ad app list --filter "startsWith(displayName, 'SSC-Assistant')" --query "[].{NAME:displayName, ID:id, APPID:appId}"
+```
