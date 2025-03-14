@@ -1,10 +1,10 @@
 import json
 import logging
 import os
-from typing import List, Optional
 
+from src.constants.tools import TOOL_BR
 from tools.bits.bits_utils import DatabaseConnection, extract_fields_from_query
-from utils.decorators import tool_metadata
+from utils.decorators import discover_subfolder_functions_with_metadata, tool_metadata
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -204,3 +204,34 @@ def search_br_by_field(field_name: str, field_value: str, limit: int = 10):
             result = db.execute_query(query, limit, f"%{field_value}%")
             return {'br': result}
     return "Try using one of the following fields: " + ", ".join(valid_search_fields)
+
+@tool_metadata({
+    "type": "function",
+    "function": {
+        "name": "how_to_search_brs",
+        "description": "Use this function to help guide the user in their search for BRs. It will list all the functions here and their paremeter to help the AI guide the user in their search. If the question is asked in french please try to translate everything in french.",
+        "parameters": {
+            "type": "object",
+            "properties": {},
+            "required": []
+      }
+    }
+  })
+def how_to_search_brs():
+    """
+    This is a metadata function that will list all the functions 
+    here and their paremeter to help the AI guide the user in their search
+    """
+    functions = discover_subfolder_functions_with_metadata("tools.bits.bits_functions",
+                                                           "tools/bits/bits_functions.py",
+                                                           TOOL_BR)
+    # filter out this function right here
+    for key in list(functions.keys()):
+        if key == "how_to_search_brs":
+            del functions[key]
+
+    metadata = {}
+    for key, value in functions.items():
+        metadata[key] = value['metadata']
+    print(metadata)
+    return json.dumps(metadata)
