@@ -167,7 +167,7 @@ def get_br_assigned_to(name: str, limit: int = 10, assigned_to_fields: str = "")
     "type": "function",
     "function": {
         "name": "search_br_by_field",
-        "description": "Gets information about a BR given a specific BR field. If multiple fields are needed, invoke this function multiple times. The fields availables are: {fields}. If the user doesn't provide a field let him know what are the field names. Else use best guest.".replace("{fields}", ", ".join(valid_search_fields)),
+        "description": "A 'BR' is a 'Business Request', which includes information about purchase orders inside the Government of Canada. This function searches information about BRs given a specific BR field (labelled `field_name`). If multiple fields are needed, invoke this function multiple times... once for each field. The fields available are: {fields}. If the user doesn't provide a `field_name` then let them know what the field names are. Otherwise use best guess.".replace("{fields}", ", ".join(valid_search_fields)),
         "parameters": {
             "type": "object",
             "properties": {
