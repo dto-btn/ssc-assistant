@@ -105,5 +105,16 @@ variable "bits_database_config" {
 variable "postgres_connection_string" {
     type = string
     sensitive = true
-    description = "value of the postgres connection string"
+    description = "DEPRECATED value of the postgres connection string"
+}
+
+variable "username_postgress" {
+    type = string
+    description = "value of the username for the postgress server"
+}
+
+variable "password_postgress" {
+    type = string
+    sensitive = true
+    description = "password for the username of postgress server"
 }

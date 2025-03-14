@@ -69,3 +69,18 @@ data "azurerm_search_service" "main" {
   resource_group_name   = "ScSc-CIO_ECT_ssc_assistant-rg"
   name   = "ssc-assistant-search-service"
 }
+
+/****************************************************
+*                         DB                        *
+*****************************************************/
+module "postgress" {
+  source = "../modules/db"
+
+  project_name = var.project_name
+  default_location = var.default_location
+  rg_name = azurerm_resource_group.dev.name
+  name_prefix = var.name_prefix
+  username_postgress = var.username_postgress
+  password_postgress = var.password_postgress
+  
+}
