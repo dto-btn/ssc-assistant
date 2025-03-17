@@ -114,7 +114,7 @@ class SuggestionApiResponse:
     # not provided if success is False
     content: Optional[str] = None
     citations: Optional[List[SuggestionCitationApiResponse]] = None
-    suggestion_id: Optional[str] = None
+    id: Optional[str] = None
 
 
 @dataclass

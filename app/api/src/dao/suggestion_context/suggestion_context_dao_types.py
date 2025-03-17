@@ -10,7 +10,7 @@ from uuid import uuid4
 # abstract version of the DAO
 class BaseSuggestionContextDao:
     def get_suggestion_context_by_id(
-        self, suggestion_id: str
+        self, id: str
     ) -> SuggestionContextWithSuggestionsAndId:
         raise NotImplementedError
 

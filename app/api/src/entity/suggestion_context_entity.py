@@ -8,7 +8,7 @@ class SuggestionContextCitationEntity(BaseModel):
 
 
 class SuggestionContextEntity(BaseModel):
-    suggestion_id: str
+    id: str
     success: bool
     language: Literal["en", "fr"]
     original_query: str
