@@ -101,3 +101,9 @@ variable "bits_database_config" {
   default = null
   sensitive = true
 }
+
+variable "postgres_connection_string" {
+    type = string
+    sensitive = true
+    description = "value of the postgres connection string"
+}

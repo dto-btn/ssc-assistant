@@ -5,16 +5,14 @@ from typing import Any, List, Optional, Tuple, Union
 
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from openai import AzureOpenAI, Stream
-from openai.types.chat import (ChatCompletion, ChatCompletionChunk,
-                               ChatCompletionMessageParam)
+from openai.types.chat import ChatCompletion, ChatCompletionChunk
 from openai.types.completion_usage import CompletionUsage
-
-from tools.geds.geds_functions import extract_geds_profiles
-from tools.tools import call_tools, load_tools, invoke_corporate_function, get_functions_by_type
+from src.constants.tools import TOOL_CORPORATE
+from src.service.tool_service import ToolService
+from tools.corporate.corporate_functions import intranet_question
 from utils.manage_message import load_messages
-from utils.models import (Citation,
-                                  Completion, Context, Message, MessageRequest,
-                                  ToolInfo)
+from utils.models import (Citation, Completion, Context, Message,
+                          MessageRequest, ToolInfo)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -27,23 +25,6 @@ azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
 api_version             = os.getenv("AZURE_OPENAI_VERSION", "2024-05-01-preview")
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
-
-# versions capabilities
-# https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
-# client_data = AzureOpenAI(
-#     # if we just use the azure_endpoint here it doesn't reach the extensions endpoint
-#     # and thus we cannot use data sources directly
-#     base_url=f'{azure_openai_uri}openai/deployments/{model}/extensions',
-#     api_version=api_version,
-#     #azure_endpoint=azure_openai_uri,
-#     api_key=api_key
-# )
-
-# https://learn.microsoft.com/en-us/azure/ai-services/openai/references/on-your-data?tabs=python
-# versions capabilities
-# https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
-# example of using functions with azure search instead of the data source
-#   https://github.com/Azure-Samples/openai/blob/main/Basic_Samples/Functions/functions_with_azure_search.ipynb
 
 client = AzureOpenAI(
     api_version=api_version,
@@ -81,7 +62,7 @@ def _create_azure_cognitive_search_data_source(index_name: str, top: int=3, lang
     ]}
 
 
-def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optional['ToolInfo'], Union['ChatCompletion', 'Stream[ChatCompletionChunk]']]:
+def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optional['ToolInfo'], Union['ChatCompletion', 'Stream[ChatCompletionChunk]']]:# pylint: disable=line-too-long
     """
     Initiate a chat with via openai api using data_source (azure cognitive search)
 
@@ -92,108 +73,46 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
     model = message_request.model
     messages = load_messages(message_request)
     # 1. Check if we are to use tools
-    tools_info = None
-
     if message_request.tools:
-        logger.debug("Using Tools: %s", message_request.tools)
-        tools = load_tools(message_request.tools)
+        logger.debug("Requested tools: %s", message_request.tools)
+        tool_service = ToolService(message_request.tools)
         # 1a. Invoke tools completion,
         additional_tools_required = True
-        tools_used = False
 
-        while additional_tools_required:
+        while additional_tools_required and tool_service.tools:
             completion_tools = client.chat.completions.create(
                     messages=messages,
                     model=model,
-                    tools=tools, # type: ignore
+                    tools=tool_service.tools, # type: ignore
+                    #https://platform.openai.com/docs/guides/function-calling#additional-configurations
                     tool_choice='auto',
                     stream=False
                 ) # type: ignore
 
             if completion_tools.choices[0].message.tool_calls:
-                tools_used = True
-                if any(f.function.name in get_functions_by_type('corporate') for f in completion_tools.choices[0].message.tool_calls): # pylint: disable=line-too-long
+                if any(f.function.name in tool_service.get_functions_by_type(TOOL_CORPORATE) for f in completion_tools.choices[0].message.tool_calls): # pylint: disable=line-too-long
                     logger.debug("This corporate function was passed -> %s", message_request.corporateFunction)
-                    if message_request.corporateFunction in [f.function.name for f in completion_tools.choices[0].message.tool_calls]: # pylint: disable=line-too-long
-                        # This will always end the while loop if a intranet question is detected, since the Azure OpenAI
-                        # call for this currently holds the citations
-                        # and we do not wish to maintain this part at this time.
-                        # solution would be to retain citation and quote from answer and figure a way to retain them
-                        # if the text match (not citations as part of msg extra content)
-                        #      but the actual citations within the returned text, ex; The president is John Wayne[1]
-                        # and you can contact him at 888-888-8888[2]
-                        tools_info = ToolInfo()
-                        tools_info.tool_type.append("corporate")
-                        tools_info.function_names.append(message_request.corporateFunction)
+                    _ = tool_service.call_tools(completion_tools.choices[0].message.tool_calls, messages)
 
-                        index_name = invoke_corporate_function(message_request.corporateFunction)
-                        logger.debug("Invoking index named --> %s", index_name)
-                        return (tools_info, client.chat.completions.create(
-                            messages=messages,
-                            model=model,
-                            extra_body=_create_azure_cognitive_search_data_source(index_name,
-                                                                                  message_request.top,
-                                                                                  message_request.lang),
-                            stream=stream
-                        ))
-
-                messages = call_tools(completion_tools.choices[0].message.tool_calls, messages)
-
+                    index_name = intranet_question()
+                    return (tool_service.tools_info, client.chat.completions.create(
+                        messages=messages,
+                        model=model,
+                        extra_body=_create_azure_cognitive_search_data_source(index_name,
+                                                                                message_request.top,
+                                                                                message_request.lang),
+                        stream=stream
+                    ))
+                # this will modify the messages array we send to OpenAI to contain the function_calls **it** requested
+                # and that we processed on it's behalf.
+                messages = tool_service.call_tools(completion_tools.choices[0].message.tool_calls, messages)
             else:
                 additional_tools_required = False
-
-        # add tool info for tools used
-        if tools_used:
-            tools_info = add_tool_info_if_used(messages, tools)
-
-    return (tools_info, client.chat.completions.create(
+    return (tool_service.tools_info, client.chat.completions.create(
         messages=messages,
         model=model,
         stream=stream
     ))
-
-def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: List[Any]) -> ToolInfo:
-    tools_info = ToolInfo()
-    function_to_tool_type = {tool['function']['name']: tool['tool_type'] for tool in tools if tool.get('type') == 'function'}
-
-    for message in messages:
-        if message["role"] == "function":
-            function_name = message["name"]
-            tools_info.function_names.append(function_name)
-
-            if function_name in function_to_tool_type:
-                tool_name = function_to_tool_type[function_name]
-                tools_info.tool_type.append(tool_name)
-
-                # extract profiles if it's a geds function
-                if tool_name == "geds":
-                    content = message.get("content", "")
-                    profiles = extract_geds_profiles(content)
-                    tools_info.payload = {"profiles": profiles}
-
-            if function_name == "get_available_rooms":
-                content = message.get("content", "")
-                if content is not None:
-                    try:
-                        data = json.loads(content)
-                    except json.JSONDecodeError:
-                        logger.warning(f"Content is not valid JSON: {content}")
-                        data = {}
-                    if data.get("floorPlan") is not None:
-                        floor_plan = data.get("floorPlan")
-                        logger.debug(f"FLOOR PLAN: {floor_plan}")
-                        tools_info.payload = {"floorPlan": floor_plan}
-
-            if function_name == "verify_booking_details":
-                content = message.get("content", "")
-                if content is not None:
-                    booking_details = json.loads(content)
-                    logger.debug(f"BOOKING DETAILS {booking_details}")
-                    tools_info.payload = {"bookingDetails": booking_details}
-
-    return tools_info
-
-
 
 def convert_chat_with_data_response(chat_completion: ChatCompletion) -> Completion:
     """

@@ -152,9 +152,10 @@ export const ChatInput = ({
           <UploadFileButton disabled={disabled} onFileUpload={onFileUpload} />
         )}
         <InputBase
+          autoFocus
           sx={{ ml: 1, flex: 1 }}
           placeholder={t("ask.question")}
-          inputProps={{ "aria-label": t("ask.question") }}
+          inputProps={{ "aria-label": t("ask.question"), "tabIndex": 1 }}
           error={error}
           id="ask-question"
           onKeyDown={onEnterPress}

@@ -40,7 +40,7 @@ export const BubbleButtons: React.FC<BubbleButtonsProps> = (props: BubbleButtons
             style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none' }}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            tabIndex={0}>
+            tabIndex={2}>
             {isCopied ? <CheckIcon style={{ fontSize: 20 }}/> : <ContentCopyIcon className="copy-icon" style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>}
           </button>
         </Tooltip>
@@ -51,7 +51,7 @@ export const BubbleButtons: React.FC<BubbleButtonsProps> = (props: BubbleButtons
             style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none', display: isMostRecent ? 'inline' : 'none' }}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            tabIndex={0}
+          tabIndex={2}
         >
           <RefreshIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>
         </button>
@@ -65,7 +65,7 @@ export const BubbleButtons: React.FC<BubbleButtonsProps> = (props: BubbleButtons
           style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none' }}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          tabIndex={0}
+          tabIndex={2}
         >
           <ThumbUpAltOutlinedIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>
         </button>
@@ -79,7 +79,7 @@ export const BubbleButtons: React.FC<BubbleButtonsProps> = (props: BubbleButtons
           style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none' }}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          tabIndex={0}
+          tabIndex={2}
         >
           <ThumbDownAltOutlinedIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>
         </button>
