@@ -73,7 +73,8 @@ resource "azurerm_linux_web_app" "api" {
     BITS_DB_USERNAME              = var.bits_database_config.USERNAME
     BITS_DB_PWD                   = var.bits_database_config.PASSWORD
 
-    SQL_CONNECTION_STRING         = var.postgres_connection_string
+    SQL_CONNECTION_STRING         = var.postgres_connection_string # instead of this, use the module output (see below)
+    # SQL_CONNECTION_STRING         = module.postgress.postgres_connection_string 
   }
 
   sticky_settings { # settings that are the same regardless of deployment slot..
