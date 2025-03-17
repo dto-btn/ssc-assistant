@@ -543,13 +543,6 @@ const MainScreen = () => {
     });
   };
 
-  useEffect(() => {
-    const hasSeenTutorials = localStorage.getItem("hasSeenTutorials");
-    if (hasSeenTutorials !== "true" && displayIsAtleastSm) {
-      setShowTutorials(true);
-    }
-  }, []);
-
   const handleUpdateTutorialBubbleNumber = (tipNumber: number | undefined) => {
     setTutorialBubbleNumber(tipNumber);
   };
