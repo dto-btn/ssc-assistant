@@ -28,12 +28,10 @@ class SuggestionContextDao(BaseSuggestionContextDao):
 
     @override
     def get_suggestion_context_by_id(
-        self, suggestion_id: str
+        self, id: str
     ) -> SuggestionContextWithSuggestionsAndId:
         with self.sql_session_provider.provide() as session:
-            suggestion_context = session.query(SuggestionContextSqlEntity).get(
-                suggestion_id
-            )
+            suggestion_context = session.query(SuggestionContextSqlEntity).get(id)
 
         if suggestion_context is None:
             return None

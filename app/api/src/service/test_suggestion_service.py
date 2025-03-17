@@ -469,14 +469,14 @@ def test_get_suggestioncontext_by_id(ctx: LocalTestContext):
     )
 
     assert response["success"] is True
-    suggestion_id = response["suggestion_id"]
-    assert type(suggestion_id) is str
-    assert len(suggestion_id) > 0
-    suggestion_context = suggestion_service.get_suggestioncontext_by_id(suggestion_id)
+    id = response["id"]
+    assert type(id) is str
+    assert len(id) > 0
+    suggestion_context = suggestion_service.get_suggestioncontext_by_id(id)
 
     assert suggestion_context is not None
     assert suggestion_context["success"] is True
-    assert suggestion_context["suggestion_id"] == suggestion_id
+    assert suggestion_context["id"] == id
     assert suggestion_context["content"] == "test_content"
     assert suggestion_context["language"] == "en"
     assert suggestion_context["requester"] == "someone_cool"

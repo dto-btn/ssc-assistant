@@ -12,7 +12,7 @@ class SuggestionContextDaoMapper:
         sql_entity: SuggestionContextSqlEntity,
     ) -> SuggestionContextWithSuggestionsAndId:
         return SuggestionContextWithSuggestionsAndId(
-            suggestion_id=sql_entity.id,
+            id=sql_entity.id,
             success=True,  # we never save a suggestion that was not successful
             language=sql_entity.language,
             original_query=sql_entity.original_query,
@@ -39,17 +39,5 @@ class SuggestionContextDaoMapper:
             for citation in entity["citations"]
         ]
         sql_entity.created_at = entity["timestamp"]
-
-        # suggestion_id=None,
-        # success=entity["success"],
-        # language=entity["language"],
-        # original_query=entity["original_query"],
-        # created_at=entity["timestamp"],
-        # requester=entity["requester"],
-        # content=entity["content"],
-        # citations=[
-        #     {"title": citation["title"], "url": citation["url"]}
-        #     for citation in entity["citations"]
-        # ],
 
         return sql_entity

@@ -77,7 +77,7 @@ class SuggestionContextWithSuggestionsAndId(SuggestionContextWithSuggestions):
     initiate a new chat with the user that is based on the suggestion.
     """
 
-    suggestion_id: str
+    id: str
 
 class SuggestionContextWithoutSuggestions(SuggestionResponseBase):
     """

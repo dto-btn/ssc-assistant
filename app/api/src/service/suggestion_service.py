@@ -253,12 +253,12 @@ class SuggestionService:
 
     def get_suggestioncontext_by_id(
         self,
-        suggestion_id: str,
+        id: str,
     ) -> SuggestionContextWithSuggestionsAndId | None:
         """
         Get a suggestion context by its ID.
         """
-        return self.suggestion_context_dao.get_suggestion_context_by_id(suggestion_id)
+        return self.suggestion_context_dao.get_suggestion_context_by_id(id)
 
     def clear_stale_suggestions(self) -> None:
         """

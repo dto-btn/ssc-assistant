@@ -20,14 +20,10 @@ class MockSuggestionContextDao(BaseSuggestionContextDao):
 
     @override
     def get_suggestion_context_by_id(
-        self, suggestion_id: str
+        self, id: str
     ) -> SuggestionContextWithSuggestionsAndId:
         return next(
-            (
-                suggestion
-                for suggestion in self._suggestions
-                if suggestion["suggestion_id"] == suggestion_id
-            ),
+            (suggestion for suggestion in self._suggestions if suggestion["id"] == id),
             None,
         )
 
@@ -37,7 +33,7 @@ class MockSuggestionContextDao(BaseSuggestionContextDao):
     ) -> SuggestionContextWithSuggestionsAndId:
         suggestion_context_with_id: SuggestionContextWithSuggestionsAndId = (
             SuggestionContextWithSuggestionsAndId(
-                suggestion_id=str(uuid4()),
+                id=str(uuid4()),
                 success=suggestion["success"],
                 language=suggestion["language"],
                 original_query=suggestion["original_query"],
