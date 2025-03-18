@@ -76,7 +76,7 @@ data "azurerm_search_service" "main" {
 module "postgress" {
   source = "../modules/db"
 
-  project_name = var.project_name
+  project_name = "devsscassistant"
   default_location = var.default_location
   rg_name = azurerm_resource_group.dev.name
   name_prefix = var.name_prefix

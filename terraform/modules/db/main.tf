@@ -1,6 +1,6 @@
 resource "azurerm_postgresql_flexible_server" "db" {
-  name                = lower(replace("${var.name_prefix}${var.project_name}_postgress", "_", "-"))
-  # name                = "scsc-cio-ect-ssc-assistant-dev-postgress"
+  # name                = lower(replace("${var.name_prefix}${var.project_name}_postgress", "_", "-"))
+  name                = "${var.project_name}-postgres"
   location            = var.default_location
   resource_group_name = var.rg_name
 
@@ -12,14 +12,15 @@ resource "azurerm_postgresql_flexible_server" "db" {
   auto_grow_enabled            = true
 
   administrator_login          = var.username_postgress
-  administrator_password = var.password_postgress
+  administrator_password       = var.password_postgress
   version                      = "16"
+
+  zone = "1"
 }
 
-resource "azurerm_postgresql_database" "db" {
+resource "azurerm_postgresql_flexible_server_database" "db" {
   name                = var.db_name
-  resource_group_name = var.rg_name
-  server_name         = azurerm_postgresql_flexible_server.db.name
+  server_id           = azurerm_postgresql_flexible_server.db.id
   charset             = "UTF8"
   collation           = "en_US.utf8"
 
