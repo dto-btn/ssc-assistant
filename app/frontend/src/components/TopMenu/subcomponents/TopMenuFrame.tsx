@@ -42,7 +42,6 @@ export const TopMenuFrame: FC<TopMenuProps> = (({ children }) => {
                         display: "flex",
                         alignItems: "center",
                         gap: "1rem",
-                        cursor: "pointer",
                         userSelect: "none",
                     }}>
                         <img src={logo} style={{
