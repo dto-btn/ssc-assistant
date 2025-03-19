@@ -1,0 +1,50 @@
+name: Database (alembic setup, etc.)
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+    secrets:
+      SQL_CONNECTION_STRING:
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        sparse-checkout: 'app/api'
+        sparse-checkout-cone-mode: false
+
+    - name: Move api files to pwd
+      run: |
+        ls -la
+        mv app/api/* .
+        rm -rf app
+        ls -la
+
+    - name: Set up Python
+      uses: actions/setup-python@v5.2.0
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m venv --copies antenv
+        source antenv/bin/activate
+        pip install -r requirements.txt
+
+    - name: Alembic run
+      run: |
+        cd alembic
+        alembic upgrade head
+      env:
+        SQL_CONNECTION_STRING: ${{ secrets.SQL_CONNECTION_STRING }}

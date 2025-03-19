@@ -27,6 +27,14 @@ jobs:
       app-name: 'ssc-assistant-dev'
     secrets: inherit
 
+  alembic-dev:
+    # TODO: uncomment when satisfied..
+    # if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/db.yml
+    with:
+      environment: 'dev'
+    secrets: inherit
+
   ###################
   #    PILOT-PROD   #
   ###################
