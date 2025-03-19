@@ -8,7 +8,7 @@ on:
         required: true
     secrets:
       SQL_CONNECTION_STRING:
-        required: false
+        required: true
 
 permissions:
   id-token: write
@@ -23,24 +23,19 @@ jobs:
         sparse-checkout: 'app/api'
         sparse-checkout-cone-mode: false
 
-    - name: Move api files to pwd
-      run: |
-        ls -la
-        mv app/api/* .
-        rm -rf app
-        ls -la
-
     - name: Set up Python
       uses: actions/setup-python@v5.2.0
       with:
         python-version: '3.12'
 
     - name: Install dependencies
+      working-directory: 'app/api'
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
 
     - name: Alembic run
+      working-directory: 'app/api'
       run: |
         alembic upgrade head
       env:
