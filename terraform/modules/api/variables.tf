@@ -119,3 +119,9 @@ variable "openai_api_version" {
     type = string
     default = "2024-05-01-preview"
 }
+
+variable "postgres_connection_string" {
+    type = string
+    sensitive = true
+    description = "value of the postgres connection string"
+}

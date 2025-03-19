@@ -114,3 +114,17 @@ resource "azurerm_dns_txt_record" "assistant-dev" {
     value = "78b0199e2df7d755f121ad995a9192f55622702ae3526f9a4bc826bac852574d"
   }
 }
+
+/****************************************************
+*                         DB                        *
+*****************************************************/
+module "postgress" {
+  source = "modules/db"
+
+  project_name = "pilotprodsscassistant"
+  default_location = var.default_location
+  rg_name = azurerm_resource_group.dev.name
+  name_prefix = var.name_prefix
+  username_postgress = var.username_postgress
+  password_postgress = var.password_postgress
+}
