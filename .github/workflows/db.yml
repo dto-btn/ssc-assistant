@@ -6,9 +6,6 @@ on:
       environment:
         type: string
         required: true
-    secrets:
-      SQL_CONNECTION_STRING:
-        required: true
 
 permissions:
   id-token: write
@@ -17,6 +14,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     steps:
     - uses: actions/checkout@v4
       with:
