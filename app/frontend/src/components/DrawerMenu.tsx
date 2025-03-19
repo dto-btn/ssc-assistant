@@ -31,7 +31,6 @@ import Handyman from "@mui/icons-material/Handyman";
 import { useEffect, useRef, useState } from "react";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import InfoIcon from "@mui/icons-material/Info";
 import HistoryIcon from "@mui/icons-material/History";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
@@ -45,7 +44,6 @@ interface DrawerMenuProps {
   openDrawer: boolean;
   chatDescriptions: string[];
   currentChatIndex: number;
-  toggleDrawer: (arg: boolean) => void;
   onClearChat: () => void;
   onNewChat: () => void;
   setLangCookie: () => void;
@@ -60,8 +58,6 @@ interface DrawerMenuProps {
   ) => void;
   selectedCorporateFunction: string;
   handleSelectedModelChanged: (modelName: string) => void;
-  tutorialBubbleNumber?: number;
-  handleToggleTutorials: (showTutorials?: boolean) => void;
   handleDeleteSavedChat: (index: number) => void;
   handleLoadSavedChat: (index: number) => void;
   renameChat: (newChatDescription: string, index: number) => void;
@@ -70,7 +66,6 @@ interface DrawerMenuProps {
 export const DrawerMenu = ({
   openDrawer,
   chatDescriptions,
-  toggleDrawer,
   onClearChat,
   onNewChat,
   setLangCookie,
@@ -81,8 +76,6 @@ export const DrawerMenu = ({
   selectedCorporateFunction,
   handleSelectedModelChanged,
   selectedModel,
-  tutorialBubbleNumber,
-  handleToggleTutorials,
   handleDeleteSavedChat,
   handleLoadSavedChat,
   renameChat,
@@ -176,34 +169,6 @@ export const DrawerMenu = ({
       setSelectChatMenuOpen(false);
     }
   }, [openDrawer]);
-
-  // Use effect for opening the collapses for tools/model selection with tutorials
-  useEffect(() => {
-    if (openDrawer && tutorialBubbleNumber) {
-      switch (tutorialBubbleNumber) {
-        case 2:
-          setToolMenuOpen(true);
-          setSelectModelMenuOpen(false);
-          break;
-        case 3:
-          setToolMenuOpen(false);
-          setSelectModelMenuOpen(true);
-          break;
-        case 4:
-          setToolMenuOpen(false);
-          setSelectModelMenuOpen(false);
-          break;
-        case 5:
-          setSelectChatMenuOpen(false);
-          break;
-        case 6:
-          setSelectChatMenuOpen(true);
-          break;
-        default:
-          break;
-      }
-    }
-  }, [tutorialBubbleNumber, openDrawer]);
 
   // focus the text field when a user renames a chat
   useEffect(() => {
@@ -387,7 +352,7 @@ export const DrawerMenu = ({
             </ListItemIcon>
             <ListItemText
               primary={t("new.conversation")}
-              aria-description={t("tutorial.newChat")}
+              aria-description={t("new.conversation.aria.description")}
               aria-label={t("new.conversation")}
             />
           </ListItemButton>
@@ -542,16 +507,6 @@ export const DrawerMenu = ({
         </Collapse>
       </List>
       <List sx={{ marginTop: "auto" }}>
-        {!tutorialBubbleNumber && (
-          <ListItem key="tutorials" disablePadding>
-            <ListItemButton onClick={() => handleToggleTutorials(true)}>
-              <ListItemIcon>
-                <InfoIcon />
-              </ListItemIcon>
-              <ListItemText primary={t("tutorial.view")} />
-            </ListItemButton>
-          </ListItem>
-        )}
         {isAuthenticated && (
           <ListItem key="logout" disablePadding>
             <ListItemButton onClick={logout}>
@@ -570,7 +525,6 @@ export const DrawerMenu = ({
     <Drawer
       anchor="right"
       open={openDrawer}
-      onClose={() => toggleDrawer(false)}
     >
       {list()}
     </Drawer>

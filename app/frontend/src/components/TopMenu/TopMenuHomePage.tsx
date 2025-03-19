@@ -1,19 +1,15 @@
-import MenuIcon from "@mui/icons-material/Menu";
-import { Box, BoxProps, IconButton } from "@mui/material";
+import { Box, BoxProps } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { UserProfilePicture } from "../ProfilePicture";
 import { useContext } from "react";
 import { UserContext } from "../../context/UserContext";
-import { forwardRef } from "react";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import React from "react";
 import { TopMenuFrame } from "./subcomponents/TopMenuFrame";
 import TopmenuMicrosofTeamsIcon from "./TopmenuMicrosofTeamsIcon.svg";
 
 interface TopMenuHomePageProps {
-  toggleDrawer: (arg: boolean) => void;
-  ref: React.RefObject<HTMLButtonElement>;
   onNewChat: () => void;
 }
 
@@ -24,10 +20,7 @@ type TopMenuHomePageItem = {
   onClick: () => void;
 };
 
-export const TopMenuHomePage = forwardRef<
-  HTMLButtonElement,
-  TopMenuHomePageProps
->(({ toggleDrawer, onNewChat }, ref) => {
+export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat }) => {
   const { t } = useTranslation();
   const { graphData } = useContext(UserContext);
 
@@ -131,15 +124,6 @@ export const TopMenuHomePage = forwardRef<
               />
             </>
           )}
-          <IconButton
-            edge="start"
-            color="inherit"
-            onClick={() => toggleDrawer(true)}
-            aria-label={t("aria.show.menu")}
-            ref={ref}
-          >
-            <MenuIcon />
-          </IconButton>
         </Box>
       </Box>
     </TopMenuFrame>

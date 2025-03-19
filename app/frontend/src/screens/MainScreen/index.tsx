@@ -24,7 +24,6 @@ import { apiUse } from "../../authConfig";
 import { AccountInfo, InteractionStatus } from "@azure/msal-browser";
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from "uuid";
-import { TutorialBubble } from "../../components/TutorialBubble";
 import { bookReservation } from "../../api/api";
 import { allowedToolsSet } from "../../allowedTools";
 import { callMsGraph } from "../../graph";
@@ -66,7 +65,7 @@ const MainScreen = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
-  const [openDrawer, setOpenDrawer] = useState<boolean>(false);
+  const [openDrawer, setOpenDrawer] = useState<boolean>(true);
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [isGoodResponse, setIsGoodResponse] = useState(false);
@@ -82,17 +81,12 @@ const MainScreen = () => {
   const [showDeleteChatDialog, setShowDeleteChatDialog] = useState(false);
   const [warningDialogMessage, setWarningDialogMessage] = useState("");
   const [quotedText, setQuotedText] = useState<string>();
-  const [showTutorials, setShowTutorials] = useState(false);
-  const [tutorialBubbleNumber, setTutorialBubbleNumber] = useState<
-    number | undefined
-  >(undefined);
   const [apiAccessToken, setApiAccessToken] = useState<string>("");
   const [enabledTools, setEnabledTools] =
     useState<Record<string, boolean>>(defaultEnabledTools);
   const [selectedCorporateFunction, setSelectedCorporateFunction] =
     useState<string>("intranet_question");
 
-  const menuIconRef = useRef<HTMLButtonElement>(null);
   const theme = useTheme();
   const { instance, inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
@@ -391,14 +385,12 @@ const MainScreen = () => {
       saveChatHistories(updatedChatHistory);
       return updatedChatHistory;
     });
-    setOpenDrawer(false);
   };
 
   const setLangCookie = () => {
     Cookies.set("lang_setting", i18n.language, {
       expires: 30,
     });
-    setOpenDrawer(false);
   };
 
   const handleLogout = () => {
@@ -543,27 +535,6 @@ const MainScreen = () => {
     });
   };
 
-  useEffect(() => {
-    const hasSeenTutorials = localStorage.getItem("hasSeenTutorials");
-    if (hasSeenTutorials !== "true" && displayIsAtleastSm) {
-      setShowTutorials(true);
-    }
-  }, []);
-
-  const handleUpdateTutorialBubbleNumber = (tipNumber: number | undefined) => {
-    setTutorialBubbleNumber(tipNumber);
-  };
-
-  const toggleTutorials = (showTutorials?: boolean) => {
-    if (showTutorials) {
-      setOpenDrawer(false);
-      setShowTutorials(true);
-    } else {
-      localStorage.setItem("hasSeenTutorials", "true");
-      setShowTutorials(false);
-    }
-  };
-
   const handleDeleteSavedChat = (index: number) => {
     setChatIndexToLoadOrDelete(index);
     setShowDeleteChatDialog(true);
@@ -582,7 +553,6 @@ const MainScreen = () => {
 
       if (updatedChatHistories.length === 0) {
         // current chat was only chat and at index 0, so just reset state
-        setOpenDrawer(false);
         setCurrentChatHistory(defaultChatHistory);
       } else if (currentChatIndex === chatIndexToLoadOrDelete) {
         // deleting current chat, so set to whatever is at index 0
@@ -642,7 +612,6 @@ const MainScreen = () => {
         ...chatHistoriesDescriptions,
         "Conversation " + (chatHistoriesDescriptions.length + 1),
       ]);
-      setOpenDrawer(false);
     }
   };
 
@@ -772,7 +741,6 @@ const MainScreen = () => {
           ...chatHistoriesDescriptions,
           parsedSuggestionContext.context.original_query,
         ]);
-        setOpenDrawer(false);
       } else {
         const showError = (msg: string) => {
           /**
@@ -807,8 +775,6 @@ const MainScreen = () => {
   return (
     <UserContext.Provider value={userData}>
       <TopMenuHomePage
-        toggleDrawer={setOpenDrawer}
-        ref={menuIconRef}
         onNewChat={handleNewChat}
       />
       {currentChatHistory.chatItems.length === 0 ? (
@@ -908,13 +874,9 @@ const MainScreen = () => {
       )}
       <Disclaimer />
       <DrawerMenu
-        openDrawer={
-          openDrawer ||
-          (tutorialBubbleNumber !== undefined && tutorialBubbleNumber > 1)
-        }
+        openDrawer={openDrawer}
         chatDescriptions={chatHistoriesDescriptions}
         currentChatIndex={currentChatIndex}
-        toggleDrawer={setOpenDrawer}
         onClearChat={handleClearChat}
         onNewChat={handleNewChat}
         setLangCookie={setLangCookie}
@@ -925,8 +887,6 @@ const MainScreen = () => {
         selectedCorporateFunction={selectedCorporateFunction}
         selectedModel={currentChatHistory.model}
         handleSelectedModelChanged={hanldeUpdateModelVersion}
-        tutorialBubbleNumber={tutorialBubbleNumber}
-        handleToggleTutorials={toggleTutorials}
         handleDeleteSavedChat={handleDeleteSavedChat}
         handleLoadSavedChat={handleLoadSavedChat}
         renameChat={renameChat}
@@ -938,13 +898,6 @@ const MainScreen = () => {
         handleClose={() => setIsFeedbackVisible(false)}
         handleFeedbackSubmit={handleFeedbackSubmit}
       />
-      {showTutorials && (
-        <TutorialBubble
-          handleAllTutorialsDisplayed={toggleTutorials}
-          menuIconRef={menuIconRef}
-          updateTutorialBubbleNumber={handleUpdateTutorialBubbleNumber}
-        />
-      )}
 
       <DeleteConversationConfirmation
         open={showDeleteChatDialog}
