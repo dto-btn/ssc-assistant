@@ -523,8 +523,13 @@ export const DrawerMenu = ({
 
   return (
     <Drawer
-      anchor="right"
       open={openDrawer}
+      variant="permanent"
+      sx={{
+        display: { xs: 'none', sm: 'block' },
+        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: '200px' },
+      }}
+
     >
       {list()}
     </Drawer>

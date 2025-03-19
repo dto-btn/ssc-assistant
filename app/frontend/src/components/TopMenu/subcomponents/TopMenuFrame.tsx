@@ -19,7 +19,10 @@ export const TopMenuFrame: FC<TopMenuProps> = (({ children }) => {
                     bgcolor: "white",
                     backgroundImage: "none",
                     boxShadow: "none",
-                    position: "sticky"
+                    position: "fixed",
+                    left: 200,
+                    top: 0,
+                    right: 0
                 }}
             >
                 <Toolbar

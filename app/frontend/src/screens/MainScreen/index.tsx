@@ -783,7 +783,7 @@ const MainScreen = () => {
           sx={{
             position: "fixed",
             top: 0,
-            left: 0,
+            left: 200,
             right: 0,
             bottom: 0,
             display: "flex",
@@ -834,6 +834,11 @@ const MainScreen = () => {
             flexFlow: "column",
             minHeight: "100vh",
             margin: "auto",
+              position: "fixed",
+              top: 0,
+              left: 200,
+              right: 0,
+              bottom: 0,
           }}
           maxWidth="lg"
         >
