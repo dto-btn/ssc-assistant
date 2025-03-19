@@ -82,9 +82,6 @@ export const DrawerMenu = ({
   renameChat,
   currentChatIndex,
 }: DrawerMenuProps) => {
-  const [toolMenuOpen, setToolMenuOpen] = useState(false);
-  const [selectModelMenuOpen, setSelectModelMenuOpen] = useState(false);
-  const [selectChatMenuOpen, setSelectChatMenuOpen] = useState(false);
   const [moreMenuAnchor, setMoreMenuAnchor] = useState<null | HTMLElement>(
     null
   );
@@ -94,19 +91,12 @@ export const DrawerMenu = ({
   const [editedDescription, setEditedDescription] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [textFieldIsFocused, setTextFieldIsFocused] = useState(false);
+  const [selectChatMenuOpen, setSelectChatMenuOpen] = useState(false);
 
   const isAuthenticated = useIsAuthenticated();
   const moreMenuOpen = Boolean(moreMenuAnchor);
   const { t } = useTranslation();
   const textFieldRef = useRef<HTMLDivElement>(null);
-
-  const toggleToolDrawerOpen = () => {
-    setToolMenuOpen(!toolMenuOpen);
-  };
-
-  const toggleSelectModelMenuOpen = () => {
-    setSelectModelMenuOpen(!selectModelMenuOpen);
-  };
 
   const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     handleSelectedModelChanged((event.target as HTMLInputElement).value);
@@ -161,16 +151,6 @@ export const DrawerMenu = ({
       }
     }, 100);
   };
-
-  // use effect to close the collapses when the drawer is toggled closed
-  useEffect(() => {
-    if (!openDrawer) {
-      setSelectModelMenuOpen(false);
-      setToolMenuOpen(false);
-      setSelectChatMenuOpen(false);
-    }
-  }, [openDrawer]);
-
   // focus the text field when a user renames a chat
   useEffect(() => {
     if (editingIndex !== null && textFieldRef.current) {
@@ -219,18 +199,16 @@ export const DrawerMenu = ({
           />
         </Divider>
         <ListItem key="toolSettings" disablePadding>
-          <ListItemButton
-            onClick={toggleToolDrawerOpen}
-            aria-expanded={toolMenuOpen}
+          <ListItem
+            aria-expanded={true}
           >
             <ListItemIcon>
               <Handyman />
             </ListItemIcon>
             <ListItemText primary={t("menu.chooseTools")} />
-            {toolMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </ListItemButton>
+          </ListItem>
         </ListItem>
-        <Collapse in={toolMenuOpen} timeout="auto" unmountOnExit>
+        <Collapse in={true} timeout="auto" unmountOnExit>
           <Divider />
           <FormGroup>
             {corporateKey && (
@@ -295,18 +273,16 @@ export const DrawerMenu = ({
           </FormGroup>
         </Collapse>
         <ListItem key="modelSelection" disablePadding>
-          <ListItemButton
-            onClick={toggleSelectModelMenuOpen}
-            aria-expanded={selectModelMenuOpen}
+          <ListItem
+            aria-expanded={true}
           >
             <ListItemIcon>
               <PsychologyIcon />
             </ListItemIcon>
             <ListItemText>{t("model.version.select")}</ListItemText>
-            {selectModelMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </ListItemButton>
+          </ListItem>
         </ListItem>
-        <Collapse in={selectModelMenuOpen} timeout="auto" unmountOnExit>
+        <Collapse in={true} timeout="auto" unmountOnExit>
           <Divider />
           <RadioGroup
             defaultValue="gpt-4o"
