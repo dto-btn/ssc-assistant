@@ -42,7 +42,6 @@ jobs:
 
     - name: Alembic run
       run: |
-        cd alembic
         alembic upgrade head
       env:
         SQL_CONNECTION_STRING: ${{ secrets.SQL_CONNECTION_STRING }}
