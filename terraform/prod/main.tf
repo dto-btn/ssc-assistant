@@ -74,7 +74,7 @@ module "api" {
   ai_endpoint = data.azurerm_cognitive_account.ai-pilot-prod.endpoint
   ai_key = data.azurerm_cognitive_account.ai-pilot-prod.primary_access_key
 
-  postgres_connection_string = var.postgres_connection_string
+  postgres_connection_string = module.postgress.postgres_connection_string
 }
 
 /****************************************************

@@ -126,7 +126,7 @@ resource "azurerm_linux_web_app" "api" {
     ALLOWED_TOOLS                 = "corporate, geds"
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
     #PORT = 5001
-    SQL_CONNECTION_STRING         = var.postgres_connection_string
+    SQL_CONNECTION_STRING         = module.postgress.postgres_connection_string
   }
 
   sticky_settings { # settings that are the same regardless of deployment slot..
