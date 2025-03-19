@@ -2,8 +2,6 @@ import {
   Box,
   Dialog,
   DialogContent,
-  useMediaQuery,
-  useTheme,
 } from "@mui/material";
 import {
   ChatInput,
@@ -93,10 +91,8 @@ const MainScreen = () => {
     useState<string>("intranet_question");
 
   const menuIconRef = useRef<HTMLButtonElement>(null);
-  const theme = useTheme();
   const { instance, inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
-  const displayIsAtleastSm = useMediaQuery(theme.breakpoints.up("sm"));
 
   const setCurrentChatIndex = (index: number) => {
     // Set the index in local storage
@@ -542,13 +538,6 @@ const MainScreen = () => {
       return updatedChatHistory;
     });
   };
-
-  useEffect(() => {
-    const hasSeenTutorials = localStorage.getItem("hasSeenTutorials");
-    if (hasSeenTutorials !== "true" && displayIsAtleastSm) {
-      setShowTutorials(true);
-    }
-  }, []);
 
   const handleUpdateTutorialBubbleNumber = (tipNumber: number | undefined) => {
     setTutorialBubbleNumber(tipNumber);
