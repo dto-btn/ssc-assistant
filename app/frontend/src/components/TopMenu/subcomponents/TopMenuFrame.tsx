@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import logo from "../../../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { type PropsWithChildren } from "react";
 import { type FC } from "react";
+import { LEFT_MENU_WIDTH } from "../../../constants/frameDimensions";
 
 type TopMenuProps = PropsWithChildren;
 export const TopMenuFrame: FC<TopMenuProps> = (({ children }) => {
@@ -20,7 +21,7 @@ export const TopMenuFrame: FC<TopMenuProps> = (({ children }) => {
                     backgroundImage: "none",
                     boxShadow: "none",
                     position: "fixed",
-                    left: 200,
+                    left: LEFT_MENU_WIDTH,
                     top: 0,
                     right: 0
                 }}

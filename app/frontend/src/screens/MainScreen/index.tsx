@@ -33,6 +33,7 @@ import { useLocation } from "react-router";
 import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
 import { useAppStore } from "../../context/AppStore";
 import Typography from "@mui/material/Typography";
+import { LEFT_MENU_WIDTH } from "../../constants/frameDimensions";
 
 const MainScreen = () => {
   const appStore = useAppStore();
@@ -783,7 +784,7 @@ const MainScreen = () => {
           sx={{
             position: "fixed",
             top: 0,
-            left: 200,
+            left: LEFT_MENU_WIDTH,
             right: 0,
             bottom: 0,
             display: "flex",
@@ -836,7 +837,7 @@ const MainScreen = () => {
             margin: "auto",
               position: "fixed",
               top: 0,
-              left: 200,
+              left: LEFT_MENU_WIDTH,
               right: 0,
               bottom: 0,
           }}

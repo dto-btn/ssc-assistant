@@ -39,6 +39,7 @@ import { useTranslation } from "react-i18next";
 import React from "react";
 import { allowedToolsSet, allowedCorporateFunctionsSet } from "../allowedTools";
 import FormLabel from "@mui/material/FormLabel";
+import { LEFT_MENU_WIDTH } from "../constants/frameDimensions";
 
 interface DrawerMenuProps {
   openDrawer: boolean;
@@ -527,7 +528,7 @@ export const DrawerMenu = ({
       variant="permanent"
       sx={{
         display: { xs: 'none', sm: 'block' },
-        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: '200px' },
+        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: `${LEFT_MENU_WIDTH}px` },
       }}
 
     >
