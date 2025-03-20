@@ -73,8 +73,6 @@ module "api" {
   #ai_key = azurerm_cognitive_account.ai.primary_access_key
   ai_endpoint = data.azurerm_cognitive_account.ai-pilot-prod.endpoint
   ai_key = data.azurerm_cognitive_account.ai-pilot-prod.primary_access_key
-
-  postgres_connection_string = module.postgress.postgres_connection_string
 }
 
 /****************************************************
@@ -85,7 +83,7 @@ module "postgress" {
 
   project_name = "prodsscassistant"
   default_location = var.default_location
-  rg_name = azurerm_resource_group.dev.name
+  rg_name = azurerm_resource_group.main.name
   name_prefix = var.name_prefix
   username_postgress = var.username_postgress
   password_postgress = var.password_postgress

@@ -119,11 +119,11 @@ resource "azurerm_dns_txt_record" "assistant-dev" {
 *                         DB                        *
 *****************************************************/
 module "postgress" {
-  source = "modules/db"
+  source = "./modules/db"
 
   project_name = "pilotprodsscassistant"
   default_location = var.default_location
-  rg_name = azurerm_resource_group.dev.name
+  rg_name = azurerm_resource_group.main.name
   name_prefix = var.name_prefix
   username_postgress = var.username_postgress
   password_postgress = var.password_postgress
