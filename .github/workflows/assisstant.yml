@@ -27,6 +27,13 @@ jobs:
       app-name: 'ssc-assistant-dev'
     secrets: inherit
 
+  alembic-dev:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/db.yml
+    with:
+      environment: 'dev'
+    secrets: inherit
+
   ###################
   #    PILOT-PROD   #
   ###################
@@ -49,6 +56,13 @@ jobs:
       app-name: 'ssc-assistant'
     secrets: inherit
 
+  alembic-pilot-prod:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/db.yml
+    with:
+      environment: 'pilot-prod'
+    secrets: inherit
+
   ###################
   #      PROD       #
   ###################
@@ -69,4 +83,11 @@ jobs:
       disabled-features: ''
       environment: 'prod'
       app-name: 'ssc-assistant-prod'
+    secrets: inherit
+
+  alembic-prod:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/db.yml
+    with:
+      environment: 'prod'
     secrets: inherit

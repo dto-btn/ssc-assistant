@@ -120,6 +120,7 @@ resource "azurerm_linux_web_app" "api" {
     ALLOWED_TOOLS                 = join(", ", var.allowed_tools)
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS = var.tenant_id
     #PORT = 5001
+    SQL_CONNECTION_STRING         = var.postgres_connection_string
   },
   var.bits_database_config != null ? {
     BITS_DB_SERVER                = var.bits_database_config.URL

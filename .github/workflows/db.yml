@@ -1,0 +1,40 @@
+name: Database (alembic setup, etc.)
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        sparse-checkout: 'app/api'
+        sparse-checkout-cone-mode: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v5.2.0
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      working-directory: 'app/api'
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-dev.txt
+
+    - name: Alembic run
+      working-directory: 'app/api'
+      run: |
+        alembic upgrade head
+      env:
+        SQL_CONNECTION_STRING: ${{ secrets.SQL_CONNECTION_STRING }}
