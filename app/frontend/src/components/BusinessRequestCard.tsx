@@ -87,6 +87,12 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
         }
       ></CardHeader>
       <CardContent>
+        {(isEnglish ? data.BR_TYPE_EN : data.BR_TYPE_FR) && (
+          <Typography variant="body2">
+            <strong>{t("br.type")}: </strong>
+            {isEnglish ? data.BR_TYPE_EN : data.BR_TYPE_FR}
+          </Typography>
+        )}
         <Typography variant="body2" color="textPrimary">
           <strong>{t("priority")}: </strong>
           {isEnglish ? data.PRIORITY_EN : data.PRIORITY_FR}
@@ -101,14 +107,30 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
             {isEnglish ? data.CLIENT_SUBGRP_EN : data.CLIENT_SUBGRP_FR}
           </Typography>
         )}
-        <Typography variant="body2" color="textPrimary">
+        {/* <Typography variant="body2" color="textPrimary">
           <strong>{t("create.date")}: </strong>
           {new Date(data.CREATE_DATE).toLocaleDateString()}
-        </Typography>
+        </Typography> */}
         <Typography variant="body2" color="textPrimary">
           <strong>{t("submit.date")}: </strong>
           {new Date(data.SUBMIT_DATE).toLocaleDateString()}
         </Typography>
+        <Typography variant="body2" color="textPrimary">
+          <strong>{t("client.request.impl.date")}: </strong>
+          {new Date(data.REQST_IMPL_DATE).toLocaleDateString()}
+        </Typography>
+        {data.RVSD_TARGET_IMPL_DATE && (
+          <Typography variant="body2" color="textPrimary">
+            <strong>{t("revised.impl.date")}: </strong>
+            {new Date(data.RVSD_TARGET_IMPL_DATE).toLocaleDateString()}
+          </Typography>
+        )}
+        {data.ACTUAL_IMPL_DATE && (
+          <Typography variant="body2" color="textPrimary">
+            <strong>{t("actual.impl.date")}: </strong>
+            {new Date(data.ACTUAL_IMPL_DATE).toLocaleDateString()}
+          </Typography>
+        )}
         {(isEnglish ? data.CANCEL_REASON_EN : data.CANCEL_REASON_FR) && (
           <Typography variant="body2">
             <strong>{t("cancel.reason")}: </strong>

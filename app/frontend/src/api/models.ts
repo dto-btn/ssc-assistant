@@ -126,7 +126,7 @@ interface BusinessRequest {
   DAYS_SINCE_SUBMIT: number;
   REQST_IMPL_DATE: string;
   TARGET_IMPL_DATE: string;
-  RVSD_TARGET_IMPL_DATE: string | null;
+  RVSD_TARGET_IMPL_DATE: string;
   ACTUAL_IMPL_DATE: string;
   DAYS_TO_IMPL: number;
   CANCEL_REASON_EN: string | null;

@@ -714,5 +714,21 @@
     "assignee": {
         "en": "Assignee",
         "fr": "Assigné"
+    },
+    "br.type": {
+        "en": "BR Type",
+        "fr": "Type de DO"
+    },
+    "client.request.impl.date": {
+        "en": "Client Requested Implementation Date",
+        "fr": "Date de mise en œuvre demandée par le client"
+    },
+    "revised.impl.date": {
+        "en": "Revised Implementation Date",
+        "fr": "Date de mise en œuvre révisée"
+    },
+    "actual.impl.date": {
+        "en": "Actual Implementation Date",
+        "fr": "Date de mise en œuvre réelle"
     }
 }
