@@ -30,6 +30,7 @@ import FitScreenIcon from "@mui/icons-material/FitScreen";
 import BusinessRequestCard from "./BusinessRequestCard";
 import BusinessRequestUpdates from "./BusinessRequestUpdates";
 import { transformToBusinessRequest } from "../util/bits_utils";
+import BusinessRequestTable from "./BusinessRequestTable";
 
 interface AssistantBubbleProps {
   text: string;
@@ -474,7 +475,17 @@ export const AssistantBubble = ({
                     marginTop: 2,
                   }}
                 >
+                  {brData && brData.length > 1 && (
+                    <Box sx={{ gridColumn: "span 2" }}>
+                      <BusinessRequestTable
+                        data={brData}
+                        lang={i18n.language}
+                      />
+                    </Box>
+                  )}
+
                   {brData &&
+                    brData.length == 1 &&
                     brData.map((item, index) => (
                       <BusinessRequestCard
                         key={index}

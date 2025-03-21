@@ -734,5 +734,9 @@
     "actual.impl.date": {
         "en": "Actual Implementation Date",
         "fr": "Date de mise en œuvre réelle"
+    },
+    "business.request.title": {
+        "en": "Title",
+        "fr": "Nom"
     }
 }
