@@ -172,56 +172,47 @@ export const AssistantBubble = ({
       return processedProfiles;
     };
 
-    if (toolsInfo) {
-      if (toolsInfo?.payload?.br) {
-        try {
-          const brInformation = toolsInfo.payload.br;
-          if (brInformation.length) {
-            brInformation.map((br: any) => {
-              const brData = transformToBusinessRequest(br);
-              setBrData((prev) => (prev ? [...prev, brData] : [brData]));
-            });
+    if (toolsInfo && toolsInfo.length > 0) {
+      toolsInfo.map((tool) => {
+        const payload = tool.payload;
+        // BRs
+        if (payload?.br) {
+          try {
+            const brInformation = payload.br;
+            if (brInformation.length) {
+              brInformation.map((br: any) => {
+                const brData = transformToBusinessRequest(br);
+                setBrData((prev) => (prev ? [...prev, brData] : [brData]));
+              });
+            }
+          } catch (error) {
+            console.error("Error transforming BR data", error);
           }
-        } catch (error) {
-          console.error("Error transforming BR data", error);
         }
-      }
-
-      if (toolsInfo?.payload?.br_updates) {
-        try {
-          const brUpdates = toolsInfo.payload.br_updates;
-          setBrUpdates(brUpdates);
-        } catch (error) {
-          console.error("Error transforming BR update data", error);
+        // BR Updates
+        if (payload?.br_updates) {
+          try {
+            const brUpdates = payload.br_updates;
+            setBrUpdates(brUpdates);
+          } catch (error) {
+            console.error("Error transforming BR update data", error);
+          }
         }
-      }
+        // GEDS
+        if (payload?.profiles) {
+          const processedProfiles = processProfiles(payload.profiles);
+          setProfiles(processedProfiles);
+        }
 
-      if (
-        toolsInfo.payload &&
-        Object.prototype.hasOwnProperty.call(toolsInfo.payload, "profiles") &&
-        toolsInfo.payload.profiles !== null
-      ) {
-        const processedProfiles = processProfiles(toolsInfo.payload.profiles);
-        setProfiles(processedProfiles);
-      }
+        //ARCHIBUS
+        if (payload?.floorPlan) {
+          setFloorPlanFilename(payload.floorPlan);
+        }
 
-      if (
-        toolsInfo.payload &&
-        Object.prototype.hasOwnProperty.call(toolsInfo.payload, "floorPlan")
-      ) {
-        const floorPlanFile = toolsInfo.payload.floorPlan;
-        setFloorPlanFilename(floorPlanFile);
-      }
-
-      if (
-        toolsInfo.payload &&
-        Object.prototype.hasOwnProperty.call(
-          toolsInfo.payload,
-          "bookingDetails"
-        )
-      ) {
-        setBookingDetails(toolsInfo.payload.bookingDetails);
-      }
+        if (payload?.bookingDetails) {
+          setBookingDetails(payload.bookingDetails);
+        }
+      });
     }
   }, [toolsInfo, text]);
 

@@ -99,7 +99,7 @@ class ToolService:
 
                 # Search for an existing tool with the same tool_type and function_name
                 existing_tool = next(
-                    (ti for ti in self.tools_info 
+                    (ti for ti in self.tools_info
                      if ti.tool_type == tool_type and ti.function_name == function_name),
                     None
                 )
@@ -108,6 +108,7 @@ class ToolService:
                     tool_info.count += 1
                 else:
                     tool_info = ToolInfo(tool_type=tool_type, function_name=function_name)
+                    self.tools_info.append(tool_info)
 
                 data = {}
                 if tool_type == TOOL_GEDS:
