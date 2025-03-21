@@ -293,22 +293,32 @@ export const AssistantBubble = ({
 
             {toolsUsed && toolsInfo.tool_type && (
               <ToolsUsedBox>
-                <Tooltip title={t("toolsUsed")} arrow>
-                  <HandymanIcon
-                    style={{
-                      fontSize: 16,
-                      margin: "0px 3px 0px 0px",
-                      color: "#4b3e99",
-                    }}
-                  />
-                </Tooltip>
-                <Stack direction="row" spacing={1}>
-                  {toolsInfo.tool_type.map((tool, index) => (
-                    <Tooltip title={t(tool)} key={index} arrow>
-                      <Chip label={toolsInfo.function_names[index] + "()"} />
-                    </Tooltip>
-                  ))}
-                </Stack>
+                <Paper
+                  sx={{ backgroundColor: "white", padding: 1 }}
+                  elevation={3}
+                >
+                  <Typography variant="caption" gutterBottom>
+                    {t("toolsUsed.short")}:{" "}
+                  </Typography>
+                  <Divider sx={{ margin: 1 }} />
+                  <Stack direction="row" spacing={1}>
+                    {toolsInfo.tool_type.map((tool, index) => (
+                      <Tooltip title={t(tool)} key={index} arrow>
+                        <Chip
+                          icon={
+                            <HandymanIcon
+                              style={{
+                                fontSize: 16,
+                                color: "#4b3e99",
+                              }}
+                            />
+                          }
+                          label={toolsInfo.function_names[index] + "()"}
+                        />
+                      </Tooltip>
+                    ))}
+                  </Stack>
+                </Paper>
               </ToolsUsedBox>
             )}
 
@@ -541,7 +551,7 @@ const ToolsUsedBox = styled(Box)`
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: 10px 15px;
+  padding: 1em;
 `;
 
 const MainContentWrapper = styled(Box)`

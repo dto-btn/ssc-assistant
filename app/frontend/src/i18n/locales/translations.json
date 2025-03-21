@@ -96,8 +96,12 @@
         "fr": "Effacer"
     },
     "toolsUsed": {
-        "en": "Tools used by the assistant in the response",
-        "fr": "Outils utilisés par l'assistant dans la réponse"
+        "en": "Tools (functions) used by the assistant in the response",
+        "fr": "Outils (fonctions) utilisés par l'assistant dans la réponse"
+    },
+    "toolsUsed.short": {
+        "en": "Tools (functions) used",
+        "fr": "Outils (fonctions) utilisés"
     },
     "answer.not.found": {
         "en": "It seems we could not find an answer to your question, you can try clearing the history and asking the question again.",

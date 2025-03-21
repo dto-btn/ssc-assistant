@@ -29,28 +29,33 @@ valid_search_fields = [
     "type": "function",
     "function": {
         "name": "get_br_information",
-        "description": "Gets information about a BR given a specific BR number.",
+        "description": "Returns Business Request(s) (BR) information. Can be invoked for one OR many BR numbers at the same time. I.e; Give me BR info for 12345, 32456 and 66123. Should only invoke this function once",
         "parameters": {
             "type": "object",
             "properties": {
-                "br_number": {
-                    "type": "integer",
-                    "description": "A BR number."
+                "br_numbers": {
+                    "type": "array",
+                    "description": "An Array containing all the Business Request (BR) numbers.",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             },
-            "required": ["br_number"]
+            "required": ["br_numbers"]
       }
     }
   })
-def get_br_information(br_number: int):
+def get_br_information(br_numbers: list[int]):
     """
     gets br information
 
     SELECT BR_NMBR, BR_TITLE, BR_SHORT_TITLE, PRIORITY_EN, PRIORITY_FR, CLIENT_NAME_SRC, CREATE_DATE,
     SUBMIT_DATE, REQST_IMPL_DATE FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR = 123456;
     """
-    query = "SELECT * FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR = %s;"
-    result = db.execute_query(query, br_number)
+    placeholders = ", ".join(["%s"] * len(br_numbers))
+    query = f"SELECT * FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR IN ({placeholders});"
+
+    result = db.execute_query(query, *br_numbers)
     return {'br': result}
 
 @tool_metadata({
