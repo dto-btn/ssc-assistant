@@ -23,7 +23,7 @@ class ToolService:
         _allowed_tools_str: str = os.getenv("ALLOWED_TOOLS") or ",".join([TOOL_CORPORATE, TOOL_GEDS])
         self.allowed_tools = [tool.strip() for tool in _allowed_tools_str.split(",")]
         self.tools = self._load_tools(requested_tools)
-        self.tools_info = ToolInfo()
+        self.tools_info: List[ToolInfo] = []
 
     def get_functions_by_type(self, tool_type: str) -> List[str]:
         """
@@ -96,9 +96,19 @@ class ToolService:
         for tool in self.tools:
             if function_name is not None and tool['function']['name'] == function_name:
                 tool_type = tool['tool_type']
-                # we add the information to the tools_info object regardless if we got data or not with it.
-                self.tools_info.function_names.append(function_name)
-                self.tools_info.tool_type.append(tool_type)
+
+                # Search for an existing tool with the same tool_type and function_name
+                existing_tool = next(
+                    (ti for ti in self.tools_info 
+                     if ti.tool_type == tool_type and ti.function_name == function_name),
+                    None
+                )
+                if existing_tool:
+                    tool_info = existing_tool
+                    tool_info.count += 1
+                else:
+                    tool_info = ToolInfo(tool_type=tool_type, function_name=function_name)
+
                 data = {}
                 if tool_type == TOOL_GEDS:
                     data = self._process_geds_function_for_payload(function_name, response_as_string)
@@ -112,19 +122,19 @@ class ToolService:
                 if data:
                     # here we will update the payload dictionary with some logic
                     for key, value in data.items():
-                        if key in self.tools_info.payload:
+                        if key in tool_info.payload:
                             logger.debug("Key Found!: %s", key)
-                            if isinstance(self.tools_info.payload[key], list) and isinstance(value, list):
+                            if isinstance(tool_info.payload[key], list) and isinstance(value, list):
                                 logger.debug("Extending List: %s", key)
-                                self.tools_info.payload[key].extend(value) # type: ignore
-                            elif isinstance(self.tools_info.payload[key], dict) and isinstance(value, dict):
+                                tool_info.payload[key].extend(value) # type: ignore
+                            elif isinstance(tool_info.payload[key], dict) and isinstance(value, dict):
                                 logger.debug("Updating Dict: %s", key)
-                                self.tools_info.payload[key].update(value) # type: ignore
+                                tool_info.payload[key].update(value) # type: ignore
                             else:
                                 # Handle potential type conflicts or other logic
                                 pass
                         else:
-                            self.tools_info.payload[key] = value
+                            tool_info.payload[key] = value
 
 
     def _process_geds_function_for_payload(self, function_name: str, response_as_string: str) -> dict | None:

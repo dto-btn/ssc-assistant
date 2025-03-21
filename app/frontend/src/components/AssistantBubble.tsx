@@ -35,7 +35,7 @@ interface AssistantBubbleProps {
   text: string;
   isLoading: boolean;
   context?: Context | null;
-  toolsInfo?: ToolInfo;
+  toolsInfo?: ToolInfo[];
   scrollRef?: React.RefObject<HTMLDivElement>;
   replayChat: () => void;
   index: number;
@@ -85,7 +85,6 @@ export const AssistantBubble = ({
   const [confirmButtonDisabled, setConfirmButtonDisabled] = useState(false);
   const [isFloorPlanExpanded, setFloorPlanExpanded] = useState(false);
   const isMostRecent = index === total - 1;
-  const toolsUsed = toolsInfo && toolsInfo.tool_type.length > 0;
   const [brData, setBrData] = useState<BusinessRequest[] | undefined>(
     undefined
   );
@@ -291,19 +290,19 @@ export const AssistantBubble = ({
               </TextComponentsBox>
             </MainContentWrapper>
 
-            {toolsUsed && toolsInfo.tool_type && (
+            {toolsInfo && toolsInfo.length > 0 && (
               <ToolsUsedBox>
                 <Paper
                   sx={{ backgroundColor: "white", padding: 1 }}
                   elevation={3}
                 >
                   <Typography variant="caption" gutterBottom>
-                    {t("toolsUsed.short")} ({toolsInfo.tool_type.length}):
+                    {t("toolsUsed.short")} (COUNT LOL):
                   </Typography>
                   <Divider sx={{ margin: 1 }} />
                   <Stack direction="row" spacing={1}>
-                    {toolsInfo.tool_type.map((tool, index) => (
-                      <Tooltip title={t(tool)} key={index} arrow>
+                    {toolsInfo.map((tool, index) => (
+                      <Tooltip title={t(tool.function_name)} key={index} arrow>
                         <Chip
                           icon={
                             <HandymanIcon
@@ -313,7 +312,7 @@ export const AssistantBubble = ({
                               }}
                             />
                           }
-                          label={toolsInfo.function_names[index] + "()"}
+                          label={`${tool.function_name}()`}
                         />
                       </Tooltip>
                     ))}

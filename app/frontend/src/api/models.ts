@@ -22,7 +22,7 @@ interface Message {
   role: string;
   content?: string | null;
   context?: Context | null;
-  tools_info?: ToolInfo;
+  tools_info?: ToolInfo[];
   quotedText?: string;
   attachments?: Attachment[];
 }
@@ -56,8 +56,8 @@ interface ToastMessage {
 type ChatItem = Message | Completion | ToastMessage;
 
 interface ToolInfo {
-  tool_type: string[];
-  function_names: string[];
+  tool_type: string;
+  function_name: string;
   payload?: Record<string, any>;
 }
 
