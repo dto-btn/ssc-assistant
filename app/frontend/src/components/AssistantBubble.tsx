@@ -180,10 +180,12 @@ export const AssistantBubble = ({
           try {
             const brInformation = payload.br;
             if (brInformation.length) {
-              brInformation.map((br: any) => {
-                const brData = transformToBusinessRequest(br);
-                setBrData((prev) => (prev ? [...prev, brData] : [brData]));
+              console.log(brInformation);
+              const brInfoTransformed = brInformation.map((br: any) => {
+                return transformToBusinessRequest(br);
+                //setBrData((prev) => (prev ? [...prev, brData] : [brData]));
               });
+              setBrData(brInfoTransformed);
             }
           } catch (error) {
             console.error("Error transforming BR data", error);
@@ -288,7 +290,7 @@ export const AssistantBubble = ({
                   elevation={3}
                 >
                   <Typography variant="caption" gutterBottom>
-                    {t("toolsUsed.short")} (COUNT LOL):
+                    {t("toolsUsed.short")} ({toolsInfo.length}):
                   </Typography>
                   <Divider sx={{ margin: 1 }} />
                   <Stack direction="row" spacing={1}>
