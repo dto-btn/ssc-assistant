@@ -298,7 +298,7 @@ export const AssistantBubble = ({
                   elevation={3}
                 >
                   <Typography variant="caption" gutterBottom>
-                    {t("toolsUsed.short")}:{" "}
+                    {t("toolsUsed.short")} ({toolsInfo.tool_type.length}):
                   </Typography>
                   <Divider sx={{ margin: 1 }} />
                   <Stack direction="row" spacing={1}>
