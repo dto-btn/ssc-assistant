@@ -196,10 +196,13 @@ class SuggestionService:
         completion_response = convert_chat_with_data_response(completion)
 
         # Generate list of citations, for later use
-        citations: List[SuggestionCitationApiResponse] = [
-            SuggestionCitationApiResponse(url=x.url, title=x.title)
-            for x in completion_response.message.context.citations
-        ]
+        if getattr(completion_response.message, "context", None) is None:
+            citations: List[SuggestionCitationApiResponse] = []
+        else:
+            citations: List[SuggestionCitationApiResponse] = [
+                SuggestionCitationApiResponse(url=x.url, title=x.title)
+                for x in completion_response.message.context.citations
+            ]
 
         # # Post Processing: Dedupe citations
         if completion_response.message.context and opts.get("dedupe_citations", False):
