@@ -69,23 +69,19 @@ def get_br_information(br_numbers: list[int]):
                 "br_number": {
                     "type": "integer",
                     "description": "A BR number."
-                },
-                "top": {
-                    "type": "integer",
-                    "description": "The number of rows to return. Defaults to 5 if not specified."
                 }
             },
             "required": ["br_number"]
       }
     }
   })
-def get_br_updates(br_number: int, top: int = 5):
+def get_br_updates(br_number: int):
     """
     gets br updates from snapshot table
     """
     query = """
     SELECT
-        TOP(%s)
+        TOP(1)
         f.BR_NMBR,
         f.PERIOD_END_DATE,
         f.DAYS_SINCE_SUBMIT,
@@ -107,8 +103,8 @@ def get_br_updates(br_number: int, top: int = 5):
         f.STATUS_ID = d.STATUS_ID
     WHERE
         f.BR_NMBR = %s
-     ORDER BY f.LAST_STATUS_DATE DESC;"""
-    result = db.execute_query(query, top, br_number)
+     ORDER BY f.PERIOD_END_DATE DESC;"""
+    result = db.execute_query(query, br_number)
     return {'br_updates': result}
 
 @tool_metadata({
