@@ -1,10 +1,12 @@
 import json
 import logging
 import os
+from datetime import datetime
 
 from src.constants.tools import TOOL_BR
 from tools.bits.bits_utils import DatabaseConnection, extract_fields_from_query
-from utils.decorators import discover_subfolder_functions_with_metadata, tool_metadata
+from utils.decorators import (discover_subfolder_functions_with_metadata,
+                              tool_metadata)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -49,63 +51,146 @@ def get_br_information(br_numbers: list[int]):
     """
     gets br information
 
-    SELECT BR_NMBR, BR_TITLE, BR_SHORT_TITLE, PRIORITY_EN, PRIORITY_FR, CLIENT_NAME_SRC, CREATE_DATE,
-    SUBMIT_DATE, REQST_IMPL_DATE FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR = 123456;
+    SELECT
+        br.BR_NMBR,
+        br.BR_TITLE,
+        br.BR_SHORT_TITLE,
+        s.BR_ACTIVE_EN,
+        s.BR_ACTIVE_FR,
+        s.BITS_STATUS_EN,
+        s.BITS_STATUS_FR
+    FROM
+        [EDR_CARZ].[DIM_DEMAND_BR_ITEMS] br
+    INNER JOIN
+        (SELECT BR_NMBR, STATUS_ID
+        FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT]
+        WHERE PERIOD_END_DATE > '2025-03-24') snp
+    ON snp.BR_NMBR = br.BR_NMBR
+    INNER JOIN
+        [EDR_CARZ].[DIM_BITS_STATUS] s
+    ON s.STATUS_ID = snp.STATUS_ID
+    LEFT JOIN
+        [EDR_CARZ].[DIM_GC_ORGANIZATION] org
+    ON br.GC_ORG_NMBR = org.GC_ORG_NMBR
+    WHERE
+        br.BR_NMBR = 74096;
+
+    NOTE: No need to join on ORGANIZATION Table atm.. some info is already rolled in BR ITEMS ...
     """
     placeholders = ", ".join(["%s"] * len(br_numbers))
-    query = f"SELECT * FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS WHERE BR_NMBR IN ({placeholders});"
+
+    today = datetime.today()
+    today_formatted = today.strftime('%Y-%m-%d')
+
+    query = f"""
+    SELECT
+        br.BR_NMBR,
+        br.BR_TITLE,
+        br.BR_SHORT_TITLE,
+        br.RPT_GC_ORG_NAME_EN,
+        br.RPT_GC_ORG_NAME_FR,
+        br.ORG_TYPE_EN,
+        br.ORG_TYPE_FR,
+        br.REQST_IMPL_DATE,
+        br.PRIORITY_EN,
+        br.PRIORITY_FR,
+        br.BR_OWNER,
+        br.SUBMIT_DATE,
+        br.RVSD_TARGET_IMPL_DATE,
+        br.BA_OPI,
+        br.CPLX_EN,
+        br.CPLX_FR,
+        br.ACTUAL_IMPL_DATE,
+        br.AGRMT_END_DATE,
+        br.BA_TL,
+        br.TL_OPI,
+        br.SOL_OPI,
+        br.PM_OPI,
+        br.SCOPE_EN,
+        br.SCOPE_FR,
+        br.CSM_DIRTR,
+        br.CLIENT_REQST_SOL_DATE,
+        br.BA_PRICE_OPI,
+        br.SDM_TL_OPI,
+        br.CLIENT_SUBGRP_EN,
+        br.CLIENT_SUBGRP_FR,
+        br.PROD_OPI,
+        br.PRPO_TARGET_DATE,
+        br.IMPL_SGNOFF_DATE,
+        br.GROUP_EN,
+        br.GROUP_FR,
+        br.ENGN_OPI,
+        br.AGRMT_OPI,
+        br.BA_PRICE_OPI,
+        s.BR_ACTIVE_EN,
+        s.BR_ACTIVE_FR,
+        s.BITS_STATUS_EN,
+        s.BITS_STATUS_FR 
+    FROM
+        [EDR_CARZ].[DIM_DEMAND_BR_ITEMS] br
+    INNER JOIN
+        (SELECT BR_NMBR, STATUS_ID
+        FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT]
+        WHERE PERIOD_END_DATE > '{today_formatted}') snp
+    ON snp.BR_NMBR = br.BR_NMBR
+    INNER JOIN
+        [EDR_CARZ].[DIM_BITS_STATUS] s
+    ON s.STATUS_ID = snp.STATUS_ID
+    WHERE
+        br.BR_NMBR IN ({placeholders});
+    """
 
     result = db.execute_query(query, *br_numbers)
     return {'br': result}
 
-@tool_metadata({
-    "type": "function",
-    "function": {
-        "name": "get_br_updates",
-        "description": "Gets BR updates from the snapshot table.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "br_number": {
-                    "type": "integer",
-                    "description": "A BR number."
-                }
-            },
-            "required": ["br_number"]
-      }
-    }
-  })
-def get_br_updates(br_number: int):
-    """
-    gets br updates from snapshot table
-    """
-    query = """
-    SELECT
-        TOP(1)
-        f.BR_NMBR,
-        f.PERIOD_END_DATE,
-        f.DAYS_SINCE_SUBMIT,
-        f.LAST_STATUS_DATE,
-        f.DAYS_IN_STATUS,
-        f.AGE_IN_STATUS_EN,
-        f.AGE_IN_STATUS_FR,
-        f.IMPL_FLAG_EN,
-        f.IMPL_FLAG_FR,
-        d.BITS_STATUS_EN,
-        d.BITS_STATUS_FR,
-        d.BR_ACTIVE_EN,
-        d.BR_ACTIVE_FR
-    FROM
-        [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT] f
-    INNER JOIN
-        [EDR_CARZ].[DIM_BITS_STATUS] d
-    ON
-        f.STATUS_ID = d.STATUS_ID
-    WHERE
-        f.BR_NMBR = %s
-     ORDER BY f.PERIOD_END_DATE DESC;"""
-    result = db.execute_query(query, br_number)
-    return {'br_updates': result}
+# @tool_metadata({
+#     "type": "function",
+#     "function": {
+#         "name": "get_br_updates",
+#         "description": "Gets BR updates from the snapshot table.",
+#         "parameters": {
+#             "type": "object",
+#             "properties": {
+#                 "br_number": {
+#                     "type": "integer",
+#                     "description": "A BR number."
+#                 }
+#             },
+#             "required": ["br_number"]
+#       }
+#     }
+#   })
+# def get_br_updates(br_number: int):
+#     """
+#     gets br updates from snapshot table
+#     """
+#     query = """
+#     SELECT
+#         TOP(1)
+#         f.BR_NMBR,
+#         f.PERIOD_END_DATE,
+#         f.DAYS_SINCE_SUBMIT,
+#         f.LAST_STATUS_DATE,
+#         f.DAYS_IN_STATUS,
+#         f.AGE_IN_STATUS_EN,
+#         f.AGE_IN_STATUS_FR,
+#         f.IMPL_FLAG_EN,
+#         f.IMPL_FLAG_FR,
+#         d.BITS_STATUS_EN,
+#         d.BITS_STATUS_FR,
+#         d.BR_ACTIVE_EN,
+#         d.BR_ACTIVE_FR
+#     FROM
+#         [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT] f
+#     INNER JOIN
+#         [EDR_CARZ].[DIM_BITS_STATUS] d
+#     ON
+#         f.STATUS_ID = d.STATUS_ID
+#     WHERE
+#         f.BR_NMBR = %s
+#      ORDER BY f.PERIOD_END_DATE DESC;"""
+#     result = db.execute_query(query, br_number)
+#     return {'br_updates': result}
 
 @tool_metadata({
     "type": "function",
@@ -200,7 +285,7 @@ def search_br_by_field(field_name: str, field_value: str, limit: int = 10):
         fields = extract_fields_from_query([field_name], valid_search_fields)
         if fields:
             query = """SELECT TOP(%d) *
-                       FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS 
+                       FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS
                        WHERE {field} LIKE %s;""".replace("{field}", fields[0])
             result = db.execute_query(query, limit, f"%{field_value}%")
             return {'br': result}
@@ -220,7 +305,7 @@ def search_br_by_field(field_name: str, field_value: str, limit: int = 10):
   })
 def how_to_search_brs():
     """
-    This is a metadata function that will list all the functions 
+    This is a metadata function that will list all the functions
     here and their paremeter to help the AI guide the user in their search
     """
     functions = discover_subfolder_functions_with_metadata("tools.bits.bits_functions",
