@@ -38,8 +38,10 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
               <TableCell>{t("business.request.number")}</TableCell>
               <TableCell>{t("business.request.title")}</TableCell>
               <TableCell>{t("client.name")}</TableCell>
-              <TableCell>{t("br.type")}</TableCell>
               <TableCell>{t("br.owner")}</TableCell>
+              <TableCell>{t("status")}</TableCell>
+              <TableCell>{t("priority")}</TableCell>
+              <TableCell>{t("submit.date")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -56,11 +58,21 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
                     </Link>
                   </TableCell>
                   <TableCell>{row.BR_SHORT_TITLE}</TableCell>
-                  <TableCell>{row.CLIENT_NAME_SRC}</TableCell>
                   <TableCell>
-                    {isEnglish ? row.BR_TYPE_EN : row.BR_TYPE_FR}
+                    {isEnglish
+                      ? row.RPT_GC_ORG_NAME_EN
+                      : row.RPT_GC_ORG_NAME_FR}
                   </TableCell>
                   <TableCell>{row.BR_OWNER}</TableCell>
+                  <TableCell>
+                    {isEnglish ? row.BITS_STATUS_EN : row.BITS_STATUS_FR}
+                  </TableCell>
+                  <TableCell>
+                    {isEnglish ? row.PRIORITY_EN : row.PRIORITY_FR}
+                  </TableCell>
+                  <TableCell>
+                    {new Date(row.SUBMIT_DATE).toLocaleDateString()}
+                  </TableCell>
                 </TableRow>
               );
             })}

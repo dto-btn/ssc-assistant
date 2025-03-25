@@ -584,7 +584,7 @@
         "fr": "Date de création"
     },
     "submit.date": {
-        "en": "Submit Date",
+        "en": "Date Submited",
         "fr": "Date de soumission"
     },
     "associated.business.requests": {
@@ -636,20 +636,20 @@
         "fr": "OPI du gestionnaire de la réussite client"
     },
     "tl.opi": {
-        "en": "Team Lead OPI",
-        "fr": "OPI du chef d'équipe"
+        "en": "SDM Executive",
+        "fr": "Cadre SDM"
     },
     "csm.dirtr": {
-        "en": "Customer Success Director",
-        "fr": "Directeur de la réussite client"
+        "en": "Client Executive",
+        "fr": "Cadre Client"
     },
     "sol.opi": {
-        "en": "Solution OPI",
-        "fr": "OPI sur la solution"
+        "en": "Conceptual Designer",
+        "fr": "Designer Conceptuel"
     },
     "engn.opi": {
-        "en": "Engineer OPI",
-        "fr": "OPI de l'ingénieur"
+        "en": "Implementation OPI",
+        "fr": "OPI de l'implémentation"
     },
     "ba.opi": {
         "en": "Business Analyst OPI",
@@ -660,8 +660,8 @@
         "fr": "Chef d'équipe des analystes opérationnels"
     },
     "pm.opi": {
-        "en": "Project Manager OPI",
-        "fr": "OPI du chef de projet"
+        "en": "PM/Coordinator",
+        "fr": "Chef de Projet/Coordinateur"
     },
     "ba.price_opi": {
         "en": "Business Analyst Pricing OPI",
@@ -684,8 +684,8 @@
         "fr": "OPI du gestionnaire de compte"
     },
     "sdm.tl_opi": {
-        "en": "Service Delivery Manager Team Lead OPI",
-        "fr": "OPI du chef d'équipe du gestionnaire de la prestation de services"
+        "en": "Service Delivery Manager Team Lead",
+        "fr": "Chef d'équipe du gestionnaire de la prestation de services"
     },
     "reqmt.ovrvw": {
         "en": "Requirement Overview",
@@ -723,20 +723,44 @@
         "en": "BR Type",
         "fr": "Type de DO"
     },
-    "client.request.impl.date": {
+    "REQST_IMPL_DATE": {
         "en": "Client Requested Implementation Date",
         "fr": "Date de mise en œuvre demandée par le client"
     },
-    "revised.impl.date": {
+    "RVSD_TARGET_IMPL_DATE": {
         "en": "Revised Implementation Date",
         "fr": "Date de mise en œuvre révisée"
     },
-    "actual.impl.date": {
+    "ACTUAL_IMPL_DATE": {
         "en": "Actual Implementation Date",
         "fr": "Date de mise en œuvre réelle"
     },
     "business.request.title": {
         "en": "Title",
         "fr": "Nom"
+    },
+    "complexity": {
+        "en": "Complexity",
+        "fr": "Complexité"
+    },
+    "scope": {
+        "en": "Scope (OAR/PR)",
+        "fr": "Portée (OAR/PR)"
+    },
+    "CLIENT_REQST_SOL_DATE": {
+        "en": "Client Requested Specification Date",
+        "fr": "Date de Spécification Demandée par le Client"
+    },
+    "AGRMT_END_DATE": {
+        "en": "Agreement End Date",
+        "fr": "Date de Fin de l'Accord"
+    },
+    "PRPO_TARGET_DATE": {
+        "en": "Target Specification Date",
+        "fr": "Date de Spécification Cible"
+    },
+    "IMPL_SGNOFF_DATE": {
+        "en": "Client Sign-off Implementation Date",
+        "fr": "Date de Mise en Œuvre de l'Approbation du Client"
     }
 }

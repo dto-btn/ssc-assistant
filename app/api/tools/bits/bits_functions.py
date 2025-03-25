@@ -92,6 +92,8 @@ def get_br_information(br_numbers: list[int]):
         br.ORG_TYPE_EN,
         br.ORG_TYPE_FR,
         br.REQST_IMPL_DATE,
+        br.BR_TYPE_EN,
+        br.BR_TYPE_FR,
         br.PRIORITY_EN,
         br.PRIORITY_FR,
         br.BR_OWNER,
@@ -122,10 +124,12 @@ def get_br_information(br_numbers: list[int]):
         br.ENGN_OPI,
         br.AGRMT_OPI,
         br.BA_PRICE_OPI,
+        br.ASSOC_BRs,
+        br.REQMT_OVRVW,
         s.BR_ACTIVE_EN,
         s.BR_ACTIVE_FR,
         s.BITS_STATUS_EN,
-        s.BITS_STATUS_FR 
+        s.BITS_STATUS_FR
     FROM
         [EDR_CARZ].[DIM_DEMAND_BR_ITEMS] br
     INNER JOIN
