@@ -146,8 +146,6 @@ Try to display only the main fields:
 
 When asked for multiple BR items, please display them in a markdown table format so it's easier for the user to process the information.
 
-If asked about a SINGLE specific BR try to get the updates for it at the same time via get_br_updates function.
-
 The system will display the full retrieved information to the user below the answer. The user can be made aware of this.
 """
 
@@ -164,8 +162,6 @@ Essayez d'afficher uniquement les champs principaux suivants :
 - Client Name
 
 Lorsque vous demandez plusieurs éléments DO, veuillez les afficher dans un format de tableau markdown afin qu'il soit plus facile pour l'utilisateur de traiter les informations.
-
-Si l'on vous demande des informations sur UN SEUL PO (BR) spécifique, essayez d'obtenir les mises à jour en même temps via la fonction get_br_updates.
 
 Le système affichera les informations récupérées complètes en dessous de la réponse. L'utilisateur peut en être informé.
 Note : Le mot-clé BR est également accepté et signifie la même chose."""

@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from typing import List, Optional
 
 from src.constants.tools import TOOL_BR
 from tools.bits.bits_utils import DatabaseConnection, extract_fields_from_query
@@ -238,7 +239,7 @@ def get_br_by_status(status: str, assigned_to: str = "", limit: int = 100):
     result = db.execute_query(query, limit, status)
     return {'br': result}
 
-def _get_br_query(br_numbers: list[int] = [], status: str = "", limit: int = 0) -> str:
+def _get_br_query(br_numbers: Optional[List[int]] = None, status: str = "", limit: int = 0) -> str:
     """Function that will build the select statement for retreiving BRs
 
     NOTE: No need to join on ORGANIZATION Table atm.. some info is already rolled in BR ITEMS ...
@@ -290,7 +291,7 @@ def _get_br_query(br_numbers: list[int] = [], status: str = "", limit: int = 0) 
         br.ENGN_OPI,
         br.AGRMT_OPI,
         br.BA_PRICE_OPI,
-        br.ASSOC_BRs,
+        br.ASSOC_BRS,
         br.REQMT_OVRVW,
         s.BR_ACTIVE_EN,
         s.BR_ACTIVE_FR,
@@ -302,32 +303,31 @@ def _get_br_query(br_numbers: list[int] = [], status: str = "", limit: int = 0) 
 
     if status:
         base_query += """
-            INNER JOIN
-                (SELECT BR_NMBR, STATUS_ID
-                FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT]
-                WHERE PERIOD_END_DATE > GETDATE() AND STATUS_ID IN (%s)) snp
-            ON snp.BR_NMBR = br.BR_NMBR
+        INNER JOIN
+            (SELECT BR_NMBR, STATUS_ID
+            FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT]
+            WHERE PERIOD_END_DATE > GETDATE() AND STATUS_ID IN (%s)) snp
+        ON snp.BR_NMBR = br.BR_NMBR
         """
     else:
         base_query += """
-            INNER JOIN
-                (SELECT BR_NMBR, STATUS_ID
-                FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT]
-                WHERE PERIOD_END_DATE > GETDATE()) snp
-            ON snp.BR_NMBR = br.BR_NMBR
+        INNER JOIN
+            (SELECT BR_NMBR, STATUS_ID
+            FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT]
+            WHERE PERIOD_END_DATE > GETDATE()) snp
+        ON snp.BR_NMBR = br.BR_NMBR
         """
 
     base_query += """
-        INNER JOIN
-            [EDR_CARZ].[DIM_BITS_STATUS] s
-        ON s.STATUS_ID = snp.STATUS_ID
+    INNER JOIN
+        [EDR_CARZ].[DIM_BITS_STATUS] s
+    ON s.STATUS_ID = snp.STATUS_ID
     """
 
     if br_numbers:
         # Prevents SQL injection, this only calculates the placehoders ... i.e; BR_NMBR IN (%s, %s, %s)
         placeholders = ", ".join(["%s"] * len(br_numbers))
         base_query += f"""
-            WHERE
-            br.BR_NMBR IN ({placeholders});"
+        WHERE br.BR_NMBR IN ({placeholders});
         """
     return base_query
