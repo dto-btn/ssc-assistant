@@ -328,6 +328,10 @@ def _get_br_query(br_numbers: Optional[List[int]] = None, status: str = "", limi
         # Prevents SQL injection, this only calculates the placehoders ... i.e; BR_NMBR IN (%s, %s, %s)
         placeholders = ", ".join(["%s"] * len(br_numbers))
         base_query += f"""
-        WHERE br.BR_NMBR IN ({placeholders});
+        WHERE s.BR_ACTIVE_EN = 'Active' AND br.BR_NMBR IN ({placeholders});
+        """
+    else:
+        base_query += """
+        WHERE s.BR_ACTIVE_EN = 'Active';
         """
     return base_query

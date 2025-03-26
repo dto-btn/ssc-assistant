@@ -144,8 +144,7 @@ Try to display only the main fields:
 - BR Type
 - Client Name
 
-When asked for multiple BR items, please display them in a markdown table format so it's easier for the user to process the information.
-Limit yourself to 10 items.
+When asked for multiple BR items, please bear in mind that the information will be displayed to the user below your answer. You can summarize the information.
 
 The system will display the full retrieved information to the user below the answer. The user can be made aware of this.
 """
@@ -162,8 +161,7 @@ Essayez d'afficher uniquement les champs principaux suivants :
 - BR Type
 - Client Name
 
-Lorsque vous demandez plusieurs éléments DO, veuillez les afficher dans un format de tableau markdown afin qu'il soit plus facile pour l'utilisateur de traiter les informations.
-Limitez vous à 10 éléments.
+Lorsque vous demandez plusieurs éléments BR, veuillez noter que les informations seront affichées à l'utilisateur sous votre réponse. Vous pouvez résumer les informations.
 
 Le système affichera les informations récupérées complètes en dessous de la réponse. L'utilisateur peut en être informé.
 Note : Le mot-clé BR est également accepté et signifie la même chose."""
