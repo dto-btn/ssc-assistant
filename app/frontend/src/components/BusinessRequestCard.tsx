@@ -89,6 +89,12 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
             {isEnglish ? data.BR_TYPE_EN : data.BR_TYPE_FR}
           </Typography>
         )}
+        {(isEnglish ? data.BITS_STATUS_EN : data.BITS_STATUS_FR) && (
+          <Typography variant="body2">
+            <strong>{t("status")}: </strong>
+            {isEnglish ? data.BITS_STATUS_EN : data.BITS_STATUS_FR}
+          </Typography>
+        )}
         <Typography variant="body2" color="textPrimary">
           <strong>{t("priority")}: </strong>
           {isEnglish ? data.PRIORITY_EN : data.PRIORITY_FR}

@@ -51,7 +51,7 @@ def get_br_information(br_numbers: list[int]):
     """
     gets br information
     """
-    query = _get_br_query(br_numbers)
+    query = _get_br_query(len(br_numbers))
     result = db.execute_query(query, *br_numbers)
     return {'br': result}
 
@@ -235,22 +235,23 @@ def get_br_by_status(status: str, assigned_to: str = "", limit: int = 100):
     """
     This will retreive the code table BR_STATUSES
     """
-    query = _get_br_query(status=status, limit=limit)
+    query = _get_br_query(status=True, limit=bool(limit))
     result = db.execute_query(query, limit, status)
     return {'br': result}
 
-def _get_br_query(br_numbers: Optional[List[int]] = None, status: str = "", limit: int = 0) -> str:
+def _get_br_query(br_number_count: int = 0, status: bool = False, limit: bool = False, active: bool = False) -> str:
     """Function that will build the select statement for retreiving BRs
 
     NOTE: No need to join on ORGANIZATION Table atm.. some info is already rolled in BR ITEMS ...
     """
-    if br_numbers is None:
-        br_numbers = []
+    query = "SELECT\n"
+
+    # Limit amount of results
     if limit:
-        base_query = "SELECT TOP(%d) "
-    else:
-        base_query = "SELECT "
-    base_query += """
+        query += "TOP(%d)\n"
+
+    # Default select statement from BR_ITEMS & other tables
+    query += """
         br.BR_NMBR,
         br.BR_TITLE,
         br.BR_SHORT_TITLE,
@@ -301,37 +302,37 @@ def _get_br_query(br_numbers: Optional[List[int]] = None, status: str = "", limi
         [EDR_CARZ].[DIM_DEMAND_BR_ITEMS] br
     """
 
+    # Processing BR SNAPSHOT clause
+    snapshot_where_clause = ["PERIOD_END_DATE > GETDATE()"]
     if status:
-        base_query += """
-        INNER JOIN
-            (SELECT BR_NMBR, STATUS_ID
-            FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT]
-            WHERE PERIOD_END_DATE > GETDATE() AND STATUS_ID IN (%s)) snp
-        ON snp.BR_NMBR = br.BR_NMBR
-        """
-    else:
-        base_query += """
-        INNER JOIN
-            (SELECT BR_NMBR, STATUS_ID
-            FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT]
-            WHERE PERIOD_END_DATE > GETDATE()) snp
-        ON snp.BR_NMBR = br.BR_NMBR
-        """
+        snapshot_where_clause.append("STATUS_ID IN (%s)")
 
-    base_query += """
+    snapshot_where_clause = " AND ".join(snapshot_where_clause)
+    query += f"""
+    INNER JOIN
+        (SELECT BR_NMBR, STATUS_ID
+        FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT]
+        WHERE {snapshot_where_clause}) snp
+    ON snp.BR_NMBR = br.BR_NMBR
+    """
+
+    # Processing BR STATUS clause
+    query += """
     INNER JOIN
         [EDR_CARZ].[DIM_BITS_STATUS] s
     ON s.STATUS_ID = snp.STATUS_ID
     """
 
-    if br_numbers:
+    # WHERE CLAUSE PROCESSING (BR_NMBR and ACTIVE, etc)
+    base_where_clause = []
+    if active:
+        base_where_clause.append("s.BR_ACTIVE_EN = 'Active'")
+
+    if br_number_count:
         # Prevents SQL injection, this only calculates the placehoders ... i.e; BR_NMBR IN (%s, %s, %s)
-        placeholders = ", ".join(["%s"] * len(br_numbers))
-        base_query += f"""
-        WHERE s.BR_ACTIVE_EN = 'Active' AND br.BR_NMBR IN ({placeholders});
-        """
-    else:
-        base_query += """
-        WHERE s.BR_ACTIVE_EN = 'Active';
-        """
-    return base_query
+        placeholders = ", ".join(["%s"] * br_number_count)
+        base_where_clause.append(f"br.BR_NMBR IN ({placeholders})")
+    
+    if base_where_clause:
+        query += "WHERE " + " AND ".join(base_where_clause)
+    return query
