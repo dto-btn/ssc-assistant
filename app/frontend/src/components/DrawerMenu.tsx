@@ -503,7 +503,14 @@ export const DrawerMenu = ({
       open={openDrawer}
       variant="persistent"
       sx={{
-        '& .MuiDrawer-paper': { boxSizing: 'border-box', width: `${LEFT_MENU_WIDTH}px` },
+        '& .MuiDrawer-paper': {
+          boxSizing: 'border-box',
+          width: `${LEFT_MENU_WIDTH}px`,
+          // For some reason, whenever a vertical scrollbar appears on the menu,
+          // horizontal scrollbar appears too. This is a workaround to remove the
+          // horizontal scrollbar, which is mostly nonfunctional.
+          overflowX: "clip",
+        },
       }}
 
     >
