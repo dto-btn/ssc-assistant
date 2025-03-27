@@ -90,6 +90,11 @@ const MainScreen = () => {
     useState<string>("intranet_question");
 
 
+  // We want to set the menu drawer open setting when launching the app.
+  // When the app is launched and the screen is large or bigger, we show the drawer.
+  // When the screen is smaller, we hide the drawer for better responsive UX.
+  // This only happens once when the app is launched. We do not re-evaluate
+  // the screen size when the app is running.
   const theme = useTheme();
   useEffect(() => {
     const size = window.innerWidth;
