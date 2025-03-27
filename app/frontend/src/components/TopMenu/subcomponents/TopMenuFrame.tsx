@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, Icon, IconButton } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
@@ -7,6 +7,7 @@ import logo from "../../../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { type PropsWithChildren } from "react";
 import { type FC } from "react";
 import { LEFT_MENU_WIDTH } from "../../../constants/frameDimensions";
+import MenuIcon from '@mui/icons-material/Menu';
 
 type TopMenuProps = PropsWithChildren;
 export const TopMenuFrame: FC<TopMenuProps> = (({ children }) => {
@@ -42,6 +43,13 @@ export const TopMenuFrame: FC<TopMenuProps> = (({ children }) => {
                         border: "none"
                     })}
                 >
+                    {/* Menu icon */}
+                    <IconButton sx={{
+                        color: 'white',
+                        // hidden on medium and larger screens
+                        display: { xs: 'block', md: 'none' },
+                    }}><MenuIcon /></IconButton>
+
                     <Box sx={{
                         display: "flex",
                         alignItems: "center",
