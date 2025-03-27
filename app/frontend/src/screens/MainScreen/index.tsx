@@ -2,8 +2,6 @@ import {
   Box,
   Dialog,
   DialogContent,
-  useMediaQuery,
-  useTheme,
 } from "@mui/material";
 import {
   ChatInput,
@@ -88,10 +86,9 @@ const MainScreen = () => {
   const [selectedCorporateFunction, setSelectedCorporateFunction] =
     useState<string>("intranet_question");
 
-  const theme = useTheme();
+
   const { instance, inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
-  const displayIsAtleastSm = useMediaQuery(theme.breakpoints.up("sm"));
 
   const setCurrentChatIndex = (index: number) => {
     // Set the index in local storage
@@ -666,10 +663,10 @@ const MainScreen = () => {
   useEffect(() => {
     console.debug(
       "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-        isAuthenticated +
-        ", InProgress? " +
-        inProgress +
-        ")"
+      isAuthenticated +
+      ", InProgress? " +
+      inProgress +
+      ")"
     );
     if (
       isAuthenticated &&
@@ -835,11 +832,11 @@ const MainScreen = () => {
             flexFlow: "column",
             minHeight: "100vh",
             margin: "auto",
-              position: "fixed",
-              top: 0,
-              left: LEFT_MENU_WIDTH,
-              right: 0,
-              bottom: 0,
+            position: "fixed",
+            top: 0,
+            left: LEFT_MENU_WIDTH,
+            right: 0,
+            bottom: 0,
           }}
           maxWidth="lg"
         >

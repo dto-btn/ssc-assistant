@@ -5,6 +5,7 @@ on:
     branches:
       - main
   pull_request:
+  workflow_dispatch:
 
 jobs:
   ###################
@@ -25,6 +26,13 @@ jobs:
       disabled-features: ''
       environment: 'dev'
       app-name: 'ssc-assistant-dev'
+    secrets: inherit
+
+  alembic-dev:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/db.yml
+    with:
+      environment: 'dev'
     secrets: inherit
 
   ###################
@@ -49,6 +57,13 @@ jobs:
       app-name: 'ssc-assistant'
     secrets: inherit
 
+  alembic-pilot-prod:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/db.yml
+    with:
+      environment: 'pilot-prod'
+    secrets: inherit
+
   ###################
   #      PROD       #
   ###################
@@ -69,4 +84,11 @@ jobs:
       disabled-features: ''
       environment: 'prod'
       app-name: 'ssc-assistant-prod'
+    secrets: inherit
+
+  alembic-prod:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/db.yml
+    with:
+      environment: 'prod'
     secrets: inherit

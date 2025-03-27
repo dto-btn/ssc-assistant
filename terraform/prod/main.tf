@@ -76,6 +76,20 @@ module "api" {
 }
 
 /****************************************************
+*                         DB                        *
+*****************************************************/
+module "postgress" {
+  source = "../modules/db"
+
+  project_name = "prodsscassistant"
+  default_location = var.default_location
+  rg_name = azurerm_resource_group.main.name
+  name_prefix = var.name_prefix
+  username_postgress = var.username_postgress
+  password_postgress = var.password_postgress
+}
+
+/****************************************************
 *            LOG ANALYTICS WORKSPACE                *
 *****************************************************/
 resource "azurerm_log_analytics_workspace" "main" {
