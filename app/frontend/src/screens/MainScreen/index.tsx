@@ -35,6 +35,7 @@ import { useAppStore } from "../../context/AppStore";
 import Typography from "@mui/material/Typography";
 import { LEFT_MENU_WIDTH } from "../../constants/frameDimensions";
 import MenuIcon from "@mui/icons-material/Menu";
+import { theme } from "../../theme";
 
 const MainScreen = () => {
   const appStore = useAppStore();
@@ -67,7 +68,8 @@ const MainScreen = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
-  const [openDrawer, setOpenDrawer] = useState<boolean>(true);
+  // On app launch, keep the drawer open if the screen is larger than lg, else keep it closed.
+  const [openDrawer, setOpenDrawer] = useState<boolean>(window.innerWidth < theme.breakpoints.values.lg ? false : true);
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [isGoodResponse, setIsGoodResponse] = useState(false);
@@ -88,23 +90,6 @@ const MainScreen = () => {
     useState<Record<string, boolean>>(defaultEnabledTools);
   const [selectedCorporateFunction, setSelectedCorporateFunction] =
     useState<string>("intranet_question");
-
-
-  // We want to set the menu drawer open setting when launching the app.
-  // When the app is launched and the screen is large or bigger, we show the drawer.
-  // When the screen is smaller, we hide the drawer for better responsive UX.
-  // This only happens once when the app is launched. We do not re-evaluate
-  // the screen size when the app is running.
-  const theme = useTheme();
-  useEffect(() => {
-    const size = window.innerWidth;
-    if (size < theme.breakpoints.values.lg) {
-      setOpenDrawer(false);
-    } else {
-      setOpenDrawer(true);
-    }
-  }, [])
-
 
   const { instance, inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
