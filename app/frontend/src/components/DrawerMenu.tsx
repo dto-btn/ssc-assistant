@@ -501,7 +501,7 @@ export const DrawerMenu = ({
   return (
     <Drawer
       open={openDrawer}
-      variant="permanent"
+      variant="persistent"
       sx={{
         display: { xs: 'none', sm: 'block' },
         '& .MuiDrawer-paper': { boxSizing: 'border-box', width: `${LEFT_MENU_WIDTH}px` },

@@ -2,6 +2,8 @@ import {
   Box,
   Dialog,
   DialogContent,
+  IconButton,
+  useTheme,
 } from "@mui/material";
 import {
   ChatInput,
@@ -32,6 +34,7 @@ import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
 import { useAppStore } from "../../context/AppStore";
 import Typography from "@mui/material/Typography";
 import { LEFT_MENU_WIDTH } from "../../constants/frameDimensions";
+import MenuIcon from "@mui/icons-material/Menu";
 
 const MainScreen = () => {
   const appStore = useAppStore();
@@ -85,6 +88,17 @@ const MainScreen = () => {
     useState<Record<string, boolean>>(defaultEnabledTools);
   const [selectedCorporateFunction, setSelectedCorporateFunction] =
     useState<string>("intranet_question");
+
+
+  const theme = useTheme();
+  useEffect(() => {
+    const size = window.innerWidth;
+    if (size < theme.breakpoints.values.lg) {
+      setOpenDrawer(false);
+    } else {
+      setOpenDrawer(true);
+    }
+  }, [])
 
 
   const { instance, inProgress } = useMsal();
@@ -774,6 +788,16 @@ const MainScreen = () => {
     <UserContext.Provider value={userData}>
       <TopMenuHomePage
         onNewChat={handleNewChat}
+        leftOffset={openDrawer ? LEFT_MENU_WIDTH : 0}
+        childrenLeftOfLogo={
+          <>
+            < IconButton sx={{
+              color: 'white',
+            }} onClick={() => setOpenDrawer(state => !state)}>
+              <MenuIcon />
+            </IconButton>
+          </>
+        }
       />
       {currentChatHistory.chatItems.length === 0 ? (
         // if 0 chat history
@@ -781,7 +805,7 @@ const MainScreen = () => {
           sx={{
             position: "fixed",
             top: 0,
-            left: LEFT_MENU_WIDTH,
+            left: openDrawer ? LEFT_MENU_WIDTH : 0,
             right: 0,
             bottom: 0,
             display: "flex",
@@ -834,7 +858,7 @@ const MainScreen = () => {
             margin: "auto",
             position: "fixed",
             top: 0,
-            left: LEFT_MENU_WIDTH,
+              left: openDrawer ? LEFT_MENU_WIDTH : 0,
             right: 0,
             bottom: 0,
           }}

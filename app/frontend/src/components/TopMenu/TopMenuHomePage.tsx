@@ -1,4 +1,4 @@
-import { Box, BoxProps } from "@mui/material";
+import { Box, BoxProps, IconButton } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import { UserProfilePicture } from "../ProfilePicture";
@@ -11,6 +11,8 @@ import TopmenuMicrosofTeamsIcon from "./TopmenuMicrosofTeamsIcon.svg";
 
 interface TopMenuHomePageProps {
   onNewChat: () => void;
+  childrenLeftOfLogo?: React.ReactNode;
+  leftOffset?: number;
 }
 
 type TopMenuHomePageItem = {
@@ -20,7 +22,7 @@ type TopMenuHomePageItem = {
   onClick: () => void;
 };
 
-export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat }) => {
+export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat, childrenLeftOfLogo, leftOffset }) => {
   const { t } = useTranslation();
   const { graphData } = useContext(UserContext);
 
@@ -50,7 +52,10 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat }) 
   ];
 
   return (
-    <TopMenuFrame>
+    <TopMenuFrame
+      childrenLeftOfLogo={childrenLeftOfLogo}
+      leftOffset={leftOffset}
+    >
       <Box
         sx={{
           display: "flex",

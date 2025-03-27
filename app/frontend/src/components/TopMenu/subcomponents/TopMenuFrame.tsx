@@ -1,4 +1,4 @@
-import { Box, Icon, IconButton } from "@mui/material";
+import { Box } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
@@ -6,11 +6,12 @@ import { useTranslation } from "react-i18next";
 import logo from "../../../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { type PropsWithChildren } from "react";
 import { type FC } from "react";
-import { LEFT_MENU_WIDTH } from "../../../constants/frameDimensions";
-import MenuIcon from '@mui/icons-material/Menu';
 
-type TopMenuProps = PropsWithChildren;
-export const TopMenuFrame: FC<TopMenuProps> = (({ children }) => {
+type TopMenuProps = PropsWithChildren<{
+    childrenLeftOfLogo?: React.ReactNode;
+    leftOffset?: number
+}>;
+export const TopMenuFrame: FC<TopMenuProps> = (({ children, childrenLeftOfLogo, leftOffset }) => {
     const { t } = useTranslation();
 
     return (
@@ -22,7 +23,7 @@ export const TopMenuFrame: FC<TopMenuProps> = (({ children }) => {
                     backgroundImage: "none",
                     boxShadow: "none",
                     position: "fixed",
-                    left: LEFT_MENU_WIDTH,
+                    left: leftOffset || 0,
                     top: 0,
                     right: 0
                 }}
@@ -43,13 +44,7 @@ export const TopMenuFrame: FC<TopMenuProps> = (({ children }) => {
                         border: "none"
                     })}
                 >
-                    {/* Menu icon */}
-                    <IconButton sx={{
-                        color: 'white',
-                        // hidden on medium and larger screens
-                        display: { xs: 'block', md: 'none' },
-                    }}><MenuIcon /></IconButton>
-
+                    {childrenLeftOfLogo}
                     <Box sx={{
                         display: "flex",
                         alignItems: "center",
