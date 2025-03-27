@@ -31,7 +31,6 @@ import Handyman from "@mui/icons-material/Handyman";
 import { useEffect, useRef, useState } from "react";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import InfoIcon from "@mui/icons-material/Info";
 import HistoryIcon from "@mui/icons-material/History";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
@@ -40,12 +39,12 @@ import { useTranslation } from "react-i18next";
 import React from "react";
 import { allowedToolsSet, allowedCorporateFunctionsSet } from "../allowedTools";
 import FormLabel from "@mui/material/FormLabel";
+import { LEFT_MENU_WIDTH } from "../constants/frameDimensions";
 
 interface DrawerMenuProps {
   openDrawer: boolean;
   chatDescriptions: string[];
   currentChatIndex: number;
-  toggleDrawer: (arg: boolean) => void;
   onClearChat: () => void;
   onNewChat: () => void;
   setLangCookie: () => void;
@@ -60,8 +59,6 @@ interface DrawerMenuProps {
   ) => void;
   selectedCorporateFunction: string;
   handleSelectedModelChanged: (modelName: string) => void;
-  tutorialBubbleNumber?: number;
-  handleToggleTutorials: (showTutorials?: boolean) => void;
   handleDeleteSavedChat: (index: number) => void;
   handleLoadSavedChat: (index: number) => void;
   renameChat: (newChatDescription: string, index: number) => void;
@@ -70,7 +67,6 @@ interface DrawerMenuProps {
 export const DrawerMenu = ({
   openDrawer,
   chatDescriptions,
-  toggleDrawer,
   onClearChat,
   onNewChat,
   setLangCookie,
@@ -81,16 +77,11 @@ export const DrawerMenu = ({
   selectedCorporateFunction,
   handleSelectedModelChanged,
   selectedModel,
-  tutorialBubbleNumber,
-  handleToggleTutorials,
   handleDeleteSavedChat,
   handleLoadSavedChat,
   renameChat,
   currentChatIndex,
 }: DrawerMenuProps) => {
-  const [toolMenuOpen, setToolMenuOpen] = useState(false);
-  const [selectModelMenuOpen, setSelectModelMenuOpen] = useState(false);
-  const [selectChatMenuOpen, setSelectChatMenuOpen] = useState(false);
   const [moreMenuAnchor, setMoreMenuAnchor] = useState<null | HTMLElement>(
     null
   );
@@ -100,19 +91,12 @@ export const DrawerMenu = ({
   const [editedDescription, setEditedDescription] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [textFieldIsFocused, setTextFieldIsFocused] = useState(false);
+  const [selectChatMenuOpen, setSelectChatMenuOpen] = useState(false);
 
   const isAuthenticated = useIsAuthenticated();
   const moreMenuOpen = Boolean(moreMenuAnchor);
   const { t } = useTranslation();
   const textFieldRef = useRef<HTMLDivElement>(null);
-
-  const toggleToolDrawerOpen = () => {
-    setToolMenuOpen(!toolMenuOpen);
-  };
-
-  const toggleSelectModelMenuOpen = () => {
-    setSelectModelMenuOpen(!selectModelMenuOpen);
-  };
 
   const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     handleSelectedModelChanged((event.target as HTMLInputElement).value);
@@ -167,44 +151,6 @@ export const DrawerMenu = ({
       }
     }, 100);
   };
-
-  // use effect to close the collapses when the drawer is toggled closed
-  useEffect(() => {
-    if (!openDrawer) {
-      setSelectModelMenuOpen(false);
-      setToolMenuOpen(false);
-      setSelectChatMenuOpen(false);
-    }
-  }, [openDrawer]);
-
-  // Use effect for opening the collapses for tools/model selection with tutorials
-  useEffect(() => {
-    if (openDrawer && tutorialBubbleNumber) {
-      switch (tutorialBubbleNumber) {
-        case 2:
-          setToolMenuOpen(true);
-          setSelectModelMenuOpen(false);
-          break;
-        case 3:
-          setToolMenuOpen(false);
-          setSelectModelMenuOpen(true);
-          break;
-        case 4:
-          setToolMenuOpen(false);
-          setSelectModelMenuOpen(false);
-          break;
-        case 5:
-          setSelectChatMenuOpen(false);
-          break;
-        case 6:
-          setSelectChatMenuOpen(true);
-          break;
-        default:
-          break;
-      }
-    }
-  }, [tutorialBubbleNumber, openDrawer]);
-
   // focus the text field when a user renames a chat
   useEffect(() => {
     if (editingIndex !== null && textFieldRef.current) {
@@ -253,18 +199,16 @@ export const DrawerMenu = ({
           />
         </Divider>
         <ListItem key="toolSettings" disablePadding>
-          <ListItemButton
-            onClick={toggleToolDrawerOpen}
-            aria-expanded={toolMenuOpen}
+          <ListItem
+            aria-expanded={true}
           >
             <ListItemIcon>
               <Handyman />
             </ListItemIcon>
             <ListItemText primary={t("menu.chooseTools")} />
-            {toolMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </ListItemButton>
+          </ListItem>
         </ListItem>
-        <Collapse in={toolMenuOpen} timeout="auto" unmountOnExit>
+        <Collapse in={true} timeout="auto" unmountOnExit>
           <Divider />
           <FormGroup>
             {corporateKey && (
@@ -329,18 +273,16 @@ export const DrawerMenu = ({
           </FormGroup>
         </Collapse>
         <ListItem key="modelSelection" disablePadding>
-          <ListItemButton
-            onClick={toggleSelectModelMenuOpen}
-            aria-expanded={selectModelMenuOpen}
+          <ListItem
+            aria-expanded={true}
           >
             <ListItemIcon>
               <PsychologyIcon />
             </ListItemIcon>
             <ListItemText>{t("model.version.select")}</ListItemText>
-            {selectModelMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </ListItemButton>
+          </ListItem>
         </ListItem>
-        <Collapse in={selectModelMenuOpen} timeout="auto" unmountOnExit>
+        <Collapse in={true} timeout="auto" unmountOnExit>
           <Divider />
           <RadioGroup
             defaultValue="gpt-4o"
@@ -387,7 +329,7 @@ export const DrawerMenu = ({
             </ListItemIcon>
             <ListItemText
               primary={t("new.conversation")}
-              aria-description={t("tutorial.newChat")}
+              aria-description={t("new.conversation.aria.description")}
               aria-label={t("new.conversation")}
             />
           </ListItemButton>
@@ -542,16 +484,6 @@ export const DrawerMenu = ({
         </Collapse>
       </List>
       <List sx={{ marginTop: "auto" }}>
-        {!tutorialBubbleNumber && (
-          <ListItem key="tutorials" disablePadding>
-            <ListItemButton onClick={() => handleToggleTutorials(true)}>
-              <ListItemIcon>
-                <InfoIcon />
-              </ListItemIcon>
-              <ListItemText primary={t("tutorial.view")} />
-            </ListItemButton>
-          </ListItem>
-        )}
         {isAuthenticated && (
           <ListItem key="logout" disablePadding>
             <ListItemButton onClick={logout}>
@@ -568,9 +500,19 @@ export const DrawerMenu = ({
 
   return (
     <Drawer
-      anchor="right"
       open={openDrawer}
-      onClose={() => toggleDrawer(false)}
+      variant="persistent"
+      sx={{
+        '& .MuiDrawer-paper': {
+          boxSizing: 'border-box',
+          width: `${LEFT_MENU_WIDTH}px`,
+          // For some reason, whenever a vertical scrollbar appears on the menu,
+          // horizontal scrollbar appears too. This is a workaround to remove the
+          // horizontal scrollbar, which is mostly nonfunctional.
+          overflowX: "clip",
+        },
+      }}
+
     >
       {list()}
     </Drawer>

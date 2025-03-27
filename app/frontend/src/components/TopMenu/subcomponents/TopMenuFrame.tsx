@@ -7,8 +7,11 @@ import logo from "../../../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { type PropsWithChildren } from "react";
 import { type FC } from "react";
 
-type TopMenuProps = PropsWithChildren;
-export const TopMenuFrame: FC<TopMenuProps> = (({ children }) => {
+type TopMenuProps = PropsWithChildren<{
+    childrenLeftOfLogo?: React.ReactNode;
+    leftOffset?: number
+}>;
+export const TopMenuFrame: FC<TopMenuProps> = (({ children, childrenLeftOfLogo, leftOffset }) => {
     const { t } = useTranslation();
 
     return (
@@ -19,7 +22,10 @@ export const TopMenuFrame: FC<TopMenuProps> = (({ children }) => {
                     bgcolor: "white",
                     backgroundImage: "none",
                     boxShadow: "none",
-                    position: "sticky"
+                    position: "fixed",
+                    left: leftOffset || 0,
+                    top: 0,
+                    right: 0
                 }}
             >
                 <Toolbar
@@ -38,6 +44,7 @@ export const TopMenuFrame: FC<TopMenuProps> = (({ children }) => {
                         border: "none"
                     })}
                 >
+                    {childrenLeftOfLogo}
                     <Box sx={{
                         display: "flex",
                         alignItems: "center",
