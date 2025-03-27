@@ -1,1 +1,1 @@
-export const LEFT_MENU_WIDTH = 320;
+export const LEFT_MENU_WIDTH = 300;

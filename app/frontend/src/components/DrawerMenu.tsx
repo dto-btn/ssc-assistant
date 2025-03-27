@@ -503,7 +503,6 @@ export const DrawerMenu = ({
       open={openDrawer}
       variant="persistent"
       sx={{
-        display: { xs: 'none', sm: 'block' },
         '& .MuiDrawer-paper': { boxSizing: 'border-box', width: `${LEFT_MENU_WIDTH}px` },
       }}
 
