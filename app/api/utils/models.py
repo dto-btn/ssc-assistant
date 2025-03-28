@@ -1,7 +1,7 @@
 from dataclasses import field
-from marshmallow_dataclass import dataclass
 from typing import Any, Dict, List, Literal, Optional, Union
 
+from marshmallow_dataclass import dataclass
 
 
 @dataclass
@@ -25,8 +25,10 @@ class Context:
 
 @dataclass
 class ToolInfo:
-    tool_type: List[str] = field(default_factory=list)
-    function_names: List[str] = field(default_factory=list)
+    """Gives back info on the tool that was used, function and payload contained"""
+    tool_type: str
+    function_name: str
+    count: int = field(default=1)
     payload: Dict[str, Union[Dict, list]] = field(default_factory=lambda: {})
 
 @dataclass
@@ -45,7 +47,7 @@ class Message:
     quotedText: Optional[str] = None
     content: Optional[str] = None
     context: Optional[Context] = None
-    tools_info: Optional[ToolInfo] = None
+    tools_info: Optional[List[ToolInfo]] = None
     attachments: Optional[List[Attachment]] = None
 
 @dataclass

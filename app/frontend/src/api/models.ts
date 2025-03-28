@@ -22,7 +22,7 @@ interface Message {
   role: string;
   content?: string | null;
   context?: Context | null;
-  tools_info?: ToolInfo;
+  tools_info?: ToolInfo[];
   quotedText?: string;
   attachments?: Attachment[];
 }
@@ -56,8 +56,8 @@ interface ToastMessage {
 type ChatItem = Message | Completion | ToastMessage;
 
 interface ToolInfo {
-  tool_type: string[];
-  function_names: string[];
+  tool_type: string;
+  function_name: string;
   payload?: Record<string, any>;
 }
 
@@ -111,62 +111,48 @@ interface BusinessRequest {
   BR_NMBR: number;
   BR_TITLE: string;
   BR_SHORT_TITLE: string;
-  PRIORITY_EN: string;
-  PRIORITY_FR: string;
-  CLIENT_NAME_SRC: string;
   RPT_GC_ORG_NAME_EN: string;
   RPT_GC_ORG_NAME_FR: string;
   ORG_TYPE_EN: string;
   ORG_TYPE_FR: string;
-  CLIENT_SUBGRP_ID: string;
-  CLIENT_SUBGRP_EN: string;
-  CLIENT_SUBGRP_FR: string;
-  CREATE_DATE: string;
-  SUBMIT_DATE: string;
-  DAYS_SINCE_SUBMIT: number;
   REQST_IMPL_DATE: string;
-  TARGET_IMPL_DATE: string;
-  RVSD_TARGET_IMPL_DATE: string | null;
-  ACTUAL_IMPL_DATE: string;
-  DAYS_TO_IMPL: number;
-  CANCEL_REASON_EN: string | null;
-  CANCEL_REASON_FR: string | null;
-  HOLD_REASON_EN: string | null;
-  HOLD_REASON_FR: string | null;
-  GROUP_ID: number;
-  GROUP_EN: string;
-  GROUP_FR: string;
-  REGION_ACRN_EN: string;
-  REGION_ACRN_FR: string;
-  REGION_EN: string;
-  REGION_FR: string;
   BR_TYPE_EN: string;
   BR_TYPE_FR: string;
-  FUNDING_TYPE_EN: string;
-  FUNDING_TYPE_FR: string;
+  PRIORITY_EN: string;
+  PRIORITY_FR: string;
+  BR_OWNER: string;
+  SUBMIT_DATE: string;
+  RVSD_TARGET_IMPL_DATE: string;
+  BA_OPI: string;
   CPLX_EN: string;
   CPLX_FR: string;
+  ACTUAL_IMPL_DATE: string;
+  AGRMT_END_DATE: string;
+  BA_TL: string;
+  TL_OPI: string;
+  SOL_OPI: string;
+  PM_OPI: string;
   SCOPE_EN: string;
   SCOPE_FR: string;
-  BR_OWNER: string;
-  BR_INITR: string;
-  BR_LAST_EDITOR: string;
-  CSM_OPI: string;
-  TL_OPI: string;
   CSM_DIRTR: string;
-  SOL_OPI: string;
-  ENGN_OPI: string;
-  BA_OPI: string;
-  BA_TL: string;
-  PM_OPI: string;
+  CLIENT_REQST_SOL_DATE: string;
   BA_PRICE_OPI: string;
-  QA_OPI: string;
-  SL_COORD: string;
-  AGRMT_OPI: string;
-  ACCT_MGR_OPI: string;
   SDM_TL_OPI: string;
-  REQMT_OVRVW: string;
+  CLIENT_SUBGRP_EN: string;
+  CLIENT_SUBGRP_FR: string;
+  PROD_OPI: string;
+  PRPO_TARGET_DATE: string;
+  IMPL_SGNOFF_DATE: string;
+  GROUP_EN: string;
+  GROUP_FR: string;
+  ENGN_OPI: string;
+  AGRMT_OPI: string;
+  BR_ACTIVE_EN: string;
+  BR_ACTIVE_FR: string;
+  BITS_STATUS_EN: string;
+  BITS_STATUS_FR: string;
   ASSOC_BRS: string;
+  REQMT_OVRVW: string;
 }
 
 interface BusinessRequestUpdate {
