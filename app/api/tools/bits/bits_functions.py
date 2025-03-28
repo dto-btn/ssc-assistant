@@ -192,16 +192,28 @@ def how_to_search_brs():
         "description": "Use this function to list all the BR Statuses. This can be used to get the STATUS_ID. To perform search in other queries.",
         "parameters": {
             "type": "object",
-            "properties": {},
+            "properties": {
+                "active": {
+                    "type": "boolean",
+                    "description": "If true, only active statuses will be returned. Defaults to true."
+                }
+            },
             "required": []
       }
     }
   })
-def get_br_statuses():
+def get_br_statuses(active: bool = True):
     """
     This will retreive the code table BR_STATUSES
     """
-    query = "SELECT * FROM [EDR_CARZ].[DIM_BITS_STATUS];"
+    query = """
+    SELECT STATUS_ID, BITS_STATUS_EN as NAME_EN, BITS_STATUS_FR as NAME_FR
+    FROM EDR_CARZ.DIM_BITS_STATUS
+    """
+
+    if active:
+        query += "\nWHERE BR_ACTIVE_EN = 'Active'"
+
     result = db.execute_query(query)
     return {'br_statuses': result}
 
@@ -233,7 +245,7 @@ def get_br_statuses():
   })
 def get_br_by_status(status: str, assigned_to: str = "", limit: int = 100):
     """
-    This will retreive the code table BR_STATUSES
+    This will retreive BR filtered by status.
     """
     query = _get_br_query(status=True, limit=bool(limit))
     result = db.execute_query(query, limit, status)
