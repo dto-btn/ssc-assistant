@@ -16,7 +16,7 @@ interface ApiMessageDto {
   role: string;
   content?: string | null;
   context?: Context | null;
-  tools_info?: ToolInfo;
+  tools_info?: ToolInfo[];
   quotedText?: string;
   attachments?: ApiAttachmentDto[];
 }
