@@ -12,6 +12,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { DataGrid, GridColDef, GridValueGetter } from "@mui/x-data-grid";
 
 interface BusinessRequestTableProps {
   data: Array<BusinessRequest>;
@@ -26,58 +27,75 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
   const { t } = useTranslation();
   const theme = useTheme();
 
+  const columns: GridColDef[] = [
+    {
+      field: "BR_NMBR",
+      headerName: t("business.request.number.short"),
+      width: 75,
+      renderCell: (params) => (
+        <Link
+          href={`https://bitsprod.ssc-spc.gc.ca/BR/${params.value}`}
+          rel="noopener"
+          target="_blank"
+        >
+          #{params.value}
+        </Link>
+      ),
+    },
+    {
+      field: "BR_SHORT_TITLE",
+      headerName: t("business.request.title"),
+      width: 250,
+    },
+    {
+      field: isEnglish ? "RPT_GC_ORG_NAME_EN" : "RPT_GC_ORG_NAME_FR",
+      headerName: t("client.name"),
+      width: 200,
+    },
+    { field: "BR_OWNER", headerName: t("br.owner"), width: 150 },
+    {
+      field: isEnglish ? "BITS_STATUS_EN" : "BITS_STATUS_FR",
+      headerName: t("status"),
+      width: 125,
+    },
+    {
+      field: isEnglish ? "PRIORITY_EN" : "PRIORITY_FR",
+      headerName: t("priority"),
+      width: 100,
+    },
+    {
+      field: "SUBMIT_DATE",
+      headerName: t("submit.date"),
+      width: 150,
+      valueGetter: (value, row) =>
+        new Date(value).toLocaleString("en-CA", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }),
+    },
+  ];
+
+  const paginationModel = { page: 0, pageSize: 10 };
+
   return (
     <Box>
       <TableContainer
         component={Paper}
         sx={{ backgroundColor: theme.palette.secondary.contrastText }}
       >
-        <Table aria-label={t("business.request.updates")}>
-          <TableHead>
-            <TableRow>
-              <TableCell>{t("business.request.number")}</TableCell>
-              <TableCell>{t("business.request.title")}</TableCell>
-              <TableCell>{t("client.name")}</TableCell>
-              <TableCell>{t("br.owner")}</TableCell>
-              <TableCell>{t("status")}</TableCell>
-              <TableCell>{t("priority")}</TableCell>
-              <TableCell>{t("submit.date")}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data.map((row, index) => {
-              return (
-                <TableRow key={index}>
-                  <TableCell>
-                    <Link
-                      href={`https://bitsprod.ssc-spc.gc.ca/BR/${row.BR_NMBR}`}
-                      rel="noopener"
-                      target="_blank"
-                    >
-                      #{row.BR_NMBR}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{row.BR_SHORT_TITLE}</TableCell>
-                  <TableCell>
-                    {isEnglish
-                      ? row.RPT_GC_ORG_NAME_EN
-                      : row.RPT_GC_ORG_NAME_FR}
-                  </TableCell>
-                  <TableCell>{row.BR_OWNER}</TableCell>
-                  <TableCell>
-                    {isEnglish ? row.BITS_STATUS_EN : row.BITS_STATUS_FR}
-                  </TableCell>
-                  <TableCell>
-                    {isEnglish ? row.PRIORITY_EN : row.PRIORITY_FR}
-                  </TableCell>
-                  <TableCell>
-                    {new Date(row.SUBMIT_DATE).toLocaleDateString()}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+        <DataGrid
+          rows={data}
+          columns={columns}
+          getRowId={(row) => row.BR_NMBR}
+          initialState={{ pagination: { paginationModel } }}
+          pageSizeOptions={[5, 10]}
+          checkboxSelection
+          sx={{
+            border: 0,
+            backgroundColor: theme.palette.secondary.contrastText,
+          }}
+        />
       </TableContainer>
     </Box>
   );

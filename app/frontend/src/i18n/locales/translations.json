@@ -567,6 +567,10 @@
         "en": "Business Request #",
         "fr": "Demande opérationnelles n°"
     },
+    "business.request.number.short": {
+        "en": "BR #",
+        "fr": "n° DO"
+    },
     "priority": {
         "en": "Priority",
         "fr": "Priorité"
