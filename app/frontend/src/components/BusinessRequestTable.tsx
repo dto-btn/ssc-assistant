@@ -1,18 +1,7 @@
 import React from "react";
-import {
-  Box,
-  Link,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  useTheme,
-} from "@mui/material";
+import { Box, Link, Paper, TableContainer, useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { DataGrid, GridColDef, GridValueGetter } from "@mui/x-data-grid";
+import { DataGrid, GridColDef } from "@mui/x-data-grid";
 
 interface BusinessRequestTableProps {
   data: Array<BusinessRequest>;
