@@ -94,18 +94,24 @@ def get_br_information(br_numbers: list[int]):
 @tool_metadata({
     "type": "function",
     "function": {
-        "name": "search_br_by_field",
-        "description": "A 'BR' is a 'Business Request', which includes information about purchase orders inside the Government of Canada. This function searches information about BRs given a specific BR field (labelled `field_name`). If multiple fields are needed, invoke this function multiple times... once for each field. The fields available are: {fields}. If the user doesn't provide a `field_name` then let them know what the field names are. Otherwise use best guess.".replace("{fields}", ", ".join(list(valid_search_fields.keys()))),
+        "name": "search_br_by_fields",
+        "description": "This function searches information about BRs given specific BR field(s) and value(s) pairs. YOU MUST ENSURE THAT YOU PASS THE FIELD NAMES AND THE VALUES IN THE SAME ORDER IN EACH RESPECTIVE LISTS.The fields available are: {fields}. If the user doesn't provide a `field_name` then let them know what the field names are. Otherwise use best guess.".replace("{fields}", ", ".join(list(valid_search_fields.keys()))),
         "parameters": {
             "type": "object",
             "properties": {
-                "field_name": {
-                    "type": "string",
-                    "description": "A field name to filter BRs by."
+                "field_names": {
+                    "type": "array",
+                    "description": "A list of fields name(s) to filter BRs by.",
+                    "items": {
+                        "type": "string"
+                    }
                 },
-                "field_value": {
-                    "type": "string",
-                    "description": "A field value to filter BRs by."
+                "field_values": {
+                    "type": "array",
+                    "description": "A list of fields value(s) to filter BRs by.",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "limit": {
                     "type": "integer",
@@ -113,21 +119,23 @@ def get_br_information(br_numbers: list[int]):
                     "default": 50
                 }
             },
-            "required": ["field_name", "field_value"]
+            "required": ["field_names", "field_values"]
       }
     }
   })
-def search_br_by_field(field_name: str, field_value: str, limit: int = 50):
+def search_br_by_fields(field_names: List[str], field_values: List[str], limit: int = 50):
     """
     search_br_by_field
 
     Search BRs via a specific field:
     """
-    if field_name:
-        fields = extract_fields_from_query([field_name], list(valid_search_fields.keys()) )
+    if field_names:
+        fields = extract_fields_from_query(field_names, list(valid_search_fields.keys()))
+        print(fields)
         if fields:
-            query = _get_br_query(limit=bool(limit), by_field=valid_search_fields[fields[0]])
-            result = db.execute_query(query, limit, f"%{field_value}%")
+            query_fields = [valid_search_fields[field] for field in fields]
+            query = _get_br_query(limit=bool(limit), by_fields=query_fields)
+            result = db.execute_query(query, limit, *(f"%{value}%" for value in field_values))
             return {'br': result}
     return "Try using one of the following fields: " + ", ".join(list(valid_search_fields.keys()))
 
@@ -232,7 +240,7 @@ def _get_br_query(br_number_count: int = 0,
                     status: bool = False,
                     limit: bool = False,
                     active: bool = False,
-                    by_field: str = "") -> str:
+                    by_fields: Optional[List[str]] = None) -> str:
     """Function that will build the select statement for retreiving BRs
 
     NOTE: No need to join on ORGANIZATION Table atm.. some info is already rolled in BR ITEMS ...
@@ -283,8 +291,8 @@ def _get_br_query(br_number_count: int = 0,
         placeholders = ", ".join(["%s"] * br_number_count)
         base_where_clause.append(f"br.BR_NMBR IN ({placeholders})")
 
-    if by_field:
-        base_where_clause.append(by_field + " LIKE %s")
+    if by_fields:
+        base_where_clause.append(" AND ".join([f"{field} LIKE %s" for field in by_fields]))
 
     if base_where_clause:
         query += "WHERE " + " AND ".join(base_where_clause)

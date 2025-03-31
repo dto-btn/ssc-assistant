@@ -144,7 +144,7 @@ Try to display only the main fields:
 - BR Type
 - Client Name
 
-When asked for multiple BR items, please bear in mind that the information will be displayed to the user below your answer. You can summarize the information.
+When asked for multiple BR items, please bear in mind that the information will be displayed to the user below your answer. You can summarize the information. But DO NOT list BRs in your answer.
 
 The system will display the full retrieved information to the user below the answer. The user can be made aware of this.
 """
@@ -163,7 +163,7 @@ Essayez d'afficher uniquement les champs principaux suivants :
 
 Lorsque vous demandez plusieurs éléments BR, veuillez noter que les informations seront affichées à l'utilisateur sous votre réponse. Vous pouvez résumer les informations.
 
-Le système affichera les informations récupérées complètes en dessous de la réponse. L'utilisateur peut en être informé.
+Le système affichera les informations récupérées complètes en dessous de la réponse. L'utilisateur peut en être informé. Ne pas afficher les DOs dans votre réponse.
 Note : Le mot-clé BR est également accepté et signifie la même chose."""
 # pylint: enable=line-too-long
 
