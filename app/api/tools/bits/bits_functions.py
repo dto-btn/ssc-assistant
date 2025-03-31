@@ -91,63 +91,6 @@ def get_br_information(br_numbers: list[int]):
     result = db.execute_query(query, *br_numbers)
     return {'br': result}
 
-# @tool_metadata({
-#     "type": "function",
-#     "function": {
-#         "name": "get_br_assigned_to",
-#         "description": "Gets information about BRs assigned to a given name. If no limit is specified, it returns the top 10 items by default. List of fields a user can specify in assigned_to_fields: {fields}".replace("{fields}", ", ".join(valid_assigned_to_fields)),
-#         "parameters": {
-#             "type": "object",
-#             "properties": {
-#                 "name": {
-#                     "type": "string",
-#                     "description": "The name to search for in the BR records. This can be the BR owner, initiator, last editor, or other specified roles."
-#                 },
-#                 "limit": {
-#                     "type": "integer",
-#                     "description": "The maximum number of BR items to return. Defaults to 10.",
-#                     "default": 10
-#                 },
-#                 "assigned_to_fields": {
-#                     "type": "string",
-#                     "description": "This is a list of comma separated fields that the user wants to filter this request on."
-#                 }
-#             },
-#             "required": ["name"]
-#         }
-#     }
-# })
-# def get_br_assigned_to(name: str, limit: int = 10, assigned_to_fields: str = ""):
-#     """
-#     Gets BR information assigned to a given name.
-#     """
-#     fields = []
-#     # If no specific fields are provided, use all valid fields
-#     if assigned_to_fields:
-#         assigned_to_fields_list = [field.strip() for field in assigned_to_fields.split(',')]
-#         fields = extract_fields_from_query(assigned_to_fields_list, valid_assigned_to_fields)
-#         # If no valid specific fields are provided, default to all valid fields
-#         if not fields:
-#             fields = valid_assigned_to_fields
-#     else:
-#         fields = valid_assigned_to_fields
-
-#     condition = " OR ".join([f"{field} LIKE %s" for field in fields])
-#     query = f"""
-#     WITH MatchedRows AS (
-#         SELECT *
-#         FROM EDR_CARZ.DIM_DEMAND_BR_ITEMS
-#         WHERE {condition}
-#     )
-#     SELECT TOP(%d) *, (SELECT COUNT(*) FROM MatchedRows) AS TotalCount
-#     FROM MatchedRows;
-#     """
-
-#     name_pattern = f"{name}%"
-#     params = [name_pattern] * len(fields) + [limit]
-#     result = db.execute_query(query, *params)
-#     return {'br': result}
-
 @tool_metadata({
     "type": "function",
     "function": {
