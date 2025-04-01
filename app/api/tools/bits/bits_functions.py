@@ -88,8 +88,7 @@ def get_br_information(br_numbers: list[int]):
     gets br information
     """
     query = _get_br_query(len(br_numbers))
-    result = db.execute_query(query, *br_numbers)
-    return {'br': result}
+    return db.execute_query(query, *br_numbers)
 
 @tool_metadata({
     "type": "function",
@@ -135,8 +134,7 @@ def search_br_by_fields(field_names: List[str], field_values: List[str], limit: 
         if fields:
             query_fields = [valid_search_fields[field] for field in fields]
             query = _get_br_query(limit=bool(limit), by_fields=query_fields)
-            result = db.execute_query(query, limit, *(f"%{value}%" for value in field_values))
-            return {'br': result}
+            return db.execute_query(query, *(f"%{value}%" for value in field_values), limit)
     return "Try using one of the following fields: " + ", ".join(list(valid_search_fields.keys()))
 
 @tool_metadata({
@@ -167,7 +165,6 @@ def how_to_search_brs():
     metadata = {}
     for key, value in functions.items():
         metadata[key] = value['metadata']
-    print(metadata)
     return json.dumps(metadata)
 
 @tool_metadata({
@@ -199,8 +196,7 @@ def get_br_statuses(active: bool = True):
     if active:
         query += "WHERE BR_ACTIVE_EN = 'Active'"
 
-    result = db.execute_query(query)
-    return {'br_statuses': result}
+    return db.execute_query(query, result_key="br_statuses")
 
 @tool_metadata({
     "type": "function",
@@ -233,8 +229,7 @@ def get_br_by_status(status: str, assigned_to: str = "", limit: int = 100):
     This will retreive BR filtered by status.
     """
     query = _get_br_query(status=True, limit=bool(limit))
-    result = db.execute_query(query, limit, status)
-    return {'br': result}
+    return db.execute_query(query, status, limit)
 
 def _get_br_query(br_number_count: int = 0,
                     status: bool = False,
@@ -245,11 +240,9 @@ def _get_br_query(br_number_count: int = 0,
 
     NOTE: No need to join on ORGANIZATION Table atm.. some info is already rolled in BR ITEMS ...
     """
-    query = "SELECT\n"
-
-    # Limit amount of results
-    if limit:
-        query += "TOP(%d)\n"
+    query = """WITH FilteredResults AS (
+    SELECT
+    """
 
     # Default select statement from BR_ITEMS & other tables
     query += "br.BR_NMBR as BR_NMBR," + ",".join([f"{value} as {key}" for key, value in valid_search_fields.items()])
@@ -300,9 +293,17 @@ def _get_br_query(br_number_count: int = 0,
     if base_where_clause:
         query += "WHERE " + " AND ".join(base_where_clause)
 
+    # Wrap CTE statement
+
+    query += """)
+    SELECT {top} *,
+        (SELECT COUNT(*) FROM FilteredResults) AS TotalCount
+    FROM FilteredResults
+    """.replace("{top}", "TOP(%d)" if limit else "")
+
     # ORDER BY clause
     query += """
     ORDER BY
-        br.BR_NMBR DESC
+        BR_NMBR DESC
     """
     return query
