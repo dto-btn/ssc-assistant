@@ -30,12 +30,13 @@ import FitScreenIcon from "@mui/icons-material/FitScreen";
 import BusinessRequestCard from "./BusinessRequestCard";
 import BusinessRequestUpdates from "./BusinessRequestUpdates";
 import { transformToBusinessRequest } from "../util/bits_utils";
+import BusinessRequestTable from "./BusinessRequestTable";
 
 interface AssistantBubbleProps {
   text: string;
   isLoading: boolean;
   context?: Context | null;
-  toolsInfo?: ToolInfo;
+  toolsInfo?: ToolInfo[];
   scrollRef?: React.RefObject<HTMLDivElement>;
   replayChat: () => void;
   index: number;
@@ -85,7 +86,6 @@ export const AssistantBubble = ({
   const [confirmButtonDisabled, setConfirmButtonDisabled] = useState(false);
   const [isFloorPlanExpanded, setFloorPlanExpanded] = useState(false);
   const isMostRecent = index === total - 1;
-  const toolsUsed = toolsInfo && toolsInfo.tool_type.length > 0;
   const [brData, setBrData] = useState<BusinessRequest[] | undefined>(
     undefined
   );
@@ -173,56 +173,48 @@ export const AssistantBubble = ({
       return processedProfiles;
     };
 
-    if (toolsInfo) {
-      if (toolsInfo?.payload?.br) {
-        try {
-          const brInformation = toolsInfo.payload.br;
-          if (brInformation.length) {
-            brInformation.map((br: any) => {
-              const brData = transformToBusinessRequest(br);
-              setBrData((prev) => (prev ? [...prev, brData] : [brData]));
-            });
+    if (toolsInfo && toolsInfo.length > 0) {
+      toolsInfo.map((tool) => {
+        const payload = tool.payload;
+        // BRs
+        if (payload?.br) {
+          try {
+            const brInformation = payload.br;
+            if (brInformation.length) {
+              const brInfoTransformed = brInformation.map((br: any) => {
+                return transformToBusinessRequest(br);
+                //setBrData((prev) => (prev ? [...prev, brData] : [brData]));
+              });
+              setBrData(brInfoTransformed);
+            }
+          } catch (error) {
+            console.error("Error transforming BR data", error);
           }
-        } catch (error) {
-          console.error("Error transforming BR data", error);
         }
-      }
-
-      if (toolsInfo?.payload?.br_updates) {
-        try {
-          const brUpdates = toolsInfo.payload.br_updates;
-          setBrUpdates(brUpdates);
-        } catch (error) {
-          console.error("Error transforming BR update data", error);
+        // BR Updates
+        if (payload?.br_updates) {
+          try {
+            const brUpdates = payload.br_updates;
+            setBrUpdates(brUpdates);
+          } catch (error) {
+            console.error("Error transforming BR update data", error);
+          }
         }
-      }
+        // GEDS
+        if (payload?.profiles) {
+          const processedProfiles = processProfiles(payload.profiles);
+          setProfiles(processedProfiles);
+        }
 
-      if (
-        toolsInfo.payload &&
-        Object.prototype.hasOwnProperty.call(toolsInfo.payload, "profiles") &&
-        toolsInfo.payload.profiles !== null
-      ) {
-        const processedProfiles = processProfiles(toolsInfo.payload.profiles);
-        setProfiles(processedProfiles);
-      }
+        //ARCHIBUS
+        if (payload?.floorPlan) {
+          setFloorPlanFilename(payload.floorPlan);
+        }
 
-      if (
-        toolsInfo.payload &&
-        Object.prototype.hasOwnProperty.call(toolsInfo.payload, "floorPlan")
-      ) {
-        const floorPlanFile = toolsInfo.payload.floorPlan;
-        setFloorPlanFilename(floorPlanFile);
-      }
-
-      if (
-        toolsInfo.payload &&
-        Object.prototype.hasOwnProperty.call(
-          toolsInfo.payload,
-          "bookingDetails"
-        )
-      ) {
-        setBookingDetails(toolsInfo.payload.bookingDetails);
-      }
+        if (payload?.bookingDetails) {
+          setBookingDetails(payload.bookingDetails);
+        }
+      });
     }
   }, [toolsInfo, text]);
 
@@ -291,24 +283,34 @@ export const AssistantBubble = ({
               </TextComponentsBox>
             </MainContentWrapper>
 
-            {toolsUsed && toolsInfo.tool_type && (
+            {toolsInfo && toolsInfo.length > 0 && (
               <ToolsUsedBox>
-                <Tooltip title={t("toolsUsed")} arrow>
-                  <HandymanIcon
-                    style={{
-                      fontSize: 16,
-                      margin: "0px 3px 0px 0px",
-                      color: "#4b3e99",
-                    }}
-                  />
-                </Tooltip>
-                <Stack direction="row" spacing={1}>
-                  {toolsInfo.tool_type.map((tool, index) => (
-                    <Tooltip title={t(tool)} key={index} arrow>
-                      <Chip label={toolsInfo.function_names[index] + "()"} />
-                    </Tooltip>
-                  ))}
-                </Stack>
+                <Paper
+                  sx={{ backgroundColor: "white", padding: 1 }}
+                  elevation={3}
+                >
+                  <Typography variant="caption" gutterBottom>
+                    {t("toolsUsed.short")} ({toolsInfo.length}):
+                  </Typography>
+                  <Divider sx={{ margin: 1 }} />
+                  <Stack direction="row" spacing={1}>
+                    {toolsInfo.map((tool, index) => (
+                      <Tooltip title={t(tool.function_name)} key={index} arrow>
+                        <Chip
+                          icon={
+                            <HandymanIcon
+                              style={{
+                                fontSize: 16,
+                                color: "#4b3e99",
+                              }}
+                            />
+                          }
+                          label={`${tool.function_name}()`}
+                        />
+                      </Tooltip>
+                    ))}
+                  </Stack>
+                </Paper>
               </ToolsUsedBox>
             )}
 
@@ -472,7 +474,17 @@ export const AssistantBubble = ({
                     marginTop: 2,
                   }}
                 >
+                  {brData && brData.length > 1 && (
+                    <Box sx={{ gridColumn: "span 2" }}>
+                      <BusinessRequestTable
+                        data={brData}
+                        lang={i18n.language}
+                      />
+                    </Box>
+                  )}
+
                   {brData &&
+                    brData.length == 1 &&
                     brData.map((item, index) => (
                       <BusinessRequestCard
                         key={index}
@@ -541,7 +553,7 @@ const ToolsUsedBox = styled(Box)`
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: 10px 15px;
+  padding: 1em;
 `;
 
 const MainContentWrapper = styled(Box)`
