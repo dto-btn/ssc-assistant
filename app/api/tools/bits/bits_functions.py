@@ -261,7 +261,10 @@ def _get_br_query(br_number_count: int = 0,
     """
 
     # Processing BR SNAPSHOT clause
-    snapshot_where_clause = ["PERIOD_END_DATE > GETDATE()"]
+    #snapshot_where_clause = ["PERIOD_END_DATE > GETDATE()"]
+    snapshot_where_clause = ["""
+    PERIOD_END_DATE = (SELECT TOP(1) MAX(PERIOD_END_DATE) PERIOD_END_DATE FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT])
+                             """]
     if status:
         snapshot_where_clause.append("STATUS_ID IN (%s)")
 
