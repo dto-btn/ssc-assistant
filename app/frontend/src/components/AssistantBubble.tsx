@@ -181,7 +181,6 @@ export const AssistantBubble = ({
           try {
             const brInformation = payload.br;
             if (brInformation.length) {
-              console.log(brInformation);
               const brInfoTransformed = brInformation.map((br: any) => {
                 return transformToBusinessRequest(br);
                 //setBrData((prev) => (prev ? [...prev, brData] : [brData]));
