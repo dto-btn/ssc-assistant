@@ -83,6 +83,12 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
         }
       ></CardHeader>
       <CardContent>
+        {data.BR_OWNER && (
+          <Typography variant="body2">
+            <strong>{t("br.owner")}: </strong>
+            {data.BR_OWNER}
+          </Typography>
+        )}
         {(isEnglish ? data.BR_TYPE_EN : data.BR_TYPE_FR) && (
           <Typography variant="body2">
             <strong>{t("br.type")}: </strong>
@@ -199,87 +205,6 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
           </Typography>
         )}
 
-        <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                <strong>{t("role")}</strong>
-              </TableCell>
-              <TableCell>
-                <strong>{t("assignee")}</strong>
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data.BR_OWNER && (
-              <TableRow>
-                <TableCell>{t("br.owner")}</TableCell>
-                <TableCell>{data.BR_OWNER}</TableCell>
-              </TableRow>
-            )}
-            {data.TL_OPI && (
-              <TableRow>
-                <TableCell>{t("tl.opi")}</TableCell>
-                <TableCell>{data.TL_OPI}</TableCell>
-              </TableRow>
-            )}
-            {data.CSM_DIRTR && (
-              <TableRow>
-                <TableCell>{t("csm.dirtr")}</TableCell>
-                <TableCell>{data.CSM_DIRTR}</TableCell>
-              </TableRow>
-            )}
-            {data.SOL_OPI && (
-              <TableRow>
-                <TableCell>{t("sol.opi")}</TableCell>
-                <TableCell>{data.SOL_OPI}</TableCell>
-              </TableRow>
-            )}
-            {data.ENGN_OPI && (
-              <TableRow>
-                <TableCell>{t("engn.opi")}</TableCell>
-                <TableCell>{data.ENGN_OPI}</TableCell>
-              </TableRow>
-            )}
-            {data.BA_OPI && (
-              <TableRow>
-                <TableCell>{t("ba.opi")}</TableCell>
-                <TableCell>{data.BA_OPI}</TableCell>
-              </TableRow>
-            )}
-            {data.BA_TL && (
-              <TableRow>
-                <TableCell>{t("ba.tl")}</TableCell>
-                <TableCell>{data.BA_TL}</TableCell>
-              </TableRow>
-            )}
-            {data.PM_OPI && (
-              <TableRow>
-                <TableCell>{t("pm.opi")}</TableCell>
-                <TableCell>{data.PM_OPI}</TableCell>
-              </TableRow>
-            )}
-            {data.BA_PRICE_OPI && (
-              <TableRow>
-                <TableCell>{t("ba.price_opi")}</TableCell>
-                <TableCell>{data.BA_PRICE_OPI}</TableCell>
-              </TableRow>
-            )}
-            {data.AGRMT_OPI && (
-              <TableRow>
-                <TableCell>{t("agrmt.opi")}</TableCell>
-                <TableCell>{data.AGRMT_OPI}</TableCell>
-              </TableRow>
-            )}
-            {data.SDM_TL_OPI && (
-              <TableRow>
-                <TableCell>{t("sdm.tl_opi")}</TableCell>
-                <TableCell>{data.SDM_TL_OPI}</TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
         <CardActions disableSpacing>
           {/* <Button
             size="small"
@@ -305,16 +230,86 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
           <Typography variant="body2" sx={{ marginBottom: 2 }}>
             {data.BR_TITLE}
           </Typography>
-          {data.REQMT_OVRVW && (
-            <>
-              <Typography variant="body2" sx={{ marginBottom: 2 }}>
-                <strong>{t("reqmt.ovrvw")}: </strong>
-              </Typography>
-              <Typography variant="body2" sx={{ marginBottom: 2 }}>
-                {data.REQMT_OVRVW}
-              </Typography>
-            </>
-          )}
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>
+                  <strong>{t("role")}</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>{t("assignee")}</strong>
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {data.BR_OWNER && (
+                <TableRow>
+                  <TableCell>{t("br.owner")}</TableCell>
+                  <TableCell>{data.BR_OWNER}</TableCell>
+                </TableRow>
+              )}
+              {data.TL_OPI && (
+                <TableRow>
+                  <TableCell>{t("tl.opi")}</TableCell>
+                  <TableCell>{data.TL_OPI}</TableCell>
+                </TableRow>
+              )}
+              {data.CSM_DIRTR && (
+                <TableRow>
+                  <TableCell>{t("csm.dirtr")}</TableCell>
+                  <TableCell>{data.CSM_DIRTR}</TableCell>
+                </TableRow>
+              )}
+              {data.SOL_OPI && (
+                <TableRow>
+                  <TableCell>{t("sol.opi")}</TableCell>
+                  <TableCell>{data.SOL_OPI}</TableCell>
+                </TableRow>
+              )}
+              {data.ENGN_OPI && (
+                <TableRow>
+                  <TableCell>{t("engn.opi")}</TableCell>
+                  <TableCell>{data.ENGN_OPI}</TableCell>
+                </TableRow>
+              )}
+              {data.BA_OPI && (
+                <TableRow>
+                  <TableCell>{t("ba.opi")}</TableCell>
+                  <TableCell>{data.BA_OPI}</TableCell>
+                </TableRow>
+              )}
+              {data.BA_TL && (
+                <TableRow>
+                  <TableCell>{t("ba.tl")}</TableCell>
+                  <TableCell>{data.BA_TL}</TableCell>
+                </TableRow>
+              )}
+              {data.PM_OPI && (
+                <TableRow>
+                  <TableCell>{t("pm.opi")}</TableCell>
+                  <TableCell>{data.PM_OPI}</TableCell>
+                </TableRow>
+              )}
+              {data.BA_PRICE_OPI && (
+                <TableRow>
+                  <TableCell>{t("ba.price_opi")}</TableCell>
+                  <TableCell>{data.BA_PRICE_OPI}</TableCell>
+                </TableRow>
+              )}
+              {data.AGRMT_OPI && (
+                <TableRow>
+                  <TableCell>{t("agrmt.opi")}</TableCell>
+                  <TableCell>{data.AGRMT_OPI}</TableCell>
+                </TableRow>
+              )}
+              {data.SDM_TL_OPI && (
+                <TableRow>
+                  <TableCell>{t("sdm.tl_opi")}</TableCell>
+                  <TableCell>{data.SDM_TL_OPI}</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Collapse>
     </Card>

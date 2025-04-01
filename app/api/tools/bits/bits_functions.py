@@ -17,7 +17,7 @@ db = DatabaseConnection(os.getenv("BITS_DB_SERVER", "missing.domain"),
                         os.getenv("BITS_DB_DATABASE", "missing.dbname"))
 
 valid_search_fields = {
-    #'BR_TITLE': 'br.BR_TITLE',
+    'BR_TITLE': 'br.BR_TITLE',
     'BR_SHORT_TITLE': 'br.BR_SHORT_TITLE',
     'RPT_GC_ORG_NAME_EN': 'br.RPT_GC_ORG_NAME_EN',
     'RPT_GC_ORG_NAME_FR': 'br.RPT_GC_ORG_NAME_FR',
@@ -115,15 +115,15 @@ def get_br_information(br_numbers: list[int]):
                 },
                 "limit": {
                     "type": "integer",
-                    "description": "The maximum number of BR items to return. Defaults to 50.",
-                    "default": 50
+                    "description": "The maximum number of BR items to return. Defaults to 100.",
+                    "default": 100
                 }
             },
             "required": ["field_names", "field_values"]
       }
     }
   })
-def search_br_by_fields(field_names: List[str], field_values: List[str], limit: int = 50):
+def search_br_by_fields(field_names: List[str], field_values: List[str], limit: int = 100):
     """
     search_br_by_field
 
@@ -216,8 +216,8 @@ def get_br_statuses(active: bool = True):
                 },
                 "limit": {
                     "type": "integer",
-                    "description": "The maximum number of BR items to return. Defaults to 50.",
-                    "default": 50
+                    "description": "The maximum number of BR items to return. Defaults to 100.",
+                    "default": 100
                 },
                 "assigned_to": {
                     "type": "string",
@@ -228,7 +228,7 @@ def get_br_statuses(active: bool = True):
       }
     }
   })
-def get_br_by_status(status: str, assigned_to: str = "", limit: int = 50):
+def get_br_by_status(status: str, assigned_to: str = "", limit: int = 100):
     """
     This will retreive BR filtered by status.
     """
@@ -299,4 +299,10 @@ def _get_br_query(br_number_count: int = 0,
 
     if base_where_clause:
         query += "WHERE " + " AND ".join(base_where_clause)
+
+    # ORDER BY clause
+    query += """
+    ORDER BY
+        br.BR_NMBR DESC
+    """
     return query
