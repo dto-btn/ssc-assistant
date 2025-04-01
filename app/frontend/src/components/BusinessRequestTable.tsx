@@ -56,7 +56,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
       field: "SUBMIT_DATE",
       headerName: t("submit.date"),
       width: 150,
-      valueGetter: (value, row) =>
+      valueGetter: (value) =>
         new Date(value).toLocaleString("en-CA", {
           year: "numeric",
           month: "2-digit",
