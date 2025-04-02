@@ -97,7 +97,7 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat, ch
               {item.icon}
               <Typography
                 variant="body1"
-                sx={{ display: { xs: "none", md: "block" } }}
+                sx={{ display: { xs: "none", lg: "block" } }}
                 aria-label={item.label}
               >
                 {item.label}
@@ -118,7 +118,7 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat, ch
             <>
               <Typography
                 variant="body1"
-                sx={{ display: { xs: "none", md: "block" } }}
+                sx={{ display: { xs: "none", lg: "block" } }}
               >
                 {graphData["givenName"]} {graphData["surname"]}
               </Typography>

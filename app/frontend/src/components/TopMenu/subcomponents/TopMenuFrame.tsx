@@ -56,7 +56,7 @@ export const TopMenuFrame: FC<TopMenuProps> = (({ children, childrenLeftOfLogo, 
                             width: "35px",
                             height: "auto",
                         }} alt="logo of SSC" />
-                        <Typography variant="h1" sx={{ fontSize: '20px', fontWeight: '500' }}>{t("title")}</Typography>
+                        <Typography variant="h1" sx={{ fontSize: '20px', fontWeight: '500', textWrap: "nowrap" }}>{t("title")}</Typography>
                     </Box>
                     <Box sx={{
                         display: "flex",
