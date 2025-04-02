@@ -25,7 +25,8 @@ export const TopMenuFrame: FC<TopMenuProps> = (({ children, childrenLeftOfLogo, 
                     position: "fixed",
                     left: leftOffset || 0,
                     top: 0,
-                    right: 0
+                    right: 0,
+                    width: `calc(100vw - ${leftOffset || 0}px)`,
                 }}
             >
                 <Toolbar
