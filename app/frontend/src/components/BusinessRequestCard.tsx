@@ -5,7 +5,6 @@ import {
   CardContent,
   CardHeader,
   Collapse,
-  Divider,
   Link,
   styled,
   Table,
@@ -180,7 +179,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
           <Typography variant="body2" color="textPrimary">
             <strong>{t("associated.business.requests")}: </strong>
             {typeof data.ASSOC_BRS === "string" &&
-            data.ASSOC_BRS.includes(",") ? (
+              data.ASSOC_BRS.includes(",") ? (
               data.ASSOC_BRS.split(",").map((br, index) => (
                 <React.Fragment key={index}>
                   <Link
