@@ -510,6 +510,7 @@ export const DrawerMenu = ({
           // horizontal scrollbar appears too. This is a workaround to remove the
           // horizontal scrollbar, which is mostly nonfunctional.
           overflowX: "clip",
+          backgroundColor: "#ededf3",
         },
       }}
 
