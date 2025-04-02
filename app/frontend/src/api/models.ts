@@ -152,7 +152,6 @@ interface BusinessRequest {
   BITS_STATUS_EN: string;
   BITS_STATUS_FR: string;
   ASSOC_BRS: string;
-  REQMT_OVRVW: string;
 }
 
 interface BusinessRequestUpdate {

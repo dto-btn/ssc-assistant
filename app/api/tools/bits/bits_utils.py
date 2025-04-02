@@ -22,7 +22,7 @@ class DatabaseConnection:
         logger.debug("requesting connection to database to --> %s", self.server)
         return pymssql.connect(server=self.server, user=self.username, password=self.password, database=self.database)  # pylint: disable=no-member
 
-    def execute_query(self, query, *args):
+    def execute_query(self, query, *args, result_key='br'):
         """
         Executes a query against the database
 
@@ -55,8 +55,20 @@ class DatabaseConnection:
             result = [{columns[i]: row[i] for i in range(len(columns))} for row in rows] # type: ignore
             logger.debug("Found %s results!", len(result))
 
+            total_count = next((item.get("TotalCount") for item in result if "TotalCount" in item), None)
+
+            final_result = {
+            result_key: result,
+                'metadata': {
+                    'execution_time': execution_time,
+                    'results': len(result),
+                    'total_rows': total_count,
+                }
+            }
+
             # Convert the result to JSON
-            json_result = json.dumps(result, default=_datetime_serializer, indent=4)#needed for the date serialization
+                                                    #needed for the date serialization
+            json_result = json.dumps(final_result, default=_datetime_serializer, indent=4)
             return json.loads(json_result)
 
         finally:
