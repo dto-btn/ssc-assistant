@@ -62,7 +62,7 @@ def _create_azure_cognitive_search_data_source(index_name: str, top: int=3, lang
     ]}
 
 
-def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optional['ToolInfo'], Union['ChatCompletion', 'Stream[ChatCompletionChunk]']]:# pylint: disable=line-too-long
+def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optional[List['ToolInfo']], Union['ChatCompletion', 'Stream[ChatCompletionChunk]']]:# pylint: disable=line-too-long
     """
     Initiate a chat with via openai api using data_source (azure cognitive search)
 
@@ -139,7 +139,7 @@ def build_completion_response(content: str,
                               completion_tokens: int = 0,
                               prompt_tokens: int = 0,
                               total_tokens: int = 0,
-                              tools_info: Optional[ToolInfo] = None):
+                              tools_info: Optional[List[ToolInfo]] = None):
     """
     Builds a completion response based on the context given and the content
     """

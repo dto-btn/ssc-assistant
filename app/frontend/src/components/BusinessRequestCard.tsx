@@ -71,10 +71,6 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
       sx={{ backgroundColor: theme.palette.secondary.contrastText }}
     >
       <CardHeader
-        // avatar={
-        //   <Avatar sx={{ bgcolor: red[500] }} aria-label="BR #" variant="square">
-        //     #
-        //   </Avatar>}
         title={data.BR_SHORT_TITLE}
         subheader={
           <Link
@@ -87,13 +83,25 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
         }
       ></CardHeader>
       <CardContent>
+        {(isEnglish ? data.BR_TYPE_EN : data.BR_TYPE_FR) && (
+          <Typography variant="body2">
+            <strong>{t("br.type")}: </strong>
+            {isEnglish ? data.BR_TYPE_EN : data.BR_TYPE_FR}
+          </Typography>
+        )}
+        {(isEnglish ? data.BITS_STATUS_EN : data.BITS_STATUS_FR) && (
+          <Typography variant="body2">
+            <strong>{t("status")}: </strong>
+            {isEnglish ? data.BITS_STATUS_EN : data.BITS_STATUS_FR}
+          </Typography>
+        )}
         <Typography variant="body2" color="textPrimary">
           <strong>{t("priority")}: </strong>
           {isEnglish ? data.PRIORITY_EN : data.PRIORITY_FR}
         </Typography>
         <Typography variant="body2" color="textPrimary">
           <strong>{t("client.name")}: </strong>
-          {data.CLIENT_NAME_SRC}
+          {isEnglish ? data.RPT_GC_ORG_NAME_EN : data.RPT_GC_ORG_NAME_FR}
         </Typography>
         {(isEnglish ? data.CLIENT_SUBGRP_EN : data.CLIENT_SUBGRP_FR) && (
           <Typography variant="body2" color="textPrimary">
@@ -101,20 +109,67 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
             {isEnglish ? data.CLIENT_SUBGRP_EN : data.CLIENT_SUBGRP_FR}
           </Typography>
         )}
-        <Typography variant="body2" color="textPrimary">
-          <strong>{t("create.date")}: </strong>
-          {new Date(data.CREATE_DATE).toLocaleDateString()}
-        </Typography>
+        {(isEnglish ? data.CPLX_EN : data.CPLX_FR) && (
+          <Typography variant="body2" color="textPrimary">
+            <strong>{t("complexity")}: </strong>
+            {isEnglish ? data.CPLX_EN : data.CPLX_FR}
+          </Typography>
+        )}
+        {(isEnglish ? data.SCOPE_EN : data.SCOPE_FR) && (
+          <Typography variant="body2" color="textPrimary">
+            <strong>{t("scope")}: </strong>
+            {isEnglish ? data.SCOPE_EN : data.SCOPE_FR}
+          </Typography>
+        )}
         <Typography variant="body2" color="textPrimary">
           <strong>{t("submit.date")}: </strong>
           {new Date(data.SUBMIT_DATE).toLocaleDateString()}
         </Typography>
-        {(isEnglish ? data.CANCEL_REASON_EN : data.CANCEL_REASON_FR) && (
-          <Typography variant="body2">
-            <strong>{t("cancel.reason")}: </strong>
-            {isEnglish ? data.CANCEL_REASON_EN : data.CANCEL_REASON_FR}
+        <Typography variant="body2" color="textPrimary">
+          <strong>{t("REQST_IMPL_DATE")}: </strong>
+          {new Date(data.REQST_IMPL_DATE).toLocaleDateString()}
+        </Typography>
+        {data.RVSD_TARGET_IMPL_DATE && (
+          <Typography variant="body2" color="textPrimary">
+            <strong>{t("RVSD_TARGET_IMPL_DATE")}: </strong>
+            {new Date(data.RVSD_TARGET_IMPL_DATE).toLocaleDateString()}
           </Typography>
         )}
+        {data.ACTUAL_IMPL_DATE && (
+          <Typography variant="body2" color="textPrimary">
+            <strong>{t("ACTUAL_IMPL_DATE")}: </strong>
+            {new Date(data.ACTUAL_IMPL_DATE).toLocaleDateString()}
+          </Typography>
+        )}
+
+        {data.CLIENT_REQST_SOL_DATE && (
+          <Typography variant="body2" color="textPrimary">
+            <strong>{t("CLIENT_REQST_SOL_DATE")}: </strong>
+            {new Date(data.CLIENT_REQST_SOL_DATE).toLocaleDateString()}
+          </Typography>
+        )}
+
+        {data.AGRMT_END_DATE && (
+          <Typography variant="body2" color="textPrimary">
+            <strong>{t("AGRMT_END_DATE")}: </strong>
+            {new Date(data.AGRMT_END_DATE).toLocaleDateString()}
+          </Typography>
+        )}
+
+        {data.PRPO_TARGET_DATE && (
+          <Typography variant="body2" color="textPrimary">
+            <strong>{t("PRPO_TARGET_DATE")}: </strong>
+            {new Date(data.PRPO_TARGET_DATE).toLocaleDateString()}
+          </Typography>
+        )}
+
+        {data.IMPL_SGNOFF_DATE && (
+          <Typography variant="body2" color="textPrimary">
+            <strong>{t("IMPL_SGNOFF_DATE")}: </strong>
+            {new Date(data.IMPL_SGNOFF_DATE).toLocaleDateString()}
+          </Typography>
+        )}
+
         {data.ASSOC_BRS && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("associated.business.requests")}: </strong>
@@ -161,24 +216,6 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
               <TableRow>
                 <TableCell>{t("br.owner")}</TableCell>
                 <TableCell>{data.BR_OWNER}</TableCell>
-              </TableRow>
-            )}
-            {data.BR_INITR && (
-              <TableRow>
-                <TableCell>{t("br.initr")}</TableCell>
-                <TableCell>{data.BR_INITR}</TableCell>
-              </TableRow>
-            )}
-            {data.BR_LAST_EDITOR && (
-              <TableRow>
-                <TableCell>{t("br.last_editor")}</TableCell>
-                <TableCell>{data.BR_LAST_EDITOR}</TableCell>
-              </TableRow>
-            )}
-            {data.CSM_OPI && (
-              <TableRow>
-                <TableCell>{t("csm.opi")}</TableCell>
-                <TableCell>{data.CSM_OPI}</TableCell>
               </TableRow>
             )}
             {data.TL_OPI && (
@@ -229,28 +266,10 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                 <TableCell>{data.BA_PRICE_OPI}</TableCell>
               </TableRow>
             )}
-            {data.QA_OPI && (
-              <TableRow>
-                <TableCell>{t("qa.opi")}</TableCell>
-                <TableCell>{data.QA_OPI}</TableCell>
-              </TableRow>
-            )}
-            {data.SL_COORD && (
-              <TableRow>
-                <TableCell>{t("sl.coord")}</TableCell>
-                <TableCell>{data.SL_COORD}</TableCell>
-              </TableRow>
-            )}
             {data.AGRMT_OPI && (
               <TableRow>
                 <TableCell>{t("agrmt.opi")}</TableCell>
                 <TableCell>{data.AGRMT_OPI}</TableCell>
-              </TableRow>
-            )}
-            {data.ACCT_MGR_OPI && (
-              <TableRow>
-                <TableCell>{t("acct_mgr.opi")}</TableCell>
-                <TableCell>{data.ACCT_MGR_OPI}</TableCell>
               </TableRow>
             )}
             {data.SDM_TL_OPI && (

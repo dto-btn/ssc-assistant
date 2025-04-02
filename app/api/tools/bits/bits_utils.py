@@ -82,9 +82,10 @@ def extract_fields_from_query(query: list, valid_fields: list):
         list: A list of fields extracted from the query.
     """
     fields = []
-    for field in valid_fields:
-        # Check if the field is mentioned in the query
-        for user_field in query:
+    for user_field in query:
+        # Check if the user_field matches any valid field
+        for field in valid_fields:
             if re.search(rf"\b{field}\b", user_field, re.IGNORECASE):
                 fields.append(user_field)
+                break
     return fields
