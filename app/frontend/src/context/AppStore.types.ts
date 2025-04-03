@@ -11,4 +11,8 @@ export type AppContext = {
         show: (message: string, debounceKey: string) => void;
         _hide: (id: number) => void;
     };
+    appDrawer: {
+        isOpen: boolean;
+        toggle: () => void;
+    }
 };

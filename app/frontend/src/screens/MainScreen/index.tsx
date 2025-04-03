@@ -34,7 +34,7 @@ import { useAppStore } from "../../context/AppStore";
 import Typography from "@mui/material/Typography";
 import { LEFT_MENU_WIDTH } from "../../constants/frameDimensions";
 import MenuIcon from "@mui/icons-material/Menu";
-import { theme } from "../../theme";
+import NewLayout from "../../components/layouts/NewLayout";
 
 const MainScreen = () => {
   const appStore = useAppStore();
@@ -68,7 +68,6 @@ const MainScreen = () => {
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
   // On app launch, keep the drawer open if the screen is larger than lg, else keep it closed.
-  const [openDrawer, setOpenDrawer] = useState<boolean>(window.innerWidth < theme.breakpoints.values.lg ? false : true);
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [isGoodResponse, setIsGoodResponse] = useState(false);
@@ -775,28 +774,51 @@ const MainScreen = () => {
 
   return (
     <UserContext.Provider value={userData}>
-      <TopMenuHomePage
-        onNewChat={handleNewChat}
-        leftOffset={openDrawer ? LEFT_MENU_WIDTH : 0}
-        childrenLeftOfLogo={
-          <>
-            < IconButton sx={{
-              color: 'white',
-            }} onClick={() => setOpenDrawer(state => !state)}>
-              <MenuIcon />
-            </IconButton>
-          </>
-        }
-      />
+      <NewLayout
+        appBar={(
+          <TopMenuHomePage
+            onNewChat={handleNewChat}
+            childrenLeftOfLogo={
+              <>
+                < IconButton sx={{
+                  color: 'white',
+                }} onClick={() => appStore.appDrawer.toggle()}>
+                  <MenuIcon />
+                </IconButton>
+              </>
+            }
+          />
+        )}
+        appDrawerContents={(
+          <DrawerMenu
+            chatDescriptions={chatHistoriesDescriptions}
+            currentChatIndex={currentChatIndex}
+            onClearChat={handleClearChat}
+            onNewChat={handleNewChat}
+            setLangCookie={setLangCookie}
+            logout={handleLogout}
+            enabledTools={enabledTools}
+            handleUpdateEnabledTools={handleUpdateEnabledTools}
+            handleSetSelectedCorporateFunction={handleSetSelectedCorporateFunction}
+            selectedCorporateFunction={selectedCorporateFunction}
+            selectedModel={currentChatHistory.model}
+            handleSelectedModelChanged={hanldeUpdateModelVersion}
+            handleDeleteSavedChat={handleDeleteSavedChat}
+            handleLoadSavedChat={handleLoadSavedChat}
+            renameChat={renameChat}
+          />
+        )}
+      >
+
       {currentChatHistory.chatItems.length === 0 ? (
         // if 0 chat history
         <Box
           sx={{
-            position: "fixed",
-            top: 0,
-            left: openDrawer ? LEFT_MENU_WIDTH : 0,
-            right: 0,
-            bottom: 0,
+              // position: "fixed",
+              // top: 0,
+              // left: openDrawer ? LEFT_MENU_WIDTH : 0,
+              // right: 0,
+              // bottom: 0,
             display: "flex",
             flexFlow: "column",
             minHeight: "100vh",
@@ -847,7 +869,7 @@ const MainScreen = () => {
             margin: "auto",
             position: "fixed",
             top: 0,
-              left: openDrawer ? LEFT_MENU_WIDTH : 0,
+                left: appStore.appDrawer.isOpen ? LEFT_MENU_WIDTH : 0,
             right: 0,
             bottom: 0,
           }}
@@ -889,24 +911,7 @@ const MainScreen = () => {
         </Box>
       )}
       <Disclaimer />
-      <DrawerMenu
-        openDrawer={openDrawer}
-        chatDescriptions={chatHistoriesDescriptions}
-        currentChatIndex={currentChatIndex}
-        onClearChat={handleClearChat}
-        onNewChat={handleNewChat}
-        setLangCookie={setLangCookie}
-        logout={handleLogout}
-        enabledTools={enabledTools}
-        handleUpdateEnabledTools={handleUpdateEnabledTools}
-        handleSetSelectedCorporateFunction={handleSetSelectedCorporateFunction}
-        selectedCorporateFunction={selectedCorporateFunction}
-        selectedModel={currentChatHistory.model}
-        handleSelectedModelChanged={hanldeUpdateModelVersion}
-        handleDeleteSavedChat={handleDeleteSavedChat}
-        handleLoadSavedChat={handleLoadSavedChat}
-        renameChat={renameChat}
-      />
+
       <FeedbackForm
         feedback={feedback}
         setFeedback={setFeedback}
@@ -929,6 +934,7 @@ const MainScreen = () => {
           <DialogContent>{warningDialogMessage}</DialogContent>
         </Dialog>
       )}
+      </NewLayout>
     </UserContext.Provider>
   );
 };

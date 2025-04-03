@@ -10,17 +10,15 @@ import { TopMenuItem } from "./subcomponents/TopMenuItem";
 interface TopMenuHomePageProps {
   onNewChat: () => void;
   childrenLeftOfLogo?: React.ReactNode;
-  leftOffset?: number;
 }
 
 
-export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat, childrenLeftOfLogo, leftOffset }) => {
+export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat, childrenLeftOfLogo }) => {
   const { t } = useTranslation();
 
   return (
     <TopMenuFrame
       childrenLeftOfLogo={childrenLeftOfLogo}
-      leftOffset={leftOffset}
     >
       <Box
         sx={{

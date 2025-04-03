@@ -1,32 +1,35 @@
 import { Box } from "@mui/material";
-import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
 import logo from "../../../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { type PropsWithChildren } from "react";
 import { type FC } from "react";
+import { AppBar } from "../../layouts/NewLayout/components/AppBar";
+import { useAppStore } from "../../../context/AppStore";
+import { LEFT_MENU_WIDTH } from "../../../constants/frameDimensions";
 
 type TopMenuProps = PropsWithChildren<{
     childrenLeftOfLogo?: React.ReactNode;
-    leftOffset?: number
 }>;
-export const TopMenuFrame: FC<TopMenuProps> = (({ children, childrenLeftOfLogo, leftOffset }) => {
+export const TopMenuFrame: FC<TopMenuProps> = (({ children, childrenLeftOfLogo }) => {
     const { t } = useTranslation();
+    const { appDrawer } = useAppStore();
+    const isOpen = appDrawer.isOpen;
 
     return (
         <>
-            <AppBar
+            <AppBar position="fixed" isOpen={isOpen} drawerWidth={LEFT_MENU_WIDTH}
                 sx={{
                     display: "inline-block",
                     bgcolor: "white",
                     backgroundImage: "none",
                     boxShadow: "none",
                     position: "fixed",
-                    left: leftOffset || 0,
+                    left: 0,
                     top: 0,
                     right: 0,
-                    width: `calc(100vw - ${leftOffset || 0}px)`,
+                    width: `calc(100vw - ${isOpen ? LEFT_MENU_WIDTH : 0}px)`,
                 }}
             >
                 <Toolbar

@@ -1,6 +1,5 @@
 import React from 'react';
-import Box from '@mui/material/Box';
-import NewLayout from '../components/layouts/NewLayout';
+import NewLayoutScreen from '../screens/NewLayoutScreen';
 
 interface NewLayoutRouteProps {
     /* props */
@@ -8,7 +7,7 @@ interface NewLayoutRouteProps {
 
 const NewLayoutRoute: React.FC<NewLayoutRouteProps> = ({ /* props */ }) => {
     return (
-        <NewLayout />
+        <NewLayoutScreen />
     );
 };
 

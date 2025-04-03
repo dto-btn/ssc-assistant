@@ -21,7 +21,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import Drawer from "@mui/material/Drawer";
 import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
 import { changeLanguage } from "i18next";
@@ -39,10 +38,8 @@ import { useTranslation } from "react-i18next";
 import React from "react";
 import { allowedToolsSet, allowedCorporateFunctionsSet } from "../allowedTools";
 import FormLabel from "@mui/material/FormLabel";
-import { LEFT_MENU_WIDTH } from "../constants/frameDimensions";
 
 interface DrawerMenuProps {
-  openDrawer: boolean;
   chatDescriptions: string[];
   currentChatIndex: number;
   onClearChat: () => void;
@@ -65,7 +62,6 @@ interface DrawerMenuProps {
 }
 
 export const DrawerMenu = ({
-  openDrawer,
   chatDescriptions,
   onClearChat,
   onNewChat,
@@ -499,23 +495,9 @@ export const DrawerMenu = ({
   );
 
   return (
-    <Drawer
-      open={openDrawer}
-      variant="persistent"
-      sx={{
-        '& .MuiDrawer-paper': {
-          boxSizing: 'border-box',
-          width: `${LEFT_MENU_WIDTH}px`,
-          // For some reason, whenever a vertical scrollbar appears on the menu,
-          // horizontal scrollbar appears too. This is a workaround to remove the
-          // horizontal scrollbar, which is mostly nonfunctional.
-          overflowX: "clip",
-          backgroundColor: "#ededf3",
-        },
-      }}
-
-    >
+    <>
       {list()}
-    </Drawer>
+    </>
+    // </Drawer>
   );
 };
