@@ -58,11 +58,12 @@ class DatabaseConnection:
             total_count = next((item.get("TotalCount") for item in result if "TotalCount" in item), None)
 
             final_result = {
-            result_key: result,
+                result_key: result,
                 'metadata': {
                     'execution_time': execution_time,
                     'results': len(result),
                     'total_rows': total_count,
+                    'extraction_date': result[0].get("EXTRACTION_DATE") if result else None,
                 }
             }
 
