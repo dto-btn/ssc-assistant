@@ -1,8 +1,6 @@
-import { Box, BoxProps, IconButton } from "@mui/material";
+import { Box, BoxProps } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
-import { useContext } from "react";
-import { UserContext } from "../../context/UserContext";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import React from "react";
 import { TopMenuFrame } from "./subcomponents/TopMenuFrame";
@@ -24,7 +22,6 @@ type TopMenuHomePageItem = {
 
 export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat, childrenLeftOfLogo, leftOffset }) => {
   const { t } = useTranslation();
-  const { graphData } = useContext(UserContext);
 
   const topMenuItems: TopMenuHomePageItem[] = [
     {
@@ -61,7 +58,6 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat, ch
           display: "flex",
           alignItems: "center",
           width: "100%",
-          cursor: "pointer",
           userSelect: "none",
         }}
       >
@@ -70,7 +66,6 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat, ch
             display: "flex",
             alignItems: "center",
             gap: "1rem",
-            cursor: "pointer",
             userSelect: "none",
           }}
         >
@@ -107,28 +102,14 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat, ch
         </Box>
         <Box
           sx={{
-            display: "flex",
-            flexGrow: 1,
-            justifyContent: "flex-end",
-            alignItems: "center",
-            gap: "1rem",
+            marginLeft: "auto", // make it float to the right
           }}
         >
-          {graphData && (
-            <>
-              <Typography
-                variant="body1"
-                sx={{ display: { xs: "none", lg: "block" } }}
-              >
-                {graphData["givenName"]} {graphData["surname"]}
-              </Typography>
-              <ProfilePictureOnClickMenu
-                fullName={graphData["givenName"] + " " + graphData["surname"]}
-                size="30px"
-                fontSize="12px"
-              />
-            </>
-          )}
+          <ProfilePictureOnClickMenu
+            size="30px"
+            fontSize="12px"
+          />
+
         </Box>
       </Box>
     </TopMenuFrame>

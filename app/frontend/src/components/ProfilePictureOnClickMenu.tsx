@@ -1,24 +1,24 @@
 import * as React from 'react';
-import Button from '@mui/material/Button';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { UserProfilePicture } from './ProfilePicture';
+import { useContext } from 'react';
+import { UserContext } from '../context/UserContext';
 
 interface ProfilePictureOnClickMenuProps {
-    fullName: string;
     size?: string;
     fontSize?: string;
 }
 
 
 export const ProfilePictureOnClickMenu: React.FC<ProfilePictureOnClickMenuProps> = ({
-    fullName,
     size,
     fontSize,
 }) => {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
+    const { graphData } = useContext(UserContext);
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
     };
@@ -26,17 +26,34 @@ export const ProfilePictureOnClickMenu: React.FC<ProfilePictureOnClickMenuProps>
         setAnchorEl(null);
     };
 
-    return (
-        <div>
+    return graphData && (
+        <Box
+            sx={{
+                cursor: "pointer"
+            }}
+        >
             <Box
                 id="demo-positioned-button"
                 aria-controls={open ? 'demo-positioned-menu' : undefined}
                 aria-haspopup="true"
                 aria-expanded={open ? 'true' : undefined}
+                sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: "1rem",
+                }}
                 onClick={handleClick}
+
             >
+                <Typography
+                    variant="body1"
+                    sx={{ display: { xs: "none", lg: "block" } }}
+                >
+                    {graphData["givenName"]} {graphData["surname"]}
+                </Typography>
                 <UserProfilePicture
-                    fullName={fullName}
+                    fullName={graphData["givenName"] + " " + graphData["surname"]}
                     size={size}
                     fontSize={fontSize}
                 />
@@ -60,6 +77,6 @@ export const ProfilePictureOnClickMenu: React.FC<ProfilePictureOnClickMenuProps>
                 <MenuItem onClick={handleClose}>My account</MenuItem>
                 <MenuItem onClick={handleClose}>Logout</MenuItem>
             </Menu>
-        </div>
+        </Box>
     );
 }

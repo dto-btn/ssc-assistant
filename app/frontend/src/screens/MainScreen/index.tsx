@@ -3,7 +3,6 @@ import {
   Dialog,
   DialogContent,
   IconButton,
-  useTheme,
 } from "@mui/material";
 import {
   ChatInput,
