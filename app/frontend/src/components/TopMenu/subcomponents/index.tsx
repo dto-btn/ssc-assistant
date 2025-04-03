@@ -2,9 +2,9 @@ import * as React from 'react';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { Box, Typography } from '@mui/material';
-import { UserProfilePicture } from './ProfilePicture';
+import { UserProfilePicture } from './ProfileMenuButton/ProfilePicture';
 import { useContext } from 'react';
-import { UserContext } from '../context/UserContext';
+import { UserContext } from '../../../context/UserContext';
 
 interface ProfilePictureOnClickMenuProps {
     size?: string;
@@ -12,7 +12,7 @@ interface ProfilePictureOnClickMenuProps {
 }
 
 
-export const ProfilePictureOnClickMenu: React.FC<ProfilePictureOnClickMenuProps> = ({
+export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
     size,
     fontSize,
 }) => {

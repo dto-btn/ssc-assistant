@@ -5,7 +5,7 @@ import AddCommentIcon from "@mui/icons-material/AddComment";
 import React from "react";
 import { TopMenuFrame } from "./subcomponents/TopMenuFrame";
 import TopmenuMicrosofTeamsIcon from "./TopmenuMicrosofTeamsIcon.svg";
-import { ProfilePictureOnClickMenu } from "../ProfilePictureOnClickMenu";
+import { ProfileMenuButton } from "./subcomponents";
 
 interface TopMenuHomePageProps {
   onNewChat: () => void;
@@ -105,7 +105,7 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat, ch
             marginLeft: "auto", // make it float to the right
           }}
         >
-          <ProfilePictureOnClickMenu
+          <ProfileMenuButton
             size="30px"
             fontSize="12px"
           />
