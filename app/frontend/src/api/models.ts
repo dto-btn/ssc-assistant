@@ -109,7 +109,6 @@ interface SuggestionContext {
 
 interface BusinessRequest {
   BR_NMBR: number;
-  BR_TITLE: string;
   BR_SHORT_TITLE: string;
   RPT_GC_ORG_NAME_EN: string;
   RPT_GC_ORG_NAME_FR: string;
@@ -130,7 +129,6 @@ interface BusinessRequest {
   AGRMT_END_DATE: string;
   BA_TL: string;
   TL_OPI: string;
-  SOL_OPI: string;
   PM_OPI: string;
   SCOPE_EN: string;
   SCOPE_FR: string;
@@ -145,7 +143,6 @@ interface BusinessRequest {
   IMPL_SGNOFF_DATE: string;
   GROUP_EN: string;
   GROUP_FR: string;
-  ENGN_OPI: string;
   AGRMT_OPI: string;
   BR_ACTIVE_EN: string;
   BR_ACTIVE_FR: string;

@@ -259,18 +259,6 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                   <TableCell>{data.CSM_DIRTR}</TableCell>
                 </TableRow>
               )}
-              {data.SOL_OPI && (
-                <TableRow>
-                  <TableCell>{t("sol.opi")}</TableCell>
-                  <TableCell>{data.SOL_OPI}</TableCell>
-                </TableRow>
-              )}
-              {data.ENGN_OPI && (
-                <TableRow>
-                  <TableCell>{t("engn.opi")}</TableCell>
-                  <TableCell>{data.ENGN_OPI}</TableCell>
-                </TableRow>
-              )}
               {data.BA_OPI && (
                 <TableRow>
                   <TableCell>{t("ba.opi")}</TableCell>

@@ -17,7 +17,6 @@ db = DatabaseConnection(os.getenv("BITS_DB_SERVER", "missing.domain"),
                         os.getenv("BITS_DB_DATABASE", "missing.dbname"))
 
 valid_search_fields = {
-    'BR_TITLE': 'br.BR_TITLE',
     'BR_SHORT_TITLE': 'br.BR_SHORT_TITLE',
     'RPT_GC_ORG_NAME_EN': 'br.RPT_GC_ORG_NAME_EN',
     'RPT_GC_ORG_NAME_FR': 'br.RPT_GC_ORG_NAME_FR',
@@ -38,7 +37,6 @@ valid_search_fields = {
     'AGRMT_END_DATE': 'br.AGRMT_END_DATE',
     'BA_TL': 'br.BA_TL',
     'TL_OPI': 'br.TL_OPI',
-    'SOL_OPI': 'br.SOL_OPI',
     'PM_OPI': 'br.PM_OPI',
     'SCOPE_EN': 'br.SCOPE_EN',
     'SCOPE_FR': 'br.SCOPE_FR',
@@ -53,7 +51,6 @@ valid_search_fields = {
     'IMPL_SGNOFF_DATE': 'br.IMPL_SGNOFF_DATE',
     'GROUP_EN': 'br.GROUP_EN',
     'GROUP_FR': 'br.GROUP_FR',
-    'ENGN_OPI': 'br.ENGN_OPI',
     'AGRMT_OPI': 'br.AGRMT_OPI',
     'ASSOC_BRS': 'br.ASSOC_BRS',
     'REQMT_OVRVW': 'br.REQMT_OVRVW',

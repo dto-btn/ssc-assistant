@@ -647,14 +647,6 @@
         "en": "Client Executive",
         "fr": "Cadre Client"
     },
-    "sol.opi": {
-        "en": "Conceptual Designer",
-        "fr": "Designer Conceptuel"
-    },
-    "engn.opi": {
-        "en": "Implementation OPI",
-        "fr": "OPI de l'implémentation"
-    },
     "ba.opi": {
         "en": "Business Analyst OPI",
         "fr": "OPI de l'analyste opérationnel"
