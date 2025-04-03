@@ -108,6 +108,7 @@ interface SuggestionContext {
 }
 
 interface BusinessRequest {
+  LEAD_PRODUCT: string;
   BR_NMBR: number;
   BR_SHORT_TITLE: string;
   RPT_GC_ORG_NAME_EN: string;

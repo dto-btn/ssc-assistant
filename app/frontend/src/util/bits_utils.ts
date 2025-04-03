@@ -1,5 +1,6 @@
 export const transformToBusinessRequest = (data: any): BusinessRequest => {
   return {
+    LEAD_PRODUCT: data.LEAD_PRODUCT,
     BR_NMBR: data.BR_NMBR,
     BR_SHORT_TITLE: data.BR_SHORT_TITLE,
     RPT_GC_ORG_NAME_EN: data.RPT_GC_ORG_NAME_EN,

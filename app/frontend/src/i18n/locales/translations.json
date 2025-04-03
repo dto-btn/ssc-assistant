@@ -766,5 +766,9 @@
     "SDM_TL_OPI": {  
         "en": "SDM Team Lead",  
         "fr": "GPS Chef d'équipe"  
+    },
+    "LEAD_PRODUCT": {  
+        "en": "Lead Product",  
+        "fr": "Produit principal"  
     }
 }

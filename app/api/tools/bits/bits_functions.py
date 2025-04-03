@@ -17,6 +17,7 @@ db = DatabaseConnection(os.getenv("BITS_DB_SERVER", "missing.domain"),
                         os.getenv("BITS_DB_DATABASE", "missing.dbname"))
 
 valid_search_fields = {
+    'LEAD_PRODUCT': 'products.PROD_ID',
     'BR_SHORT_TITLE': 'br.BR_SHORT_TITLE',
     'RPT_GC_ORG_NAME_EN': 'br.RPT_GC_ORG_NAME_EN',
     'RPT_GC_ORG_NAME_FR': 'br.RPT_GC_ORG_NAME_FR',
@@ -404,6 +405,13 @@ def _get_br_query(br_number_count: int = 0,
         ) AS PivotTable
     ) AS opis
     ON opis.BR_NMBR = br.BR_NMBR
+    """
+
+    # PRODUCTS
+    query += """
+    INNER JOIN
+		(SELECT BR_NMBR, PROD_ID FROM [EDR_CARZ].[FCT_DEMAND_BR_PRODUCTS] WHERE PROD_TYPE = 'LEAD') products
+	ON products.BR_NMBR = br.BR_NMBR
     """
 
     # WHERE CLAUSE PROCESSING (BR_NMBR and ACTIVE, etc)

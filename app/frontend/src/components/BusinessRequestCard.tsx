@@ -82,12 +82,10 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
         }
       ></CardHeader>
       <CardContent>
-        {data.SR_OWNER && (
-          <Typography variant="body2">
-            <strong>{t("SR_OWNER")}: </strong>
-            {data.SR_OWNER}
-          </Typography>
-        )}
+        <Typography variant="body2" color="textPrimary">
+          <strong>{t("LEAD_PRODUCT")}: </strong>
+          {data.LEAD_PRODUCT}
+        </Typography>
         {(isEnglish ? data.BR_TYPE_EN : data.BR_TYPE_FR) && (
           <Typography variant="body2">
             <strong>{t("br.type")}: </strong>
@@ -235,6 +233,12 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
               </TableRow>
             </TableHead>
             <TableBody>
+              {data.SR_OWNER && (
+                <TableRow>
+                  <TableCell>{t("SR_OWNER")}</TableCell>
+                  <TableCell>{data.SR_OWNER}</TableCell>
+                </TableRow>
+              )}
               {data.ACC_MANAGER_OPI && (
                 <TableRow>
                   <TableCell>{t("ACC_MANAGER_OPI")}</TableCell>
