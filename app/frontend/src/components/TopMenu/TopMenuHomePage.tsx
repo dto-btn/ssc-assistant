@@ -1,13 +1,13 @@
 import { Box, BoxProps, IconButton } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import { useTranslation } from "react-i18next";
-import { UserProfilePicture } from "../ProfilePicture";
 import { useContext } from "react";
 import { UserContext } from "../../context/UserContext";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import React from "react";
 import { TopMenuFrame } from "./subcomponents/TopMenuFrame";
 import TopmenuMicrosofTeamsIcon from "./TopmenuMicrosofTeamsIcon.svg";
+import { ProfilePictureOnClickMenu } from "../ProfilePictureOnClickMenu";
 
 interface TopMenuHomePageProps {
   onNewChat: () => void;
@@ -122,7 +122,7 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat, ch
               >
                 {graphData["givenName"]} {graphData["surname"]}
               </Typography>
-              <UserProfilePicture
+              <ProfilePictureOnClickMenu
                 fullName={graphData["givenName"] + " " + graphData["surname"]}
                 size="30px"
                 fontSize="12px"
