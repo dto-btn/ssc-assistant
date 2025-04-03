@@ -82,10 +82,10 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
         }
       ></CardHeader>
       <CardContent>
-        {data.BR_OWNER && (
+        {data.SR_OWNER && (
           <Typography variant="body2">
-            <strong>{t("br.owner")}: </strong>
-            {data.BR_OWNER}
+            <strong>{t("SR_OWNER")}: </strong>
+            {data.SR_OWNER}
           </Typography>
         )}
         {(isEnglish ? data.BR_TYPE_EN : data.BR_TYPE_FR) && (
@@ -235,58 +235,88 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {data.BR_OWNER && (
+              {data.ACC_MANAGER_OPI && (
                 <TableRow>
-                  <TableCell>{t("br.owner")}</TableCell>
-                  <TableCell>{data.BR_OWNER}</TableCell>
+                  <TableCell>{t("ACC_MANAGER_OPI")}</TableCell>
+                  <TableCell>{data.ACC_MANAGER_OPI}</TableCell>
                 </TableRow>
               )}
-              {data.TL_OPI && (
+              {data.AGR_OPI && (
                 <TableRow>
-                  <TableCell>{t("tl.opi")}</TableCell>
-                  <TableCell>{data.TL_OPI}</TableCell>
-                </TableRow>
-              )}
-              {data.CSM_DIRTR && (
-                <TableRow>
-                  <TableCell>{t("csm.dirtr")}</TableCell>
-                  <TableCell>{data.CSM_DIRTR}</TableCell>
+                  <TableCell>{t("AGR_OPI")}</TableCell>
+                  <TableCell>{data.AGR_OPI}</TableCell>
                 </TableRow>
               )}
               {data.BA_OPI && (
                 <TableRow>
-                  <TableCell>{t("ba.opi")}</TableCell>
+                  <TableCell>{t("BA_OPI")}</TableCell>
                   <TableCell>{data.BA_OPI}</TableCell>
+                </TableRow>
+              )}
+              {data.BA_PRICING_OPI && (
+                <TableRow>
+                  <TableCell>{t("BA_PRICING_OPI")}</TableCell>
+                  <TableCell>{data.BA_PRICING_OPI}</TableCell>
+                </TableRow>
+              )}
+              {data.BA_PRICING_TL && (
+                <TableRow>
+                  <TableCell>{t("BA_PRICING_TL")}</TableCell>
+                  <TableCell>{data.BA_PRICING_TL}</TableCell>
                 </TableRow>
               )}
               {data.BA_TL && (
                 <TableRow>
-                  <TableCell>{t("ba.tl")}</TableCell>
+                  <TableCell>{t("BA_TL")}</TableCell>
                   <TableCell>{data.BA_TL}</TableCell>
+                </TableRow>
+              )}
+              {data.CSM_DIRECTOR && (
+                <TableRow>
+                  <TableCell>{t("CSM_DIRECTOR")}</TableCell>
+                  <TableCell>{data.CSM_DIRECTOR}</TableCell>
+                </TableRow>
+              )}
+              {data.EAOPI && (
+                <TableRow>
+                  <TableCell>{t("EAOPI")}</TableCell>
+                  <TableCell>{data.EAOPI}</TableCell>
                 </TableRow>
               )}
               {data.PM_OPI && (
                 <TableRow>
-                  <TableCell>{t("pm.opi")}</TableCell>
+                  <TableCell>{t("PM_OPI")}</TableCell>
                   <TableCell>{data.PM_OPI}</TableCell>
                 </TableRow>
               )}
-              {data.BA_PRICE_OPI && (
+              {data.QA_OPI && (
                 <TableRow>
-                  <TableCell>{t("ba.price_opi")}</TableCell>
-                  <TableCell>{data.BA_PRICE_OPI}</TableCell>
-                </TableRow>
-              )}
-              {data.AGRMT_OPI && (
-                <TableRow>
-                  <TableCell>{t("agrmt.opi")}</TableCell>
-                  <TableCell>{data.AGRMT_OPI}</TableCell>
+                  <TableCell>{t("QA_OPI")}</TableCell>
+                  <TableCell>{data.QA_OPI}</TableCell>
                 </TableRow>
               )}
               {data.SDM_TL_OPI && (
                 <TableRow>
-                  <TableCell>{t("sdm.tl_opi")}</TableCell>
+                  <TableCell>{t("SDM_TL_OPI")}</TableCell>
                   <TableCell>{data.SDM_TL_OPI}</TableCell>
+                </TableRow>
+              )}
+              {data.SR_OWNER && (
+                <TableRow>
+                  <TableCell>{t("SR_OWNER")}</TableCell>
+                  <TableCell>{data.SR_OWNER}</TableCell>
+                </TableRow>
+              )}
+              {data.TEAMLEADER && (
+                <TableRow>
+                  <TableCell>{t("TEAMLEADER")}</TableCell>
+                  <TableCell>{data.TEAMLEADER}</TableCell>
+                </TableRow>
+              )}
+              {data.WIO_OPI && (
+                <TableRow>
+                  <TableCell>{t("WIO_OPI")}</TableCell>
+                  <TableCell>{data.WIO_OPI}</TableCell>
                 </TableRow>
               )}
             </TableBody>
