@@ -223,12 +223,6 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
       </CardContent>
       <Collapse in={expanded} timeout="auto" unmountOnExit>
         <CardContent>
-          <Typography variant="body2" sx={{ marginBottom: 2 }}>
-            <strong>{t("long.title")}: </strong>
-          </Typography>
-          <Typography variant="body2" sx={{ marginBottom: 2 }}>
-            {data.BR_TITLE}
-          </Typography>
           <Table size="small">
             <TableHead>
               <TableRow>
