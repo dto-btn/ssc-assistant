@@ -17,7 +17,7 @@ db = DatabaseConnection(os.getenv("BITS_DB_SERVER", "missing.domain"),
                         os.getenv("BITS_DB_DATABASE", "missing.dbname"))
 
 valid_search_fields = {
-    'BR_TITLE': 'br.BR_TITLE',
+    'LEAD_PRODUCT': 'products.PROD_ID',
     'BR_SHORT_TITLE': 'br.BR_SHORT_TITLE',
     'RPT_GC_ORG_NAME_EN': 'br.RPT_GC_ORG_NAME_EN',
     'RPT_GC_ORG_NAME_FR': 'br.RPT_GC_ORG_NAME_FR',
@@ -28,39 +28,115 @@ valid_search_fields = {
     'BR_TYPE_FR': 'br.BR_TYPE_FR',
     'PRIORITY_EN': 'br.PRIORITY_EN',
     'PRIORITY_FR': 'br.PRIORITY_FR',
-    'BR_OWNER': 'br.BR_OWNER',
     'SUBMIT_DATE': 'br.SUBMIT_DATE',
     'RVSD_TARGET_IMPL_DATE': 'br.RVSD_TARGET_IMPL_DATE',
-    'BA_OPI': 'br.BA_OPI',
     'CPLX_EN': 'br.CPLX_EN',
     'CPLX_FR': 'br.CPLX_FR',
     'ACTUAL_IMPL_DATE': 'br.ACTUAL_IMPL_DATE',
     'AGRMT_END_DATE': 'br.AGRMT_END_DATE',
-    'BA_TL': 'br.BA_TL',
-    'TL_OPI': 'br.TL_OPI',
-    'SOL_OPI': 'br.SOL_OPI',
-    'PM_OPI': 'br.PM_OPI',
     'SCOPE_EN': 'br.SCOPE_EN',
     'SCOPE_FR': 'br.SCOPE_FR',
-    'CSM_DIRTR': 'br.CSM_DIRTR',
     'CLIENT_REQST_SOL_DATE': 'br.CLIENT_REQST_SOL_DATE',
-    'BA_PRICE_OPI': 'br.BA_PRICE_OPI',
-    'SDM_TL_OPI': 'br.SDM_TL_OPI',
     'CLIENT_SUBGRP_EN': 'br.CLIENT_SUBGRP_EN',
     'CLIENT_SUBGRP_FR': 'br.CLIENT_SUBGRP_FR',
-    'PROD_OPI': 'br.PROD_OPI',
     'PRPO_TARGET_DATE': 'br.PRPO_TARGET_DATE',
     'IMPL_SGNOFF_DATE': 'br.IMPL_SGNOFF_DATE',
     'GROUP_EN': 'br.GROUP_EN',
     'GROUP_FR': 'br.GROUP_FR',
-    'ENGN_OPI': 'br.ENGN_OPI',
-    'AGRMT_OPI': 'br.AGRMT_OPI',
     'ASSOC_BRS': 'br.ASSOC_BRS',
-    'REQMT_OVRVW': 'br.REQMT_OVRVW',
     'BR_ACTIVE_EN': 's.BR_ACTIVE_EN',
     'BR_ACTIVE_FR': 's.BR_ACTIVE_FR',
     'BITS_STATUS_EN': 's.BITS_STATUS_EN',
-    'BITS_STATUS_FR': 's.BITS_STATUS_FR'
+    'BITS_STATUS_FR': 's.BITS_STATUS_FR',
+    'ACC_MANAGER_OPI': 'opis.ACC_MANAGER_OPI',
+    'AGR_OPI': 'opis.AGR_OPI',
+    'BA_OPI': 'opis.BA_OPI',
+    'BA_PRICING_OPI': 'opis.BA_PRICING_OPI',
+    'BA_PRICING_TL': 'opis.BA_PRICING_TL',
+    'BA_TL': 'opis.BA_TL',
+    'CSM_DIRECTOR': 'opis.CSM_DIRECTOR',
+    'EAOPI': 'opis.EAOPI',
+    'PM_OPI': 'opis.PM_OPI',
+    'QA_OPI': 'opis.QA_OPI',
+    'SDM_TL_OPI': 'opis.SDM_TL_OPI',
+    'SR_OWNER': 'opis.SR_OWNER',
+    'TEAMLEADER': 'opis.TEAMLEADER',
+    'WIO_OPI': 'opis.WIO_OPI'
+}
+
+opis_mapping =  {
+    "QA_OPI": {
+        "en": "QA OPI",
+        "fr": "BPR QA"
+    },
+    "CSM_DIRECTOR": {
+        "en": "Client Executive",
+        "fr": "Client exécutif"
+    },
+    "PROD_OPI": {
+        "en": "Service Lead",
+        "fr": "BPR des services"
+    },
+    "ENG_OPI": {
+        "en": "Implementation OPI",
+        "fr": "BPR Implémentation"
+    },
+    "BA_OPI": {
+        "en": "BA OPI",
+        "fr": "BPR analyste"
+    },
+    "TEAMLEADER": {
+        "en": "Teamleader",
+        "fr": "Chef d`équipe"
+    },
+    "BA_PRICING_OPI": {
+        "en": "BA Pricing OPI",
+        "fr": "BPR AA du prix"
+    },
+    "BA_PRICING_TL": {
+        "en": "Service Line Coordinator",
+        "fr": "Coordonnateur de la ligne de service"
+    },
+    "SR_OWNER": {
+        "en": "BR OWNER",
+        "fr": "Propriétaire"
+    },
+    "WIO_OPI": {
+        "en": "Finance OPI",
+        "fr": "BPR du Finance"
+    },
+    "EAOPI": {
+        "en": "EA OPI",
+        "fr": "BPR AE"
+    },
+    "SOLN_OPI": {
+        "en": "Conceptual Designer",
+        "fr": "Créateur Conceptuel"
+    },
+    "AGR_OPI": {
+        "en": "Agreement OPI",
+        "fr": "BPR Entente"
+    },
+    "PM_OPI": {
+        "en": "PM/Coordinator",
+        "fr": "GP/Coordonnateur"
+    },
+    "SISDOPI": {
+        "en": "SISD OPI",
+        "fr": "BPR DSIS"
+    },
+    "BA_TL": {
+        "en": "BA Team Lead",
+        "fr": "Chef d`équipe analystes"
+    },
+    "ACC_MANAGER_OPI": {
+        "en": "Account Manager",
+        "fr": "Gestionnaire de compte"
+    },
+    "SDM_TL_OPI": {
+        "en": "SDM Team Lead",
+        "fr": "GPS Chef d'équipe"
+    }
 }
 
 @tool_metadata({
@@ -245,7 +321,7 @@ def _get_br_query(br_number_count: int = 0,
     """
 
     # Default select statement from BR_ITEMS & other tables
-    query += "br.BR_NMBR as BR_NMBR," + ",".join([f"{value} as {key}" for key, value in valid_search_fields.items()])
+    query += "br.BR_NMBR as BR_NMBR, br.EXTRACTION_DATE as EXTRACTION_DATE, " + ", ".join([f"{value} as {key}" for key, value in valid_search_fields.items()])
 
     # Deault FROM statement
     query += """
@@ -275,6 +351,67 @@ def _get_br_query(br_number_count: int = 0,
     INNER JOIN
         [EDR_CARZ].[DIM_BITS_STATUS] s
     ON s.STATUS_ID = snp.STATUS_ID
+    """
+
+    # Processing BR OPIS clause
+    query += """
+    LEFT JOIN
+        (SELECT
+            BR_NMBR,
+            ACC_MANAGER_OPI,
+            AGR_OPI,
+            BA_OPI,
+            BA_PRICING_OPI,
+            BA_PRICING_TL,
+            BA_TL,
+            CSM_DIRECTOR,
+            EAOPI,
+            PM_OPI,
+            PROD_OPI,
+            QA_OPI,
+            SDM_TL_OPI,
+            SISDOPI,
+            SR_OWNER,
+            TEAMLEADER,
+            WIO_OPI
+        FROM
+        (
+            SELECT opis.BR_NMBR, opis.BUS_OPI_ID, person.FULL_NAME
+            FROM [EDR_CARZ].[FCT_DEMAND_BR_OPIS] opis
+            INNER JOIN [EDR_CARZ].[DIM_BITS_PERSON] person
+            ON opis.PERSON_ID = person.PERSON_ID
+        ) AS SourceTable
+        PIVOT
+        (
+            MAX(FULL_NAME)
+            FOR BUS_OPI_ID IN (
+                ACC_MANAGER_OPI,
+                AGR_OPI,
+                BA_OPI,
+                BA_PRICING_OPI,
+                BA_PRICING_TL,
+                BA_TL,
+                CSM_DIRECTOR,
+                EAOPI,
+                PM_OPI,
+                PROD_OPI,
+                QA_OPI,
+                SDM_TL_OPI,
+                SISDOPI,
+                SR_OWNER,
+                TEAMLEADER,
+                WIO_OPI
+            )
+        ) AS PivotTable
+    ) AS opis
+    ON opis.BR_NMBR = br.BR_NMBR
+    """
+
+    # PRODUCTS
+    query += """
+    INNER JOIN
+		(SELECT BR_NMBR, PROD_ID FROM [EDR_CARZ].[FCT_DEMAND_BR_PRODUCTS] WHERE PROD_TYPE = 'LEAD') products
+	ON products.BR_NMBR = br.BR_NMBR
     """
 
     # WHERE CLAUSE PROCESSING (BR_NMBR and ACTIVE, etc)
