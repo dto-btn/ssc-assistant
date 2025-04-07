@@ -62,7 +62,6 @@ valid_search_fields = {
     'SR_OWNER': 'opis.SR_OWNER',
     'TEAMLEADER': 'opis.TEAMLEADER',
     'WIO_OPI': 'opis.WIO_OPI',
-    'SOLN_OPI': 'opis.SOLN_OPI',
     'GCIT_CAT_EN': 'br.GCIT_CAT_EN',
     'GCIT_CAT_FR': 'br.GCIT_CAT_FR',
     'GCIT_PRIORITY_EN': 'br.GCIT_PRIORITY_EN',
