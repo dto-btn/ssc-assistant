@@ -799,18 +799,13 @@ const MainScreen = () => {
       {currentChatHistory.chatItems.length === 0 ? (
         // if 0 chat history
         <Box
-          sx={{
-              // position: "fixed",
-              // top: 0,
-              // left: openDrawer ? LEFT_MENU_WIDTH : 0,
-              // right: 0,
-              // bottom: 0,
+            sx={{
             display: "flex",
-            flexFlow: "column",
-            minHeight: "100vh",
+              flexFlow: "column",
             margin: "auto",
             justifyContent: "center",
             alignItems: "center",
+              minHeight: "80vh",
           }}
           maxWidth="lg"
         >
