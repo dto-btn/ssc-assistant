@@ -154,6 +154,10 @@ interface BusinessRequest {
   SR_OWNER: string;
   TEAMLEADER: string;
   WIO_OPI: string;
+  GCIT_CAT_EN: string;
+  GCIT_CAT_FR: string;
+  GCIT_PRIORITY_EN: string;
+  GCIT_PRIORITY_FR: string;
 }
 
 interface BusinessRequestUpdate {

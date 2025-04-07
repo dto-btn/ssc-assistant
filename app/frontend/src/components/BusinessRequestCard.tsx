@@ -202,6 +202,20 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
           </Typography>
         )}
 
+        {(isEnglish ? data.GCIT_PRIORITY_EN : data.GCIT_PRIORITY_FR) && (
+          <Typography variant="body2" color="textPrimary">
+            <strong>{t("GCIT_PRIORITY")}: </strong>
+            {isEnglish ? data.GCIT_PRIORITY_EN : data.GCIT_PRIORITY_FR}
+          </Typography>
+        )}
+
+        {(isEnglish ? data.GCIT_CAT_EN : data.GCIT_CAT_FR) && (
+          <Typography variant="body2" color="textPrimary">
+            <strong>{t("GCIT_CAT")}: </strong>
+            {isEnglish ? data.GCIT_CAT_EN : data.GCIT_CAT_FR}
+          </Typography>
+        )}
+
         <CardActions disableSpacing>
           {/* <Button
             size="small"

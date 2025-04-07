@@ -46,5 +46,9 @@ export const transformToBusinessRequest = (data: any): BusinessRequest => {
     SR_OWNER: data.SR_OWNER,
     TEAMLEADER: data.TEAMLEADER,
     WIO_OPI: data.WIO_OPI,
+    GCIT_CAT_EN: data.GCIT_CAT_EN,
+    GCIT_CAT_FR: data.GCIT_CAT_FR,
+    GCIT_PRIORITY_EN: data.GCIT_PRIORITY_EN,
+    GCIT_PRIORITY_FR: data.GCIT_PRIORITY_FR,
   };
 };

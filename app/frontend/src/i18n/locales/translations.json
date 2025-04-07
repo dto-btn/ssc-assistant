@@ -770,5 +770,13 @@
     "LEAD_PRODUCT": {
         "en": "Lead Product",
         "fr": "Produit principal"
+    },
+    "GCIT_PRIORITY": {
+        "en": "GCIT Decision Framework Priority",
+        "fr": "Priorité du cadre décisionnel GCTI"
+    },
+    "GCIT_CAT": {
+        "en": "GCIT Category Project or Activity",
+        "fr": "Projet ou activité de catégorie GCTI"
     }
 }
