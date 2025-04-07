@@ -14,7 +14,6 @@ import {
 import ChatMessagesContainer from "../../containers/ChatMessagesContainer";
 import { t } from "i18next";
 import React, { useEffect, useRef, useState } from "react";
-import i18n from "../../i18n";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { isACompletion, isAMessage, isAToastMessage } from "../../utils";
 import { isTokenExpired } from "../../util/token";
@@ -774,6 +773,12 @@ const MainScreen = () => {
                 </IconButton>
               </>
             }
+            handleSetSelectedCorporateFunction={handleSetSelectedCorporateFunction}
+            selectedCorporateFunction={selectedCorporateFunction}
+            enabledTools={enabledTools}
+            handleUpdateEnabledTools={handleUpdateEnabledTools}
+            handleSelectedModelChanged={hanldeUpdateModelVersion}
+            selectedModel={currentChatHistory.model}
           />
         )}
         appDrawerContents={(
@@ -782,12 +787,6 @@ const MainScreen = () => {
             currentChatIndex={currentChatIndex}
             onClearChat={handleClearChat}
             logout={handleLogout}
-            enabledTools={enabledTools}
-            handleUpdateEnabledTools={handleUpdateEnabledTools}
-            handleSetSelectedCorporateFunction={handleSetSelectedCorporateFunction}
-            selectedCorporateFunction={selectedCorporateFunction}
-            selectedModel={currentChatHistory.model}
-            handleSelectedModelChanged={hanldeUpdateModelVersion}
             handleDeleteSavedChat={handleDeleteSavedChat}
             handleLoadSavedChat={handleLoadSavedChat}
             renameChat={renameChat}
