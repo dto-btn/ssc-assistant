@@ -3,7 +3,7 @@ import { useMsal } from "@azure/msal-react";
 import AddPhotoAlternateOutlinedIcon from "@mui/icons-material/AddPhotoAlternateOutlined";
 import IconButton from "@mui/material/Button";
 import { styled } from "@mui/material/styles";
-import { t } from "i18next";
+import { useTranslation } from "react-i18next";
 import { useRef, useState } from "react";
 import { uploadFile } from "../api/api";
 import { apiUse } from "../authConfig";
@@ -31,6 +31,7 @@ export default function InputFileUpload({
   const [uploading, setUploading] = useState(false);
   const [fileInputKey, setFileInputKey] = useState(Date.now());
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const { t } = useTranslation();
 
   const encodeAndUploadFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

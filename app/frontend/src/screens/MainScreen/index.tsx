@@ -2,6 +2,7 @@ import {
   Box,
   Dialog,
   DialogContent,
+  IconButton,
 } from "@mui/material";
 import {
   ChatInput,
@@ -11,18 +12,15 @@ import {
   TopMenuHomePage,
 } from "../../components";
 import ChatMessagesContainer from "../../containers/ChatMessagesContainer";
-import { t } from "i18next";
+import { useTranslation } from "react-i18next"
 import React, { useEffect, useRef, useState } from "react";
-import i18n from "../../i18n";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { isACompletion, isAMessage, isAToastMessage } from "../../utils";
 import { isTokenExpired } from "../../util/token";
 import { completionMySSC, sendFeedback } from "../../api/api";
 import { apiUse } from "../../authConfig";
 import { AccountInfo, InteractionStatus } from "@azure/msal-browser";
-import Cookies from "js-cookie";
 import { v4 as uuidv4 } from "uuid";
-import { TutorialBubble } from "../../components/TutorialBubble";
 import { bookReservation } from "../../api/api";
 import { allowedToolsSet } from "../../allowedTools";
 import { callMsGraph } from "../../graph";
@@ -32,8 +30,12 @@ import { useLocation } from "react-router";
 import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
 import { useAppStore } from "../../context/AppStore";
 import Typography from "@mui/material/Typography";
+import { LEFT_MENU_WIDTH } from "../../constants/frameDimensions";
+import MenuIcon from "@mui/icons-material/Menu";
+import NewLayout from "../../components/layouts/NewLayout";
 
 const MainScreen = () => {
+  const { t } = useTranslation();
   const appStore = useAppStore();
   const defaultEnabledTools: { [key: string]: boolean } = {};
   allowedToolsSet.forEach((tool) => {
@@ -64,7 +66,7 @@ const MainScreen = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
-  const [openDrawer, setOpenDrawer] = useState<boolean>(false);
+  // On app launch, keep the drawer open if the screen is larger than lg, else keep it closed.
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [isGoodResponse, setIsGoodResponse] = useState(false);
@@ -80,17 +82,12 @@ const MainScreen = () => {
   const [showDeleteChatDialog, setShowDeleteChatDialog] = useState(false);
   const [warningDialogMessage, setWarningDialogMessage] = useState("");
   const [quotedText, setQuotedText] = useState<string>();
-  const [showTutorials, setShowTutorials] = useState(false);
-  const [tutorialBubbleNumber, setTutorialBubbleNumber] = useState<
-    number | undefined
-  >(undefined);
   const [apiAccessToken, setApiAccessToken] = useState<string>("");
   const [enabledTools, setEnabledTools] =
     useState<Record<string, boolean>>(defaultEnabledTools);
   const [selectedCorporateFunction, setSelectedCorporateFunction] =
     useState<string>("intranet_question");
 
-  const menuIconRef = useRef<HTMLButtonElement>(null);
   const { instance, inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
 
@@ -387,14 +384,6 @@ const MainScreen = () => {
       saveChatHistories(updatedChatHistory);
       return updatedChatHistory;
     });
-    setOpenDrawer(false);
-  };
-
-  const setLangCookie = () => {
-    Cookies.set("lang_setting", i18n.language, {
-      expires: 30,
-    });
-    setOpenDrawer(false);
   };
 
   const handleLogout = () => {
@@ -402,11 +391,6 @@ const MainScreen = () => {
       postLogoutRedirectUri: "/",
     });
   };
-
-  useEffect(() => {
-    // Set the `lang` attribute whenever the language changes
-    document.documentElement.lang = i18n.language;
-  }, [i18n.language]);
 
   // Scrolls the last updated message (if its streaming, or once done) into view
   useEffect(() => {
@@ -539,20 +523,6 @@ const MainScreen = () => {
     });
   };
 
-  const handleUpdateTutorialBubbleNumber = (tipNumber: number | undefined) => {
-    setTutorialBubbleNumber(tipNumber);
-  };
-
-  const toggleTutorials = (showTutorials?: boolean) => {
-    if (showTutorials) {
-      setOpenDrawer(false);
-      setShowTutorials(true);
-    } else {
-      localStorage.setItem("hasSeenTutorials", "true");
-      setShowTutorials(false);
-    }
-  };
-
   const handleDeleteSavedChat = (index: number) => {
     setChatIndexToLoadOrDelete(index);
     setShowDeleteChatDialog(true);
@@ -571,7 +541,6 @@ const MainScreen = () => {
 
       if (updatedChatHistories.length === 0) {
         // current chat was only chat and at index 0, so just reset state
-        setOpenDrawer(false);
         setCurrentChatHistory(defaultChatHistory);
       } else if (currentChatIndex === chatIndexToLoadOrDelete) {
         // deleting current chat, so set to whatever is at index 0
@@ -631,7 +600,6 @@ const MainScreen = () => {
         ...chatHistoriesDescriptions,
         "Conversation " + (chatHistoriesDescriptions.length + 1),
       ]);
-      setOpenDrawer(false);
     }
   };
 
@@ -685,10 +653,10 @@ const MainScreen = () => {
   useEffect(() => {
     console.debug(
       "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-        isAuthenticated +
-        ", InProgress? " +
-        inProgress +
-        ")"
+      isAuthenticated +
+      ", InProgress? " +
+      inProgress +
+      ")"
     );
     if (
       isAuthenticated &&
@@ -761,7 +729,6 @@ const MainScreen = () => {
           ...chatHistoriesDescriptions,
           parsedSuggestionContext.context.original_query,
         ]);
-        setOpenDrawer(false);
       } else {
         const showError = (msg: string) => {
           /**
@@ -795,26 +762,50 @@ const MainScreen = () => {
 
   return (
     <UserContext.Provider value={userData}>
-      <TopMenuHomePage
-        toggleDrawer={setOpenDrawer}
-        ref={menuIconRef}
-        onNewChat={handleNewChat}
-      />
+      <NewLayout
+        appBar={(
+          <TopMenuHomePage
+            childrenLeftOfLogo={
+              <>
+                < IconButton sx={{
+                  color: 'white',
+                }} onClick={() => appStore.appDrawer.toggle()}>
+                  <MenuIcon />
+                </IconButton>
+              </>
+            }
+            handleSetSelectedCorporateFunction={handleSetSelectedCorporateFunction}
+            selectedCorporateFunction={selectedCorporateFunction}
+            enabledTools={enabledTools}
+            handleUpdateEnabledTools={handleUpdateEnabledTools}
+            handleSelectedModelChanged={hanldeUpdateModelVersion}
+            selectedModel={currentChatHistory.model}
+          />
+        )}
+        appDrawerContents={(
+          <DrawerMenu
+            chatDescriptions={chatHistoriesDescriptions}
+            currentChatIndex={currentChatIndex}
+            onClearChat={handleClearChat}
+            logout={handleLogout}
+            handleDeleteSavedChat={handleDeleteSavedChat}
+            handleLoadSavedChat={handleLoadSavedChat}
+            renameChat={renameChat}
+            onNewChat={handleNewChat}
+          />
+        )}
+      >
+
       {currentChatHistory.chatItems.length === 0 ? (
         // if 0 chat history
         <Box
-          sx={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            sx={{
             display: "flex",
-            flexFlow: "column",
-            minHeight: "100vh",
+              flexFlow: "column",
             margin: "auto",
             justifyContent: "center",
             alignItems: "center",
+              minHeight: "80vh",
           }}
           maxWidth="lg"
         >
@@ -835,7 +826,7 @@ const MainScreen = () => {
               gutterBottom
               sx={{ fontSize: "3.5rem" }}
             >
-              How can I help?
+                {t("how.can.i.help")}
             </Typography>
             <ChatInput
               clearOnSend
@@ -857,6 +848,11 @@ const MainScreen = () => {
             flexFlow: "column",
             minHeight: "100vh",
             margin: "auto",
+            position: "fixed",
+            top: 0,
+                left: appStore.appDrawer.isOpen ? LEFT_MENU_WIDTH : 0,
+            right: 0,
+            bottom: 0,
           }}
           maxWidth="lg"
         >
@@ -896,30 +892,7 @@ const MainScreen = () => {
         </Box>
       )}
       <Disclaimer />
-      <DrawerMenu
-        openDrawer={
-          openDrawer ||
-          (tutorialBubbleNumber !== undefined && tutorialBubbleNumber > 1)
-        }
-        chatDescriptions={chatHistoriesDescriptions}
-        currentChatIndex={currentChatIndex}
-        toggleDrawer={setOpenDrawer}
-        onClearChat={handleClearChat}
-        onNewChat={handleNewChat}
-        setLangCookie={setLangCookie}
-        logout={handleLogout}
-        enabledTools={enabledTools}
-        handleUpdateEnabledTools={handleUpdateEnabledTools}
-        handleSetSelectedCorporateFunction={handleSetSelectedCorporateFunction}
-        selectedCorporateFunction={selectedCorporateFunction}
-        selectedModel={currentChatHistory.model}
-        handleSelectedModelChanged={hanldeUpdateModelVersion}
-        tutorialBubbleNumber={tutorialBubbleNumber}
-        handleToggleTutorials={toggleTutorials}
-        handleDeleteSavedChat={handleDeleteSavedChat}
-        handleLoadSavedChat={handleLoadSavedChat}
-        renameChat={renameChat}
-      />
+
       <FeedbackForm
         feedback={feedback}
         setFeedback={setFeedback}
@@ -927,13 +900,6 @@ const MainScreen = () => {
         handleClose={() => setIsFeedbackVisible(false)}
         handleFeedbackSubmit={handleFeedbackSubmit}
       />
-      {showTutorials && (
-        <TutorialBubble
-          handleAllTutorialsDisplayed={toggleTutorials}
-          menuIconRef={menuIconRef}
-          updateTutorialBubbleNumber={handleUpdateTutorialBubbleNumber}
-        />
-      )}
 
       <DeleteConversationConfirmation
         open={showDeleteChatDialog}
@@ -949,6 +915,7 @@ const MainScreen = () => {
           <DialogContent>{warningDialogMessage}</DialogContent>
         </Dialog>
       )}
+      </NewLayout>
     </UserContext.Provider>
   );
 };

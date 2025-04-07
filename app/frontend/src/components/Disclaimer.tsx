@@ -11,21 +11,13 @@ import { useTranslation } from "react-i18next";
 import Cookies from "js-cookie";
 import { useMsal } from "@azure/msal-react";
 import { InteractionStatus } from "@azure/msal-browser";
+import { useAppStore } from "../context/AppStore";
 
 export const Disclaimer = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [hideDialog, setHideDialog] = useState(true);
   const { inProgress } = useMsal();
-
-  const setTranslationCookie = () => {
-    Cookies.set("lang_setting", i18n.language, {
-      expires: 30,
-    });
-  };
-
-  const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
-  };
+  const appStore = useAppStore();
 
   useEffect(() => {
     const disclaimerAccepted = Cookies.get("disclaimer_accepted");
@@ -61,10 +53,7 @@ export const Disclaimer = () => {
             {t("accept")}
           </Button>
           <Button
-            onClick={() => {
-              changeLanguage(t("langlink.shorthand"));
-              setTranslationCookie();
-            }}
+            onClick={() => { appStore.languageService.changeLanguage() }}
           >
             {t("langlink")}
           </Button>

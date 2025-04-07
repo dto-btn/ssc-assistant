@@ -1,69 +1,46 @@
-import MenuIcon from "@mui/icons-material/Menu";
-import { Box, BoxProps, IconButton } from "@mui/material";
-import Typography from "@mui/material/Typography";
+import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { UserProfilePicture } from "../ProfilePicture";
-import { useContext } from "react";
-import { UserContext } from "../../context/UserContext";
-import { forwardRef } from "react";
-import AddCommentIcon from "@mui/icons-material/AddComment";
 import React from "react";
 import { TopMenuFrame } from "./subcomponents/TopMenuFrame";
 import TopmenuMicrosofTeamsIcon from "./TopmenuMicrosofTeamsIcon.svg";
+import { ProfileMenuButton } from "./subcomponents/ProfileMenuButton";
+import { TopMenuItem } from "./subcomponents/TopMenuItem";
 
 interface TopMenuHomePageProps {
-  toggleDrawer: (arg: boolean) => void;
-  ref: React.RefObject<HTMLButtonElement>;
-  onNewChat: () => void;
+  childrenLeftOfLogo?: React.ReactNode;
+  enabledTools: Record<string, boolean>;
+  handleSetSelectedCorporateFunction: (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => void;
+  selectedCorporateFunction: string;
+  handleUpdateEnabledTools: (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => void;
+  selectedModel: string;
+  handleSelectedModelChanged: (modelName: string) => void;
 }
 
-type TopMenuHomePageItem = {
-  icon: React.ReactElement;
-  label: string;
-  extraStyles?: BoxProps;
-  onClick: () => void;
-};
 
-export const TopMenuHomePage = forwardRef<
-  HTMLButtonElement,
-  TopMenuHomePageProps
->(({ toggleDrawer, onNewChat }, ref) => {
+export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({
+  childrenLeftOfLogo,
+  enabledTools,
+  handleSetSelectedCorporateFunction,
+  selectedCorporateFunction,
+  handleUpdateEnabledTools,
+  selectedModel,
+  handleSelectedModelChanged
+}) => {
   const { t } = useTranslation();
-  const { graphData } = useContext(UserContext);
-
-  const topMenuItems: TopMenuHomePageItem[] = [
-    {
-      // icon: <AddCommentIcon sx={{ fontSize: "1.1rem" }} />,
-      icon: <img src={TopmenuMicrosofTeamsIcon} alt="Teams" style={{ width: "1.1rem" }} />,
-      label: t("button.joinchat"),
-      onClick: () => {
-        // onNewChat();
-        // open microsoft.com in a new tab
-        window.open("https://teams.microsoft.com/l/channel/19%3Au1yOceUvSm8spn8ZAyma2zT90c042tzBQAwst9Gem1c1%40thread.tacv2/SSC%20Assistant?groupId=9c07bdb4-3403-464b-a1c2-91cdaf3a2496&ngc=true&allowXTenantAccess=true", "_blank");
-      },
-      extraStyles: {
-        "bgcolor": "white",
-        "color": "#7a81eb",
-        // "borderColor": "#434bb4"
-      }
-    },
-    {
-      icon: <AddCommentIcon sx={{ fontSize: "1.1rem" }} />,
-      label: t("new.conversation"),
-      onClick: () => {
-        onNewChat();
-      },
-    },
-  ];
 
   return (
-    <TopMenuFrame>
+    <TopMenuFrame
+      childrenLeftOfLogo={childrenLeftOfLogo}
+    >
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
           width: "100%",
-          cursor: "pointer",
           userSelect: "none",
         }}
       >
@@ -72,74 +49,42 @@ export const TopMenuHomePage = forwardRef<
             display: "flex",
             alignItems: "center",
             gap: "1rem",
-            cursor: "pointer",
             userSelect: "none",
           }}
         >
-          {topMenuItems.map((item, index) => (
-            <Box
-              key={index}
-              tabIndex={2}
-              sx={{
-                transition: "border-color 0.2s",
-                display: "flex",
-                gap: 0.5,
-                alignItems: "center",
-                cursor: "pointer",
-                border: "2px solid transparent",
-                padding: "0.25rem 0.5rem",
-                borderRadius: "0.5rem",
-                ":hover": {
-                  borderColor: "white",
-                },
-                ...(item.extraStyles || [])
-              }}
-              onClick={item.onClick}
-            >
-              {item.icon}
-              <Typography
-                variant="body1"
-                sx={{ display: { xs: "none", md: "block" } }}
-                aria-label={item.label}
-              >
-                {item.label}
-              </Typography>
-            </Box>
-          ))}
+
         </Box>
         <Box
           sx={{
+            marginLeft: "auto", // make it float to the right
             display: "flex",
-            flexGrow: 1,
-            justifyContent: "flex-end",
-            alignItems: "center",
-            gap: "1rem",
+            gap: "2rem",
           }}
         >
-          {graphData && (
-            <>
-              <Typography
-                variant="body1"
-                sx={{ display: { xs: "none", md: "block" } }}
-              >
-                {graphData["givenName"]} {graphData["surname"]}
-              </Typography>
-              <UserProfilePicture
-                fullName={graphData["givenName"] + " " + graphData["surname"]}
-                size="30px"
-                fontSize="12px"
-              />
-            </>
-          )}
-          <IconButton
-            edge="start"
-            color="inherit"
-            onClick={() => toggleDrawer(true)}
-            aria-label={t("aria.show.menu")}
-            ref={ref}
-          >
-            <MenuIcon />
-          </IconButton>
+          <TopMenuItem item={{
+            icon: <img src={TopmenuMicrosofTeamsIcon} alt="Teams" style={{ width: "1.1rem" }} />,
+            label: t("button.joinchat"),
+            onClick: () => {
+              // open microsoft.com in a new tab
+              window.open("https://teams.microsoft.com/l/channel/19%3Au1yOceUvSm8spn8ZAyma2zT90c042tzBQAwst9Gem1c1%40thread.tacv2/SSC%20Assistant?groupId=9c07bdb4-3403-464b-a1c2-91cdaf3a2496&ngc=true&allowXTenantAccess=true", "_blank");
+            },
+            extraStyles: {
+              "bgcolor": "white",
+              "color": "#7a81eb",
+              padding: "0rem 1rem",
+            }
+          }} />
+          <ProfileMenuButton
+            size="30px"
+            fontSize="12px"
+            enabledTools={enabledTools}
+            handleSetSelectedCorporateFunction={handleSetSelectedCorporateFunction}
+            selectedCorporateFunction={selectedCorporateFunction}
+            handleUpdateEnabledTools={handleUpdateEnabledTools}
+            selectedModel={selectedModel}
+            handleSelectedModelChanged={handleSelectedModelChanged}
+          />
+
         </Box>
       </Box>
     </TopMenuFrame>

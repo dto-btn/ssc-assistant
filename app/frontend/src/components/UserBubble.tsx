@@ -4,7 +4,7 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github.css";
 import { visuallyHidden } from "@mui/utils";
-import { t } from "i18next";
+import { useTranslation } from "react-i18next";
 
 interface UserChatProps {
   text: string | null | undefined;
@@ -13,6 +13,7 @@ interface UserChatProps {
 }
 
 export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
+  const { t } = useTranslation();
   // keeping this here for typesafety because we are ts-expect-error down in the return
   const url: string | undefined =
     attachments && attachments[0]?.blob_storage_url;

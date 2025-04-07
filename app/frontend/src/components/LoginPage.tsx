@@ -5,15 +5,18 @@ import Modal from '@mui/material/Modal';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
-import { changeLanguage, t } from "i18next";
+import { useAppStore } from '../context/AppStore';
+import { useTranslation } from 'react-i18next';
 
 const logoStyle = {
   width: "50px",
   height: "auto",
 };
 
-const LoginPage = ({ open, setOpen, setLangCookie }: { open: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>>, setLangCookie: () => void }) => {
+const LoginPage = ({ open, setOpen }: { open: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) => {
+  const { t } = useTranslation();
   const { instance } = useMsal();
+  const appStore = useAppStore();
 
   const handleLogin = () => {
     instance.loginPopup(userRead).then((response) => {
@@ -46,7 +49,7 @@ const LoginPage = ({ open, setOpen, setLangCookie }: { open: boolean, setOpen: R
       >
         <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
           <img src={logo} style={logoStyle} alt="logo of SSC" />
-          <Button onClick={() => {changeLanguage(t("langlink.shorthand")); setLangCookie();}}>{t("langlink")}</Button>
+          <Button onClick={() => { appStore.languageService.changeLanguage() }}>{t("langlink")}</Button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <h2 style={{ marginBottom: '1rem' }}>{t("welcome")}</h2>

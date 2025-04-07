@@ -1,13 +1,9 @@
-import LanguageIcon from "@mui/icons-material/Language";
 import DeleteIcon from "@mui/icons-material/Delete";
-import PsychologyIcon from "@mui/icons-material/Psychology";
 import {
   Box,
   Chip,
   Collapse,
   Divider,
-  FormControlLabel,
-  FormGroup,
   IconButton,
   List,
   ListItem,
@@ -16,81 +12,40 @@ import {
   ListItemText,
   Menu,
   MenuItem,
-  Switch,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
-import Drawer from "@mui/material/Drawer";
-import Radio from "@mui/material/Radio";
-import RadioGroup from "@mui/material/RadioGroup";
-import { changeLanguage } from "i18next";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useIsAuthenticated } from "@azure/msal-react";
-import Handyman from "@mui/icons-material/Handyman";
 import { useEffect, useRef, useState } from "react";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import InfoIcon from "@mui/icons-material/Info";
-import HistoryIcon from "@mui/icons-material/History";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import EditIcon from "@mui/icons-material/Edit";
 import { useTranslation } from "react-i18next";
 import React from "react";
-import { allowedToolsSet, allowedCorporateFunctionsSet } from "../allowedTools";
-import FormLabel from "@mui/material/FormLabel";
 
 interface DrawerMenuProps {
-  openDrawer: boolean;
   chatDescriptions: string[];
   currentChatIndex: number;
-  toggleDrawer: (arg: boolean) => void;
   onClearChat: () => void;
-  onNewChat: () => void;
-  setLangCookie: () => void;
   logout: () => void;
-  enabledTools: Record<string, boolean>;
-  selectedModel: string;
-  handleUpdateEnabledTools: (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => void;
-  handleSetSelectedCorporateFunction: (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => void;
-  selectedCorporateFunction: string;
-  handleSelectedModelChanged: (modelName: string) => void;
-  tutorialBubbleNumber?: number;
-  handleToggleTutorials: (showTutorials?: boolean) => void;
   handleDeleteSavedChat: (index: number) => void;
   handleLoadSavedChat: (index: number) => void;
   renameChat: (newChatDescription: string, index: number) => void;
+  onNewChat: () => void;
 }
 
 export const DrawerMenu = ({
-  openDrawer,
   chatDescriptions,
-  toggleDrawer,
   onClearChat,
-  onNewChat,
-  setLangCookie,
   logout,
-  enabledTools,
-  handleUpdateEnabledTools,
-  handleSetSelectedCorporateFunction,
-  selectedCorporateFunction,
-  handleSelectedModelChanged,
-  selectedModel,
-  tutorialBubbleNumber,
-  handleToggleTutorials,
   handleDeleteSavedChat,
   handleLoadSavedChat,
   renameChat,
   currentChatIndex,
+  onNewChat
 }: DrawerMenuProps) => {
-  const [toolMenuOpen, setToolMenuOpen] = useState(false);
-  const [selectModelMenuOpen, setSelectModelMenuOpen] = useState(false);
-  const [selectChatMenuOpen, setSelectChatMenuOpen] = useState(false);
   const [moreMenuAnchor, setMoreMenuAnchor] = useState<null | HTMLElement>(
     null
   );
@@ -105,18 +60,6 @@ export const DrawerMenu = ({
   const moreMenuOpen = Boolean(moreMenuAnchor);
   const { t } = useTranslation();
   const textFieldRef = useRef<HTMLDivElement>(null);
-
-  const toggleToolDrawerOpen = () => {
-    setToolMenuOpen(!toolMenuOpen);
-  };
-
-  const toggleSelectModelMenuOpen = () => {
-    setSelectModelMenuOpen(!selectModelMenuOpen);
-  };
-
-  const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    handleSelectedModelChanged((event.target as HTMLInputElement).value);
-  };
 
   const handleMoreMenuClick = (
     event: React.MouseEvent<HTMLButtonElement>,
@@ -167,44 +110,6 @@ export const DrawerMenu = ({
       }
     }, 100);
   };
-
-  // use effect to close the collapses when the drawer is toggled closed
-  useEffect(() => {
-    if (!openDrawer) {
-      setSelectModelMenuOpen(false);
-      setToolMenuOpen(false);
-      setSelectChatMenuOpen(false);
-    }
-  }, [openDrawer]);
-
-  // Use effect for opening the collapses for tools/model selection with tutorials
-  useEffect(() => {
-    if (openDrawer && tutorialBubbleNumber) {
-      switch (tutorialBubbleNumber) {
-        case 2:
-          setToolMenuOpen(true);
-          setSelectModelMenuOpen(false);
-          break;
-        case 3:
-          setToolMenuOpen(false);
-          setSelectModelMenuOpen(true);
-          break;
-        case 4:
-          setToolMenuOpen(false);
-          setSelectModelMenuOpen(false);
-          break;
-        case 5:
-          setSelectChatMenuOpen(false);
-          break;
-        case 6:
-          setSelectChatMenuOpen(true);
-          break;
-        default:
-          break;
-      }
-    }
-  }, [tutorialBubbleNumber, openDrawer]);
-
   // focus the text field when a user renames a chat
   useEffect(() => {
     if (editingIndex !== null && textFieldRef.current) {
@@ -213,13 +118,13 @@ export const DrawerMenu = ({
     }
   }, [editingIndex]);
 
-  const tools = Object.keys(enabledTools).filter((tool) =>
-    allowedToolsSet.has(tool)
-  );
+  // const tools = Object.keys(enabledTools).filter((tool) =>
+  //   allowedToolsSet.has(tool)
+  // );
   // Separate the corporate key
-  const corporateKeyIndex = tools.indexOf("corporate");
-  const corporateKey =
-    corporateKeyIndex > -1 ? tools.splice(corporateKeyIndex, 1)[0] : null;
+  // const corporateKeyIndex = tools.indexOf("corporate");
+  // const corporateKey =
+  //   corporateKeyIndex > -1 ? tools.splice(corporateKeyIndex, 1)[0] : null;
 
   const list = () => (
     <Box
@@ -232,143 +137,18 @@ export const DrawerMenu = ({
       }}
     >
       <List>
-        <ListItem key="language" disablePadding>
-          <ListItemButton
-            onClick={() => {
-              changeLanguage(t("langlink.shorthand"));
-              setLangCookie();
-            }}
-          >
+        <ListItem key="newChat" disablePadding>
+          <ListItemButton onClick={() => onNewChat()}>
             <ListItemIcon>
-              <LanguageIcon />
+              <AddCommentIcon />
             </ListItemIcon>
-            <ListItemText primary={t("langlink")} />
-          </ListItemButton>
-        </ListItem>
-        <Divider sx={{ margin: "5px 0px" }}>
-          <Chip
-            label={t("drawer.header.toolsAndModels")}
-            size="small"
-            sx={{ backgroundColor: "transparent" }}
-          />
-        </Divider>
-        <ListItem key="toolSettings" disablePadding>
-          <ListItemButton
-            onClick={toggleToolDrawerOpen}
-            aria-expanded={toolMenuOpen}
-          >
-            <ListItemIcon>
-              <Handyman />
-            </ListItemIcon>
-            <ListItemText primary={t("menu.chooseTools")} />
-            {toolMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={toolMenuOpen} timeout="auto" unmountOnExit>
-          <Divider />
-          <FormGroup>
-            {corporateKey && (
-              <Box
-                sx={{
-                  minWidth: 120,
-                  marginLeft: "70px",
-                  marginRight: "10px",
-                  paddingTop: "5px",
-                }}
-              >
-                <FormLabel id="corpo-data-label">
-                  {t("corporate.data")}
-                </FormLabel>
-                <RadioGroup
-                  aria-labelledby="corpo-data-label"
-                  name="corpo-data-group"
-                  onChange={handleSetSelectedCorporateFunction}
-                  value={selectedCorporateFunction}
-                  defaultValue="intranet_question"
-                >
-                  <FormControlLabel
-                    key={-1}
-                    value="none"
-                    control={<Radio />}
-                    label={t("none")}
-                  />
-                  {Array.from(allowedCorporateFunctionsSet).map(
-                    (name, index) => (
-                      <FormControlLabel
-                        key={index}
-                        value={name}
-                        control={<Radio />}
-                        label={t(name)}
-                      />
-                    )
-                  )}
-                </RadioGroup>
-              </Box>
-            )}
-            <Divider />
-            {tools.map((tool, index) => {
-              return (
-                <FormControlLabel
-                  label={t(tool)}
-                  key={index}
-                  control={
-                    <Switch
-                      checked={enabledTools[tool]}
-                      onChange={handleUpdateEnabledTools}
-                      name={tool}
-                      sx={{
-                        marginLeft: "70px",
-                        marginRight: "10px",
-                        color: "primary.main",
-                      }}
-                    />
-                  }
-                />
-              );
-            })}
-          </FormGroup>
-        </Collapse>
-        <ListItem key="modelSelection" disablePadding>
-          <ListItemButton
-            onClick={toggleSelectModelMenuOpen}
-            aria-expanded={selectModelMenuOpen}
-          >
-            <ListItemIcon>
-              <PsychologyIcon />
-            </ListItemIcon>
-            <ListItemText>{t("model.version.select")}</ListItemText>
-            {selectModelMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={selectModelMenuOpen} timeout="auto" unmountOnExit>
-          <Divider />
-          <RadioGroup
-            defaultValue="gpt-4o"
-            aria-labelledby="select-language-model-radio"
-            name="model-radios"
-            sx={{ marginLeft: "70px" }}
-            value={selectedModel}
-            onChange={handleRadioChange}
-          >
-            <FormControlLabel
-              value="gpt-4o"
-              control={<Radio />}
-              label="GPT-4o"
+            <ListItemText
+              primary={t("new.conversation")}
+              aria-description={t("new.conversation.aria.description")}
+              aria-label={t("new.conversation")}
             />
-            <FormControlLabel
-              value="gpt-35-turbo-1106"
-              control={<Radio />}
-              label="GPT-3.5 Turbo"
-            />
-          </RadioGroup>
-        </Collapse>
-        <Divider sx={{ margin: "5px 0px" }}>
-          <Chip
-            label={t("drawer.header.conversations")}
-            size="small"
-            sx={{ backgroundColor: "transparent" }}
-          />
-        </Divider>
+          </ListItemButton>
+        </ListItem>
         <ListItem key="clearchat" disablePadding>
           <ListItemButton onClick={onClearChat}>
             <ListItemIcon>
@@ -380,32 +160,14 @@ export const DrawerMenu = ({
             />
           </ListItemButton>
         </ListItem>
-        <ListItem key="newChat" disablePadding>
-          <ListItemButton onClick={onNewChat}>
-            <ListItemIcon>
-              <AddCommentIcon />
-            </ListItemIcon>
-            <ListItemText
-              primary={t("new.conversation")}
-              aria-description={t("tutorial.newChat")}
-              aria-label={t("new.conversation")}
-            />
-          </ListItemButton>
-        </ListItem>
-        <ListItem key="chatSelection" disablePadding>
-          <ListItemButton
-            onClick={() => setSelectChatMenuOpen(!selectChatMenuOpen)}
-            aria-expanded={selectChatMenuOpen}
-          >
-            <ListItemIcon>
-              <HistoryIcon />
-            </ListItemIcon>
-            <ListItemText>{t("select.conversation")}</ListItemText>
-            {selectChatMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={selectChatMenuOpen} timeout="auto" unmountOnExit>
-          <Divider />
+        <Divider sx={{ margin: "5px 0px" }}>
+          <Chip
+            label={t("drawer.header.conversations")}
+            size="small"
+            sx={{ backgroundColor: "transparent" }}
+          />
+        </Divider>
+        <Collapse in={true} timeout="auto" unmountOnExit>
           {chatDescriptions.map((chatDescription, index) => {
             return (
               <ListItem
@@ -422,6 +184,29 @@ export const DrawerMenu = ({
                   transition: "none",
                 }}
               >
+                {(editingIndex === null || editingIndex !== index) && (
+                  <ListItemButton
+                    disableRipple
+                    sx={{
+                      padding: "5px 10px",
+                      "&:hover": {
+                        backgroundColor: "transparent",
+                      },
+                    }}
+                    onClick={() => handleLoadSavedChat(index)}
+                  >
+                    <Typography
+                      noWrap
+                      sx={{
+                        width: "100%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {chatDescription}
+                    </Typography>
+                  </ListItemButton>
+                )}
                 <IconButton
                   onClick={(event) => handleMoreMenuClick(event, index)}
                   disableRipple
@@ -513,45 +298,13 @@ export const DrawerMenu = ({
                   />
                 )}
 
-                {(editingIndex === null || editingIndex !== index) && (
-                  <ListItemButton
-                    disableRipple
-                    sx={{
-                      padding: "5px 10px",
-                      "&:hover": {
-                        backgroundColor: "transparent",
-                      },
-                    }}
-                    onClick={() => handleLoadSavedChat(index)}
-                  >
-                    <Typography
-                      noWrap
-                      sx={{
-                        width: "100%",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {chatDescription}
-                    </Typography>
-                  </ListItemButton>
-                )}
+
               </ListItem>
             );
           })}
         </Collapse>
       </List>
       <List sx={{ marginTop: "auto" }}>
-        {!tutorialBubbleNumber && (
-          <ListItem key="tutorials" disablePadding>
-            <ListItemButton onClick={() => handleToggleTutorials(true)}>
-              <ListItemIcon>
-                <InfoIcon />
-              </ListItemIcon>
-              <ListItemText primary={t("tutorial.view")} />
-            </ListItemButton>
-          </ListItem>
-        )}
         {isAuthenticated && (
           <ListItem key="logout" disablePadding>
             <ListItemButton onClick={logout}>
@@ -567,12 +320,9 @@ export const DrawerMenu = ({
   );
 
   return (
-    <Drawer
-      anchor="right"
-      open={openDrawer}
-      onClose={() => toggleDrawer(false)}
-    >
+    <>
       {list()}
-    </Drawer>
+    </>
+    // </Drawer>
   );
 };
