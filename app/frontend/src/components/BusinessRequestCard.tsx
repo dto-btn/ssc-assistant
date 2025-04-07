@@ -177,7 +177,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
           <Typography variant="body2" color="textPrimary">
             <strong>{t("associated.business.requests")}: </strong>
             {typeof data.ASSOC_BRS === "string" &&
-              data.ASSOC_BRS.includes(",") ? (
+            data.ASSOC_BRS.includes(",") ? (
               data.ASSOC_BRS.split(",").map((br, index) => (
                 <React.Fragment key={index}>
                   <Link
@@ -303,12 +303,6 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                 <TableRow>
                   <TableCell>{t("SDM_TL_OPI")}</TableCell>
                   <TableCell>{data.SDM_TL_OPI}</TableCell>
-                </TableRow>
-              )}
-              {data.SR_OWNER && (
-                <TableRow>
-                  <TableCell>{t("SR_OWNER")}</TableCell>
-                  <TableCell>{data.SR_OWNER}</TableCell>
                 </TableRow>
               )}
               {data.TEAMLEADER && (
