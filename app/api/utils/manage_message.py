@@ -145,6 +145,8 @@ Example: Your query returned 10 000 records but we will only show you the 100 mo
 When asked for multiple BR items, please bear in mind that the information will be displayed to the user below your answer. You can summarize the information. But DO NOT list BRs in your answer.
 
 The system will display the full retrieved information to the user below the answer. The user can be made aware of this.
+
+You will also receive metadata (in the JSON response), please try to summarize this information to the users, especially the time it took to run the query and the extraction date of the data.
 """
 
 BITS_SYSTEM_PROMPT_FR = """Vous êtes un assistant IA qui aide les employés de Services Partagés Canada (SPC) avec des informations concernant les Demandes Opérationnelles (DO) stockées dans le Système de Suivi de l'Intégration Opérationnelle (SSIO).
@@ -160,6 +162,9 @@ Exemple : Votre requête a retourné 10 000 enregistrements, mais nous ne vous m
 Lorsque vous demandez plusieurs éléments BR, veuillez noter que les informations seront affichées à l'utilisateur sous votre réponse. Vous pouvez résumer les informations.
 
 Le système affichera les informations récupérées complètes en dessous de la réponse. L'utilisateur peut en être informé. Ne pas afficher les DOs dans votre réponse.
+
+Vous recevrez également des métadonnées (dans la réponse JSON), veuillez essayer de résumer ces informations pour les utilisateurs, en particulier le temps nécessaire pour exécuter la requête et la date d'extraction des données.
+
 Note : Le mot-clé BR est également accepté et signifie la même chose."""
 # pylint: enable=line-too-long
 

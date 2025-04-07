@@ -108,8 +108,8 @@ interface SuggestionContext {
 }
 
 interface BusinessRequest {
+  LEAD_PRODUCT: string;
   BR_NMBR: number;
-  BR_TITLE: string;
   BR_SHORT_TITLE: string;
   RPT_GC_ORG_NAME_EN: string;
   RPT_GC_ORG_NAME_FR: string;
@@ -120,38 +120,40 @@ interface BusinessRequest {
   BR_TYPE_FR: string;
   PRIORITY_EN: string;
   PRIORITY_FR: string;
-  BR_OWNER: string;
   SUBMIT_DATE: string;
   RVSD_TARGET_IMPL_DATE: string;
-  BA_OPI: string;
   CPLX_EN: string;
   CPLX_FR: string;
   ACTUAL_IMPL_DATE: string;
   AGRMT_END_DATE: string;
-  BA_TL: string;
-  TL_OPI: string;
-  SOL_OPI: string;
-  PM_OPI: string;
   SCOPE_EN: string;
   SCOPE_FR: string;
-  CSM_DIRTR: string;
   CLIENT_REQST_SOL_DATE: string;
-  BA_PRICE_OPI: string;
-  SDM_TL_OPI: string;
   CLIENT_SUBGRP_EN: string;
   CLIENT_SUBGRP_FR: string;
-  PROD_OPI: string;
   PRPO_TARGET_DATE: string;
   IMPL_SGNOFF_DATE: string;
   GROUP_EN: string;
   GROUP_FR: string;
-  ENGN_OPI: string;
-  AGRMT_OPI: string;
   BR_ACTIVE_EN: string;
   BR_ACTIVE_FR: string;
   BITS_STATUS_EN: string;
   BITS_STATUS_FR: string;
   ASSOC_BRS: string;
+  ACC_MANAGER_OPI: string;
+  AGR_OPI: string;
+  BA_OPI: string;
+  BA_PRICING_OPI: string;
+  BA_PRICING_TL: string;
+  BA_TL: string;
+  CSM_DIRECTOR: string;
+  EAOPI: string;
+  PM_OPI: string;
+  QA_OPI: string;
+  SDM_TL_OPI: string;
+  SR_OWNER: string;
+  TEAMLEADER: string;
+  WIO_OPI: string;
 }
 
 interface BusinessRequestUpdate {

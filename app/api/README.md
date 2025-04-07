@@ -54,3 +54,19 @@ alembic downgrade base && alembic upgrade head
 # create migration
 alembic revision -m "create suggestion table"
 ```
+
+## pymssql on Mac OSX
+
+`pymssql` has dependency with **FreeTDS**, as such ensure you install it beforehand `brew install freetds`.
+
+After which if you have issues with running the code please do the following: 
+
+```bash
+uv pip uninstall pymssql
+myfreetds=$(brew --prefix freetds)
+export LDFLAGS="-L$myfreetds/lib"
+export CPPFLAGS="-I$myfreetds/include"
+uv pip install --pre --no-binary :all: pymssql --no-cache
+```
+
+After this all should be working.

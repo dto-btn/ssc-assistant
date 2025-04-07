@@ -59,44 +59,21 @@ All the necessary `npm install` and `pip install` commands have already been run
 
 If you encounter an issue starting `npm` in dev containers you can refer to this [workaround/bug](https://stackoverflow.com/questions/75708866/vscode-dev-container-fails-to-load-ms-vscode-js-debug-extension-correctly).
 
-### Manual setup (deprecated)
+### Manual setup API
 
-We are developing on python 3.11+.
+We are developing on python 3.12+.
 
-Please setup your environement like so:
-
-We have 2 python projects in this repo, I create 2 virtual envs and switch between them via command line and/or visual studio.
-
-First we setup the backend API project:
-
-```bash
-python3 -m venv .venv_api
-source .venv_api/bin/activate
-pip install -r app/api/requirements-dev.txt --upgrade
-```
-
-You should then see something like this denoting which environement you are in your shell. To leave this `.venv` simply type `deactivate`
-
-```bash
-(.venv_api) ➜  ~/git/ssc-assistant/
-```
+ * [Install UV](https://github.com/astral-sh/uv)
+ * Install Python 3.12, (or via `uv python install 3.12`)
+ * Create `virtualenv`, `cd app/api` and then `uv venv`
+ * `source .venv/bin/activate`
+ * `uv pip sync requirements-dev.txt` (install dependencies)
 
 **Now ensure that VSCode** uses the proper `.venv` folder by pressing `Ctrl + Shift + P` and then type `Python: Select Interpreter`
 
-and then the azure function project:
+### Manual Setup Frontend
 
-```bash
-python3 -m venv .venv_func
-source .venv_func/bin/activate
-pip install -r az-functions/create-index/requirements.txt --upgrade
-```
-
-(for this virtual env the `.vscode/settings.json` should already be pointing to the proper folder, else re-follow steps above to ensure VSCode uses the proper venv for that section of the project)
-
-```bash
-npm install
-npm run dev
-```
+ * [Install nvm/npm/node](https://nodejs.org/en/download/)
 
 ### Infrastructure
 
