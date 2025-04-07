@@ -1,15 +1,15 @@
 import * as React from 'react';
 import Menu from '@mui/material/Menu';
 import { Box, Chip, Collapse, Divider, FormControlLabel, FormGroup, FormLabel, ListItem, ListItemButton, ListItemIcon, ListItemText, Radio, RadioGroup, Switch, Typography } from '@mui/material';
-import { UserProfilePicture } from './ProfileMenuButton/ProfilePicture';
+import { UserProfilePicture } from './ProfilePicture';
 import { useContext } from 'react';
-import { UserContext } from '../../../context/UserContext';
+import { UserContext } from '../../../../context/UserContext';
 import { t } from "i18next";
 import LanguageIcon from "@mui/icons-material/Language";
-import { useAppStore } from '../../../context/AppStore';
+import { useAppStore } from '../../../../context/AppStore';
 import HandymanIcon from '@mui/icons-material/Handyman';
 import PsychologyIcon from "@mui/icons-material/Psychology";
-import { allowedToolsSet, allowedCorporateFunctionsSet } from "../../../allowedTools";
+import { allowedToolsSet, allowedCorporateFunctionsSet } from "../../../../allowedTools";
 
 interface ProfilePictureOnClickMenuProps {
     size?: string;

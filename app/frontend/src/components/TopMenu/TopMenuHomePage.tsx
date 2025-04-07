@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import React from "react";
 import { TopMenuFrame } from "./subcomponents/TopMenuFrame";
 import TopmenuMicrosofTeamsIcon from "./TopmenuMicrosofTeamsIcon.svg";
-import { ProfileMenuButton } from "./subcomponents";
+import { ProfileMenuButton } from "./subcomponents/ProfileMenuButton";
 import { TopMenuItem } from "./subcomponents/TopMenuItem";
 
 interface TopMenuHomePageProps {

@@ -58,7 +58,7 @@ export const DrawerMenu = ({
   const [editedDescription, setEditedDescription] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [textFieldIsFocused, setTextFieldIsFocused] = useState(false);
-  const [selectChatMenuOpen, setSelectChatMenuOpen] = useState(false);
+  const [selectChatMenuOpen, setSelectChatMenuOpen] = useState(true);
 
   const isAuthenticated = useIsAuthenticated();
   const moreMenuOpen = Boolean(moreMenuAnchor);
