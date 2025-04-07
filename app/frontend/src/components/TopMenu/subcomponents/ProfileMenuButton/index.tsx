@@ -4,7 +4,7 @@ import { Box, Chip, Collapse, Divider, FormControlLabel, FormGroup, FormLabel, L
 import { UserProfilePicture } from './ProfilePicture';
 import { useContext } from 'react';
 import { UserContext } from '../../../../context/UserContext';
-import { t } from "i18next";
+import { useTranslation } from "react-i18next";
 import LanguageIcon from "@mui/icons-material/Language";
 import { useAppStore } from '../../../../context/AppStore';
 import HandymanIcon from '@mui/icons-material/Handyman';
@@ -39,6 +39,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
     selectedModel,
     handleSelectedModelChanged
 }) => {
+    const { t } = useTranslation();
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const [toolsMenuOpen, setToolsMenuOpen] = React.useState(false);
     const [modelMenuOpen, setModelMenuOpen] = React.useState(false);

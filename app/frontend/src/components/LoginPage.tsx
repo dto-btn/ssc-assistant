@@ -6,7 +6,7 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { useAppStore } from '../context/AppStore';
-import { t } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 const logoStyle = {
   width: "50px",
@@ -14,6 +14,7 @@ const logoStyle = {
 };
 
 const LoginPage = ({ open, setOpen }: { open: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) => {
+  const { t } = useTranslation();
   const { instance } = useMsal();
   const appStore = useAppStore();
 

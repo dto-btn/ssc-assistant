@@ -1,4 +1,4 @@
-import { t } from "i18next";
+import { useTranslation } from 'react-i18next';
 import React from "react";
 import {
   Button,
@@ -19,6 +19,7 @@ export const DeleteConversationConfirmation: React.FC<Props> = ({
   onClose,
   onDelete,
 }) => {
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>{t("delete.conversation.title")}</DialogTitle>
