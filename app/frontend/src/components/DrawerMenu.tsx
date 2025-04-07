@@ -174,150 +174,6 @@ export const DrawerMenu = ({
       }}
     >
       <List>
-        <ListItem key="language" disablePadding>
-          <ListItemButton
-            onClick={() => {
-              changeLanguage(t("langlink.shorthand"));
-              setLangCookie();
-            }}
-          >
-            <ListItemIcon>
-              <LanguageIcon />
-            </ListItemIcon>
-            <ListItemText primary={t("langlink")} />
-          </ListItemButton>
-        </ListItem>
-        <Divider sx={{ margin: "5px 0px" }}>
-          <Chip
-            label={t("drawer.header.toolsAndModels")}
-            size="small"
-            sx={{ backgroundColor: "transparent" }}
-          />
-        </Divider>
-        <ListItem key="toolSettings" disablePadding>
-          <ListItem
-            aria-expanded={true}
-          >
-            <ListItemIcon>
-              <Handyman />
-            </ListItemIcon>
-            <ListItemText primary={t("menu.chooseTools")} />
-          </ListItem>
-        </ListItem>
-        <Collapse in={true} timeout="auto" unmountOnExit>
-          <Divider />
-          <FormGroup>
-            {corporateKey && (
-              <Box
-                sx={{
-                  minWidth: 120,
-                  marginLeft: "70px",
-                  marginRight: "10px",
-                  paddingTop: "5px",
-                }}
-              >
-                <FormLabel id="corpo-data-label">
-                  {t("corporate.data")}
-                </FormLabel>
-                <RadioGroup
-                  aria-labelledby="corpo-data-label"
-                  name="corpo-data-group"
-                  onChange={handleSetSelectedCorporateFunction}
-                  value={selectedCorporateFunction}
-                  defaultValue="intranet_question"
-                >
-                  <FormControlLabel
-                    key={-1}
-                    value="none"
-                    control={<Radio />}
-                    label={t("none")}
-                  />
-                  {Array.from(allowedCorporateFunctionsSet).map(
-                    (name, index) => (
-                      <FormControlLabel
-                        key={index}
-                        value={name}
-                        control={<Radio />}
-                        label={t(name)}
-                      />
-                    )
-                  )}
-                </RadioGroup>
-              </Box>
-            )}
-            <Divider />
-            {tools.map((tool, index) => {
-              return (
-                <FormControlLabel
-                  label={t(tool)}
-                  key={index}
-                  control={
-                    <Switch
-                      checked={enabledTools[tool]}
-                      onChange={handleUpdateEnabledTools}
-                      name={tool}
-                      sx={{
-                        marginLeft: "70px",
-                        marginRight: "10px",
-                        color: "primary.main",
-                      }}
-                    />
-                  }
-                />
-              );
-            })}
-          </FormGroup>
-        </Collapse>
-        <ListItem key="modelSelection" disablePadding>
-          <ListItem
-            aria-expanded={true}
-          >
-            <ListItemIcon>
-              <PsychologyIcon />
-            </ListItemIcon>
-            <ListItemText>{t("model.version.select")}</ListItemText>
-          </ListItem>
-        </ListItem>
-        <Collapse in={true} timeout="auto" unmountOnExit>
-          <Divider />
-          <RadioGroup
-            defaultValue="gpt-4o"
-            aria-labelledby="select-language-model-radio"
-            name="model-radios"
-            sx={{ marginLeft: "70px" }}
-            value={selectedModel}
-            onChange={handleRadioChange}
-          >
-            <FormControlLabel
-              value="gpt-4o"
-              control={<Radio />}
-              label="GPT-4o"
-            />
-            <FormControlLabel
-              value="gpt-35-turbo-1106"
-              control={<Radio />}
-              label="GPT-3.5 Turbo"
-            />
-          </RadioGroup>
-        </Collapse>
-        <Divider sx={{ margin: "5px 0px" }}>
-          <Chip
-            label={t("drawer.header.conversations")}
-            size="small"
-            sx={{ backgroundColor: "transparent" }}
-          />
-        </Divider>
-        <ListItem key="clearchat" disablePadding>
-          <ListItemButton onClick={onClearChat}>
-            <ListItemIcon>
-              <DeleteIcon />
-            </ListItemIcon>
-            <ListItemText
-              primary={t("clear.conversation")}
-              aria-label={t("clear.conversation")}
-            />
-          </ListItemButton>
-        </ListItem>
         <ListItem key="newChat" disablePadding>
           <ListItemButton onClick={onNewChat}>
             <ListItemIcon>
@@ -330,6 +186,24 @@ export const DrawerMenu = ({
             />
           </ListItemButton>
         </ListItem>
+        <ListItem key="clearchat" disablePadding>
+          <ListItemButton onClick={onClearChat}>
+            <ListItemIcon>
+              <DeleteIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary={t("clear.conversation")}
+              aria-label={t("clear.conversation")}
+            />
+          </ListItemButton>
+        </ListItem>
+        <Divider sx={{ margin: "5px 0px" }}>
+          <Chip
+            label={t("drawer.header.conversations")}
+            size="small"
+            sx={{ backgroundColor: "transparent" }}
+          />
+        </Divider>
         <ListItem key="chatSelection" disablePadding>
           <ListItemButton
             onClick={() => setSelectChatMenuOpen(!selectChatMenuOpen)}
@@ -477,6 +351,132 @@ export const DrawerMenu = ({
               </ListItem>
             );
           })}
+        </Collapse>
+        <ListItem key="language" disablePadding>
+          <ListItemButton
+            onClick={() => {
+              changeLanguage(t("langlink.shorthand"));
+              setLangCookie();
+            }}
+          >
+            <ListItemIcon>
+              <LanguageIcon />
+            </ListItemIcon>
+            <ListItemText primary={t("langlink")} />
+          </ListItemButton>
+        </ListItem>
+        <Divider sx={{ margin: "5px 0px" }}>
+          <Chip
+            label={t("drawer.header.toolsAndModels")}
+            size="small"
+            sx={{ backgroundColor: "transparent" }}
+          />
+        </Divider>
+        <ListItem key="toolSettings" disablePadding>
+          <ListItem
+            aria-expanded={true}
+          >
+            <ListItemIcon>
+              <Handyman />
+            </ListItemIcon>
+            <ListItemText primary={t("menu.chooseTools")} />
+          </ListItem>
+        </ListItem>
+        <Collapse in={true} timeout="auto" unmountOnExit>
+          <Divider />
+          <FormGroup>
+            {corporateKey && (
+              <Box
+                sx={{
+                  minWidth: 120,
+                  marginLeft: "70px",
+                  marginRight: "10px",
+                  paddingTop: "5px",
+                }}
+              >
+                <FormLabel id="corpo-data-label">
+                  {t("corporate.data")}
+                </FormLabel>
+                <RadioGroup
+                  aria-labelledby="corpo-data-label"
+                  name="corpo-data-group"
+                  onChange={handleSetSelectedCorporateFunction}
+                  value={selectedCorporateFunction}
+                  defaultValue="intranet_question"
+                >
+                  <FormControlLabel
+                    key={-1}
+                    value="none"
+                    control={<Radio />}
+                    label={t("none")}
+                  />
+                  {Array.from(allowedCorporateFunctionsSet).map(
+                    (name, index) => (
+                      <FormControlLabel
+                        key={index}
+                        value={name}
+                        control={<Radio />}
+                        label={t(name)}
+                      />
+                    )
+                  )}
+                </RadioGroup>
+              </Box>
+            )}
+            <Divider />
+            {tools.map((tool, index) => {
+              return (
+                <FormControlLabel
+                  label={t(tool)}
+                  key={index}
+                  control={
+                    <Switch
+                      checked={enabledTools[tool]}
+                      onChange={handleUpdateEnabledTools}
+                      name={tool}
+                      sx={{
+                        marginLeft: "70px",
+                        marginRight: "10px",
+                        color: "primary.main",
+                      }}
+                    />
+                  }
+                />
+              );
+            })}
+          </FormGroup>
+        </Collapse>
+        <ListItem key="modelSelection" disablePadding>
+          <ListItem
+            aria-expanded={true}
+          >
+            <ListItemIcon>
+              <PsychologyIcon />
+            </ListItemIcon>
+            <ListItemText>{t("model.version.select")}</ListItemText>
+          </ListItem>
+        </ListItem>
+        <Collapse in={true} timeout="auto" unmountOnExit>
+          <Divider />
+          <RadioGroup
+            defaultValue="gpt-4o"
+            aria-labelledby="select-language-model-radio"
+            name="model-radios"
+            sx={{ marginLeft: "70px" }}
+            value={selectedModel}
+            onChange={handleRadioChange}
+          >
+            <FormControlLabel
+              value="gpt-4o"
+              control={<Radio />}
+              label="GPT-4o"
+            />
+            <FormControlLabel
+              value="gpt-35-turbo-1106"
+              control={<Radio />}
+              label="GPT-3.5 Turbo"
+            />
+          </RadioGroup>
         </Collapse>
       </List>
       <List sx={{ marginTop: "auto" }}>
