@@ -158,6 +158,7 @@ interface BusinessRequest {
   GCIT_CAT_FR: string;
   GCIT_PRIORITY_EN: string;
   GCIT_PRIORITY_FR: string;
+  TARGET_IMPL_DATE: string;
 }
 
 interface BusinessRequestUpdate {

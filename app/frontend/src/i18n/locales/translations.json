@@ -778,5 +778,9 @@
     "GCIT_CAT": {
         "en": "GCIT Category Project or Activity",
         "fr": "Projet ou activité de catégorie GCTI"
+    },
+    "TARGET_IMPL_DATE": {
+        "en": "Target Implementation Date",
+        "fr": "Date de mise en œuvre cible"
     }
 }

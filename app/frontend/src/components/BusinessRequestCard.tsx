@@ -126,50 +126,93 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
         )}
         <Typography variant="body2" color="textPrimary">
           <strong>{t("submit.date")}: </strong>
-          {new Date(data.SUBMIT_DATE).toLocaleDateString()}
+          {new Date(data.SUBMIT_DATE).toLocaleString("en-CA", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          })}
         </Typography>
         <Typography variant="body2" color="textPrimary">
           <strong>{t("REQST_IMPL_DATE")}: </strong>
-          {new Date(data.REQST_IMPL_DATE).toLocaleDateString()}
+          {new Date(data.REQST_IMPL_DATE).toLocaleString("en-CA", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          })}
         </Typography>
         {data.RVSD_TARGET_IMPL_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("RVSD_TARGET_IMPL_DATE")}: </strong>
-            {new Date(data.RVSD_TARGET_IMPL_DATE).toLocaleDateString()}
+            {new Date(data.RVSD_TARGET_IMPL_DATE).toLocaleString("en-CA", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            })}
           </Typography>
         )}
         {data.ACTUAL_IMPL_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("ACTUAL_IMPL_DATE")}: </strong>
-            {new Date(data.ACTUAL_IMPL_DATE).toLocaleDateString()}
+            {new Date(data.ACTUAL_IMPL_DATE).toLocaleString("en-CA", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            })}
           </Typography>
         )}
 
         {data.CLIENT_REQST_SOL_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("CLIENT_REQST_SOL_DATE")}: </strong>
-            {new Date(data.CLIENT_REQST_SOL_DATE).toLocaleDateString()}
+            {new Date(data.CLIENT_REQST_SOL_DATE).toLocaleString("en-CA", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            })}
           </Typography>
         )}
 
         {data.AGRMT_END_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("AGRMT_END_DATE")}: </strong>
-            {new Date(data.AGRMT_END_DATE).toLocaleDateString()}
+            {new Date(data.AGRMT_END_DATE).toLocaleString("en-CA", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            })}
           </Typography>
         )}
 
         {data.PRPO_TARGET_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("PRPO_TARGET_DATE")}: </strong>
-            {new Date(data.PRPO_TARGET_DATE).toLocaleDateString()}
+            {new Date(data.PRPO_TARGET_DATE).toLocaleString("en-CA", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            })}
           </Typography>
         )}
 
         {data.IMPL_SGNOFF_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("IMPL_SGNOFF_DATE")}: </strong>
-            {new Date(data.IMPL_SGNOFF_DATE).toLocaleDateString()}
+            {new Date(data.IMPL_SGNOFF_DATE).toLocaleString("en-CA", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            })}
+          </Typography>
+        )}
+
+        {data.TARGET_IMPL_DATE && (
+          <Typography variant="body2" color="textPrimary">
+            <strong>{t("TARGET_IMPL_DATE")}: </strong>
+            {new Date(data.TARGET_IMPL_DATE).toLocaleString("en-CA", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            })}
           </Typography>
         )}
 

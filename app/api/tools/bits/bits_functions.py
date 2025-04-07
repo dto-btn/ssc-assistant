@@ -66,6 +66,7 @@ valid_search_fields = {
     'GCIT_CAT_FR': 'br.GCIT_CAT_FR',
     'GCIT_PRIORITY_EN': 'br.GCIT_PRIORITY_EN',
     'GCIT_PRIORITY_FR': 'br.GCIT_PRIORITY_FR',
+    'TARGET_IMPL_DATE': 'br.TARGET_IMPL_DATE',
 }
 
 opis_mapping = {

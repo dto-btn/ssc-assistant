@@ -50,5 +50,6 @@ export const transformToBusinessRequest = (data: any): BusinessRequest => {
     GCIT_CAT_FR: data.GCIT_CAT_FR,
     GCIT_PRIORITY_EN: data.GCIT_PRIORITY_EN,
     GCIT_PRIORITY_FR: data.GCIT_PRIORITY_FR,
+    TARGET_IMPL_DATE: data.TARGET_IMPL_DATE,
   };
 };
