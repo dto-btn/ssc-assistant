@@ -21,7 +21,6 @@ import { isTokenExpired } from "../../util/token";
 import { completionMySSC, sendFeedback } from "../../api/api";
 import { apiUse } from "../../authConfig";
 import { AccountInfo, InteractionStatus } from "@azure/msal-browser";
-import Cookies from "js-cookie";
 import { v4 as uuidv4 } from "uuid";
 import { bookReservation } from "../../api/api";
 import { allowedToolsSet } from "../../allowedTools";
@@ -387,22 +386,11 @@ const MainScreen = () => {
     });
   };
 
-  const setLangCookie = () => {
-    Cookies.set("lang_setting", i18n.language, {
-      expires: 30,
-    });
-  };
-
   const handleLogout = () => {
     instance.logoutRedirect({
       postLogoutRedirectUri: "/",
     });
   };
-
-  useEffect(() => {
-    // Set the `lang` attribute whenever the language changes
-    document.documentElement.lang = i18n.language;
-  }, [i18n.language]);
 
   // Scrolls the last updated message (if its streaming, or once done) into view
   useEffect(() => {
@@ -777,8 +765,6 @@ const MainScreen = () => {
       <NewLayout
         appBar={(
           <TopMenuHomePage
-            setLangCookie={setLangCookie}
-            onNewChat={handleNewChat}
             onNewChat={handleNewChat}
             childrenLeftOfLogo={
               <>

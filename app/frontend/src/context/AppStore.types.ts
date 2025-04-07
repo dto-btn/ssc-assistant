@@ -1,3 +1,5 @@
+import { LanguageService } from "../services/LanguageService";
+
 type SnackbarDatum = {
     id: number;
     message: string;
@@ -14,5 +16,6 @@ export type AppContext = {
     appDrawer: {
         isOpen: boolean;
         toggle: () => void;
-    }
+    },
+    languageService: LanguageService
 };

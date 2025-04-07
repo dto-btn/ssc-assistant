@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { produce } from 'immer'
 import { AppContext } from './AppStore.types';
 import { theme } from '../theme';
+import { LanguageService } from '../services/LanguageService';
 
 // This is the time-to-live for a snackbar in milliseconds. After this time, the snackbar will
 // automatically hide itself.
@@ -91,7 +92,8 @@ const useAppStore = create<AppContext>((set, get) => ({
                 draft.appDrawer.isOpen = !draft.appDrawer.isOpen;
             }));
         }
-    }
+    },
+    languageService: new LanguageService()
 }));
 
 export { useAppStore };

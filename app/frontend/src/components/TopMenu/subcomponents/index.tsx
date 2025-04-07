@@ -5,14 +5,14 @@ import { Box, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography }
 import { UserProfilePicture } from './ProfileMenuButton/ProfilePicture';
 import { useContext } from 'react';
 import { UserContext } from '../../../context/UserContext';
-import { t, changeLanguage } from "i18next";
+import { t } from "i18next";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import LanguageIcon from "@mui/icons-material/Language";
+import { useAppStore } from '../../../context/AppStore';
 
 interface ProfilePictureOnClickMenuProps {
     size?: string;
     fontSize?: string;
-    setLangCookie: () => void;
     onNewChat: () => void;
 }
 
@@ -20,7 +20,6 @@ interface ProfilePictureOnClickMenuProps {
 export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
     size,
     fontSize,
-    setLangCookie,
     onNewChat
 }) => {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -32,6 +31,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
     const handleClose = () => {
         setAnchorEl(null);
     };
+    const appStore = useAppStore();
 
     return graphData && (
         <Box
@@ -95,8 +95,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                 <ListItem key="language" disablePadding>
                     <ListItemButton
                         onClick={() => {
-                            changeLanguage(t("langlink.shorthand"));
-                            setLangCookie();
+                            appStore.languageService.changeLanguage();
                         }}
                     >
                         <ListItemIcon>
