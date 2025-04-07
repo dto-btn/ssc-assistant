@@ -10,6 +10,8 @@ import { useAppStore } from '../../../../context/AppStore';
 import HandymanIcon from '@mui/icons-material/Handyman';
 import PsychologyIcon from "@mui/icons-material/Psychology";
 import { allowedToolsSet, allowedCorporateFunctionsSet } from "../../../../allowedTools";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 interface ProfilePictureOnClickMenuProps {
     size?: string;
@@ -38,6 +40,8 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
     handleSelectedModelChanged
 }) => {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const [toolsMenuOpen, setToolsMenuOpen] = React.useState(false);
+    const [modelMenuOpen, setModelMenuOpen] = React.useState(false);
     const open = Boolean(anchorEl);
     const { graphData } = useContext(UserContext);
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -127,17 +131,19 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                         sx={{ backgroundColor: "transparent" }}
                     />
                 </Divider>
-                <ListItem key="toolSettings" disablePadding>
-                    <ListItem
+                <ListItem key="toolSettings" disablePadding >
+                    <ListItemButton
+                        onClick={() => setToolsMenuOpen(!toolsMenuOpen)}
                         aria-expanded={true}
                     >
                         <ListItemIcon>
                             <HandymanIcon />
                         </ListItemIcon>
                         <ListItemText primary={t("menu.chooseTools")} />
-                    </ListItem>
+                        {toolsMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                    </ListItemButton>
                 </ListItem>
-                <Collapse in={true} timeout="auto" unmountOnExit>
+                <Collapse in={toolsMenuOpen} timeout="auto" unmountOnExit >
                     <Divider />
                     <FormGroup>
                         {corporateKey && (
@@ -201,17 +207,19 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                         })}
                     </FormGroup>
                 </Collapse>
-                <ListItem key="modelSelection" disablePadding>
-                    <ListItem
+                <ListItem key="modelSelection" disablePadding >
+                    <ListItemButton
                         aria-expanded={true}
+                        onClick={() => setModelMenuOpen(!modelMenuOpen)}
                     >
                         <ListItemIcon>
                             <PsychologyIcon />
                         </ListItemIcon>
                         <ListItemText>{t("model.version.select")}</ListItemText>
-                    </ListItem>
+                        {modelMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                    </ListItemButton>
                 </ListItem>
-                <Collapse in={true} timeout="auto" unmountOnExit>
+                <Collapse in={modelMenuOpen} timeout="auto" unmountOnExit>
                     <Divider />
                     <RadioGroup
                         defaultValue="gpt-4o"
