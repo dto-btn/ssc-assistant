@@ -7,12 +7,11 @@ import { ProfileMenuButton } from "./subcomponents";
 import { TopMenuItem } from "./subcomponents/TopMenuItem";
 
 interface TopMenuHomePageProps {
-  onNewChat: () => void;
   childrenLeftOfLogo?: React.ReactNode;
 }
 
 
-export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat, childrenLeftOfLogo }) => {
+export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ childrenLeftOfLogo }) => {
   const { t } = useTranslation();
 
   return (
@@ -62,7 +61,6 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat, ch
           <ProfileMenuButton
             size="30px"
             fontSize="12px"
-            onNewChat={onNewChat}
           />
 
         </Box>
