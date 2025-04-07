@@ -1,6 +1,5 @@
 import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import AddCommentIcon from "@mui/icons-material/AddComment";
 import React from "react";
 import { TopMenuFrame } from "./subcomponents/TopMenuFrame";
 import TopmenuMicrosofTeamsIcon from "./TopmenuMicrosofTeamsIcon.svg";
@@ -36,13 +35,6 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat, ch
             userSelect: "none",
           }}
         >
-          <TopMenuItem item={{
-            icon: <AddCommentIcon sx={{ fontSize: "1.1rem" }} />,
-            label: t("new.conversation"),
-            onClick: () => {
-              onNewChat();
-            },
-          }} />
 
         </Box>
         <Box

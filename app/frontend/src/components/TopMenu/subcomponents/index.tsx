@@ -1,26 +1,22 @@
 import * as React from 'react';
 import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
 import { Box, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography } from '@mui/material';
 import { UserProfilePicture } from './ProfileMenuButton/ProfilePicture';
 import { useContext } from 'react';
 import { UserContext } from '../../../context/UserContext';
 import { t } from "i18next";
-import AddCommentIcon from "@mui/icons-material/AddComment";
 import LanguageIcon from "@mui/icons-material/Language";
 import { useAppStore } from '../../../context/AppStore';
 
 interface ProfilePictureOnClickMenuProps {
     size?: string;
     fontSize?: string;
-    onNewChat: () => void;
 }
 
 
 export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
     size,
     fontSize,
-    onNewChat
 }) => {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
@@ -80,18 +76,6 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                     horizontal: 'left',
                 }}
             >
-                <ListItem key="newChat" disablePadding>
-                    <ListItemButton onClick={() => onNewChat()}>
-                        <ListItemIcon>
-                            <AddCommentIcon />
-                        </ListItemIcon>
-                        <ListItemText
-                            primary={t("new.conversation")}
-                            aria-description={t("new.conversation.aria.description")}
-                            aria-label={t("new.conversation")}
-                        />
-                    </ListItemButton>
-                </ListItem>
                 <ListItem key="language" disablePadding>
                     <ListItemButton
                         onClick={() => {

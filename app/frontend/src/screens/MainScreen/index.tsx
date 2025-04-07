@@ -765,7 +765,6 @@ const MainScreen = () => {
       <NewLayout
         appBar={(
           <TopMenuHomePage
-            onNewChat={handleNewChat}
             childrenLeftOfLogo={
               <>
                 < IconButton sx={{
@@ -792,6 +791,7 @@ const MainScreen = () => {
             handleDeleteSavedChat={handleDeleteSavedChat}
             handleLoadSavedChat={handleLoadSavedChat}
             renameChat={renameChat}
+            onNewChat={handleNewChat}
           />
         )}
       >

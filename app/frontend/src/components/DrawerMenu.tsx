@@ -55,6 +55,7 @@ interface DrawerMenuProps {
   handleDeleteSavedChat: (index: number) => void;
   handleLoadSavedChat: (index: number) => void;
   renameChat: (newChatDescription: string, index: number) => void;
+  onNewChat: () => void;
 }
 
 export const DrawerMenu = ({
@@ -71,6 +72,7 @@ export const DrawerMenu = ({
   handleLoadSavedChat,
   renameChat,
   currentChatIndex,
+  onNewChat
 }: DrawerMenuProps) => {
   const [moreMenuAnchor, setMoreMenuAnchor] = useState<null | HTMLElement>(
     null
@@ -168,6 +170,18 @@ export const DrawerMenu = ({
       }}
     >
       <List>
+        <ListItem key="newChat" disablePadding>
+          <ListItemButton onClick={() => onNewChat()}>
+            <ListItemIcon>
+              <AddCommentIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary={t("new.conversation")}
+              aria-description={t("new.conversation.aria.description")}
+              aria-label={t("new.conversation")}
+            />
+          </ListItemButton>
+        </ListItem>
         <ListItem key="clearchat" disablePadding>
           <ListItemButton onClick={onClearChat}>
             <ListItemIcon>
