@@ -171,7 +171,6 @@ export const DrawerMenu = ({
           />
         </Divider>
         <Collapse in={true} timeout="auto" unmountOnExit>
-          <Divider />
           {chatDescriptions.map((chatDescription, index) => {
             return (
               <ListItem
@@ -188,6 +187,29 @@ export const DrawerMenu = ({
                   transition: "none",
                 }}
               >
+                {(editingIndex === null || editingIndex !== index) && (
+                  <ListItemButton
+                    disableRipple
+                    sx={{
+                      padding: "5px 10px",
+                      "&:hover": {
+                        backgroundColor: "transparent",
+                      },
+                    }}
+                    onClick={() => handleLoadSavedChat(index)}
+                  >
+                    <Typography
+                      noWrap
+                      sx={{
+                        width: "100%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {chatDescription}
+                    </Typography>
+                  </ListItemButton>
+                )}
                 <IconButton
                   onClick={(event) => handleMoreMenuClick(event, index)}
                   disableRipple
@@ -279,29 +301,7 @@ export const DrawerMenu = ({
                   />
                 )}
 
-                {(editingIndex === null || editingIndex !== index) && (
-                  <ListItemButton
-                    disableRipple
-                    sx={{
-                      padding: "5px 10px",
-                      "&:hover": {
-                        backgroundColor: "transparent",
-                      },
-                    }}
-                    onClick={() => handleLoadSavedChat(index)}
-                  >
-                    <Typography
-                      noWrap
-                      sx={{
-                        width: "100%",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {chatDescription}
-                    </Typography>
-                  </ListItemButton>
-                )}
+
               </ListItem>
             );
           })}
