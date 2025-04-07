@@ -58,7 +58,6 @@ export const DrawerMenu = ({
   const [editedDescription, setEditedDescription] = useState("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [textFieldIsFocused, setTextFieldIsFocused] = useState(false);
-  const [selectChatMenuOpen, setSelectChatMenuOpen] = useState(true);
 
   const isAuthenticated = useIsAuthenticated();
   const moreMenuOpen = Boolean(moreMenuAnchor);
@@ -171,19 +170,7 @@ export const DrawerMenu = ({
             sx={{ backgroundColor: "transparent" }}
           />
         </Divider>
-        <ListItem key="chatSelection" disablePadding>
-          <ListItemButton
-            onClick={() => setSelectChatMenuOpen(!selectChatMenuOpen)}
-            aria-expanded={selectChatMenuOpen}
-          >
-            <ListItemIcon>
-              <HistoryIcon />
-            </ListItemIcon>
-            <ListItemText>{t("select.conversation")}</ListItemText>
-            {selectChatMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </ListItemButton>
-        </ListItem>
-        <Collapse in={selectChatMenuOpen} timeout="auto" unmountOnExit>
+        <Collapse in={true} timeout="auto" unmountOnExit>
           <Divider />
           {chatDescriptions.map((chatDescription, index) => {
             return (

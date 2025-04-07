@@ -12,7 +12,7 @@ import {
   TopMenuHomePage,
 } from "../../components";
 import ChatMessagesContainer from "../../containers/ChatMessagesContainer";
-import { t } from "i18next";
+import { useTranslation } from "react-i18next"
 import React, { useEffect, useRef, useState } from "react";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { isACompletion, isAMessage, isAToastMessage } from "../../utils";
@@ -35,6 +35,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import NewLayout from "../../components/layouts/NewLayout";
 
 const MainScreen = () => {
+  const { t } = useTranslation();
   const appStore = useAppStore();
   const defaultEnabledTools: { [key: string]: boolean } = {};
   allowedToolsSet.forEach((tool) => {
@@ -830,7 +831,7 @@ const MainScreen = () => {
               gutterBottom
               sx={{ fontSize: "3.5rem" }}
             >
-              How can I help?
+                {t("how.can.i.help")}
             </Typography>
             <ChatInput
               clearOnSend

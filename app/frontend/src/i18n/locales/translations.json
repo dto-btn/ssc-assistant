@@ -7,6 +7,10 @@
         "en": "Type your question here:",
         "fr": "Tapez votre question ici :"
     },
+    "how.can.i.help": {
+        "en": "How can I help?",
+        "fr": "Comment puis-je vous aider?"
+    },
     "chat.with.gpt": {
         "en": "Chat with GPT and:",
         "fr": "Discutez avec GPT et :"
@@ -440,7 +444,7 @@
         "fr": "Nouveau"
     },
     "drawer.header.conversations": {
-        "en": "Conversations",
+        "en": "Chats",
         "fr": "Conversations"
     },
     "drawer.header.toolsAndModels": {
