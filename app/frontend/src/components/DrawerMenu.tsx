@@ -19,9 +19,6 @@ import {
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useIsAuthenticated } from "@azure/msal-react";
 import { useEffect, useRef, useState } from "react";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import HistoryIcon from "@mui/icons-material/History";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import EditIcon from "@mui/icons-material/Edit";
