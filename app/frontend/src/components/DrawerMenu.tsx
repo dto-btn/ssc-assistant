@@ -1,4 +1,3 @@
-import LanguageIcon from "@mui/icons-material/Language";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PsychologyIcon from "@mui/icons-material/Psychology";
 import {
@@ -23,7 +22,6 @@ import {
 } from "@mui/material";
 import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
-import { changeLanguage } from "i18next";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useIsAuthenticated } from "@azure/msal-react";
 import Handyman from "@mui/icons-material/Handyman";
@@ -43,8 +41,6 @@ interface DrawerMenuProps {
   chatDescriptions: string[];
   currentChatIndex: number;
   onClearChat: () => void;
-  onNewChat: () => void;
-  setLangCookie: () => void;
   logout: () => void;
   enabledTools: Record<string, boolean>;
   selectedModel: string;
@@ -64,8 +60,6 @@ interface DrawerMenuProps {
 export const DrawerMenu = ({
   chatDescriptions,
   onClearChat,
-  onNewChat,
-  setLangCookie,
   logout,
   enabledTools,
   handleUpdateEnabledTools,
@@ -174,18 +168,6 @@ export const DrawerMenu = ({
       }}
     >
       <List>
-        <ListItem key="newChat" disablePadding>
-          <ListItemButton onClick={onNewChat}>
-            <ListItemIcon>
-              <AddCommentIcon />
-            </ListItemIcon>
-            <ListItemText
-              primary={t("new.conversation")}
-              aria-description={t("new.conversation.aria.description")}
-              aria-label={t("new.conversation")}
-            />
-          </ListItemButton>
-        </ListItem>
         <ListItem key="clearchat" disablePadding>
           <ListItemButton onClick={onClearChat}>
             <ListItemIcon>
@@ -352,19 +334,6 @@ export const DrawerMenu = ({
             );
           })}
         </Collapse>
-        <ListItem key="language" disablePadding>
-          <ListItemButton
-            onClick={() => {
-              changeLanguage(t("langlink.shorthand"));
-              setLangCookie();
-            }}
-          >
-            <ListItemIcon>
-              <LanguageIcon />
-            </ListItemIcon>
-            <ListItemText primary={t("langlink")} />
-          </ListItemButton>
-        </ListItem>
         <Divider sx={{ margin: "5px 0px" }}>
           <Chip
             label={t("drawer.header.toolsAndModels")}

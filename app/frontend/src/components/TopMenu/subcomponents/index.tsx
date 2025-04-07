@@ -1,20 +1,27 @@
 import * as React from 'react';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { Box, Typography } from '@mui/material';
+import { Box, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography } from '@mui/material';
 import { UserProfilePicture } from './ProfileMenuButton/ProfilePicture';
 import { useContext } from 'react';
 import { UserContext } from '../../../context/UserContext';
+import { t, changeLanguage } from "i18next";
+import AddCommentIcon from "@mui/icons-material/AddComment";
+import LanguageIcon from "@mui/icons-material/Language";
 
 interface ProfilePictureOnClickMenuProps {
     size?: string;
     fontSize?: string;
+    setLangCookie: () => void;
+    onNewChat: () => void;
 }
 
 
 export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
     size,
     fontSize,
+    setLangCookie,
+    onNewChat
 }) => {
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
@@ -41,7 +48,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                     display: "flex",
                     flexDirection: "row",
                     alignItems: "center",
-                    gap: "1rem",
+                    gap: "1rem"
                 }}
                 onClick={handleClick}
 
@@ -73,9 +80,31 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                     horizontal: 'left',
                 }}
             >
-                <MenuItem onClick={handleClose}>Profile</MenuItem>
-                <MenuItem onClick={handleClose}>My account</MenuItem>
-                <MenuItem onClick={handleClose}>Logout</MenuItem>
+                <ListItem key="newChat" disablePadding>
+                    <ListItemButton onClick={() => onNewChat()}>
+                        <ListItemIcon>
+                            <AddCommentIcon />
+                        </ListItemIcon>
+                        <ListItemText
+                            primary={t("new.conversation")}
+                            aria-description={t("new.conversation.aria.description")}
+                            aria-label={t("new.conversation")}
+                        />
+                    </ListItemButton>
+                </ListItem>
+                <ListItem key="language" disablePadding>
+                    <ListItemButton
+                        onClick={() => {
+                            changeLanguage(t("langlink.shorthand"));
+                            setLangCookie();
+                        }}
+                    >
+                        <ListItemIcon>
+                            <LanguageIcon />
+                        </ListItemIcon>
+                        <ListItemText primary={t("langlink")} />
+                    </ListItemButton>
+                </ListItem>
             </Menu>
         </Box>
     );

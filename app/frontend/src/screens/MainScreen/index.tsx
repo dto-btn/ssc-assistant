@@ -777,6 +777,8 @@ const MainScreen = () => {
       <NewLayout
         appBar={(
           <TopMenuHomePage
+            setLangCookie={setLangCookie}
+            onNewChat={handleNewChat}
             onNewChat={handleNewChat}
             childrenLeftOfLogo={
               <>
@@ -794,8 +796,6 @@ const MainScreen = () => {
             chatDescriptions={chatHistoriesDescriptions}
             currentChatIndex={currentChatIndex}
             onClearChat={handleClearChat}
-            onNewChat={handleNewChat}
-            setLangCookie={setLangCookie}
             logout={handleLogout}
             enabledTools={enabledTools}
             handleUpdateEnabledTools={handleUpdateEnabledTools}

@@ -10,10 +10,11 @@ import { TopMenuItem } from "./subcomponents/TopMenuItem";
 interface TopMenuHomePageProps {
   onNewChat: () => void;
   childrenLeftOfLogo?: React.ReactNode;
+  setLangCookie: () => void;
 }
 
 
-export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat, childrenLeftOfLogo }) => {
+export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat, childrenLeftOfLogo, setLangCookie }) => {
   const { t } = useTranslation();
 
   return (
@@ -70,6 +71,8 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({ onNewChat, ch
           <ProfileMenuButton
             size="30px"
             fontSize="12px"
+            setLangCookie={setLangCookie}
+            onNewChat={onNewChat}
           />
 
         </Box>
