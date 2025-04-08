@@ -100,8 +100,8 @@
         "fr": "Outils (fonctions) utilisés par l'assistant dans la réponse"
     },
     "toolsUsed.short": {
-        "en": "Tools (functions) used",
-        "fr": "Outils (fonctions) utilisés"
+        "en": "The agent took the following action(s)",
+        "fr": "L'agent a pris la/les action(s) suivante(s)."
     },
     "answer.not.found": {
         "en": "It seems we could not find an answer to your question, you can try clearing the history and asking the question again.",

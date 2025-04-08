@@ -283,37 +283,6 @@ export const AssistantBubble = ({
               </TextComponentsBox>
             </MainContentWrapper>
 
-            {toolsInfo && toolsInfo.length > 0 && (
-              <ToolsUsedBox>
-                <Paper
-                  sx={{ backgroundColor: "white", padding: 1 }}
-                  elevation={3}
-                >
-                  <Typography variant="caption" gutterBottom>
-                    {t("toolsUsed.short")} ({toolsInfo.length}):
-                  </Typography>
-                  <Divider sx={{ margin: 1 }} />
-                  <Stack direction="row" spacing={1}>
-                    {toolsInfo.map((tool, index) => (
-                      <Tooltip title={t(tool.function_name)} key={index} arrow>
-                        <Chip
-                          icon={
-                            <HandymanIcon
-                              style={{
-                                fontSize: 16,
-                                color: "#4b3e99",
-                              }}
-                            />
-                          }
-                          label={`${tool.function_name}()`}
-                        />
-                      </Tooltip>
-                    ))}
-                  </Stack>
-                </Paper>
-              </ToolsUsedBox>
-            )}
-
             {!isLoading &&
               processedContent.citedCitations &&
               processedContent.citedCitations.length > 0 && (
@@ -463,7 +432,6 @@ export const AssistantBubble = ({
 
             {!isLoading && (brData || brUpdates) && (
               <>
-                <Divider />
                 <Box
                   sx={{
                     width: "100%",
@@ -501,6 +469,35 @@ export const AssistantBubble = ({
                   )}
                 </Box>
               </>
+            )}
+            {toolsInfo && toolsInfo.length > 0 && (
+              <ToolsUsedBox>
+                <Paper
+                  sx={{ backgroundColor: "white", padding: 1 }}
+                  elevation={3}
+                >
+                  <Typography variant="caption" gutterBottom>
+                    {t("toolsUsed.short")}: {/*({toolsInfo.length}):*/}
+                  </Typography>
+                  <Stack direction="row" spacing={1}>
+                    {toolsInfo.map((tool, index) => (
+                      <Tooltip title={t(tool.function_name)} key={index} arrow>
+                        <Chip
+                          icon={
+                            <HandymanIcon
+                              style={{
+                                fontSize: 16,
+                                color: "#4b3e99",
+                              }}
+                            />
+                          }
+                          label={`${tool.function_name}()`}
+                        />
+                      </Tooltip>
+                    ))}
+                  </Stack>
+                </Paper>
+              </ToolsUsedBox>
             )}
           </ChatBubbleInner>
         </Box>
