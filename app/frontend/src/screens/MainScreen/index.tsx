@@ -67,7 +67,6 @@ const MainScreen = () => {
     number | null
   >(null);
   const [showDeleteChatDialog, setShowDeleteChatDialog] = useState(false);
-  const [warningDialogMessage, setWarningDialogMessage] = useState("");
   const [quotedText, setQuotedText] = useState<string>();
   const [apiAccessToken, setApiAccessToken] = useState<string>("");
   const [enabledTools, setEnabledTools] =
@@ -422,7 +421,10 @@ const MainScreen = () => {
         error.name === "QuotaExceededError"
       ) {
         console.error("LocalStorage is full:", error);
-        setWarningDialogMessage(t("storage.full"));
+        snackbars.show(
+          t("storage.full"),
+          "STORAGE_FULL_ERROR"
+        );
       }
       console.error("Failed to save to localStorage:", error);
     }
@@ -556,10 +558,13 @@ const MainScreen = () => {
 
   const handleNewChat = () => {
     const chatHistories = PersistenceUtils.getChatHistories();
-    if (chatHistories.length === 10) {
-      setWarningDialogMessage(t("chat.history.full"));
+    const newChatIndex = chatHistoriesDescriptions.length;
+    if (chatHistories.length === 10 || newChatIndex >= 10) {
+      snackbars.show(
+        t("chat.history.full"),
+        "CHAT_HISTORY_FULL_ERROR"
+      );
     } else {
-      const newChatIndex = chatHistories.length;
       setCurrentChatIndex(newChatIndex);
       setDefaultChatHistory()
       setChatHistoriesDescriptions([
@@ -873,15 +878,6 @@ const MainScreen = () => {
           onClose={handleCancelDeleteSavedChat}
           onDelete={deleteSavedChat}
         />
-
-        {warningDialogMessage && (
-          <Dialog
-            open={Boolean(warningDialogMessage)}
-            onClose={() => setWarningDialogMessage("")}
-          >
-            <DialogContent>{warningDialogMessage}</DialogContent>
-          </Dialog>
-        )}
       </NewLayout>
     </UserContext.Provider>
   );

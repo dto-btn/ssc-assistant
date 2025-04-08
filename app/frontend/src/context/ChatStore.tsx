@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { produce } from 'immer'
+import { DEFAULT_CHAT_MODEL } from '../constants/models';
 
 type ChatStore = {
     currentChatIndex: number,
@@ -11,7 +12,7 @@ type ChatStore = {
 };
 
 const buildDefaultModel = () => {
-    return "gpt-4o";
+    return DEFAULT_CHAT_MODEL
 }
 
 

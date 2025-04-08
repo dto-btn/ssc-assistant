@@ -1,9 +1,30 @@
+import { DEFAULT_CHAT_MODEL } from "../constants/models";
+
+const cleanChatHistories = (histories: (ChatHistory | null)[]) => {
+    return histories.map((history, i) => {
+        if (!history) {
+            return {
+                chatItems: [],
+                description: "Conversation " + (i + 1),
+                uuid: "",
+                model: DEFAULT_CHAT_MODEL,
+                corporateFunction: "",
+                employeeProfile: null,
+                createdAt: new Date(),
+            }
+        } else {
+            return history;
+        }
+    })
+}
+
 export class PersistenceUtils {
-    static getChatHistories(): ChatHistory[] {
+    static getChatHistories(): (ChatHistory)[] {
         try {
-            return JSON.parse(
+            const histories = JSON.parse(
                 localStorage.getItem("chatHistories") || "[]"
-            ) as ChatHistory[];
+            ) as (ChatHistory | null)[];
+            return cleanChatHistories(histories);
         } catch (e) {
             console.error("Error parsing chat histories from localStorage. Returning empty array.", e);
             return [];
@@ -11,7 +32,7 @@ export class PersistenceUtils {
     }
 
     static setChatHistories(chatHistories: ChatHistory[]): void {
-        localStorage.setItem("chatHistories", JSON.stringify(chatHistories));
+        localStorage.setItem("chatHistories", JSON.stringify(cleanChatHistories(chatHistories)));
     }
 
     static getCurrentChatIndex(): number {
