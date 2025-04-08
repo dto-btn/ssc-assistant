@@ -43,7 +43,7 @@ export const transformToBusinessRequest = (data: any): BusinessRequest => {
     PM_OPI: data.PM_OPI,
     QA_OPI: data.QA_OPI,
     SDM_TL_OPI: data.SDM_TL_OPI,
-    SR_OWNER: data.SR_OWNER,
+    BR_OWNER: data.BR_OWNER,
     TEAMLEADER: data.TEAMLEADER,
     WIO_OPI: data.WIO_OPI,
     GCIT_CAT_EN: data.GCIT_CAT_EN,

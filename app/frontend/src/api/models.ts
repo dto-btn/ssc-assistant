@@ -151,7 +151,7 @@ interface BusinessRequest {
   PM_OPI: string;
   QA_OPI: string;
   SDM_TL_OPI: string;
-  SR_OWNER: string;
+  BR_OWNER: string;
   TEAMLEADER: string;
   WIO_OPI: string;
   GCIT_CAT_EN: string;

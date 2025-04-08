@@ -42,7 +42,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
       headerName: t("client.name"),
       width: 200,
     },
-    { field: "SR_OWNER", headerName: t("SR_OWNER"), width: 150 },
+    { field: "BR_OWNER", headerName: t("BR_OWNER"), width: 150 },
     {
       field: isEnglish ? "BITS_STATUS_EN" : "BITS_STATUS_FR",
       headerName: t("status"),

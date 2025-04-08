@@ -273,10 +273,10 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {data.SR_OWNER && (
+              {data.BR_OWNER && (
                 <TableRow>
-                  <TableCell>{t("SR_OWNER")}</TableCell>
-                  <TableCell>{data.SR_OWNER}</TableCell>
+                  <TableCell>{t("BR_OWNER")}</TableCell>
+                  <TableCell>{data.BR_OWNER}</TableCell>
                 </TableRow>
               )}
               {data.ACC_MANAGER_OPI && (

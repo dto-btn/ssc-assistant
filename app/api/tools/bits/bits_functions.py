@@ -59,7 +59,7 @@ valid_search_fields = {
     'PM_OPI': 'opis.PM_OPI',
     'QA_OPI': 'opis.QA_OPI',
     'SDM_TL_OPI': 'opis.SDM_TL_OPI',
-    'SR_OWNER': 'opis.SR_OWNER',
+    'BR_OWNER': 'opis.BR_OWNER',
     'TEAMLEADER': 'opis.TEAMLEADER',
     'WIO_OPI': 'opis.WIO_OPI',
     'GCIT_CAT_EN': 'br.GCIT_CAT_EN',
@@ -102,7 +102,7 @@ opis_mapping = {
         "en": "Service Line Coordinator",
         "fr": "Coordonnateur de la ligne de service"
     },
-    "SR_OWNER": {
+    "BR_OWNER": {
         "en": "BR OWNER",
         "fr": "Propriétaire"
     },
@@ -215,7 +215,7 @@ def search_br_by_fields(field_names: List[str], field_values: List[str], limit: 
             query_fields = [valid_search_fields[field] for field in fields]
             query = _get_br_query(limit=bool(limit), by_fields=query_fields)
             return db.execute_query(query, *(f"%{value}%" for value in field_values), limit)
-    return "Try using one of the following fields: " + ", ".join(list(valid_search_fields.keys()))
+    return {"error": "Try using one of the following fields: " + ", ".join(list(valid_search_fields.keys()))}
 
 @tool_metadata({
     "type": "function",
@@ -375,7 +375,7 @@ def _get_br_query(br_number_count: int = 0,
             QA_OPI,
             SDM_TL_OPI,
             SISDOPI,
-            SR_OWNER,
+            SR_OWNER as BR_OWNER,
             TEAMLEADER,
             WIO_OPI
         FROM
