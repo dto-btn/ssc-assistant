@@ -780,6 +780,7 @@ const MainScreen = () => {
             handleUpdateEnabledTools={handleUpdateEnabledTools}
             handleSelectedModelChanged={hanldeUpdateModelVersion}
             selectedModel={currentChatHistory.model}
+            logout={handleLogout}
           />
         )}
         appDrawerContents={(
@@ -787,7 +788,6 @@ const MainScreen = () => {
             chatDescriptions={chatHistoriesDescriptions}
             currentChatIndex={currentChatIndex}
             onClearChat={handleClearChat}
-            logout={handleLogout}
             handleDeleteSavedChat={handleDeleteSavedChat}
             handleLoadSavedChat={handleLoadSavedChat}
             renameChat={renameChat}
