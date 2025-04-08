@@ -1,7 +1,5 @@
 import {
   Box,
-  Dialog,
-  DialogContent,
   IconButton,
 } from "@mui/material";
 import {
