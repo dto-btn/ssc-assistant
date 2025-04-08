@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Link, Paper, TableContainer, useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import { DateDisplay, formatDate } from './subcomponents/DateDisplay';
+import { formatDate } from './subcomponents/DateDisplay';
 
 interface BusinessRequestTableProps {
   data: Array<BusinessRequest>;
