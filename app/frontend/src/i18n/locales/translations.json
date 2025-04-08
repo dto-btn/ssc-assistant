@@ -105,7 +105,7 @@
     },
     "toolsUsed.short": {
         "en": "The agent took the following action(s)",
-        "fr": "L'agent a pris la/les action(s) suivante(s)."
+        "fr": "L'agent a pris la/les action(s) suivante(s)"
     },
     "answer.not.found": {
         "en": "It seems we could not find an answer to your question, you can try clearing the history and asking the question again.",
