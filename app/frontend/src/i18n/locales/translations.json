@@ -104,8 +104,8 @@
         "fr": "Outils (fonctions) utilisés par l'assistant dans la réponse"
     },
     "toolsUsed.short": {
-        "en": "Tools (functions) used",
-        "fr": "Outils (fonctions) utilisés"
+        "en": "The agent took the following action(s)",
+        "fr": "L'agent a pris la/les action(s) suivante(s)."
     },
     "answer.not.found": {
         "en": "It seems we could not find an answer to your question, you can try clearing the history and asking the question again.",
@@ -635,80 +635,92 @@
         "en": "Client Sign-off Implementation Date",
         "fr": "Date de Mise en Œuvre de l'Approbation du Client"
     },
-    "QA_OPI": {  
-        "en": "QA OPI",  
-        "fr": "BPR QA"  
-    },  
-    "CSM_DIRECTOR": {  
-        "en": "Client Executive",  
-        "fr": "Client exécutif"  
-    },  
-    "PROD_OPI": {  
-        "en": "Service Lead",  
-        "fr": "BPR des services"  
-    },  
-    "ENG_OPI": {  
-        "en": "Implementation OPI",  
-        "fr": "BPR Implémentation"  
-    },  
-    "BA_OPI": {  
-        "en": "BA OPI",  
-        "fr": "BPR analyste"  
-    },  
-    "TEAMLEADER": {  
-        "en": "Teamleader",  
-        "fr": "Chef d`équipe"  
-    },  
-    "BA_PRICING_OPI": {  
-        "en": "BA Pricing OPI",  
-        "fr": "BPR AA du prix"  
-    },  
-    "BA_PRICING_TL": {  
-        "en": "Service Line Coordinator",  
-        "fr": "Coordonnateur de la ligne de service"  
-    },  
-    "SR_OWNER": {  
-        "en": "BR OWNER",  
-        "fr": "Propriétaire"  
-    },  
-    "WIO_OPI": {  
-        "en": "Finance OPI",  
-        "fr": "BPR du Finance"  
-    },  
-    "EAOPI": {  
-        "en": "EA OPI",  
-        "fr": "BPR AE"  
-    },  
-    "SOLN_OPI": {  
-        "en": "Conceptual Designer",  
-        "fr": "Créateur Conceptuel"  
-    },  
-    "AGR_OPI": {  
-        "en": "Agreement OPI",  
-        "fr": "BPR Entente"  
-    },  
-    "PM_OPI": {  
-        "en": "PM/Coordinator",  
-        "fr": "GP/Coordonnateur"  
-    },  
-    "SISDOPI": {  
-        "en": "SISD OPI",  
-        "fr": "BPR DSIS"  
-    },  
-    "BA_TL": {  
-        "en": "BA Team Lead",  
-        "fr": "Chef d`équipe analystes"  
-    },  
-    "ACC_MANAGER_OPI": {  
-        "en": "Account Manager",  
-        "fr": "Gestionnaire de compte"  
-    },  
-    "SDM_TL_OPI": {  
-        "en": "SDM Team Lead",  
-        "fr": "GPS Chef d'équipe"  
+    "QA_OPI": {
+        "en": "QA OPI",
+        "fr": "BPR QA"
     },
-    "LEAD_PRODUCT": {  
-        "en": "Lead Product",  
-        "fr": "Produit principal"  
+    "CSM_DIRECTOR": {
+        "en": "Client Executive",
+        "fr": "Client exécutif"
+    },
+    "PROD_OPI": {
+        "en": "Service Lead",
+        "fr": "BPR des services"
+    },
+    "ENG_OPI": {
+        "en": "Implementation OPI",
+        "fr": "BPR Implémentation"
+    },
+    "BA_OPI": {
+        "en": "BA OPI",
+        "fr": "BPR analyste"
+    },
+    "TEAMLEADER": {
+        "en": "Teamleader",
+        "fr": "Chef d`équipe"
+    },
+    "BA_PRICING_OPI": {
+        "en": "BA Pricing OPI",
+        "fr": "BPR AA du prix"
+    },
+    "BA_PRICING_TL": {
+        "en": "Service Line Coordinator",
+        "fr": "Coordonnateur de la ligne de service"
+    },
+    "BR_OWNER": {
+        "en": "BR OWNER",
+        "fr": "Propriétaire"
+    },
+    "WIO_OPI": {
+        "en": "Finance OPI",
+        "fr": "BPR du Finance"
+    },
+    "EAOPI": {
+        "en": "EA OPI",
+        "fr": "BPR AE"
+    },
+    "SOLN_OPI": {
+        "en": "Conceptual Designer",
+        "fr": "Créateur Conceptuel"
+    },
+    "AGR_OPI": {
+        "en": "Agreement OPI",
+        "fr": "BPR Entente"
+    },
+    "PM_OPI": {
+        "en": "PM/Coordinator",
+        "fr": "GP/Coordonnateur"
+    },
+    "SISDOPI": {
+        "en": "SISD OPI",
+        "fr": "BPR DSIS"
+    },
+    "BA_TL": {
+        "en": "BA Team Lead",
+        "fr": "Chef d`équipe analystes"
+    },
+    "ACC_MANAGER_OPI": {
+        "en": "Account Manager",
+        "fr": "Gestionnaire de compte"
+    },
+    "SDM_TL_OPI": {
+        "en": "SDM Team Lead",
+        "fr": "GPS Chef d'équipe"
+    },
+    "LEAD_PRODUCT": {
+        "en": "Lead Product",
+        "fr": "Produit principal"
+    },
+    "GCIT_PRIORITY": {
+        "en": "GCIT Decision Framework Priority",
+        "fr": "Priorité du cadre décisionnel GCTI"
+    },
+    "GCIT_CAT": {
+        "en": "GCIT Category Project or Activity",
+        "fr": "Projet ou activité de catégorie GCTI"
+    },
+    "TARGET_IMPL_DATE": {
+        "en": "Target Implementation Date",
+        "fr": "Date de mise en œuvre cible"
     }
 }

@@ -2,6 +2,7 @@ import React from "react";
 import { Box, Link, Paper, TableContainer, useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import { formatDate } from './subcomponents/DateDisplay';
 
 interface BusinessRequestTableProps {
   data: Array<BusinessRequest>;
@@ -41,7 +42,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
       headerName: t("client.name"),
       width: 200,
     },
-    { field: "SR_OWNER", headerName: t("SR_OWNER"), width: 150 },
+    { field: "BR_OWNER", headerName: t("BR_OWNER"), width: 150 },
     {
       field: isEnglish ? "BITS_STATUS_EN" : "BITS_STATUS_FR",
       headerName: t("status"),
@@ -57,11 +58,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
       headerName: t("submit.date"),
       width: 150,
       valueGetter: (value) =>
-        new Date(value).toLocaleString("en-CA", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-        }),
+        formatDate(value),
     },
   ];
 
