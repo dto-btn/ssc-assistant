@@ -34,6 +34,7 @@ import { LEFT_MENU_WIDTH } from "../../constants/frameDimensions";
 import MenuIcon from "@mui/icons-material/Menu";
 import NewLayout from "../../components/layouts/NewLayout";
 import { useChatStore } from "../../context/ChatStore";
+import { PersistenceUtils } from "../../util/persistence";
 
 const MainScreen = () => {
   const { t } = useTranslation();
@@ -50,12 +51,6 @@ const MainScreen = () => {
     graphData: null,
     profilePictureURL: "",
   });
-
-  const loadCurrentChatIndexIfAble = () => {
-    const index = localStorage.getItem("currentChatIndex");
-    if (index != null) return Number(index);
-    return 0;
-  };
 
   const location = useLocation();
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -86,7 +81,7 @@ const MainScreen = () => {
 
   const setCurrentChatIndex = (index: number) => {
     // Set the index in local storage
-    localStorage.setItem("currentChatIndex", index.toString());
+    PersistenceUtils.setCurrentChatIndex(index);
     // Update the state
     chatStoreSetCurrentChatIndex(index);
   };
@@ -343,16 +338,14 @@ const MainScreen = () => {
   };
 
   const loadChatHistoriesFromStorage = () => {
-    const chatHistories = localStorage.getItem("chatHistories");
-    if (chatHistories && chatHistories.length > 0) {
-      console.log("Loading chat histories from local storage");
-      const parsedChatHistories = JSON.parse(chatHistories) as ChatHistory[];
-      const currentIndex = loadCurrentChatIndexIfAble();
+    const parsedChatHistories = PersistenceUtils.getChatHistories();
+    if (parsedChatHistories.length > 0) {
+      let currentIndex = PersistenceUtils.getCurrentChatIndex();
       const loadedChatHistory = parsedChatHistories[currentIndex];
       if (!loadedChatHistory) {
         // if the chat history is empty, just set the current chat history to the default
-        setDefaultChatHistory()
-        return;
+        PersistenceUtils.setCurrentChatIndex(0);
+        currentIndex = 0;
       }
       chatStoreSetCurrentChatIndex(currentIndex); //just need to set the state here, no need to modify local storage.
       setCurrentChatHistory(loadedChatHistory);
@@ -429,11 +422,9 @@ const MainScreen = () => {
 
   const saveChatHistories = (updatedChatHistory: ChatHistory) => {
     try {
-      const chatHistories = JSON.parse(
-        localStorage.getItem("chatHistories") || "[]"
-      ) as ChatHistory[];
+      const chatHistories = PersistenceUtils.getChatHistories();
       chatHistories[currentChatIndex] = updatedChatHistory;
-      localStorage.setItem("chatHistories", JSON.stringify(chatHistories));
+      PersistenceUtils.setChatHistories(chatHistories);
     } catch (error) {
       if (
         error instanceof DOMException &&
@@ -524,9 +515,7 @@ const MainScreen = () => {
   const deleteSavedChat = () => {
     setShowDeleteChatDialog(false);
     if (chatIndexToLoadOrDelete !== null) {
-      const chatHistories = JSON.parse(
-        localStorage.getItem("chatHistories") || "[]"
-      ) as ChatHistory[];
+      const chatHistories = PersistenceUtils.getChatHistories();
       const updatedChatHistories = [
         ...chatHistories.slice(0, chatIndexToLoadOrDelete),
         ...chatHistories.slice(chatIndexToLoadOrDelete + 1),
@@ -556,10 +545,7 @@ const MainScreen = () => {
       }
 
       setChatIndexToLoadOrDelete(null);
-      localStorage.setItem(
-        "chatHistories",
-        JSON.stringify(updatedChatHistories)
-      );
+      PersistenceUtils.setChatHistories(updatedChatHistories);
     }
   };
 
@@ -569,9 +555,7 @@ const MainScreen = () => {
   };
 
   const handleLoadSavedChat = (index: number) => {
-    const chatHistories = JSON.parse(
-      localStorage.getItem("chatHistories") || "[]"
-    ) as ChatHistory[];
+    const chatHistories = PersistenceUtils.getChatHistories();
     if (chatHistories) {
       const newChat = chatHistories[index];
       setCurrentChatHistory(newChat);
@@ -580,9 +564,7 @@ const MainScreen = () => {
   };
 
   const handleNewChat = () => {
-    const chatHistories = JSON.parse(
-      localStorage.getItem("chatHistories") || "[]"
-    ) as ChatHistory[];
+    const chatHistories = PersistenceUtils.getChatHistories();
     if (chatHistories.length === 10) {
       setWarningDialogMessage(t("chat.history.full"));
     } else {
@@ -597,16 +579,14 @@ const MainScreen = () => {
   };
 
   const renameChat = (newDescription: string, indexToUpdate: number) => {
-    const chatHistories = JSON.parse(
-      localStorage.getItem("chatHistories") || "[]"
-    ) as ChatHistory[];
+    const chatHistories = PersistenceUtils.getChatHistories();
     const updatedChatHistories = [...chatHistories];
     const updatedChatHistory: ChatHistory = {
       ...chatHistories[indexToUpdate],
       description: newDescription,
     };
     updatedChatHistories[indexToUpdate] = updatedChatHistory;
-    localStorage.setItem("chatHistories", JSON.stringify(updatedChatHistories));
+    PersistenceUtils.setChatHistories(updatedChatHistories);
     if (currentChatIndex === indexToUpdate) {
       setCurrentChatHistory(updatedChatHistory);
     }
