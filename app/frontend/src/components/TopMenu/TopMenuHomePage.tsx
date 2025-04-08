@@ -18,6 +18,7 @@ interface TopMenuHomePageProps {
   ) => void;
   selectedModel: string;
   handleSelectedModelChanged: (modelName: string) => void;
+  logout: () => void;
 }
 
 
@@ -28,7 +29,8 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({
   selectedCorporateFunction,
   handleUpdateEnabledTools,
   selectedModel,
-  handleSelectedModelChanged
+  handleSelectedModelChanged,
+  logout
 }) => {
   const { t } = useTranslation();
 
@@ -83,6 +85,7 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({
             handleUpdateEnabledTools={handleUpdateEnabledTools}
             selectedModel={selectedModel}
             handleSelectedModelChanged={handleSelectedModelChanged}
+            logout={logout}
           />
 
         </Box>

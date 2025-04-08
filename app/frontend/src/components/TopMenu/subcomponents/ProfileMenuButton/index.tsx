@@ -12,6 +12,8 @@ import PsychologyIcon from "@mui/icons-material/Psychology";
 import { allowedToolsSet, allowedCorporateFunctionsSet } from "../../../../allowedTools";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useIsAuthenticated } from '@azure/msal-react';
+import LogoutIcon from "@mui/icons-material/Logout";
 
 interface ProfilePictureOnClickMenuProps {
     size?: string;
@@ -26,6 +28,7 @@ interface ProfilePictureOnClickMenuProps {
     ) => void;
     selectedModel: string;
     handleSelectedModelChanged: (modelName: string) => void;
+    logout: () => void;
 }
 
 
@@ -37,8 +40,10 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
     selectedCorporateFunction,
     handleUpdateEnabledTools,
     selectedModel,
-    handleSelectedModelChanged
+    handleSelectedModelChanged,
+    logout
 }) => {
+    const isAuthenticated = useIsAuthenticated();
     const { t } = useTranslation();
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const [toolsMenuOpen, setToolsMenuOpen] = React.useState(false);
@@ -242,6 +247,16 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                         />
                     </RadioGroup>
                 </Collapse>
+                {isAuthenticated && (
+                    <ListItem key="logout" disablePadding>
+                        <ListItemButton onClick={logout}>
+                            <ListItemIcon>
+                                <LogoutIcon />
+                            </ListItemIcon>
+                            <ListItemText primary={t("logout")} />
+                        </ListItemButton>
+                    </ListItem>
+                )}
             </Menu>
         </Box>
     );

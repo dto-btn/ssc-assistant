@@ -16,8 +16,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import LogoutIcon from "@mui/icons-material/Logout";
-import { useIsAuthenticated } from "@azure/msal-react";
 import { useEffect, useRef, useState } from "react";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
@@ -29,7 +27,6 @@ interface DrawerMenuProps {
   chatDescriptions: string[];
   currentChatIndex: number;
   onClearChat: () => void;
-  logout: () => void;
   handleDeleteSavedChat: (index: number) => void;
   handleLoadSavedChat: (index: number) => void;
   renameChat: (newChatDescription: string, index: number) => void;
@@ -39,7 +36,6 @@ interface DrawerMenuProps {
 export const DrawerMenu = ({
   chatDescriptions,
   onClearChat,
-  logout,
   handleDeleteSavedChat,
   handleLoadSavedChat,
   renameChat,
@@ -56,7 +52,7 @@ export const DrawerMenu = ({
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [textFieldIsFocused, setTextFieldIsFocused] = useState(false);
 
-  const isAuthenticated = useIsAuthenticated();
+
   const moreMenuOpen = Boolean(moreMenuAnchor);
   const { t } = useTranslation();
   const textFieldRef = useRef<HTMLDivElement>(null);
@@ -303,18 +299,6 @@ export const DrawerMenu = ({
             );
           })}
         </Collapse>
-      </List>
-      <List sx={{ marginTop: "auto" }}>
-        {isAuthenticated && (
-          <ListItem key="logout" disablePadding>
-            <ListItemButton onClick={logout}>
-              <ListItemIcon>
-                <LogoutIcon />
-              </ListItemIcon>
-              <ListItemText primary={t("logout")} />
-            </ListItemButton>
-          </ListItem>
-        )}
       </List>
     </Box>
   );

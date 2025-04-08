@@ -29,11 +29,12 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
   return (
     <Box
       sx={{
-        overflowY: "hidden",
         padding: "0.5rem",
-        paddingTop: "6rem",
         paddingBottom: 0,
         alignItems: "flex-end",
+        overflowY: '',
+        maxWidth: "lg",
+        margin: 'auto'
       }}
       aria-live="polite"
       aria-relevant="additions"

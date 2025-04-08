@@ -24,5 +24,5 @@ export const MainContentSection = styled('main', { shouldForwardProp: (prop) => 
                 marginLeft: 0,
             },
         },
-    ],
+    ]
 }));
