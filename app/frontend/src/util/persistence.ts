@@ -22,4 +22,29 @@ export class PersistenceUtils {
     static setCurrentChatIndex(index: number): void {
         localStorage.setItem("currentChatIndex", index.toString());
     }
+
+    static setEnabledTools(enabledTools: Record<string, boolean>): void {
+        localStorage.setItem("enabledTools", JSON.stringify(enabledTools));
+    }
+
+    static getEnabledTools(): Record<string, boolean> {
+        try {
+            return JSON.parse(localStorage.getItem("enabledTools") || "{}");
+        } catch (e) {
+            console.error("Error parsing enabled tools from localStorage. Returning empty object.", e);
+            return {};
+        }
+    }
+
+    static getSelectedCorporateFunction(): string | null {
+        return localStorage.getItem("selectedCorporateFunction");
+    }
+
+    static setSelectedCorporateFunction(functionName: string) {
+        localStorage.setItem("selectedCorporateFunction", functionName);
+    }
+
+    static clearSelectedCorporateFunction() {
+        localStorage.setItem("selectedCorporateFunction", "none");
+    }
 }

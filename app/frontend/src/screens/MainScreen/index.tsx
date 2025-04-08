@@ -387,22 +387,13 @@ const MainScreen = () => {
   useEffect(() => {
     loadChatHistoriesFromStorage();
     // TODO: load settings
-    const enabledTools = localStorage.getItem("enabledTools");
-    if (enabledTools) {
-      const parsedEnabledTools = JSON.parse(enabledTools) as Record<
-        string,
-        boolean
-      >;
-      if (
-        Object.keys(defaultEnabledTools).length ==
-        Object.keys(parsedEnabledTools).length
-      ) {
-        setEnabledTools(parsedEnabledTools);
-      }
+    const enabledTools = PersistenceUtils.getEnabledTools();
+    if (Object.keys(defaultEnabledTools).length == Object.keys(enabledTools).length) {
+      setEnabledTools(enabledTools);
+    } else {
+      setEnabledTools(defaultEnabledTools);
     }
-    const selectedCorporateFunction = localStorage.getItem(
-      "selectedCorporateFunction"
-    );
+    const selectedCorporateFunction = PersistenceUtils.getSelectedCorporateFunction();
     if (selectedCorporateFunction)
       setSelectedCorporateFunction(selectedCorporateFunction);
   }, []);
@@ -455,7 +446,7 @@ const MainScreen = () => {
       // disable the function being used
       // (should have no incidence on backend but this is to make it clear to the user)
       setSelectedCorporateFunction("none");
-      localStorage.setItem("selectedCorporateFunction", "none");
+      PersistenceUtils.clearSelectedCorporateFunction();
     } else if (name !== "archibus" && checked) {
       // If any tool other than 'archibus' is enabled, set 'archibus' to off
       updatedTools = {
@@ -471,7 +462,7 @@ const MainScreen = () => {
       };
     }
     setEnabledTools(updatedTools);
-    localStorage.setItem("enabledTools", JSON.stringify(updatedTools));
+    PersistenceUtils.setEnabledTools(updatedTools);
   };
 
   const handleSetSelectedCorporateFunction = (
@@ -480,7 +471,7 @@ const MainScreen = () => {
     //https://mui.com/material-ui/react-radio-button/
     let functionName = (event.target as HTMLInputElement).value;
     setSelectedCorporateFunction(functionName);
-    localStorage.setItem("selectedCorporateFunction", functionName);
+    PersistenceUtils.setSelectedCorporateFunction(functionName);
     // disable Archibus if it's checked and on...
     setEnabledTools((enabledTools) => {
       if (functionName == "none") {
@@ -491,7 +482,7 @@ const MainScreen = () => {
       if (enabledTools.hasOwnProperty("archibus")) {
         enabledTools["archibus"] = false;
       }
-      localStorage.setItem("enabledTools", JSON.stringify(enabledTools));
+      PersistenceUtils.setEnabledTools(enabledTools);
       return enabledTools;
     });
   };
