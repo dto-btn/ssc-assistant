@@ -93,6 +93,9 @@ const useAppStore = create<AppContext>((set, get) => ({
             }));
         }
     },
+    chat: {
+        currentChatIndex: 0
+    },
     languageService: new LanguageService()
 }));
 

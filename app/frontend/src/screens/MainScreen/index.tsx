@@ -70,7 +70,6 @@ const MainScreen = () => {
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [isGoodResponse, setIsGoodResponse] = useState(false);
-  const [currentChatIndex, _setCurrentChatIndex] = useState<number>(0);
   const [currentChatHistory, setCurrentChatHistory] =
     useState<ChatHistory>(defaultChatHistory);
   const [chatHistoriesDescriptions, setChatHistoriesDescriptions] = useState<
@@ -95,8 +94,10 @@ const MainScreen = () => {
     // Set the index in local storage
     localStorage.setItem("currentChatIndex", index.toString());
     // Update the state
-    _setCurrentChatIndex(index);
+    appStore.chat.currentChatIndex = index;
   };
+
+  const { currentChatIndex } = appStore.chat;
 
   const convertChatHistoryToMessages = (chatHistory: ChatItem[]): Message[] => {
     const startIndex = Math.max(chatHistory.length - maxMessagesSent, 0);
@@ -361,7 +362,7 @@ const MainScreen = () => {
         setCurrentChatHistory(defaultChatHistory);
         return;
       }
-      _setCurrentChatIndex(currentIndex); //just need to set the state here, no need to modify local storage.
+      appStore.chat.currentChatIndex = currentIndex; //just need to set the state here, no need to modify local storage.
       setCurrentChatHistory(loadedChatHistory);
       setChatHistoriesDescriptions(
         parsedChatHistories.map(

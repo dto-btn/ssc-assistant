@@ -17,5 +17,8 @@ export type AppContext = {
         isOpen: boolean;
         toggle: () => void;
     },
+    chat: {
+        currentChatIndex: number
+    },
     languageService: LanguageService
 };
