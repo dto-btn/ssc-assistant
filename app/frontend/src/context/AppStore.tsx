@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { produce } from 'immer'
-import { AppContext } from './AppStore.types';
 import { theme } from '../theme';
-import { LanguageService } from '../services/LanguageService';
+
+import { LanguageService } from "../services/LanguageService";
 
 // This is the time-to-live for a snackbar in milliseconds. After this time, the snackbar will
 // automatically hide itself.
@@ -12,7 +12,27 @@ const SNACKBAR_TTL_MS = 6000;
 // This is only used if a debounceKey is passed to the show function.
 const SNACKBAR_DEBOUNCE_MS = 100;
 
-const useAppStore = create<AppContext>((set, get) => ({
+type SnackbarDatum = {
+    id: number;
+    message: string;
+    isOpen: boolean;
+};
+
+type AppContext = {
+    snackbars: {
+        data: SnackbarDatum[];
+        debounceKeys: string[];
+        show: (message: string, debounceKey: string) => void;
+        _hide: (id: number) => void;
+    };
+    appDrawer: {
+        isOpen: boolean;
+        toggle: () => void;
+    },
+    languageService: LanguageService
+};
+
+export const useAppStore = create<AppContext>((set, get) => ({
     snackbars: {
         data: [],
         debounceKeys: [],
@@ -93,10 +113,6 @@ const useAppStore = create<AppContext>((set, get) => ({
             }));
         }
     },
-    chat: {
-        currentChatIndex: 0
-    },
     languageService: new LanguageService()
 }));
 
-export { useAppStore };

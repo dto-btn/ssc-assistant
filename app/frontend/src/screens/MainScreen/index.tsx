@@ -33,23 +33,18 @@ import Typography from "@mui/material/Typography";
 import { LEFT_MENU_WIDTH } from "../../constants/frameDimensions";
 import MenuIcon from "@mui/icons-material/Menu";
 import NewLayout from "../../components/layouts/NewLayout";
+import { useChatStore } from "../../context/ChatStore";
 
 const MainScreen = () => {
   const { t } = useTranslation();
-  const appStore = useAppStore();
+  const { currentChatIndex, currentChatHistory, setCurrentChatHistory, setDefaultChatHistory, getDefaultModel, setCurrentChatIndex: chatStoreSetCurrentChatIndex } = useChatStore();
+  const snackbars = useAppStore((state) => state.snackbars);
+  const appDrawer = useAppStore((state) => state.appDrawer);
   const defaultEnabledTools: { [key: string]: boolean } = {};
   allowedToolsSet.forEach((tool) => {
     if (tool == "archibus") defaultEnabledTools[tool] = false;
     else defaultEnabledTools[tool] = true;
   });
-
-  const defaultModel = "gpt-4o";
-  const defaultChatHistory = {
-    chatItems: [],
-    description: "",
-    uuid: "",
-    model: defaultModel,
-  };
 
   const [userData, setUserData] = useState({
     graphData: null,
@@ -70,8 +65,6 @@ const MainScreen = () => {
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [isGoodResponse, setIsGoodResponse] = useState(false);
-  const [currentChatHistory, setCurrentChatHistory] =
-    useState<ChatHistory>(defaultChatHistory);
   const [chatHistoriesDescriptions, setChatHistoriesDescriptions] = useState<
     string[]
   >(["Conversation 1"]);
@@ -90,14 +83,13 @@ const MainScreen = () => {
   const { instance, inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
 
+
   const setCurrentChatIndex = (index: number) => {
     // Set the index in local storage
     localStorage.setItem("currentChatIndex", index.toString());
     // Update the state
-    appStore.chat.currentChatIndex = index;
+    chatStoreSetCurrentChatIndex(index);
   };
-
-  const { currentChatIndex } = appStore.chat;
 
   const convertChatHistoryToMessages = (chatHistory: ChatItem[]): Message[] => {
     const startIndex = Math.max(chatHistory.length - maxMessagesSent, 0);
@@ -359,10 +351,10 @@ const MainScreen = () => {
       const loadedChatHistory = parsedChatHistories[currentIndex];
       if (!loadedChatHistory) {
         // if the chat history is empty, just set the current chat history to the default
-        setCurrentChatHistory(defaultChatHistory);
+        setDefaultChatHistory()
         return;
       }
-      appStore.chat.currentChatIndex = currentIndex; //just need to set the state here, no need to modify local storage.
+      chatStoreSetCurrentChatIndex(currentIndex); //just need to set the state here, no need to modify local storage.
       setCurrentChatHistory(loadedChatHistory);
       setChatHistoriesDescriptions(
         parsedChatHistories.map(
@@ -372,7 +364,7 @@ const MainScreen = () => {
       );
     } else {
       // If there are no chat histories, set the current chat to the default
-      setCurrentChatHistory(defaultChatHistory);
+      setDefaultChatHistory()
     }
   };
 
@@ -542,7 +534,7 @@ const MainScreen = () => {
 
       if (updatedChatHistories.length === 0) {
         // current chat was only chat and at index 0, so just reset state
-        setCurrentChatHistory(defaultChatHistory);
+        setDefaultChatHistory()
       } else if (currentChatIndex === chatIndexToLoadOrDelete) {
         // deleting current chat, so set to whatever is at index 0
         setCurrentChatHistory(updatedChatHistories[0]);
@@ -596,7 +588,7 @@ const MainScreen = () => {
     } else {
       const newChatIndex = chatHistories.length;
       setCurrentChatIndex(newChatIndex);
-      setCurrentChatHistory(defaultChatHistory);
+      setDefaultChatHistory()
       setChatHistoriesDescriptions([
         ...chatHistoriesDescriptions,
         "Conversation " + (chatHistoriesDescriptions.length + 1),
@@ -723,7 +715,7 @@ const MainScreen = () => {
           ],
           description: parsedSuggestionContext.context.original_query,
           uuid: uuidv4(),
-          model: defaultModel,
+          model: getDefaultModel(),
         };
         setCurrentChatHistory(newChatHistory);
         setChatHistoriesDescriptions([
@@ -737,7 +729,7 @@ const MainScreen = () => {
            * This debounce key is used to prevent multiple snackbars from showing in quick succession.
            */
           const suggestContextErrorDebounceKey = "SUGGEST_CONTEXT_ERROR";
-          appStore.snackbars.show(msg, suggestContextErrorDebounceKey);
+          snackbars.show(msg, suggestContextErrorDebounceKey);
           console.error("ERROR: parsedSuggestionContext", msg);
         };
         switch (parsedSuggestionContext.errorReason) {
@@ -770,7 +762,7 @@ const MainScreen = () => {
               <>
                 < IconButton sx={{
                   color: 'white',
-                }} onClick={() => appStore.appDrawer.toggle()}>
+                }} onClick={() => appDrawer.toggle()}>
                   <MenuIcon />
                 </IconButton>
               </>
@@ -852,7 +844,7 @@ const MainScreen = () => {
               margin: "auto",
               position: "fixed",
               top: 0,
-              left: appStore.appDrawer.isOpen ? LEFT_MENU_WIDTH : 0,
+                left: appDrawer.isOpen ? LEFT_MENU_WIDTH : 0,
               right: 0,
               bottom: 0,
               paddingTop: "3rem",
