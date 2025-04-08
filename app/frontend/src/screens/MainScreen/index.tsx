@@ -796,128 +796,128 @@ const MainScreen = () => {
         )}
       >
 
-      {currentChatHistory.chatItems.length === 0 ? (
-        // if 0 chat history
-        <Box
+        {currentChatHistory.chatItems.length === 0 ? (
+          // if 0 chat history
+          <Box
             sx={{
-            display: "flex",
+              display: "flex",
               flexFlow: "column",
-            margin: "auto",
-            justifyContent: "center",
-            alignItems: "center",
+              margin: "auto",
+              justifyContent: "center",
+              alignItems: "center",
               minHeight: "80vh",
               paddingTop: "3rem",
-          }}
-          maxWidth="lg"
-        >
-          <Box
-            sx={{
-              minWidth: "700px",
-              zIndex: 1100,
-              bgcolor: "background.default",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "2rem",
             }}
+            maxWidth="lg"
           >
-            <Typography
-              variant="h1"
-              component="h1"
-              gutterBottom
-              sx={{ fontSize: "3.5rem" }}
+            <Box
+              sx={{
+                minWidth: "700px",
+                zIndex: 1100,
+                bgcolor: "background.default",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "2rem",
+              }}
             >
+              <Typography
+                variant="h1"
+                component="h1"
+                gutterBottom
+                sx={{ fontSize: "3.5rem" }}
+              >
                 {t("how.can.i.help")}
-            </Typography>
-            <ChatInput
-              clearOnSend
-              placeholder={t("placeholder")}
-              disabled={isLoading}
-              onSend={(question, attachments) =>
-                makeApiRequest(question, userData, attachments)
-              }
-              quotedText={quotedText}
-              selectedModel={currentChatHistory.model}
-            />
+              </Typography>
+              <ChatInput
+                clearOnSend
+                placeholder={t("placeholder")}
+                disabled={isLoading}
+                onSend={(question, attachments) =>
+                  makeApiRequest(question, userData, attachments)
+                }
+                quotedText={quotedText}
+                selectedModel={currentChatHistory.model}
+              />
+            </Box>
           </Box>
-        </Box>
-      ) : (
-        // If 1 chat history
-        <Box
-          sx={{
-            display: "flex",
-            flexFlow: "column",
-            minHeight: "100vh",
-            margin: "auto",
-            position: "fixed",
-            top: 0,
-                left: appStore.appDrawer.isOpen ? LEFT_MENU_WIDTH : 0,
-            right: 0,
-            bottom: 0,
-                paddingTop: "3rem",
-                overflow: 'auto'
-          }}
-              // maxWidth="lg"
-        >
-          <Box sx={{ flexGrow: 1 }}></Box>
-          <ChatMessagesContainer
-            chatHistory={currentChatHistory}
-            isLoading={isLoading}
-            chatMessageStreamEnd={chatMessageStreamEnd}
-            replayChat={replayChat}
-            setIsFeedbackVisible={setIsFeedbackVisible}
-            setIsGoodResponse={setIsGoodResponse}
-            handleRemoveToastMessage={handleRemoveToastMessage}
-            handleBookReservation={handleBookReservation}
-          />
-          <div ref={chatMessageStreamEnd} style={{ height: "50px" }} />
+        ) : (
+          // If 1 chat history
           <Box
             sx={{
-              position: "sticky",
-              bottom: 0,
-              left: 0,
+              display: "flex",
+              flexFlow: "column",
+              minHeight: "100vh",
+              margin: "auto",
+              position: "fixed",
+              top: 0,
+              left: appStore.appDrawer.isOpen ? LEFT_MENU_WIDTH : 0,
               right: 0,
-              zIndex: 1100,
-              bgcolor: "background.default",
+              bottom: 0,
+              paddingTop: "3rem",
+              overflow: 'auto'
             }}
+          // maxWidth="lg"
           >
-            <ChatInput
-              clearOnSend
-              placeholder={t("placeholder")}
-              disabled={isLoading}
-              onSend={(question, attachments) =>
-                makeApiRequest(question, userData, attachments)
-              }
-              quotedText={quotedText}
-              selectedModel={currentChatHistory.model}
+            <Box sx={{ flexGrow: 1 }}></Box>
+            <ChatMessagesContainer
+              chatHistory={currentChatHistory}
+              isLoading={isLoading}
+              chatMessageStreamEnd={chatMessageStreamEnd}
+              replayChat={replayChat}
+              setIsFeedbackVisible={setIsFeedbackVisible}
+              setIsGoodResponse={setIsGoodResponse}
+              handleRemoveToastMessage={handleRemoveToastMessage}
+              handleBookReservation={handleBookReservation}
             />
+            <div ref={chatMessageStreamEnd} style={{ height: "50px" }} />
+            <Box
+              sx={{
+                position: "sticky",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                zIndex: 1100,
+                bgcolor: "background.default",
+              }}
+            >
+              <ChatInput
+                clearOnSend
+                placeholder={t("placeholder")}
+                disabled={isLoading}
+                onSend={(question, attachments) =>
+                  makeApiRequest(question, userData, attachments)
+                }
+                quotedText={quotedText}
+                selectedModel={currentChatHistory.model}
+              />
+            </Box>
           </Box>
-        </Box>
-      )}
-      <Disclaimer />
+        )}
+        <Disclaimer />
 
-      <FeedbackForm
-        feedback={feedback}
-        setFeedback={setFeedback}
-        open={isFeedbackVisible}
-        handleClose={() => setIsFeedbackVisible(false)}
-        handleFeedbackSubmit={handleFeedbackSubmit}
-      />
+        <FeedbackForm
+          feedback={feedback}
+          setFeedback={setFeedback}
+          open={isFeedbackVisible}
+          handleClose={() => setIsFeedbackVisible(false)}
+          handleFeedbackSubmit={handleFeedbackSubmit}
+        />
 
-      <DeleteConversationConfirmation
-        open={showDeleteChatDialog}
-        onClose={handleCancelDeleteSavedChat}
-        onDelete={deleteSavedChat}
-      />
+        <DeleteConversationConfirmation
+          open={showDeleteChatDialog}
+          onClose={handleCancelDeleteSavedChat}
+          onDelete={deleteSavedChat}
+        />
 
-      {warningDialogMessage && (
-        <Dialog
-          open={Boolean(warningDialogMessage)}
-          onClose={() => setWarningDialogMessage("")}
-        >
-          <DialogContent>{warningDialogMessage}</DialogContent>
-        </Dialog>
-      )}
+        {warningDialogMessage && (
+          <Dialog
+            open={Boolean(warningDialogMessage)}
+            onClose={() => setWarningDialogMessage("")}
+          >
+            <DialogContent>{warningDialogMessage}</DialogContent>
+          </Dialog>
+        )}
       </NewLayout>
     </UserContext.Provider>
   );

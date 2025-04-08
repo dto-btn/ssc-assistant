@@ -18,6 +18,7 @@ import {
 import { useTranslation } from "react-i18next";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import IconButton, { IconButtonProps } from "@mui/material/IconButton";
+import { DateDisplay } from './subcomponents/DateDisplay';
 
 interface BusinessRequestProps {
   data: BusinessRequest;
@@ -126,50 +127,75 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
         )}
         <Typography variant="body2" color="textPrimary">
           <strong>{t("submit.date")}: </strong>
-          {new Date(data.SUBMIT_DATE).toLocaleDateString()}
+          <DateDisplay
+            dateString={data.SUBMIT_DATE}
+          />
         </Typography>
         <Typography variant="body2" color="textPrimary">
           <strong>{t("REQST_IMPL_DATE")}: </strong>
-          {new Date(data.REQST_IMPL_DATE).toLocaleDateString()}
+          <DateDisplay
+            dateString={data.REQST_IMPL_DATE}
+          />
         </Typography>
         {data.RVSD_TARGET_IMPL_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("RVSD_TARGET_IMPL_DATE")}: </strong>
-            {new Date(data.RVSD_TARGET_IMPL_DATE).toLocaleDateString()}
+            <DateDisplay
+              dateString={data.RVSD_TARGET_IMPL_DATE}
+            />
           </Typography>
         )}
         {data.ACTUAL_IMPL_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("ACTUAL_IMPL_DATE")}: </strong>
-            {new Date(data.ACTUAL_IMPL_DATE).toLocaleDateString()}
+            <DateDisplay
+              dateString={data.ACTUAL_IMPL_DATE}
+            />
           </Typography>
         )}
 
         {data.CLIENT_REQST_SOL_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("CLIENT_REQST_SOL_DATE")}: </strong>
-            {new Date(data.CLIENT_REQST_SOL_DATE).toLocaleDateString()}
+            <DateDisplay
+              dateString={data.CLIENT_REQST_SOL_DATE}
+            />
           </Typography>
         )}
 
         {data.AGRMT_END_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("AGRMT_END_DATE")}: </strong>
-            {new Date(data.AGRMT_END_DATE).toLocaleDateString()}
+            <DateDisplay
+              dateString={data.AGRMT_END_DATE}
+            />
           </Typography>
         )}
 
         {data.PRPO_TARGET_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("PRPO_TARGET_DATE")}: </strong>
-            {new Date(data.PRPO_TARGET_DATE).toLocaleDateString()}
+            <DateDisplay
+              dateString={data.PRPO_TARGET_DATE}
+            />
           </Typography>
         )}
 
         {data.IMPL_SGNOFF_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("IMPL_SGNOFF_DATE")}: </strong>
-            {new Date(data.IMPL_SGNOFF_DATE).toLocaleDateString()}
+            <DateDisplay
+              dateString={data.IMPL_SGNOFF_DATE}
+            />
+          </Typography>
+        )}
+
+        {data.TARGET_IMPL_DATE && (
+          <Typography variant="body2" color="textPrimary">
+            <strong>{t("TARGET_IMPL_DATE")}: </strong>
+            <DateDisplay
+              dateString={data.TARGET_IMPL_DATE}
+            />
           </Typography>
         )}
 
@@ -177,7 +203,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
           <Typography variant="body2" color="textPrimary">
             <strong>{t("associated.business.requests")}: </strong>
             {typeof data.ASSOC_BRS === "string" &&
-              data.ASSOC_BRS.includes(",") ? (
+            data.ASSOC_BRS.includes(",") ? (
               data.ASSOC_BRS.split(",").map((br, index) => (
                 <React.Fragment key={index}>
                   <Link
@@ -199,6 +225,20 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                 {data.ASSOC_BRS}
               </Link>
             )}
+          </Typography>
+        )}
+
+        {(isEnglish ? data.GCIT_PRIORITY_EN : data.GCIT_PRIORITY_FR) && (
+          <Typography variant="body2" color="textPrimary">
+            <strong>{t("GCIT_PRIORITY")}: </strong>
+            {isEnglish ? data.GCIT_PRIORITY_EN : data.GCIT_PRIORITY_FR}
+          </Typography>
+        )}
+
+        {(isEnglish ? data.GCIT_CAT_EN : data.GCIT_CAT_FR) && (
+          <Typography variant="body2" color="textPrimary">
+            <strong>{t("GCIT_CAT")}: </strong>
+            {isEnglish ? data.GCIT_CAT_EN : data.GCIT_CAT_FR}
           </Typography>
         )}
 
@@ -233,10 +273,10 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {data.SR_OWNER && (
+              {data.BR_OWNER && (
                 <TableRow>
-                  <TableCell>{t("SR_OWNER")}</TableCell>
-                  <TableCell>{data.SR_OWNER}</TableCell>
+                  <TableCell>{t("BR_OWNER")}</TableCell>
+                  <TableCell>{data.BR_OWNER}</TableCell>
                 </TableRow>
               )}
               {data.ACC_MANAGER_OPI && (
@@ -303,12 +343,6 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                 <TableRow>
                   <TableCell>{t("SDM_TL_OPI")}</TableCell>
                   <TableCell>{data.SDM_TL_OPI}</TableCell>
-                </TableRow>
-              )}
-              {data.SR_OWNER && (
-                <TableRow>
-                  <TableCell>{t("SR_OWNER")}</TableCell>
-                  <TableCell>{data.SR_OWNER}</TableCell>
                 </TableRow>
               )}
               {data.TEAMLEADER && (

@@ -59,12 +59,17 @@ valid_search_fields = {
     'PM_OPI': 'opis.PM_OPI',
     'QA_OPI': 'opis.QA_OPI',
     'SDM_TL_OPI': 'opis.SDM_TL_OPI',
-    'SR_OWNER': 'opis.SR_OWNER',
+    'BR_OWNER': 'opis.BR_OWNER',
     'TEAMLEADER': 'opis.TEAMLEADER',
-    'WIO_OPI': 'opis.WIO_OPI'
+    'WIO_OPI': 'opis.WIO_OPI',
+    'GCIT_CAT_EN': 'br.GCIT_CAT_EN',
+    'GCIT_CAT_FR': 'br.GCIT_CAT_FR',
+    'GCIT_PRIORITY_EN': 'br.GCIT_PRIORITY_EN',
+    'GCIT_PRIORITY_FR': 'br.GCIT_PRIORITY_FR',
+    'TARGET_IMPL_DATE': 'br.TARGET_IMPL_DATE',
 }
 
-opis_mapping =  {
+opis_mapping = {
     "QA_OPI": {
         "en": "QA OPI",
         "fr": "BPR QA"
@@ -97,7 +102,7 @@ opis_mapping =  {
         "en": "Service Line Coordinator",
         "fr": "Coordonnateur de la ligne de service"
     },
-    "SR_OWNER": {
+    "BR_OWNER": {
         "en": "BR OWNER",
         "fr": "Propriétaire"
     },
@@ -206,12 +211,11 @@ def search_br_by_fields(field_names: List[str], field_values: List[str], limit: 
     """
     if field_names:
         fields = extract_fields_from_query(field_names, list(valid_search_fields.keys()))
-        print(fields)
         if fields:
             query_fields = [valid_search_fields[field] for field in fields]
             query = _get_br_query(limit=bool(limit), by_fields=query_fields)
             return db.execute_query(query, *(f"%{value}%" for value in field_values), limit)
-    return "Try using one of the following fields: " + ", ".join(list(valid_search_fields.keys()))
+    return {"error": "Try using one of the following fields: " + ", ".join(list(valid_search_fields.keys()))}
 
 @tool_metadata({
     "type": "function",
@@ -307,6 +311,29 @@ def get_br_by_status(status: str, assigned_to: str = "", limit: int = 100):
     query = _get_br_query(status=True, limit=bool(limit))
     return db.execute_query(query, status, limit)
 
+@tool_metadata({
+    "type": "function",
+    "function": {
+        "name": "get_organization_names",
+        "description": "Use this function to list all organization and get a proper value for the RPT_GC_ORG_NAME_EN or RPT_GC_ORG_NAME_FR fields which are also refered to as clients. This can be invoked when a user is searching for BRs by a client name but is using the acronym. Example: Search for BRs with clients PC. You would resolve it to Parks Canada and search for RPT_GC_ORG_NAME_EN = Parks Canada.",
+        "parameters": {
+            "type": "object",
+            "properties": {},
+            "required": []
+      }
+    }
+  })
+def get_organization_names():
+    """
+    This will retreive organization so AI can look them up.
+    """
+    query = """
+    SELECT GC_ORG_NAME_EN, GC_ORG_NAME_FR, ORG_SHORT_NAME, ORG_ACRN_EN, ORG_ACRN_FR, ORG_ACRN_BIL, ORG_WEBSITE 
+    FROM EDR_CARZ.DIM_GC_ORGANIZATION
+    """
+
+    return db.execute_query(query, result_key="org_names")
+
 def _get_br_query(br_number_count: int = 0,
                     status: bool = False,
                     limit: bool = False,
@@ -371,7 +398,7 @@ def _get_br_query(br_number_count: int = 0,
             QA_OPI,
             SDM_TL_OPI,
             SISDOPI,
-            SR_OWNER,
+            SR_OWNER as BR_OWNER,
             TEAMLEADER,
             WIO_OPI
         FROM
