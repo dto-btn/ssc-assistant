@@ -211,7 +211,6 @@ def search_br_by_fields(field_names: List[str], field_values: List[str], limit: 
     """
     if field_names:
         fields = extract_fields_from_query(field_names, list(valid_search_fields.keys()))
-        print(fields)
         if fields:
             query_fields = [valid_search_fields[field] for field in fields]
             query = _get_br_query(limit=bool(limit), by_fields=query_fields)

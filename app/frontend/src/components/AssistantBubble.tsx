@@ -27,10 +27,10 @@ import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { visuallyHidden } from "@mui/utils";
 import Draggable from "react-draggable";
 import FitScreenIcon from "@mui/icons-material/FitScreen";
-import BusinessRequestCard from "./BusinessRequestCard";
-import BusinessRequestUpdates from "./BusinessRequestUpdates";
+import BusinessRequestCard from "./BusinessRequests/BusinessRequestCard";
+import BusinessRequestUpdates from "./BusinessRequests/BusinessRequestUpdates";
 import { transformToBusinessRequest } from "../util/bits_utils";
-import BusinessRequestTable from "./BusinessRequestTable";
+import BusinessRequestTable from "./BusinessRequests/BusinessRequestTable";
 
 interface AssistantBubbleProps {
   text: string;

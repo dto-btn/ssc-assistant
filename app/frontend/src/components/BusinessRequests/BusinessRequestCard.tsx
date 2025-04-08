@@ -18,6 +18,7 @@ import {
 import { useTranslation } from "react-i18next";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import IconButton, { IconButtonProps } from "@mui/material/IconButton";
+import { DateDisplay } from './subcomponents/DateDisplay';
 
 interface BusinessRequestProps {
   data: BusinessRequest;
@@ -126,93 +127,75 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
         )}
         <Typography variant="body2" color="textPrimary">
           <strong>{t("submit.date")}: </strong>
-          {new Date(data.SUBMIT_DATE).toLocaleString("en-CA", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-          })}
+          <DateDisplay
+            dateString={data.SUBMIT_DATE}
+          />
         </Typography>
         <Typography variant="body2" color="textPrimary">
           <strong>{t("REQST_IMPL_DATE")}: </strong>
-          {new Date(data.REQST_IMPL_DATE).toLocaleString("en-CA", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-          })}
+          <DateDisplay
+            dateString={data.REQST_IMPL_DATE}
+          />
         </Typography>
         {data.RVSD_TARGET_IMPL_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("RVSD_TARGET_IMPL_DATE")}: </strong>
-            {new Date(data.RVSD_TARGET_IMPL_DATE).toLocaleString("en-CA", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-            })}
+            <DateDisplay
+              dateString={data.RVSD_TARGET_IMPL_DATE}
+            />
           </Typography>
         )}
         {data.ACTUAL_IMPL_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("ACTUAL_IMPL_DATE")}: </strong>
-            {new Date(data.ACTUAL_IMPL_DATE).toLocaleString("en-CA", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-            })}
+            <DateDisplay
+              dateString={data.ACTUAL_IMPL_DATE}
+            />
           </Typography>
         )}
 
         {data.CLIENT_REQST_SOL_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("CLIENT_REQST_SOL_DATE")}: </strong>
-            {new Date(data.CLIENT_REQST_SOL_DATE).toLocaleString("en-CA", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-            })}
+            <DateDisplay
+              dateString={data.CLIENT_REQST_SOL_DATE}
+            />
           </Typography>
         )}
 
         {data.AGRMT_END_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("AGRMT_END_DATE")}: </strong>
-            {new Date(data.AGRMT_END_DATE).toLocaleString("en-CA", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-            })}
+            <DateDisplay
+              dateString={data.AGRMT_END_DATE}
+            />
           </Typography>
         )}
 
         {data.PRPO_TARGET_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("PRPO_TARGET_DATE")}: </strong>
-            {new Date(data.PRPO_TARGET_DATE).toLocaleString("en-CA", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-            })}
+            <DateDisplay
+              dateString={data.PRPO_TARGET_DATE}
+            />
           </Typography>
         )}
 
         {data.IMPL_SGNOFF_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("IMPL_SGNOFF_DATE")}: </strong>
-            {new Date(data.IMPL_SGNOFF_DATE).toLocaleString("en-CA", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-            })}
+            <DateDisplay
+              dateString={data.IMPL_SGNOFF_DATE}
+            />
           </Typography>
         )}
 
         {data.TARGET_IMPL_DATE && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("TARGET_IMPL_DATE")}: </strong>
-            {new Date(data.TARGET_IMPL_DATE).toLocaleString("en-CA", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-            })}
+            <DateDisplay
+              dateString={data.TARGET_IMPL_DATE}
+            />
           </Typography>
         )}
 
