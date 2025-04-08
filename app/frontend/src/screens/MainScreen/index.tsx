@@ -806,6 +806,7 @@ const MainScreen = () => {
             justifyContent: "center",
             alignItems: "center",
               minHeight: "80vh",
+              paddingTop: "3rem",
           }}
           maxWidth="lg"
         >
@@ -853,8 +854,10 @@ const MainScreen = () => {
                 left: appStore.appDrawer.isOpen ? LEFT_MENU_WIDTH : 0,
             right: 0,
             bottom: 0,
+                paddingTop: "3rem",
+                overflow: 'auto'
           }}
-          maxWidth="lg"
+              // maxWidth="lg"
         >
           <Box sx={{ flexGrow: 1 }}></Box>
           <ChatMessagesContainer
