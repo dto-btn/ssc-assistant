@@ -85,20 +85,16 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
       <CardContent>
         <Typography variant="body2" color="textPrimary">
           <strong>{t("LEAD_PRODUCT")}: </strong>
-          {data.LEAD_PRODUCT}
+          {isEnglish ? data.LEAD_PRODUCT_EN : data.LEAD_PRODUCT_FR}
         </Typography>
-        {(isEnglish ? data.BR_TYPE_EN : data.BR_TYPE_FR) && (
-          <Typography variant="body2">
-            <strong>{t("br.type")}: </strong>
-            {isEnglish ? data.BR_TYPE_EN : data.BR_TYPE_FR}
-          </Typography>
-        )}
-        {(isEnglish ? data.BITS_STATUS_EN : data.BITS_STATUS_FR) && (
-          <Typography variant="body2">
-            <strong>{t("status")}: </strong>
-            {isEnglish ? data.BITS_STATUS_EN : data.BITS_STATUS_FR}
-          </Typography>
-        )}
+        <Typography variant="body2">
+          <strong>{t("br.type")}: </strong>
+          {isEnglish ? data.BR_TYPE_EN : data.BR_TYPE_FR}
+        </Typography>
+        <Typography variant="body2">
+          <strong>{t("status")}: </strong>
+          {isEnglish ? data.BITS_STATUS_EN : data.BITS_STATUS_FR}
+        </Typography>
         <Typography variant="body2" color="textPrimary">
           <strong>{t("priority")}: </strong>
           {isEnglish ? data.PRIORITY_EN : data.PRIORITY_FR}
@@ -107,24 +103,18 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
           <strong>{t("client.name")}: </strong>
           {isEnglish ? data.RPT_GC_ORG_NAME_EN : data.RPT_GC_ORG_NAME_FR}
         </Typography>
-        {(isEnglish ? data.CLIENT_SUBGRP_EN : data.CLIENT_SUBGRP_FR) && (
-          <Typography variant="body2" color="textPrimary">
-            <strong>{t("client.subgroup")}: </strong>
-            {isEnglish ? data.CLIENT_SUBGRP_EN : data.CLIENT_SUBGRP_FR}
-          </Typography>
-        )}
-        {(isEnglish ? data.CPLX_EN : data.CPLX_FR) && (
-          <Typography variant="body2" color="textPrimary">
-            <strong>{t("complexity")}: </strong>
-            {isEnglish ? data.CPLX_EN : data.CPLX_FR}
-          </Typography>
-        )}
-        {(isEnglish ? data.SCOPE_EN : data.SCOPE_FR) && (
-          <Typography variant="body2" color="textPrimary">
-            <strong>{t("scope")}: </strong>
-            {isEnglish ? data.SCOPE_EN : data.SCOPE_FR}
-          </Typography>
-        )}
+        <Typography variant="body2" color="textPrimary">
+          <strong>{t("client.subgroup")}: </strong>
+          {isEnglish ? data.CLIENT_SUBGRP_EN : data.CLIENT_SUBGRP_FR}
+        </Typography>
+        <Typography variant="body2" color="textPrimary">
+          <strong>{t("complexity")}: </strong>
+          {isEnglish ? data.CPLX_EN : data.CPLX_FR}
+        </Typography>
+        <Typography variant="body2" color="textPrimary">
+          <strong>{t("scope")}: </strong>
+          {isEnglish ? data.SCOPE_EN : data.SCOPE_FR}
+        </Typography>
         <Typography variant="body2" color="textPrimary">
           <strong>{t("submit.date")}: </strong>
           <DateDisplay
@@ -137,68 +127,48 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
             dateString={data.REQST_IMPL_DATE}
           />
         </Typography>
-        {data.RVSD_TARGET_IMPL_DATE && (
-          <Typography variant="body2" color="textPrimary">
-            <strong>{t("RVSD_TARGET_IMPL_DATE")}: </strong>
-            <DateDisplay
-              dateString={data.RVSD_TARGET_IMPL_DATE}
-            />
-          </Typography>
-        )}
-        {data.ACTUAL_IMPL_DATE && (
-          <Typography variant="body2" color="textPrimary">
-            <strong>{t("ACTUAL_IMPL_DATE")}: </strong>
-            <DateDisplay
-              dateString={data.ACTUAL_IMPL_DATE}
-            />
-          </Typography>
-        )}
-
-        {data.CLIENT_REQST_SOL_DATE && (
-          <Typography variant="body2" color="textPrimary">
-            <strong>{t("CLIENT_REQST_SOL_DATE")}: </strong>
-            <DateDisplay
-              dateString={data.CLIENT_REQST_SOL_DATE}
-            />
-          </Typography>
-        )}
-
-        {data.AGRMT_END_DATE && (
-          <Typography variant="body2" color="textPrimary">
-            <strong>{t("AGRMT_END_DATE")}: </strong>
-            <DateDisplay
-              dateString={data.AGRMT_END_DATE}
-            />
-          </Typography>
-        )}
-
-        {data.PRPO_TARGET_DATE && (
-          <Typography variant="body2" color="textPrimary">
-            <strong>{t("PRPO_TARGET_DATE")}: </strong>
-            <DateDisplay
-              dateString={data.PRPO_TARGET_DATE}
-            />
-          </Typography>
-        )}
-
-        {data.IMPL_SGNOFF_DATE && (
-          <Typography variant="body2" color="textPrimary">
-            <strong>{t("IMPL_SGNOFF_DATE")}: </strong>
-            <DateDisplay
-              dateString={data.IMPL_SGNOFF_DATE}
-            />
-          </Typography>
-        )}
-
-        {data.TARGET_IMPL_DATE && (
-          <Typography variant="body2" color="textPrimary">
-            <strong>{t("TARGET_IMPL_DATE")}: </strong>
-            <DateDisplay
-              dateString={data.TARGET_IMPL_DATE}
-            />
-          </Typography>
-        )}
-
+        <Typography variant="body2" color="textPrimary">
+          <strong>{t("RVSD_TARGET_IMPL_DATE")}: </strong>
+          <DateDisplay
+            dateString={data.RVSD_TARGET_IMPL_DATE}
+          />
+        </Typography>
+        <Typography variant="body2" color="textPrimary">
+          <strong>{t("ACTUAL_IMPL_DATE")}: </strong>
+          <DateDisplay
+            dateString={data.ACTUAL_IMPL_DATE}
+          />
+        </Typography>
+        <Typography variant="body2" color="textPrimary">
+          <strong>{t("CLIENT_REQST_SOL_DATE")}: </strong>
+          <DateDisplay
+            dateString={data.CLIENT_REQST_SOL_DATE}
+          />
+        </Typography>
+        <Typography variant="body2" color="textPrimary">
+          <strong>{t("AGRMT_END_DATE")}: </strong>
+          <DateDisplay
+            dateString={data.AGRMT_END_DATE}
+          />
+        </Typography>
+        <Typography variant="body2" color="textPrimary">
+          <strong>{t("PRPO_TARGET_DATE")}: </strong>
+          <DateDisplay
+            dateString={data.PRPO_TARGET_DATE}
+          />
+        </Typography>
+        <Typography variant="body2" color="textPrimary">
+          <strong>{t("IMPL_SGNOFF_DATE")}: </strong>
+          <DateDisplay
+            dateString={data.IMPL_SGNOFF_DATE}
+          />
+        </Typography>
+        <Typography variant="body2" color="textPrimary">
+          <strong>{t("TARGET_IMPL_DATE")}: </strong>
+          <DateDisplay
+            dateString={data.TARGET_IMPL_DATE}
+          />
+        </Typography>
         {data.ASSOC_BRS && (
           <Typography variant="body2" color="textPrimary">
             <strong>{t("associated.business.requests")}: </strong>
@@ -227,20 +197,14 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
             )}
           </Typography>
         )}
-
-        {(isEnglish ? data.GCIT_PRIORITY_EN : data.GCIT_PRIORITY_FR) && (
-          <Typography variant="body2" color="textPrimary">
-            <strong>{t("GCIT_PRIORITY")}: </strong>
-            {isEnglish ? data.GCIT_PRIORITY_EN : data.GCIT_PRIORITY_FR}
-          </Typography>
-        )}
-
-        {(isEnglish ? data.GCIT_CAT_EN : data.GCIT_CAT_FR) && (
-          <Typography variant="body2" color="textPrimary">
-            <strong>{t("GCIT_CAT")}: </strong>
-            {isEnglish ? data.GCIT_CAT_EN : data.GCIT_CAT_FR}
-          </Typography>
-        )}
+        <Typography variant="body2" color="textPrimary">
+          <strong>{t("GCIT_PRIORITY")}: </strong>
+          {isEnglish ? data.GCIT_PRIORITY_EN : data.GCIT_PRIORITY_FR}
+        </Typography>
+        <Typography variant="body2" color="textPrimary">
+          <strong>{t("GCIT_CAT")}: </strong>
+          {isEnglish ? data.GCIT_CAT_EN : data.GCIT_CAT_FR}
+        </Typography>
 
         <CardActions disableSpacing>
           {/* <Button
@@ -273,90 +237,62 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {data.BR_OWNER && (
-                <TableRow>
-                  <TableCell>{t("BR_OWNER")}</TableCell>
-                  <TableCell>{data.BR_OWNER}</TableCell>
-                </TableRow>
-              )}
-              {data.ACC_MANAGER_OPI && (
-                <TableRow>
-                  <TableCell>{t("ACC_MANAGER_OPI")}</TableCell>
-                  <TableCell>{data.ACC_MANAGER_OPI}</TableCell>
-                </TableRow>
-              )}
-              {data.AGR_OPI && (
-                <TableRow>
-                  <TableCell>{t("AGR_OPI")}</TableCell>
-                  <TableCell>{data.AGR_OPI}</TableCell>
-                </TableRow>
-              )}
-              {data.BA_OPI && (
-                <TableRow>
-                  <TableCell>{t("BA_OPI")}</TableCell>
-                  <TableCell>{data.BA_OPI}</TableCell>
-                </TableRow>
-              )}
-              {data.BA_PRICING_OPI && (
-                <TableRow>
-                  <TableCell>{t("BA_PRICING_OPI")}</TableCell>
-                  <TableCell>{data.BA_PRICING_OPI}</TableCell>
-                </TableRow>
-              )}
-              {data.BA_PRICING_TL && (
-                <TableRow>
-                  <TableCell>{t("BA_PRICING_TL")}</TableCell>
-                  <TableCell>{data.BA_PRICING_TL}</TableCell>
-                </TableRow>
-              )}
-              {data.BA_TL && (
-                <TableRow>
-                  <TableCell>{t("BA_TL")}</TableCell>
-                  <TableCell>{data.BA_TL}</TableCell>
-                </TableRow>
-              )}
-              {data.CSM_DIRECTOR && (
-                <TableRow>
-                  <TableCell>{t("CSM_DIRECTOR")}</TableCell>
-                  <TableCell>{data.CSM_DIRECTOR}</TableCell>
-                </TableRow>
-              )}
-              {data.EAOPI && (
-                <TableRow>
-                  <TableCell>{t("EAOPI")}</TableCell>
-                  <TableCell>{data.EAOPI}</TableCell>
-                </TableRow>
-              )}
-              {data.PM_OPI && (
-                <TableRow>
-                  <TableCell>{t("PM_OPI")}</TableCell>
-                  <TableCell>{data.PM_OPI}</TableCell>
-                </TableRow>
-              )}
-              {data.QA_OPI && (
-                <TableRow>
-                  <TableCell>{t("QA_OPI")}</TableCell>
-                  <TableCell>{data.QA_OPI}</TableCell>
-                </TableRow>
-              )}
-              {data.SDM_TL_OPI && (
-                <TableRow>
-                  <TableCell>{t("SDM_TL_OPI")}</TableCell>
-                  <TableCell>{data.SDM_TL_OPI}</TableCell>
-                </TableRow>
-              )}
-              {data.TEAMLEADER && (
-                <TableRow>
-                  <TableCell>{t("TEAMLEADER")}</TableCell>
-                  <TableCell>{data.TEAMLEADER}</TableCell>
-                </TableRow>
-              )}
-              {data.WIO_OPI && (
-                <TableRow>
-                  <TableCell>{t("WIO_OPI")}</TableCell>
-                  <TableCell>{data.WIO_OPI}</TableCell>
-                </TableRow>
-              )}
+              <TableRow>
+                <TableCell>{t("BR_OWNER")}</TableCell>
+                <TableCell>{data.BR_OWNER}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>{t("ACC_MANAGER_OPI")}</TableCell>
+                <TableCell>{data.ACC_MANAGER_OPI}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>{t("AGR_OPI")}</TableCell>
+                <TableCell>{data.AGR_OPI}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>{t("BA_OPI")}</TableCell>
+                <TableCell>{data.BA_OPI}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>{t("BA_PRICING_OPI")}</TableCell>
+                <TableCell>{data.BA_PRICING_OPI}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>{t("BA_PRICING_TL")}</TableCell>
+                <TableCell>{data.BA_PRICING_TL}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>{t("BA_TL")}</TableCell>
+                <TableCell>{data.BA_TL}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>{t("CSM_DIRECTOR")}</TableCell>
+                <TableCell>{data.CSM_DIRECTOR}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>{t("EAOPI")}</TableCell>
+                <TableCell>{data.EAOPI}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>{t("PM_OPI")}</TableCell>
+                <TableCell>{data.PM_OPI}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>{t("QA_OPI")}</TableCell>
+                <TableCell>{data.QA_OPI}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>{t("SDM_TL_OPI")}</TableCell>
+                <TableCell>{data.SDM_TL_OPI}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>{t("TEAMLEADER")}</TableCell>
+                <TableCell>{data.TEAMLEADER}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>{t("WIO_OPI")}</TableCell>
+                <TableCell>{data.WIO_OPI}</TableCell>
+              </TableRow>
             </TableBody>
           </Table>
         </CardContent>

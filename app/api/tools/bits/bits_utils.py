@@ -156,7 +156,8 @@ class BITSQueryBuilder:
     """Class to build BITS queries."""
 
     valid_search_fields = {
-        'LEAD_PRODUCT': 'products.PROD_ID',
+        'LEAD_PRODUCT_EN': 'products.PROD_DESC_EN',
+        'LEAD_PRODUCT_FR': 'products.PROD_DESC_FR',
         'BR_SHORT_TITLE': 'br.BR_SHORT_TITLE',
         'RPT_GC_ORG_NAME_EN': 'br.RPT_GC_ORG_NAME_EN',
         'RPT_GC_ORG_NAME_FR': 'br.RPT_GC_ORG_NAME_FR',
@@ -310,9 +311,10 @@ class BITSQueryBuilder:
 
         # PRODUCTS
         query += """
-        INNER JOIN
-            (SELECT BR_NMBR, PROD_ID FROM [EDR_CARZ].[FCT_DEMAND_BR_PRODUCTS] WHERE PROD_TYPE = 'LEAD') products
-        ON products.BR_NMBR = br.BR_NMBR
+        LEFT JOIN
+            (SELECT BR_NMBR, PROD_ID FROM [EDR_CARZ].[FCT_DEMAND_BR_PRODUCTS] WHERE PROD_TYPE = 'LEAD') br_products
+        ON br_products.BR_NMBR = br.BR_NMBR
+        LEFT JOIN [EDR_CARZ].[DIM_BITS_PRODUCT] products ON products.PROD_ID = br_products.PROD_ID
         """
 
         # WHERE CLAUSE PROCESSING (BR_NMBR and ACTIVE, etc)

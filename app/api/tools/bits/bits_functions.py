@@ -42,14 +42,14 @@ def get_br_information(br_numbers: list[int]):
     """
     gets br information
     """
-    query = query_builder.get_br_query(len(br_numbers))
+    query = query_builder.get_br_query(len(br_numbers), active=False) #BRs here do not need to be active to be returned
     return db.execute_query(query, *br_numbers)
 
 @tool_metadata({
     "type": "function",
     "function": {
         "name": "search_br_by_fields",
-        "description": "This function searches information about BRs given specific BR field(s) and value(s) pairs. YOU MUST ENSURE THAT YOU PASS THE FIELD NAMES AND THE VALUES IN THE SAME ORDER IN EACH RESPECTIVE LISTS.The fields available are: {fields}. If the user doesn't provide a `field_name` then let them know what the field names are. Otherwise use best guess.".replace("{fields}", ", ".join(list(query_builder.valid_search_fields.keys()))),
+        "description": "This function searches information about BRs given specific BR field(s) and value(s) pairs. YOU MUST ENSURE THAT YOU PASS THE FIELD NAMES AND THE VALUES IN THE SAME ORDER IN EACH RESPECTIVE LISTS.The fields available are obtainable via valid_search_fields() functions. If the user doesn't provide a `field_name` then let them know what the field names are.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -89,7 +89,9 @@ def search_br_by_fields(field_names: List[str], field_values: List[str], limit: 
             query_fields = [query_builder.valid_search_fields[field] for field in fields]
             query = query_builder.get_br_query(limit=bool(limit), by_fields=query_fields, active=True)
             return db.execute_query(query, *(f"%{value}%" for value in field_values), limit)
-    return {"error": "Try using one of the following fields: " + ", ".join(list(query_builder.valid_search_fields.keys()))}
+    return {
+        "error": "Try using one of the following fields: " + ", ".join(list(query_builder.valid_search_fields.keys()))
+        }
 
 @tool_metadata({
     "type": "function",
@@ -207,3 +209,21 @@ def how_to_search_brs():
     for key, value in functions.items():
         metadata[key] = value['metadata']
     return json.dumps(metadata)
+
+@tool_metadata({
+    "type": "function",
+    "function": {
+        "name": "valid_search_fields",
+        "description": "Use this function to list all the valid search fields. This can be used to get the field names that are available to search for BRs.",
+        "parameters": {
+            "type": "object",
+            "properties": {},
+            "required": []
+      }
+    }
+  })
+def valid_search_fields():
+    """
+    This function returns all the valid search fields
+    """
+    return json.dumps(query_builder.valid_search_fields.keys())
