@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Menu from '@mui/material/Menu';
-import { Box, Chip, Collapse, Divider, FormControlLabel, FormGroup, FormLabel, ListItem, ListItemButton, ListItemIcon, ListItemText, Radio, RadioGroup, Switch, Typography } from '@mui/material';
+import { Box, Chip, Collapse, Divider, FormControlLabel, FormGroup, FormLabel, ListItem, ListItemButton, ListItemIcon, ListItemText, Radio, RadioGroup, Switch } from '@mui/material';
 import { UserProfilePicture } from './ProfilePicture';
 import { useContext } from 'react';
 import { UserContext } from '../../../../stores/UserContext';

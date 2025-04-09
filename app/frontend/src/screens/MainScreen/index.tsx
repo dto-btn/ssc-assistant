@@ -15,7 +15,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { isACompletion, isAMessage, isAToastMessage } from "../../utils";
 import { isTokenExpired } from "../../util/token";
-import { completionMySSC, sendFeedback } from "../../api/api";
+import { completionMySSC } from "../../api/api";
 import { apiUse } from "../../authConfig";
 import { AccountInfo, InteractionStatus } from "@azure/msal-browser";
 import { v4 as uuidv4 } from "uuid";
@@ -55,9 +55,6 @@ const MainScreen = () => {
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
   // On app launch, keep the drawer open if the screen is larger than lg, else keep it closed.
-  const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
-  const [feedback, setFeedback] = useState("");
-  const [isGoodResponse, setIsGoodResponse] = useState(false);
   const [chatHistoriesDescriptions, setChatHistoriesDescriptions] = useState<
     string[]
   >(["Conversation 1"]);
@@ -244,36 +241,6 @@ const MainScreen = () => {
 
     sendApiRequest(request);
     setQuotedText(undefined);
-  };
-
-  const handleFeedbackSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setIsFeedbackVisible(false);
-    let toast: ToastMessage;
-
-    try {
-      await sendFeedback(feedback, isGoodResponse, currentChatHistory.uuid);
-      toast = {
-        toastMessage: t("feedback.success"),
-        isError: false,
-      };
-    } catch (error) {
-      toast = {
-        toastMessage: t("feedback.fail"),
-        isError: true,
-      };
-    }
-
-    setCurrentChatHistory((prevChatHistory) => {
-      const updatedChatHistory = {
-        ...prevChatHistory,
-        chatItems: [...prevChatHistory.chatItems, toast],
-      };
-
-      return updatedChatHistory;
-    });
-
-    setFeedback("");
   };
 
   const updateLastMessage = (message_chunk: string) => {
@@ -831,9 +798,7 @@ const MainScreen = () => {
               chatHistory={currentChatHistory}
               isLoading={isLoading}
               chatMessageStreamEnd={chatMessageStreamEnd}
-              replayChat={replayChat}
-              setIsFeedbackVisible={setIsFeedbackVisible}
-              setIsGoodResponse={setIsGoodResponse}
+                replayChat={replayChat}
               handleRemoveToastMessage={handleRemoveToastMessage}
               handleBookReservation={handleBookReservation}
             />
@@ -864,11 +829,7 @@ const MainScreen = () => {
         <Disclaimer />
 
         <FeedbackForm
-          feedback={feedback}
-          setFeedback={setFeedback}
-          open={isFeedbackVisible}
-          handleClose={() => setIsFeedbackVisible(false)}
-          handleFeedbackSubmit={handleFeedbackSubmit}
+
         />
 
         <DeleteConversationConfirmation

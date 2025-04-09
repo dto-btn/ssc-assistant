@@ -29,7 +29,12 @@ type AppContext = {
         isOpen: boolean;
         toggle: () => void;
     },
-    languageService: LanguageService
+    languageService: LanguageService,
+    feedbackForm: {
+        state: "open-positive" | "open-negative" | "closed";
+        open: (feedbackType: "positive" | "negative") => void;
+        close: () => void;
+    }
 };
 
 export const useAppStore = create<AppContext>((set, get) => ({
@@ -110,6 +115,19 @@ export const useAppStore = create<AppContext>((set, get) => ({
         toggle: () => {
             set((state) => produce(state, (draft) => {
                 draft.appDrawer.isOpen = !draft.appDrawer.isOpen;
+            }));
+        }
+    },
+    feedbackForm: {
+        state: "closed",
+        open: (feedbackType: "positive" | "negative") => {
+            set((state) => produce(state, (draft) => {
+                draft.feedbackForm.state = feedbackType === "positive" ? "open-positive" : "open-negative";
+            }));
+        },
+        close: () => {
+            set((state) => produce(state, (draft) => {
+                draft.feedbackForm.state = "closed";
             }));
         }
     },
