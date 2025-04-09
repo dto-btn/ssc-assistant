@@ -22,16 +22,16 @@ import { v4 as uuidv4 } from "uuid";
 import { bookReservation } from "../../api/api";
 import { allowedToolsSet } from "../../allowedTools";
 import { callMsGraph } from "../../graph";
-import { UserContext } from "../../context/UserContext";
+import { UserContext } from "../../stores/UserContext";
 import { DeleteConversationConfirmation } from "../../components/DeleteConversationConfirmation";
 import { useLocation } from "react-router";
 import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
-import { useAppStore } from "../../context/AppStore";
+import { useAppStore } from "../../stores/AppStore";
 import Typography from "@mui/material/Typography";
 import { LEFT_MENU_WIDTH } from "../../constants/frameDimensions";
 import MenuIcon from "@mui/icons-material/Menu";
 import NewLayout from "../../components/layouts/NewLayout";
-import { useChatStore } from "../../context/ChatStore";
+import { useChatStore } from "../../stores/ChatStore";
 import { PersistenceUtils } from "../../util/persistence";
 
 const MainScreen = () => {

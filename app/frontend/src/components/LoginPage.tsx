@@ -5,7 +5,7 @@ import Modal from '@mui/material/Modal';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
-import { useAppStore } from '../context/AppStore';
+import { useAppStore } from '../stores/AppStore';
 import { useTranslation } from 'react-i18next';
 
 const logoStyle = {

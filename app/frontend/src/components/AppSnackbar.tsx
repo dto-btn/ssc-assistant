@@ -1,5 +1,5 @@
 import { Alert, Snackbar } from "@mui/material";
-import { useAppStore } from "../context/AppStore";
+import { useAppStore } from "../stores/AppStore";
 import Slide, { SlideProps } from '@mui/material/Slide';
 
 function SlideTransition(props: SlideProps) {

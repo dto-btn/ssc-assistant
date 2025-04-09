@@ -1,6 +1,6 @@
 import Avatar from '@mui/material/Avatar';
 import { useContext } from 'react';
-import { UserContext } from '../../../../context/UserContext';
+import { UserContext } from '../../../../stores/UserContext';
 
 interface UserProfileProps {
   fullName: string;
