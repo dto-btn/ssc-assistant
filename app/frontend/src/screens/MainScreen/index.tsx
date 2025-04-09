@@ -28,7 +28,7 @@ import { useLocation } from "react-router";
 import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
 import { useAppStore } from "../../stores/AppStore";
 import Typography from "@mui/material/Typography";
-import { LEFT_MENU_WIDTH } from "../../constants/frameDimensions";
+import { SNACKBAR_DEBOUNCE_KEYS, LEFT_MENU_WIDTH } from "../../constants";
 import MenuIcon from "@mui/icons-material/Menu";
 import NewLayout from "../../components/layouts/NewLayout";
 import { useChatStore } from "../../stores/ChatStore";
@@ -388,7 +388,7 @@ const MainScreen = () => {
         console.error("LocalStorage is full:", error);
         snackbars.show(
           t("storage.full"),
-          "STORAGE_FULL_ERROR"
+          SNACKBAR_DEBOUNCE_KEYS.STORAGE_FULL_ERROR
         );
       }
       console.error("Failed to save to localStorage:", error);
@@ -527,7 +527,7 @@ const MainScreen = () => {
     if (chatHistories.length === 10 || newChatIndex >= 10) {
       snackbars.show(
         t("chat.history.full"),
-        "CHAT_HISTORY_FULL_ERROR"
+        SNACKBAR_DEBOUNCE_KEYS.CHAT_HISTORY_FULL_ERROR
       );
     } else {
       setCurrentChatIndex(newChatIndex);
@@ -665,12 +665,7 @@ const MainScreen = () => {
         ]);
       } else {
         const showError = (msg: string) => {
-          /**
-           * The suggest context error gets triggered multiple times upon rendering the page.
-           * This debounce key is used to prevent multiple snackbars from showing in quick succession.
-           */
-          const suggestContextErrorDebounceKey = "SUGGEST_CONTEXT_ERROR";
-          snackbars.show(msg, suggestContextErrorDebounceKey);
+          snackbars.show(msg, SNACKBAR_DEBOUNCE_KEYS.SUGGEST_CONTEXT_ERROR);
           console.error("ERROR: parsedSuggestionContext", msg);
         };
         switch (parsedSuggestionContext.errorReason) {

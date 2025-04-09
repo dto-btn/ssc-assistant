@@ -9,7 +9,7 @@ import { AppBar } from './components/AppBar';
 import { DrawerHeader } from './components/DrawerHeader';
 import { MainContentSection } from './components/MainContentSection';
 import { useAppStore } from '../../../stores/AppStore';
-import { LEFT_MENU_WIDTH } from '../../../constants/frameDimensions';
+import { LEFT_MENU_WIDTH } from "../../../constants";
 
 
 interface NewLayoutProps extends React.PropsWithChildren {

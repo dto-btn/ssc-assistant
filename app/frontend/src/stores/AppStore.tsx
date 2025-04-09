@@ -3,14 +3,7 @@ import { produce } from 'immer'
 import { theme } from '../theme';
 
 import { LanguageService } from "../services/LanguageService";
-
-// This is the time-to-live for a snackbar in milliseconds. After this time, the snackbar will
-// automatically hide itself.
-const SNACKBAR_TTL_MS = 6000;
-
-// This debounces the snackbar so that we don't show multiple snackbars in quick succession.
-// This is only used if a debounceKey is passed to the show function.
-const SNACKBAR_DEBOUNCE_MS = 100;
+import { SNACKBAR_DEBOUNCE_KEYS, SNACKBAR_DEBOUNCE_MS, SNACKBAR_TTL_MS } from '../constants';
 
 type SnackbarDatum = {
     id: number;
@@ -21,8 +14,8 @@ type SnackbarDatum = {
 type AppContext = {
     snackbars: {
         data: SnackbarDatum[];
-        debounceKeys: string[];
-        show: (message: string, debounceKey: string) => void;
+        debounceKeys: SNACKBAR_DEBOUNCE_KEYS[];
+        show: (message: string, debounceKey: SNACKBAR_DEBOUNCE_KEYS) => void;
         _hide: (id: number) => void;
     };
     appDrawer: {
@@ -46,7 +39,7 @@ export const useAppStore = create<AppContext>((set, get) => ({
          * The debounceKey is used to prevent multiple snackbars from showing in quick succession. It
          * is optional, and if it is not provided, the snackbar will not be debounced.
          */
-        show: (message: string, debounceKey?: string) => {
+        show: (message: string, debounceKey?: SNACKBAR_DEBOUNCE_KEYS) => {
             // If the debounce key is provided and is in the list of debounce keys, we don't show the snackbar.
             if (debounceKey && get().snackbars.debounceKeys.includes(debounceKey)) {
                 return;
