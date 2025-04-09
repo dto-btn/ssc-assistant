@@ -33,10 +33,12 @@ import MenuIcon from "@mui/icons-material/Menu";
 import NewLayout from "../../components/layouts/NewLayout";
 import { useChatStore } from "../../stores/ChatStore";
 import { PersistenceUtils } from "../../util/persistence";
+import { useChatService } from "../../hooks/useChatService";
 
 const MainScreen = () => {
   const { t } = useTranslation();
-  const { currentChatIndex, currentChatHistory, setCurrentChatHistory, setDefaultChatHistory, getDefaultModel, setCurrentChatIndex: chatStoreSetCurrentChatIndex } = useChatStore();
+  const { currentChatIndex, currentChatHistory, chatHistoriesDescriptions, setCurrentChatHistory, setDefaultChatHistory, getDefaultModel, setCurrentChatIndex: chatStoreSetCurrentChatIndex, setChatHistoriesDescriptions } = useChatStore();
+  const chatService = useChatService();
   const snackbars = useAppStore((state) => state.snackbars);
   const appDrawer = useAppStore((state) => state.appDrawer);
   const defaultEnabledTools: { [key: string]: boolean } = {};
@@ -54,10 +56,6 @@ const MainScreen = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
-  // On app launch, keep the drawer open if the screen is larger than lg, else keep it closed.
-  const [chatHistoriesDescriptions, setChatHistoriesDescriptions] = useState<
-    string[]
-  >(["Conversation 1"]);
   const [chatIndexToLoadOrDelete, setChatIndexToLoadOrDelete] = useState<
     number | null
   >(null);
@@ -473,37 +471,7 @@ const MainScreen = () => {
   const deleteSavedChat = () => {
     setShowDeleteChatDialog(false);
     if (chatIndexToLoadOrDelete !== null) {
-      const chatHistories = PersistenceUtils.getChatHistories();
-      const updatedChatHistories = [
-        ...chatHistories.slice(0, chatIndexToLoadOrDelete),
-        ...chatHistories.slice(chatIndexToLoadOrDelete + 1),
-      ];
-
-      if (updatedChatHistories.length === 0) {
-        // current chat was only chat and at index 0, so just reset state
-        setDefaultChatHistory()
-      } else if (currentChatIndex === chatIndexToLoadOrDelete) {
-        // deleting current chat, so set to whatever is at index 0
-        setCurrentChatHistory(updatedChatHistories[0]);
-        setCurrentChatIndex(0);
-      } else if (chatIndexToLoadOrDelete < currentChatIndex) {
-        // deleted chat is at a lower index, so re-index current chat
-        setCurrentChatIndex(currentChatIndex - 1);
-      }
-
-      if (updatedChatHistories.length === 0) {
-        setChatHistoriesDescriptions(["Conversation 1"]);
-      } else {
-        setChatHistoriesDescriptions(
-          updatedChatHistories.map(
-            (chatHistory, index) =>
-              chatHistory.description || "Conversation " + (index + 1)
-          )
-        );
-      }
-
-      setChatIndexToLoadOrDelete(null);
-      PersistenceUtils.setChatHistories(updatedChatHistories);
+      chatService.deleteSavedChat(chatIndexToLoadOrDelete);
     }
   };
 
