@@ -790,11 +790,7 @@ const MainScreen = () => {
           </Box>
         )}
         <Disclaimer />
-
-        <FeedbackForm
-
-        />
-
+        <FeedbackForm />
         <DeleteConversationConfirmation
           open={showDeleteChatDialog}
           onClose={handleCancelDeleteSavedChat}
