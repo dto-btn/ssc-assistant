@@ -130,6 +130,7 @@ export const DrawerMenu = ({
         display: "flex",
         flexDirection: "column",
         height: "100vh",
+        backgroundColor: "#ececf7"
       }}
     >
       <List>

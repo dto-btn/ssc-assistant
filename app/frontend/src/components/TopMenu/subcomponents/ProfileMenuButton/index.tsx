@@ -14,6 +14,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useIsAuthenticated } from '@azure/msal-react';
 import LogoutIcon from "@mui/icons-material/Logout";
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
 interface ProfilePictureOnClickMenuProps {
     size?: string;
@@ -86,17 +87,13 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                     display: "flex",
                     flexDirection: "row",
                     alignItems: "center",
-                    gap: "1rem"
+                    gap: "0.5rem"
                 }}
                 onClick={handleClick}
 
             >
-                <Typography
-                    variant="body1"
-                    sx={{ display: { xs: "none", lg: "block" } }}
-                >
-                    {graphData["givenName"]} {graphData["surname"]}
-                </Typography>
+
+                <MoreHorizIcon />
                 <UserProfilePicture
                     fullName={graphData["givenName"] + " " + graphData["surname"]}
                     size={size}
