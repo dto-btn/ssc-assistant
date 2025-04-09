@@ -21,3 +21,7 @@ export enum SNACKBAR_DEBOUNCE_KEYS {
     CHAT_HISTORY_FULL_ERROR,
     SUGGEST_CONTEXT_ERROR
 }
+
+// This is the maximum number of messages that can be sent in a single request.
+// It works by taking the last 10 messages from the chat history and sending them to the API.
+export const MAX_MESSAGES_SENT = 10;

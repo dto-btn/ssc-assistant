@@ -28,12 +28,13 @@ import { useLocation } from "react-router";
 import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
 import { useAppStore } from "../../stores/AppStore";
 import Typography from "@mui/material/Typography";
-import { SNACKBAR_DEBOUNCE_KEYS, LEFT_MENU_WIDTH } from "../../constants";
+import { SNACKBAR_DEBOUNCE_KEYS, LEFT_MENU_WIDTH, MAX_MESSAGES_SENT } from "../../constants";
 import MenuIcon from "@mui/icons-material/Menu";
 import NewLayout from "../../components/layouts/NewLayout";
 import { useChatStore } from "../../stores/ChatStore";
 import { PersistenceUtils } from "../../util/persistence";
 import { useChatService } from "../../hooks/useChatService";
+import { convertChatHistoryToMessages } from "./utils";
 
 const MainScreen = () => {
   const { t } = useTranslation();
@@ -54,7 +55,6 @@ const MainScreen = () => {
 
   const location = useLocation();
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [maxMessagesSent] = useState<number>(10);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
   const [chatIndexToLoadOrDelete, setChatIndexToLoadOrDelete] = useState<
     number | null
@@ -71,31 +71,6 @@ const MainScreen = () => {
   const isAuthenticated = useIsAuthenticated();
 
 
-  const setCurrentChatIndex = (index: number) => {
-    // Set the index in local storage
-    PersistenceUtils.setCurrentChatIndex(index);
-    // Update the state
-    chatStoreSetCurrentChatIndex(index);
-  };
-
-  const convertChatHistoryToMessages = (chatHistory: ChatItem[]): Message[] => {
-    const startIndex = Math.max(chatHistory.length - maxMessagesSent, 0);
-    return chatHistory
-      .slice(startIndex)
-      .map((chatItem) => {
-        if (isACompletion(chatItem)) {
-          return {
-            role: chatItem.message.role,
-            content: chatItem.message.content,
-          };
-        }
-        if (isAMessage(chatItem)) {
-          return chatItem;
-        }
-        return undefined;
-      })
-      .filter((message) => message !== undefined) as Message[];
-  };
 
   const sendApiRequest = async (request: MessageRequest) => {
     try {
@@ -114,7 +89,7 @@ const MainScreen = () => {
 
       const completionResponse = await completionMySSC({
         request: request,
-        updateLastMessage: updateLastMessage,
+        updateLastMessage: chatService.updateLastMessage,
         accessToken: token,
       });
 
@@ -149,7 +124,7 @@ const MainScreen = () => {
           chatItems: updatedChatItems.filter((item) => !isAToastMessage(item)),
         };
 
-        saveChatHistories(filteredChatHistory);
+        chatService.saveChatHistories(filteredChatHistory);
         return updatedChatHistory;
       });
     } catch (error) {
@@ -207,12 +182,12 @@ const MainScreen = () => {
     const messages = convertChatHistoryToMessages([
       ...currentChatHistory.chatItems,
       userMessage,
-    ]);
+    ], MAX_MESSAGES_SENT);
 
     // prepare request bundle
     const request: MessageRequest = {
       messages: messages,
-      max: maxMessagesSent,
+      max: MAX_MESSAGES_SENT,
       top: 5,
       tools: Object.keys(enabledTools).filter((key) => enabledTools[key]),
       uuid: currentChatHistory.uuid,
@@ -233,42 +208,12 @@ const MainScreen = () => {
           responsePlaceholder,
         ],
       };
-      saveChatHistories(updatedChatHistory);
+      chatService.saveChatHistories(updatedChatHistory);
       return updatedChatHistory;
     });
 
     sendApiRequest(request);
     setQuotedText(undefined);
-  };
-
-  const updateLastMessage = (message_chunk: string) => {
-    setCurrentChatHistory((prevChatHistory) => {
-      const updatedChatItems = prevChatHistory?.chatItems.map(
-        (item, itemIndex) => {
-          if (
-            itemIndex === prevChatHistory.chatItems.length - 1 &&
-            isACompletion(item)
-          ) {
-            return {
-              ...item,
-              message: {
-                ...item.message,
-                content: message_chunk,
-              },
-            };
-          }
-          return item;
-        }
-      );
-
-      const updatedChatHistory: ChatHistory = {
-        ...prevChatHistory,
-        chatItems: updatedChatItems,
-      };
-
-      saveChatHistories(updatedChatHistory);
-      return updatedChatHistory;
-    });
   };
 
   const replayChat = () => {
@@ -285,7 +230,7 @@ const MainScreen = () => {
         ),
       };
 
-      saveChatHistories(updatedChatHistory);
+      chatService.saveChatHistories(updatedChatHistory);
       return updatedChatHistory;
     });
 
@@ -329,7 +274,7 @@ const MainScreen = () => {
         ...prevChatHistory,
         chatItems: [],
       };
-      saveChatHistories(updatedChatHistory);
+      chatService.saveChatHistories(updatedChatHistory);
       return updatedChatHistory;
     });
   };
@@ -371,26 +316,6 @@ const MainScreen = () => {
 
       return updatedChatHistory;
     });
-  };
-
-  const saveChatHistories = (updatedChatHistory: ChatHistory) => {
-    try {
-      const chatHistories = PersistenceUtils.getChatHistories();
-      chatHistories[currentChatIndex] = updatedChatHistory;
-      PersistenceUtils.setChatHistories(chatHistories);
-    } catch (error) {
-      if (
-        error instanceof DOMException &&
-        error.name === "QuotaExceededError"
-      ) {
-        console.error("LocalStorage is full:", error);
-        snackbars.show(
-          t("storage.full"),
-          SNACKBAR_DEBOUNCE_KEYS.STORAGE_FULL_ERROR
-        );
-      }
-      console.error("Failed to save to localStorage:", error);
-    }
   };
 
   const handleUpdateEnabledTools = (
@@ -458,7 +383,7 @@ const MainScreen = () => {
         ...prevChatHistory,
         model: modelName,
       };
-      saveChatHistories(updatedChatHistory);
+      chatService.saveChatHistories(updatedChatHistory);
       return updatedChatHistory;
     });
   };
@@ -480,52 +405,7 @@ const MainScreen = () => {
     setChatIndexToLoadOrDelete(null);
   };
 
-  const handleLoadSavedChat = (index: number) => {
-    const chatHistories = PersistenceUtils.getChatHistories();
-    if (chatHistories) {
-      const newChat = chatHistories[index];
-      setCurrentChatHistory(newChat);
-      setCurrentChatIndex(index);
-    }
-  };
 
-  const handleNewChat = () => {
-    const chatHistories = PersistenceUtils.getChatHistories();
-    const newChatIndex = chatHistoriesDescriptions.length;
-    if (chatHistories.length === 10 || newChatIndex >= 10) {
-      snackbars.show(
-        t("chat.history.full"),
-        SNACKBAR_DEBOUNCE_KEYS.CHAT_HISTORY_FULL_ERROR
-      );
-    } else {
-      setCurrentChatIndex(newChatIndex);
-      setDefaultChatHistory()
-      setChatHistoriesDescriptions([
-        ...chatHistoriesDescriptions,
-        "Conversation " + (chatHistoriesDescriptions.length + 1),
-      ]);
-    }
-  };
-
-  const renameChat = (newDescription: string, indexToUpdate: number) => {
-    const chatHistories = PersistenceUtils.getChatHistories();
-    const updatedChatHistories = [...chatHistories];
-    const updatedChatHistory: ChatHistory = {
-      ...chatHistories[indexToUpdate],
-      description: newDescription,
-    };
-    updatedChatHistories[indexToUpdate] = updatedChatHistory;
-    PersistenceUtils.setChatHistories(updatedChatHistories);
-    if (currentChatIndex === indexToUpdate) {
-      setCurrentChatHistory(updatedChatHistory);
-    }
-    setChatHistoriesDescriptions(
-      updatedChatHistories.map(
-        (chatHistory, index) =>
-          chatHistory.description || "Conversation " + (index + 1)
-      )
-    );
-  };
 
   const handleBookReservation = async (bookingDetails: BookingConfirmation) => {
     let toast: ToastMessage;
@@ -547,7 +427,7 @@ const MainScreen = () => {
         ...prevChatHistory,
         chatItems: [...prevChatHistory.chatItems, toast],
       };
-      saveChatHistories(updatedChatHistory);
+      chatService.saveChatHistories(updatedChatHistory);
       return updatedChatHistory;
     });
   };
@@ -608,7 +488,7 @@ const MainScreen = () => {
 
         // now create a new conversation with the context
         const newChatIndex = chatHistoriesDescriptions.length;
-        setCurrentChatIndex(newChatIndex);
+        chatService.setCurrentChatIndex(newChatIndex);
         const newChatHistory: ChatHistory = {
           chatItems: [
             {
@@ -686,9 +566,9 @@ const MainScreen = () => {
             currentChatIndex={currentChatIndex}
             onClearChat={handleClearChat}
             handleDeleteSavedChat={handleDeleteSavedChat}
-            handleLoadSavedChat={handleLoadSavedChat}
-            renameChat={renameChat}
-            onNewChat={handleNewChat}
+            handleLoadSavedChat={chatService.handleLoadSavedChat}
+            renameChat={chatService.renameChat}
+            onNewChat={chatService.handleNewChat}
           />
         )}
       >
