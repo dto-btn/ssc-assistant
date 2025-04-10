@@ -42,8 +42,6 @@ interface AssistantBubbleProps {
   index: number;
   total: number;
   handleBookReservation: (bookingDetails: BookingConfirmation) => void;
-  setIsFeedbackVisible: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsGoodResponse: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 function DraggablePaperComponent(props: PaperProps) {

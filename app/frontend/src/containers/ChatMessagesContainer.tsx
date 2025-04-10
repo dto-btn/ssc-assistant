@@ -67,8 +67,6 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                 index={index}
                 total={chatHistory.chatItems.length}
                 handleBookReservation={handleBookReservation}
-                setIsFeedbackVisible={setIsFeedbackVisible}
-                setIsGoodResponse={setIsGoodResponse}
               />
             )}
             {isAMessage(chatItem) && (

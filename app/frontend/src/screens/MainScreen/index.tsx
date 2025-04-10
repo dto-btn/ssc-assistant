@@ -20,7 +20,6 @@ import { apiUse } from "../../authConfig";
 import { AccountInfo, InteractionStatus } from "@azure/msal-browser";
 import { v4 as uuidv4 } from "uuid";
 import { bookReservation } from "../../api/api";
-import { TutorialBubble } from "../../components/TutorialBubble";
 import { allowedToolsSet } from "../../allowedTools";
 import { callMsGraph } from "../../graph";
 import { UserContext } from "../../stores/UserContext";
