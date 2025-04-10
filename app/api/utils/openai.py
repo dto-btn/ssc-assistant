@@ -171,25 +171,25 @@ def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: Lis
                     profiles = extract_geds_profiles(content)
                     tools_info.payload = {"profiles": profiles}
 
-            if function_name == "get_available_rooms":
-                content = message.get("content", "")
-                if content is not None:
-                    try:
-                        data = json.loads(content)
-                    except json.JSONDecodeError:
-                        logger.warning(f"Content is not valid JSON: {content}")
-                        data = {}
-                    if data.get("floorPlan") is not None:
-                        floor_plan = data.get("floorPlan")
-                        logger.debug(f"FLOOR PLAN: {floor_plan}")
-                        tools_info.payload = {"floorPlan": floor_plan}
-
-            if function_name == "verify_booking_details":
-                content = message.get("content", "")
-                if content is not None:
-                    booking_details = json.loads(content)
-                    logger.debug(f"BOOKING DETAILS {booking_details}")
-                    tools_info.payload = {"bookingDetails": booking_details}
+            # if function_name == "get_available_rooms":
+            #     content = message.get("content", "")
+            #     if content is not None:
+            #         try:
+            #             data = json.loads(content)
+            #         except json.JSONDecodeError:
+            #             logger.warning(f"Content is not valid JSON: {content}")
+            #             data = {}
+            #         if data.get("floorPlan") is not None:
+            #             floor_plan = data.get("floorPlan")
+            #             logger.debug(f"FLOOR PLAN: {floor_plan}")
+            #             tools_info.payload = {"floorPlan": floor_plan}
+            #
+            # if function_name == "verify_booking_details":
+            #     content = message.get("content", "")
+            #     if content is not None:
+            #         booking_details = json.loads(content)
+            #         logger.debug(f"BOOKING DETAILS {booking_details}")
+            #         tools_info.payload = {"bookingDetails": booking_details}
 
     return tools_info
 

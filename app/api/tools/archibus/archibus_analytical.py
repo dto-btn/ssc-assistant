@@ -2,9 +2,9 @@ import json
 import logging
 from utils.decorators import tool_metadata
 
-from .api_helper import make_archibus_api_call
-from .archibus_utilities import get_current_date, get_date_two_months_ago
-from .userprofile import user_profile
+# from .api_helper import make_archibus_api_call
+# from .archibus_utilities import get_current_date, get_date_two_months_ago
+# from .userprofile import user_profile
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +46,10 @@ logger = logging.getLogger(__name__)
     }
 })
 def generate_analytical_report_on_locations(bl_id: str ,  fl_id: str, start_date: str = None, end_date: str = None, rm_id: str = None, em_id: str = None ):
+    from .api_helper import make_archibus_api_call
+    from .archibus_utilities import get_current_date, get_date_two_months_ago
+    from .userprofile import user_profile
+
     if user_profile.verify_profile():
         if start_date is None:
             start_date = get_date_two_months_ago()

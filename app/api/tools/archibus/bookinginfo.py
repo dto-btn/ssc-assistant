@@ -5,10 +5,10 @@ from typing import List
 import requests
 
 from utils.decorators import tool_metadata
-from .api_helper import make_api_call, make_archibus_api_call
-from .buildingInfo import get_floor_plan
-from .userprofile import user_profile
-from .archibus_utilities import get_current_date, get_date_two_months_ago
+# from .api_helper import make_api_call, make_archibus_api_call
+# from .buildingInfo import get_floor_plan
+# from .userprofile import user_profile
+from .archibus_utilities import get_current_date
 logger = logging.getLogger(__name__)
 
 
@@ -39,6 +39,10 @@ def escape_quotes(s):
     ]
 })
 def get_historical_bookings(em_id: str):
+    from .api_helper import make_archibus_api_call
+    from .userprofile import user_profile
+    from .archibus_utilities import get_current_date, get_date_two_months_ago
+
     if user_profile.verify_profile():
         date_start = get_date_two_months_ago()
         date_end = get_current_date()
@@ -94,15 +98,25 @@ def get_historical_bookings(em_id: str):
     ]
 })
 def get_current_reservations(em_id: str):
+    from .api_helper import  make_archibus_api_call
+    from .userprofile import user_profile
+
     if user_profile.verify_profile():
         if em_id is None:
             em_id = user_profile.get_user_id()
+        start_date = get_current_date()
         payload = [
             {
                 "fieldName": "em_id",
                 "filterValue": em_id,
                 "filterOperation": "="
-            }
+            },
+            {
+                "fieldName": "date_start",
+                "filterValue": start_date,
+                "filterOperation": "="
+            },
+
         ]
         response = make_archibus_api_call(f"v1/data?viewName=ab-selfservice-dashboard.axvw&dataSource=workplaceReservations", payload, 'GET')
         return json.loads(response.text)
@@ -113,7 +127,7 @@ def get_current_reservations(em_id: str):
     "type": "function",
     "function": {
         "name": "create_users_booking",
-        "description": "Creates a booking entry in an Archibus system with the provided booking details. only do this after confirming with the user that booking details are correct never any other time.",
+        "description": "Creates a booking entry in an Archibus system with the provided booking details. only do this after confirming with the user that booking details are correct never any other time.for multiple days you will have to run this for each individual day",
         "parameters": {
             "type": "object",
             "properties": {
@@ -146,17 +160,12 @@ def get_current_reservations(em_id: str):
                     "format": "date",
                     "description": "The start date of the booking, formatted as 'YYYY-MM-DD'. leave blank if you are unsure this date can not be in the past"
                 },
-                "end_date": {
-                    "type": "string",
-                    "format": "date",
-                    "description": "The end date of the booking, formatted as 'YYYY-MM-DD'. leave blank if you are unsure this date can not be in the past"
-                },
                 "dayPart": {
                     "type": "string",
                     "description": "This indicated a full day with 0, the morning half day with 1 and afternoon half day with 2 example: 0:Full Day / 1:Morning / 2:Afternoon"
                 }
             },
-            "required": ["bl_id", "fl_id", "rm_id", "em_id", "dv_id", "dp_id","start_date", "end_date", "daysPart",]
+            "required": ["bl_id", "fl_id", "rm_id", "em_id", "dv_id", "dp_id","start_date", "daysPart",]
         },
         "returns": {
             "description": "A JSON object with the response from the Archibus system. If the status code is 200, the booking was successful.",
@@ -164,7 +173,16 @@ def get_current_reservations(em_id: str):
         }
     }
 })
-def create_users_booking( bl_id: str, fl_id: str, rm_id: str, em_id: str, dv_id: str, dp_id: str, start_date: str = get_current_date(), end_date: str = get_current_date(), dayPart: str = 0) :
+def create_users_booking( bl_id: str, fl_id: str, rm_id: str, em_id: str, dv_id: str, dp_id: str, start_date: str = None, dayPart: str = 0) :
+    from .api_helper import  make_archibus_api_call
+    from .userprofile import user_profile
+
+    if start_date is None:
+        start_date = get_current_date()
+
+    if start_date < get_current_date():
+        return {"invalid date, date is in past"}
+
     if user_profile.verify_profile():
         bookingRecord = [
             {
@@ -186,7 +204,7 @@ def create_users_booking( bl_id: str, fl_id: str, rm_id: str, em_id: str, dv_id:
             "\"\"",
             dayPart,
             start_date,
-            end_date,
+            start_date,
             "\"\"",
             [
                 json.dumps(bookingRecord[0], separators=(',', ':')),  # Ensures no extra spaces
@@ -218,7 +236,7 @@ def create_users_booking( bl_id: str, fl_id: str, rm_id: str, em_id: str, dv_id:
                 },
                 "floorId": {
                     "type": "string",
-                    "description": "A string indicating the ID of the floor within the specified building. Get from the employee record if missing."
+                    "description": "A string indicating the ID of the floor within the specified building. Get from the employee record if missing or ask the user."
                 },
                 "date_start": {
                     "type": "string",
@@ -247,7 +265,15 @@ def create_users_booking( bl_id: str, fl_id: str, rm_id: str, em_id: str, dv_id:
         "required": ["buildingId", "floorId", "date_start", "date_end", "dayPart"]
     }
 })
-def fetch_room_availability(buildingId: str, floorId: str, date_start: str = get_current_date(),date_end: str = get_current_date(), dayPart: str = 0):
+def fetch_room_availability(buildingId: str, floorId: str, date_start: str = None, date_end: str = None, dayPart: str = 0):
+    from .api_helper import make_archibus_api_call
+    from .userprofile import user_profile
+
+    if date_start is None:
+        date_start = get_current_date()
+    if date_end is None:
+        date_end = get_current_date()
+
     if user_profile.verify_profile():
 
         data_list =[
@@ -322,6 +348,8 @@ def fetch_room_availability(buildingId: str, floorId: str, date_start: str = get
     }
 })
 def fetch_first_available_room(buildingId: str, floorId: str, date_start: str = get_current_date(), date_end: str = get_current_date(), dayPart: str = 0):
+    from .userprofile import user_profile
+
     if user_profile.verify_profile():
         response = fetch_room_availability(buildingId, floorId, date_start, date_end, dayPart)
 
@@ -340,7 +368,7 @@ def fetch_first_available_room(buildingId: str, floorId: str, date_start: str = 
     "type": "function",
     "function": {
         "name": "cancel_bookings",
-        "description": "Cancels bookings from the reservation system. If any details are missing, it retrieves the current reservations using the 'get_current_reservations' function to find the relevant booking data to cancel. Do not cancel before confirming that one your going cancel is the correct one",
+        "description": "Cancels bookings from the reservation system. If any of fields are missing retrieves it current reservations using the 'get_current_reservations' function to find the relevant booking data to cancel. Do not cancel before confirming that one your going cancel is the correct one",
         "parameters": {
             "type": "object",
             "properties": {
@@ -378,6 +406,9 @@ def fetch_first_available_room(buildingId: str, floorId: str, date_start: str = 
     }
 })
 def cancel_bookings(pct_id: int, parent_pct_id: int, em_id: str, bl_id: str, activity_log_id: str, vistorID: str = None, operationLevel: str = "1"):
+    from .api_helper import make_archibus_api_call
+    from .userprofile import user_profile
+
     if user_profile.verify_profile():
         if pct_id and parent_pct_id and em_id and bl_id and activity_log_id is not None:
             payload =     [
@@ -408,10 +439,6 @@ def cancel_bookings(pct_id: int, parent_pct_id: int, em_id: str, bl_id: str, act
                   "type": "string",
                   "description": "The month, day, and year of the booking, formatted like YYYY-MM-DD. If the user does not provide a date, ask them for it."
               },
-              "date_end": {
-                  "type": "string",
-                  "description": "The month, day, and year of the booking, formatted like YYYY-MM-DD. If the user does not provide a date, ask them for it."
-              },
               "bl_id": {
                   "type": "string",
                   "description": "The unique identifier of the building where the booking takes place. Example: AB-BAS4. DO NOT USE THE STREET NUMBER OR ADDRESS."
@@ -434,15 +461,15 @@ def cancel_bookings(pct_id: int, parent_pct_id: int, em_id: str, bl_id: str, act
                 "description": "This indicated a full day with 0, the morning half day with 1 and afternoon half day with 2 example: 0:Full Day / 1:Morning / 2:Afternoon"
               }
           },
-          "required": ["date", "buildingId", "user", "duration", "floorId", "roomId"]
+          "required": ["date_start", "buildingId", "user", "duration", "floorId", "roomId"]
       }
     }
   })
-def verify_booking_details(date_start: str, date_end: str, bl_id: str, fl_id: str, rm_id: str, em_id: str, dayPart: int ):
+def verify_booking_details(date_start: str, bl_id: str, fl_id: str, rm_id: str, em_id: str, dayPart: int ):
 
     booking_details = {
         "date_start":date_start,
-        "date_end":date_end,
+        "date_end":date_start,
         "bl_id":bl_id,
         "fl_id":fl_id,
         "rm_id":rm_id,

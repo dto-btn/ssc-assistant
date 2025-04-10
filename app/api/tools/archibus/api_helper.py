@@ -1,5 +1,3 @@
-from http.cookiejar import request_port
-
 import requests
 import logging
 import os

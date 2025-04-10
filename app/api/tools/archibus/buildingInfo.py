@@ -3,11 +3,52 @@ import logging
 
 import requests
 
-from .api_helper import make_api_call, make_archibus_api_call
-from .userprofile import user_profile
+# from .api_helper import make_api_call, make_archibus_api_call
+# from .userprofile import user_profile
 
 logger = logging.getLogger(__name__)
 from utils.decorators import tool_metadata
+
+
+
+@tool_metadata({
+    "type": "function",
+    "function": {
+        "name": "get_building_info_by_address",
+        "description": "Retrieve the building id and floor id's, based on the provided address.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "description": "The physical street address or location descriptor used to look up the associated building information."
+                }
+            },
+            "required": ["address"]
+        }
+    }
+})
+def get_building_info_by_address(address: str):
+    from .api_helper import make_archibus_api_call
+    from .userprofile import user_profile
+
+    logger.debug(f'Getting information about {address}')
+    if user_profile.verify_profile():
+        if address:
+            payload = [
+                {
+                    "fieldName": "address1",
+                    "filterValue": f"%{address}%",
+                    "filterOperation": "like"
+                }
+            ]
+            response = make_archibus_api_call(f"v1/data?viewName=ssc-system-util.axvw&dataSource=buildingAddress", payload, 'GET')
+            return json.loads(response.text)
+        else:
+            return False
+    else:
+        return False
+
 
 
 @tool_metadata({
@@ -72,6 +113,9 @@ from utils.decorators import tool_metadata
     ]
 })
 def get_building_info(buildingId: str):
+    from .api_helper import  make_archibus_api_call
+    from .userprofile import user_profile
+
     logger.debug(f'Getting information about {buildingId}')
     if user_profile.verify_profile():
         if buildingId:
@@ -111,7 +155,7 @@ def get_building_info(buildingId: str):
         },
         "returns": {
             "type": "array",
-            "description": "An array of JSON objects containing comprehensive building details. only display the first 20",
+            "description": "An array of JSON objects containing comprehensive building details. only display the first 10 in a list",
             "items": {
                 "type": "object",
                 "properties": {
@@ -143,6 +187,9 @@ def get_building_info(buildingId: str):
     ]
 })
 def get_floor_info(buildingId: str, floorId: str = ""):
+    from .api_helper import  make_archibus_api_call
+    from .userprofile import user_profile
+
     logger.debug(f'Getting information about {floorId}')
     if user_profile.verify_profile():
         if buildingId:
@@ -267,6 +314,7 @@ def get_floor_info(buildingId: str, floorId: str = ""):
     }
 })
 def get_floor_plan(buildingId: str, floorId: str):
+    from .api_helper import make_api_call
     try:
         uri = f"/buildings/{buildingId}/floors"
         response = make_api_call(uri)

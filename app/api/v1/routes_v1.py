@@ -16,7 +16,7 @@ from src.service.suggestion_service import SuggestionService
 from utils.manage_message import SUGGEST_SYSTEM_PROMPT_FR, SUGGEST_SYSTEM_PROMPT_EN
 from src.context.build_context import build_context
 
-from tools.archibus.archibus_functions import make_api_call
+from tools.archibus.api_helper import make_api_call
 from utils.auth import auth, user_ad
 from utils.db import (
     flag_conversation,

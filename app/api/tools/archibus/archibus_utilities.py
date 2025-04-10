@@ -28,7 +28,7 @@ def get_current_date_and_time():
     }
 })
 def get_current_date():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.now().strftime("%Y-%m-%d")
 
 
 @tool_metadata({

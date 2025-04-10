@@ -4,7 +4,7 @@ import logging
 from .api_helper import make_api_call,make_archibus_api_call
 
 # Building information
-from .buildingInfo import get_floor_plan, get_building_info,get_floor_info
+from .buildingInfo import get_floor_plan, get_building_info,get_floor_info,get_building_info_by_address
 
 # Booking information
 from .bookinginfo import fetch_room_availability,create_users_booking,fetch_first_available_room,get_current_reservations,get_historical_bookings,cancel_bookings,verify_booking_details
@@ -43,5 +43,6 @@ __all__ = [
     "cancel_bookings",
     "verify_booking_details",
     "get_google_maps_link",
-    "generate_analytical_report_on_locations"
+    "generate_analytical_report_on_locations",
+    "get_building_info_by_address"
 ]
