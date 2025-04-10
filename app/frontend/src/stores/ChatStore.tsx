@@ -7,6 +7,7 @@ type ChatStore = {
   currentChatHistory: ChatHistory;
   chatHistoriesDescriptions: string[];
   chatIndexToLoadOrDelete: number | null;
+  quotedText: string | undefined;
   setChatIndexToLoadOrDelete: (index: number | null) => void;
   setCurrentChatHistory: (
     param: ChatHistory | ((prev: ChatHistory) => ChatHistory)
@@ -22,6 +23,7 @@ export const useChatStore = create<ChatStore>((set) => ({
   chatIndexToLoadOrDelete: null,
   currentChatHistory: buildDefaultChatHistory(),
   chatHistoriesDescriptions: ["Conversation 1"],
+  quotedText: undefined,
   setChatIndexToLoadOrDelete: (index: number | null) => {
     set((state) =>
       produce(state, (draft) => {

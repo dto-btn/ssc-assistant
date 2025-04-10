@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { produce } from 'immer'
 import { theme } from '../theme';
-
 import { LanguageService } from "../services/LanguageService";
 import { SNACKBAR_DEBOUNCE_KEYS, SNACKBAR_DEBOUNCE_MS, SNACKBAR_TTL_MS } from '../constants';
 
@@ -27,6 +26,9 @@ type AppContext = {
         state: "open-positive" | "open-negative" | "closed";
         open: (feedbackType: "positive" | "negative") => void;
         close: () => void;
+    },
+    tools: {
+        selectedCorporateFunction: string;
     }
 };
 
@@ -123,6 +125,9 @@ export const useAppStore = create<AppContext>((set, get) => ({
                 draft.feedbackForm.state = "closed";
             }));
         }
+    },
+    tools: {
+        selectedCorporateFunction: "intranet_question"
     },
     languageService: new LanguageService()
 }));
