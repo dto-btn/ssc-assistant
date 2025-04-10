@@ -1,13 +1,9 @@
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   Box,
   Card,
-  CardActions,
   CardContent,
   CardHeader,
-  Collapse,
   Link,
-  styled,
   Tab,
   Table,
   TableBody,
@@ -15,10 +11,8 @@ import {
   TableHead,
   TableRow,
   Tabs,
-  Typography,
   useTheme,
 } from "@mui/material";
-import IconButton, { IconButtonProps } from "@mui/material/IconButton";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { DateDisplay } from "./subcomponents/DateDisplay";
@@ -28,49 +22,16 @@ interface BusinessRequestProps {
   lang: string;
 }
 
-interface ExpandMoreProps extends IconButtonProps {
-  expand: boolean;
-}
-
-const ExpandMore = styled((props: ExpandMoreProps) => {
-  const { expand, ...other } = props;
-  return <IconButton {...other} />;
-})(({ theme }) => ({
-  marginLeft: "auto",
-  transition: theme.transitions.create("transform", {
-    duration: theme.transitions.duration.shortest,
-  }),
-  variants: [
-    {
-      props: ({ expand }) => !expand,
-      style: {
-        transform: "rotate(0deg)",
-      },
-    },
-    {
-      props: ({ expand }) => !!expand,
-      style: {
-        transform: "rotate(180deg)",
-      },
-    },
-  ],
-}));
-
 const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
   data,
   lang,
 }) => {
   const isEnglish = lang === "en";
   const { t } = useTranslation();
-  const [expanded, setExpanded] = React.useState(false);
   const theme = useTheme();
   const [tabIndex, setTabIndex] = React.useState(0);
 
-  const handleExpandClick = () => {
-    setExpanded(!expanded);
-  };
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabIndex(newValue);
   };
   return (
