@@ -1,12 +1,7 @@
 from dataclasses import field
-from marshmallow_dataclass import dataclass
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 
-from src.service.suggestion_service_types import (
-    SuggestRequestOpts,
-    SuggestionContextWithSuggestions,
-    SuggestionContextWithoutSuggestions,
-)
+from marshmallow_dataclass import dataclass
 
 
 @dataclass
@@ -30,9 +25,11 @@ class Context:
 
 @dataclass
 class ToolInfo:
-    tool_type: List[str] = field(default_factory=list)
-    function_names: List[str] = field(default_factory=list)
-    payload: Optional[Dict] = None
+    """Gives back info on the tool that was used, function and payload contained"""
+    tool_type: str
+    function_name: str
+    count: int = field(default=1)
+    payload: Dict[str, Union[Dict, list]] = field(default_factory=lambda: {})
 
 @dataclass
 class Attachment:
@@ -50,7 +47,7 @@ class Message:
     quotedText: Optional[str] = None
     content: Optional[str] = None
     context: Optional[Context] = None
-    tools_info: Optional[ToolInfo] = None
+    tools_info: Optional[List[ToolInfo]] = None
     attachments: Optional[List[Attachment]] = None
 
 @dataclass
@@ -100,23 +97,13 @@ class FilePayload:
     name: str
 
 @dataclass
-class SuggestionRequest:
-    '''this is a suggestion request that most likely comes from the myssc+ search feature'''
-    query: str
-    lang: str
-    system_prompt: Optional[str]
-    corporate_function: str = field(default='intranet_question')
-    dedupe_citations: bool = field(default=True)
-    remove_markdown: bool = field(default=True)
-
-@dataclass
-class NewSuggestionCitation:
+class SuggestionCitationApiResponse:
     url: str
     title: str
 
 
 @dataclass
-class NewSuggestionResponse:
+class SuggestionApiResponse:
     original_query: str
     success: Literal[True, False]
     language: str
@@ -128,11 +115,12 @@ class NewSuggestionResponse:
 
     # not provided if success is False
     content: Optional[str] = None
-    citations: Optional[List[NewSuggestionCitation]] = None
+    citations: Optional[List[SuggestionCitationApiResponse]] = None
+    id: Optional[str] = None
 
 
 @dataclass
-class NewSuggestionRequest:
+class SuggestionApiRequest:
     """this is a suggestion request that most likely comes from the myssc+ search feature"""
 
     query: str

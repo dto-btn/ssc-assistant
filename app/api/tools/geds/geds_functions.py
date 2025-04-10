@@ -106,15 +106,14 @@ def _get_employee_by_phone_number(employee_phone_number: str):
     if response.status_code == 200:
         return json.dumps(response.text)
     else:
-        logger.debug("Unable to get any info.", response.reason)
+        logger.debug("Unable to get any info: %s", response.reason)
         return "Didn't find any matching employee with that phone number."
-    
+
 def _extract_last_description(organization_info):
     # The JSON response has nested [organizationInformation][organization]
     # This traverses through the nested objects to get the last description
     while "organizationInformation" in organization_info:
         organization_info = organization_info["organizationInformation"]["organization"]
-    
     return organization_info["description"]
 
 def extract_geds_profiles(content):

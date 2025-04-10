@@ -54,6 +54,7 @@ def create_entity(data, partition_key: str, row_key_prefix: str, user: User | No
         logger.error("Unable to add user information: %s", e)
 
     if isinstance(data_copy, Completion):
+        data_copy.message.tools_info = None #avoid functions data returned by SSCA
         entity['Answer'] = data_copy.message.content
 
     if isinstance(data_copy, MessageRequest) and data_copy.messages:

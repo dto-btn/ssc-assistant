@@ -38,7 +38,7 @@ variable "aad_client_id_api" {
 
 variable "allowed_tools"  {
     type = list(string)
-    default = ["coporate", "geds"]
+    default = ["corporate", "geds"]
 }
 
 variable "rg_name" {
@@ -113,4 +113,15 @@ variable "bits_database_config" {
   })
   default = null
   sensitive = true
+}
+
+variable "openai_api_version" {
+    type = string
+    default = "2024-05-01-preview"
+}
+
+variable "postgres_connection_string" {
+    type = string
+    sensitive = true
+    description = "value of the postgres connection string"
 }

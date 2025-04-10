@@ -1,15 +1,15 @@
 import { useSearchParams, useNavigate } from "react-router";
 import { FC, useEffect, useState } from "react"
 import z from "zod";
+import { getSuggestionContext } from "../api/suggestionContext.api";
+import { SuggestionContextResponseModel } from "../api/suggestionContext.models";
 
 
-// This component is a route that is used to parse the suggestionContext parameter from the URL.
-// The suggestionContext parameter is a base64 encoded JSON string that contains information about
-// the suggestion that was made. The suggestionContext parameter is used to continue chatting with
-// the user after they have received a suggestion from a 3rd party service. 
+// This component is a route that is used to parse the suggestionContextId parameter from the URL.
+// The suggestionContextId parameter is a UUID that references a suggestion that was made by a 3rd party service.
+// The suggestionContextId is used to query the suggestion from the API by being passed as a parameter to the 
+// GET /suggest endpoint.
 // Currently, MySSC++ is the only 3rd party service that uses this route.
-// The format of the suggestion is used in the /suggest endpoint. The rreturned body of the /suggest
-// endpoint can be base64 encoded as-is, and passed as the suggestionContext parameter to this route
 
 // Test links
 
@@ -57,75 +57,79 @@ export type ParsedSuggestionContext =
     | { success: true, context: SuggestionContext }
     | { success: false, errorReason: SuggestCallbackStates };
 
-const validateContextParam = (contextBase64: string | null): ParsedSuggestionContext => {
-    if (!contextBase64) {
-        console.error("parseContextParam: context is undefined");
-        return {
-            success: false,
-            errorReason: "redirect_because_context_validation_failed"
-        }
-    }
+const doSuggestionContextApiQuery = async (suggestionContextId: string): Promise<SuggestionContextResponseModel> => {
 
     try {
-        const contextStringified = atob(contextBase64);
-        const parsed = SuggestionContextSchema.parse(JSON.parse(contextStringified));
+        const suggestionContext = await getSuggestionContext({
+            suggestionContextId: suggestionContextId
+        });
 
-        if (parsed.success) {
-            return {
-                success: true,
-                context: parsed
-            }
-        } else {
-            console.error("parseContextParam: server returned success: false");
-            return {
-                success: false,
-                errorReason: "redirect_because_server_returned_success_false"
-            }
-        }
+        return suggestionContext;
     } catch (e) {
-        if (e instanceof z.ZodError) {
-            console.error("parseContextParam: Zod validation failed", e.errors);
-            return {
-                success: false,
-                errorReason: "redirect_because_context_validation_failed"
-            }
-        }
-
-        // Log the error
-        console.error("Unknown error while parsing SuggestionContext", e);
-        return {
-            success: false,
-            errorReason: "redirect_because_context_validation_failed"
-        }
+        console.error(e);
+        return Promise.reject(e);
     }
 }
 
 const useParsedContextParam = () => {
     const [urlParams] = useSearchParams();
-    const suggestionContext = urlParams.get("suggestionContext")
-    const [returnVal, setReturnVal] = useState<ParsedSuggestionContext | null>(null);
+    const suggestionContextId = urlParams.get("suggestionContextId")
+    const [returnVal, setReturnVal] = useState<SuggestionContextResponseModel | null>(null);
+    const [errorVal, setErrorVal] = useState<SuggestCallbackStates | null>(null);
 
     useEffect(() => {
-        const validatedContext = validateContextParam(suggestionContext);
-        setReturnVal(validatedContext);
-    }, [suggestionContext]);
+        setErrorVal(null);
+        if (!suggestionContextId) {
+            // todo: error handling
+            setErrorVal("redirect_because_context_validation_failed");
+            return;
+        }
+        doSuggestionContextApiQuery(suggestionContextId)
+            .then((suggestionContext) => {
+                setReturnVal(suggestionContext);
+            })
+            .catch((e) => {
+                // todo: error handling
+                console.error(e);
+                setErrorVal("redirect_with_unknown_error");
+            })
+    }, [suggestionContextId]);
 
-    return returnVal;
+    return {
+        suggestionContext: returnVal,
+        error: errorVal
+    };
 }
 
 export const SuggestCallbackRoute: FC = () => {
-    const parsedContext = useParsedContextParam();
+    const { suggestionContext, error } = useParsedContextParam();
 
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!parsedContext) {
+        if (error) {
+            navigate("/", {
+                state: {
+                    success: false,
+                    reason: "redirect_with_unknown_error"
+                }
+            })
             return;
         }
+
+        if (!suggestionContext) {
+            // this means there's an api call in progress
+            return;
+        }
+
+        // success
         navigate('/', {
-            state: parsedContext
+            state: {
+                success: true,
+                context: suggestionContext
+            }
         })
-    }, [parsedContext])
+    }, [suggestionContext, error, navigate])
 
     return (
         <></>

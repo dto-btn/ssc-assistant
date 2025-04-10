@@ -1,20 +1,57 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from "react-i18next";
 import { Button, Dialog, DialogActions, DialogTitle, DialogContent, TextField, Typography } from '@mui/material';
+import { useAppStore } from '../stores/AppStore';
+import { sendFeedback } from "../api/api";
+import { useChatStore } from '../stores/ChatStore';
 
-interface FeedbackFormProps {
-  feedback: string;
-  setFeedback: React.Dispatch<React.SetStateAction<string>>;
-  open: boolean;
-  handleClose: () => void;
-  handleFeedbackSubmit: (event: React.FormEvent) => void;
-}
+export const FeedbackForm = () => {
+  const { currentChatHistory, setCurrentChatHistory } = useChatStore();
+  const { close, state } = useAppStore((state) => state.feedbackForm);
 
-export const FeedbackForm = ({ feedback, setFeedback, open, handleClose, handleFeedbackSubmit }: FeedbackFormProps) => {
+  const isOpen = state === "open-positive" || state === "open-negative";
+
   const { t } = useTranslation();
+  const [feedback, setFeedback] = useState("");
+
+  const handleFeedbackSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    close();
+
+    if (!currentChatHistory) {
+      return;
+    }
+
+    let toast: ToastMessage;
+    const isGoodResponse = state === "open-positive";
+
+    try {
+      await sendFeedback(feedback, isGoodResponse, currentChatHistory.uuid);
+      toast = {
+        toastMessage: t("feedback.success"),
+        isError: false,
+      };
+    } catch (error) {
+      toast = {
+        toastMessage: t("feedback.fail"),
+        isError: true,
+      };
+    }
+
+    setCurrentChatHistory((prevChatHistory) => {
+      const updatedChatHistory = {
+        ...prevChatHistory,
+        chatItems: [...prevChatHistory.chatItems, toast],
+      };
+
+      return updatedChatHistory;
+    });
+
+    setFeedback("");
+  };
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth={"sm"}>
+    <Dialog open={isOpen} onClose={() => close()} fullWidth maxWidth={"sm"}>
         <DialogTitle>{t("provide.feedback")}</DialogTitle>
         <Typography variant="subtitle2" align="left" style={{ paddingLeft: "24px" }}>{t("msg.opt")}</Typography>
 
@@ -28,7 +65,7 @@ export const FeedbackForm = ({ feedback, setFeedback, open, handleClose, handleF
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>{t("cancel")}</Button>
+        <Button onClick={() => close()}>{t("cancel")}</Button>
           <Button
             style={{ backgroundColor: "#4b3e99", color: "white"}}
             type="submit"

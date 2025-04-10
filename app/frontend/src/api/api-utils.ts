@@ -1,6 +1,6 @@
 type GetProps = {
     url: string;
-    accessToken: string;
+    accessToken?: string;
 }
 export const get = async (props: GetProps) => {
     return doFetch({ verb: "GET", ...props });
@@ -18,18 +18,23 @@ export const post = async (props: PostProps) => {
 type DoFetchProps = {
     verb: "GET" | "POST" | "PUT" | "DELETE";
     url: string;
-    accessToken: string;
+    accessToken?: string;
     body?: object;
 }
 const doFetch = async (props: DoFetchProps) => {
     const { verb, url, accessToken } = props;
 
+    const headersInit: HeadersInit = {
+        "Content-Type": "application/json"
+    }
+
     const requestInit: RequestInit = {
         method: verb,
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + accessToken.trim()
-        }
+        headers: headersInit
+    }
+
+    if (accessToken) {
+        headersInit["Authorization"] = "Bearer " + accessToken.trim();
     }
 
     if (props.body) {

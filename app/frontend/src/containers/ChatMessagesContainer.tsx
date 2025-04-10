@@ -8,9 +8,8 @@ interface ChatMessagesContainerProps {
   isLoading: boolean;
   chatMessageStreamEnd: RefObject<HTMLDivElement>;
   replayChat: () => void;
-  setIsFeedbackVisible: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsGoodResponse: React.Dispatch<React.SetStateAction<boolean>>;
   handleRemoveToastMessage: (index: number) => void;
+  handleBookReservation: (bookingDetails: BookingConfirmation) => void;
 }
 
 const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
@@ -19,19 +18,19 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     isLoading,
     chatMessageStreamEnd,
     replayChat,
-    setIsFeedbackVisible,
-    setIsGoodResponse,
     handleRemoveToastMessage,
+    handleBookReservation,
   } = props;
 
   return (
     <Box
       sx={{
-        overflowY: "hidden",
         padding: "0.5rem",
-        paddingTop: "6rem",
         paddingBottom: 0,
         alignItems: "flex-end",
+        overflowY: '',
+        maxWidth: "lg",
+        margin: 'auto'
       }}
       aria-live="polite"
       aria-relevant="additions"
@@ -67,6 +66,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                 replayChat={replayChat}
                 index={index}
                 total={chatHistory.chatItems.length}
+                handleBookReservation={handleBookReservation}
                 setIsFeedbackVisible={setIsFeedbackVisible}
                 setIsGoodResponse={setIsGoodResponse}
               />

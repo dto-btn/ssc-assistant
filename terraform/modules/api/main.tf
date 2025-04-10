@@ -104,6 +104,7 @@ resource "azurerm_linux_web_app" "api" {
     AZURE_OPENAI_ENDPOINT         = var.ai_endpoint
     AZURE_OPENAI_API_KEY          = var.ai_key
     AZURE_OPENAI_MODEL            = "gpt-4o"
+    AZURE_OPENAI_VERSION          = var.openai_api_version
     AZURE_SEARCH_INDEX_NAME       = "current"
     GEDS_API_TOKEN                = var.geds_api_token
     SERVER_URL_PROD               = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net"
@@ -119,7 +120,7 @@ resource "azurerm_linux_web_app" "api" {
     ALLOWED_TOOLS                 = join(", ", var.allowed_tools)
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS = var.tenant_id
     #PORT = 5001
-    FF_USE_NEW_SUGGESTION_SERVICE = true
+    SQL_CONNECTION_STRING         = var.postgres_connection_string
   },
   var.bits_database_config != null ? {
     BITS_DB_SERVER                = var.bits_database_config.URL
@@ -129,7 +130,7 @@ resource "azurerm_linux_web_app" "api" {
   } : {})
 
   sticky_settings { # settings that are the same regardless of deployment slot..
-    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DATABASE_ENDPOINT", "BLOB_ENDPOINT", "AZURE_SEARCH_INDEX_NAME", "ALLOWED_TOOLS", "ARCHIBUS_API_USERNAME", "ARCHIBUS_API_PASSWORD", "FF_USE_NEW_SUGGESTION_SERVICE" ]
+    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DATABASE_ENDPOINT", "BLOB_ENDPOINT", "AZURE_SEARCH_INDEX_NAME", "ALLOWED_TOOLS", "ARCHIBUS_API_USERNAME", "ARCHIBUS_API_PASSWORD" ]
   }
 }
 

@@ -54,7 +54,7 @@ resource "azurerm_linux_function_app" "functions" {
   }
 
   sticky_settings { # settings that are the same regardless of deployment slot..
-    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DOMAIN_NAME", "AZURE_SEARCH_ADMIN_KEY", "BLOB_CONNECTION_STRING", "BLOB_CONTAINER_NAME", "FF_USE_NEW_SUGGESTION_SERVICE" ]
+    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DOMAIN_NAME", "AZURE_SEARCH_ADMIN_KEY", "BLOB_CONNECTION_STRING", "BLOB_CONTAINER_NAME" ]
   }
 
   virtual_network_subnet_id = data.azurerm_subnet.subscription-vnet-sub.id

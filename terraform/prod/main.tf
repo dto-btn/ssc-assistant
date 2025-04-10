@@ -68,8 +68,25 @@ module "api" {
   search_service_name = data.azurerm_search_service.pilot-prod.name
   search_service_pk = data.azurerm_search_service.pilot-prod.primary_key
 
-  ai_endpoint = azurerm_cognitive_account.ai.endpoint
-  ai_key = azurerm_cognitive_account.ai.primary_access_key
+  # Temporary until we fix code to support newer model version
+  #ai_endpoint = azurerm_cognitive_account.ai.endpoint
+  #ai_key = azurerm_cognitive_account.ai.primary_access_key
+  ai_endpoint = data.azurerm_cognitive_account.ai-pilot-prod.endpoint
+  ai_key = data.azurerm_cognitive_account.ai-pilot-prod.primary_access_key
+}
+
+/****************************************************
+*                         DB                        *
+*****************************************************/
+module "postgress" {
+  source = "../modules/db"
+
+  project_name = "prodsscassistant"
+  default_location = var.default_location
+  rg_name = azurerm_resource_group.main.name
+  name_prefix = var.name_prefix
+  username_postgress = var.username_postgress
+  password_postgress = var.password_postgress
 }
 
 /****************************************************

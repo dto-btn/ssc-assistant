@@ -27,11 +27,11 @@ index_name: str = os.getenv("AZURE_SEARCH_INDEX_NAME", "current")
         }
     }
 })
-def intranet_question(*args): # pylint: disable=unused-argument
+def intranet_question(query: str): # pylint: disable=unused-argument
     """
     Returns the MySSC+ index (most up to date, generally the index alias named "current")
     """
-    return index_name
+    return {"index_name": index_name}
 
 
 @tool_metadata({

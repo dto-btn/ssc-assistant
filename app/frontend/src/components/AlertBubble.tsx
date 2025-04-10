@@ -2,7 +2,7 @@ import Alert from '@mui/material/Alert';
 import { Box } from '@mui/material';
 import {styled} from '@mui/system';
 import { visuallyHidden } from '@mui/utils';
-import { t } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 
 interface AlterBubbleProps {
@@ -12,6 +12,7 @@ interface AlterBubbleProps {
 }
 
 export const AlertBubble = ({ toast, index, removeMessageHandler }: AlterBubbleProps) => {
+    const { t } = useTranslation();
     const alertSeverity = toast.isError ? "error" : "success";
 
     const handleCloseClicked = () => {
@@ -19,7 +20,7 @@ export const AlertBubble = ({ toast, index, removeMessageHandler }: AlterBubbleP
     }
 
     return (
-        <AlertView tabIndex={0}>
+        <AlertView tabIndex={2}>
             <Box sx={visuallyHidden}>{t("aria.alert.message")}</Box> {/* Hidden div for screen reader */}
             <Alert 
                 severity={alertSeverity} 

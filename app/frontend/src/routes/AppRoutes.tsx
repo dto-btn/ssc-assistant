@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider } from "react-router";
 import { RootRoute } from ".";
 import { AdminRoute } from "./admin";
 import { SuggestCallbackRoute } from "./SuggestCallbackRoute";
+import NewLayoutRoute from "./NewLayoutRoute";
 
 const router = createBrowserRouter([
     {
@@ -16,6 +17,10 @@ const router = createBrowserRouter([
     {
         path: "/suggest-callback",
         element: <SuggestCallbackRoute />
+    },
+    {
+        path: "/new-layout",
+        element: <NewLayoutRoute />
     }
 ]);
 
