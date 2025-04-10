@@ -51,7 +51,11 @@ client = AzureOpenAI(
     azure_ad_token_provider=token_provider,
 )
 
-def _create_azure_cognitive_search_data_source(index_name: str, top: int=3) -> dict:
+def _create_azure_cognitive_search_data_source(index_name: str, top: int=3, lang_filter: str="") -> dict:
+    current_filter=""
+    if lang_filter == 'en' or lang_filter == 'fr':
+        current_filter = f"langcode eq '{lang_filter}'"
+        logger.debug("Adding langfilter to datasource query %s", current_filter)
     return {"data_sources":
             [{
             "type": "azure_search",
@@ -67,6 +71,7 @@ def _create_azure_cognitive_search_data_source(index_name: str, top: int=3) -> d
                     "type": "api_key",
                     "key": key,
                 },
+                "filter": current_filter,
                 "embedding_dependency": {
                     "type": "deployment_name",
                     "deployment_name": "text-embedding-ada-002"
@@ -126,7 +131,9 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                         return (tools_info, client.chat.completions.create(
                             messages=messages,
                             model=model,
-                            extra_body=_create_azure_cognitive_search_data_source(index_name, message_request.top),
+                            extra_body=_create_azure_cognitive_search_data_source(index_name,
+                                                                                  message_request.top,
+                                                                                  message_request.lang),
                             stream=stream
                         ))
 
@@ -164,25 +171,25 @@ def add_tool_info_if_used(messages: List[ChatCompletionMessageParam], tools: Lis
                     profiles = extract_geds_profiles(content)
                     tools_info.payload = {"profiles": profiles}
 
-            if function_name == "get_available_rooms":
-                content = message.get("content", "")
-                if content is not None:
-                    try:
-                        data = json.loads(content)
-                    except json.JSONDecodeError:
-                        logger.warning(f"Content is not valid JSON: {content}")
-                        data = {}
-                    if data.get("floorPlan") is not None:
-                        floor_plan = data.get("floorPlan")
-                        logger.debug(f"FLOOR PLAN: {floor_plan}")
-                        tools_info.payload = {"floorPlan": floor_plan}
-
-            if function_name == "verify_booking_details":
-                content = message.get("content", "")
-                if content is not None:
-                    booking_details = json.loads(content)
-                    logger.debug(f"BOOKING DETAILS {booking_details}")
-                    tools_info.payload = {"bookingDetails": booking_details}
+            # if function_name == "get_available_rooms":
+            #     content = message.get("content", "")
+            #     if content is not None:
+            #         try:
+            #             data = json.loads(content)
+            #         except json.JSONDecodeError:
+            #             logger.warning(f"Content is not valid JSON: {content}")
+            #             data = {}
+            #         if data.get("floorPlan") is not None:
+            #             floor_plan = data.get("floorPlan")
+            #             logger.debug(f"FLOOR PLAN: {floor_plan}")
+            #             tools_info.payload = {"floorPlan": floor_plan}
+            #
+            # if function_name == "verify_booking_details":
+            #     content = message.get("content", "")
+            #     if content is not None:
+            #         booking_details = json.loads(content)
+            #         logger.debug(f"BOOKING DETAILS {booking_details}")
+            #         tools_info.payload = {"bookingDetails": booking_details}
 
     return tools_info
 

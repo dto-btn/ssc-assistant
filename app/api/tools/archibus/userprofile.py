@@ -1,5 +1,5 @@
 import logging
-from .archibus_functions import make_archibus_api_call
+
 from utils.decorators import tool_metadata
 from utils.auth import get_or_create_user
 
@@ -16,6 +16,7 @@ class UserProfile:
             self.user_id = get_or_create_user().token["upn"]
         logger.debug("Loading Profile")
         if self._profile is None:
+            from .archibus_functions import make_archibus_api_call
             user_id = self.get_user_id()
             user_url = f"v1/user/{user_id}"
             response = make_archibus_api_call(user_url)

@@ -2,6 +2,13 @@ from dataclasses import field
 from marshmallow_dataclass import dataclass
 from typing import Any, Dict, List, Literal, Optional
 
+from src.service.suggestion_service_types import (
+    SuggestRequestOpts,
+    SuggestionContextWithSuggestions,
+    SuggestionContextWithoutSuggestions,
+)
+
+
 @dataclass
 class Metadata:
     chunking: str
@@ -96,4 +103,37 @@ class FilePayload:
 class SuggestionRequest:
     '''this is a suggestion request that most likely comes from the myssc+ search feature'''
     query: str
+    lang: str
+    system_prompt: Optional[str]
     corporate_function: str = field(default='intranet_question')
+    dedupe_citations: bool = field(default=True)
+    remove_markdown: bool = field(default=True)
+
+@dataclass
+class NewSuggestionCitation:
+    url: str
+    title: str
+
+
+@dataclass
+class NewSuggestionResponse:
+    original_query: str
+    success: Literal[True, False]
+    language: str
+    timestamp: str  # ISO format string expected
+    requester: str
+
+    # only provided if success is False
+    reason: Optional[Literal["INVALID_QUERY", "INVALID_LANGUAGE"]] = None
+
+    # not provided if success is False
+    content: Optional[str] = None
+    citations: Optional[List[NewSuggestionCitation]] = None
+
+
+@dataclass
+class NewSuggestionRequest:
+    """this is a suggestion request that most likely comes from the myssc+ search feature"""
+
+    query: str
+    opts: Dict[str, Any]

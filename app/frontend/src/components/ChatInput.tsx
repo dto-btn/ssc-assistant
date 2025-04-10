@@ -1,19 +1,17 @@
+import CloseIcon from "@mui/icons-material/Close";
+import Send from "@mui/icons-material/Send";
 import {
   Box,
-  Container,
-  TextField,
-  InputAdornment,
-  IconButton,
   CircularProgress,
-  styled,
+  Container,
+  IconButton,
+  InputBase,
+  Paper,
   Typography,
   useTheme,
 } from "@mui/material";
-import Send from "@mui/icons-material/Send";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn";
-import CloseIcon from "@mui/icons-material/Close";
 import UploadFileButton from "./UploadFileButton";
 import { disabledFeaturesSet } from "../allowedTools";
 
@@ -23,7 +21,6 @@ interface ChatInputProps {
   placeholder?: string;
   clearOnSend?: boolean;
   quotedText?: string;
-  handleRemoveQuote: () => void;
   selectedModel: string;
 }
 
@@ -32,7 +29,6 @@ export const ChatInput = ({
   disabled,
   clearOnSend,
   quotedText,
-  handleRemoveQuote,
   selectedModel,
 }: ChatInputProps) => {
   const [question, setQuestion] = useState<string>("");
@@ -40,6 +36,7 @@ export const ChatInput = ({
   const [error, setError] = useState(false);
   const theme = useTheme();
   const [file, setFile] = useState<Attachment | undefined>(undefined);
+  const inputFieldRef = React.useRef<HTMLInputElement>(null);
 
   const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "GPT-3.5 Turbo";
 
@@ -65,6 +62,7 @@ export const ChatInput = ({
 
   const onFileUpload = (file: Attachment) => {
     setFile(file);
+    inputFieldRef.current?.focus();
   };
 
   const handleRemoveFile = () => {
@@ -90,197 +88,115 @@ export const ChatInput = ({
         boxShadow: "0px -15px 20px " + theme.palette.background.default,
       })}
     >
-      <ChatInputWrapper theme={theme}>
-        {quotedText && (
-          <QuoteContainer>
-            <KeyboardReturnIcon
-              sx={{ transform: "scaleX(-1)", ml: "8px", color: "black" }}
-            />
-            <Typography
-              variant="body1"
-              sx={{
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                maxWidth: "calc(100% - 24px)",
-                fontSize: "14px",
-                ml: "10px",
-                mr: "5px",
-                color: "black",
-                flex: 1,
-              }}
-            >
-              "{quotedText}"
-            </Typography>
-            <IconButton
-              onClick={handleRemoveQuote}
-              sx={{
-                mr: "5px",
-                "&:hover": {
-                  backgroundColor: "#979797",
-                },
-              }}
-            >
-              <CloseIcon
-                sx={{
-                  fontSize: "20px",
-                  color: "black",
-                }}
-              />
-            </IconButton>
-          </QuoteContainer>
-        )}
-        <Box component="form" noValidate autoComplete="off">
-          <TextField
-            error={error}
-            helperText={error ? t("question.maxlength") : ""}
-            value={question}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-              if (event.target.value && event.target.value.length > 24000)
-                setError(true);
-              else setError(false);
-              setQuestion(event.target.value);
-            }}
-            fullWidth
-            type="text"
-            id="ask-question"
-            onKeyDown={onEnterPress}
-            multiline={true}
-            minRows={3}
-            maxRows={3}
-            label={t("ask.question")}
-            sx={{
-              padding: "0px 20px",
-              "& .MuiInputBase-input::placeholder": {
-                opacity: 0.7,
-              },
-              ".MuiFormLabel-root": {
-                padding: "5px 0px 0px 20px",
-              },
-            }}
-            variant="standard"
-            InputProps={{
-              disableUnderline: true,
-              startAdornment: file && (
-                <Box
-                  display="flex"
-                  alignItems="start"
-                  mb={2}
-                  sx={{ padding: 1, mr: 3 }}
-                >
-                  <IconButton
-                    onClick={handleRemoveFile}
-                    sx={{
-                      mr: -2,
-                      mt: -2,
-                      backgroundColor: "white",
-                      border: "1px solid black",
-                      "&:hover": {
-                        backgroundColor: "white", // maintain white background on hover
-                      },
-                    }}
-                    size={"small"}
-                    color="primary"
-                    aria-description={
-                      t("delete") + ": " + t("user.file.upload")
-                    }
-                  >
-                    <CloseIcon color="primary" />
-                  </IconButton>
-                  {/\.(jpeg|jpg|gif|png|webp|bmp|svg)$/i.test(
-                    file.blob_storage_url
-                  ) ? (
-                    <Box
-                      component="img"
-                      src={file.encoded_file}
-                      alt={t("uploaded.file.alt")}
-                      sx={{
-                        maxWidth: "100%",
-                        maxHeight: 100,
-                        borderRadius: 2,
-                      }}
-                    />
-                  ) : (
-                    //leaving this code in but it's not used at the moment since we disabled non-image uploads
-                    <Box
-                      component="a"
-                      href={file.encoded_file}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      sx={{ color: "blue", textDecoration: "underline" }}
-                    >
-                      {file.file_name}
-                    </Box>
-                  )}
-                </Box>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={sendQuestion}
-                    disabled={disabled}
-                    sx={{
-                      "&:hover": {
-                        backgroundColor: "rgba(0, 0, 0, 0.2)",
-                      },
-                    }}
-                    aria-label={t("send")}
-                  >
-                    {" "}
-                    {disabled ? (
-                      <CircularProgress
-                        size={24}
-                        aria-label={t("generating")}
-                      />
-                    ) : (
-                      <Send
-                        sx={{ color: "primary.main" }}
-                        aria-label={t("send")}
-                      />
-                    )}
-                  </IconButton>
-                  {!disabledFeaturesSet.has("file_upload") && (
-                    <UploadFileButton
-                      disabled={disabled}
-                      onFileUpload={onFileUpload}
-                    />
-                  )}
-                </InputAdornment>
-              ),
-            }}
-          ></TextField>
-        </Box>
-        <Typography
+      {file && (
+        <Paper
           sx={{
-            fontSize: "13px",
-            mr: "10px",
-            opacity: 0.7,
-            textAlign: "right",
+            p: "2px 4px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "left",
+            borderRadius: "30px 30px 0 0",
+            borderColor: theme.palette.primary.main,
+            borderWidth: "1px 1px 0px 1px",
+            borderStyle: "solid",
           }}
         >
-          {t("model.version.disclaimer")} {modelName}
-        </Typography>
-      </ChatInputWrapper>
+          <IconButton
+            onClick={handleRemoveFile}
+            size="large"
+            color="primary"
+            aria-description={t("delete") + ": " + t("user.file.upload")}
+            aria-label={t("delete")}
+          >
+            <CloseIcon color="primary" />
+          </IconButton>
+          {/\.(jpeg|jpg|gif|png|webp|bmp|svg)$/i.test(file.blob_storage_url) ? (
+            <Box
+              component="img"
+              src={file.blob_storage_url}
+              alt={t("uploaded.file.alt")}
+              sx={{
+                maxWidth: "100%",
+                maxHeight: 130,
+                borderRadius: "25px",
+                padding: "8px",
+              }}
+            />
+          ) : (
+            //leaving this code in but it's not used at the moment since we disabled non-image uploads
+            <Box
+              component="a"
+              href={file.blob_storage_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{ color: "blue", textDecoration: "underline" }}
+            >
+              {file.file_name}
+            </Box>
+          )}
+        </Paper>
+      )}
+      <Paper
+        component="form"
+        sx={{
+          p: "2px 5px",
+          display: "flex",
+          alignItems: "center",
+          borderRadius: file ? "0 0 30px 30px" : "40px",
+          borderColor: theme.palette.primary.main,
+          borderWidth: file ? "0 1px 1px 1px" : "1px",
+          borderStyle: "solid",
+        }}
+      >
+        {!disabledFeaturesSet.has("file_upload") && !file && (
+          <UploadFileButton disabled={disabled} onFileUpload={onFileUpload} />
+        )}
+        <InputBase
+          sx={{ ml: 1, flex: 1 }}
+          placeholder={t("ask.question")}
+          inputProps={{ "aria-label": t("ask.question") }}
+          error={error}
+          id="ask-question"
+          onKeyDown={onEnterPress}
+          value={question}
+          multiline
+          maxRows={15}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            if (event.target.value && event.target.value.length > 24000)
+              setError(true);
+            else setError(false);
+            setQuestion(event.target.value);
+          }}
+        />
+        <IconButton
+          onClick={sendQuestion}
+          disabled={disabled}
+          sx={{
+            "&:hover": {
+              backgroundColor: "rgba(0, 0, 0, 0.2)",
+            },
+          }}
+          aria-label={t("send")}
+          size="large"
+        >
+          {disabled ? (
+            <CircularProgress size={24} aria-label={t("generating")} />
+          ) : (
+            <Send sx={{ color: "primary.main" }} aria-label={t("send")} />
+          )}
+        </IconButton>
+      </Paper>
+      <Typography
+        sx={{
+          fontSize: "13px",
+          mr: "50px",
+          pt: "5px",
+          opacity: 0.7,
+          textAlign: "right",
+        }}
+      >
+        {t("model.version.disclaimer")} {modelName}
+      </Typography>
     </Container>
   );
 };
-
-const ChatInputWrapper = styled(Box)(({ theme }) => ({
-  border: "2px solid #e0e0e0",
-  borderRadius: "5px",
-  "&:focus-within": {
-    borderColor: theme.palette.primary.main,
-  },
-}));
-
-const QuoteContainer = styled(Box)`
-  display: flex;
-  align-items: center;
-  height: 60px;
-  width: 95%;
-  margin: 10px 0px 0px 20px;
-  background-color: lightgrey;
-  border-radius: 10px;
-`;

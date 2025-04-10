@@ -1,71 +1,64 @@
-import { BarChart, Bar, Rectangle, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { Box } from "@mui/material";
 import { MonthlyReportItemModel } from "../../api/admin.models"
+import { SimpleBarChart } from '../chart/SimpleBarChart';
+import { SimpleDataTable } from "../chart/SimpleDataTable";
 
 type MonthlyReportProps = {
     data: MonthlyReportItemModel[]
 }
 export const MonthlyReport = ({ data }: MonthlyReportProps) => {
     return (
-        <div>
-            {/* <ResponsiveContainer width="100%" height="100%"> */}
-            <BarChart
-                width={500}
-                height={300}
+        <Box width="fit-content">
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
+            <SimpleBarChart
+                title='Average Questions Asked Per Day'
+                xKey='month_label'
+                yKey='average_questions_asked_per_day'
+                    color='#4a90e2'
                 data={data}
-                margin={{
-                    top: 5,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                }}
-            >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month_label" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="average_questions_asked_per_day" fill="#555555" activeBar={<Rectangle fill="#e6e6e6" stroke="#b3b3b3" />} />
-
-            </BarChart>
-            {/* <ResponsiveContainer width="100%" height="100%"> */}
-            <BarChart
-                width={500}
-                height={300}
+            />
+            <SimpleBarChart
+                title='Total Questions Asked'
+                xKey='month_label'
+                yKey='total_questions_asked'
+                    color='#50be87'
                 data={data}
-                margin={{
-                    top: 5,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                }}
-            >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month_label" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="total_questions_asked" fill="#ffcc00" activeBar={<Rectangle fill="#fff2cc" stroke="#cc9900" />} />
-            </BarChart>
-            {/* <ResponsiveContainer width="100%" height="100%"> */}
-            <BarChart
-                width={500}
-                height={300}
+            />
+            <SimpleBarChart
+                title='Active Users'
+                xKey='month_label'
+                yKey='active_users'
+                    color='#8e44ad'
                 data={data}
-                margin={{
-                    top: 5,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
-                }}
-            >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month_label" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="active_users" fill="#ff0000" activeBar={<Rectangle fill="#ffcccc" stroke="#cc0000" />} />
-            </BarChart>
-            {/* </ResponsiveContainer> */}
-        </div>
+            />
+            </Box>
+            <Box>
+            <SimpleDataTable
+                columnMappings={[
+                    {
+                        headerLabel: "Month",
+                        key: "month_label"
+                    },
+                    {
+                        headerLabel: "Active Users",
+                        key: "active_users"
+                    },
+                    {
+                        headerLabel: "Average Questions Asked Per Day",
+                        key: "average_questions_asked_per_day"
+                    },
+                    {
+                        headerLabel: "Average Questions Per User",
+                        key: "average_questions_per_user"
+                    },
+                    {
+                        headerLabel: "Total Questions Asked",
+                        key: "total_questions_asked"
+                    }
+                ]}
+                data={data}
+            />
+            </Box>
+        </Box>
     );
 }

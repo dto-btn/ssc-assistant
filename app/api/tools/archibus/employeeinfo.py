@@ -1,8 +1,8 @@
 import json
 import logging
 
-from .archibus_functions import make_archibus_api_call
-from .userprofile import user_profile
+# from .archibus_functions import make_archibus_api_call
+# from .userprofile import user_profile
 from utils.decorators import tool_metadata
 
 logger = logging.getLogger(__name__)
@@ -52,6 +52,8 @@ logger = logging.getLogger(__name__)
   ]
 })
 def get_employee_record():
+  from .archibus_functions import make_archibus_api_call
+  from .userprofile import user_profile
   logger.debug("getting employee record")
 
   if user_profile.verify_profile():

@@ -82,6 +82,7 @@ resource "azurerm_role_assignment" "openai_user" {
 resource "azurerm_role_assignment" "api_read_openai" {
   role_definition_name = "Cognitive Services User"
   scope = data.azurerm_resource_group.ai.id
+  #principal_id         = module.api.api_principal_id
   principal_id = azurerm_linux_web_app.api.identity[0].principal_id
 }
 
