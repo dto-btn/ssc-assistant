@@ -722,5 +722,17 @@
     "TARGET_IMPL_DATE": {
         "en": "Target Implementation Date",
         "fr": "Date de mise en œuvre cible"
+    },
+    "br.tab.1": {
+        "en": "General",
+        "fr": "Générale"
+    },
+    "br.tab.2": {
+        "en": "Dates",
+        "fr": "Dates"
+    },
+    "br.tab.3": {
+        "en": "OPIS",
+        "fr": "BPR"
     }
 }
