@@ -1,12 +1,12 @@
 import * as React from 'react';
 import Menu from '@mui/material/Menu';
-import { Box, Chip, Collapse, Divider, FormControlLabel, FormGroup, FormLabel, ListItem, ListItemButton, ListItemIcon, ListItemText, Radio, RadioGroup, Switch, Typography } from '@mui/material';
+import { Box, Chip, Collapse, Divider, FormControlLabel, FormGroup, FormLabel, ListItem, ListItemButton, ListItemIcon, ListItemText, Radio, RadioGroup, Switch } from '@mui/material';
 import { UserProfilePicture } from './ProfilePicture';
 import { useContext } from 'react';
-import { UserContext } from '../../../../context/UserContext';
+import { UserContext } from '../../../../stores/UserContext';
 import { useTranslation } from "react-i18next";
 import LanguageIcon from "@mui/icons-material/Language";
-import { useAppStore } from '../../../../context/AppStore';
+import { useAppStore } from '../../../../stores/AppStore';
 import HandymanIcon from '@mui/icons-material/Handyman';
 import PsychologyIcon from "@mui/icons-material/Psychology";
 import { allowedToolsSet, allowedCorporateFunctionsSet } from "../../../../allowedTools";
@@ -14,6 +14,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useIsAuthenticated } from '@azure/msal-react';
 import LogoutIcon from "@mui/icons-material/Logout";
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
 interface ProfilePictureOnClickMenuProps {
     size?: string;
@@ -86,17 +87,13 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                     display: "flex",
                     flexDirection: "row",
                     alignItems: "center",
-                    gap: "1rem"
+                    gap: "0.5rem"
                 }}
                 onClick={handleClick}
 
             >
-                <Typography
-                    variant="body1"
-                    sx={{ display: { xs: "none", lg: "block" } }}
-                >
-                    {graphData["givenName"]} {graphData["surname"]}
-                </Typography>
+
+                <MoreHorizIcon />
                 <UserProfilePicture
                     fullName={graphData["givenName"] + " " + graphData["surname"]}
                     size={size}

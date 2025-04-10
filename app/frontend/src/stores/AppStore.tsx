@@ -1,18 +1,36 @@
 import { create } from 'zustand';
 import { produce } from 'immer'
-import { AppContext } from './AppStore.types';
 import { theme } from '../theme';
-import { LanguageService } from '../services/LanguageService';
 
-// This is the time-to-live for a snackbar in milliseconds. After this time, the snackbar will
-// automatically hide itself.
-const SNACKBAR_TTL_MS = 6000;
+import { LanguageService } from "../services/LanguageService";
+import { SNACKBAR_DEBOUNCE_KEYS, SNACKBAR_DEBOUNCE_MS, SNACKBAR_TTL_MS } from '../constants';
 
-// This debounces the snackbar so that we don't show multiple snackbars in quick succession.
-// This is only used if a debounceKey is passed to the show function.
-const SNACKBAR_DEBOUNCE_MS = 100;
+type SnackbarDatum = {
+    id: number;
+    message: string;
+    isOpen: boolean;
+};
 
-const useAppStore = create<AppContext>((set, get) => ({
+type AppContext = {
+    snackbars: {
+        data: SnackbarDatum[];
+        debounceKeys: SNACKBAR_DEBOUNCE_KEYS[];
+        show: (message: string, debounceKey: SNACKBAR_DEBOUNCE_KEYS) => void;
+        _hide: (id: number) => void;
+    };
+    appDrawer: {
+        isOpen: boolean;
+        toggle: () => void;
+    },
+    languageService: LanguageService,
+    feedbackForm: {
+        state: "open-positive" | "open-negative" | "closed";
+        open: (feedbackType: "positive" | "negative") => void;
+        close: () => void;
+    }
+};
+
+export const useAppStore = create<AppContext>((set, get) => ({
     snackbars: {
         data: [],
         debounceKeys: [],
@@ -21,7 +39,7 @@ const useAppStore = create<AppContext>((set, get) => ({
          * The debounceKey is used to prevent multiple snackbars from showing in quick succession. It
          * is optional, and if it is not provided, the snackbar will not be debounced.
          */
-        show: (message: string, debounceKey?: string) => {
+        show: (message: string, debounceKey?: SNACKBAR_DEBOUNCE_KEYS) => {
             // If the debounce key is provided and is in the list of debounce keys, we don't show the snackbar.
             if (debounceKey && get().snackbars.debounceKeys.includes(debounceKey)) {
                 return;
@@ -93,7 +111,19 @@ const useAppStore = create<AppContext>((set, get) => ({
             }));
         }
     },
+    feedbackForm: {
+        state: "closed",
+        open: (feedbackType: "positive" | "negative") => {
+            set((state) => produce(state, (draft) => {
+                draft.feedbackForm.state = feedbackType === "positive" ? "open-positive" : "open-negative";
+            }));
+        },
+        close: () => {
+            set((state) => produce(state, (draft) => {
+                draft.feedbackForm.state = "closed";
+            }));
+        }
+    },
     languageService: new LanguageService()
 }));
 
-export { useAppStore };

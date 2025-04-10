@@ -6,8 +6,8 @@ import logo from "../../../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { type PropsWithChildren } from "react";
 import { type FC } from "react";
 import { AppBar } from "../../layouts/NewLayout/components/AppBar";
-import { useAppStore } from "../../../context/AppStore";
-import { LEFT_MENU_WIDTH } from "../../../constants/frameDimensions";
+import { useAppStore } from "../../../stores/AppStore";
+import { LEFT_MENU_WIDTH } from "../../../constants";
 
 type TopMenuProps = PropsWithChildren<{
     childrenLeftOfLogo?: React.ReactNode;
