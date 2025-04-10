@@ -41,8 +41,6 @@ interface AssistantBubbleProps {
   replayChat: () => void;
   index: number;
   total: number;
-  setIsFeedbackVisible: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsGoodResponse: React.Dispatch<React.SetStateAction<boolean>>;
   handleBookReservation: (bookingDetails: BookingConfirmation) => void;
 }
 
@@ -66,8 +64,6 @@ export const AssistantBubble = ({
   replayChat,
   index,
   total,
-  setIsFeedbackVisible,
-  setIsGoodResponse,
   handleBookReservation,
 }: AssistantBubbleProps) => {
   const { t, i18n } = useTranslation();
@@ -512,8 +508,6 @@ export const AssistantBubble = ({
               }}
             >
               <BubbleButtons
-                setIsFeedbackVisible={setIsFeedbackVisible}
-                setIsGoodResponse={setIsGoodResponse}
                 isHovering={isHovering}
                 isMostRecent={isMostRecent}
                 replayChat={replayChat}
