@@ -85,7 +85,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                 </TableRow>
                 <TableRow>
                   <TableCell>
-                    <strong>{t("status")}: </strong>
+                    <strong>{t("status")}</strong>
                   </TableCell>
                   <TableCell>
                     {isEnglish ? data.BITS_STATUS_EN : data.BITS_STATUS_FR}
@@ -148,6 +148,24 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                   <TableCell>
                     {isEnglish ? data.GCIT_CAT_EN : data.GCIT_CAT_FR}
                   </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <strong>{t("IO_ID")}</strong>
+                  </TableCell>
+                  <TableCell>{data.IO_ID}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <strong>{t("EPS_NMBR")}</strong>
+                  </TableCell>
+                  <TableCell>{data.EPS_NMBR}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <strong>{t("ECD_NMBR")}</strong>
+                  </TableCell>
+                  <TableCell>{data.ECD_NMBR}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>
@@ -331,6 +349,10 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                 <TableRow>
                   <TableCell>{t("WIO_OPI")}</TableCell>
                   <TableCell>{data.WIO_OPI}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>{t("PROD_OPI")}</TableCell>
+                  <TableCell>{data.PROD_OPI}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>

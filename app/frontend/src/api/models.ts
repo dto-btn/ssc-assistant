@@ -160,6 +160,10 @@ interface BusinessRequest {
   GCIT_PRIORITY_EN: string;
   GCIT_PRIORITY_FR: string;
   TARGET_IMPL_DATE: string;
+  IO_ID: string;
+  EPS_NMBR: string;
+  ECD_NMBR: string;
+  PROD_OPI: string;
 }
 
 interface BusinessRequestUpdate {

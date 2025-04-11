@@ -52,5 +52,9 @@ export const transformToBusinessRequest = (data: any): BusinessRequest => {
     GCIT_PRIORITY_EN: data.GCIT_PRIORITY_EN,
     GCIT_PRIORITY_FR: data.GCIT_PRIORITY_FR,
     TARGET_IMPL_DATE: data.TARGET_IMPL_DATE,
+    IO_ID: data.IO_ID,
+    EPS_NMBR: data.EPS_NMBR,
+    ECD_NMBR: data.ECD_NMBR,
+    PROD_OPI: data.PROD_OPI,
   };
 };

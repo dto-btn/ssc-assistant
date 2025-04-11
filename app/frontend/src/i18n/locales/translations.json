@@ -660,8 +660,8 @@
         "fr": "BPR analyste"
     },
     "TEAMLEADER": {
-        "en": "Teamleader",
-        "fr": "Chef d`équipe"
+        "en": "SDM Executive",
+        "fr": "Cadre GPS"
     },
     "BA_PRICING_OPI": {
         "en": "BA Pricing OPI",
@@ -738,5 +738,17 @@
     "br.tab.3": {
         "en": "OPIS",
         "fr": "BPR"
+    },
+    "IO_ID": {
+        "en": "IO ID",
+        "fr": "IO ID"
+    },
+    "EPS_NMBR": {
+        "en": "EPS #",
+        "fr": "EPS #"
+    },
+    "ECD_NMBR": {
+        "en": "ECD #",
+        "fr": "ECD #"
     }
 }
