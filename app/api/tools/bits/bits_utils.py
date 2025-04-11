@@ -207,6 +207,10 @@ class BITSQueryBuilder:
         'GCIT_PRIORITY_EN': 'br.GCIT_PRIORITY_EN',
         'GCIT_PRIORITY_FR': 'br.GCIT_PRIORITY_FR',
         'TARGET_IMPL_DATE': 'br.TARGET_IMPL_DATE',
+        'IO_ID': 'br.IO_ID',
+        'EPS_NMBR': 'br.EPS_NMBR',
+        'ECD_NMBR': 'br.ECD_NMBR',
+        'PROD_OPI': 'opis.PROD_OPI',
     }
 
     def get_br_query(self, br_number_count: int = 0,
