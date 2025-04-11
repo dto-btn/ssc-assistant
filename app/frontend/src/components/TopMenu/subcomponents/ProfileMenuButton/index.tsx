@@ -107,12 +107,15 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                 open={open}
                 onClose={handleClose}
                 anchorOrigin={{
-                    vertical: 'top',
+                    vertical: 'bottom',
                     horizontal: 'left',
                 }}
                 transformOrigin={{
                     vertical: 'top',
                     horizontal: 'left',
+                }}
+                sx={{
+                    top: 5
                 }}
             >
                 <ListItem key="language" disablePadding>

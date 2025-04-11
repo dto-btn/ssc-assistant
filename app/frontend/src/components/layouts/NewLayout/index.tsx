@@ -4,7 +4,7 @@ import Drawer from '@mui/material/Drawer';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
+import VerticalSplitIcon from '@mui/icons-material/VerticalSplit';
 import { AppBar } from './components/AppBar';
 import { DrawerHeader } from './components/DrawerHeader';
 import { MainContentSection } from './components/MainContentSection';
@@ -27,7 +27,7 @@ const NewLayout: React.FC<NewLayoutProps> = ({ children, appBar, appDrawerConten
     return (
         <Box sx={{ display: 'flex' }}>
             {appBar ? appBar : (
-                <AppBar position="fixed" isOpen={isOpen} drawerWidth={LEFT_MENU_WIDTH}>
+                <AppBar position="fixed" isOpen={isOpen} drawerWidth={LEFT_MENU_WIDTH} >
                     <Toolbar>
                         <Box sx={{
                             cursor: "pointer",
@@ -43,7 +43,7 @@ const NewLayout: React.FC<NewLayoutProps> = ({ children, appBar, appDrawerConten
                                 aria-label="open drawer"
                                 edge="start"
                             >
-                                <MenuIcon />
+                                <VerticalSplitIcon />
                             </IconButton>
                             <Typography variant="h6" noWrap component="div">
                                 Click to {isOpen ? 'close' : 'open'} drawer
@@ -63,6 +63,7 @@ const NewLayout: React.FC<NewLayoutProps> = ({ children, appBar, appDrawerConten
                     '& .MuiDrawer-paper': {
                         width: drawerWidth,
                         boxSizing: 'border-box',
+                        backgroundColor: "#ededf3"
                     },
                 }}
                 variant="persistent"

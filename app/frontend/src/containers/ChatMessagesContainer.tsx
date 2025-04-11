@@ -30,7 +30,8 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         alignItems: "flex-end",
         overflowY: '',
         maxWidth: "lg",
-        margin: 'auto'
+        margin: 'auto',
+        width: "100%"
       }}
       aria-live="polite"
       aria-relevant="additions"

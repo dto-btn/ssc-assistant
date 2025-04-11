@@ -3,7 +3,7 @@ import { PersistenceUtils } from "../util/persistence";
 import { useChatStore } from "../stores/ChatStore";
 import { useAppStore } from "../stores/AppStore";
 import { useTranslation } from "react-i18next";
-import { SNACKBAR_DEBOUNCE_KEYS } from "../constants";
+import { MAX_CHAT_HISTORIES_LENGTH, SNACKBAR_DEBOUNCE_KEYS } from "../constants";
 import { isACompletion } from "../utils";
 
 export const useChatService = () => {
@@ -73,7 +73,7 @@ export const useChatService = () => {
     const handleNewChat = () => {
         const chatHistories = PersistenceUtils.getChatHistories();
         const newChatIndex = chatHistoriesDescriptions.length;
-        if (chatHistories.length === 10 || newChatIndex >= 10) {
+        if (chatHistories.length === MAX_CHAT_HISTORIES_LENGTH || newChatIndex >= MAX_CHAT_HISTORIES_LENGTH) {
             snackbars.show(
                 t("chat.history.full"),
                 SNACKBAR_DEBOUNCE_KEYS.CHAT_HISTORY_FULL_ERROR
