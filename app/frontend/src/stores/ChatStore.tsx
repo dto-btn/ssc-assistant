@@ -61,6 +61,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     if (!currentChatHistory) {
       return buildDefaultChatHistory();
     } else {
+      // We are spreading the defaultChatHistory because a lot of the time, we are losing keys from localstorage.
+      // This is a hacky fix for now. We want to move to database persistence later anyway.
       return {
         ...buildDefaultChatHistory(),
         ...currentChatHistory
