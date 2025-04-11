@@ -13,14 +13,10 @@ import ChatMessagesContainer from "../../containers/ChatMessagesContainer";
 import { useTranslation } from "react-i18next"
 import React, { useEffect, useRef, useState } from "react";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
-import { isACompletion, isAMessage, isAToastMessage } from "../../utils";
-import { isTokenExpired } from "../../util/token";
-import { completionMySSC } from "../../api/api";
-import { apiUse } from "../../authConfig";
-import { AccountInfo, InteractionStatus } from "@azure/msal-browser";
+import { isAMessage } from "../../utils";
+import { InteractionStatus } from "@azure/msal-browser";
 import { v4 as uuidv4 } from "uuid";
 import { bookReservation } from "../../api/api";
-import { allowedToolsSet } from "../../allowedTools";
 import { callMsGraph } from "../../graph";
 import { UserContext } from "../../stores/UserContext";
 import { DeleteConversationConfirmation } from "../../components/DeleteConversationConfirmation";
@@ -28,25 +24,21 @@ import { useLocation } from "react-router";
 import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
 import { useAppStore } from "../../stores/AppStore";
 import Typography from "@mui/material/Typography";
-import { SNACKBAR_DEBOUNCE_KEYS, LEFT_MENU_WIDTH, MAX_MESSAGES_SENT } from "../../constants";
+import { SNACKBAR_DEBOUNCE_KEYS, LEFT_MENU_WIDTH } from "../../constants";
 import MenuIcon from "@mui/icons-material/Menu";
 import NewLayout from "../../components/layouts/NewLayout";
 import { useChatStore } from "../../stores/ChatStore";
 import { PersistenceUtils } from "../../util/persistence";
 import { useChatService } from "../../hooks/useChatService";
-import { convertChatHistoryToMessages } from "./utils";
+import { useApiRequestService } from "./useApiRequestService";
+import { defaultEnabledTools } from "../../allowedTools";
 
 const MainScreen = () => {
   const { t } = useTranslation();
-  const { currentChatIndex, currentChatHistory, chatHistoriesDescriptions, setCurrentChatHistory, setDefaultChatHistory, getDefaultModel, setCurrentChatIndex: chatStoreSetCurrentChatIndex, setChatHistoriesDescriptions } = useChatStore();
+  const appStore = useAppStore();
+  const { currentChatIndex, currentChatHistory, chatHistoriesDescriptions, setCurrentChatHistory, setDefaultChatHistory, getDefaultModel, setCurrentChatIndex: chatStoreSetCurrentChatIndex, setChatHistoriesDescriptions, quotedText } = useChatStore();
   const chatService = useChatService();
-  const snackbars = useAppStore((state) => state.snackbars);
-  const appDrawer = useAppStore((state) => state.appDrawer);
-  const defaultEnabledTools: { [key: string]: boolean } = {};
-  allowedToolsSet.forEach((tool) => {
-    if (tool == "archibus") defaultEnabledTools[tool] = false;
-    else defaultEnabledTools[tool] = true;
-  });
+  const apiRequestService = useApiRequestService();
 
   const [userData, setUserData] = useState({
     graphData: null,
@@ -54,167 +46,14 @@ const MainScreen = () => {
   });
 
   const location = useLocation();
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
   const [chatIndexToLoadOrDelete, setChatIndexToLoadOrDelete] = useState<
     number | null
   >(null);
   const [showDeleteChatDialog, setShowDeleteChatDialog] = useState(false);
-  const [quotedText, setQuotedText] = useState<string>();
-  const [apiAccessToken, setApiAccessToken] = useState<string>("");
-  const [enabledTools, setEnabledTools] =
-    useState<Record<string, boolean>>(defaultEnabledTools);
-  const [selectedCorporateFunction, setSelectedCorporateFunction] =
-    useState<string>("intranet_question");
 
   const { instance, inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
-
-
-
-  const sendApiRequest = async (request: MessageRequest) => {
-    try {
-      let token = apiAccessToken;
-      if (!apiAccessToken || isTokenExpired(apiAccessToken)) {
-        const response = await instance.acquireTokenSilent({
-          ...apiUse,
-          account: instance.getActiveAccount() as AccountInfo,
-          forceRefresh: true,
-        });
-        setApiAccessToken(response.accessToken);
-        token = response.accessToken;
-      }
-
-      if (!token) throw new Error(t("no.token"));
-
-      const completionResponse = await completionMySSC({
-        request: request,
-        updateLastMessage: chatService.updateLastMessage,
-        accessToken: token,
-      });
-
-      setCurrentChatHistory((prevChatHistory) => {
-        const updatedChatItems = prevChatHistory?.chatItems.map(
-          (item, itemIndex) => {
-            if (
-              itemIndex === prevChatHistory.chatItems.length - 1 &&
-              isACompletion(item)
-            ) {
-              return {
-                ...item,
-                message: {
-                  ...item.message,
-                  context: completionResponse.message.context,
-                  tools_info: completionResponse.message.tools_info,
-                },
-              };
-            }
-            return item;
-          }
-        );
-
-        const updatedChatHistory: ChatHistory = {
-          ...prevChatHistory,
-          chatItems: updatedChatItems,
-        };
-
-        // filters toast messages so they're not saved to local storage
-        const filteredChatHistory = {
-          ...updatedChatHistory,
-          chatItems: updatedChatItems.filter((item) => !isAToastMessage(item)),
-        };
-
-        chatService.saveChatHistories(filteredChatHistory);
-        return updatedChatHistory;
-      });
-    } catch (error) {
-      let errorMessage: string;
-
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else {
-        errorMessage = t("chat.unknownError");
-      }
-
-      const toast: ToastMessage = {
-        toastMessage: errorMessage,
-        isError: true,
-      };
-
-      setCurrentChatHistory((prevChatHistory) => {
-        const updatedChatHistory = {
-          ...prevChatHistory,
-          chatItems: [...prevChatHistory.chatItems, toast],
-        };
-        return updatedChatHistory;
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const makeApiRequest = async (
-    question: string,
-    userData: { graphData: any },
-    attachments?: Attachment[],
-    quotedTextFromRegenerate?: string
-  ) => {
-    // set is loading so we disable some interactive functionality while we load the response
-    setIsLoading(true);
-    const messagedQuoted = quotedTextFromRegenerate
-      ? quotedTextFromRegenerate
-      : quotedText;
-
-    const userMessage: Message = {
-      role: "user",
-      content: question,
-      quotedText: messagedQuoted,
-      attachments: attachments,
-    };
-
-    const responsePlaceholder: Completion = {
-      message: {
-        role: "assistant",
-        content: "",
-      },
-    };
-
-    const messages = convertChatHistoryToMessages([
-      ...currentChatHistory.chatItems,
-      userMessage,
-    ], MAX_MESSAGES_SENT);
-
-    // prepare request bundle
-    const request: MessageRequest = {
-      messages: messages,
-      max: MAX_MESSAGES_SENT,
-      top: 5,
-      tools: Object.keys(enabledTools).filter((key) => enabledTools[key]),
-      uuid: currentChatHistory.uuid,
-      quotedText: messagedQuoted,
-      model: currentChatHistory.model,
-      fullName:
-        userData.graphData["givenName"] + " " + userData.graphData["surname"],
-      corporateFunction: selectedCorporateFunction,
-    };
-
-    // update current chat window with the message sent..
-    setCurrentChatHistory((prevChatHistory) => {
-      const updatedChatHistory = {
-        ...prevChatHistory,
-        chatItems: [
-          ...prevChatHistory.chatItems,
-          userMessage,
-          responsePlaceholder,
-        ],
-      };
-      chatService.saveChatHistories(updatedChatHistory);
-      return updatedChatHistory;
-    });
-
-    sendApiRequest(request);
-    setQuotedText(undefined);
-  };
 
   const replayChat = () => {
     const currentChatHistoryItems = currentChatHistory.chatItems;
@@ -235,11 +74,12 @@ const MainScreen = () => {
     });
 
     if (isAMessage(lastQuestion)) {
-      makeApiRequest(
+      apiRequestService.makeApiRequest(
         lastQuestion.content ? lastQuestion.content : "",
         userData,
         undefined,
-        lastQuestion.quotedText
+        lastQuestion.quotedText,
+        appStore.tools.enabledTools
       );
     }
   };
@@ -296,13 +136,13 @@ const MainScreen = () => {
     // TODO: load settings
     const enabledTools = PersistenceUtils.getEnabledTools();
     if (Object.keys(defaultEnabledTools).length == Object.keys(enabledTools).length) {
-      setEnabledTools(enabledTools);
+      appStore.tools.setEnabledTools(enabledTools);
     } else {
-      setEnabledTools(defaultEnabledTools);
+      appStore.tools.setEnabledTools(defaultEnabledTools);
     }
     const selectedCorporateFunction = PersistenceUtils.getSelectedCorporateFunction();
     if (selectedCorporateFunction)
-      setSelectedCorporateFunction(selectedCorporateFunction);
+      appStore.tools.setSelectedCorporateFunction(selectedCorporateFunction);
   }, []);
 
   const handleRemoveToastMessage = (indexToRemove: number) => {
@@ -326,7 +166,7 @@ const MainScreen = () => {
 
     if (name === "archibus" && checked) {
       // If 'archibus' is enabled, set all other tools to off
-      updatedTools = Object.keys(enabledTools).reduce(
+      updatedTools = Object.keys(appStore.tools.enabledTools).reduce(
         (acc: { [key: string]: boolean }, tool: string) => {
           acc[tool] = tool === "archibus";
           return acc;
@@ -335,23 +175,23 @@ const MainScreen = () => {
       );
       // disable the function being used
       // (should have no incidence on backend but this is to make it clear to the user)
-      setSelectedCorporateFunction("none");
+      appStore.tools.setSelectedCorporateFunction("none");
       PersistenceUtils.clearSelectedCorporateFunction();
     } else if (name !== "archibus" && checked) {
       // If any tool other than 'archibus' is enabled, set 'archibus' to off
       updatedTools = {
-        ...enabledTools,
+        ...appStore.tools.enabledTools,
         [name]: checked,
         archibus: false,
       };
     } else {
       // Otherwise, just update the specific tool's state
       updatedTools = {
-        ...enabledTools,
+        ...appStore.tools.enabledTools,
         [name]: checked,
       };
     }
-    setEnabledTools(updatedTools);
+    appStore.tools.setEnabledTools(updatedTools);
     PersistenceUtils.setEnabledTools(updatedTools);
   };
 
@@ -360,21 +200,21 @@ const MainScreen = () => {
   ) => {
     //https://mui.com/material-ui/react-radio-button/
     let functionName = (event.target as HTMLInputElement).value;
-    setSelectedCorporateFunction(functionName);
+    appStore.tools.setSelectedCorporateFunction(functionName);
     PersistenceUtils.setSelectedCorporateFunction(functionName);
     // disable Archibus if it's checked and on...
-    setEnabledTools((enabledTools) => {
+    const _enabledTools = { ...appStore.tools.enabledTools };
+
       if (functionName == "none") {
-        enabledTools["corporate"] = false;
+        _enabledTools["corporate"] = false;
       } else {
-        enabledTools["corporate"] = true;
+        _enabledTools["corporate"] = true;
       }
-      if (enabledTools.hasOwnProperty("archibus")) {
-        enabledTools["archibus"] = false;
+    if (_enabledTools.hasOwnProperty("archibus")) {
+      _enabledTools["archibus"] = false;
       }
-      PersistenceUtils.setEnabledTools(enabledTools);
-      return enabledTools;
-    });
+    PersistenceUtils.setEnabledTools(_enabledTools);
+    appStore.tools.setEnabledTools(_enabledTools);
   };
 
   const hanldeUpdateModelVersion = (modelName: string) => {
@@ -513,7 +353,7 @@ const MainScreen = () => {
         ]);
       } else {
         const showError = (msg: string) => {
-          snackbars.show(msg, SNACKBAR_DEBOUNCE_KEYS.SUGGEST_CONTEXT_ERROR);
+          appStore.snackbars.show(msg, SNACKBAR_DEBOUNCE_KEYS.SUGGEST_CONTEXT_ERROR);
           console.error("ERROR: parsedSuggestionContext", msg);
         };
         switch (parsedSuggestionContext.errorReason) {
@@ -546,14 +386,14 @@ const MainScreen = () => {
               <>
                 < IconButton sx={{
                   color: 'white',
-                }} onClick={() => appDrawer.toggle()}>
+                }} onClick={() => appStore.appDrawer.toggle()}>
                   <MenuIcon />
                 </IconButton>
               </>
             }
             handleSetSelectedCorporateFunction={handleSetSelectedCorporateFunction}
-            selectedCorporateFunction={selectedCorporateFunction}
-            enabledTools={enabledTools}
+            selectedCorporateFunction={appStore.tools.selectedCorporateFunction}
+            enabledTools={appStore.tools.enabledTools}
             handleUpdateEnabledTools={handleUpdateEnabledTools}
             handleSelectedModelChanged={hanldeUpdateModelVersion}
             selectedModel={currentChatHistory.model}
@@ -609,9 +449,9 @@ const MainScreen = () => {
               <ChatInput
                 clearOnSend
                 placeholder={t("placeholder")}
-                disabled={isLoading}
+                disabled={apiRequestService.isLoading}
                 onSend={(question, attachments) =>
-                  makeApiRequest(question, userData, attachments)
+                  apiRequestService.makeApiRequest(question, userData, attachments, undefined, appStore.tools.enabledTools)
                 }
                 quotedText={quotedText}
                 selectedModel={currentChatHistory.model}
@@ -628,7 +468,7 @@ const MainScreen = () => {
               margin: "auto",
               position: "fixed",
               top: 0,
-                left: appDrawer.isOpen ? LEFT_MENU_WIDTH : 0,
+                left: appStore.appDrawer.isOpen ? LEFT_MENU_WIDTH : 0,
               right: 0,
               bottom: 0,
               paddingTop: "3rem",
@@ -639,7 +479,7 @@ const MainScreen = () => {
             <Box sx={{ flexGrow: 1 }}></Box>
             <ChatMessagesContainer
               chatHistory={currentChatHistory}
-              isLoading={isLoading}
+                isLoading={apiRequestService.isLoading}
               chatMessageStreamEnd={chatMessageStreamEnd}
                 replayChat={replayChat}
               handleRemoveToastMessage={handleRemoveToastMessage}
@@ -659,9 +499,9 @@ const MainScreen = () => {
               <ChatInput
                 clearOnSend
                 placeholder={t("placeholder")}
-                disabled={isLoading}
+                  disabled={apiRequestService.isLoading}
                 onSend={(question, attachments) =>
-                  makeApiRequest(question, userData, attachments)
+                  apiRequestService.makeApiRequest(question, userData, attachments, undefined, appStore.tools.enabledTools)
                 }
                 quotedText={quotedText}
                 selectedModel={currentChatHistory.model}
