@@ -5,6 +5,7 @@ import { useAppStore } from "../stores/AppStore";
 import { useTranslation } from "react-i18next";
 import { MAX_CHAT_HISTORIES_LENGTH, SNACKBAR_DEBOUNCE_KEYS } from "../constants";
 import { isACompletion } from "../utils";
+import { buildDefaultChatHistory } from "../stores/modelBuilders";
 
 export const useChatService = () => {
     const { t } = useTranslation()
@@ -79,11 +80,16 @@ export const useChatService = () => {
                 SNACKBAR_DEBOUNCE_KEYS.CHAT_HISTORY_FULL_ERROR
             );
         } else {
-            setCurrentChatIndex(newChatIndex);
-            setDefaultChatHistory()
+            const newChat = buildDefaultChatHistory()
+            chatHistories.push(newChat);
+            const newDescription = "Conversation " + (chatHistoriesDescriptions.length + 1);
+            newChat.description = newDescription;
+            PersistenceUtils.setChatHistories(chatHistories);
+            setCurrentChatIndex(chatHistories.length - 1);
+            setCurrentChatHistory(newChat);
             setChatHistoriesDescriptions([
                 ...chatHistoriesDescriptions,
-                "Conversation " + (chatHistoriesDescriptions.length + 1),
+                newDescription
             ]);
         }
     };
