@@ -4,11 +4,12 @@ import { buildDefaultChatHistory, buildDefaultModel } from "./modelBuilders";
 
 type ChatStore = {
   currentChatIndex: number;
-  currentChatHistory: ChatHistory;
+  currentChatHistory: ChatHistory | undefined;
   chatHistoriesDescriptions: string[];
   chatIndexToLoadOrDelete: number | null;
   quotedText: string | undefined;
   setChatIndexToLoadOrDelete: (index: number | null) => void;
+  getCurrentChatHistory: () => ChatHistory;
   setCurrentChatHistory: (
     param: ChatHistory | ((prev: ChatHistory) => ChatHistory)
   ) => void;
@@ -18,7 +19,7 @@ type ChatStore = {
   setChatHistoriesDescriptions: (descriptions: string[]) => void;
 };
 
-export const useChatStore = create<ChatStore>((set) => ({
+export const useChatStore = create<ChatStore>((set, get) => ({
   currentChatIndex: 0,
   chatIndexToLoadOrDelete: null,
   currentChatHistory: buildDefaultChatHistory(),
@@ -37,7 +38,7 @@ export const useChatStore = create<ChatStore>((set) => ({
     set((state) =>
       produce(state, (draft) => {
         if (typeof param === "function") {
-          draft.currentChatHistory = param(draft.currentChatHistory);
+          draft.currentChatHistory = param(draft.getCurrentChatHistory());
         } else {
           draft.currentChatHistory = param;
         }
@@ -53,6 +54,18 @@ export const useChatStore = create<ChatStore>((set) => ({
   },
   getDefaultModel: () => {
     return buildDefaultModel();
+  },
+  getCurrentChatHistory: () => {
+    const state = get();
+    const currentChatHistory = state.currentChatHistory;
+    if (!currentChatHistory) {
+      return buildDefaultChatHistory();
+    } else {
+      return {
+        ...buildDefaultChatHistory(),
+        ...currentChatHistory
+      }
+    }
   },
   setCurrentChatIndex: (index: number) => {
     set((state) =>

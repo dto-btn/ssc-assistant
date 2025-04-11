@@ -6,7 +6,7 @@ import { sendFeedback } from "../api/api";
 import { useChatStore } from '../stores/ChatStore';
 
 export const FeedbackForm = () => {
-  const { currentChatHistory, setCurrentChatHistory } = useChatStore();
+  const { getCurrentChatHistory, setCurrentChatHistory } = useChatStore();
   const { close, state } = useAppStore((state) => state.feedbackForm);
 
   const isOpen = state === "open-positive" || state === "open-negative";
@@ -18,15 +18,11 @@ export const FeedbackForm = () => {
     event.preventDefault();
     close();
 
-    if (!currentChatHistory) {
-      return;
-    }
-
     let toast: ToastMessage;
     const isGoodResponse = state === "open-positive";
 
     try {
-      await sendFeedback(feedback, isGoodResponse, currentChatHistory.uuid);
+      await sendFeedback(feedback, isGoodResponse, getCurrentChatHistory().uuid);
       toast = {
         toastMessage: t("feedback.success"),
         isError: false,
