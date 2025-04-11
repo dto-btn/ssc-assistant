@@ -11,6 +11,10 @@
         "en": "How can I help?",
         "fr": "Comment puis-je vous aider?"
     },
+    "how.can.i.help.submessage": {
+        "en": "Hey there! 🌟 I'm your AI buddy, always ready to help! Have HR questions, need SSC info, or some policy guidance? I'm on it! I can also crunch data, jazz up your drafts, or take your outline and turn it into something awesome for you to review. And that's just the beginning... Let's make magic together! ✨",
+        "fr": "Salut! 🌟 Je suis votre ami IA, toujours prêt à aider! Vous avez des questions sur les RH, besoin d'informations sur SPC ou des conseils sur les politiques? Je suis là pour ça! Je peux aussi analyser des données, embellir vos brouillons, ou prendre votre plan et le transformer en quelque chose d'incroyable à revoir. Et ce n'est que le début... Faisons de la magie ensemble! ✨"
+    },
     "chat.with.gpt": {
         "en": "Chat with GPT and:",
         "fr": "Discutez avec GPT et :"
