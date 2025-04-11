@@ -36,7 +36,7 @@ import { defaultEnabledTools } from "../../allowedTools";
 const MainScreen = () => {
   const { t } = useTranslation();
   const appStore = useAppStore();
-  const { currentChatIndex, currentChatHistory, chatHistoriesDescriptions, setCurrentChatHistory, setDefaultChatHistory, getDefaultModel, setCurrentChatIndex: chatStoreSetCurrentChatIndex, setChatHistoriesDescriptions, quotedText } = useChatStore();
+  const { currentChatIndex, getCurrentChatHistory, chatHistoriesDescriptions, setCurrentChatHistory, setDefaultChatHistory, getDefaultModel, setCurrentChatIndex: chatStoreSetCurrentChatIndex, setChatHistoriesDescriptions, quotedText } = useChatStore();
   const chatService = useChatService();
   const apiRequestService = useApiRequestService();
 
@@ -56,7 +56,7 @@ const MainScreen = () => {
   const isAuthenticated = useIsAuthenticated();
 
   const replayChat = () => {
-    const currentChatHistoryItems = currentChatHistory.chatItems;
+    const currentChatHistoryItems = getCurrentChatHistory().chatItems;
     const lastQuestion =
       currentChatHistoryItems[currentChatHistoryItems.length - 2];
 
@@ -128,7 +128,7 @@ const MainScreen = () => {
   // Scrolls the last updated message (if its streaming, or once done) into view
   useEffect(() => {
     chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" });
-  }, [currentChatHistory?.chatItems]);
+  }, [getCurrentChatHistory().chatItems]);
 
   // Load chat histories if present
   useEffect(() => {
@@ -396,7 +396,7 @@ const MainScreen = () => {
             enabledTools={appStore.tools.enabledTools}
             handleUpdateEnabledTools={handleUpdateEnabledTools}
             handleSelectedModelChanged={hanldeUpdateModelVersion}
-            selectedModel={currentChatHistory.model}
+            selectedModel={getCurrentChatHistory().model}
             logout={handleLogout}
           />
         )}
@@ -413,7 +413,7 @@ const MainScreen = () => {
         )}
       >
 
-        {currentChatHistory.chatItems.length === 0 ? (
+        {getCurrentChatHistory().chatItems.length === 0 ? (
           // if 0 chat history
           <Box
             sx={{
@@ -463,7 +463,7 @@ const MainScreen = () => {
                   apiRequestService.makeApiRequest(question, userData, attachments, undefined, appStore.tools.enabledTools)
                 }
                 quotedText={quotedText}
-                selectedModel={currentChatHistory.model}
+                selectedModel={getCurrentChatHistory().model}
               />
             </Box>
           </Box>
@@ -487,7 +487,7 @@ const MainScreen = () => {
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <ChatMessagesContainer
-              chatHistory={currentChatHistory}
+                chatHistory={getCurrentChatHistory()}
                 isLoading={apiRequestService.isLoading}
               chatMessageStreamEnd={chatMessageStreamEnd}
                 replayChat={replayChat}
@@ -513,7 +513,7 @@ const MainScreen = () => {
                   apiRequestService.makeApiRequest(question, userData, attachments, undefined, appStore.tools.enabledTools)
                 }
                 quotedText={quotedText}
-                selectedModel={currentChatHistory.model}
+                  selectedModel={getCurrentChatHistory().model}
               />
             </Box>
           </Box>

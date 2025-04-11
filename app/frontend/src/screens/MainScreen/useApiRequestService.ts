@@ -130,7 +130,7 @@ export const useApiRequestService = () => {
         };
 
         const messages = convertChatHistoryToMessages([
-            ...chatStore.currentChatHistory.chatItems,
+            ...chatStore.getCurrentChatHistory().chatItems,
             userMessage,
         ], MAX_MESSAGES_SENT);
 
@@ -141,9 +141,9 @@ export const useApiRequestService = () => {
             max: MAX_MESSAGES_SENT,
             top: 5,
             tools: Object.keys(enabledTools).filter((key) => enabledTools[key]),
-            uuid: chatStore.currentChatHistory.uuid,
+            uuid: chatStore.getCurrentChatHistory().uuid,
             quotedText: messagedQuoted,
-            model: chatStore.currentChatHistory.model,
+            model: chatStore.getCurrentChatHistory().model,
             fullName:
                 userData.graphData["givenName"] + " " + userData.graphData["surname"],
             corporateFunction: selectedCorporateFunction,
