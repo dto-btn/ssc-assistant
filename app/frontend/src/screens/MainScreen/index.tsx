@@ -17,7 +17,6 @@ import { isAMessage } from "../../utils";
 import { InteractionStatus } from "@azure/msal-browser";
 import { v4 as uuidv4 } from "uuid";
 import { bookReservation } from "../../api/api";
-import { allowedToolsSet } from "../../allowedTools";
 import { callMsGraph } from "../../graph";
 import { UserContext } from "../../stores/UserContext";
 import { DeleteConversationConfirmation } from "../../components/DeleteConversationConfirmation";
@@ -32,6 +31,7 @@ import { useChatStore } from "../../stores/ChatStore";
 import { PersistenceUtils } from "../../util/persistence";
 import { useChatService } from "../../hooks/useChatService";
 import { useApiRequestService } from "./useApiRequestService";
+import { defaultEnabledTools } from "../../allowedTools";
 
 const MainScreen = () => {
   const { t } = useTranslation();
@@ -39,11 +39,6 @@ const MainScreen = () => {
   const { currentChatIndex, currentChatHistory, chatHistoriesDescriptions, setCurrentChatHistory, setDefaultChatHistory, getDefaultModel, setCurrentChatIndex: chatStoreSetCurrentChatIndex, setChatHistoriesDescriptions, quotedText } = useChatStore();
   const chatService = useChatService();
   const apiRequestService = useApiRequestService();
-  const defaultEnabledTools: { [key: string]: boolean } = {};
-  allowedToolsSet.forEach((tool) => {
-    if (tool == "archibus") defaultEnabledTools[tool] = false;
-    else defaultEnabledTools[tool] = true;
-  });
 
   const [userData, setUserData] = useState({
     graphData: null,
@@ -56,8 +51,6 @@ const MainScreen = () => {
     number | null
   >(null);
   const [showDeleteChatDialog, setShowDeleteChatDialog] = useState(false);
-  const [enabledTools, setEnabledTools] =
-    useState<Record<string, boolean>>(defaultEnabledTools);
 
   const { instance, inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
@@ -86,7 +79,7 @@ const MainScreen = () => {
         userData,
         undefined,
         lastQuestion.quotedText,
-        enabledTools
+        appStore.tools.enabledTools
       );
     }
   };
@@ -143,13 +136,13 @@ const MainScreen = () => {
     // TODO: load settings
     const enabledTools = PersistenceUtils.getEnabledTools();
     if (Object.keys(defaultEnabledTools).length == Object.keys(enabledTools).length) {
-      setEnabledTools(enabledTools);
+      appStore.tools.setEnabledTools(enabledTools);
     } else {
-      setEnabledTools(defaultEnabledTools);
+      appStore.tools.setEnabledTools(defaultEnabledTools);
     }
     const selectedCorporateFunction = PersistenceUtils.getSelectedCorporateFunction();
     if (selectedCorporateFunction)
-      appStore.tools.selectedCorporateFunction = selectedCorporateFunction;
+      appStore.tools.setSelectedCorporateFunction(selectedCorporateFunction);
   }, []);
 
   const handleRemoveToastMessage = (indexToRemove: number) => {
@@ -173,7 +166,7 @@ const MainScreen = () => {
 
     if (name === "archibus" && checked) {
       // If 'archibus' is enabled, set all other tools to off
-      updatedTools = Object.keys(enabledTools).reduce(
+      updatedTools = Object.keys(appStore.tools.enabledTools).reduce(
         (acc: { [key: string]: boolean }, tool: string) => {
           acc[tool] = tool === "archibus";
           return acc;
@@ -182,23 +175,23 @@ const MainScreen = () => {
       );
       // disable the function being used
       // (should have no incidence on backend but this is to make it clear to the user)
-      appStore.tools.selectedCorporateFunction = "none";
+      appStore.tools.setSelectedCorporateFunction("none");
       PersistenceUtils.clearSelectedCorporateFunction();
     } else if (name !== "archibus" && checked) {
       // If any tool other than 'archibus' is enabled, set 'archibus' to off
       updatedTools = {
-        ...enabledTools,
+        ...appStore.tools.enabledTools,
         [name]: checked,
         archibus: false,
       };
     } else {
       // Otherwise, just update the specific tool's state
       updatedTools = {
-        ...enabledTools,
+        ...appStore.tools.enabledTools,
         [name]: checked,
       };
     }
-    setEnabledTools(updatedTools);
+    appStore.tools.setEnabledTools(updatedTools);
     PersistenceUtils.setEnabledTools(updatedTools);
   };
 
@@ -207,21 +200,21 @@ const MainScreen = () => {
   ) => {
     //https://mui.com/material-ui/react-radio-button/
     let functionName = (event.target as HTMLInputElement).value;
-    appStore.tools.selectedCorporateFunction = functionName;
+    appStore.tools.setSelectedCorporateFunction(functionName);
     PersistenceUtils.setSelectedCorporateFunction(functionName);
     // disable Archibus if it's checked and on...
-    setEnabledTools((enabledTools) => {
+    const _enabledTools = { ...appStore.tools.enabledTools };
+
       if (functionName == "none") {
-        enabledTools["corporate"] = false;
+        _enabledTools["corporate"] = false;
       } else {
-        enabledTools["corporate"] = true;
+        _enabledTools["corporate"] = true;
       }
-      if (enabledTools.hasOwnProperty("archibus")) {
-        enabledTools["archibus"] = false;
+    if (_enabledTools.hasOwnProperty("archibus")) {
+      _enabledTools["archibus"] = false;
       }
-      PersistenceUtils.setEnabledTools(enabledTools);
-      return enabledTools;
-    });
+    PersistenceUtils.setEnabledTools(_enabledTools);
+    appStore.tools.setEnabledTools(_enabledTools);
   };
 
   const hanldeUpdateModelVersion = (modelName: string) => {
@@ -400,7 +393,7 @@ const MainScreen = () => {
             }
             handleSetSelectedCorporateFunction={handleSetSelectedCorporateFunction}
             selectedCorporateFunction={appStore.tools.selectedCorporateFunction}
-            enabledTools={enabledTools}
+            enabledTools={appStore.tools.enabledTools}
             handleUpdateEnabledTools={handleUpdateEnabledTools}
             handleSelectedModelChanged={hanldeUpdateModelVersion}
             selectedModel={currentChatHistory.model}
@@ -458,7 +451,7 @@ const MainScreen = () => {
                 placeholder={t("placeholder")}
                 disabled={apiRequestService.isLoading}
                 onSend={(question, attachments) =>
-                  apiRequestService.makeApiRequest(question, userData, attachments, undefined, enabledTools)
+                  apiRequestService.makeApiRequest(question, userData, attachments, undefined, appStore.tools.enabledTools)
                 }
                 quotedText={quotedText}
                 selectedModel={currentChatHistory.model}
@@ -508,7 +501,7 @@ const MainScreen = () => {
                 placeholder={t("placeholder")}
                   disabled={apiRequestService.isLoading}
                 onSend={(question, attachments) =>
-                  apiRequestService.makeApiRequest(question, userData, attachments, undefined, enabledTools)
+                  apiRequestService.makeApiRequest(question, userData, attachments, undefined, appStore.tools.enabledTools)
                 }
                 quotedText={quotedText}
                 selectedModel={currentChatHistory.model}
