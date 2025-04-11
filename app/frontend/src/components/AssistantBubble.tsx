@@ -450,11 +450,19 @@ export const AssistantBubble = ({
                   {brData &&
                     brData.length == 1 &&
                     brData.map((item, index) => (
-                      <BusinessRequestCard
-                        key={index}
-                        data={item}
-                        lang={i18n.language}
-                      />
+                      <Box
+                        sx={{
+                          gridColumn: "span 1",
+                          display: "flex",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <BusinessRequestCard
+                          key={index}
+                          data={item}
+                          lang={i18n.language}
+                        />
+                      </Box>
                     ))}
 
                   {brUpdates && (
