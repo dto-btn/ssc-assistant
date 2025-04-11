@@ -136,7 +136,8 @@ export const DrawerMenu = ({
         width: 300,
         display: "flex",
         flexDirection: "column",
-        height: "100vh"
+        height: "100vh",
+        overflowX: "hidden",
       }}
     >
       <List>
@@ -219,6 +220,7 @@ export const DrawerMenu = ({
                   aria-expanded={moreMenuOpen ? "true" : undefined}
                   aria-haspopup="true"
                   sx={{
+                    marginRight: "10px",
                     "&:hover": {
                       backgroundColor: "transparent",
                       color: "black",
