@@ -436,7 +436,7 @@
         "fr": "Avertissement : Votre historique de conversation est plein. Vous devez supprimer une conversation existante pour en créer une nouvelle."
     },
     "new.conversation": {
-        "en": "New Conversation",
+        "en": "New Chat",
         "fr": "Nouvelle conversation"
     },
     "new.conversation.short": {
