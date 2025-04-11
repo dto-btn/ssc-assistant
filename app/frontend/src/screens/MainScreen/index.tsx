@@ -25,7 +25,7 @@ import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
 import { useAppStore } from "../../stores/AppStore";
 import Typography from "@mui/material/Typography";
 import { SNACKBAR_DEBOUNCE_KEYS, LEFT_MENU_WIDTH } from "../../constants";
-import MenuIcon from "@mui/icons-material/Menu";
+import VerticalSplitIcon from "@mui/icons-material/VerticalSplit";
 import NewLayout from "../../components/layouts/NewLayout";
 import { useChatStore } from "../../stores/ChatStore";
 import { PersistenceUtils } from "../../util/persistence";
@@ -387,7 +387,7 @@ const MainScreen = () => {
                 < IconButton sx={{
                   color: 'white',
                 }} onClick={() => appStore.appDrawer.toggle()}>
-                  <MenuIcon />
+                  <VerticalSplitIcon />
                 </IconButton>
               </>
             }
