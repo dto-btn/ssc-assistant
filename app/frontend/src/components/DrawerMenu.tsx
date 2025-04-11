@@ -122,6 +122,13 @@ export const DrawerMenu = ({
   // const corporateKey =
   //   corporateKeyIndex > -1 ? tools.splice(corporateKeyIndex, 1)[0] : null;
 
+  const chatDescriptionsWithOriginalIndex: { chatDescription: string, originalIndex: number }[] = chatDescriptions.map((chatDescription, index) => {
+    return {
+      chatDescription,
+      originalIndex: index
+    };
+  });
+
   const list = () => (
     <Box
       role="presentation"
@@ -129,8 +136,7 @@ export const DrawerMenu = ({
         width: 300,
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
-        backgroundColor: "#ededf3"
+        height: "100vh"
       }}
     >
       <List>
@@ -165,7 +171,7 @@ export const DrawerMenu = ({
           />
         </Divider>
         <Collapse in={true} timeout="auto" unmountOnExit>
-          {chatDescriptions.map((chatDescription, index) => {
+          {chatDescriptionsWithOriginalIndex.reverse().map(({ chatDescription, originalIndex: index }) => {
             return (
               <ListItem
                 key={index}

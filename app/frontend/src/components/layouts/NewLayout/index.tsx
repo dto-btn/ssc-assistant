@@ -27,7 +27,7 @@ const NewLayout: React.FC<NewLayoutProps> = ({ children, appBar, appDrawerConten
     return (
         <Box sx={{ display: 'flex' }}>
             {appBar ? appBar : (
-                <AppBar position="fixed" isOpen={isOpen} drawerWidth={LEFT_MENU_WIDTH}>
+                <AppBar position="fixed" isOpen={isOpen} drawerWidth={LEFT_MENU_WIDTH} >
                     <Toolbar>
                         <Box sx={{
                             cursor: "pointer",
@@ -63,6 +63,7 @@ const NewLayout: React.FC<NewLayoutProps> = ({ children, appBar, appDrawerConten
                     '& .MuiDrawer-paper': {
                         width: drawerWidth,
                         boxSizing: 'border-box',
+                        backgroundColor: "#ededf3"
                     },
                 }}
                 variant="persistent"
