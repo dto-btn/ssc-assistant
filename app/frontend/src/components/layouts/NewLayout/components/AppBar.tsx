@@ -23,6 +23,10 @@ export const AppBar = styled(MuiAppBar, {
           easing: theme.transitions.easing.easeOut,
           duration: theme.transitions.duration.enteringScreen,
         }),
+        '& .MuiToolbar-gutters': {
+          paddingLeft: theme.spacing(1),
+          paddingRight: theme.spacing(1),
+        }
       },
     },
   ],
