@@ -7,11 +7,13 @@ import { Typography } from '@mui/material'
  */
 
 export const formatDate = (date: string): string => {
-  return new Date(date).toLocaleString("en-CA", {
+  if(date)
+    return new Date(date).toLocaleString("en-CA", {
             year: "numeric",
             month: "2-digit",
             day: "2-digit",
           });
+  else return "";
 };
 
 interface DateDisplayProps {
@@ -20,7 +22,7 @@ interface DateDisplayProps {
 
 export const DateDisplay = ({ dateString }: DateDisplayProps) => {
   return (
-    <Typography variant="button" gutterBottom sx={{ display: 'block' }}>
+    <Typography variant="button">
       {formatDate(dateString)}
     </Typography>)
 }
