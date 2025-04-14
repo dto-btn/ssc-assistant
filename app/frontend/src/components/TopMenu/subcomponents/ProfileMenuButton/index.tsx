@@ -77,6 +77,8 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
             sx={{
                 cursor: "pointer"
             }}
+            onClick={handleClick}
+            tabIndex={0}
         >
             <Box
                 id="demo-positioned-button"
@@ -89,10 +91,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                     alignItems: "center",
                     gap: "0.5rem"
                 }}
-                onClick={handleClick}
-
             >
-
                 <MoreHorizIcon />
                 <UserProfilePicture
                     fullName={graphData["givenName"] + " " + graphData["surname"]}
