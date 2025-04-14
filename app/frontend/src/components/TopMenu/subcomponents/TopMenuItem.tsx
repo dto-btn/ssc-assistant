@@ -9,7 +9,7 @@ type Props = {
 export const TopMenuItem: FC<Props> = ({ item }) => {
     return (
         <Box
-            tabIndex={2}
+            tabindex={0}
             sx={{
                 transition: "border-color 0.2s",
                 display: "flex",
