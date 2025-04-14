@@ -128,7 +128,7 @@ def get_br_statuses(active: bool = True):
     "type": "function",
     "function": {
         "name": "get_br_by_status",
-        "description": "Use this function to list all the BR filtered by a specific status.",
+        "description": "Use this function to list all the BR filtered by a specific status. Never assume a status a user is giving you is correct. Always use get_br_statuses() to get the list of statuses and their ID. This can be used to get the STATUS_ID.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -154,8 +154,12 @@ def get_br_by_status(status: str, assigned_to: str = "", limit: int = 100):
     """
     This will retreive BR filtered by status.
     """
-    query = query_builder.get_br_query(status=True, limit=bool(limit))
-    return db.execute_query(query, status, limit)
+    if assigned_to:
+        query = query_builder.get_br_query(status=True, by_fields=["opis.BR_OWNER"], limit=bool(limit))
+        return db.execute_query(query, status, assigned_to, limit)
+    else:
+        query = query_builder.get_br_query(status=True, limit=bool(limit))
+        return db.execute_query(query, status, limit)
 
 @tool_metadata({
     "type": "function",
