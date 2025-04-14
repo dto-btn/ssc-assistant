@@ -155,6 +155,13 @@ class DatabaseConnection:
 class BITSQueryBuilder:
     """Class to build BITS queries."""
 
+    br_owner = {'BR_OWNER': 'opis.BR_OWNER'}
+
+    status = {
+        'BITS_STATUS_EN': 's.BITS_STATUS_EN',
+        'BITS_STATUS_FR': 's.BITS_STATUS_FR',
+    }
+
     valid_search_fields = {
         'LEAD_PRODUCT_EN': 'products.PROD_DESC_EN',
         'LEAD_PRODUCT_FR': 'products.PROD_DESC_FR',
@@ -186,8 +193,6 @@ class BITSQueryBuilder:
         'ASSOC_BRS': 'br.ASSOC_BRS',
         'BR_ACTIVE_EN': 's.BR_ACTIVE_EN',
         'BR_ACTIVE_FR': 's.BR_ACTIVE_FR',
-        'BITS_STATUS_EN': 's.BITS_STATUS_EN',
-        'BITS_STATUS_FR': 's.BITS_STATUS_FR',
         'ACC_MANAGER_OPI': 'opis.ACC_MANAGER_OPI',
         'AGR_OPI': 'opis.AGR_OPI',
         'BA_OPI': 'opis.BA_OPI',
@@ -199,7 +204,6 @@ class BITSQueryBuilder:
         'PM_OPI': 'opis.PM_OPI',
         'QA_OPI': 'opis.QA_OPI',
         'SDM_TL_OPI': 'opis.SDM_TL_OPI',
-        'BR_OWNER': 'opis.BR_OWNER',
         'TEAMLEADER': 'opis.TEAMLEADER',
         'WIO_OPI': 'opis.WIO_OPI',
         'GCIT_CAT_EN': 'br.GCIT_CAT_EN',
@@ -213,14 +217,22 @@ class BITSQueryBuilder:
         'PROD_OPI': 'opis.PROD_OPI',
     }
 
+    valid_search_fields.update(br_owner)
+    valid_search_fields.update(status)
+
     def get_br_query(self, br_number_count: int = 0,
-                    status: bool = False,
+                    status: int = 0,
                     limit: bool = False,
                     active: bool = True,
                     by_fields: Optional[List[str]] = None) -> str:
         """Function that will build the select statement for retreiving BRs
 
-        NOTE: No need to join on ORGANIZATION Table atm.. some info is already rolled in BR ITEMS ...
+        Parameters order for the execute query should be as follow:
+
+        1) statuses
+        2) all thw other fields value
+        3) limit for TOP()
+
         """
         query = """WITH FilteredResults AS (
         SELECT
@@ -241,7 +253,8 @@ class BITSQueryBuilder:
         PERIOD_END_DATE = (SELECT TOP(1) MAX(PERIOD_END_DATE) PERIOD_END_DATE FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT])
                                 """]
         if status:
-            snapshot_where_clause.append("STATUS_ID IN (%s)")
+            placeholders = ", ".join(["%s"] * status)
+            snapshot_where_clause.append(f"STATUS_ID IN ({placeholders})")
 
         snapshot_where_clause = " AND ".join(snapshot_where_clause)
         query += f"""
@@ -359,7 +372,7 @@ def _datetime_serializer(obj):
     raise TypeError(f"Type {type(obj)} not serializable")
 
 
-def extract_fields_from_query(query: list, valid_fields: list):
+def extract_fields_from_query(key_value_pairs: list, valid_fields: list):
     """
     Extract fields from the user's query based on the valid fields.
 
@@ -371,10 +384,35 @@ def extract_fields_from_query(query: list, valid_fields: list):
         list: A list of fields extracted from the query.
     """
     fields = []
-    for user_field in query:
-        # Check if the user_field matches any valid field
+    for key_value in key_value_pairs:
+         # Ensure we got sent a key=value style pair
+        parts = key_value.split('=', 1)
+        # Ensure the split resulted in exactly two parts, else skip this item
+        if len(parts) != 2:
+            continue
+
+        user_field = parts[0].strip()
+
         for field in valid_fields:
             if re.search(rf"\b{field}\b", user_field, re.IGNORECASE):
-                fields.append(user_field)
+                fields.append(key_value)
                 break
     return fields
+
+def split_fields(fields):
+    """
+    Splits fields into keys and values.
+    Parameters:
+        fields (list): A list of fields in the format 'key=value'.
+    Returns:
+        tuple: A tuple containing two lists: keys and values.
+    """
+    keys = []
+    values = []
+
+    for field in fields:
+        if '=' in field:
+            key, value = field.split('=', 1)
+            keys.append(key.strip())
+            values.append(value.strip())
+    return keys, values
