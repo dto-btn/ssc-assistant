@@ -49,7 +49,7 @@ def get_br_information(br_numbers: list[int]):
     "type": "function",
     "function": {
         "name": "search_br_by_fields",
-        "description": "This function searches information about BRs given specific BR field(s) and value(s) pairs. YOU MUST ENSURE THAT YOU PASS THE FIELD NAMES AND THE VALUES IN THE SAME ORDER IN EACH RESPECTIVE LISTS.The fields available are obtainable via valid_search_fields() functions. If the user doesn't provide a `field_name` then let them know what the field names are.",
+        "description": "This function searches information about BRs given specific BR field(s) and value(s) pairs. YOU MUST ENSURE THAT YOU PASS THE FIELD NAMES AND THE VALUES IN THE SAME ORDER IN EACH RESPECTIVE LISTS. ALSO ENSURE THAT FOR EACH FIELDS YOU PASS YOU HAVE A MATCHING VALUE.The fields available are obtainable via valid_search_fields() functions. If the user doesn't provide a `field_name` then let them know what the field names are. To Search by status use get_br_by_status() function.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -97,7 +97,7 @@ def search_br_by_fields(field_names: List[str], field_values: List[str], limit: 
     "type": "function",
     "function": {
         "name": "get_br_statuses",
-        "description": "Use this function to list all the BR Statuses. This can be used to get the STATUS_ID. To perform search in other queries.",
+        "description": "Use this function to list all the BR Statuses. This can be used to get the STATUS_ID. To perform search in other queries. NEVER ASSUME THE USER GIVES YOU A VALID STATUS. ALWAYS USE THIS FUNCTION TO GET THE LIST OF STATUSES AND THEIR ID.",
         "parameters": {
             "type": "object",
             "properties": {
