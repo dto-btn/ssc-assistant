@@ -82,6 +82,8 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                 }}
                 onClick={handleClick}
                 tabIndex={0}
+                title="open settings dropdown"
+                aria-label="open settings dropdown"
             >
                 <Box
                     id="demo-positioned-button"
