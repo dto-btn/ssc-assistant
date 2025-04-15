@@ -42,6 +42,7 @@ const NewLayout: React.FC<NewLayoutProps> = ({ children, appBar, appDrawerConten
                                 color="inherit"
                                 aria-label="open drawer"
                                 edge="start"
+                                title="open drawer"
                             >
                                 <VerticalSplitIcon />
                             </IconButton>
