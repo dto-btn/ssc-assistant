@@ -243,11 +243,6 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                             control={<Radio />}
                             label="GPT-4o"
                         />
-                        <FormControlLabel
-                            value="gpt-35-turbo-1106"
-                            control={<Radio />}
-                            label="GPT-3.5 Turbo"
-                        />
                     </RadioGroup>
                 </Collapse>
                 {isAuthenticated && (
