@@ -217,7 +217,6 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                                     role="menuitem"
                                     aria-label={t(tool)}
                                     title={t(tool)}
-                                    role="group"
                                     control={
                                         <Switch
                                             checked={enabledTools[tool]}
