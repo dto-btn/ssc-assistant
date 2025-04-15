@@ -51,7 +51,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
     const [modelMenuOpen, setModelMenuOpen] = React.useState(false);
     const [isOpen, setIsOpen] = React.useState(false);
     const { graphData } = useContext(UserContext);
-    const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    const handleOpen = (event: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
         setIsOpen(true);
     };
@@ -80,10 +80,18 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                 sx={{
                     cursor: "pointer"
                 }}
-                onClick={handleClick}
+                onClick={handleOpen}
+                onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                        handleOpen(event);
+                    }
+                }}
                 tabIndex={0}
                 title="open settings dropdown"
                 aria-label="open settings dropdown"
+                role="button"
+                aria-haspopup="true"
+                aria-expanded={isOpen ? 'true' : undefined}
             >
                 <Box
                     id="demo-positioned-button"
@@ -122,6 +130,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                 sx={{
                     top: 5
                 }}
+                autoFocus
             >
                 <ListItem key="language" disablePadding>
                     <ListItemButton
@@ -145,7 +154,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                 <ListItem key="toolSettings" disablePadding >
                     <ListItemButton
                         onClick={() => setToolsMenuOpen(!toolsMenuOpen)}
-                        aria-expanded={true}
+                        aria-expanded={toolsMenuOpen}
                     >
                         <ListItemIcon>
                             <HandymanIcon />
@@ -175,6 +184,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                                     onChange={handleSetSelectedCorporateFunction}
                                     value={selectedCorporateFunction}
                                     defaultValue="intranet_question"
+                                    role="group"
                                 >
                                     <FormControlLabel
                                         key={-1}
@@ -189,6 +199,9 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                                                 value={name}
                                                 control={<Radio />}
                                                 label={t(name)}
+                                                role="menuitem"
+                                                title={t(name)}
+                                                aria-label={t(name)}
                                             />
                                         )
                                     )}
@@ -201,6 +214,10 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                                 <FormControlLabel
                                     label={t(tool)}
                                     key={index}
+                                    role="menuitem"
+                                    aria-label={t(tool)}
+                                    title={t(tool)}
+                                    role="group"
                                     control={
                                         <Switch
                                             checked={enabledTools[tool]}
@@ -220,8 +237,9 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                 </Collapse>
                 <ListItem key="modelSelection" disablePadding >
                     <ListItemButton
-                        aria-expanded={true}
+                        aria-expanded={modelMenuOpen}
                         onClick={() => setModelMenuOpen(!modelMenuOpen)}
+                        role="menuitem"
                     >
                         <ListItemIcon>
                             <PsychologyIcon />
