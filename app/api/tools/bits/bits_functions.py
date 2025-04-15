@@ -1,10 +1,10 @@
 import json
 import logging
 import os
-from typing import List
+from typing import List, Optional
 
 from src.constants.tools import TOOL_BR
-from tools.bits.bits_utils import BITSQueryBuilder, DatabaseConnection, extract_fields_from_query
+from tools.bits.bits_utils import BITSQueryBuilder, DatabaseConnection, extract_fields_from_query, split_fields
 from utils.decorators import (discover_subfolder_functions_with_metadata,
                               tool_metadata)
 
@@ -49,20 +49,20 @@ def get_br_information(br_numbers: list[int]):
     "type": "function",
     "function": {
         "name": "search_br_by_fields",
-        "description": "This function searches information about BRs given specific BR field(s) and value(s) pairs. YOU MUST ENSURE THAT YOU PASS THE FIELD NAMES AND THE VALUES IN THE SAME ORDER IN EACH RESPECTIVE LISTS.The fields available are obtainable via valid_search_fields() functions. If the user doesn't provide a `field_name` then let them know what the field names are.",
+        "description": "This function searches information about BRs given specific BR field(s) and value(s) pairs. Concatenate the field name to the value via an equal sign (ex: 'RPT_GC_ORG_NAME_EN=Shared Services Canada'). The fields available are obtainable via valid_search_fields() functions. YOU MUST VALIDATE ANY FIELDS PASSED TO YOU, do not assume the user as a valid field name passed. If the user doesn't provide a `field_name` then let them know what the field names are. To Search by status use get_br_by_status() to confirm STATUS_ID.",
         "parameters": {
             "type": "object",
             "properties": {
-                "field_names": {
+                "search_values": {
                     "type": "array",
-                    "description": "A list of fields name(s) to filter BRs by.",
+                    "description": "A list of fields name(s) and their value(s) to filter BRs by. Ex: ['BR_OWNER=Bob Smith', 'BR_SHORT_TITLE=Windows 10']. DO NOT USE THIS FOR STATUSES.",
                     "items": {
                         "type": "string"
                     }
                 },
-                "field_values": {
+                "statuses" : {
                     "type": "array",
-                    "description": "A list of fields value(s) to filter BRs by.",
+                    "description": "A list of statuses to filter BRs by. Ex: ['Active', 'Inactive']. This is a list of STATUS_ID.",
                     "items": {
                         "type": "string"
                     }
@@ -73,22 +73,36 @@ def get_br_information(br_numbers: list[int]):
                     "default": 100
                 }
             },
-            "required": ["field_names", "field_values"]
+            "required": []
       }
     }
   })
-def search_br_by_fields(field_names: List[str], field_values: List[str], limit: int = 100):
+def search_br_by_fields(search_values: Optional[List[str]] = None, statuses: Optional[List[str]] = None, limit: int = 100):
     """
     search_br_by_field
 
     Search BRs via a specific field:
     """
-    if field_names:
-        fields = extract_fields_from_query(field_names, list(query_builder.valid_search_fields.keys()))
-        if fields:
-            query_fields = [query_builder.valid_search_fields[field] for field in fields]
-            query = query_builder.get_br_query(limit=bool(limit), by_fields=query_fields, active=True)
-            return db.execute_query(query, *(f"%{value}%" for value in field_values), limit)
+    if search_values or statuses:
+        fields = []
+        values = []
+        if search_values:
+            fields = extract_fields_from_query(search_values, list(query_builder.valid_search_fields.keys()))
+            fields, values = split_fields(fields)
+            if fields:
+                fields = [query_builder.valid_search_fields[field] for field in fields]
+        query = query_builder.get_br_query(limit=bool(limit),
+                                           by_fields=fields if fields else None,
+                                           active=True,
+                                           status=len(statuses) if statuses else 0)
+        # Build query parameters dynamically
+        query_params = []
+        if statuses:
+            query_params.extend(statuses)
+        query_params.extend(f"%{value}%" for value in values if values)
+        query_params.append(limit)
+
+        return db.execute_query(query, *query_params)
     return {
         "error": "Try using one of the following fields: " + ", ".join(list(query_builder.valid_search_fields.keys()))
         }
@@ -97,7 +111,7 @@ def search_br_by_fields(field_names: List[str], field_values: List[str], limit: 
     "type": "function",
     "function": {
         "name": "get_br_statuses",
-        "description": "Use this function to list all the BR Statuses. This can be used to get the STATUS_ID. To perform search in other queries.",
+        "description": "Use this function to list all the BR Statuses. This can be used to get the STATUS_ID. To perform search in other queries. NEVER ASSUME THE USER GIVES YOU A VALID STATUS. ALWAYS USE THIS FUNCTION TO GET THE LIST OF STATUSES AND THEIR ID.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -127,39 +141,6 @@ def get_br_statuses(active: bool = True):
 @tool_metadata({
     "type": "function",
     "function": {
-        "name": "get_br_by_status",
-        "description": "Use this function to list all the BR filtered by a specific status.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "status": {
-                    "type": "string",
-                    "description": "This is the status (STATUS_ID) that the user wants to filter the requests for. If you don't know the statuses beforehand call get_br_statuses() function to get STATUS_ID."
-                },
-                "limit": {
-                    "type": "integer",
-                    "description": "The maximum number of BR items to return. Defaults to 100.",
-                    "default": 100
-                },
-                "assigned_to": {
-                    "type": "string",
-                    "description": "This is the name of the person that the BR is assigned to (BR_OWNER)"
-                }
-            },
-            "required": ["status"]
-      }
-    }
-  })
-def get_br_by_status(status: str, assigned_to: str = "", limit: int = 100):
-    """
-    This will retreive BR filtered by status.
-    """
-    query = query_builder.get_br_query(status=True, limit=bool(limit))
-    return db.execute_query(query, status, limit)
-
-@tool_metadata({
-    "type": "function",
-    "function": {
         "name": "get_organization_names",
         "description": "Use this function to list all organization and get a proper value for the RPT_GC_ORG_NAME_EN or RPT_GC_ORG_NAME_FR fields which are also refered to as clients. This can be invoked when a user is searching for BRs by a client name but is using the acronym. Example: Search for BRs with clients PC. You would resolve it to Parks Canada and search for RPT_GC_ORG_NAME_EN = Parks Canada.",
         "parameters": {
@@ -174,7 +155,7 @@ def get_organization_names():
     This will retreive organization so AI can look them up.
     """
     query = """
-    SELECT GC_ORG_NAME_EN, GC_ORG_NAME_FR, ORG_SHORT_NAME, ORG_ACRN_EN, ORG_ACRN_FR, ORG_ACRN_BIL, ORG_WEBSITE 
+    SELECT GC_ORG_NAME_EN, GC_ORG_NAME_FR, ORG_SHORT_NAME, ORG_ACRN_EN, ORG_ACRN_FR, ORG_ACRN_BIL, ORG_WEBSITE
     FROM EDR_CARZ.DIM_GC_ORGANIZATION
     """
 

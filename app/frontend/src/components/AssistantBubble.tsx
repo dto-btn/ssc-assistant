@@ -136,6 +136,28 @@ export const AssistantBubble = ({
     return { processedText, citedCitations, citationNumberMapping };
   }
 
+  const processProfiles = (employeeProfiles: EmployeeProfile[]) => {
+    const processedProfiles: EmployeeProfile[] = [];
+
+    employeeProfiles.forEach((profile) => {
+      // Clone the profile to ensure it is extensible
+      const extensibleProfile = { ...profile };
+
+      if (
+        text.includes(extensibleProfile.email) ||
+        (extensibleProfile.phone && text.includes(extensibleProfile.phone))
+      ) {
+        extensibleProfile.matchedProfile = true;
+      } else {
+        extensibleProfile.matchedProfile = false;
+      }
+
+      processedProfiles.push(extensibleProfile);
+    });
+
+    return processedProfiles;
+  };
+
   useEffect(() => {
     if (context?.citations) {
       const { processedText, citedCitations, citationNumberMapping } =
@@ -151,24 +173,6 @@ export const AssistantBubble = ({
   }, [isLoading, context, text, scrollRef]);
 
   useEffect(() => {
-    const processProfiles = (employeeProfiles: EmployeeProfile[]) => {
-      const processedProfiles: EmployeeProfile[] = [];
-
-      employeeProfiles.forEach((profile) => {
-        if (
-          text.includes(profile.email) ||
-          (profile.phone && text.includes(profile.phone))
-        ) {
-          profile.matchedProfile = true;
-        } else {
-          profile.matchedProfile = false;
-        }
-        processedProfiles.push(profile);
-      });
-
-      return processedProfiles;
-    };
-
     if (toolsInfo && toolsInfo.length > 0) {
       toolsInfo.map((tool) => {
         const payload = tool.payload;
@@ -198,6 +202,7 @@ export const AssistantBubble = ({
         }
         // GEDS
         if (payload?.profiles) {
+          console.log("Profiles: ", payload.profiles);
           const processedProfiles = processProfiles(payload.profiles);
           setProfiles(processedProfiles);
         }
@@ -322,14 +327,6 @@ export const AssistantBubble = ({
                   </Box>
                 </>
               )}
-
-            {!isLoading && profiles.length > 0 && (
-              <ProfileCardsContainer
-                profiles={profiles}
-                isExpanded={profilesExpanded}
-                toggleShowProfileHandler={handleToggleShowProfiles}
-              />
-            )}
 
             {floorPlanFilename && (
               <>
@@ -473,6 +470,13 @@ export const AssistantBubble = ({
                   )}
                 </Box>
               </>
+            )}
+            {!isLoading && profiles.length > 0 && (
+              <ProfileCardsContainer
+                profiles={profiles}
+                isExpanded={profilesExpanded}
+                toggleShowProfileHandler={handleToggleShowProfiles}
+              />
             )}
             {toolsInfo && toolsInfo.length > 0 && (
               <ToolsUsedBox>

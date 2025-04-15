@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Link, Paper, TableContainer, useTheme } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import { formatDate } from './subcomponents/DateDisplay';
+import { formatDate } from "./subcomponents/DateDisplay";
 
 interface BusinessRequestTableProps {
   data: Array<BusinessRequest>;
@@ -57,8 +57,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
       field: "SUBMIT_DATE",
       headerName: t("submit.date"),
       width: 150,
-      valueGetter: (value) =>
-        formatDate(value),
+      valueGetter: (value) => formatDate(value),
     },
   ];
 
@@ -76,7 +75,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
           getRowId={(row) => row.BR_NMBR}
           initialState={{ pagination: { paginationModel } }}
           pageSizeOptions={[5, 10]}
-          checkboxSelection
+          // checkboxSelection
           sx={{
             border: 0,
             backgroundColor: theme.palette.secondary.contrastText,
