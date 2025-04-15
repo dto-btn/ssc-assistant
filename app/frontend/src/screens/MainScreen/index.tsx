@@ -386,7 +386,10 @@ const MainScreen = () => {
               <>
                 < IconButton sx={{
                   color: 'white',
-                }} onClick={() => appStore.appDrawer.toggle()}>
+                }} onClick={() => appStore.appDrawer.toggle()}
+                  aria-label="open drawer"
+                  title="open drawer"
+                >
                   <VerticalSplitIcon />
                 </IconButton>
               </>
