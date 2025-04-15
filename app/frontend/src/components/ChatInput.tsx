@@ -38,7 +38,7 @@ export const ChatInput = ({
   const [file, setFile] = useState<Attachment | undefined>(undefined);
   const inputFieldRef = React.useRef<HTMLInputElement>(null);
 
-  const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "GPT-3.5 Turbo";
+  const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "";
 
   const sendQuestion = () => {
     if (disabled || !question.trim()) {
