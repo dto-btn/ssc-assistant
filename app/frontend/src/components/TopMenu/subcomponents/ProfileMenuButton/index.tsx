@@ -49,13 +49,15 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const [toolsMenuOpen, setToolsMenuOpen] = React.useState(false);
     const [modelMenuOpen, setModelMenuOpen] = React.useState(false);
-    const open = Boolean(anchorEl);
+    const [isOpen, setIsOpen] = React.useState(false);
     const { graphData } = useContext(UserContext);
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
+        setIsOpen(true);
     };
     const handleClose = () => {
         setAnchorEl(null);
+        setIsOpen(false);
     };
     const appStore = useAppStore();
 
@@ -73,37 +75,39 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
     };
 
     return graphData && (
-        <Box
-            sx={{
-                cursor: "pointer"
-            }}
-            onClick={handleClick}
-            tabIndex={0}
-        >
+        <>
             <Box
-                id="demo-positioned-button"
-                aria-controls={open ? 'demo-positioned-menu' : undefined}
-                aria-haspopup="true"
-                aria-expanded={open ? 'true' : undefined}
                 sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: "0.5rem"
+                    cursor: "pointer"
                 }}
+                onClick={handleClick}
+                tabIndex={0}
             >
-                <MoreHorizIcon />
-                <UserProfilePicture
-                    fullName={graphData["givenName"] + " " + graphData["surname"]}
-                    size={size}
-                    fontSize={fontSize}
-                />
+                <Box
+                    id="demo-positioned-button"
+                    aria-controls={isOpen ? 'demo-positioned-menu' : undefined}
+                    aria-haspopup="true"
+                    aria-expanded={isOpen ? 'true' : undefined}
+                    sx={{
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: "0.5rem"
+                    }}
+                >
+                    <MoreHorizIcon />
+                    <UserProfilePicture
+                        fullName={graphData["givenName"] + " " + graphData["surname"]}
+                        size={size}
+                        fontSize={fontSize}
+                    />
+                </Box>
             </Box>
             <Menu
                 id="demo-positioned-menu"
                 aria-labelledby="demo-positioned-button"
                 anchorEl={anchorEl}
-                open={open}
+                open={isOpen}
                 onClose={handleClose}
                 anchorOrigin={{
                     vertical: 'bottom',
@@ -257,6 +261,6 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                     </ListItem>
                 )}
             </Menu>
-        </Box>
+        </>
     );
 }
