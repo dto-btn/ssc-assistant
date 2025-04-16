@@ -8,7 +8,6 @@ const cleanChatHistories = (histories: (ChatHistory | null)[]) => {
                 description: "Conversation " + (i + 1),
                 uuid: "",
                 model: DEFAULT_CHAT_MODEL,
-                corporateFunction: "",
                 employeeProfile: null,
                 createdAt: new Date(),
             }
@@ -55,17 +54,5 @@ export class PersistenceUtils {
             console.error("Error parsing enabled tools from localStorage. Returning empty object.", e);
             return {};
         }
-    }
-
-    static getSelectedCorporateFunction(): string | null {
-        return localStorage.getItem("selectedCorporateFunction");
-    }
-
-    static setSelectedCorporateFunction(functionName: string) {
-        localStorage.setItem("selectedCorporateFunction", functionName);
-    }
-
-    static clearSelectedCorporateFunction() {
-        localStorage.setItem("selectedCorporateFunction", "none");
     }
 }

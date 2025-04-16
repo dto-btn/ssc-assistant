@@ -22,14 +22,14 @@ import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import { useContext, useState } from 'react';
 import { t } from 'i18next';
-import MenuDivider from './MenuDivider';
 import { tt } from '../../i18n/tt';
-import { allowedToolsSet, allowedCorporateFunctionsSet } from "../../allowedTools";
+import { allowedToolsSet } from "../../allowedTools";
 import { useIsAuthenticated } from '@azure/msal-react';
 import React from 'react';
 import { UserContext } from '../../stores/UserContext';
 import { useAppStore } from '../../stores/AppStore';
 import LogoutIcon from '@mui/icons-material/Logout';
+import MenuDivider from '../TopMenu/subcomponents/ProfileMenuButton/MenuDivider';
 
 type Props = {
 
@@ -40,12 +40,6 @@ const NestedMenuPrototype: React.FC<Props> = ({ }) => {
     const { graphData } = useContext(UserContext);
     const appStore = useAppStore();
 
-    const handleSetSelectedCorporateFunction = () => {
-        // todo
-    }
-    const selectedCorporateFunction = () => {
-        // todo
-    }
     const handleUpdateEnabledTools = () => {
         // todo
     }
@@ -72,57 +66,6 @@ const NestedMenuPrototype: React.FC<Props> = ({ }) => {
                     </ListItemIcon>
                     <ListItemText>{t("langlink")}</ListItemText>
                 </MenuItem>
-                {/* <MenuItem>
-                    <RadioGroup
-                        aria-labelledby="demo-radio-buttons-group-label"
-                        defaultValue="female"
-                        name="radio-buttons-group"
-                    >
-                        <FormControlLabel value="female" control={<Radio />} label="Female" />
-                        <FormControlLabel value="male" control={<Radio />} label="Male" />
-                        <FormControlLabel value="other" control={<Radio />} label="Other" />
-                    </RadioGroup>
-                </MenuItem> */}
-                {/* <MenuDivider title={tt("corporate.data")} />
-                <MenuItem>
-
-                    {corporateKey && (
-                        <>
-                            <FormGroup role="menu">
-                                <RadioGroup
-                                    aria-labelledby="corpo-data-label"
-                                    name="corpo-data-group"
-                                    onChange={handleSetSelectedCorporateFunction}
-                                    value={selectedCorporateFunction}
-                                    defaultValue="intranet_question"
-                                    role="group"
-                                >
-                                    <FormControlLabel
-                                        key={-1}
-                                        value="none"
-                                        control={<Radio />}
-                                        label={t("none")}
-                                    />
-                                    {Array.from(allowedCorporateFunctionsSet).map(
-                                        (name, index) => (
-                                            <FormControlLabel
-                                                key={index}
-                                                value={name}
-                                                control={<Radio />}
-                                                label={t(name)}
-                                                role="menuitem"
-                                                title={t(name)}
-                                                aria-label={t(name)}
-                                            />
-                                        )
-                                    )}
-                                </RadioGroup>
-                            </FormGroup>
-                            <MenuItem>
-                            </MenuItem>
-                        </>
-                    )}
-                </MenuItem> */}
                 <MenuDivider title={tt("menu.chooseTools")} />
                 <MenuItem>
                     <FormGroup>

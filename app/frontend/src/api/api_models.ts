@@ -9,7 +9,6 @@ interface ApiMessageRequestDto {
   quotedText?: string;
   model: string;
   fullName?: string;
-  corporateFunction?: string
 }
 
 interface ApiMessageDto {

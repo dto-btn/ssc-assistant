@@ -135,7 +135,6 @@ export const useApiRequestService = () => {
         ], MAX_MESSAGES_SENT);
 
         // prepare request bundle
-        const selectedCorporateFunction = PersistenceUtils.getSelectedCorporateFunction() || undefined;
         const request: MessageRequest = {
             messages: messages,
             max: MAX_MESSAGES_SENT,
@@ -146,7 +145,6 @@ export const useApiRequestService = () => {
             model: chatStore.getCurrentChatHistory().model,
             fullName:
                 userData.graphData["givenName"] + " " + userData.graphData["surname"],
-            corporateFunction: selectedCorporateFunction,
         };
 
         // update current chat window with the message sent..

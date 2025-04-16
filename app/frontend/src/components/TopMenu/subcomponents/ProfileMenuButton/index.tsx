@@ -1,29 +1,23 @@
 import * as React from 'react';
 import Menu from '@mui/material/Menu';
-import { Box, Chip, Collapse, Divider, FormControlLabel, FormGroup, FormLabel, ListItem, ListItemButton, ListItemIcon, ListItemText, Radio, RadioGroup, Switch } from '@mui/material';
+import { Box, Collapse, Divider, FormControlLabel, FormGroup, ListItemButton, ListItemIcon, ListItemText, MenuItem, Radio, RadioGroup, Switch } from '@mui/material';
 import { UserProfilePicture } from './ProfilePicture';
 import { useContext } from 'react';
 import { UserContext } from '../../../../stores/UserContext';
 import { useTranslation } from "react-i18next";
 import LanguageIcon from "@mui/icons-material/Language";
 import { useAppStore } from '../../../../stores/AppStore';
-import HandymanIcon from '@mui/icons-material/Handyman';
-import PsychologyIcon from "@mui/icons-material/Psychology";
-import { allowedToolsSet, allowedCorporateFunctionsSet } from "../../../../allowedTools";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { allowedToolsSet } from "../../../../allowedTools";
 import { useIsAuthenticated } from '@azure/msal-react';
 import LogoutIcon from "@mui/icons-material/Logout";
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import MenuDivider from './MenuDivider';
+import { tt } from '../../../../i18n/tt';
 
 interface ProfilePictureOnClickMenuProps {
     size?: string;
     fontSize?: string;
     enabledTools: Record<string, boolean>;
-    handleSetSelectedCorporateFunction: (
-        event: React.ChangeEvent<HTMLInputElement>
-    ) => void;
-    selectedCorporateFunction: string;
     handleUpdateEnabledTools: (
         event: React.ChangeEvent<HTMLInputElement>
     ) => void;
@@ -37,8 +31,6 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
     size,
     fontSize,
     enabledTools,
-    handleSetSelectedCorporateFunction,
-    selectedCorporateFunction,
     handleUpdateEnabledTools,
     selectedModel,
     handleSelectedModelChanged,
@@ -47,8 +39,6 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
     const isAuthenticated = useIsAuthenticated();
     const { t } = useTranslation();
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-    const [toolsMenuOpen, setToolsMenuOpen] = React.useState(false);
-    const [modelMenuOpen, setModelMenuOpen] = React.useState(false);
     const [isOpen, setIsOpen] = React.useState(false);
     const { graphData } = useContext(UserContext);
     const handleOpen = (event: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>) => {
@@ -130,130 +120,44 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                 sx={{
                     top: 5
                 }}
-                autoFocus
+                // autoFocus
             >
-                <ListItem key="language" disablePadding>
-                    <ListItemButton
-                        onClick={() => {
-                            appStore.languageService.changeLanguage();
-                        }}
-                    >
-                        <ListItemIcon>
-                            <LanguageIcon />
-                        </ListItemIcon>
-                        <ListItemText primary={t("langlink")} />
-                    </ListItemButton>
-                </ListItem>
-                <Divider sx={{ margin: "5px 0px" }}>
-                    <Chip
-                        label={t("drawer.header.toolsAndModels")}
-                        size="small"
-                        sx={{ backgroundColor: "transparent" }}
-                    />
-                </Divider>
-                <ListItem key="toolSettings" disablePadding >
-                    <ListItemButton
-                        onClick={() => setToolsMenuOpen(!toolsMenuOpen)}
-                        aria-expanded={toolsMenuOpen}
-                    >
-                        <ListItemIcon>
-                            <HandymanIcon />
-                        </ListItemIcon>
-                        <ListItemText primary={t("menu.chooseTools")} />
-                        {toolsMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                    </ListItemButton>
-                </ListItem>
-                <Collapse in={toolsMenuOpen} timeout="auto" unmountOnExit >
-                    <Divider />
-                    <FormGroup>
-                        {corporateKey && (
-                            <Box
-                                sx={{
-                                    minWidth: 120,
-                                    marginLeft: "70px",
-                                    marginRight: "10px",
-                                    paddingTop: "5px",
-                                }}
-                            >
-                                <FormLabel id="corpo-data-label">
-                                    {t("corporate.data")}
-                                </FormLabel>
-                                <RadioGroup
-                                    aria-labelledby="corpo-data-label"
-                                    name="corpo-data-group"
-                                    onChange={handleSetSelectedCorporateFunction}
-                                    value={selectedCorporateFunction}
-                                    defaultValue="intranet_question"
-                                    role="group"
-                                >
-                                    <FormControlLabel
-                                        key={-1}
-                                        value="none"
-                                        control={<Radio />}
-                                        label={t("none")}
-                                    />
-                                    {Array.from(allowedCorporateFunctionsSet).map(
-                                        (name, index) => (
-                                            <FormControlLabel
-                                                key={index}
-                                                value={name}
-                                                control={<Radio />}
-                                                label={t(name)}
-                                                role="menuitem"
-                                                title={t(name)}
-                                                aria-label={t(name)}
-                                            />
-                                        )
-                                    )}
-                                </RadioGroup>
-                            </Box>
-                        )}
-                        <Divider />
+                <MenuDivider title={tt("langlink.divider.description")} />
+                <MenuItem title={tt("langlink.divider.description")}
+                    onClick={() => {
+                        appStore.languageService.changeLanguage();
+                    }}>
+                    <ListItemIcon>
+                        <LanguageIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>{t("langlink")}</ListItemText>
+                </MenuItem>
+                <MenuDivider title={tt("menu.chooseTools")} />
                         {tools.map((tool, index) => {
                             return (
-                                <FormControlLabel
-                                    label={t(tool)}
+                                // <MenuItem title={tt("menu.chooseTools")}>
+                                <MenuItem>
+
+                                    <Switch
+                                // label={t(tool)}
                                     key={index}
                                     role="menuitem"
                                     aria-label={t(tool)}
-                                    title={t(tool)}
-                                    control={
-                                        <Switch
-                                            checked={enabledTools[tool]}
-                                            onChange={handleUpdateEnabledTools}
-                                            name={tool}
-                                            sx={{
-                                                marginLeft: "70px",
-                                                marginRight: "10px",
-                                                color: "primary.main",
-                                            }}
-                                        />
-                                    }
-                                />
+                                        title={t(tool)}
+                                        checked={enabledTools[tool]}
+                                        onChange={handleUpdateEnabledTools}
+                                        name={tool}
+                                    />
+
+                                </MenuItem>
                             );
                         })}
-                    </FormGroup>
-                </Collapse>
-                <ListItem key="modelSelection" disablePadding >
-                    <ListItemButton
-                        aria-expanded={modelMenuOpen}
-                        onClick={() => setModelMenuOpen(!modelMenuOpen)}
-                        role="menuitem"
-                    >
-                        <ListItemIcon>
-                            <PsychologyIcon />
-                        </ListItemIcon>
-                        <ListItemText>{t("model.version.select")}</ListItemText>
-                        {modelMenuOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                    </ListItemButton>
-                </ListItem>
-                <Collapse in={modelMenuOpen} timeout="auto" unmountOnExit>
-                    <Divider />
+                <MenuDivider title={t("menu.model.select")} />
+                <MenuItem title={tt("menu.model.select")}>
                     <RadioGroup
                         defaultValue="gpt-4o"
                         aria-labelledby="select-language-model-radio"
                         name="model-radios"
-                        sx={{ marginLeft: "70px" }}
                         value={selectedModel}
                         onChange={handleRadioChange}
                     >
@@ -263,16 +167,19 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                             label="GPT-4o"
                         />
                     </RadioGroup>
-                </Collapse>
+                </MenuItem>
                 {isAuthenticated && (
-                    <ListItem key="logout" disablePadding>
-                        <ListItemButton onClick={logout}>
-                            <ListItemIcon>
-                                <LogoutIcon />
-                            </ListItemIcon>
-                            <ListItemText primary={t("logout")} />
-                        </ListItemButton>
-                    </ListItem>
+                    <>
+                        <MenuDivider />
+                        <MenuItem title={tt("logout")}>
+                            <ListItemButton onClick={logout}>
+                                <ListItemIcon>
+                                    <LogoutIcon />
+                                </ListItemIcon>
+                                <ListItemText primary={tt("logout")} />
+                            </ListItemButton>
+                        </MenuItem>
+                    </>
                 )}
             </Menu>
         </>
