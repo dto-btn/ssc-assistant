@@ -65,7 +65,6 @@ jobs:
         VITE_AZURE_AD_API_SCOPE: ${{ secrets.VITE_AZURE_AD_API_SCOPE }}
         VITE_AZURE_AD_TENANT_ID: ${{ secrets.VITE_AZURE_AD_TENANT_ID }}
         VITE_ALLOWED_TOOLS: ${{ inputs.allowed-tools }}
-        VITE_ALLOWED_CORPORATE_FUNCTIONS: ${{ inputs.allowed-corporate-functions }}
         VITE_DISABLED_FEATURES: ${{ inputs.disabled-features }}
         VITE_CLARITY_TOKEN: ${{ secrets.VITE_CLARITY_TOKEN }}
 

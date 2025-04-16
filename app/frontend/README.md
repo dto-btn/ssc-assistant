@@ -35,15 +35,11 @@ The following `.env` settings are there to control certain components from being
 
 ```bash
 VITE_ALLOWED_TOOLS=geds,corporate,archibus
-VITE_ALLOWED_CORPORATE_FUNCTIONS=intranet_question,telecom_question,pmcoe_question
 VITE_DISABLED_FEATURES="file_upload"
 ```
 
 * `VITE_ALLOWED_TOOLS`: This controls the tools that will be presented in the tools menu, example, the BITS (EDR) data,
 geds API And so on.
-* `VITE_ALLOWED_CORPORATE_FUNCTIONS`: If `corporate` tool is enabled this allows us to leverage the search service to do
-RAG, this matches `functions` subfolders in the `api` to enable their set of functionalities. Mostly can be seen as a
-direct method to reach a search service index however.
 * `VITE_DISABLED_FEATURES`: disables the listed features. For instance `file_upload` will disable the file upload button
 from the UI.
 
