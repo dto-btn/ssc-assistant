@@ -172,8 +172,8 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                 {isAuthenticated && (
                     <>
                         <MenuDivider />
-                        <MenuItem title={tt("logout")}>
-                            <ListItemButton onClick={logout}>
+                        <MenuItem title={tt("logout")} onClick={logout}>
+                            <ListItemButton>
                                 <ListItemIcon>
                                     <LogoutIcon color="error" />
                                 </ListItemIcon>
