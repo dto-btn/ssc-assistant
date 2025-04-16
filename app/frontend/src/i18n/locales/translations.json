@@ -123,6 +123,10 @@
         "en": "SSC's data",
         "fr": "Données des SPC"
     },
+    "langlink.divider.description": {
+        "en": "Language",
+        "fr": "Langue"
+    },
     "langlink.shorthand": {
         "en": "fr",
         "fr": "en"
@@ -451,10 +455,6 @@
         "en": "Chats",
         "fr": "Conversations"
     },
-    "drawer.header.toolsAndModels": {
-        "en": "Tools and Models",
-        "fr": "Outils et modèles"
-    },
     "storage.full": {
         "en": "Warning: Your storage is full. Please delete or clear a conversation/conversations to continue.",
         "fr": "Avertissement : Votre stockage est plein. Veuillez supprimer ou effacer une ou plusieurs conversations pour continuer."
@@ -494,10 +494,6 @@
     "telecom_question": {
         "en": "Telecomunication",
         "fr": "Télécomunication"
-    },
-    "corporate.data": {
-        "en": "SSC's data",
-        "fr": "Données de SPC"
     },
     "pmcoe_question": {
         "en": "PMCoE",

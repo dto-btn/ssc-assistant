@@ -11,7 +11,7 @@ import {
 } from "../../components";
 import ChatMessagesContainer from "../../containers/ChatMessagesContainer";
 import { useTranslation } from "react-i18next"
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { isAMessage } from "../../utils";
 import { InteractionStatus } from "@azure/msal-browser";
@@ -140,9 +140,6 @@ const MainScreen = () => {
     } else {
       appStore.tools.setEnabledTools(defaultEnabledTools);
     }
-    const selectedCorporateFunction = PersistenceUtils.getSelectedCorporateFunction();
-    if (selectedCorporateFunction)
-      appStore.tools.setSelectedCorporateFunction(selectedCorporateFunction);
   }, []);
 
   const handleRemoveToastMessage = (indexToRemove: number) => {
@@ -159,12 +156,12 @@ const MainScreen = () => {
   };
 
   const handleUpdateEnabledTools = (
-    event: React.ChangeEvent<HTMLInputElement>
+    name: string
   ) => {
-    const { name, checked } = event.target;
     let updatedTools;
+    const newState: boolean = !appStore.tools.enabledTools[name];
 
-    if (name === "archibus" && checked) {
+    if (name === "archibus") {
       // If 'archibus' is enabled, set all other tools to off
       updatedTools = Object.keys(appStore.tools.enabledTools).reduce(
         (acc: { [key: string]: boolean }, tool: string) => {
@@ -173,48 +170,22 @@ const MainScreen = () => {
         },
         {}
       );
-      // disable the function being used
-      // (should have no incidence on backend but this is to make it clear to the user)
-      appStore.tools.setSelectedCorporateFunction("none");
-      PersistenceUtils.clearSelectedCorporateFunction();
-    } else if (name !== "archibus" && checked) {
+    } else if (name !== "archibus") {
       // If any tool other than 'archibus' is enabled, set 'archibus' to off
       updatedTools = {
         ...appStore.tools.enabledTools,
-        [name]: checked,
+        [name]: newState,
         archibus: false,
       };
     } else {
       // Otherwise, just update the specific tool's state
       updatedTools = {
         ...appStore.tools.enabledTools,
-        [name]: checked,
+        [name]: newState,
       };
     }
     appStore.tools.setEnabledTools(updatedTools);
     PersistenceUtils.setEnabledTools(updatedTools);
-  };
-
-  const handleSetSelectedCorporateFunction = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    //https://mui.com/material-ui/react-radio-button/
-    let functionName = (event.target as HTMLInputElement).value;
-    appStore.tools.setSelectedCorporateFunction(functionName);
-    PersistenceUtils.setSelectedCorporateFunction(functionName);
-    // disable Archibus if it's checked and on...
-    const _enabledTools = { ...appStore.tools.enabledTools };
-
-      if (functionName == "none") {
-        _enabledTools["corporate"] = false;
-      } else {
-        _enabledTools["corporate"] = true;
-      }
-    if (_enabledTools.hasOwnProperty("archibus")) {
-      _enabledTools["archibus"] = false;
-      }
-    PersistenceUtils.setEnabledTools(_enabledTools);
-    appStore.tools.setEnabledTools(_enabledTools);
   };
 
   const hanldeUpdateModelVersion = (modelName: string) => {
@@ -394,8 +365,6 @@ const MainScreen = () => {
                 </IconButton>
               </>
             }
-            handleSetSelectedCorporateFunction={handleSetSelectedCorporateFunction}
-            selectedCorporateFunction={appStore.tools.selectedCorporateFunction}
             enabledTools={appStore.tools.enabledTools}
             handleUpdateEnabledTools={handleUpdateEnabledTools}
             handleSelectedModelChanged={hanldeUpdateModelVersion}

@@ -30,7 +30,6 @@ function convertRequestForAPI(request: MessageRequest): ApiMessageRequestDto {
     quotedText: request.quotedText,
     model: request.model,
     fullName: request.fullName,
-    corporateFunction: request.corporateFunction
   };
 }
 

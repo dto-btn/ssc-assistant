@@ -21,8 +21,7 @@ jobs:
   frontend-dev:
     uses: ./.github/workflows/frontend.yml
     with:
-      allowed-tools: 'geds,corporate,archibus,bits'
-      allowed-corporate-functions: 'intranet_question,telecom_question,pmcoe_question'
+      allowed-tools: 'geds,corporate,bits'
       disabled-features: ''
       environment: 'dev'
       app-name: 'ssc-assistant-dev'
@@ -51,7 +50,6 @@ jobs:
     uses: ./.github/workflows/frontend.yml
     with:
       allowed-tools: 'geds,corporate'
-      allowed-corporate-functions: 'intranet_question'
       disabled-features: ''
       environment: 'pilot-prod'
       app-name: 'ssc-assistant'
@@ -80,7 +78,6 @@ jobs:
     uses: ./.github/workflows/frontend.yml
     with:
       allowed-tools: 'geds,corporate'
-      allowed-corporate-functions: 'intranet_question'
       disabled-features: ''
       environment: 'prod'
       app-name: 'ssc-assistant-prod'

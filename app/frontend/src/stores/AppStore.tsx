@@ -29,10 +29,8 @@ type AppContext = {
         close: () => void;
     },
     tools: {
-        selectedCorporateFunction: string;
         enabledTools: Record<string, boolean>;
         setEnabledTools: (tools: Record<string, boolean>) => void;
-        setSelectedCorporateFunction: (corporateFunction: string) => void;
     }
 };
 
@@ -131,18 +129,12 @@ export const useAppStore = create<AppContext>((set, get) => ({
         }
     },
     tools: {
-        selectedCorporateFunction: "intranet_question",
         enabledTools: { ...defaultEnabledTools },
         setEnabledTools: (tools: Record<string, boolean>) => {
             set((state) => produce(state, (draft) => {
                 draft.tools.enabledTools = { ...tools };
             }));
         },
-        setSelectedCorporateFunction: (corporateFunction: string) => {
-            set((state) => produce(state, (draft) => {
-                draft.tools.selectedCorporateFunction = corporateFunction;
-            }));
-        }
     },
     languageService: new LanguageService()
 }));
