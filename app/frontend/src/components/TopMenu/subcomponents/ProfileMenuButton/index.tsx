@@ -120,7 +120,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                 sx={{
                     top: 5
                 }}
-                // autoFocus
+            // autoFocus
             >
                 <MenuDivider title={tt("langlink.divider.description")} />
                 <MenuItem title={tt("langlink.divider.description")}
