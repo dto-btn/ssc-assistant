@@ -1,1 +1,0 @@
-export type TranslationKeys = keyof typeof import('./translations.json');

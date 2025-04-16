@@ -1,3 +1,6 @@
+import Box from '@mui/material/Box';
+import Switch from '@mui/material/Switch';
+import FormGroup from '@mui/material/FormGroup';
 import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import MenuList from '@mui/material/MenuList';
@@ -5,19 +8,57 @@ import MenuItem from '@mui/material/MenuItem';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Typography from '@mui/material/Typography';
-import ContentCut from '@mui/icons-material/ContentCut';
 import ContentCopy from '@mui/icons-material/ContentCopy';
 import ContentPaste from '@mui/icons-material/ContentPaste';
 import Cloud from '@mui/icons-material/Cloud';
 import LanguageIcon from "@mui/icons-material/Language";
-import { FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from '@mui/material';
-import { useState } from 'react';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormLabel from '@mui/material/FormLabel';
+import ListItemButton from '@mui/material/ListItemButton';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import { useContext, useState } from 'react';
 import { t } from 'i18next';
 import MenuDivider from './MenuDivider';
 import { tt } from '../../i18n/tt';
+import { allowedToolsSet, allowedCorporateFunctionsSet } from "../../allowedTools";
+import { useIsAuthenticated } from '@azure/msal-react';
+import React from 'react';
+import { UserContext } from '../../stores/UserContext';
+import { useAppStore } from '../../stores/AppStore';
+import LogoutIcon from '@mui/icons-material/Logout';
 
-export default function NestedMenuPrototype() {
-    const [isSelected, setIsSelected] = useState(false);
+type Props = {
+
+}
+
+const NestedMenuPrototype: React.FC<Props> = ({ }) => {
+    const isAuthenticated = useIsAuthenticated();
+    const { graphData } = useContext(UserContext);
+    const appStore = useAppStore();
+
+    const handleSetSelectedCorporateFunction = () => {
+        // todo
+    }
+    const selectedCorporateFunction = () => {
+        // todo
+    }
+    const handleUpdateEnabledTools = () => {
+        // todo
+    }
+
+    const { enabledTools } = appStore.tools;
+
+    const tools = Object.keys(enabledTools).filter((tool) =>
+        allowedToolsSet.has(tool)
+    );
+
+    const logout = () => {
+
+    }
+
+    const corporateKey = tools.find(i => i === "corporate") || null;
+
     return (
         <Paper sx={{ width: 320, maxWidth: '100%' }}>
             <MenuList>
@@ -28,8 +69,7 @@ export default function NestedMenuPrototype() {
                     </ListItemIcon>
                     <ListItemText>{t("langlink")}</ListItemText>
                 </MenuItem>
-                <MenuDivider title={tt("menu.chooseTools")} />
-                <MenuItem>
+                {/* <MenuItem>
                     <RadioGroup
                         aria-labelledby="demo-radio-buttons-group-label"
                         defaultValue="female"
@@ -39,34 +79,86 @@ export default function NestedMenuPrototype() {
                         <FormControlLabel value="male" control={<Radio />} label="Male" />
                         <FormControlLabel value="other" control={<Radio />} label="Other" />
                     </RadioGroup>
-                </MenuItem>
-                <MenuDivider title={tt("model.version.select")} />
+                </MenuItem> */}
+                <MenuDivider title={tt("corporate.data")} />
                 <MenuItem>
-                    <ListItemIcon>
-                        <ContentCopy fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>Copy</ListItemText>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        ⌘C
-                    </Typography>
+
+                    {corporateKey && (
+                        <>
+                            <FormGroup role="menu">
+                                <RadioGroup
+                                    aria-labelledby="corpo-data-label"
+                                    name="corpo-data-group"
+                                    onChange={handleSetSelectedCorporateFunction}
+                                    value={selectedCorporateFunction}
+                                    defaultValue="intranet_question"
+                                    role="group"
+                                >
+                                    <FormControlLabel
+                                        key={-1}
+                                        value="none"
+                                        control={<Radio />}
+                                        label={t("none")}
+                                    />
+                                    {Array.from(allowedCorporateFunctionsSet).map(
+                                        (name, index) => (
+                                            <FormControlLabel
+                                                key={index}
+                                                value={name}
+                                                control={<Radio />}
+                                                label={t(name)}
+                                                role="menuitem"
+                                                title={t(name)}
+                                                aria-label={t(name)}
+                                            />
+                                        )
+                                    )}
+                                </RadioGroup>
+                            </FormGroup>
+                            <MenuItem>
+                            </MenuItem>
+                        </>
+                    )}
                 </MenuItem>
+                <MenuDivider title={tt("menu.chooseTools")} />
                 <MenuItem>
-                    <ListItemIcon>
-                        <ContentPaste fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>Paste</ListItemText>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        ⌘V
-                    </Typography>
+                    <FormGroup>
+                        {tools.map((tool, index) => {
+                            return (
+                                <FormControlLabel
+                                    label={t(tool)}
+                                    key={index}
+                                    role="menuitem"
+                                    aria-label={t(tool)}
+                                    title={t(tool)}
+                                    control={
+                                        <Switch
+                                            checked={enabledTools[tool]}
+                                            onChange={handleUpdateEnabledTools}
+                                            name={tool}
+                                        />
+                                    }
+                                />
+                            );
+                        })}
+                    </FormGroup>
                 </MenuItem>
-                <Divider />
-                <MenuItem>
-                    <ListItemIcon>
-                        <Cloud fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>Web Clipboard</ListItemText>
-                </MenuItem>
+                {isAuthenticated && (
+                    <>
+                        <MenuDivider />
+                        <MenuItem>
+                            <ListItemButton onClick={logout}>
+                                <ListItemIcon>
+                                    <LogoutIcon />
+                                </ListItemIcon>
+                                <ListItemText primary={t("logout")} />
+                            </ListItemButton>
+                        </MenuItem>
+                    </>
+                )}
             </MenuList>
         </Paper>
     );
 }
+
+export default NestedMenuPrototype
