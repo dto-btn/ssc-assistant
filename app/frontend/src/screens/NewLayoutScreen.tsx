@@ -1,7 +1,6 @@
 import React from 'react';
 import NewLayout from '../components/layouts/NewLayout';
 import Typography from '@mui/material/Typography';
-import NestedMenuPrototype from '../components/NestedMenuPrototype';
 
 interface NewLayoutScreenProps {
     /* props */
@@ -10,7 +9,6 @@ interface NewLayoutScreenProps {
 const NewLayoutScreen: React.FC<NewLayoutScreenProps> = ({ /* props */ }) => {
     return (
         <NewLayout>
-            <NestedMenuPrototype />
             <Typography sx={{ marginBottom: 2 }}>
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
                 tempor incididunt ut labore et dolore magna aliqua. Rhoncus dolor purus non

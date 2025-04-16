@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Menu from '@mui/material/Menu';
-import { Box, Collapse, Divider, FormControlLabel, FormGroup, ListItemButton, ListItemIcon, ListItemText, MenuItem, Radio, RadioGroup, Switch } from '@mui/material';
+import { Box, FormControlLabel, ListItemButton, ListItemIcon, ListItemText, MenuItem, Radio, RadioGroup, Switch } from '@mui/material';
 import { UserProfilePicture } from './ProfilePicture';
 import { useContext } from 'react';
 import { UserContext } from '../../../../stores/UserContext';
@@ -54,11 +54,6 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
     const tools = Object.keys(enabledTools).filter((tool) =>
         allowedToolsSet.has(tool)
     );
-    // separate corporate key
-    const corporateKeyIndex = tools.indexOf("corporate");
-    const corporateKey =
-        corporateKeyIndex > -1 ? tools.splice(corporateKeyIndex, 1)[0] : null;
-
 
     const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         handleSelectedModelChanged((event.target as HTMLInputElement).value);

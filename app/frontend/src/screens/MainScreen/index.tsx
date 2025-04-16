@@ -11,7 +11,7 @@ import {
 } from "../../components";
 import ChatMessagesContainer from "../../containers/ChatMessagesContainer";
 import { useTranslation } from "react-i18next"
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { isAMessage } from "../../utils";
 import { InteractionStatus } from "@azure/msal-browser";

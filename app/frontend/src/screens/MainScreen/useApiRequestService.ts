@@ -10,7 +10,6 @@ import { useChatStore } from "../../stores/ChatStore";
 import { isACompletion, isAToastMessage } from "../../utils";
 import { convertChatHistoryToMessages } from "./utils";
 import { MAX_MESSAGES_SENT } from "../../constants";
-import { PersistenceUtils } from "../../util/persistence";
 
 
 export const useApiRequestService = () => {
