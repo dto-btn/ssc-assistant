@@ -156,12 +156,12 @@ const MainScreen = () => {
   };
 
   const handleUpdateEnabledTools = (
-    event: React.ChangeEvent<HTMLInputElement>
+    name: string
   ) => {
-    const { name, checked } = event.target;
     let updatedTools;
+    const newState: boolean = !appStore.tools.enabledTools[name];
 
-    if (name === "archibus" && checked) {
+    if (name === "archibus") {
       // If 'archibus' is enabled, set all other tools to off
       updatedTools = Object.keys(appStore.tools.enabledTools).reduce(
         (acc: { [key: string]: boolean }, tool: string) => {
@@ -170,18 +170,18 @@ const MainScreen = () => {
         },
         {}
       );
-    } else if (name !== "archibus" && checked) {
+    } else if (name !== "archibus") {
       // If any tool other than 'archibus' is enabled, set 'archibus' to off
       updatedTools = {
         ...appStore.tools.enabledTools,
-        [name]: checked,
+        [name]: newState,
         archibus: false,
       };
     } else {
       // Otherwise, just update the specific tool's state
       updatedTools = {
         ...appStore.tools.enabledTools,
-        [name]: checked,
+        [name]: newState,
       };
     }
     appStore.tools.setEnabledTools(updatedTools);

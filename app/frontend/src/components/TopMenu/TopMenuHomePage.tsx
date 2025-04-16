@@ -10,7 +10,7 @@ interface TopMenuHomePageProps {
   childrenLeftOfLogo?: React.ReactNode;
   enabledTools: Record<string, boolean>;
   handleUpdateEnabledTools: (
-    event: React.ChangeEvent<HTMLInputElement>
+    name: string
   ) => void;
   selectedModel: string;
   handleSelectedModelChanged: (modelName: string) => void;

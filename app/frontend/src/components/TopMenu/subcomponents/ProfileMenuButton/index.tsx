@@ -19,7 +19,7 @@ interface ProfilePictureOnClickMenuProps {
     fontSize?: string;
     enabledTools: Record<string, boolean>;
     handleUpdateEnabledTools: (
-        event: React.ChangeEvent<HTMLInputElement>
+        name: string
     ) => void;
     selectedModel: string;
     handleSelectedModelChanged: (modelName: string) => void;
@@ -136,17 +136,22 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                         {tools.map((tool, index) => {
                             return (
                                 // <MenuItem title={tt("menu.chooseTools")}>
-                                <MenuItem>
+                                <MenuItem onClick={() => handleUpdateEnabledTools(
+                                    tool
+                                )}>
 
-                                    <Switch
-                                // label={t(tool)}
+                                    <FormControlLabel
+                                        label={t(tool)}
                                     key={index}
                                     role="menuitem"
                                     aria-label={t(tool)}
                                         title={t(tool)}
                                         checked={enabledTools[tool]}
-                                        onChange={handleUpdateEnabledTools}
+                                        // onChange={handleUpdateEnabledTools}
                                         name={tool}
+                                        control={
+                                            <Switch />
+                                        }
                                     />
 
                                 </MenuItem>
@@ -162,6 +167,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                         onChange={handleRadioChange}
                     >
                         <FormControlLabel
+                            disabled
                             value="gpt-4o"
                             control={<Radio />}
                             label="GPT-4o"
@@ -174,7 +180,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                         <MenuItem title={tt("logout")}>
                             <ListItemButton onClick={logout}>
                                 <ListItemIcon>
-                                    <LogoutIcon />
+                                    <LogoutIcon color="error" />
                                 </ListItemIcon>
                                 <ListItemText primary={tt("logout")} />
                             </ListItemButton>
