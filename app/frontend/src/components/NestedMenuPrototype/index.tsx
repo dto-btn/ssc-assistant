@@ -1,3 +1,6 @@
+// todo: remove archibus
+// todo: remove corporate.data
+
 import Box from '@mui/material/Box';
 import Switch from '@mui/material/Switch';
 import FormGroup from '@mui/material/FormGroup';
@@ -80,7 +83,7 @@ const NestedMenuPrototype: React.FC<Props> = ({ }) => {
                         <FormControlLabel value="other" control={<Radio />} label="Other" />
                     </RadioGroup>
                 </MenuItem> */}
-                <MenuDivider title={tt("corporate.data")} />
+                {/* <MenuDivider title={tt("corporate.data")} />
                 <MenuItem>
 
                     {corporateKey && (
@@ -119,7 +122,7 @@ const NestedMenuPrototype: React.FC<Props> = ({ }) => {
                             </MenuItem>
                         </>
                     )}
-                </MenuItem>
+                </MenuItem> */}
                 <MenuDivider title={tt("menu.chooseTools")} />
                 <MenuItem>
                     <FormGroup>
