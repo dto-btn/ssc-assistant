@@ -123,6 +123,10 @@
         "en": "SSC's data",
         "fr": "Données des SPC"
     },
+    "langlink.divider.description": {
+        "en": "Language",
+        "fr": "Langue"
+    },
     "langlink.shorthand": {
         "en": "fr",
         "fr": "en"
