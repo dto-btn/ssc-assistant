@@ -6,9 +6,6 @@ on:
       allowed-tools:
         type: string
         required: true
-      allowed-corporate-functions:
-        type: string
-        required: true
       disabled-features:
         type: string
         required: true
