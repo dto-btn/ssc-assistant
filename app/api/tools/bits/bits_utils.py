@@ -3,7 +3,7 @@ import logging
 import re
 import time
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import pymssql
 
@@ -155,14 +155,28 @@ class DatabaseConnection:
 class BITSQueryBuilder:
     """Class to build BITS queries."""
 
-    br_owner = {'BR_OWNER': 'opis.BR_OWNER'}
+    br_owner = {
+        'BR_OWNER': 'opis.BR_OWNER'
+    }
 
     status = {
         'BITS_STATUS_EN': 's.BITS_STATUS_EN',
         'BITS_STATUS_FR': 's.BITS_STATUS_FR',
     }
 
-    valid_search_fields = {
+    date_fields = {
+        'REQST_IMPL_DATE': 'br.REQST_IMPL_DATE',
+        'SUBMIT_DATE': 'br.SUBMIT_DATE',
+        'RVSD_TARGET_IMPL_DATE': 'br.RVSD_TARGET_IMPL_DATE',
+        'ACTUAL_IMPL_DATE': 'br.ACTUAL_IMPL_DATE',
+        'AGRMT_END_DATE': 'br.AGRMT_END_DATE',
+        'PRPO_TARGET_DATE': 'br.PRPO_TARGET_DATE',
+        'IMPL_SGNOFF_DATE': 'br.IMPL_SGNOFF_DATE',
+        'CLIENT_REQST_SOL_DATE': 'br.CLIENT_REQST_SOL_DATE',
+        'TARGET_IMPL_DATE': 'br.TARGET_IMPL_DATE',
+    }
+
+    base_fields = {
         'LEAD_PRODUCT_EN': 'products.PROD_DESC_EN',
         'LEAD_PRODUCT_FR': 'products.PROD_DESC_FR',
         'BR_SHORT_TITLE': 'br.BR_SHORT_TITLE',
@@ -170,24 +184,16 @@ class BITSQueryBuilder:
         'RPT_GC_ORG_NAME_FR': 'br.RPT_GC_ORG_NAME_FR',
         'ORG_TYPE_EN': 'br.ORG_TYPE_EN',
         'ORG_TYPE_FR': 'br.ORG_TYPE_FR',
-        'REQST_IMPL_DATE': 'br.REQST_IMPL_DATE',
         'BR_TYPE_EN': 'br.BR_TYPE_EN',
         'BR_TYPE_FR': 'br.BR_TYPE_FR',
         'PRIORITY_EN': 'br.PRIORITY_EN',
         'PRIORITY_FR': 'br.PRIORITY_FR',
-        'SUBMIT_DATE': 'br.SUBMIT_DATE',
-        'RVSD_TARGET_IMPL_DATE': 'br.RVSD_TARGET_IMPL_DATE',
         'CPLX_EN': 'br.CPLX_EN',
         'CPLX_FR': 'br.CPLX_FR',
-        'ACTUAL_IMPL_DATE': 'br.ACTUAL_IMPL_DATE',
-        'AGRMT_END_DATE': 'br.AGRMT_END_DATE',
         'SCOPE_EN': 'br.SCOPE_EN',
         'SCOPE_FR': 'br.SCOPE_FR',
-        'CLIENT_REQST_SOL_DATE': 'br.CLIENT_REQST_SOL_DATE',
         'CLIENT_SUBGRP_EN': 'br.CLIENT_SUBGRP_EN',
         'CLIENT_SUBGRP_FR': 'br.CLIENT_SUBGRP_FR',
-        'PRPO_TARGET_DATE': 'br.PRPO_TARGET_DATE',
-        'IMPL_SGNOFF_DATE': 'br.IMPL_SGNOFF_DATE',
         'GROUP_EN': 'br.GROUP_EN',
         'GROUP_FR': 'br.GROUP_FR',
         'ASSOC_BRS': 'br.ASSOC_BRS',
@@ -210,21 +216,27 @@ class BITSQueryBuilder:
         'GCIT_CAT_FR': 'br.GCIT_CAT_FR',
         'GCIT_PRIORITY_EN': 'br.GCIT_PRIORITY_EN',
         'GCIT_PRIORITY_FR': 'br.GCIT_PRIORITY_FR',
-        'TARGET_IMPL_DATE': 'br.TARGET_IMPL_DATE',
         'IO_ID': 'br.IO_ID',
         'EPS_NMBR': 'br.EPS_NMBR',
         'ECD_NMBR': 'br.ECD_NMBR',
         'PROD_OPI': 'opis.PROD_OPI',
     }
 
-    valid_search_fields.update(br_owner)
-    valid_search_fields.update(status)
+    # Modify base fields
+    base_fields.update(br_owner)
+    base_fields.update(status)
+
+    # Combine all search fields
+    valid_search_fields = {}
+    valid_search_fields.update(base_fields)
+    valid_search_fields.update(date_fields)
 
     def get_br_query(self, br_number_count: int = 0,
                     status: int = 0,
                     limit: bool = False,
                     active: bool = True,
-                    by_fields: Optional[List[str]] = None) -> str:
+                    by_fields: Optional[List[str]] = None,
+                    by_dates: Optional[dict[str, str]] = None) -> str:
         """Function that will build the select statement for retreiving BRs
 
         Parameters order for the execute query should be as follow:
@@ -347,6 +359,9 @@ class BITSQueryBuilder:
         if by_fields:
             base_where_clause.append(" AND ".join([f"{field} LIKE %s" for field in by_fields]))
 
+        if by_dates:
+            base_where_clause.append(" AND ".join([f"CONVERT(DATE, {field}) {value} %s" for field, value in by_dates.items()]))
+
         if base_where_clause:
             query += "WHERE " + " AND ".join(base_where_clause)
 
@@ -372,47 +387,39 @@ def _datetime_serializer(obj):
     raise TypeError(f"Type {type(obj)} not serializable")
 
 
-def extract_fields_from_query(key_value_pairs: list, valid_fields: list):
+def extract_fields_and_value_pairs(fields_and_values: list[str], valid_fields: dict[str, str]) -> dict[str, str]:
     """
     Extract fields from the user's query based on the valid fields.
 
     Parameters:
-        query (str): The user's query.
-        valid_fields (list): A list of valid fields.
+        fields_and_values: list[str]: The user's query.
+        valid_fields: dict[str, str]: A list of valid fields from the system
 
     Returns:
-        list: A list of fields extracted from the query.
+        list: A list of fields extracted from the query in a key-value pair format.
     """
-    fields = []
-    for key_value in key_value_pairs:
-         # Ensure we got sent a key=value style pair
-        parts = key_value.split('=', 1)
-        # Ensure the split resulted in exactly two parts, else skip this item
-        if len(parts) != 2:
+    valid_fields = {}
+    for field_and_value in fields_and_values:
+        key, value = split_field(field_and_value)
+        if not key or not value:
             continue
-
-        user_field = parts[0].strip()
-
-        for field in valid_fields:
-            if re.search(rf"\b{field}\b", user_field, re.IGNORECASE):
-                fields.append(key_value)
+        for k, v in valid_fields.items():
+            if re.search(rf"\b{k}\b", key, re.IGNORECASE):
+                valid_fields.update({v: value})
                 break
-    return fields
+    return valid_fields
 
-def split_fields(fields):
+def split_field(field: str) -> Tuple[str, str] | Tuple[None, None]:
     """
     Splits fields into keys and values.
     Parameters:
-        fields (list): A list of fields in the format 'key=value'.
+        field : A field in the format 'key=value'.
     Returns:
         tuple: A tuple containing two lists: keys and values.
     """
-    keys = []
-    values = []
-
-    for field in fields:
-        if '=' in field:
-            key, value = field.split('=', 1)
-            keys.append(key.strip())
-            values.append(value.strip())
-    return keys, values
+    parts = field.split('=', 1)
+    if len(parts) != 2:
+        return None, None
+    key = parts[0].strip()
+    value = parts[1].strip()
+    return key, value
