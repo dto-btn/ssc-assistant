@@ -133,30 +133,30 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                     <ListItemText>{t("langlink")}</ListItemText>
                 </MenuItem>
                 <MenuDivider title={tt("menu.chooseTools")} />
-                        {tools.map((tool, index) => {
-                            return (
-                                // <MenuItem title={tt("menu.chooseTools")}>
-                                <MenuItem onClick={() => handleUpdateEnabledTools(
-                                    tool
-                                )}>
+                {tools.map((tool, index) => {
+                    return (
+                        // <MenuItem title={tt("menu.chooseTools")}>
+                        <MenuItem onClick={() => handleUpdateEnabledTools(
+                            tool
+                        )}>
 
-                                    <FormControlLabel
-                                        label={t(tool)}
-                                    key={index}
-                                    role="menuitem"
-                                    aria-label={t(tool)}
-                                        title={t(tool)}
-                                        checked={enabledTools[tool]}
-                                        // onChange={handleUpdateEnabledTools}
-                                        name={tool}
-                                        control={
-                                            <Switch />
-                                        }
-                                    />
+                            <FormControlLabel
+                                label={t(tool)}
+                                key={index}
+                                role="menuitem"
+                                aria-label={t(tool)}
+                                title={t(tool)}
+                                checked={enabledTools[tool]}
+                                // onChange={handleUpdateEnabledTools}
+                                name={tool}
+                                control={
+                                    <Switch />
+                                }
+                            />
 
-                                </MenuItem>
-                            );
-                        })}
+                        </MenuItem>
+                    );
+                })}
                 <MenuDivider title={t("menu.model.select")} />
                 <MenuItem title={tt("menu.model.select")}>
                     <RadioGroup
