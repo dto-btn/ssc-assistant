@@ -3,6 +3,7 @@ import logging
 import os
 from typing import List, Optional
 
+from tools.bits.bits_models import BITSQuery
 from src.constants.tools import TOOL_BR
 from tools.bits.bits_utils import BITSQueryBuilder, DatabaseConnection, extract_fields_and_value_pairs
 from utils.decorators import (discover_subfolder_functions_with_metadata,
@@ -94,7 +95,8 @@ def search_br_by_fields(fields_and_values: Optional[List[str]] = None,
             date_fields = extract_fields_and_value_pairs(fields_and_values, query_builder.date_fields)
             if date_fields:
                 # if we have date fields we need to prepare them for the query.
-
+                pass
+        print(BITSQuery.model_json_schema())
         query = query_builder.get_br_query(limit=bool(limit),
                                            by_fields=list(dict_fields_and_values.keys()) if dict_fields_and_values else None,
                                            active=True,
