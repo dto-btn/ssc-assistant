@@ -120,8 +120,8 @@
         "fr": "Guide d'utilisation de l'IA Générative"
     },
     "corporate": {
-        "en": "SSC's data",
-        "fr": "Données des SPC"
+        "en": "MySSC+",
+        "fr": "MySSC+"
     },
     "langlink.divider.description": {
         "en": "Language",
@@ -373,7 +373,7 @@
     },
     "profile.icon.title": {
         "en": "Profile Menu",
-        "fr": "Menu de profile"
+        "fr": "Menu du profile"
     },
     "menu.model": {
         "en": "Model",
