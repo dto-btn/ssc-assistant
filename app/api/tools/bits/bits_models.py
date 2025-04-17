@@ -2,11 +2,11 @@ from pydantic import BaseModel, Field, field_validator
 
 from tools.bits.bits_utils import BITSQueryBuilder
 
-class BITSQueryFilter(BaseModel):
-    """Model for BITSQueryFilter."""
+class BRQueryFilter(BaseModel):
+    """Model for BRQueryFilter."""
     name: str = Field(..., description="Name of the database field")
     value: str = Field(..., description="Value of the field")
-    operator: str = Field(..., description="Description of the field")
+    operator: str = Field(..., description="Operator, must be one of '=', '<', or '>'")
 
     # Validator for the 'operator' field
     @field_validator("operator")
@@ -25,13 +25,13 @@ class BITSQueryFilter(BaseModel):
         if v not in BITSQueryBuilder.valid_search_fields:
             raise ValueError(f"Name must be one of {list(BITSQueryBuilder.valid_search_fields.keys())}")
         return v
-    
-class BITSQuery(BaseModel):
+
+class BRQuery(BaseModel):
     """Represent the query that the AI does on behalf of the user"""
-    query_filters: list[BITSQueryFilter] = Field(..., description="List of filters to apply to the query")
+    query_filters: list[BRQueryFilter] = Field(..., description="List of filters to apply to the query")
     limit: int = Field(100, description="Maximum number of records to return")
     statuses: list[str] = Field(..., description="List of statuses to filter by")
-    
+
     # Validator for the 'statuses' field
     # TODO: need to come up with the extract of valid statuses and their description.
     # @field_validator("statuses")
