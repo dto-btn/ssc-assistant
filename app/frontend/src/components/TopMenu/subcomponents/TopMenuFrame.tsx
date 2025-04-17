@@ -38,7 +38,7 @@ export const TopMenuFrame: FC<TopMenuProps> = (({ children, childrenLeftOfLogo }
                         width: "100%",
                         margin: "auto",
                         display: "flex",
-                        gap: "3rem",
+                        gap: "1rem",
                         alignItems: "center",
                         justifyContent: "space-between",
                         flexShrink: 0,

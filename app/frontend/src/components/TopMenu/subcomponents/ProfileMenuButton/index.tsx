@@ -1,9 +1,7 @@
 import * as React from 'react';
 import Menu from '@mui/material/Menu';
-import { Box, FormControlLabel, ListItemButton, ListItemIcon, ListItemText, MenuItem, Radio, RadioGroup, Switch } from '@mui/material';
+import { Box, FormControlLabel, ListItemIcon, ListItemText, MenuItem, Radio, RadioGroup, Switch } from '@mui/material';
 import { UserProfilePicture } from './ProfilePicture';
-import { useContext } from 'react';
-import { UserContext } from '../../../../stores/UserContext';
 import { useTranslation } from "react-i18next";
 import LanguageIcon from "@mui/icons-material/Language";
 import { useAppStore } from '../../../../stores/AppStore';
@@ -40,7 +38,6 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
     const { t } = useTranslation();
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const [isOpen, setIsOpen] = React.useState(false);
-    const { graphData } = useContext(UserContext);
     const handleOpen = (event: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
         setIsOpen(true);
@@ -59,7 +56,8 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
         handleSelectedModelChanged((event.target as HTMLInputElement).value);
     };
 
-    return graphData && (
+
+    return (
         <>
             <Box
                 sx={{
@@ -92,7 +90,6 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                 >
                     <MoreHorizIcon />
                     <UserProfilePicture
-                        fullName={graphData["givenName"] + " " + graphData["surname"]}
                         size={size}
                         fontSize={fontSize}
                     />
@@ -191,12 +188,10 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                     <>
                         <MenuDivider />
                         <MenuItem title={tt("logout")} onClick={logout}>
-                            <ListItemButton>
                                 <ListItemIcon>
-                                    <LogoutIcon color="error" />
+                                <LogoutIcon color="disabled" fontSize="small"></LogoutIcon>
                                 </ListItemIcon>
-                                <ListItemText primary={tt("logout")} />
-                            </ListItemButton>
+                            <ListItemText primary={tt("logout")} />
                         </MenuItem>
                     </>
                 )}
@@ -204,3 +199,4 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
         </>
     );
 }
+

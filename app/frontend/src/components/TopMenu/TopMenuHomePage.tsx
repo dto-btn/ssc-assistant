@@ -54,7 +54,7 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({
           sx={{
             marginLeft: "auto", // make it float to the right
             display: "flex",
-            gap: "2rem",
+            gap: "1rem",
           }}
         >
           <TopMenuItem item={{
