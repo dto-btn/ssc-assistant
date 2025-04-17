@@ -142,9 +142,9 @@ export const DrawerMenu = ({
     >
       <List>
         <ListItem key="newChat" disablePadding>
-          <ListItemButton onClick={() => onNewChat()}>
-            <ListItemIcon>
-              <AddCommentIcon />
+          <ListItemButton onClick={() => onNewChat()} >
+            <ListItemIcon sx={{ minWidth: "0px", marginRight: "10px" }}>
+              <AddCommentIcon fontSize="small" color="primary" />
             </ListItemIcon>
             <ListItemText
               primary={t("new.conversation")}
@@ -153,10 +153,10 @@ export const DrawerMenu = ({
             />
           </ListItemButton>
         </ListItem>
-        <ListItem key="clearchat" disablePadding>
+        <ListItem key="clearchat" disablePadding  >
           <ListItemButton onClick={onClearChat}>
-            <ListItemIcon>
-              <DeleteIcon />
+            <ListItemIcon sx={{ minWidth: "0px", marginRight: "10px" }}>
+              <DeleteIcon fontSize="small" color="error" />
             </ListItemIcon>
             <ListItemText
               primary={t("clear.conversation")}

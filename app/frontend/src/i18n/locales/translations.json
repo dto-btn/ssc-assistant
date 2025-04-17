@@ -367,6 +367,14 @@
         "en": "https://www.canada.ca/en/government/system/digital-government/digital-government-innovations/responsible-use-ai/guide-use-generative-ai.html",
         "fr": "https://www.canada.ca/fr/gouvernement/systeme/gouvernement-numerique/innovations-gouvernement-numerique/utilisation-responsable-ai/guide-utilisation-intelligence-artificielle-generative.html"
     },
+    "drawer.icon.title": {
+        "en": "Drawer Menu",
+        "fr": "Menu latéral"
+    },
+    "profile.icon.title": {
+        "en": "Profile Menu",
+        "fr": "Menu de profile"
+    },
     "menu.model": {
         "en": "Model",
         "fr": "Modèle"

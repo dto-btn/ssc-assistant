@@ -72,8 +72,8 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                     }
                 }}
                 tabIndex={0}
-                title="open settings dropdown"
-                aria-label="open settings dropdown"
+                title={tt("profile.icon.title")}
+                aria-label={tt("profile.icon.title")}
                 role="button"
                 aria-haspopup="true"
                 aria-expanded={isOpen ? 'true' : undefined}
@@ -128,25 +128,43 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                     <ListItemText>{t("langlink")}</ListItemText>
                 </MenuItem>
                 <MenuDivider title={tt("menu.chooseTools")} />
-                {tools.map((tool, index) => {
+                {tools.map((tool) => {
                     return (
-                        // <MenuItem title={tt("menu.chooseTools")}>
-                        <MenuItem onClick={() => handleUpdateEnabledTools(
-                            tool
-                        )}>
+                        <MenuItem key={tool}
+                            onClick={() => {
+                                handleUpdateEnabledTools(tool);
+                            }}
 
+                        >
                             <FormControlLabel
                                 label={t(tool)}
-                                key={index}
                                 role="menuitem"
                                 aria-label={t(tool)}
                                 title={t(tool)}
                                 checked={enabledTools[tool]}
-                                // onChange={handleUpdateEnabledTools}
                                 name={tool}
-                                control={
-                                    <Switch />
-                                }
+                                control={<Switch onClick={(e) => {
+                                    // Without these onClick handlers, we get dead spaces on the MenuItem, where
+                                    // clicking in a specific spot does not toggle the switch.
+                                    e.stopPropagation();
+                                    // In this particular case, we want to handle the click event on the switch itself, since
+                                    // the MenuItem will never be called due to stopPropagation.
+                                    handleUpdateEnabledTools(tool);
+                                }} />}
+                                onClick={(e) => {
+                                    // Without these onClick handlers, we get dead spaces on the MenuItem, where
+                                    // clicking in a specific spot does not toggle the switch.
+                                    e.stopPropagation();
+                                }}
+                                slotProps={{
+                                    typography: {
+                                        onClick: (e) => {
+                                            // Without these onClick handlers, we get dead spaces on the MenuItem, where
+                                            // clicking in a specific spot does not toggle the switch.
+                                            e.stopPropagation();
+                                        }
+                                    }
+                                }}
                             />
 
                         </MenuItem>
