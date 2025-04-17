@@ -89,9 +89,11 @@ def search_br_by_fields(br_query: str):
         query_params = []
         if validated_query.statuses:
             query_params.extend(validated_query.statuses)
-        query_params.extend(
-            f"%{query_filter.value}%" for query_filter in validated_query.query_filters if validated_query.query_filters
-            )
+        for query_filter in validated_query.query_filters:
+            if query_filter.is_date():
+                query_params.append(query_filter.value)
+            else:
+                query_params.append(f"%{query_filter.value}%")
         query_params.append(validated_query.limit)
         return db.execute_query(query, *query_params)
 
