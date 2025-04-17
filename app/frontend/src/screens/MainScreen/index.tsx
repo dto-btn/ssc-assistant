@@ -32,6 +32,7 @@ import { PersistenceUtils } from "../../util/persistence";
 import { useChatService } from "../../hooks/useChatService";
 import { useApiRequestService } from "./useApiRequestService";
 import { defaultEnabledTools } from "../../allowedTools";
+import { tt } from "../../i18n/tt";
 
 const MainScreen = () => {
   const { t } = useTranslation();
@@ -358,8 +359,8 @@ const MainScreen = () => {
                 < IconButton sx={{
                   color: 'white',
                 }} onClick={() => appStore.appDrawer.toggle()}
-                  aria-label="open drawer"
-                  title="open drawer"
+                  aria-label={tt("drawer.icon.title")}
+                  title={tt("drawer.icon.title")}
                 >
                   <VerticalSplitIcon />
                 </IconButton>
