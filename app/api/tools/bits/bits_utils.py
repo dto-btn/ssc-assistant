@@ -1,89 +1,16 @@
 import json
 import logging
-import re
 import time
 from datetime import datetime
 from typing import List, Optional
 
 import pymssql
 
+from tools.bits.bits_fields import BRFields
+from tools.bits.bits_models import BRQueryFilter
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-
-_opis_mapping = {
-    "QA_OPI": {
-        "en": "QA OPI",
-        "fr": "BPR QA"
-    },
-    "CSM_DIRECTOR": {
-        "en": "Client Executive",
-        "fr": "Client exécutif"
-    },
-    "PROD_OPI": {
-        "en": "Service Lead",
-        "fr": "BPR des services"
-    },
-    "ENG_OPI": {
-        "en": "Implementation OPI",
-        "fr": "BPR Implémentation"
-    },
-    "BA_OPI": {
-        "en": "BA OPI",
-        "fr": "BPR analyste"
-    },
-    "TEAMLEADER": {
-        "en": "Teamleader",
-        "fr": "Chef d`équipe"
-    },
-    "BA_PRICING_OPI": {
-        "en": "BA Pricing OPI",
-        "fr": "BPR AA du prix"
-    },
-    "BA_PRICING_TL": {
-        "en": "Service Line Coordinator",
-        "fr": "Coordonnateur de la ligne de service"
-    },
-    "BR_OWNER": {
-        "en": "BR OWNER",
-        "fr": "Propriétaire"
-    },
-    "WIO_OPI": {
-        "en": "Finance OPI",
-        "fr": "BPR du Finance"
-    },
-    "EAOPI": {
-        "en": "EA OPI",
-        "fr": "BPR AE"
-    },
-    "SOLN_OPI": {
-        "en": "Conceptual Designer",
-        "fr": "Créateur Conceptuel"
-    },
-    "AGR_OPI": {
-        "en": "Agreement OPI",
-        "fr": "BPR Entente"
-    },
-    "PM_OPI": {
-        "en": "PM/Coordinator",
-        "fr": "GP/Coordonnateur"
-    },
-    "SISDOPI": {
-        "en": "SISD OPI",
-        "fr": "BPR DSIS"
-    },
-    "BA_TL": {
-        "en": "BA Team Lead",
-        "fr": "Chef d`équipe analystes"
-    },
-    "ACC_MANAGER_OPI": {
-        "en": "Account Manager",
-        "fr": "Gestionnaire de compte"
-    },
-    "SDM_TL_OPI": {
-        "en": "SDM Team Lead",
-        "fr": "GPS Chef d'équipe"
-    }
-}
 
 class DatabaseConnection:
     """Database connection class."""
@@ -152,79 +79,13 @@ class DatabaseConnection:
             # Ensure the connection is closed
             conn.close()
 
-class BITSQueryBuilder:
+class BRQueryBuilder:
     """Class to build BITS queries."""
-
-    br_owner = {'BR_OWNER': 'opis.BR_OWNER'}
-
-    status = {
-        'BITS_STATUS_EN': 's.BITS_STATUS_EN',
-        'BITS_STATUS_FR': 's.BITS_STATUS_FR',
-    }
-
-    valid_search_fields = {
-        'LEAD_PRODUCT_EN': 'products.PROD_DESC_EN',
-        'LEAD_PRODUCT_FR': 'products.PROD_DESC_FR',
-        'BR_SHORT_TITLE': 'br.BR_SHORT_TITLE',
-        'RPT_GC_ORG_NAME_EN': 'br.RPT_GC_ORG_NAME_EN',
-        'RPT_GC_ORG_NAME_FR': 'br.RPT_GC_ORG_NAME_FR',
-        'ORG_TYPE_EN': 'br.ORG_TYPE_EN',
-        'ORG_TYPE_FR': 'br.ORG_TYPE_FR',
-        'REQST_IMPL_DATE': 'br.REQST_IMPL_DATE',
-        'BR_TYPE_EN': 'br.BR_TYPE_EN',
-        'BR_TYPE_FR': 'br.BR_TYPE_FR',
-        'PRIORITY_EN': 'br.PRIORITY_EN',
-        'PRIORITY_FR': 'br.PRIORITY_FR',
-        'SUBMIT_DATE': 'br.SUBMIT_DATE',
-        'RVSD_TARGET_IMPL_DATE': 'br.RVSD_TARGET_IMPL_DATE',
-        'CPLX_EN': 'br.CPLX_EN',
-        'CPLX_FR': 'br.CPLX_FR',
-        'ACTUAL_IMPL_DATE': 'br.ACTUAL_IMPL_DATE',
-        'AGRMT_END_DATE': 'br.AGRMT_END_DATE',
-        'SCOPE_EN': 'br.SCOPE_EN',
-        'SCOPE_FR': 'br.SCOPE_FR',
-        'CLIENT_REQST_SOL_DATE': 'br.CLIENT_REQST_SOL_DATE',
-        'CLIENT_SUBGRP_EN': 'br.CLIENT_SUBGRP_EN',
-        'CLIENT_SUBGRP_FR': 'br.CLIENT_SUBGRP_FR',
-        'PRPO_TARGET_DATE': 'br.PRPO_TARGET_DATE',
-        'IMPL_SGNOFF_DATE': 'br.IMPL_SGNOFF_DATE',
-        'GROUP_EN': 'br.GROUP_EN',
-        'GROUP_FR': 'br.GROUP_FR',
-        'ASSOC_BRS': 'br.ASSOC_BRS',
-        'BR_ACTIVE_EN': 's.BR_ACTIVE_EN',
-        'BR_ACTIVE_FR': 's.BR_ACTIVE_FR',
-        'ACC_MANAGER_OPI': 'opis.ACC_MANAGER_OPI',
-        'AGR_OPI': 'opis.AGR_OPI',
-        'BA_OPI': 'opis.BA_OPI',
-        'BA_PRICING_OPI': 'opis.BA_PRICING_OPI',
-        'BA_PRICING_TL': 'opis.BA_PRICING_TL',
-        'BA_TL': 'opis.BA_TL',
-        'CSM_DIRECTOR': 'opis.CSM_DIRECTOR',
-        'EAOPI': 'opis.EAOPI',
-        'PM_OPI': 'opis.PM_OPI',
-        'QA_OPI': 'opis.QA_OPI',
-        'SDM_TL_OPI': 'opis.SDM_TL_OPI',
-        'TEAMLEADER': 'opis.TEAMLEADER',
-        'WIO_OPI': 'opis.WIO_OPI',
-        'GCIT_CAT_EN': 'br.GCIT_CAT_EN',
-        'GCIT_CAT_FR': 'br.GCIT_CAT_FR',
-        'GCIT_PRIORITY_EN': 'br.GCIT_PRIORITY_EN',
-        'GCIT_PRIORITY_FR': 'br.GCIT_PRIORITY_FR',
-        'TARGET_IMPL_DATE': 'br.TARGET_IMPL_DATE',
-        'IO_ID': 'br.IO_ID',
-        'EPS_NMBR': 'br.EPS_NMBR',
-        'ECD_NMBR': 'br.ECD_NMBR',
-        'PROD_OPI': 'opis.PROD_OPI',
-    }
-
-    valid_search_fields.update(br_owner)
-    valid_search_fields.update(status)
-
     def get_br_query(self, br_number_count: int = 0,
                     status: int = 0,
                     limit: bool = False,
                     active: bool = True,
-                    by_fields: Optional[List[str]] = None) -> str:
+                    br_filters: Optional[List[BRQueryFilter]] = None) -> str:
         """Function that will build the select statement for retreiving BRs
 
         Parameters order for the execute query should be as follow:
@@ -239,7 +100,7 @@ class BITSQueryBuilder:
         """
 
         # Default select statement from BR_ITEMS & other tables
-        query += "br.BR_NMBR as BR_NMBR, br.EXTRACTION_DATE as EXTRACTION_DATE, " + ", ".join([f"{value} as {key}" for key, value in self.valid_search_fields.items()])
+        query += "br.BR_NMBR as BR_NMBR, br.EXTRACTION_DATE as EXTRACTION_DATE, " + ", ".join([f"{value} as {key}" for key, value in BRFields.valid_search_fields.items()])
 
         # Deault FROM statement
         query += """
@@ -344,8 +205,14 @@ class BITSQueryBuilder:
             placeholders = ", ".join(["%s"] * br_number_count)
             base_where_clause.append(f"br.BR_NMBR IN ({placeholders})")
 
-        if by_fields:
-            base_where_clause.append(" AND ".join([f"{field} LIKE %s" for field in by_fields]))
+        if br_filters:
+            for br_filter in br_filters:
+                if br_filter.is_date():
+                    # Handle date fields
+                    base_where_clause.append(f"CONVERT(DATE, {br_filter.name}) {br_filter.operator} %s")
+                else:
+                    # Handle other fields, defaulting to LIKE operator since they are mostly strings ...
+                    base_where_clause.append(f"{br_filter.name} LIKE %s")
 
         if base_where_clause:
             query += "WHERE " + " AND ".join(base_where_clause)
@@ -370,49 +237,3 @@ def _datetime_serializer(obj):
     if isinstance(obj, datetime):
         return obj.isoformat()
     raise TypeError(f"Type {type(obj)} not serializable")
-
-
-def extract_fields_from_query(key_value_pairs: list, valid_fields: list):
-    """
-    Extract fields from the user's query based on the valid fields.
-
-    Parameters:
-        query (str): The user's query.
-        valid_fields (list): A list of valid fields.
-
-    Returns:
-        list: A list of fields extracted from the query.
-    """
-    fields = []
-    for key_value in key_value_pairs:
-         # Ensure we got sent a key=value style pair
-        parts = key_value.split('=', 1)
-        # Ensure the split resulted in exactly two parts, else skip this item
-        if len(parts) != 2:
-            continue
-
-        user_field = parts[0].strip()
-
-        for field in valid_fields:
-            if re.search(rf"\b{field}\b", user_field, re.IGNORECASE):
-                fields.append(key_value)
-                break
-    return fields
-
-def split_fields(fields):
-    """
-    Splits fields into keys and values.
-    Parameters:
-        fields (list): A list of fields in the format 'key=value'.
-    Returns:
-        tuple: A tuple containing two lists: keys and values.
-    """
-    keys = []
-    values = []
-
-    for field in fields:
-        if '=' in field:
-            key, value = field.split('=', 1)
-            keys.append(key.strip())
-            values.append(value.strip())
-    return keys, values
