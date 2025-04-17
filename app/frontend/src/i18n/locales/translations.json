@@ -120,8 +120,12 @@
         "fr": "Guide d'utilisation de l'IA Générative"
     },
     "corporate": {
-        "en": "SSC's data",
-        "fr": "Données des SPC"
+        "en": "MySSC+",
+        "fr": "MonSPC+"
+    },
+    "langlink.divider.description": {
+        "en": "Language",
+        "fr": "Langue"
     },
     "langlink.shorthand": {
         "en": "fr",
@@ -363,6 +367,14 @@
         "en": "https://www.canada.ca/en/government/system/digital-government/digital-government-innovations/responsible-use-ai/guide-use-generative-ai.html",
         "fr": "https://www.canada.ca/fr/gouvernement/systeme/gouvernement-numerique/innovations-gouvernement-numerique/utilisation-responsable-ai/guide-utilisation-intelligence-artificielle-generative.html"
     },
+    "drawer.icon.title": {
+        "en": "Drawer Menu",
+        "fr": "Menu latéral"
+    },
+    "profile.icon.title": {
+        "en": "Profile Menu",
+        "fr": "Menu du profile"
+    },
     "menu.model": {
         "en": "Model",
         "fr": "Modèle"
@@ -451,10 +463,6 @@
         "en": "Chats",
         "fr": "Conversations"
     },
-    "drawer.header.toolsAndModels": {
-        "en": "Tools and Models",
-        "fr": "Outils et modèles"
-    },
     "storage.full": {
         "en": "Warning: Your storage is full. Please delete or clear a conversation/conversations to continue.",
         "fr": "Avertissement : Votre stockage est plein. Veuillez supprimer ou effacer une ou plusieurs conversations pour continuer."
@@ -494,10 +502,6 @@
     "telecom_question": {
         "en": "Telecomunication",
         "fr": "Télécomunication"
-    },
-    "corporate.data": {
-        "en": "SSC's data",
-        "fr": "Données de SPC"
     },
     "pmcoe_question": {
         "en": "PMCoE",
@@ -572,8 +576,8 @@
         "fr": "Demandes opérationnelles associées"
     },
     "long.title": {
-        "en":"Full name",
-        "fr":"Nom complet"
+        "en": "Full name",
+        "fr": "Nom complet"
     },
     "upload.uploading": {
         "en": "Upload in progress...",

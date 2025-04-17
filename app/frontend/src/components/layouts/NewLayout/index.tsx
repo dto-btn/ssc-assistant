@@ -10,6 +10,7 @@ import { DrawerHeader } from './components/DrawerHeader';
 import { MainContentSection } from './components/MainContentSection';
 import { useAppStore } from '../../../stores/AppStore';
 import { LEFT_MENU_WIDTH } from "../../../constants";
+import { tt } from '../../../i18n/tt';
 
 
 interface NewLayoutProps extends React.PropsWithChildren {
@@ -40,8 +41,9 @@ const NewLayout: React.FC<NewLayoutProps> = ({ children, appBar, appDrawerConten
                         >
                             <IconButton
                                 color="inherit"
-                                aria-label="open drawer"
+                                aria-label={tt("drawer.icon.title")}
                                 edge="start"
+                                title={tt("drawer.icon.title")}
                             >
                                 <VerticalSplitIcon />
                             </IconButton>

@@ -244,7 +244,7 @@ export const AssistantBubble = ({
   };
 
   return (
-    <ChatBubbleWrapper tabIndex={2}>
+    <ChatBubbleWrapper tabIndex={0}>
       <ChatBubbleView
         className="chatBubbleView"
         onMouseEnter={() => setIsHovering(true)}

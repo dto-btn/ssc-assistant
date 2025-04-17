@@ -142,9 +142,9 @@ export const DrawerMenu = ({
     >
       <List>
         <ListItem key="newChat" disablePadding>
-          <ListItemButton onClick={() => onNewChat()}>
-            <ListItemIcon>
-              <AddCommentIcon />
+          <ListItemButton onClick={() => onNewChat()} >
+            <ListItemIcon sx={{ minWidth: "0px", marginRight: "10px" }}>
+              <AddCommentIcon fontSize="small" color="primary" />
             </ListItemIcon>
             <ListItemText
               primary={t("new.conversation")}
@@ -153,10 +153,10 @@ export const DrawerMenu = ({
             />
           </ListItemButton>
         </ListItem>
-        <ListItem key="clearchat" disablePadding>
+        <ListItem key="clearchat" disablePadding  >
           <ListItemButton onClick={onClearChat}>
-            <ListItemIcon>
-              <DeleteIcon />
+            <ListItemIcon sx={{ minWidth: "0px", marginRight: "10px" }}>
+              <DeleteIcon fontSize="small" color="error" />
             </ListItemIcon>
             <ListItemText
               primary={t("clear.conversation")}
@@ -213,7 +213,6 @@ export const DrawerMenu = ({
                 )}
                 <IconButton
                   onClick={(event) => handleMoreMenuClick(event, index)}
-                  disableRipple
                   id="chat-history-options-button"
                   aria-label="more"
                   aria-controls={moreMenuOpen ? "chat-history-menu" : undefined}
@@ -228,6 +227,7 @@ export const DrawerMenu = ({
                   }}
                 >
                   <Tooltip
+                    tabIndex={-1}
                     title="Options"
                     placement="top"
                     slotProps={{
@@ -249,7 +249,7 @@ export const DrawerMenu = ({
                       },
                     }}
                   >
-                    <MoreHorizIcon />
+                    <MoreHorizIcon tabIndex={-1} />
                   </Tooltip>
                 </IconButton>
                 <Menu
@@ -270,11 +270,11 @@ export const DrawerMenu = ({
                     },
                   }}
                 >
-                  <MenuItem onClick={handleDeleteChatClicked}>
+                  <MenuItem onClick={handleDeleteChatClicked} tabIndex={0}>
                     <DeleteIcon sx={{ color: "red", mr: "15px" }} />
                     <Typography sx={{ color: "red" }}>{t("delete")}</Typography>
                   </MenuItem>
-                  <MenuItem onClick={handleRenameClicked}>
+                  <MenuItem onClick={handleRenameClicked} tabIndex={0}>
                     <EditIcon sx={{ mr: "15px" }} />
                     <Typography>{t("rename")}</Typography>
                   </MenuItem>

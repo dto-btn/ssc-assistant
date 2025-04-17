@@ -38,7 +38,7 @@ export const ChatInput = ({
   const [file, setFile] = useState<Attachment | undefined>(undefined);
   const inputFieldRef = React.useRef<HTMLInputElement>(null);
 
-  const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "GPT-3.5 Turbo";
+  const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "";
 
   const sendQuestion = () => {
     if (disabled || !question.trim()) {
@@ -152,8 +152,13 @@ export const ChatInput = ({
           <UploadFileButton disabled={disabled} onFileUpload={onFileUpload} />
         )}
         <InputBase
-          autoFocus
           sx={{ ml: 1, flex: 1 }}
+          slotProps={{
+            input: {
+              tabIndex: 0,
+              autoFocus: true,
+            }
+          }}
           placeholder={t("ask.question")}
           inputProps={{ "aria-label": t("ask.question"), "tabIndex": 1 }}
           error={error}

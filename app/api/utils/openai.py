@@ -73,9 +73,10 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
     model = message_request.model
     messages = load_messages(message_request)
     # 1. Check if we are to use tools
+    tool_service = ToolService(message_request.tools if message_request.tools else [])
     if message_request.tools:
         logger.debug("Requested tools: %s", message_request.tools)
-        tool_service = ToolService(message_request.tools)
+
         # 1a. Invoke tools completion,
         additional_tools_required = True
 

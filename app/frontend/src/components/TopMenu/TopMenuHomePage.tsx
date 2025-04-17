@@ -9,12 +9,8 @@ import { TopMenuItem } from "./subcomponents/TopMenuItem";
 interface TopMenuHomePageProps {
   childrenLeftOfLogo?: React.ReactNode;
   enabledTools: Record<string, boolean>;
-  handleSetSelectedCorporateFunction: (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => void;
-  selectedCorporateFunction: string;
   handleUpdateEnabledTools: (
-    event: React.ChangeEvent<HTMLInputElement>
+    name: string
   ) => void;
   selectedModel: string;
   handleSelectedModelChanged: (modelName: string) => void;
@@ -25,8 +21,6 @@ interface TopMenuHomePageProps {
 export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({
   childrenLeftOfLogo,
   enabledTools,
-  handleSetSelectedCorporateFunction,
-  selectedCorporateFunction,
   handleUpdateEnabledTools,
   selectedModel,
   handleSelectedModelChanged,
@@ -60,7 +54,7 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({
           sx={{
             marginLeft: "auto", // make it float to the right
             display: "flex",
-            gap: "2rem",
+            gap: "1rem",
           }}
         >
           <TopMenuItem item={{
@@ -80,8 +74,6 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({
             size="30px"
             fontSize="12px"
             enabledTools={enabledTools}
-            handleSetSelectedCorporateFunction={handleSetSelectedCorporateFunction}
-            selectedCorporateFunction={selectedCorporateFunction}
             handleUpdateEnabledTools={handleUpdateEnabledTools}
             selectedModel={selectedModel}
             handleSelectedModelChanged={handleSelectedModelChanged}
