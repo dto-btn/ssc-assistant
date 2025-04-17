@@ -1,10 +1,10 @@
 from pydantic import BaseModel, Field, field_validator
 
-from tools.bits.bits_utils import BITSQueryBuilder
+from tools.bits.bits_fields import BRFields
 
 class BRQueryFilter(BaseModel):
     """Model for BRQueryFilter."""
-    name: str = Field(..., description="Name of the database field")
+    name: str = Field(..., description="Name of the database field", )
     value: str = Field(..., description="Value of the field")
     operator: str = Field(..., description="Operator, must be one of '=', '<', or '>'")
 
@@ -22,9 +22,13 @@ class BRQueryFilter(BaseModel):
     @classmethod
     def validate_name(cls, v: str) -> str:
         """Validate the name field.Ensure its a valid DB field"""
-        if v not in BITSQueryBuilder.valid_search_fields:
-            raise ValueError(f"Name must be one of {list(BITSQueryBuilder.valid_search_fields.keys())}")
+        if v not in BRFields.valid_search_fields:
+            raise ValueError(f"Name must be one of {list(BRFields.valid_search_fields.keys())}")
         return v
+
+    def is_date(self) -> bool:
+        """Check if the field is a date."""
+        return str(self.name).endswith("_DATE")
 
 class BRQuery(BaseModel):
     """Represent the query that the AI does on behalf of the user"""
