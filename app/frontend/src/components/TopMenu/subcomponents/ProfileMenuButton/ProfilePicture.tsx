@@ -3,7 +3,6 @@ import { useContext } from 'react';
 import { UserContext } from '../../../../stores/UserContext';
 
 interface UserProfileProps {
-  fullName: string;
   size?: string;
   fontSize?: string;
 }
@@ -61,8 +60,14 @@ function getLetterAvatar(name: string, size: string | undefined, fontSize: strin
   return avatarData;
 }
 
-export const UserProfilePicture = ({ fullName, size, fontSize }: UserProfileProps) => {
-  const { profilePictureURL } = useContext(UserContext);
+export const UserProfilePicture = ({ size, fontSize }: UserProfileProps) => {
+  const { graphData, profilePictureURL } = useContext(UserContext);
+
+  let fullName: string = ". .";
+  if (graphData) {
+    fullName = graphData["givenName"] + " " + graphData["surname"];
+  }
+
 
   if (profilePictureURL) {
     return <Avatar aria-hidden alt={fullName} src={profilePictureURL} sx={size ? { width: size, height: size } : {}}

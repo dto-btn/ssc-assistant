@@ -109,6 +109,26 @@ const MainScreen = () => {
     }
   };
 
+  const loadEnabledToolsFromStorage = () => {
+    try {
+      const enabledTools = PersistenceUtils.getEnabledTools() || {};
+
+      // clean the enabled tools. we should only set the tools that are included in defaultEnabledTools and no other.
+      const cleanedTools = { ...defaultEnabledTools };
+      for (const key in cleanedTools) {
+        if (enabledTools.hasOwnProperty(key) && typeof enabledTools[key] === "boolean") {
+          cleanedTools[key] = enabledTools[key];
+        }
+      }
+
+      appStore.tools.setEnabledTools(cleanedTools);
+    } catch (error) {
+      // Gracefully handle any errors.
+      console.error("Error loading chat histories from local storage", error);
+      appStore.tools.setEnabledTools(defaultEnabledTools);
+    }
+  }
+
   const handleClearChat = () => {
     setCurrentChatHistory((prevChatHistory) => {
       const updatedChatHistory = {
@@ -131,16 +151,10 @@ const MainScreen = () => {
     chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" });
   }, [getCurrentChatHistory().chatItems]);
 
-  // Load chat histories if present
+  // Load chat histories and persisted tools if present
   useEffect(() => {
     loadChatHistoriesFromStorage();
-    // TODO: load settings
-    const enabledTools = PersistenceUtils.getEnabledTools();
-    if (Object.keys(defaultEnabledTools).length == Object.keys(enabledTools).length) {
-      appStore.tools.setEnabledTools(enabledTools);
-    } else {
-      appStore.tools.setEnabledTools(defaultEnabledTools);
-    }
+    loadEnabledToolsFromStorage();
   }, []);
 
   const handleRemoveToastMessage = (indexToRemove: number) => {
