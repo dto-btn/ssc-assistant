@@ -1,10 +1,12 @@
 import json
 import logging
 import os
-from typing import List, Optional
 
+from pydantic import ValidationError
 from src.constants.tools import TOOL_BR
-from tools.bits.bits_utils import BITSQueryBuilder, DatabaseConnection, extract_fields_from_query, split_fields
+from tools.bits.bits_fields import BRFields
+from tools.bits.bits_models import BRQuery
+from tools.bits.bits_utils import BRQueryBuilder, DatabaseConnection
 from utils.decorators import (discover_subfolder_functions_with_metadata,
                               tool_metadata)
 
@@ -16,8 +18,9 @@ db = DatabaseConnection(os.getenv("BITS_DB_SERVER", "missing.domain"),
                         os.getenv("BITS_DB_PWD", "missing.password"),
                         os.getenv("BITS_DB_DATABASE", "missing.dbname"))
 
-query_builder = BITSQueryBuilder()
+query_builder = BRQueryBuilder()
 
+# pylint: disable=line-too-long
 @tool_metadata({
     "type": "function",
     "function": {
@@ -38,6 +41,7 @@ query_builder = BITSQueryBuilder()
       }
     }
   })
+# pylint: enable=line-too-long
 def get_br_information(br_numbers: list[int]):
     """
     gets br information
@@ -45,68 +49,61 @@ def get_br_information(br_numbers: list[int]):
     query = query_builder.get_br_query(len(br_numbers), active=False) #BRs here do not need to be active to be returned
     return db.execute_query(query, *br_numbers)
 
+# pylint: disable=line-too-long
 @tool_metadata({
     "type": "function",
     "function": {
         "name": "search_br_by_fields",
-        "description": "This function searches information about BRs given specific BR field(s) and value(s) pairs. Concatenate the field name to the value via an equal sign (ex: 'RPT_GC_ORG_NAME_EN=Shared Services Canada'). The fields available are obtainable via valid_search_fields() functions. YOU MUST VALIDATE ANY FIELDS PASSED TO YOU, do not assume the user as a valid field name passed. If the user doesn't provide a `field_name` then let them know what the field names are. To Search by status use get_br_by_status() to confirm STATUS_ID.",
+        "description": "This function searches information about BRs given specific BR field(s) and value(s) pairs.",
         "parameters": {
             "type": "object",
             "properties": {
-                "search_values": {
-                    "type": "array",
-                    "description": "A list of fields name(s) and their value(s) to filter BRs by. Ex: ['BR_OWNER=Bob Smith', 'BR_SHORT_TITLE=Windows 10']. DO NOT USE THIS FOR STATUSES.",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "statuses" : {
-                    "type": "array",
-                    "description": "A list of statuses to filter BRs by. Ex: ['Active', 'Inactive']. This is a list of STATUS_ID.",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "limit": {
-                    "type": "integer",
-                    "description": "The maximum number of BR items to return. Defaults to 100.",
-                    "default": 100
+                "br_query": {
+                    "type": "string",
+                    "description": "A stringified JSON object that match the BRQuery model.",
                 }
             },
-            "required": []
+            "required": ["br_query"]
       }
     }
   })
-def search_br_by_fields(search_values: Optional[List[str]] = None, statuses: Optional[List[str]] = None, limit: int = 100):
+# pylint: enable=line-too-long
+def search_br_by_fields(br_query: str):
     """
     search_br_by_field
 
     Search BRs via a specific field:
     """
-    if search_values or statuses:
-        fields = []
-        values = []
-        if search_values:
-            fields = extract_fields_from_query(search_values, list(query_builder.valid_search_fields.keys()))
-            fields, values = split_fields(fields)
-            if fields:
-                fields = [query_builder.valid_search_fields[field] for field in fields]
-        query = query_builder.get_br_query(limit=bool(limit),
-                                           by_fields=fields if fields else None,
-                                           active=True,
-                                           status=len(statuses) if statuses else 0)
-        # Build query parameters dynamically
+    try:
+        user_query = BRQuery.model_validate_json(br_query)
+        logger.info("Valided query: %s", user_query)
+
+        # Prepare the SQL statement for this request.
+        sql_query = query_builder.get_br_query(limit=bool(user_query.limit),
+                                            br_filters=user_query.query_filters,
+                                            active=True,
+                                            status=len(user_query.statuses) if user_query.statuses else 0)
+
+        # Build query parameters dynamically, #1 statuses, #2 all other fields, #3 limit
         query_params = []
-        if statuses:
-            query_params.extend(statuses)
-        query_params.extend(f"%{value}%" for value in values if values)
-        query_params.append(limit)
+        if user_query.statuses:
+            query_params.extend(user_query.statuses)
+        for query_filter in user_query.query_filters:
+            if query_filter.is_date():
+                query_params.append(query_filter.value)
+            else:
+                query_params.append(f"%{query_filter.value}%")
+        query_params.append(user_query.limit)
+        return db.execute_query(sql_query, *query_params)
 
-        return db.execute_query(query, *query_params)
-    return {
-        "error": "Try using one of the following fields: " + ", ".join(list(query_builder.valid_search_fields.keys()))
-        }
+    except (json.JSONDecodeError, ValidationError) as e:
+        # Handle validation errors
+        logger.error("Validation failed!")
+        return {
+            "error": str(e)
+            }
 
+# pylint: disable=line-too-long
 @tool_metadata({
     "type": "function",
     "function": {
@@ -124,6 +121,7 @@ def search_br_by_fields(search_values: Optional[List[str]] = None, statuses: Opt
       }
     }
   })
+# pylint: enable=line-too-long
 def get_br_statuses(active: bool = True):
     """
     This will retreive the code table BR_STATUSES
@@ -138,6 +136,7 @@ def get_br_statuses(active: bool = True):
 
     return db.execute_query(query, result_key="br_statuses")
 
+# pylint: disable=line-too-long
 @tool_metadata({
     "type": "function",
     "function": {
@@ -150,6 +149,7 @@ def get_br_statuses(active: bool = True):
       }
     }
   })
+# pylint: enable=line-too-long
 def get_organization_names():
     """
     This will retreive organization so AI can look them up.
@@ -161,6 +161,7 @@ def get_organization_names():
 
     return db.execute_query(query, result_key="org_names")
 
+# pylint: disable=line-too-long
 @tool_metadata({
     "type": "function",
     "function": {
@@ -173,6 +174,7 @@ def get_organization_names():
       }
     }
   })
+# pylint: enable=line-too-long
 def how_to_search_brs():
     """
     This is a metadata function that will list all the functions
@@ -191,6 +193,7 @@ def how_to_search_brs():
         metadata[key] = value['metadata']
     return json.dumps(metadata)
 
+# pylint: disable=line-too-long
 @tool_metadata({
     "type": "function",
     "function": {
@@ -203,8 +206,12 @@ def how_to_search_brs():
       }
     }
   })
+# pylint: enable=line-too-long
 def valid_search_fields():
     """
     This function returns all the valid search fields
     """
-    return json.dumps(query_builder.valid_search_fields.keys())
+    keys = list(BRFields.valid_search_fields.keys())
+    return {
+        "field_names": json.dumps(keys)
+    }

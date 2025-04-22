@@ -57,7 +57,7 @@ class ToolService:
                 function_to_call = getattr(module, function_name)
                 function_response = function_to_call(**prepared_args)
             except Exception as exception:
-                e = "Unable to call function"
+                e = f"Unable to call function --> {function_name} with args {prepared_args}"
                 logger.error(e, exception)
                 function_response = e
 
