@@ -75,11 +75,12 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
           getRowId={(row) => row.BR_NMBR}
           initialState={{ pagination: { paginationModel } }}
           pageSizeOptions={[5, 10]}
-          // checkboxSelection
+          checkboxSelection
           sx={{
             border: 0,
             backgroundColor: theme.palette.secondary.contrastText,
           }}
+          showToolbar
         />
       </TableContainer>
     </Box>
