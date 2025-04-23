@@ -111,14 +111,9 @@ def search_br_by_fields(br_query: str):
         "description": "Use this function to list all the BR Statuses. This can be used to get the STATUS_ID. To perform search in other queries. NEVER ASSUME THE USER GIVES YOU A VALID STATUS. ALWAYS USE THIS FUNCTION TO GET THE LIST OF STATUSES AND THEIR ID.",
         "parameters": {
             "type": "object",
-            "properties": {
-                "active": {
-                    "type": "boolean",
-                    "description": "If true, only active statuses will be returned. Defaults to true."
-                }
-            },
+            "properties": {},
             "required": []
-      }
+        }
     }
   })
 # pylint: enable=line-too-long
@@ -126,15 +121,7 @@ def get_br_statuses(active: bool = True):
     """
     This will retreive the code table BR_STATUSES
     """
-    query = """
-    SELECT STATUS_ID, BITS_STATUS_EN as NAME_EN, BITS_STATUS_FR as NAME_FR
-    FROM EDR_CARZ.DIM_BITS_STATUS
-    """
-
-    if active:
-        query += "WHERE BR_ACTIVE_EN = 'Active'"
-
-    return db.execute_query(query, result_key="br_statuses")
+    json.loads("")
 
 # pylint: disable=line-too-long
 @tool_metadata({

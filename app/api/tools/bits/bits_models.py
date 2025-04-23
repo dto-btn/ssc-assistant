@@ -1,4 +1,3 @@
-import json
 from pydantic import BaseModel, Field, field_validator
 
 from tools.bits.bits_fields import BRFields
