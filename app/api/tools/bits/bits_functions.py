@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import logging
 import os
@@ -121,8 +122,11 @@ def get_br_statuses():
     """
     This will retreive the code table BR_STATUSES (Active == True)
     """
-    with open("./bits_statuses.json", 'r', encoding='utf-8') as statuses:
-        return json.load(statuses)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(script_dir, "bits_statuses.json")
+    with open(file_path, 'r', encoding='utf-8') as statuses:
+        return { "statuses": json.load(statuses) }
+
 
 # pylint: disable=line-too-long
 @tool_metadata({
@@ -203,3 +207,17 @@ def valid_search_fields():
     return {
         "field_names": json.dumps(keys)
     }
+
+@tool_metadata({
+    "type": "function",
+    "function": {
+        "name": "get_current_date",
+        "description": "This function is used to know what is the current date and time. It returns the current date and time in text format. Use this if you are unsure of what is the current date, do not make assumptions about the current date and time."
+    }
+  })
+def get_current_date():
+    """
+    TODO: this perhaps should be moved into a more generic tools folder.
+    """
+    current_date_time = datetime.now()
+    return { "date": "Formatted date and time:" + current_date_time.strftime("%Y-%m-%d %H:%M:%S") }
