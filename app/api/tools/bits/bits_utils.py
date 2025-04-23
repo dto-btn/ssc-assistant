@@ -100,7 +100,8 @@ class BRQueryBuilder:
         """
 
         # Default select statement from BR_ITEMS & other tables
-        query += "br.BR_NMBR as BR_NMBR, br.EXTRACTION_DATE as EXTRACTION_DATE, " + ", ".join([f"{value} as {key}" for key, value in BRFields.valid_search_fields.items()])
+
+        query += "br.BR_NMBR as BR_NMBR, br.EXTRACTION_DATE as EXTRACTION_DATE, " + ", ".join([f"{value['db_field']} as {key}" for key, value in BRFields.valid_search_fields.items()])
 
         # Deault FROM statement
         query += """

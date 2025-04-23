@@ -1,4 +1,3 @@
-import json
 from pydantic import BaseModel, Field, field_validator
 
 from tools.bits.bits_fields import BRFields
@@ -7,15 +6,15 @@ class BRQueryFilter(BaseModel):
     """Model for BRQueryFilter."""
     name: str = Field(..., description="Name of the database field", )
     value: str = Field(..., description="Value of the field")
-    operator: str = Field(..., description="Operator, must be one of '=', '<', or '>'")
+    operator: str = Field(..., description="Operator, must be one of '=', '<', '>', '<=' or '>='")
 
     # Validator for the 'operator' field
     @field_validator("operator")
     @classmethod
     def validate_operator(cls, v: str) -> str:
         """Validate the operator field."""
-        if v not in {"=", "<", ">"}:
-            raise ValueError("Operator must be one of '=', '<', or '>'")
+        if v not in {"=", "<", ">", "<=", ">="}:
+            raise ValueError("Operator, must be one of '=', '<', '>', '<=' or '>='")
         return v
 
     # Validator for the 'name' field

@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import logging
 import os
@@ -111,30 +112,21 @@ def search_br_by_fields(br_query: str):
         "description": "Use this function to list all the BR Statuses. This can be used to get the STATUS_ID. To perform search in other queries. NEVER ASSUME THE USER GIVES YOU A VALID STATUS. ALWAYS USE THIS FUNCTION TO GET THE LIST OF STATUSES AND THEIR ID.",
         "parameters": {
             "type": "object",
-            "properties": {
-                "active": {
-                    "type": "boolean",
-                    "description": "If true, only active statuses will be returned. Defaults to true."
-                }
-            },
+            "properties": {},
             "required": []
-      }
+        }
     }
   })
 # pylint: enable=line-too-long
-def get_br_statuses(active: bool = True):
+def get_br_statuses():
     """
-    This will retreive the code table BR_STATUSES
+    This will retreive the code table BR_STATUSES (Active == True)
     """
-    query = """
-    SELECT STATUS_ID, BITS_STATUS_EN as NAME_EN, BITS_STATUS_FR as NAME_FR
-    FROM EDR_CARZ.DIM_BITS_STATUS
-    """
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(script_dir, "bits_statuses.json")
+    with open(file_path, 'r', encoding='utf-8') as statuses:
+        return { "statuses": json.load(statuses) }
 
-    if active:
-        query += "WHERE BR_ACTIVE_EN = 'Active'"
-
-    return db.execute_query(query, result_key="br_statuses")
 
 # pylint: disable=line-too-long
 @tool_metadata({
@@ -211,7 +203,23 @@ def valid_search_fields():
     """
     This function returns all the valid search fields
     """
-    keys = list(BRFields.valid_search_fields.keys())
-    return {
-        "field_names": json.dumps(keys)
+    fields_with_descriptions = {
+        key: value.get('description', '') for key, value in BRFields.valid_search_fields.items()
     }
+    return {
+        "field_names": json.dumps(fields_with_descriptions)
+    }
+
+@tool_metadata({
+    "type": "function",
+    "function": {
+        "name": "get_current_date",
+        "description": "This function is used to know what is the current date and time. It returns the current date and time in text format. Use this if you are unsure of what is the current date, do not make assumptions about the current date and time."
+    }
+  })
+def get_current_date():
+    """
+    TODO: this perhaps should be moved into a more generic tools folder.
+    """
+    current_date_time = datetime.now()
+    return { "date": "Formatted date and time:" + current_date_time.strftime("%Y-%m-%d %H:%M:%S") }
