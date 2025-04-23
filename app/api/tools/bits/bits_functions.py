@@ -203,9 +203,11 @@ def valid_search_fields():
     """
     This function returns all the valid search fields
     """
-    keys = list(BRFields.valid_search_fields.keys())
+    fields_with_descriptions = {
+        key: value.get('description', '') for key, value in BRFields.valid_search_fields.items()
+    }
     return {
-        "field_names": json.dumps(keys)
+        "field_names": json.dumps(fields_with_descriptions)
     }
 
 @tool_metadata({
