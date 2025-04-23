@@ -117,11 +117,12 @@ def search_br_by_fields(br_query: str):
     }
   })
 # pylint: enable=line-too-long
-def get_br_statuses(active: bool = True):
+def get_br_statuses():
     """
-    This will retreive the code table BR_STATUSES
+    This will retreive the code table BR_STATUSES (Active == True)
     """
-    json.loads("")
+    with open("./bits_statuses.json", 'r', encoding='utf-8') as statuses:
+        return json.load(statuses)
 
 # pylint: disable=line-too-long
 @tool_metadata({
