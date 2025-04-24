@@ -99,6 +99,14 @@
         "en": "Clear Current Chat",
         "fr": "Effacer la conversation actuelle"
     },
+    "clear.conversation.title": {
+        "en": "Clear Conversation",
+        "fr": "Effacer la conversation"
+    },
+    "clear.conversation.content": {
+        "en": "Are you sure you want to clear the current conversation? This action cannot be undone.",
+        "fr": "Êtes-vous sûr de vouloir effacer la conversation actuelle? Cette action ne peut pas être annulée."
+    },
     "clear.conversation.short": {
         "en": "Clear",
         "fr": "Effacer"

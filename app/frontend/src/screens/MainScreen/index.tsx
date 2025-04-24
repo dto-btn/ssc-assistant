@@ -20,6 +20,7 @@ import { bookReservation } from "../../api/api";
 import { callMsGraph } from "../../graph";
 import { UserContext } from "../../stores/UserContext";
 import { DeleteConversationConfirmation } from "../../components/DeleteConversationConfirmation";
+import { ClearConversationConfirmation } from "../../components/ClearConversationConfirmation";
 import { useLocation } from "react-router";
 import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
 import { useAppStore } from "../../stores/AppStore";
@@ -52,6 +53,7 @@ const MainScreen = () => {
     number | null
   >(null);
   const [showDeleteChatDialog, setShowDeleteChatDialog] = useState(false);
+  const [showClearChatDialog, setShowClearChatDialog] = useState(false);
 
   const { instance, inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
@@ -130,6 +132,11 @@ const MainScreen = () => {
   }
 
   const handleClearChat = () => {
+    setShowClearChatDialog(true);
+  };
+
+  const clearChat = () => {
+    setShowClearChatDialog(false);
     setCurrentChatHistory((prevChatHistory) => {
       const updatedChatHistory = {
         ...prevChatHistory,
@@ -138,6 +145,10 @@ const MainScreen = () => {
       chatService.saveChatHistories(updatedChatHistory);
       return updatedChatHistory;
     });
+  };
+
+  const handleClose = () => {
+    setShowClearChatDialog(false);
   };
 
   const handleLogout = () => {
@@ -511,6 +522,11 @@ const MainScreen = () => {
           open={showDeleteChatDialog}
           onClose={handleCancelDeleteSavedChat}
           onDelete={deleteSavedChat}
+        />
+        <ClearConversationConfirmation
+          open={showClearChatDialog}
+          onClose={handleClose}
+          onClear={clearChat}
         />
       </NewLayout>
     </UserContext.Provider>

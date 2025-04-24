@@ -12,25 +12,26 @@ import {
 type Props = {
   open: boolean;
   onClose: () => void;
-  onDelete: () => void;
+  onClear: () => void;
 };
-export const DeleteConversationConfirmation: React.FC<Props> = ({
+
+export const ClearConversationConfirmation: React.FC<Props> = ({
   open,
   onClose,
-  onDelete,
+  onClear,
 }) => {
   const { t } = useTranslation();
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>{t("delete.conversation.title")}</DialogTitle>
+      <DialogTitle>{t("clear.conversation.title")}</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          {t("delete.conversation.content")}
+          {t("clear.conversation.content")}
         </DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>{t("cancel")}</Button>
-        <Button onClick={onDelete} variant="contained" size="small" color='error'>{t("delete")}</Button>
+        <Button onClick={onClear} variant="contained" size="small" color='error'>{t("clear")}</Button>
       </DialogActions>
     </Dialog>
   );
