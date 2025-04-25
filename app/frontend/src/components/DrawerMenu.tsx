@@ -264,10 +264,8 @@ export const DrawerMenu = ({
                     }}
                   >
                     <MenuItem onClick={handleDeleteChatClicked} tabIndex={0}>
-                      <DeleteIcon sx={{ color: "red", mr: "15px" }} />
-                      <Typography sx={{ color: "red" }}>
-                        {t("delete")}
-                      </Typography>
+                      <DeleteIcon color="error" sx={{ mr: "15px" }} />
+                      <Typography color="error">{t("delete")}</Typography>
                     </MenuItem>
                     <MenuItem onClick={handleRenameClicked} tabIndex={0}>
                       <EditIcon sx={{ mr: "15px" }} />
