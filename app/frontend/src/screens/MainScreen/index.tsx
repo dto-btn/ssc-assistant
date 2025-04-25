@@ -1,7 +1,4 @@
-import {
-  Box,
-  IconButton,
-} from "@mui/material";
+import { Box, IconButton } from "@mui/material";
 import {
   ChatInput,
   Disclaimer,
@@ -10,7 +7,7 @@ import {
   TopMenuHomePage,
 } from "../../components";
 import ChatMessagesContainer from "../../containers/ChatMessagesContainer";
-import { useTranslation } from "react-i18next"
+import { useTranslation } from "react-i18next";
 import { useEffect, useRef, useState } from "react";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { isAMessage } from "../../utils";
@@ -20,7 +17,6 @@ import { bookReservation } from "../../api/api";
 import { callMsGraph } from "../../graph";
 import { UserContext } from "../../stores/UserContext";
 import { DeleteConversationConfirmation } from "../../components/DeleteConversationConfirmation";
-import { ClearConversationConfirmation } from "../../components/ClearConversationConfirmation";
 import { useLocation } from "react-router";
 import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
 import { useAppStore } from "../../stores/AppStore";
@@ -38,7 +34,17 @@ import { tt } from "../../i18n/tt";
 const MainScreen = () => {
   const { t } = useTranslation();
   const appStore = useAppStore();
-  const { currentChatIndex, getCurrentChatHistory, chatHistoriesDescriptions, setCurrentChatHistory, setDefaultChatHistory, getDefaultModel, setCurrentChatIndex: chatStoreSetCurrentChatIndex, setChatHistoriesDescriptions, quotedText } = useChatStore();
+  const {
+    currentChatIndex,
+    getCurrentChatHistory,
+    chatHistoriesDescriptions,
+    setCurrentChatHistory,
+    setDefaultChatHistory,
+    getDefaultModel,
+    setCurrentChatIndex: chatStoreSetCurrentChatIndex,
+    setChatHistoriesDescriptions,
+    quotedText,
+  } = useChatStore();
   const chatService = useChatService();
   const apiRequestService = useApiRequestService();
 
@@ -53,7 +59,6 @@ const MainScreen = () => {
     number | null
   >(null);
   const [showDeleteChatDialog, setShowDeleteChatDialog] = useState(false);
-  const [showClearChatDialog, setShowClearChatDialog] = useState(false);
 
   const { instance, inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
@@ -107,7 +112,7 @@ const MainScreen = () => {
       );
     } else {
       // If there are no chat histories, set the current chat to the default
-      setDefaultChatHistory()
+      setDefaultChatHistory();
     }
   };
 
@@ -118,7 +123,10 @@ const MainScreen = () => {
       // clean the enabled tools. we should only set the tools that are included in defaultEnabledTools and no other.
       const cleanedTools = { ...defaultEnabledTools };
       for (const key in cleanedTools) {
-        if (enabledTools.hasOwnProperty(key) && typeof enabledTools[key] === "boolean") {
+        if (
+          enabledTools.hasOwnProperty(key) &&
+          typeof enabledTools[key] === "boolean"
+        ) {
           cleanedTools[key] = enabledTools[key];
         }
       }
@@ -129,26 +137,6 @@ const MainScreen = () => {
       console.error("Error loading chat histories from local storage", error);
       appStore.tools.setEnabledTools(defaultEnabledTools);
     }
-  }
-
-  const handleClearChat = () => {
-    setShowClearChatDialog(true);
-  };
-
-  const clearChat = () => {
-    setShowClearChatDialog(false);
-    setCurrentChatHistory((prevChatHistory) => {
-      const updatedChatHistory = {
-        ...prevChatHistory,
-        chatItems: [],
-      };
-      chatService.saveChatHistories(updatedChatHistory);
-      return updatedChatHistory;
-    });
-  };
-
-  const handleClose = () => {
-    setShowClearChatDialog(false);
   };
 
   const handleLogout = () => {
@@ -181,9 +169,7 @@ const MainScreen = () => {
     });
   };
 
-  const handleUpdateEnabledTools = (
-    name: string
-  ) => {
+  const handleUpdateEnabledTools = (name: string) => {
     let updatedTools;
     const newState: boolean = !appStore.tools.enabledTools[name];
 
@@ -242,8 +228,6 @@ const MainScreen = () => {
     setChatIndexToLoadOrDelete(null);
   };
 
-
-
   const handleBookReservation = async (bookingDetails: BookingConfirmation) => {
     let toast: ToastMessage;
     try {
@@ -272,10 +256,10 @@ const MainScreen = () => {
   useEffect(() => {
     console.debug(
       "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-      isAuthenticated +
-      ", InProgress? " +
-      inProgress +
-      ")"
+        isAuthenticated +
+        ", InProgress? " +
+        inProgress +
+        ")"
     );
     if (
       isAuthenticated &&
@@ -350,7 +334,10 @@ const MainScreen = () => {
         ]);
       } else {
         const showError = (msg: string) => {
-          appStore.snackbars.show(msg, SNACKBAR_DEBOUNCE_KEYS.SUGGEST_CONTEXT_ERROR);
+          appStore.snackbars.show(
+            msg,
+            SNACKBAR_DEBOUNCE_KEYS.SUGGEST_CONTEXT_ERROR
+          );
           console.error("ERROR: parsedSuggestionContext", msg);
         };
         switch (parsedSuggestionContext.errorReason) {
@@ -377,13 +364,15 @@ const MainScreen = () => {
   return (
     <UserContext.Provider value={userData}>
       <NewLayout
-        appBar={(
+        appBar={
           <TopMenuHomePage
             childrenLeftOfLogo={
               <>
-                < IconButton sx={{
-                  color: 'white',
-                }} onClick={() => appStore.appDrawer.toggle()}
+                <IconButton
+                  sx={{
+                    color: "white",
+                  }}
+                  onClick={() => appStore.appDrawer.toggle()}
                   aria-label={tt("drawer.icon.title")}
                   title={tt("drawer.icon.title")}
                 >
@@ -397,20 +386,18 @@ const MainScreen = () => {
             selectedModel={getCurrentChatHistory().model}
             logout={handleLogout}
           />
-        )}
-        appDrawerContents={(
+        }
+        appDrawerContents={
           <DrawerMenu
             chatDescriptions={chatHistoriesDescriptions}
             currentChatIndex={currentChatIndex}
-            onClearChat={handleClearChat}
             handleDeleteSavedChat={handleDeleteSavedChat}
             handleLoadSavedChat={chatService.handleLoadSavedChat}
             renameChat={chatService.renameChat}
             onNewChat={chatService.handleNewChat}
           />
-        )}
+        }
       >
-
         {getCurrentChatHistory().chatItems.length === 0 ? (
           // if 0 chat history
           <Box
@@ -458,7 +445,13 @@ const MainScreen = () => {
                 placeholder={t("placeholder")}
                 disabled={apiRequestService.isLoading}
                 onSend={(question, attachments) =>
-                  apiRequestService.makeApiRequest(question, userData, attachments, undefined, appStore.tools.enabledTools)
+                  apiRequestService.makeApiRequest(
+                    question,
+                    userData,
+                    attachments,
+                    undefined,
+                    appStore.tools.enabledTools
+                  )
                 }
                 quotedText={quotedText}
                 selectedModel={getCurrentChatHistory().model}
@@ -475,20 +468,20 @@ const MainScreen = () => {
               margin: "auto",
               position: "fixed",
               top: 0,
-                left: appStore.appDrawer.isOpen ? LEFT_MENU_WIDTH : 0,
+              left: appStore.appDrawer.isOpen ? LEFT_MENU_WIDTH : 0,
               right: 0,
               bottom: 0,
               paddingTop: "3rem",
-              overflow: 'auto'
+              overflow: "auto",
             }}
-          // maxWidth="lg"
+            // maxWidth="lg"
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <ChatMessagesContainer
-                chatHistory={getCurrentChatHistory()}
-                isLoading={apiRequestService.isLoading}
+              chatHistory={getCurrentChatHistory()}
+              isLoading={apiRequestService.isLoading}
               chatMessageStreamEnd={chatMessageStreamEnd}
-                replayChat={replayChat}
+              replayChat={replayChat}
               handleRemoveToastMessage={handleRemoveToastMessage}
               handleBookReservation={handleBookReservation}
             />
@@ -506,12 +499,18 @@ const MainScreen = () => {
               <ChatInput
                 clearOnSend
                 placeholder={t("placeholder")}
-                  disabled={apiRequestService.isLoading}
+                disabled={apiRequestService.isLoading}
                 onSend={(question, attachments) =>
-                  apiRequestService.makeApiRequest(question, userData, attachments, undefined, appStore.tools.enabledTools)
+                  apiRequestService.makeApiRequest(
+                    question,
+                    userData,
+                    attachments,
+                    undefined,
+                    appStore.tools.enabledTools
+                  )
                 }
                 quotedText={quotedText}
-                  selectedModel={getCurrentChatHistory().model}
+                selectedModel={getCurrentChatHistory().model}
               />
             </Box>
           </Box>
@@ -522,11 +521,6 @@ const MainScreen = () => {
           open={showDeleteChatDialog}
           onClose={handleCancelDeleteSavedChat}
           onDelete={deleteSavedChat}
-        />
-        <ClearConversationConfirmation
-          open={showClearChatDialog}
-          onClose={handleClose}
-          onClear={clearChat}
         />
       </NewLayout>
     </UserContext.Provider>
