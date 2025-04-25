@@ -59,7 +59,6 @@ const MainScreen = () => {
     number | null
   >(null);
   const [showDeleteChatDialog, setShowDeleteChatDialog] = useState(false);
-  const [showClearChatDialog, setShowClearChatDialog] = useState(false);
 
   const { instance, inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
