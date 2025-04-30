@@ -13,9 +13,10 @@ import {
   IconButton,
   PaperProps,
 } from "@mui/material";
-import Markdown from "react-markdown";
+import { MarkdownHooks } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
+import rehypeMermaid from 'rehype-mermaid';
 import "highlight.js/styles/github.css";
 import { useEffect, useState, Fragment } from "react";
 import { useTranslation } from "react-i18next";
@@ -270,9 +271,9 @@ export const AssistantBubble = ({
                   {t("aria.assistant.message")}
                 </Typography>{" "}
                 {/* Hidden div for screen reader */}
-                <Markdown
+                <MarkdownHooks
                   components={components}
-                  rehypePlugins={[rehypeHighlight]}
+                  rehypePlugins={[[rehypeMermaid, { strategy: 'img-png' }], rehypeHighlight]}
                   remarkPlugins={[remarkGfm]}
                 >
                   {isLoading
@@ -280,7 +281,7 @@ export const AssistantBubble = ({
                     : processedContent.processedText !== ""
                     ? processedContent.processedText
                     : text}
-                </Markdown>
+                </MarkdownHooks>
               </TextComponentsBox>
             </MainContentWrapper>
 
