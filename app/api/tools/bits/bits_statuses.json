@@ -1,692 +1,352 @@
 [
   {
-    "STATUS_ID": "AgrClntSig",
-    "NAME_EN": "Agreement-Waiting Client Signature (New)",
-    "NAME_FR": "Entente-Attente des signatures du client (nouveau)"
-  },
-  {
-    "STATUS_ID": "AGRCustHld",
-    "NAME_EN": "Implementation-Customer Hold",
-    "NAME_FR": "Mise en oeuvre en attente (client)"
-  },
-  {
-    "STATUS_ID": "AgrDrftApr",
-    "NAME_EN": "Agreement-Draft Approved",
-    "NAME_FR": "Revue de l`ébauche"
-  },
-  {
-    "STATUS_ID": "AGRDtlDes",
-    "NAME_EN": "Implementation-Detailed Design",
-    "NAME_FR": "La conception de détail"
-  },
-  {
-    "STATUS_ID": "AGRImpIntk",
-    "NAME_EN": "Implementation-Intake",
-    "NAME_FR": "Prise de mise en oeuvre"
-  },
-  {
-    "STATUS_ID": "AGRPndImp",
-    "NAME_EN": "Implementation-Pending Execution",
-    "NAME_FR": "Mise en oeuvre en attente"
-  },
-  {
-    "STATUS_ID": "AgrQA",
-    "NAME_EN": "Agreement-QA",
-    "NAME_FR": "Entente-QA"
-  },
-  {
-    "STATUS_ID": "AgrQAReq",
-    "NAME_EN": "Agreement-QA Required",
-    "NAME_FR": "Entente-QA demandé"
-  },
-  {
-    "STATUS_ID": "AgrRouting",
-    "NAME_EN": "Agreement-Routing for Internal Signatures (New)",
-    "NAME_FR": "Entente-Acheminement (nouveau)"
-  },
-  {
-    "STATUS_ID": "AMDAbandon",
-    "NAME_EN": "Amendment-Abandon",
-    "NAME_FR": "Modification-abandonner"
-  },
-  {
-    "STATUS_ID": "AMDDraft",
-    "NAME_EN": "Amendment-Draft",
-    "NAME_FR": "Modification-ébauche"
-  },
-  {
-    "STATUS_ID": "AMDInit",
-    "NAME_EN": "Amendment-Initial",
-    "NAME_FR": "Modification-Initiale"
-  },
-  {
-    "STATUS_ID": "AMDReScope",
-    "NAME_EN": "Amendment-Scope (Returned)",
-    "NAME_FR": "Modification-Scope (Retournée)"
-  },
-  {
-    "STATUS_ID": "AMDScope",
-    "NAME_EN": "Amendment-Scope",
-    "NAME_FR": "Modification-Scope"
-  },
-  {
-    "STATUS_ID": "AMDSpec",
-    "NAME_EN": "Amendment-Specification",
-    "NAME_FR": "Modification-Spécification"
-  },
-  {
-    "STATUS_ID": "AMDWIORev",
-    "NAME_EN": "Amendment-BIM Review",
-    "NAME_FR": "Modification-Revue de GIO"
-  },
-  {
-    "STATUS_ID": "AMDWIOVal",
-    "NAME_EN": "Amendment-BIM Validation",
-    "NAME_FR": "Modification-Validation de GIO"
-  },
-  {
-    "STATUS_ID": "AMEND_INPR",
-    "NAME_EN": "Amendment in Progress",
-    "NAME_FR": "Amendement en cours"
-  },
-  {
-    "STATUS_ID": "BRAssigned",
-    "NAME_EN": "SRD-Assigned",
-    "NAME_FR": "DBS-Assigné"
-  },
-  {
-    "STATUS_ID": "BRInit",
-    "NAME_EN": "SRD-Initial",
-    "NAME_FR": "DBS-Initiale"
-  },
-  {
-    "STATUS_ID": "BRRetAssgn",
-    "NAME_EN": "SRD-Returned(assigned)",
-    "NAME_FR": "Retourné (assigné)"
-  },
-  {
-    "STATUS_ID": "BRRetScope",
-    "NAME_EN": "SRD - Returned(Scope)",
-    "NAME_FR": "DBS Retourné (scope)"
-  },
-  {
-    "STATUS_ID": "BRReturn",
-    "NAME_EN": "SRD-Returned",
-    "NAME_FR": "DBS-Retourné"
-  },
-  {
-    "STATUS_ID": "BRScope",
-    "NAME_EN": "SRD - Scope",
-    "NAME_FR": "DBS - Analyse"
-  },
-  {
-    "STATUS_ID": "BRScope2",
-    "NAME_EN": "SSD - Re-Scope",
-    "NAME_FR": "DSS - Retourné pour analyse"
-  },
-  {
-    "STATUS_ID": "BRSuspend",
-    "NAME_EN": "SRD-Suspended [OLD]",
-    "NAME_FR": "DBS-Suspendu [ANCIEN]"
-  },
-  {
     "STATUS_ID": "ConAssess",
     "NAME_EN": "Advisory Assessment",
-    "NAME_FR": "Evaluation Consultatif"
-  },
-  {
-    "STATUS_ID": "ConOwnRev",
-    "NAME_EN": "Owner Review",
-    "NAME_FR": "Critique du propriétaire"
+    "NAME_FR": "Evaluation Consultatif",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
   },
   {
     "STATUS_ID": "CusAgrRev",
     "NAME_EN": "Agreement-Customer Draft Review",
-    "NAME_FR": "Revue de l`ébauche par Client"
+    "NAME_FR": "Revue de l'ébauche de l'entente Client",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "AMDDraft",
+    "NAME_EN": "Agreement-Draft",
+    "NAME_FR": "Ébauche de l’entente",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "AgrDrftApr",
+    "NAME_EN": "Agreement-Draft Approved",
+    "NAME_FR": "Ébauche de l’entente approuvée",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "AgrQAReq",
+    "NAME_EN": "Agreement-Draft Review",
+    "NAME_FR": "Revue de l'ébauche de l'entente",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "AgrQA",
+    "NAME_EN": "Agreement-QA",
+    "NAME_FR": "Entente-QA",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
   },
   {
     "STATUS_ID": "DMAgr_Req",
     "NAME_EN": "Agreement-Required",
-    "NAME_FR": "Entente Requise"
+    "NAME_FR": "Entente Requise",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
   },
   {
-    "STATUS_ID": "DMAgrClSig",
-    "NAME_EN": "Agreement-Waiting Customer Signature",
-    "NAME_FR": "Entente-Attente des signatures du client"
-  },
-  {
-    "STATUS_ID": "DMAgrDraft",
-    "NAME_EN": "Agreement-Draft",
-    "NAME_FR": "Entente-Ébauche"
-  },
-  {
-    "STATUS_ID": "DMAgrQA",
-    "NAME_EN": "Agreement-QA",
-    "NAME_FR": "Entente-QA"
-  },
-  {
-    "STATUS_ID": "DMAgrQAReq",
-    "NAME_EN": "Agreement-QA Required",
-    "NAME_FR": "Entente-QA demandé"
+    "STATUS_ID": "AgrRouting",
+    "NAME_EN": "Agreement-Routing for Internal Signatures",
+    "NAME_FR": "Entente – Acheminement interne des signatures",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
   },
   {
     "STATUS_ID": "DMAgrRev",
     "NAME_EN": "Agreement-SDM Draft Review",
-    "NAME_FR": "Revue de l`ébauche par GPS"
+    "NAME_FR": "Revue de l'ébauche de l'entente GPS",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
   },
   {
-    "STATUS_ID": "DMAgrRoute",
-    "NAME_EN": "Agreement-Routing for Internal Signatures",
-    "NAME_FR": "Entente-Acheminement"
+    "STATUS_ID": "ITApproved",
+    "NAME_EN": "Agreement-Signed",
+    "NAME_FR": "Entente signée",
+    "PHASE_EN": "Completed",
+    "PHASE_FR": "Complétée"
+  },
+  {
+    "STATUS_ID": "AgrClntSig",
+    "NAME_EN": "Agreement-Waiting Customer Signature",
+    "NAME_FR": "Entente- En attente de la signature du client",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "AMEND_INPR",
+    "NAME_EN": "Amendment in Progress",
+    "NAME_FR": "Amendement en cours",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
   },
   {
     "STATUS_ID": "DMBAAssign",
     "NAME_EN": "BA TL-Assign BA OPI",
-    "NAME_FR": "Assigner un AA"
+    "NAME_FR": "AO CE-Attribution d’un BPR pour l’AO",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
   },
   {
     "STATUS_ID": "DMBAPrice",
     "NAME_EN": "BA-Pricing",
-    "NAME_FR": "AA Prix"
+    "NAME_FR": "AO - Établissement des prix",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "DMAgrQAReq",
+    "NAME_EN": "BA-Pricing QA",
+    "NAME_FR": "INT-Revue des coûts",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
   },
   {
     "STATUS_ID": "DMBAPrRev",
-    "NAME_EN": "BA-Pricing QA",
-    "NAME_FR": "AA révision du prix"
+    "NAME_EN": "BA-Pricing Review",
+    "NAME_FR": "AO - Révision de l'établissement des prix",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
   },
   {
-    "STATUS_ID": "DMBARev",
+    "STATUS_ID": "AMDWIORev",
     "NAME_EN": "BA-Solution Review",
-    "NAME_FR": "AA révision de la solution"
+    "NAME_FR": "AO -   Révision de la solution",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
   },
   {
-    "STATUS_ID": "DMBAVal",
+    "STATUS_ID": "AMDWIOVal",
     "NAME_EN": "BA-Validation",
-    "NAME_FR": "Validation par BA"
-  },
-  {
-    "STATUS_ID": "DMBRAssign",
-    "NAME_EN": "BRD-Assigned",
-    "NAME_FR": "DBA-Assigné"
-  },
-  {
-    "STATUS_ID": "DMBRReturn",
-    "NAME_EN": "SDM-BRD-Returned",
-    "NAME_FR": "DBA-Retourné"
-  },
-  {
-    "STATUS_ID": "DMPM_Req",
-    "NAME_EN": "PM/Coordinator Required",
-    "NAME_FR": "PM/Coordinator Required"
-  },
-  {
-    "STATUS_ID": "DMRETriage",
-    "NAME_EN": "Returned to Triage",
-    "NAME_FR": "Retournée au Triage"
-  },
-  {
-    "STATUS_ID": "DMSolnDel",
-    "NAME_EN": "SL-Conceptual Design",
-    "NAME_FR": "Design Conceptuel"
-  },
-  {
-    "STATUS_ID": "DMSolnDev",
-    "NAME_EN": "Solution Development",
-    "NAME_FR": "Développement de la solution"
-  },
-  {
-    "STATUS_ID": "DMTriage",
-    "NAME_EN": "Intake-BRD Initial",
-    "NAME_FR": "DBA-Initiale"
-  },
-  {
-    "STATUS_ID": "DTAgrSig",
-    "NAME_EN": "Agreement Signature Review",
-    "NAME_FR": "Agreement Signature Review"
-  },
-  {
-    "STATUS_ID": "EA_CSR",
-    "NAME_EN": "EART-CSR",
-    "NAME_FR": "AE-ECS"
-  },
-  {
-    "STATUS_ID": "EA_Intake",
-    "NAME_EN": "EA-Intake",
-    "NAME_FR": "AE-Admission"
-  },
-  {
-    "STATUS_ID": "EA_PSR",
-    "NAME_EN": "EART-PSR",
-    "NAME_FR": "AE-EPC"
-  },
-  {
-    "STATUS_ID": "Hold",
-    "NAME_EN": "Hold",
-    "NAME_FR": "Suspension"
-  },
-  {
-    "STATUS_ID": "HoldReview",
-    "NAME_EN": "BA TL-Hold Review",
-    "NAME_FR": "Révision de la suspension"
-  },
-  {
-    "STATUS_ID": "IN_WIOVal",
-    "NAME_EN": "INFRA-BIM Validation",
-    "NAME_FR": "INFRA-WIO Validation"
-  },
-  {
-    "STATUS_ID": "INApproved",
-    "NAME_EN": "INFRA-Approved",
-    "NAME_FR": "INFRA-Approuvé"
-  },
-  {
-    "STATUS_ID": "INInit",
-    "NAME_EN": "INFRA-Development",
-    "NAME_FR": "INFRA-Développement"
-  },
-  {
-    "STATUS_ID": "INReturned",
-    "NAME_EN": "INFRA-Returned",
-    "NAME_FR": "INFRA-Retourné"
-  },
-  {
-    "STATUS_ID": "INReview",
-    "NAME_EN": "INFRA-Owner Review",
-    "NAME_FR": "INFRA-Revue du propriétaire"
-  },
-  {
-    "STATUS_ID": "INWIORev",
-    "NAME_EN": "INFRA-BIM Review",
-    "NAME_FR": "INFRA-Revue de GIO"
-  },
-  {
-    "STATUS_ID": "IT_WIOVal",
-    "NAME_EN": "INT-BIM Validation",
-    "NAME_FR": "INT-WIO Validation"
-  },
-  {
-    "STATUS_ID": "ITApproved",
-    "NAME_EN": "INT-Approved",
-    "NAME_FR": "INT-Approuvé"
-  },
-  {
-    "STATUS_ID": "ITInit",
-    "NAME_EN": "INT-Development",
-    "NAME_FR": "INT-Développement"
-  },
-  {
-    "STATUS_ID": "ITProdRev",
-    "NAME_EN": "INT-Costing Review",
-    "NAME_FR": "INT-Revue des coûts"
-  },
-  {
-    "STATUS_ID": "ITRetScope",
-    "NAME_EN": "INT-Returned (Scope)",
-    "NAME_FR": "INT-Retourné (scopage)"
-  },
-  {
-    "STATUS_ID": "ITReturned",
-    "NAME_EN": "INT-Returned",
-    "NAME_FR": "INT-Retourné"
-  },
-  {
-    "STATUS_ID": "ITReview",
-    "NAME_EN": "INT-Owner Review",
-    "NAME_FR": "INT-Revue du propriétaire"
-  },
-  {
-    "STATUS_ID": "ITScope",
-    "NAME_EN": "INT-Scope",
-    "NAME_FR": "INT-Scope"
-  },
-  {
-    "STATUS_ID": "ITWIORev",
-    "NAME_EN": "INT-BIM Review",
-    "NAME_FR": "INT-Revue de GIO"
-  },
-  {
-    "STATUS_ID": "LTPricing",
-    "NAME_EN": "Lean Pricing",
-    "NAME_FR": "Lean Pricing"
-  },
-  {
-    "STATUS_ID": "LTSLReview",
-    "NAME_EN": "SL-Service Line Review",
-    "NAME_FR": "Revision de la ligne de service"
-  },
-  {
-    "STATUS_ID": "OPS_WIOVal",
-    "NAME_EN": "BIA Validation (OPS)",
-    "NAME_FR": "OPS Validation par BICT"
-  },
-  {
-    "STATUS_ID": "OPSInit",
-    "NAME_EN": "OPS Initial",
-    "NAME_FR": "OPS Initiale"
-  },
-  {
-    "STATUS_ID": "OPSPriced",
-    "NAME_EN": "OPS Priced",
-    "NAME_FR": "OPS Evalué"
-  },
-  {
-    "STATUS_ID": "OPSReturn",
-    "NAME_EN": "OPS Returned",
-    "NAME_FR": "OPS Retourné"
-  },
-  {
-    "STATUS_ID": "PR_FinRev",
-    "NAME_EN": "Finance-Pricing Review",
-    "NAME_FR": "Revision par finances"
-  },
-  {
-    "STATUS_ID": "REInit",
-    "NAME_EN": "Returned to Triage",
-    "NAME_FR": "Retournée au Triage"
-  },
-  {
-    "STATUS_ID": "SAAccept",
-    "NAME_EN": "Agreement-Routing for Internal Signatures [OLD]",
-    "NAME_FR": "Entente-Acheminement pour signatures int [ANCIEN]"
-  },
-  {
-    "STATUS_ID": "SAClntSig",
-    "NAME_EN": "Agreement-Awaiting Client Signature [OLD]",
-    "NAME_FR": "Entente-Attente des signatures du client [ANCIEN]"
-  },
-  {
-    "STATUS_ID": "SADraft",
-    "NAME_EN": "Agreement-Draft [OLD]",
-    "NAME_FR": "Entente-Ébauche [ANCIEN]"
-  },
-  {
-    "STATUS_ID": "SAImplem",
-    "NAME_EN": "Implementation-Execution",
-    "NAME_FR": "Mise en oeuvre"
-  },
-  {
-    "STATUS_ID": "SAInServ",
-    "NAME_EN": "In Service",
-    "NAME_FR": "En Service"
-  },
-  {
-    "STATUS_ID": "SARB_CSR",
-    "NAME_EN": "SARB-CSR",
-    "NAME_FR": "CEAS-ECS"
-  },
-  {
-    "STATUS_ID": "SARB_PSR",
-    "NAME_EN": "SARB-PSR",
-    "NAME_FR": "CEAS-EPC"
-  },
-  {
-    "STATUS_ID": "SAReview",
-    "NAME_EN": "Agreement-P&I Review [OLD]",
-    "NAME_FR": "Entente-Revue PIH [ANCIEN]"
-  },
-  {
-    "STATUS_ID": "SASigned",
-    "NAME_EN": "Agreement-Signed",
-    "NAME_FR": "Entente-Signée"
-  },
-  {
-    "STATUS_ID": "SASuspend",
-    "NAME_EN": "Agreement-Suspend [OLD]",
-    "NAME_FR": "Entente-Suspendu [ANCIEN]"
-  },
-  {
-    "STATUS_ID": "SciCost",
-    "NAME_EN": "Costing",
-    "NAME_FR": "Détermination des coûts"
-  },
-  {
-    "STATUS_ID": "SciDev",
-    "NAME_EN": "SciP Solution Development",
-    "NAME_FR": "Élaboration de la solution"
-  },
-  {
-    "STATUS_ID": "SciImpl",
-    "NAME_EN": "Implementation",
-    "NAME_FR": "Mise en oeuvre"
-  },
-  {
-    "STATUS_ID": "SciReject",
-    "NAME_EN": "Sci Returned",
-    "NAME_FR": "Sci Retourné"
-  },
-  {
-    "STATUS_ID": "SciRev",
-    "NAME_EN": "ISEA Review",
-    "NAME_FR": "HISI Révision"
-  },
-  {
-    "STATUS_ID": "SciVal",
-    "NAME_EN": "ISEA Validation",
-    "NAME_FR": "HISI Validation"
-  },
-  {
-    "STATUS_ID": "SDM_DDC",
-    "NAME_EN": "SDM-DDC",
-    "NAME_FR": "GPS-ECD"
-  },
-  {
-    "STATUS_ID": "SEInit",
-    "NAME_EN": "SE Requested",
-    "NAME_FR": "Estimée Demandée"
-  },
-  {
-    "STATUS_ID": "SEPriced",
-    "NAME_EN": "SE Priced",
-    "NAME_FR": "Estimée Evaluée"
-  },
-  {
-    "STATUS_ID": "SERetTR",
-    "NAME_EN": "SE Returned (Triage)",
-    "NAME_FR": "Estimée Retourné (Triage)"
-  },
-  {
-    "STATUS_ID": "SEReturned",
-    "NAME_EN": "SE Returned",
-    "NAME_FR": "Estimée Retourné"
-  },
-  {
-    "STATUS_ID": "SETriage",
-    "NAME_EN": "SE Submitted",
-    "NAME_FR": "Estimée Soumise"
-  },
-  {
-    "STATUS_ID": "SIS_CDD",
-    "NAME_EN": "SISD-CDD",
-    "NAME_FR": "DSIS-DCC"
-  },
-  {
-    "STATUS_ID": "SIS_Intake",
-    "NAME_EN": "SISD-Intake",
-    "NAME_FR": "DSIS-Admission"
-  },
-  {
-    "STATUS_ID": "SIS_KICK",
-    "NAME_EN": "SISD-Technical Kickoff Meeting",
-    "NAME_FR": "DSIS - Réunion de lancement technique"
-  },
-  {
-    "STATUS_ID": "SIS_SID",
-    "NAME_EN": "SISD-SID",
-    "NAME_FR": "DSIS-DIS"
-  },
-  {
-    "STATUS_ID": "SLAComp",
-    "NAME_EN": "Agreement-Presented [OLD]",
-    "NAME_FR": "Entente-Présentée [ANCIEN]"
-  },
-  {
-    "STATUS_ID": "SLADraft",
-    "NAME_EN": "Agreement-Draft (PM)",
-    "NAME_FR": "Entente-Ébauche (GProd)"
-  },
-  {
-    "STATUS_ID": "SLADraftE",
-    "NAME_EN": "Agreement-Draft (CRM)",
-    "NAME_FR": "Entente-Ébauche (GRC)"
-  },
-  {
-    "STATUS_ID": "SLAMDAccpt",
-    "NAME_EN": "Agreement Amendment-Waiting Signature",
-    "NAME_FR": "Entente-Attente des signatures"
-  },
-  {
-    "STATUS_ID": "SLAMDComp",
-    "NAME_EN": "Agreement Amendment-Client Acceptance",
-    "NAME_FR": "Entente-Acceptation du client"
-  },
-  {
-    "STATUS_ID": "SLAMDDraft",
-    "NAME_EN": "Agreement Amendment-Draft",
-    "NAME_FR": "Entente-Ébauche"
-  },
-  {
-    "STATUS_ID": "SLAMDRev",
-    "NAME_EN": "Agreement Amendment-P&I Review",
-    "NAME_FR": "Entente-Revue PIH"
-  },
-  {
-    "STATUS_ID": "SLAReview",
-    "NAME_EN": "Agreement-P&I Review [OLD]",
-    "NAME_FR": "Entente-Revue PIH [ANCIEN]"
+    "NAME_FR": "AO-Validation",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "AMDAbandon",
+    "NAME_EN": "Cancel Review",
+    "NAME_FR": "Revue d'annulation",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
   },
   {
     "STATUS_ID": "SLN_cus_Rv",
     "NAME_EN": "Customer-Pricing Review",
-    "NAME_FR": "Examen de la tarification Client"
+    "NAME_FR": "Examen de la tarification Client",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "EA_Intake",
+    "NAME_EN": "EA-Intake",
+    "NAME_FR": "AE-Admission",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "EA_CSR",
+    "NAME_EN": "EART-CSR",
+    "NAME_FR": "AE-ECS",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "EA_PSR",
+    "NAME_EN": "EART-PSR",
+    "NAME_FR": "AE-EPC",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
   },
   {
     "STATUS_ID": "SLN_FIN_In",
-    "NAME_EN": "Finance Pricing Intake",
-    "NAME_FR": "Financement des prix"
+    "NAME_EN": "Finance-Pricing Intake",
+    "NAME_FR": "Financement des prix",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
   },
   {
-    "STATUS_ID": "SLN_FIN_Rv",
+    "STATUS_ID": "PR_FinRev",
     "NAME_EN": "Finance-Pricing Review",
-    "NAME_FR": "Examen des prix financiers"
+    "NAME_FR": "Revision par finances",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
   },
   {
-    "STATUS_ID": "SLN_SDM_Rv",
-    "NAME_EN": "SDM Pricing Review",
-    "NAME_FR": "Examen de la tarification SDM"
+    "STATUS_ID": "BRSuspend",
+    "NAME_EN": "Hold",
+    "NAME_FR": "En attente",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "HoldReview",
+    "NAME_EN": "Hold Review",
+    "NAME_FR": "Révision de la suspension",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "AGRCustHld",
+    "NAME_EN": "Implementation-Customer Hold",
+    "NAME_FR": "Mise en œuvre – En attente (client)",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "AGRDtlDes",
+    "NAME_EN": "Implementation-Detailed Design",
+    "NAME_FR": "Mise en œuvre – Conception détaillée",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "INInit",
+    "NAME_EN": "Implementation-Execution",
+    "NAME_FR": "Mise en oeuvre",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "AGRPndImp",
+    "NAME_EN": "Implementation-Pending Execution",
+    "NAME_FR": "Mise en œuvre – En attente de la mise en œuvre",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "AGRImpIntk",
+    "NAME_EN": "Implementation-Required",
+    "NAME_FR": "Mise en œuvre requis",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "SAInServ",
+    "NAME_EN": "In-Service",
+    "NAME_FR": "En service",
+    "PHASE_EN": "Completed",
+    "PHASE_FR": "Complétée"
+  },
+  {
+    "STATUS_ID": "AMDInit",
+    "NAME_EN": "Intake-BRD Initial",
+    "NAME_FR": "Intégration-Version initiale des DBO",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "LTPricing",
+    "NAME_EN": "Lean Pricing",
+    "NAME_FR": "Lean Pricing",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "SARB_CSR",
+    "NAME_EN": "SARB-CSR",
+    "NAME_FR": "CEAS-ECS",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "SARB_PSR",
+    "NAME_EN": "SARB-PSR",
+    "NAME_FR": "CEAS-EPC",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "AMDReScope",
+    "NAME_EN": "SDM-BRD Returned",
+    "NAME_FR": "DBS-Retourné",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "SDM_DDC",
+    "NAME_EN": "SDM-DDC",
+    "NAME_FR": "GPS-ECD",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "ConOwnRev",
+    "NAME_EN": "SDM-Pricing Review",
+    "NAME_FR": "Examen de la tarification SDM",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "SIS_CDD",
+    "NAME_EN": "SISD-CDD",
+    "NAME_FR": "DISS-DCC",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "SIS_Intake",
+    "NAME_EN": "SISD-Intake",
+    "NAME_FR": "DSIS-Admission",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "SIS_SID",
+    "NAME_EN": "SISD-SID",
+    "NAME_FR": "DISS-DIS",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "SIS_KICK",
+    "NAME_EN": "SISD-Technical Kickoff Meeting",
+    "NAME_FR": "DSIS - Réunion de lancement technique",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "DMSolnDel",
+    "NAME_EN": "SL-Conceptual Design",
+    "NAME_FR": "Design Conceptuel",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
+  },
+  {
+    "STATUS_ID": "AMDSpec",
+    "NAME_EN": "SL-Service Line Review",
+    "NAME_FR": "Revision de la ligne de service",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
   },
   {
     "STATUS_ID": "SLN_VndQT",
     "NAME_EN": "SL-Vendor Quote",
-    "NAME_FR": "Envoyer un devis fournisseur"
+    "NAME_FR": "Envoyer un devis fournisseur",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
   },
   {
-    "STATUS_ID": "SPAccepted",
-    "NAME_EN": "SSD-Accepted [OLD]",
-    "NAME_FR": "DSS-Accepté [ANCIEN]"
-  },
-  {
-    "STATUS_ID": "SPComplete",
-    "NAME_EN": "SSD-Owner Review [OLD]",
-    "NAME_FR": "DSS-Revue du propriétaire [ANCIEN]"
-  },
-  {
-    "STATUS_ID": "SPInit",
-    "NAME_EN": "SSD-Development",
-    "NAME_FR": "DSS-Développement"
-  },
-  {
-    "STATUS_ID": "SPPricing",
-    "NAME_EN": "SSD-Product Management [OLD]",
-    "NAME_FR": "DSS-Produits et Services [ANCIEN]"
-  },
-  {
-    "STATUS_ID": "SPRejected",
-    "NAME_EN": "SSD-Rejected [OLD]",
-    "NAME_FR": "DSS-Refusé [ANCIEN]"
-  },
-  {
-    "STATUS_ID": "SPReview",
-    "NAME_EN": "SSD-Solutions Review [OLD]",
-    "NAME_FR": "DSS-Passez en revue la solution [ANCIEN]"
-  },
-  {
-    "STATUS_ID": "SPSuspend",
-    "NAME_EN": "SSD-Suspended [OLD]",
-    "NAME_FR": "DSS-Suspendu [ANCIEN]"
-  },
-  {
-    "STATUS_ID": "SUS_Client",
-    "NAME_EN": "SUS-Client Approval",
-    "NAME_FR": "MAI - L`approbation du client"
-  },
-  {
-    "STATUS_ID": "SUS_Dev",
-    "NAME_EN": "SUS-Development",
-    "NAME_FR": "MAI - Développement"
-  },
-  {
-    "STATUS_ID": "SUS_Implem",
-    "NAME_EN": "SUS-Implementation",
-    "NAME_FR": "MAI - La mise en oeuvre"
+    "STATUS_ID": "TermPend",
+    "NAME_EN": "Terminate Pending",
+    "NAME_FR": "Résiliation en attente",
+    "PHASE_EN": "Completed",
+    "PHASE_FR": "Complétée"
   },
   {
     "STATUS_ID": "TermCan",
     "NAME_EN": "Termination or Cancellation in Progress",
-    "NAME_FR": "Résiliation ou annulation en cours"
-  },
-  {
-    "STATUS_ID": "TermPend",
-    "NAME_EN": "Termination Pending",
-    "NAME_FR": "Résiliation en attente"
+    "NAME_FR": "Résiliation ou annulation en cours",
+    "PHASE_EN": "Cancelled",
+    "PHASE_FR": "Annulée"
   },
   {
     "STATUS_ID": "WBAHold",
     "NAME_EN": "WBA Hold",
-    "NAME_FR": "ABE - en attente"
-  },
-  {
-    "STATUS_ID": "WIO_Assign",
-    "NAME_EN": "WIO OPI Assigned",
-    "NAME_FR": "BPR BICT assigné"
-  },
-  {
-    "STATUS_ID": "WIORev",
-    "NAME_EN": "BIA Review",
-    "NAME_FR": "Vérification par BICT"
-  },
-  {
-    "STATUS_ID": "WIOVal",
-    "NAME_EN": "BIA Validation",
-    "NAME_FR": "OPS Validation par BICT"
-  },
-  {
-    "STATUS_ID": "WLMAccept",
-    "NAME_EN": "WLM Accepted",
-    "NAME_FR": "WLM Accepted"
-  },
-  {
-    "STATUS_ID": "WLMAssign",
-    "NAME_EN": "WLM Assign",
-    "NAME_FR": "WLM Assign"
-  },
-  {
-    "STATUS_ID": "WLMGov",
-    "NAME_EN": "WLM Governance Review",
-    "NAME_FR": "WLM Governance Review"
-  },
-  {
-    "STATUS_ID": "WLMReject",
-    "NAME_EN": "WLM Returned",
-    "NAME_FR": "WLM Returned"
-  },
-  {
-    "STATUS_ID": "WLMScope",
-    "NAME_EN": "WLM Scope",
-    "NAME_FR": "WLM Scope"
-  },
-  {
-    "STATUS_ID": "WLMTriage",
-    "NAME_EN": "WLM Triage",
-    "NAME_FR": "WLM Triage"
+    "NAME_FR": "Approche globale du bâtiment - En attente",
+    "PHASE_EN": "Active In Process",
+    "PHASE_FR": "Active en processus"
   }
 ]

@@ -34,7 +34,7 @@ class BRQuery(BaseModel):
     """Represent the query that the AI does on behalf of the user"""
     query_filters: list[BRQueryFilter] = Field(..., description="List of filters to apply to the query.")
     limit: int = Field(100, description="Maximum number of records to return. Optional. Defaults to 100.")
-    statuses: list[str] = Field([], description="List of statuses to filter by. Optional.")
+    statuses: list[str] = Field([], description="List of of STATUS_ID to filter by Confirm STATUS_ID via get_br_statuses_and_phases() function. Optional.")
 
     # Validator for the 'statuses' field
     # TODO: need to come up with the extract of valid statuses and their description.

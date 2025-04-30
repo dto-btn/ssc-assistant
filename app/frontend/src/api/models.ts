@@ -163,6 +163,8 @@ interface BusinessRequest {
   EPS_NMBR: string;
   ECD_NMBR: string;
   PROD_OPI: string;
+  PHASE_EN: string;
+  PHASE_FR: string;
 }
 
 interface BusinessRequestUpdate {

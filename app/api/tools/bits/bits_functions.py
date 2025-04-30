@@ -108,8 +108,8 @@ def search_br_by_fields(br_query: str):
 @tool_metadata({
     "type": "function",
     "function": {
-        "name": "get_br_statuses",
-        "description": "Use this function to list all the BR Statuses. This can be used to get the STATUS_ID. To perform search in other queries. NEVER ASSUME THE USER GIVES YOU A VALID STATUS. ALWAYS USE THIS FUNCTION TO GET THE LIST OF STATUSES AND THEIR ID.",
+        "name": "get_br_statuses_and_phases",
+        "description": "Use this function to list all the BR Statuses and Phases. This can be used to get the STATUS_ID. To perform search in other queries. NEVER ASSUME THE USER GIVES YOU A VALID STATUS. ALWAYS USE THIS FUNCTION TO GET THE LIST OF STATUSES AND THEIR ID.",
         "parameters": {
             "type": "object",
             "properties": {},
@@ -118,9 +118,31 @@ def search_br_by_fields(br_query: str):
     }
   })
 # pylint: enable=line-too-long
-def get_br_statuses():
+def get_br_statuses_and_phases():
     """
     This will retreive the code table BR_STATUSES (Active == True)
+        (and distinct DISP_STATUS_EN, since we dont want duplicates)
+
+    WITH DistinctStatus AS (
+        SELECT DISP_STATUS_EN, MIN(STATUS_ID) AS MinStatusID
+        FROM [EDR_CARZ].[DIM_BITS_STATUS]
+        WHERE BR_ACTIVE_EN = 'Active'
+        GROUP BY DISP_STATUS_EN
+    )
+    SELECT
+        t.STATUS_ID,
+        ds.DISP_STATUS_EN AS NAME_EN,
+        t.DISP_STATUS_FR AS NAME_FR,
+        t.BITS_PHASE_EN AS PHASE_EN,
+        t.BITS_PHASE_FR AS PHASE_FR
+    FROM
+        DistinctStatus AS ds
+    JOIN
+        [EDR_CARZ].[DIM_BITS_STATUS] AS t
+    ON
+        ds.DISP_STATUS_EN = t.DISP_STATUS_EN AND ds.MinStatusID = t.STATUS_ID
+    WHERE
+        t.BR_ACTIVE_EN = 'Active';
     """
     script_dir = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(script_dir, "bits_statuses.json")
