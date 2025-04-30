@@ -16,7 +16,8 @@ import {
 import { MarkdownHooks } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
-import rehypeMermaid from 'rehype-mermaid';
+import rehypeMermaid from "rehype-mermaid";
+import remarkRehype from "remark-rehype";
 import "highlight.js/styles/github.css";
 import { useEffect, useState, Fragment } from "react";
 import { useTranslation } from "react-i18next";
@@ -32,6 +33,7 @@ import BusinessRequestCard from "./BusinessRequests/BusinessRequestCard";
 import BusinessRequestUpdates from "./BusinessRequests/BusinessRequestUpdates";
 import { transformToBusinessRequest } from "../util/bits_utils";
 import BusinessRequestTable from "./BusinessRequests/BusinessRequestTable";
+import mermaid from "mermaid";
 
 interface AssistantBubbleProps {
   text: string;
@@ -220,13 +222,13 @@ export const AssistantBubble = ({
     }
   }, [toolsInfo, text]);
 
-  useEffect(
-    () =>
-      processingComplete
-        ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" })
-        : undefined,
-    [processingComplete, scrollRef]
-  );
+  // useEffect(
+  //   () =>
+  //     processingComplete
+  //       ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" })
+  //       : undefined,
+  //   [processingComplete, scrollRef]
+  // );
 
   useEffect(() => {
     // Set the `lang` attribute whenever the language changes
@@ -273,7 +275,17 @@ export const AssistantBubble = ({
                 {/* Hidden div for screen reader */}
                 <MarkdownHooks
                   components={components}
-                  rehypePlugins={[[rehypeMermaid, { strategy: 'img-png' }], rehypeHighlight]}
+                  rehypePlugins={[
+                    rehypeHighlight,
+                    [
+                      rehypeMermaid,
+                      {
+                        errorFallback: () => {
+                          <div>Invalid diagram format!</div>;
+                        },
+                      },
+                    ],
+                  ]}
                   remarkPlugins={[remarkGfm]}
                 >
                   {isLoading

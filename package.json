@@ -1,1 +1,5 @@
-{}
+{
+  "dependencies": {
+    "remark-rehype": "^11.1.2"
+  }
+}
