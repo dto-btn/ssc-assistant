@@ -56,5 +56,7 @@ export const transformToBusinessRequest = (data: any): BusinessRequest => {
     EPS_NMBR: data.EPS_NMBR,
     ECD_NMBR: data.ECD_NMBR,
     PROD_OPI: data.PROD_OPI,
+    PHASE_EN: data.PHASE_EN,
+    PHASE_FR: data.PHASE_FR,
   };
 };

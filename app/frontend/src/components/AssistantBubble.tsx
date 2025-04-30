@@ -13,9 +13,10 @@ import {
   IconButton,
   PaperProps,
 } from "@mui/material";
-import Markdown from "react-markdown";
+import { MarkdownHooks } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
+import rehypeMermaid from "rehype-mermaid";
 import "highlight.js/styles/github.css";
 import { useEffect, useState, Fragment } from "react";
 import { useTranslation } from "react-i18next";
@@ -71,7 +72,7 @@ export const AssistantBubble = ({
     processedText: "",
     citedCitations: [] as Citation[],
   });
-  const [processingComplete, setProcessingComplete] = useState(false);
+  const [_, setProcessingComplete] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [profiles, setProfiles] = useState<EmployeeProfile[]>([]);
   const [profilesExpanded, setExpandProfiles] = useState(false);
@@ -219,13 +220,13 @@ export const AssistantBubble = ({
     }
   }, [toolsInfo, text]);
 
-  useEffect(
-    () =>
-      processingComplete
-        ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" })
-        : undefined,
-    [processingComplete, scrollRef]
-  );
+  // useEffect(
+  //   () =>
+  //     processingComplete
+  //       ? scrollRef?.current?.scrollIntoView({ behavior: "smooth" })
+  //       : undefined,
+  //   [processingComplete, scrollRef]
+  // );
 
   useEffect(() => {
     // Set the `lang` attribute whenever the language changes
@@ -270,9 +271,19 @@ export const AssistantBubble = ({
                   {t("aria.assistant.message")}
                 </Typography>{" "}
                 {/* Hidden div for screen reader */}
-                <Markdown
+                <MarkdownHooks
                   components={components}
-                  rehypePlugins={[rehypeHighlight]}
+                  rehypePlugins={[
+                    rehypeHighlight,
+                    [
+                      rehypeMermaid,
+                      {
+                        errorFallback: () => {
+                          <div>Invalid diagram format!</div>;
+                        },
+                      },
+                    ],
+                  ]}
                   remarkPlugins={[remarkGfm]}
                 >
                   {isLoading
@@ -280,7 +291,7 @@ export const AssistantBubble = ({
                     : processedContent.processedText !== ""
                     ? processedContent.processedText
                     : text}
-                </Markdown>
+                </MarkdownHooks>
               </TextComponentsBox>
             </MainContentWrapper>
 

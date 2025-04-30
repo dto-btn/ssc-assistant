@@ -93,6 +93,14 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                 </TableRow>
                 <TableRow>
                   <TableCell>
+                    <strong>{t("PHASE")}</strong>
+                  </TableCell>
+                  <TableCell>
+                    {isEnglish ? data.PHASE_EN : data.PHASE_FR}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
                     <strong>{t("priority")}</strong>
                   </TableCell>
                   <TableCell>

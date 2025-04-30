@@ -34,25 +34,25 @@ def intranet_question(query: str): # pylint: disable=unused-argument
     return {"index_name": index_name}
 
 
-@tool_metadata({
-    "type": "function",
-    "function": {
-        "name": "telecom_question",
-        "description": "The documents contain processes, service controls, and contextual information relating to the use and provisioning of mobile telephone services for Shared Services Canada and their Partner clients.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "query": {
-                    "type": "string",
-                    "description": "The question that relates to anything related to telecomunication within SSC"
-                }
-            }
-        }
-    }
-})
-def telecom_question(*args): # pylint: disable=unused-argument
-    """returns the name of the telecom index name"""
-    return "ds-tbssn-sat"
+# @tool_metadata({
+#     "type": "function",
+#     "function": {
+#         "name": "telecom_question",
+#         "description": "The documents contain processes, service controls, and contextual information relating to the use and provisioning of mobile telephone services for Shared Services Canada and their Partner clients.",
+#         "parameters": {
+#             "type": "object",
+#             "properties": {
+#                 "query": {
+#                     "type": "string",
+#                     "description": "The question that relates to anything related to telecomunication within SSC"
+#                 }
+#             }
+#         }
+#     }
+# })
+# def telecom_question(*args): # pylint: disable=unused-argument
+#     """returns the name of the telecom index name"""
+#     return "ds-tbssn-sat"
 
 @tool_metadata({
     "type": "function",
@@ -70,6 +70,6 @@ def telecom_question(*args): # pylint: disable=unused-argument
         }
     }
 })
-def pmcoe_question(*args): # pylint: disable=unused-argument
+def pmcoe_question(query: str): # pylint: disable=unused-argument
     """returns the name of the telecom index name"""
-    return "pmcoe-cegp"
+    return "pmcoe-en"

@@ -110,7 +110,6 @@ class BRQueryBuilder:
         """
 
         # Processing BR SNAPSHOT clause
-        #snapshot_where_clause = ["PERIOD_END_DATE > GETDATE()"]
         snapshot_where_clause = ["""
         PERIOD_END_DATE = (SELECT TOP(1) MAX(PERIOD_END_DATE) PERIOD_END_DATE FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT])
                                 """]
@@ -208,12 +207,14 @@ class BRQueryBuilder:
 
         if br_filters:
             for br_filter in br_filters:
-                if br_filter.is_date():
-                    # Handle date fields
-                    base_where_clause.append(f"CONVERT(DATE, {br_filter.name}) {br_filter.operator} %s")
-                else:
-                    # Handle other fields, defaulting to LIKE operator since they are mostly strings ...
-                    base_where_clause.append(f"{br_filter.name} LIKE %s")
+                field_name = BRFields.valid_search_fields.get(br_filter.name)
+                if field_name:
+                    if br_filter.is_date():
+                        # Handle date fields
+                        base_where_clause.append(f"CONVERT(DATE, {field_name['db_field']}) {br_filter.operator} %s")
+                    else:
+                        # Handle other fields, defaulting to LIKE operator since they are mostly strings ...
+                        base_where_clause.append(f"{field_name['db_field']} LIKE %s")
 
         if base_where_clause:
             query += "WHERE " + " AND ".join(base_where_clause)

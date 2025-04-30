@@ -38,7 +38,7 @@ def _create_azure_cognitive_search_data_source(index_name: str, top: int=3, lang
         current_filter = f"langcode eq '{lang_filter}'"
         logger.debug("Adding langfilter to datasource query %s", current_filter)
     return {"data_sources":
-            [{
+        [{
             "type": "azure_search",
             "parameters": {
                 "endpoint": service_endpoint,
@@ -58,8 +58,8 @@ def _create_azure_cognitive_search_data_source(index_name: str, top: int=3, lang
                     "deployment_name": "text-embedding-ada-002"
                 },
             }
-        }
-    ]}
+        }]
+    }
 
 
 def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optional[List['ToolInfo']], Union['ChatCompletion', 'Stream[ChatCompletionChunk]']]:# pylint: disable=line-too-long
