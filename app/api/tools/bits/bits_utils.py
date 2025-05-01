@@ -98,7 +98,7 @@ class BRQueryBuilder:
         """
 
         query = """
-        DECLARE @MAX_DATE DATE = (SELECT MAX(PERIOD_END_DATE) FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT]);
+        DECLARE @MAX_DATE DATETIME = (SELECT MAX(PERIOD_END_DATE) FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT]);
 
         WITH FilteredResults AS (
         SELECT
@@ -133,44 +133,69 @@ class BRQueryBuilder:
         ON s.STATUS_ID = snp.STATUS_ID
         """
 
-        # Processing BR OPIS clause - Using CASE statements instead of PIVOT
+        # Processing BR OPIS clause - Using CASE statements with better join logic
         query += """
         LEFT JOIN
             (SELECT
                 BR_NMBR,
-                MAX(CASE WHEN BUS_OPI_ID = 'ACC_MANAGER_OPI' THEN FULL_NAME END) AS ACC_MANAGER_OPI,
-                MAX(CASE WHEN BUS_OPI_ID = 'AGR_OPI' THEN FULL_NAME END) AS AGR_OPI,
-                MAX(CASE WHEN BUS_OPI_ID = 'BA_OPI' THEN FULL_NAME END) AS BA_OPI,
-                MAX(CASE WHEN BUS_OPI_ID = 'BA_PRICING_OPI' THEN FULL_NAME END) AS BA_PRICING_OPI,
-                MAX(CASE WHEN BUS_OPI_ID = 'BA_PRICING_TL' THEN FULL_NAME END) AS BA_PRICING_TL,
-                MAX(CASE WHEN BUS_OPI_ID = 'BA_TL' THEN FULL_NAME END) AS BA_TL,
-                MAX(CASE WHEN BUS_OPI_ID = 'CSM_DIRECTOR' THEN FULL_NAME END) AS CSM_DIRECTOR,
-                MAX(CASE WHEN BUS_OPI_ID = 'EAOPI' THEN FULL_NAME END) AS EAOPI,
-                MAX(CASE WHEN BUS_OPI_ID = 'PM_OPI' THEN FULL_NAME END) AS PM_OPI,
-                MAX(CASE WHEN BUS_OPI_ID = 'PROD_OPI' THEN FULL_NAME END) AS PROD_OPI,
-                MAX(CASE WHEN BUS_OPI_ID = 'QA_OPI' THEN FULL_NAME END) AS QA_OPI,
-                MAX(CASE WHEN BUS_OPI_ID = 'SDM_TL_OPI' THEN FULL_NAME END) AS SDM_TL_OPI,
-                MAX(CASE WHEN BUS_OPI_ID = 'SISDOPI' THEN FULL_NAME END) AS SISDOPI,
-                MAX(CASE WHEN BUS_OPI_ID = 'SR_OWNER' THEN FULL_NAME END) AS BR_OWNER,
-                MAX(CASE WHEN BUS_OPI_ID = 'TEAMLEADER' THEN FULL_NAME END) AS TEAMLEADER,
-                MAX(CASE WHEN BUS_OPI_ID = 'WIO_OPI' THEN FULL_NAME END) AS WIO_OPI
-            FROM (
+                ACC_MANAGER_OPI,
+                AGR_OPI,
+                BA_OPI,
+                BA_PRICING_OPI,
+                BA_PRICING_TL,
+                BA_TL,
+                CSM_DIRECTOR,
+                EAOPI,
+                PM_OPI,
+                PROD_OPI,
+                QA_OPI,
+                SDM_TL_OPI,
+                SISDOPI,
+                SR_OWNER as BR_OWNER,
+                TEAMLEADER,
+                WIO_OPI
+            FROM
+            (
                 SELECT opis.BR_NMBR, opis.BUS_OPI_ID, person.FULL_NAME
                 FROM [EDR_CARZ].[FCT_DEMAND_BR_OPIS] opis
                 INNER JOIN [EDR_CARZ].[DIM_BITS_PERSON] person
                 ON opis.PERSON_ID = person.PERSON_ID
             ) AS SourceTable
-            GROUP BY BR_NMBR
+            PIVOT
+            (
+                MAX(FULL_NAME)
+                FOR BUS_OPI_ID IN (
+                    ACC_MANAGER_OPI,
+                    AGR_OPI,
+                    BA_OPI,
+                    BA_PRICING_OPI,
+                    BA_PRICING_TL,
+                    BA_TL,
+                    CSM_DIRECTOR,
+                    EAOPI,
+                    PM_OPI,
+                    PROD_OPI,
+                    QA_OPI,
+                    SDM_TL_OPI,
+                    SISDOPI,
+                    SR_OWNER,
+                    TEAMLEADER,
+                    WIO_OPI
+                )
+            ) AS PivotTable
         ) AS opis
         ON opis.BR_NMBR = br.BR_NMBR
         """
 
-        # PRODUCTS - Optimized with filtering in the subquery
+        # PRODUCTS - Optimized with better join hint
         query += """
         LEFT JOIN
-            (SELECT BR_NMBR, PROD_ID FROM [EDR_CARZ].[FCT_DEMAND_BR_PRODUCTS] WHERE PROD_TYPE = 'LEAD') br_products
+            (SELECT BR_NMBR, PROD_ID 
+             FROM [EDR_CARZ].[FCT_DEMAND_BR_PRODUCTS] WITH (FORCESEEK)
+             WHERE PROD_TYPE = 'LEAD') br_products
         ON br_products.BR_NMBR = br.BR_NMBR
-        LEFT JOIN [EDR_CARZ].[DIM_BITS_PRODUCT] products ON products.PROD_ID = br_products.PROD_ID
+        LEFT JOIN [EDR_CARZ].[DIM_BITS_PRODUCT] products WITH (NOLOCK)
+        ON products.PROD_ID = br_products.PROD_ID
         """
 
         # WHERE CLAUSE PROCESSING (BR_NMBR and ACTIVE, etc)
@@ -208,6 +233,7 @@ class BRQueryBuilder:
         query += """
         ORDER BY
             BR_NMBR DESC
+        OPTION (RECOMPILE, OPTIMIZE FOR (@MAX_DATE UNKNOWN))
         """
         return query
 
