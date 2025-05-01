@@ -81,49 +81,49 @@ class DatabaseConnection:
 
 class BRQueryBuilder:
     """Class to build BITS queries."""
+
     def get_br_query(self, br_number_count: int = 0,
                     status: int = 0,
                     limit: bool = False,
                     active: bool = True,
                     br_filters: Optional[List[BRQueryFilter]] = None) -> str:
         """Function that will build the select statement for retreiving BRs
-
+        
         Parameters order for the execute query should be as follow:
-
+        
         1) statuses
         2) all thw other fields value
         3) limit for TOP()
-
+        
         """
-        query = """WITH FilteredResults AS (
+
+        query = """
+        DECLARE @MAX_DATE DATE = (SELECT MAX(PERIOD_END_DATE) FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT]);
+
+        WITH FilteredResults AS (
         SELECT
         """
 
         # Default select statement from BR_ITEMS & other tables
-
         query += "br.BR_NMBR as BR_NMBR, br.EXTRACTION_DATE as EXTRACTION_DATE, " + ", ".join([f"{value['db_field']} as {key}" for key, value in BRFields.valid_search_fields.items()])
 
-        # Deault FROM statement
+        # Default FROM statement
         query += """
         FROM
             [EDR_CARZ].[DIM_DEMAND_BR_ITEMS] br
         """
 
         # Processing BR SNAPSHOT clause
-        snapshot_where_clause = ["""
-        PERIOD_END_DATE = (SELECT TOP(1) MAX(PERIOD_END_DATE) PERIOD_END_DATE FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT])
-                                """]
+        snapshot_where_clause = ["snp.PERIOD_END_DATE = @MAX_DATE"]
         if status:
             placeholders = ", ".join(["%s"] * status)
-            snapshot_where_clause.append(f"STATUS_ID IN ({placeholders})")
+            snapshot_where_clause.append(f"snp.STATUS_ID IN ({placeholders})")
 
         snapshot_where_clause = " AND ".join(snapshot_where_clause)
         query += f"""
         INNER JOIN
-            (SELECT BR_NMBR, STATUS_ID
-            FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT]
-            WHERE {snapshot_where_clause}) snp
-        ON snp.BR_NMBR = br.BR_NMBR
+            [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT] snp
+        ON snp.BR_NMBR = br.BR_NMBR AND {snapshot_where_clause}
         """
 
         # Processing BR STATUS clause
@@ -133,61 +133,39 @@ class BRQueryBuilder:
         ON s.STATUS_ID = snp.STATUS_ID
         """
 
-        # Processing BR OPIS clause
+        # Processing BR OPIS clause - Using CASE statements instead of PIVOT
         query += """
         LEFT JOIN
             (SELECT
                 BR_NMBR,
-                ACC_MANAGER_OPI,
-                AGR_OPI,
-                BA_OPI,
-                BA_PRICING_OPI,
-                BA_PRICING_TL,
-                BA_TL,
-                CSM_DIRECTOR,
-                EAOPI,
-                PM_OPI,
-                PROD_OPI,
-                QA_OPI,
-                SDM_TL_OPI,
-                SISDOPI,
-                SR_OWNER as BR_OWNER,
-                TEAMLEADER,
-                WIO_OPI
-            FROM
-            (
+                MAX(CASE WHEN BUS_OPI_ID = 'ACC_MANAGER_OPI' THEN FULL_NAME END) AS ACC_MANAGER_OPI,
+                MAX(CASE WHEN BUS_OPI_ID = 'AGR_OPI' THEN FULL_NAME END) AS AGR_OPI,
+                MAX(CASE WHEN BUS_OPI_ID = 'BA_OPI' THEN FULL_NAME END) AS BA_OPI,
+                MAX(CASE WHEN BUS_OPI_ID = 'BA_PRICING_OPI' THEN FULL_NAME END) AS BA_PRICING_OPI,
+                MAX(CASE WHEN BUS_OPI_ID = 'BA_PRICING_TL' THEN FULL_NAME END) AS BA_PRICING_TL,
+                MAX(CASE WHEN BUS_OPI_ID = 'BA_TL' THEN FULL_NAME END) AS BA_TL,
+                MAX(CASE WHEN BUS_OPI_ID = 'CSM_DIRECTOR' THEN FULL_NAME END) AS CSM_DIRECTOR,
+                MAX(CASE WHEN BUS_OPI_ID = 'EAOPI' THEN FULL_NAME END) AS EAOPI,
+                MAX(CASE WHEN BUS_OPI_ID = 'PM_OPI' THEN FULL_NAME END) AS PM_OPI,
+                MAX(CASE WHEN BUS_OPI_ID = 'PROD_OPI' THEN FULL_NAME END) AS PROD_OPI,
+                MAX(CASE WHEN BUS_OPI_ID = 'QA_OPI' THEN FULL_NAME END) AS QA_OPI,
+                MAX(CASE WHEN BUS_OPI_ID = 'SDM_TL_OPI' THEN FULL_NAME END) AS SDM_TL_OPI,
+                MAX(CASE WHEN BUS_OPI_ID = 'SISDOPI' THEN FULL_NAME END) AS SISDOPI,
+                MAX(CASE WHEN BUS_OPI_ID = 'SR_OWNER' THEN FULL_NAME END) AS BR_OWNER,
+                MAX(CASE WHEN BUS_OPI_ID = 'TEAMLEADER' THEN FULL_NAME END) AS TEAMLEADER,
+                MAX(CASE WHEN BUS_OPI_ID = 'WIO_OPI' THEN FULL_NAME END) AS WIO_OPI
+            FROM (
                 SELECT opis.BR_NMBR, opis.BUS_OPI_ID, person.FULL_NAME
                 FROM [EDR_CARZ].[FCT_DEMAND_BR_OPIS] opis
                 INNER JOIN [EDR_CARZ].[DIM_BITS_PERSON] person
                 ON opis.PERSON_ID = person.PERSON_ID
             ) AS SourceTable
-            PIVOT
-            (
-                MAX(FULL_NAME)
-                FOR BUS_OPI_ID IN (
-                    ACC_MANAGER_OPI,
-                    AGR_OPI,
-                    BA_OPI,
-                    BA_PRICING_OPI,
-                    BA_PRICING_TL,
-                    BA_TL,
-                    CSM_DIRECTOR,
-                    EAOPI,
-                    PM_OPI,
-                    PROD_OPI,
-                    QA_OPI,
-                    SDM_TL_OPI,
-                    SISDOPI,
-                    SR_OWNER,
-                    TEAMLEADER,
-                    WIO_OPI
-                )
-            ) AS PivotTable
+            GROUP BY BR_NMBR
         ) AS opis
         ON opis.BR_NMBR = br.BR_NMBR
         """
 
-        # PRODUCTS
+        # PRODUCTS - Optimized with filtering in the subquery
         query += """
         LEFT JOIN
             (SELECT BR_NMBR, PROD_ID FROM [EDR_CARZ].[FCT_DEMAND_BR_PRODUCTS] WHERE PROD_TYPE = 'LEAD') br_products
@@ -220,10 +198,9 @@ class BRQueryBuilder:
             query += "WHERE " + " AND ".join(base_where_clause)
 
         # Wrap CTE statement
-
         query += """)
         SELECT {top} *,
-            (SELECT COUNT(*) FROM FilteredResults) AS TotalCount
+            COUNT(*) OVER() AS TotalCount
         FROM FilteredResults
         """.replace("{top}", "TOP(%d)" if limit else "")
 

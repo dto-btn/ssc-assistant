@@ -11,8 +11,6 @@ class BRFields:
     status = {
         'BITS_STATUS_EN': { 'db_field': 's.DISP_STATUS_EN', 'description': 'The current BITS BR status. Status denoting where in the EBIDM process the BR is currently.'},
         'BITS_STATUS_FR': { 'db_field': 's.DISP_STATUS_FR', 'description': ''},
-        'PHASE_EN': { 'db_field': 's.BITS_PHASE_EN', 'description': 'The current phase of the BR. Phase denotes where in the EBIDM process the BR is currently.'},
-        'PHASE_FR': { 'db_field': 's.BITS_PHASE_EN', 'description': ''},
     }
 
     date_fields = {
@@ -71,6 +69,8 @@ class BRFields:
         'EPS_NMBR': { 'db_field': 'br.EPS_NMBR', 'description': 'The Clarity/EPS project number associated with the BR . Enterprise Portfolio System (EPS) is the tool used by PM to track projects.'},
         'ECD_NMBR': { 'db_field': 'br.ECD_NMBR', 'description': ''},
         'PROD_OPI': { 'db_field': 'opis.PROD_OPI', 'description': 'The Service Lead for the BR.'},
+        'PHASE_EN': { 'db_field': 's.BITS_PHASE_EN', 'description': 'The current phase of the BR. Phase denotes where in the EBIDM process the BR is currently.'},
+        'PHASE_FR': { 'db_field': 's.BITS_PHASE_EN', 'description': ''},
     }
     # pylint: enable=line-too-long
 
