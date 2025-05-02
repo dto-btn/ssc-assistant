@@ -1,12 +1,13 @@
-from datetime import datetime
 import json
 import logging
 import os
+from datetime import datetime
 
 from pydantic import ValidationError
 from src.constants.tools import TOOL_BR
 from tools.bits.bits_fields import BRFields
 from tools.bits.bits_models import BRQuery
+from tools.bits.bits_statuses_cache import StatusesCache
 from tools.bits.bits_utils import BRQueryBuilder, DatabaseConnection
 from utils.decorators import (discover_subfolder_functions_with_metadata,
                               tool_metadata)
@@ -144,10 +145,8 @@ def get_br_statuses_and_phases():
     WHERE
         t.BR_ACTIVE_EN = 'Active';
     """
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(script_dir, "bits_statuses.json")
-    with open(file_path, 'r', encoding='utf-8') as statuses:
-        return { "statuses": json.load(statuses) }
+    print(StatusesCache.get_statuses())
+    return { "statuses": StatusesCache.get_statuses() }
 
 
 # pylint: disable=line-too-long
@@ -226,22 +225,8 @@ def valid_search_fields():
     This function returns all the valid search fields
     """
     fields_with_descriptions = {
-        key: value.get('description', '') for key, value in BRFields.valid_search_fields.items()
+        key: value.get('description', '') for key, value in BRFields.valid_search_fields_no_statuses.items()
     }
     return {
         "field_names": json.dumps(fields_with_descriptions)
     }
-
-@tool_metadata({
-    "type": "function",
-    "function": {
-        "name": "get_current_date",
-        "description": "This function is used to know what is the current date and time. It returns the current date and time in text format. Use this if you are unsure of what is the current date, do not make assumptions about the current date and time."
-    }
-  })
-def get_current_date():
-    """
-    TODO: this perhaps should be moved into a more generic tools folder.
-    """
-    current_date_time = datetime.now()
-    return { "date": "Formatted date and time:" + current_date_time.strftime("%Y-%m-%d %H:%M:%S") }

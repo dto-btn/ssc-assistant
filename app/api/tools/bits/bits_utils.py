@@ -81,49 +81,49 @@ class DatabaseConnection:
 
 class BRQueryBuilder:
     """Class to build BITS queries."""
+
     def get_br_query(self, br_number_count: int = 0,
                     status: int = 0,
                     limit: bool = False,
                     active: bool = True,
                     br_filters: Optional[List[BRQueryFilter]] = None) -> str:
         """Function that will build the select statement for retreiving BRs
-
+        
         Parameters order for the execute query should be as follow:
-
+        
         1) statuses
         2) all thw other fields value
         3) limit for TOP()
-
+        
         """
-        query = """WITH FilteredResults AS (
+
+        query = """
+        DECLARE @MAX_DATE DATETIME = (SELECT MAX(PERIOD_END_DATE) FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT]);
+
+        WITH FilteredResults AS (
         SELECT
         """
 
         # Default select statement from BR_ITEMS & other tables
-
         query += "br.BR_NMBR as BR_NMBR, br.EXTRACTION_DATE as EXTRACTION_DATE, " + ", ".join([f"{value['db_field']} as {key}" for key, value in BRFields.valid_search_fields.items()])
 
-        # Deault FROM statement
+        # Default FROM statement
         query += """
         FROM
             [EDR_CARZ].[DIM_DEMAND_BR_ITEMS] br
         """
 
         # Processing BR SNAPSHOT clause
-        snapshot_where_clause = ["""
-        PERIOD_END_DATE = (SELECT TOP(1) MAX(PERIOD_END_DATE) PERIOD_END_DATE FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT])
-                                """]
+        snapshot_where_clause = ["snp.PERIOD_END_DATE = @MAX_DATE"]
         if status:
             placeholders = ", ".join(["%s"] * status)
-            snapshot_where_clause.append(f"STATUS_ID IN ({placeholders})")
+            snapshot_where_clause.append(f"snp.STATUS_ID IN ({placeholders})")
 
         snapshot_where_clause = " AND ".join(snapshot_where_clause)
         query += f"""
         INNER JOIN
-            (SELECT BR_NMBR, STATUS_ID
-            FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT]
-            WHERE {snapshot_where_clause}) snp
-        ON snp.BR_NMBR = br.BR_NMBR
+            [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT] snp
+        ON snp.BR_NMBR = br.BR_NMBR AND {snapshot_where_clause}
         """
 
         # Processing BR STATUS clause
@@ -133,7 +133,7 @@ class BRQueryBuilder:
         ON s.STATUS_ID = snp.STATUS_ID
         """
 
-        # Processing BR OPIS clause
+        # Processing BR OPIS clause - Using CASE statements with better join logic
         query += """
         LEFT JOIN
             (SELECT
@@ -187,12 +187,15 @@ class BRQueryBuilder:
         ON opis.BR_NMBR = br.BR_NMBR
         """
 
-        # PRODUCTS
+        # PRODUCTS - Optimized with better join hint
         query += """
         LEFT JOIN
-            (SELECT BR_NMBR, PROD_ID FROM [EDR_CARZ].[FCT_DEMAND_BR_PRODUCTS] WHERE PROD_TYPE = 'LEAD') br_products
+            (SELECT BR_NMBR, PROD_ID 
+             FROM [EDR_CARZ].[FCT_DEMAND_BR_PRODUCTS] WITH (FORCESEEK)
+             WHERE PROD_TYPE = 'LEAD') br_products
         ON br_products.BR_NMBR = br.BR_NMBR
-        LEFT JOIN [EDR_CARZ].[DIM_BITS_PRODUCT] products ON products.PROD_ID = br_products.PROD_ID
+        LEFT JOIN [EDR_CARZ].[DIM_BITS_PRODUCT] products WITH (NOLOCK)
+        ON products.PROD_ID = br_products.PROD_ID
         """
 
         # WHERE CLAUSE PROCESSING (BR_NMBR and ACTIVE, etc)
@@ -220,10 +223,9 @@ class BRQueryBuilder:
             query += "WHERE " + " AND ".join(base_where_clause)
 
         # Wrap CTE statement
-
         query += """)
         SELECT {top} *,
-            (SELECT COUNT(*) FROM FilteredResults) AS TotalCount
+            COUNT(*) OVER() AS TotalCount
         FROM FilteredResults
         """.replace("{top}", "TOP(%d)" if limit else "")
 
@@ -231,6 +233,7 @@ class BRQueryBuilder:
         query += """
         ORDER BY
             BR_NMBR DESC
+        OPTION (RECOMPILE, OPTIMIZE FOR (@MAX_DATE UNKNOWN))
         """
         return query
 

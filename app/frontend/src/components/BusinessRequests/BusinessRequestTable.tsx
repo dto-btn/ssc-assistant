@@ -141,6 +141,11 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
     { field: "TEAMLEADER", headerName: t("TEAMLEADER"), width: 150 },
     { field: "WIO_OPI", headerName: t("WIO_OPI"), width: 150 },
     { field: "PROD_OPI", headerName: t("PROD_OPI"), width: 150 },
+    {
+      field: isEnglish ? "CPLX_EN" : "CPLX_FR",
+      headerName: t("complexity"),
+      width: 150,
+    },
   ];
 
   const paginationModel = { page: 0, pageSize: 10 };
@@ -189,6 +194,8 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
                 TEAMLEADER: false,
                 WIO_OPI: false,
                 PROD_OPI: false,
+                CPLX_EN: false,
+                CPLX_FR: false,
               },
             },
           }}
