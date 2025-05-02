@@ -145,6 +145,7 @@ def get_br_statuses_and_phases():
     WHERE
         t.BR_ACTIVE_EN = 'Active';
     """
+    print(StatusesCache.get_statuses())
     return { "statuses": StatusesCache.get_statuses() }
 
 

@@ -8,7 +8,7 @@ class StatusesCache:
     @classmethod
     def load_statuses(cls):
         """Load statuses from the JSON file if not already loaded."""
-        if cls._statuses is None:
+        if not cls._statuses:
             script_dir = os.path.dirname(os.path.abspath(__file__))
             file_path = os.path.join(script_dir, "bits_statuses.json")
             with open(file_path, 'r', encoding='utf-8') as statuses:
@@ -22,8 +22,8 @@ class StatusesCache:
 
     @classmethod
     def get_status_ids(cls):
-      """Get all status IDs from the loaded statuses."""
-      statuses = cls.load_statuses()
-      if not isinstance(statuses, list):
-          raise TypeError("Loaded statuses are not a list")
-      return {status["STATUS_ID"] for status in statuses}
+        """Get all status IDs from the loaded statuses."""
+        statuses = cls.load_statuses()
+        if not isinstance(statuses, list):
+            raise TypeError("Loaded statuses are not a list")
+        return {status["STATUS_ID"] for status in statuses}
