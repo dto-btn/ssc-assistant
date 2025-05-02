@@ -74,14 +74,14 @@ class BRFields:
     }
     # pylint: enable=line-too-long
 
-    # Modify base fields
-    base_fields.update(br_owner)
-    base_fields.update(status)
-
     # Combine all search fields
     valid_search_fields = {}
     valid_search_fields.update(base_fields)
+    valid_search_fields.update(br_owner)
     valid_search_fields.update(date_fields)
+
+    valid_search_fields_no_statuses = valid_search_fields.copy()
+    valid_search_fields.update(status)
 
     _opis_mapping = {
         "QA_OPI": {

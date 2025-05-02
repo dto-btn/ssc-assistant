@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, field_validator
 
 from tools.bits.bits_fields import BRFields
+from tools.bits.bits_statuses_cache import StatusesCache
 
 class BRQueryFilter(BaseModel):
     """Model for BRQueryFilter."""
@@ -22,8 +23,8 @@ class BRQueryFilter(BaseModel):
     @classmethod
     def validate_name(cls, v: str) -> str:
         """Validate the name field.Ensure its a valid DB field"""
-        if v not in BRFields.valid_search_fields:
-            raise ValueError(f"Name must be one of {list(BRFields.valid_search_fields.keys())}")
+        if v not in BRFields.valid_search_fields_no_statuses:
+            raise ValueError(f"Name must be one of {list(BRFields.valid_search_fields_no_statuses.keys())}")
         return v
 
     def is_date(self) -> bool:
@@ -37,10 +38,12 @@ class BRQuery(BaseModel):
     statuses: list[str] = Field([], description="List of of STATUS_ID to filter by.")
 
     # Validator for the 'statuses' field
-    # TODO: need to come up with the extract of valid statuses and their description.
-    # @field_validator("statuses")
-    # def validate_statuses(self, v: list[str]) -> list[str]:
-    #     """Validate the statuses field."""
-    #     if not all(status in BITSQueryBuilder.valid_statuses for status in v):
-    #         raise ValueError(f"Statuses must be one of {list(BITSQueryBuilder.valid_statuses)}")
-    #     return v
+    @field_validator("statuses")
+    @classmethod
+    def validate_statuses(cls, v: list[str]) -> list[str]:
+        """Validate the statuses field."""
+        valid_statuses = StatusesCache.get_status_ids()
+        invalid = [status for status in v if status not in valid_statuses]
+        if invalid:
+            raise ValueError(f"Invalid STATUS_ID(s): {invalid}. Must be one of: {sorted(valid_statuses)}")
+        return v
