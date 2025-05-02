@@ -230,17 +230,3 @@ def valid_search_fields():
     return {
         "field_names": json.dumps(fields_with_descriptions)
     }
-
-@tool_metadata({
-    "type": "function",
-    "function": {
-        "name": "get_current_date",
-        "description": "ALWAYS invoke this function to retrieve the current date and time whenever the user asks a question involving relative time (e.g., 'today', 'yesterday', 'tomorrow', 'next week', etc.). NEVER use internal knowledge of the date and time."
-    }
-  })
-def get_current_date():
-    """
-    TODO: this perhaps should be moved into a more generic tools folder.
-    """
-    current_date_time = datetime.now()
-    return { "date": "Formatted date and time:" + current_date_time.strftime("%Y-%m-%d %H:%M:%S") }
