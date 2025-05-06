@@ -1,5 +1,4 @@
 import logging
-import os
 
 from utils.decorators import tool_metadata
 
@@ -8,7 +7,6 @@ __all__ = ["pmcoe"]
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-index_name: str = os.getenv("AZURE_SEARCH_INDEX_NAME", "current")
 
 @tool_metadata(
     {
@@ -30,4 +28,4 @@ index_name: str = os.getenv("AZURE_SEARCH_INDEX_NAME", "current")
 )
 def pmcoe(query: str):  # pylint: disable=unused-argument
     """returns the name of the telecom index name"""
-    return "pmcoe-en"
+    return {"index_name": "pmcoe"}

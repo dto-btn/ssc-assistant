@@ -21,7 +21,7 @@ jobs:
   frontend-dev:
     uses: ./.github/workflows/frontend.yml
     with:
-      allowed-tools: 'geds,corporate,bits'
+      allowed-tools: 'geds,corporate,bits,pmcoe'
       disabled-features: ''
       environment: 'dev'
       app-name: 'ssc-assistant-dev'
