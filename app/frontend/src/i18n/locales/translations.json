@@ -479,10 +479,6 @@
         "en": "Archibus",
         "fr": "Archibus"
     },
-    "pmcoe": {
-        "en": "PMCoE",
-        "fr": "CEGP"
-    },
     "booking.success": {
         "en": "Your workspace has been reserved successfully for the date: ",
         "fr": "Votre espace de travail a été réservé avec succès pour la date : "
