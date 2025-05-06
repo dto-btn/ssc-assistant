@@ -101,8 +101,8 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                 ):
 
                     logger.debug("This corporate function was passed -> %s", message_request.corporateFunction)
-                    messages = tool_service.call_tools(completion_tools.choices[0].message.tool_calls, messages)
-                    last_message = messages[-1]
+                    tool_messages = tool_service.call_tools(completion_tools.choices[0].message.tool_calls, messages)
+                    last_message = tool_messages[-1]
                     if isinstance(last_message, dict) and "content" in last_message:
                         index_name = json.loads(str(last_message['content']))
                         return (tool_service.tools_info, client.chat.completions.create(
