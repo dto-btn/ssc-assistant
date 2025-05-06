@@ -1,25 +1,33 @@
 import logging
+import os
 
 from utils.decorators import tool_metadata
 
+__all__ = ["pmcoe"]
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
-__all__ = [
-    "get_pmcoe_test_value",
-]
-
+index_name: str = os.getenv("AZURE_SEARCH_INDEX_NAME", "current")
 
 @tool_metadata(
     {
         "type": "function",
         "function": {
-            "name": "get_pmcoe_test_value",
-            "description": "A test tool that replies with a value that user can use to validate that this tool was actually called.",
-            "parameters": {"type": "object", "properties": {}, "required": []},
+            "name": "pmcoe",
+            "description": "The library contains bilingual gate templates (French and English), as well as Shared Services Canada (SSC) project management artifacts and standardized templates to support consistent project delivery and documentation.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The question that relates to anything related to project managment or gate templates within SSC",
+                    }
+                },
+            },
         },
     }
 )
-def get_pmcoe_test_value():
-    logger.debug("PMCOE secret password tool called")
-    return "Yes, it exists. The secret password is 'pineapple'."
+def pmcoe(query: str):  # pylint: disable=unused-argument
+    """returns the name of the telecom index name"""
+    return "pmcoe-en"
