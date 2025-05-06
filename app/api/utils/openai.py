@@ -9,7 +9,6 @@ from openai.types.chat import ChatCompletion, ChatCompletionChunk
 from openai.types.completion_usage import CompletionUsage
 from src.constants.tools import TOOL_CORPORATE
 from src.service.tool_service import ToolService
-from tools.corporate.corporate_functions import intranet_question
 from utils.manage_message import load_messages
 from utils.models import (Citation, Completion, Context, Message,
                           MessageRequest, ToolInfo)
@@ -91,20 +90,23 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                 ) # type: ignore
 
             if completion_tools.choices[0].message.tool_calls:
-                if any(f.function.name in tool_service.get_functions_by_type(TOOL_CORPORATE) for f in completion_tools.choices[0].message.tool_calls): # pylint: disable=line-too-long
-                    logger.debug("This corporate function was passed -> %s", message_request.corporateFunction)
-                    _ = tool_service.call_tools(completion_tools.choices[0].message.tool_calls, messages)
+                if any(
+                    f.function.name in tool_service.get_functions_by_type(TOOL_CORPORATE)
+                    for f in completion_tools.choices[0].message.tool_calls):
 
-                    # this part ensures that we query only MySSC+ index ... for now.
-                    index_name = intranet_question("")
-                    return (tool_service.tools_info, client.chat.completions.create(
-                        messages=messages,
-                        model=model,
-                        extra_body=_create_azure_cognitive_search_data_source(index_name['index_name'],
-                                                                                message_request.top,
-                                                                                message_request.lang),
-                        stream=stream
-                    ))
+                    logger.debug("This corporate function was passed -> %s", message_request.corporateFunction)
+                    messages = tool_service.call_tools(completion_tools.choices[0].message.tool_calls, messages)
+                    last_message = messages[-1]
+                    if isinstance(last_message, dict) and "content" in last_message:
+                        index_name = json.loads(str(last_message['content']))
+                        return (tool_service.tools_info, client.chat.completions.create(
+                            messages=messages,
+                            model=model,
+                            extra_body=_create_azure_cognitive_search_data_source(index_name['index_name'],
+                                                                                    message_request.top,
+                                                                                    message_request.lang),
+                            stream=stream
+                        ))
                 # this will modify the messages array we send to OpenAI to contain the function_calls **it** requested
                 # and that we processed on it's behalf.
                 messages = tool_service.call_tools(completion_tools.choices[0].message.tool_calls, messages)

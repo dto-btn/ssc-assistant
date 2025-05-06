@@ -25,4 +25,4 @@ logger.setLevel(logging.DEBUG)
 })
 def pmcoe_question(query: str): # pylint: disable=unused-argument
     """returns the name of the telecom index name"""
-    return "pmcoe"
+    return {"index_name": "pmcoe"}
