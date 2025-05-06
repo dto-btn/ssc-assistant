@@ -7,7 +7,7 @@ from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from openai import AzureOpenAI, Stream
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
 from openai.types.completion_usage import CompletionUsage
-from src.constants.tools import TOOL_CORPORATE
+from src.constants.tools import TOOL_CORPORATE, TOOL_PMCOE
 from src.service.tool_service import ToolService
 from utils.manage_message import load_messages
 from utils.models import (Citation, Completion, Context, Message,
@@ -91,8 +91,14 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
 
             if completion_tools.choices[0].message.tool_calls:
                 if any(
-                    f.function.name in tool_service.get_functions_by_type(TOOL_CORPORATE)
-                    for f in completion_tools.choices[0].message.tool_calls):
+                    (
+                        f.function.name
+                        in tool_service.get_functions_by_type(TOOL_CORPORATE)
+                        or f.function.name
+                        in tool_service.get_functions_by_type(TOOL_PMCOE)
+                    )
+                    for f in completion_tools.choices[0].message.tool_calls
+                ):
 
                     logger.debug("This corporate function was passed -> %s", message_request.corporateFunction)
                     messages = tool_service.call_tools(completion_tools.choices[0].message.tool_calls, messages)
