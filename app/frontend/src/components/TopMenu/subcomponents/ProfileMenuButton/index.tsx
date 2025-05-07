@@ -139,7 +139,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                         <>
                             {isFirstMutexTool && (
                                 // Show the divider before the mutext tools section
-                                <MenuDivider />
+                                <MenuDivider title={t("menu.mutexTools")} />
                             )}
                             <MenuItem key={tool}
                                 onClick={() => {

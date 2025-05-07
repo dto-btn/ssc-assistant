@@ -323,6 +323,10 @@
         "en": "Select Tools",
         "fr": "Sélectionnez les outils"
     },
+    "menu.mutexTools": {
+        "en": "Select one option",
+        "fr": "Choisissez une option"
+    },
     "menu.title": {
         "en": "Configure answer generation",
         "fr": "Configurer la génération de réponses"
