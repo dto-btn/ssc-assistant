@@ -11,6 +11,7 @@ from src.constants.tools import (
     TOOL_ARCHIBUS,
     TOOL_BR,
     TOOL_PMCOE,
+    TOOL_TELECOM,
 )
 from tools.geds.geds_functions import extract_geds_profiles
 from utils.decorators import discover_functions_with_metadata
@@ -27,7 +28,7 @@ class ToolService:
     """
     def __init__(self, requested_tools: List[str]):
         _allowed_tools_str: str = os.getenv("ALLOWED_TOOLS") or ",".join(
-            [TOOL_CORPORATE, TOOL_GEDS, TOOL_PMCOE]
+            [TOOL_CORPORATE, TOOL_GEDS, TOOL_PMCOE, TOOL_TELECOM]
         )
         self.allowed_tools = [tool.strip() for tool in _allowed_tools_str.split(",")]
         self.tools = self._load_tools(requested_tools)

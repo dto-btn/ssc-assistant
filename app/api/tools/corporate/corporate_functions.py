@@ -34,4 +34,4 @@ def intranet_question(query: str):  # pylint: disable=unused-argument
     """
     Returns the MySSC+ index (most up to date, generally the index alias named "current")
     """
-    return {"index_name": index_name}
+    return {"index_name": index_name, "embedding-model": "text-embedding-ada-002", "use-language-filter": True}
