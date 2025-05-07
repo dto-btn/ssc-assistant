@@ -28,4 +28,4 @@ logger.setLevel(logging.DEBUG)
 )
 def pmcoe(query: str):  # pylint: disable=unused-argument
     """returns the name of the telecom index name"""
-    return {"index_name": "pmcoe", "embedding-model": "text-embedding-3-large", "use-language-filter": True}
+    return {"index_name": "pmcoe", "embedding_model": "text-embedding-3-large", "use_language_filter": True}

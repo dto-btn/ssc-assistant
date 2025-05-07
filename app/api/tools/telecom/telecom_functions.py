@@ -27,6 +27,6 @@ def telecom(query: str): # pylint: disable=unused-argument
     """returns the name of the telecom index name"""
     return {
         "index_name": "telecom",
-        "embedding-model": "text-embedding-3-large",
-        "use-language-filter": False
+        "embedding_model": "text-embedding-3-large",
+        "use_language_filter": False
     }

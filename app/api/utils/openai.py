@@ -101,8 +101,6 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                     )
                     for f in completion_tools.choices[0].message.tool_calls
                 ):
-
-                    logger.debug("This corporate function was passed -> %s", message_request.corporateFunction)
                     tool_messages = tool_service.call_tools(completion_tools.choices[0].message.tool_calls, messages)
                     last_message = tool_messages[-1]
                     if isinstance(last_message, dict) and "content" in last_message:
@@ -110,7 +108,8 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                         try:
                             tool_response = json.loads(str(last_message['content']))
                             index_config = IndexConfig(**tool_response)
-                            
+                            print(index_config)
+
                             # Use the validated model's properties for creating the data source
                             return (tool_service.tools_info, client.chat.completions.create(
                                 messages=messages,

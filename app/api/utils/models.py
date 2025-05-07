@@ -132,7 +132,7 @@ class IndexConfig(BaseModel):
     Configuration for Azure Cognitive Search index used by tool functions
     """
     index_name: str = Field(..., description="The name of the Azure Cognitive Search index")
-    embedding_model: str = Field(default="text-embedding-ada-002", 
+    embedding_model: str = Field(default="text-embedding-ada-002",
                                 description="The embedding model to use for vector search")
-    use_language_filter: bool = Field(default=False, 
+    use_language_filter: bool = Field(default=False,
                                      description="Whether to apply language filtering to search results")
