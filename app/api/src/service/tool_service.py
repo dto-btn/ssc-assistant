@@ -5,7 +5,14 @@ import os
 from typing import List
 
 from openai.types.chat import ChatCompletionMessageParam, ChatCompletionMessageToolCall
-from src.constants.tools import TOOL_CORPORATE, TOOL_GEDS, TOOL_ARCHIBUS, TOOL_BR
+from src.constants.tools import (
+    TOOL_CORPORATE,
+    TOOL_GEDS,
+    TOOL_ARCHIBUS,
+    TOOL_BR,
+    TOOL_PMCOE,
+    TOOL_TELECOM,
+)
 from tools.geds.geds_functions import extract_geds_profiles
 from utils.decorators import discover_functions_with_metadata
 from utils.models import ToolInfo
@@ -20,7 +27,9 @@ class ToolService:
     such as adding tools payload to messages returned to the consumer of the API
     """
     def __init__(self, requested_tools: List[str]):
-        _allowed_tools_str: str = os.getenv("ALLOWED_TOOLS") or ",".join([TOOL_CORPORATE, TOOL_GEDS])
+        _allowed_tools_str: str = os.getenv("ALLOWED_TOOLS") or ",".join(
+            [TOOL_CORPORATE, TOOL_GEDS, TOOL_PMCOE, TOOL_TELECOM]
+        )
         self.allowed_tools = [tool.strip() for tool in _allowed_tools_str.split(",")]
         self.tools = self._load_tools(requested_tools)
         self.tools_info: List[ToolInfo] = []
@@ -113,7 +122,7 @@ class ToolService:
                 data = {}
                 if tool_type == TOOL_GEDS:
                     data = self._process_geds_function_for_payload(function_name, response_as_string)
-                elif tool_type == TOOL_CORPORATE:
+                elif tool_type == TOOL_CORPORATE or tool_type == TOOL_PMCOE:
                     pass
                 elif tool_type == TOOL_ARCHIBUS:
                     data = self._process_archibus_function_for_payload(function_name, response_as_string)

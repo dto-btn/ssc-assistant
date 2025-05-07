@@ -11,6 +11,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import MenuDivider from './MenuDivider';
 import { tt } from '../../../../i18n/tt';
+import { MUTEX_TOOLS } from '../../../../constants';
 
 interface ProfilePictureOnClickMenuProps {
     size?: string;
@@ -48,9 +49,16 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
     };
     const appStore = useAppStore();
 
-    const tools = Object.keys(enabledTools).filter((tool) =>
-        allowedToolsSet.has(tool)
-    );
+    const tools = Object.keys(enabledTools)
+        // First, filter out the tools that are not in the allowedToolsSet
+        .filter((tool) => MUTEX_TOOLS.indexOf(tool) === -1)
+        // Then, sort the remaining tools alphabetically
+        .sort((a, b) => a.localeCompare(b))
+        // Add the mutex tools to the end of the list
+        .concat(MUTEX_TOOLS)
+        // Only show the tools that are enabled and in the allowedToolsSet
+        .filter((tool) => allowedToolsSet.has(tool));
+
 
     const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         handleSelectedModelChanged((event.target as HTMLInputElement).value);
@@ -126,45 +134,52 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                 </MenuItem>
                 <MenuDivider title={tt("menu.chooseTools")} />
                 {tools.map((tool) => {
+                    const isFirstMutexTool = tool === MUTEX_TOOLS[0]
                     return (
-                        <MenuItem key={tool}
-                            onClick={() => {
-                                handleUpdateEnabledTools(tool);
-                            }}
-
-                        >
-                            <FormControlLabel
-                                label={t(tool)}
-                                role="menuitem"
-                                aria-label={t(tool)}
-                                title={t(tool)}
-                                checked={enabledTools[tool]}
-                                name={tool}
-                                control={<Switch onClick={(e) => {
-                                    // Without these onClick handlers, we get dead spaces on the MenuItem, where
-                                    // clicking in a specific spot does not toggle the switch.
-                                    e.stopPropagation();
-                                    // In this particular case, we want to handle the click event on the switch itself, since
-                                    // the MenuItem will never be called due to stopPropagation.
+                        <>
+                            {isFirstMutexTool && (
+                                // Show the divider before the mutext tools section
+                                <MenuDivider title={t("menu.mutexTools")} />
+                            )}
+                            <MenuItem key={tool}
+                                onClick={() => {
                                     handleUpdateEnabledTools(tool);
-                                }} />}
-                                onClick={(e) => {
-                                    // Without these onClick handlers, we get dead spaces on the MenuItem, where
-                                    // clicking in a specific spot does not toggle the switch.
-                                    e.stopPropagation();
                                 }}
-                                slotProps={{
-                                    typography: {
-                                        onClick: (e) => {
-                                            // Without these onClick handlers, we get dead spaces on the MenuItem, where
-                                            // clicking in a specific spot does not toggle the switch.
-                                            e.stopPropagation();
-                                        }
-                                    }
-                                }}
-                            />
 
-                        </MenuItem>
+                            >
+                                <FormControlLabel
+                                    label={t(tool)}
+                                    role="menuitem"
+                                    aria-label={t(tool)}
+                                    title={t(tool)}
+                                    checked={enabledTools[tool]}
+                                    name={tool}
+                                    control={<Switch onClick={(e) => {
+                                        // Without these onClick handlers, we get dead spaces on the MenuItem, where
+                                        // clicking in a specific spot does not toggle the switch.
+                                        e.stopPropagation();
+                                        // In this particular case, we want to handle the click event on the switch itself, since
+                                        // the MenuItem will never be called due to stopPropagation.
+                                        handleUpdateEnabledTools(tool);
+                                    }} />}
+                                    onClick={(e) => {
+                                        // Without these onClick handlers, we get dead spaces on the MenuItem, where
+                                        // clicking in a specific spot does not toggle the switch.
+                                        e.stopPropagation();
+                                    }}
+                                    slotProps={{
+                                        typography: {
+                                            onClick: (e) => {
+                                                // Without these onClick handlers, we get dead spaces on the MenuItem, where
+                                                // clicking in a specific spot does not toggle the switch.
+                                                e.stopPropagation();
+                                            }
+                                        }
+                                    }}
+                                />
+
+                            </MenuItem>
+                        </>
                     );
                 })}
                 <MenuDivider title={t("menu.model.select")} />

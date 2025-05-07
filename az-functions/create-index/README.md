@@ -43,6 +43,192 @@ Steps:
 "https://dev-index-mgmt.azurewebsites.net/api/orchestrators/fetch_index_data?code=<code>"
 `
 
+### Custom Indices
+
+#### PMCoE
+
+```json
+{
+  "@odata.etag": "\"0x8DD8D57EF30FFB8\"",
+  "name": "pmcoe",
+  "fields": [
+    {
+      "name": "chunk_id",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": false,
+      "retrievable": true,
+      "stored": true,
+      "sortable": true,
+      "facetable": false,
+      "key": true,
+      "analyzer": "keyword",
+      "synonymMaps": []
+    },
+    {
+      "name": "parent_id",
+      "type": "Edm.String",
+      "searchable": false,
+      "filterable": true,
+      "retrievable": true,
+      "stored": true,
+      "sortable": false,
+      "facetable": false,
+      "key": false,
+      "synonymMaps": []
+    },
+    {
+      "name": "chunk",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": false,
+      "retrievable": true,
+      "stored": true,
+      "sortable": false,
+      "facetable": false,
+      "key": false,
+      "synonymMaps": []
+    },
+    {
+      "name": "title",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": false,
+      "retrievable": true,
+      "stored": true,
+      "sortable": false,
+      "facetable": false,
+      "key": false,
+      "synonymMaps": []
+    },
+    {
+      "name": "text_vector",
+      "type": "Collection(Edm.Single)",
+      "searchable": true,
+      "filterable": false,
+      "retrievable": true,
+      "stored": true,
+      "sortable": false,
+      "facetable": false,
+      "key": false,
+      "dimensions": 3072,
+      "vectorSearchProfile": "pmcoe-azureOpenAi-text-profile",
+      "synonymMaps": []
+    },
+    {
+      "name": "langcode",
+      "type": "Edm.String",
+      "searchable": true,
+      "filterable": true,
+      "retrievable": true,
+      "stored": true,
+      "sortable": false,
+      "facetable": false,
+      "key": false,
+      "synonymMaps": []
+    }
+  ],
+  "scoringProfiles": [],
+  "suggesters": [],
+  "analyzers": [],
+  "normalizers": [],
+  "tokenizers": [],
+  "tokenFilters": [],
+  "charFilters": [],
+  "similarity": {
+    "@odata.type": "#Microsoft.Azure.Search.BM25Similarity"
+  },
+  "semantic": {
+    "defaultConfiguration": "pmcoe-semantic-configuration",
+    "configurations": [
+      {
+        "name": "pmcoe-semantic-configuration",
+        "flightingOptIn": false,
+        "prioritizedFields": {
+          "titleField": {
+            "fieldName": "title"
+          },
+          "prioritizedContentFields": [
+            {
+              "fieldName": "chunk"
+            }
+          ],
+          "prioritizedKeywordsFields": []
+        }
+      }
+    ]
+  },
+  "vectorSearch": {
+    "algorithms": [
+      {
+        "name": "pmcoe-algorithm",
+        "kind": "hnsw",
+        "hnswParameters": {
+          "metric": "cosine",
+          "m": 4,
+          "efConstruction": 400,
+          "efSearch": 500
+        }
+      }
+    ],
+    "profiles": [
+      {
+        "name": "pmcoe-azureOpenAi-text-profile",
+        "algorithm": "pmcoe-algorithm",
+        "vectorizer": "pmcoe-azureOpenAi-text-vectorizer"
+      }
+    ],
+    "vectorizers": [
+      {
+        "name": "pmcoe-azureOpenAi-text-vectorizer",
+        "kind": "azureOpenAI",
+        "azureOpenAIParameters": {
+          "resourceUri": "https://scsc-cio-ect-openai-oai.openai.azure.com",
+          "deploymentId": "text-embedding-3-large",
+          "modelName": "text-embedding-3-large"
+        }
+      }
+    ],
+    "compressions": []
+  }
+}
+```
+
+Indexer: 
+
+```json
+{
+  "@odata.context": "https://ssc-assistant-search-service.search.windows.net/$metadata#indexers/$entity",
+  "@odata.etag": "\"0x8DD8D5D178AACBF\"",
+  "name": "pmcoe-indexer",
+  "description": null,
+  "dataSourceName": "pmcoe-datasource",
+  "skillsetName": "pmcoe-skillset",
+  "targetIndexName": "pmcoe",
+  "disabled": null,
+  "schedule": null,
+  "parameters": {
+    "batchSize": null,
+    "maxFailedItems": null,
+    "maxFailedItemsPerBatch": null,
+    "configuration": {
+      "dataToExtract": "contentAndMetadata",
+      "parsingMode": "default"
+    }
+  },
+  "fieldMappings": [
+    {
+      "sourceFieldName": "metadata_storage_name",
+      "targetFieldName": "title",
+      "mappingFunction": null
+    }
+  ],
+  "outputFieldMappings": [],
+  "cache": null,
+  "encryptionKey": null
+}
+```
+
 ## Maintenance
 
 For the versioning in the `requirements.txt` file we use this command: `pip freeze -r requirements.txt|grep -i -f <(awk '{print $1}' requirements.txt) > requirements_with_versions.txt`
