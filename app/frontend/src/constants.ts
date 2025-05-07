@@ -29,3 +29,12 @@ export const MAX_MESSAGES_SENT = 10;
 // This is the maximum number of messages that we save in chat history.
 // It used to be 10, but we changed it to Infinity to allow for better user experience.
 export const MAX_CHAT_HISTORIES_LENGTH = Infinity;
+
+// this is a temporary hack for separating out the mutually-exclusive tools from the rest
+// of the tools. Once we refactor, we will not have mutually-exclusive tools.
+// If the tool is a mutex tool, we need to disable all other mutex tools and enable the 
+// selected tool. We also need to sort the mutex tools so that they are in a separate section
+// from the rest of the tools.
+export const MUTEX_TOOLS = [
+    "corporate", "pmcoe", "telecom"
+]
