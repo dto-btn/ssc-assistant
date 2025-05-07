@@ -49,7 +49,7 @@ data "azurerm_client_config" "current" {}
 #   ai_endpoint = data.azurerm_cognitive_account.ai.endpoint
 #   ai_key = data.azurerm_cognitive_account.ai.primary_access_key
 
-#   allowed_tools = ["corporate", "geds", "archibus", "bits", "pmcoe"]
+#   allowed_tools = ["corporate", "geds", "archibus", "bits", "pmcoe", "telecom"]
 # }
 
 /****************************************************

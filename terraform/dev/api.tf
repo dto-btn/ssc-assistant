@@ -65,7 +65,7 @@ resource "azurerm_linux_web_app" "api" {
     ARCHIBUS_API_PASSWORD         = var.archibus_api_password
     WEBSITE_WEBDEPLOY_USE_SCM     = true
     WEBSITE_RUN_FROM_PACKAGE      = "1"
-    ALLOWED_TOOLS                 = "corporate, geds, archibus, bits, pmcoe"
+    ALLOWED_TOOLS                 = "corporate, geds, archibus, bits, pmcoe, telecom"
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
     #PORT = 5001
     BITS_DB_SERVER                = var.bits_database_config.URL

@@ -34,7 +34,7 @@ export default {
 The following `.env` settings are there to control certain components from being made available to the end-user: 
 
 ```bash
-VITE_ALLOWED_TOOLS=geds,corporate,archibus,pmcoe
+VITE_ALLOWED_TOOLS=geds,corporate,archibus,pmcoe,telecom
 VITE_DISABLED_FEATURES="file_upload"
 ```
 
