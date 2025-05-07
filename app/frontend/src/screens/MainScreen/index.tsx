@@ -30,7 +30,6 @@ import { useChatService } from "../../hooks/useChatService";
 import { useApiRequestService } from "./useApiRequestService";
 import { defaultEnabledTools } from "../../allowedTools";
 import { tt } from "../../i18n/tt";
-import { string } from "zod";
 
 const MainScreen = () => {
   const { t } = useTranslation();
