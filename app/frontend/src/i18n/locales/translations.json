@@ -770,5 +770,9 @@
     "PHASE": {
         "en": "Phase",
         "fr": "Phase"
+    },
+    "br.metadata.showing": {
+        "en": "Showing {{results}} result(s) (out of {{total}}) in {{time}}s.",
+        "fr": "Affichage de {{results}} résultat(s) (sur {{total}}) en {{time}}s"
     }
 }

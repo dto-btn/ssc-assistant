@@ -29,9 +29,9 @@ import { visuallyHidden } from "@mui/utils";
 import Draggable from "react-draggable";
 import FitScreenIcon from "@mui/icons-material/FitScreen";
 import BusinessRequestCard from "./BusinessRequests/BusinessRequestCard";
-import BusinessRequestUpdates from "./BusinessRequests/BusinessRequestUpdates";
 import { transformToBusinessRequest } from "../util/bits_utils";
 import BusinessRequestTable from "./BusinessRequests/BusinessRequestTable";
+import BusinessRequestMetadata from "./BusinessRequests/BusinessRequestMetadata";
 
 interface AssistantBubbleProps {
   text: string;
@@ -86,9 +86,6 @@ export const AssistantBubble = ({
   const [brData, setBrData] = useState<BusinessRequest[] | undefined>(
     undefined
   );
-  const [brUpdates, setBrUpdates] = useState<
-    BusinessRequestUpdate[] | undefined
-  >(undefined);
 
   const components = {
     a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
@@ -98,6 +95,7 @@ export const AssistantBubble = ({
   const [citationNumberMapping, setCitationNumberMapping] = useState<{
     [key: number]: number;
   }>({});
+  const [brMetadata, setBrMetadata] = useState<BrMetadata | undefined>();
 
   function processText(text: string, citations: Citation[]) {
     // Regular expression to find all citation references like [doc1], [doc3], etc.
@@ -184,21 +182,17 @@ export const AssistantBubble = ({
             if (brInformation.length) {
               const brInfoTransformed = brInformation.map((br: any) => {
                 return transformToBusinessRequest(br);
-                //setBrData((prev) => (prev ? [...prev, brData] : [brData]));
               });
               setBrData(brInfoTransformed);
             }
+            if (payload?.metadata) {
+              setBrMetadata(payload.metadata);
+            }
           } catch (error) {
-            console.error("Error transforming BR data", error);
-          }
-        }
-        // BR Updates
-        if (payload?.br_updates) {
-          try {
-            const brUpdates = payload.br_updates;
-            setBrUpdates(brUpdates);
-          } catch (error) {
-            console.error("Error transforming BR update data", error);
+            console.error(
+              "Error transforming BR data and/or BR metadata",
+              error
+            );
           }
         }
         // GEDS
@@ -434,7 +428,7 @@ export const AssistantBubble = ({
               </ConfirmBookingBox>
             )}
 
-            {!isLoading && (brData || brUpdates) && (
+            {!isLoading && brData && (
               <>
                 <Box
                   sx={{
@@ -460,9 +454,9 @@ export const AssistantBubble = ({
                     brData.map((item, index) => (
                       <Box
                         sx={{
-                          gridColumn: "span 1",
+                          gridColumn: "span 2",
                           display: "flex",
-                          justifyContent: "center",
+                          justifyContent: "left",
                         }}
                       >
                         <BusinessRequestCard
@@ -472,12 +466,8 @@ export const AssistantBubble = ({
                         />
                       </Box>
                     ))}
-
-                  {brUpdates && (
-                    <BusinessRequestUpdates
-                      data={brUpdates}
-                      lang={i18n.language}
-                    />
+                  {brMetadata && (
+                    <BusinessRequestMetadata metadata={brMetadata} />
                   )}
                 </Box>
               </>
