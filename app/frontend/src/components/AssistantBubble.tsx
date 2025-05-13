@@ -86,6 +86,7 @@ export const AssistantBubble = ({
   const [brData, setBrData] = useState<BusinessRequest[] | undefined>(
     undefined
   );
+  const [brQuery, setBrQuery] = useState<string | undefined>(undefined);
 
   const components = {
     a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
@@ -195,6 +196,12 @@ export const AssistantBubble = ({
             );
           }
         }
+
+        // BR Query
+        if (payload?.brquery) {
+          setBrQuery(payload.brquery);
+        }
+
         // GEDS
         if (payload?.profiles) {
           console.log("Profiles: ", payload.profiles);
@@ -468,6 +475,19 @@ export const AssistantBubble = ({
                     ))}
                   {brMetadata && (
                     <BusinessRequestMetadata metadata={brMetadata} />
+                  )}
+                  {brQuery && (
+                    <Box
+                      sx={{
+                        gridColumn: "span 2",
+                        display: "flex",
+                        justifyContent: "left",
+                      }}
+                    >
+                      <Typography variant="body2">
+                        {JSON.stringify(brQuery, null, 2)}
+                      </Typography>
+                    </Box>
                   )}
                 </Box>
               </>

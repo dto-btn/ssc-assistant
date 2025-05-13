@@ -96,7 +96,10 @@ def search_br_by_fields(br_query: str):
             else:
                 query_params.append(f"%{query_filter.value}%")
         query_params.append(user_query.limit)
-        return db.execute_query(sql_query, *query_params)
+        result = db.execute_query(sql_query, *query_params)
+        # Append the original query to the result
+        result["brquery"] = user_query.model_dump()
+        return result
 
     except (json.JSONDecodeError, ValidationError) as e:
         # Handle validation errors
