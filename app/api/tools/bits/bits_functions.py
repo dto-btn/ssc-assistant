@@ -201,7 +201,7 @@ def valid_search_fields():
         }
         for key, value in BRFields.valid_search_fields_no_statuses.items()
     }
-    print(fields_with_descriptions)
+    
     return {
         "field_names": json.dumps(fields_with_descriptions)
     }

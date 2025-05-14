@@ -28,6 +28,8 @@ import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { visuallyHidden } from "@mui/utils";
 import Draggable from "react-draggable";
 import FitScreenIcon from "@mui/icons-material/FitScreen";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import BusinessRequestCard from "./BusinessRequests/BusinessRequestCard";
 import { transformToBusinessRequest } from "../util/bits_utils";
 import BusinessRequestTable from "./BusinessRequests/BusinessRequestTable";
@@ -87,6 +89,7 @@ export const AssistantBubble = ({
     undefined
   );
   const [brQuery, setBrQuery] = useState<string | undefined>(undefined);
+  const [isBrQueryExpanded, setIsBrQueryExpanded] = useState(false);
 
   const components = {
     a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
@@ -254,6 +257,74 @@ export const AssistantBubble = ({
       >
         <Box>
           <ChatBubbleInner elevation={4} className={"assistant-bubble-paper"}>
+            {/* brQuery at the top of the bubble */}
+            {brQuery && (
+              <Box sx={{ padding: '0 15px 0 15px', mt: 2 }}>
+                <BrQueryBubble
+                  elevation={0}
+                  sx={{
+                    maxHeight: isBrQueryExpanded ? 'none' : '100px',
+                    position: 'relative',
+                  }}
+                >
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    Business Request Query:
+                  </Typography>
+                  <Box
+                    component="pre"
+                    sx={{
+                      margin: 0,
+                      overflowX: 'auto',
+                      fontSize: '0.8rem',
+                      '& table': {
+                        borderCollapse: 'collapse',
+                        width: '100%',
+                      },
+                      '& td, & th': {
+                        border: '1px solid #ddd',
+                        padding: '8px',
+                        textAlign: 'left',
+                      },
+                      '& tr:nth-of-type(odd)': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.5)'
+                      }
+                    }}
+                  >
+                    <table>
+                      <tbody>
+                        {Object.entries(brQuery).map(([key, value]) => (
+                          <tr key={key}>
+                            <th>{key}</th>
+                            <td>
+                              {typeof value === 'object'
+                                ? JSON.stringify(value, null, 2)
+                                : String(value)
+                              }
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </Box>
+                  <IconButton
+                    onClick={() => setIsBrQueryExpanded(!isBrQueryExpanded)}
+                    sx={{
+                      position: 'absolute',
+                      bottom: '2px',
+                      right: '2px',
+                      backgroundColor: 'rgba(255,255,255,0.7)',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                      },
+                      padding: '2px'
+                    }}
+                  >
+                    {isBrQueryExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                  </IconButton>
+                </BrQueryBubble>
+              </Box>
+            )}
+
             <MainContentWrapper>
               <IconWrapper>
                 <img
@@ -290,8 +361,8 @@ export const AssistantBubble = ({
                   {isLoading
                     ? `${text.replace(/\[doc(\d+)\]/g, "")}_`
                     : processedContent.processedText !== ""
-                    ? processedContent.processedText
-                    : text}
+                      ? processedContent.processedText
+                      : text}
                 </MarkdownHooks>
               </TextComponentsBox>
             </MainContentWrapper>
@@ -476,19 +547,6 @@ export const AssistantBubble = ({
                   {brMetadata && (
                     <BusinessRequestMetadata metadata={brMetadata} />
                   )}
-                  {brQuery && (
-                    <Box
-                      sx={{
-                        gridColumn: "span 2",
-                        display: "flex",
-                        justifyContent: "left",
-                      }}
-                    >
-                      <Typography variant="body2">
-                        {JSON.stringify(brQuery, null, 2)}
-                      </Typography>
-                    </Box>
-                  )}
                 </Box>
               </>
             )}
@@ -612,3 +670,14 @@ const ConfirmBookingBox = styled(Box)`
   align-items: center;
   margin: 30px;
 `;
+
+const BrQueryBubble = styled(Paper)({
+  backgroundColor: '#ffccdc', // pink color for the bubble
+  padding: '12px',
+  borderRadius: '10px',
+  margin: '8px 0',
+  width: '100%',
+  overflow: 'auto',
+  position: 'relative',
+  transition: 'max-height 0.3s ease',
+});
