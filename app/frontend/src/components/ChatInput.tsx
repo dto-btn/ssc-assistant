@@ -81,7 +81,6 @@ export const ChatInput = ({
     <Container
       component="footer"
       sx={(theme) => ({
-        mb: 3,
         position: "sticky",
         bottom: 0,
         // box shadow fading upwards
@@ -159,7 +158,7 @@ export const ChatInput = ({
               autoFocus: true,
             }
           }}
-          placeholder={t("ask.question")}
+          placeholder={`${t("ask.question")}. ${t("model.version.disclaimer")} ${modelName}.`}
           inputProps={{ "aria-label": t("ask.question"), "tabIndex": 1 }}
           error={error}
           id="ask-question"
@@ -192,17 +191,33 @@ export const ChatInput = ({
           )}
         </IconButton>
       </Paper>
-      <Typography
-        sx={{
-          fontSize: "13px",
-          mr: "50px",
-          pt: "5px",
-          opacity: 0.7,
-          textAlign: "right",
-        }}
-      >
-        {t("model.version.disclaimer")} {modelName}
-      </Typography>
+      <Box sx={{
+        display: "flex",
+        justifyContent: "space-around",
+        pt: "5px",
+        pb: "5px",
+      }}>
+        <Typography
+          sx={{
+            fontSize: "12px",
+            ml: "50px",
+            display: "inline"
+          }}
+        >
+          ⚠️ {t("ai.disclaimer")}
+        </Typography>
+        {/* <Typography
+          sx={{
+            fontSize: "13px",
+            mr: "50px",
+            opacity: 0.7,
+            textAlign: "right",
+            display: "inline"
+          }}
+        >
+          {t("model.version.disclaimer")} {modelName}
+        </Typography> */}
+      </Box>
     </Container>
   );
 };
