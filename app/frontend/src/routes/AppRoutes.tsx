@@ -4,6 +4,7 @@ import { RootRoute } from ".";
 import { AdminRoute } from "./admin";
 import { SuggestCallbackRoute } from "./SuggestCallbackRoute";
 import NewLayoutRoute from "./NewLayoutRoute";
+import { BitsQueryRoute } from "./bits-query";
 
 const router = createBrowserRouter([
     {
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
     {
         path: "/new-layout",
         element: <NewLayoutRoute />
+    },
+    {
+        path: "/bits-query",
+        element: <BitsQueryRoute />
     }
 ]);
 
