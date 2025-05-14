@@ -206,17 +206,6 @@ export const ChatInput = ({
         >
           ⚠️ {t("ai.disclaimer")}
         </Typography>
-        {/* <Typography
-          sx={{
-            fontSize: "13px",
-            mr: "50px",
-            opacity: 0.7,
-            textAlign: "right",
-            display: "inline"
-          }}
-        >
-          {t("model.version.disclaimer")} {modelName}
-        </Typography> */}
       </Box>
     </Container>
   );
