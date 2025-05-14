@@ -17,7 +17,7 @@ interface BitsResponse {
  */
 export const searchBits = async (params: BitsQueryParams): Promise<BitsResponse> => {
     try {
-        const response = await fetch('/api/v1/bits/search', {
+        const response = await fetch('/api/1.0/bits/search', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ export const searchBits = async (params: BitsQueryParams): Promise<BitsResponse>
  */
 export const getBitsFields = async (): Promise<BitsFieldMap> => {
     try {
-        const response = await fetch('/api/v1/bits/fields');
+        const response = await fetch('/api/1.0/bits/fields');
 
         if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`);
@@ -61,7 +61,7 @@ export const getBitsFields = async (): Promise<BitsFieldMap> => {
  */
 export const getBitsStatuses = async (): Promise<{ statuses: BitsStatus[] }> => {
     try {
-        const response = await fetch('/api/v1/bits/statuses');
+        const response = await fetch('/api/1.0/bits/statuses');
 
         if (!response.ok) {
             throw new Error(`Error ${response.status}: ${response.statusText}`);
@@ -79,7 +79,7 @@ export const getBitsStatuses = async (): Promise<{ statuses: BitsStatus[] }> => 
  */
 export const getBrInformation = async (brNumbers: number[]): Promise<BitsResponse> => {
     try {
-        const response = await fetch('/api/v1/bits/br', {
+        const response = await fetch('/api/1.0/bits/br', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
