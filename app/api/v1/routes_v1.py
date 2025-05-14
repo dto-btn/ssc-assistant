@@ -518,7 +518,6 @@ def generate_monthly_user_engagement_report():
 
 @api_v1.post("/bits/search")
 @auth.login_required(role="chat")
-@user_ad.login_required
 def bits_search():
     """
     Search BITS data using query parameters.
@@ -541,7 +540,7 @@ def bits_search():
 
 @api_v1.get("/bits/fields")
 @auth.login_required(role="chat")
-@user_ad.login_required
+#
 def bits_fields():
     """
     Get available BITS fields for searching.
@@ -563,7 +562,6 @@ def bits_fields():
 
 @api_v1.get("/bits/statuses")
 @auth.login_required(role="chat")
-@user_ad.login_required
 def bits_statuses():
     """
     Get available BITS statuses.
@@ -581,7 +579,6 @@ def bits_statuses():
 
 @api_v1.post("/bits/br")
 @auth.login_required(role="chat")
-@user_ad.login_required
 def bits_br_information():
     """
     Get information about specific BR numbers.
