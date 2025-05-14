@@ -17,6 +17,9 @@ from utils.manage_message import SUGGEST_SYSTEM_PROMPT_FR, SUGGEST_SYSTEM_PROMPT
 from src.context.build_context import build_prod_context
 
 from tools.archibus.archibus_functions import make_api_call
+from tools.bits.bits_functions import search_br_by_fields, get_br_statuses_and_phases, valid_search_fields, get_br_information
+from tools.bits.bits_fields import BRFields
+from tools.bits.bits_statuses_cache import StatusesCache
 from utils.auth import auth, user_ad
 from utils.db import (
     flag_conversation,
@@ -511,3 +514,88 @@ def generate_monthly_user_engagement_report():
     ctx = build_prod_context()
     weekly_report = ctx["stats_report_service"].get_monthly_user_engagement_report()
     return jsonify(weekly_report), 200
+
+
+@api_v1.post("/bits/search")
+@auth.login_required(role="chat")
+@user_ad.login_required
+def bits_search():
+    """
+    Search BITS data using query parameters.
+    
+    This endpoint accepts a JSON body with a 'br_query' field containing the search parameters
+    in the format expected by the search_br_by_fields function.
+    """
+    try:
+        data = request.json
+        if not data or 'br_query' not in data:
+            return jsonify({"error": "Missing br_query parameter"}), 400
+        
+        # Pass the stringified JSON to the backend function
+        result = search_br_by_fields(data['br_query'])
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Error in BITS search: {str(e)}")
+        return jsonify({"error": f"Error processing request: {str(e)}"}), 500
+
+
+@api_v1.get("/bits/fields")
+@auth.login_required(role="chat")
+@user_ad.login_required
+def bits_fields():
+    """
+    Get available BITS fields for searching.
+    
+    Returns a map of field names to their descriptions.
+    """
+    try:
+        # Call the backend function to get valid search fields
+        result = valid_search_fields()
+        # Parse the field_names string back to a JSON object
+        if 'field_names' in result:
+            fields_dict = json.loads(result['field_names'])
+            return jsonify(fields_dict)
+        return jsonify({})
+    except Exception as e:
+        logger.error(f"Error getting BITS fields: {str(e)}")
+        return jsonify({"error": f"Error processing request: {str(e)}"}), 500
+
+
+@api_v1.get("/bits/statuses")
+@auth.login_required(role="chat")
+@user_ad.login_required
+def bits_statuses():
+    """
+    Get available BITS statuses.
+    
+    Returns a list of status objects with STATUS_ID, NAME_EN, NAME_FR, PHASE_EN, and PHASE_FR fields.
+    """
+    try:
+        # Call the backend function to get statuses
+        result = get_br_statuses_and_phases()
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Error getting BITS statuses: {str(e)}")
+        return jsonify({"error": f"Error processing request: {str(e)}"}), 500
+
+
+@api_v1.post("/bits/br")
+@auth.login_required(role="chat")
+@user_ad.login_required
+def bits_br_information():
+    """
+    Get information about specific BR numbers.
+    
+    This endpoint accepts a JSON body with a 'br_numbers' field containing an array of BR numbers.
+    """
+    try:
+        data = request.json
+        if not data or 'br_numbers' not in data or not isinstance(data['br_numbers'], list):
+            return jsonify({"error": "Missing or invalid br_numbers parameter"}), 400
+        
+        # Call the backend function to get BR information
+        result = get_br_information(data['br_numbers'])
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Error getting BR information: {str(e)}")
+        return jsonify({"error": f"Error processing request: {str(e)}"}), 500
