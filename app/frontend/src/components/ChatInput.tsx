@@ -1,3 +1,4 @@
+import InfoIcon from "@mui/icons-material/Info";
 import CloseIcon from "@mui/icons-material/Close";
 import Send from "@mui/icons-material/Send";
 import {
@@ -192,19 +193,25 @@ export const ChatInput = ({
         </IconButton>
       </Paper>
       <Box sx={{
+        width: "100%",
+        // center items
         display: "flex",
-        justifyContent: "space-around",
+        justifyContent: "center",
+        gap: "5px",
+        alignItems: "center",
         pt: "5px",
         pb: "5px",
+        verticalAlign: "middle",
       }}>
+        <InfoIcon fontSize="inherit" color='info' /> {t("ai.disclaimer")}
         <Typography
           sx={{
             fontSize: "12px",
             ml: "50px",
-            display: "inline"
+            display: "inline",
+            // vertically align 
           }}
         >
-          ⚠️ {t("ai.disclaimer")}
         </Typography>
       </Box>
     </Container>
