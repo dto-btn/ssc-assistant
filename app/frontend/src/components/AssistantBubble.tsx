@@ -28,8 +28,8 @@ import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { visuallyHidden } from "@mui/utils";
 import Draggable from "react-draggable";
 import FitScreenIcon from "@mui/icons-material/FitScreen";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import InfoIcon from "@mui/icons-material/Info";
 import BusinessRequestCard from "./BusinessRequests/BusinessRequestCard";
 import { transformToBusinessRequest } from "../util/bits_utils";
 import BusinessRequestTable from "./BusinessRequests/BusinessRequestTable";
@@ -88,7 +88,24 @@ export const AssistantBubble = ({
   const [brData, setBrData] = useState<BusinessRequest[] | undefined>(
     undefined
   );
-  const [brQuery, setBrQuery] = useState<string | undefined>(undefined);
+  // Define an interface for the brQuery structure
+  interface BrQueryFilter {
+    field?: string;
+    op?: string;
+    name?: string;
+    operator?: string;
+    value: string | number;
+  }
+
+  interface BrQueryType {
+    query_filters?: BrQueryFilter[];
+    status?: string;
+    statuses?: string[];
+    limit?: number;
+    [key: string]: any; // Allow for other properties we might not know about
+  }
+
+  const [brQuery, setBrQuery] = useState<BrQueryType | undefined>(undefined);
   const [isBrQueryExpanded, setIsBrQueryExpanded] = useState(false);
 
   const components = {
@@ -202,7 +219,7 @@ export const AssistantBubble = ({
 
         // BR Query
         if (payload?.brquery) {
-          setBrQuery(payload.brquery);
+          setBrQuery(payload.brquery); // This is already an object from the payload
         }
 
         // GEDS
@@ -257,73 +274,6 @@ export const AssistantBubble = ({
       >
         <Box>
           <ChatBubbleInner elevation={4} className={"assistant-bubble-paper"}>
-            {/* brQuery at the top of the bubble */}
-            {brQuery && (
-              <Box sx={{ padding: '0 15px 0 15px', mt: 2 }}>
-                <BrQueryBubble
-                  elevation={0}
-                  sx={{
-                    maxHeight: isBrQueryExpanded ? 'none' : '100px',
-                    position: 'relative',
-                  }}
-                >
-                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                    Business Request Query:
-                  </Typography>
-                  <Box
-                    component="pre"
-                    sx={{
-                      margin: 0,
-                      overflowX: 'auto',
-                      fontSize: '0.8rem',
-                      '& table': {
-                        borderCollapse: 'collapse',
-                        width: '100%',
-                      },
-                      '& td, & th': {
-                        border: '1px solid #ddd',
-                        padding: '8px',
-                        textAlign: 'left',
-                      },
-                      '& tr:nth-of-type(odd)': {
-                        backgroundColor: 'rgba(255, 255, 255, 0.5)'
-                      }
-                    }}
-                  >
-                    <table>
-                      <tbody>
-                        {Object.entries(brQuery).map(([key, value]) => (
-                          <tr key={key}>
-                            <th>{key}</th>
-                            <td>
-                              {typeof value === 'object'
-                                ? JSON.stringify(value, null, 2)
-                                : String(value)
-                              }
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </Box>
-                  <IconButton
-                    onClick={() => setIsBrQueryExpanded(!isBrQueryExpanded)}
-                    sx={{
-                      position: 'absolute',
-                      bottom: '2px',
-                      right: '2px',
-                      backgroundColor: 'rgba(255,255,255,0.7)',
-                      '&:hover': {
-                        backgroundColor: 'rgba(255,255,255,0.9)',
-                      },
-                      padding: '2px'
-                    }}
-                  >
-                    {isBrQueryExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                  </IconButton>
-                </BrQueryBubble>
-              </Box>
-            )}
 
             <MainContentWrapper>
               <IconWrapper>
@@ -586,6 +536,99 @@ export const AssistantBubble = ({
                 </Paper>
               </ToolsUsedBox>
             )}
+
+            {/* brQuery at the bottom of the bubble */}
+            {!isLoading && brQuery && (
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', padding: '0 15px 15px 15px' }}>
+                {!isBrQueryExpanded ? (
+                  <Tooltip title="Show Business Request Query">
+                    <IconButton
+                      onClick={() => setIsBrQueryExpanded(true)}
+                      size="small"
+                      sx={{
+                        color: 'primary.main',
+                        backgroundColor: 'rgba(240, 240, 255, 0.5)',
+                        '&:hover': { backgroundColor: 'rgba(240, 240, 255, 0.9)' },
+                      }}
+                    >
+                      <InfoIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                ) : (
+                  <Box sx={{
+                    maxWidth: '100%',
+                    backgroundColor: 'rgba(240, 240, 255, 0.5)',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    position: 'relative'
+                  }}>
+                    <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mb: 1 }}>
+                      Business Request Query:
+                    </Typography>
+
+                    <Stack direction="column" spacing={1} sx={{ mb: 1 }}>
+                      {/* Query Filters */}
+                      {brQuery.query_filters && brQuery.query_filters.length > 0 && (
+                        <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                          {brQuery.query_filters.map((filter, index) => (
+                            <Chip
+                              key={index}
+                              label={`${filter.field || filter.name} ${filter.op || filter.operator} ${filter.value}`}
+                              size="small"
+                              variant="outlined"
+                              color="primary"
+                            />
+                          ))}
+                        </Stack>
+                      )}
+                      
+                      {/* Limit */}
+                      {brQuery.limit !== undefined && (
+                        <Chip
+                          label={`Limit = ${brQuery.limit}`}
+                          size="small"
+                          variant="outlined"
+                          color="default"
+                        />
+                      )}
+                      
+                      {/* Status */}
+                      {brQuery.status && (
+                        <Chip
+                          label={`Status = ${brQuery.status}`}
+                          size="small"
+                          variant="outlined"
+                          color="secondary"
+                        />
+                      )}
+                      
+                      {/* Statuses array */}
+                      {brQuery.statuses && Array.isArray(brQuery.statuses) && (
+                        <Chip
+                          label={`Statuses = ${brQuery.statuses.length > 0 ? brQuery.statuses.join(', ') : 'None'}`}
+                          size="small"
+                          variant="outlined"
+                          color="secondary"
+                        />
+                      )}
+                    </Stack>
+
+                    <IconButton
+                      onClick={() => setIsBrQueryExpanded(false)}
+                      size="small"
+                      sx={{
+                        position: 'absolute',
+                        top: '5px',
+                        right: '5px',
+                        padding: '2px',
+                      }}
+                    >
+                      <ExpandLessIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                )}
+              </Box>
+            )}
           </ChatBubbleInner>
         </Box>
         <Box>
@@ -671,13 +714,4 @@ const ConfirmBookingBox = styled(Box)`
   margin: 30px;
 `;
 
-const BrQueryBubble = styled(Paper)({
-  backgroundColor: '#ffccdc', // pink color for the bubble
-  padding: '12px',
-  borderRadius: '10px',
-  margin: '8px 0',
-  width: '100%',
-  overflow: 'auto',
-  position: 'relative',
-  transition: 'max-height 0.3s ease',
-});
+// We no longer need the BrQueryBubble styled component as we're using a Box with inline styling
