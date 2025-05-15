@@ -1,4 +1,8 @@
 {
+    "ai.disclaimer": {
+        "en": "AI may make mistakes. Please validate all information before use.",
+        "fr": "L'IA peut faire des erreurs. Veuillez valider toutes les informations avant utilisation."
+    },
     "aria.show.menu": {
         "en": "Settings menu",
         "fr": "Menu des options"

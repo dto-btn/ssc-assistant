@@ -96,7 +96,10 @@ def search_br_by_fields(br_query: str):
             else:
                 query_params.append(f"%{query_filter.value}%")
         query_params.append(user_query.limit)
-        return db.execute_query(sql_query, *query_params)
+        result = db.execute_query(sql_query, *query_params)
+        # Append the original query to the result
+        result["brquery"] = user_query.model_dump()
+        return result
 
     except (json.JSONDecodeError, ValidationError) as e:
         # Handle validation errors
@@ -177,38 +180,6 @@ def get_organization_names():
 @tool_metadata({
     "type": "function",
     "function": {
-        "name": "how_to_search_brs",
-        "description": "Use this function to help guide the user in their search for BRs. It will list all the functions here and their paremeter to help the AI guide the user in their search. If the question is asked in french please try to translate everything in french.",
-        "parameters": {
-            "type": "object",
-            "properties": {},
-            "required": []
-      }
-    }
-  })
-# pylint: enable=line-too-long
-def how_to_search_brs():
-    """
-    This is a metadata function that will list all the functions
-    here and their paremeter to help the AI guide the user in their search
-    """
-    functions = discover_subfolder_functions_with_metadata("tools.bits.bits_functions",
-                                                           "tools/bits/bits_functions.py",
-                                                           TOOL_BR)
-    # filter out this function right here
-    for key in list(functions.keys()):
-        if key == "how_to_search_brs":
-            del functions[key]
-
-    metadata = {}
-    for key, value in functions.items():
-        metadata[key] = value['metadata']
-    return json.dumps(metadata)
-
-# pylint: disable=line-too-long
-@tool_metadata({
-    "type": "function",
-    "function": {
         "name": "valid_search_fields",
         "description": "Use this function to list all the valid search fields. This can be used to get the field names that are available to search for BRs.",
         "parameters": {
@@ -224,8 +195,13 @@ def valid_search_fields():
     This function returns all the valid search fields
     """
     fields_with_descriptions = {
-        key: value.get('description', '') for key, value in BRFields.valid_search_fields_no_statuses.items()
+        key: {
+            'description': value.get('description', ''),
+            'is_user_field': value.get('is_user_field', False)
+        }
+        for key, value in BRFields.valid_search_fields_no_statuses.items()
     }
+    
     return {
         "field_names": json.dumps(fields_with_descriptions)
     }
