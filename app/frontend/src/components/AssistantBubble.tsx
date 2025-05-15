@@ -541,7 +541,10 @@ export const AssistantBubble = ({
             {!isLoading && brQuery && (
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', padding: '0 15px 15px 15px' }}>
                 {!isBrQueryExpanded ? (
-                  <Tooltip title="Show Business Request Query">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                      See Query Parameters
+                    </Typography>
                     <IconButton
                       onClick={() => setIsBrQueryExpanded(true)}
                       size="small"
@@ -553,65 +556,87 @@ export const AssistantBubble = ({
                     >
                       <InfoIcon fontSize="small" />
                     </IconButton>
-                  </Tooltip>
+                  </Box>
                 ) : (
                   <Box sx={{
                     maxWidth: '100%',
-                    backgroundColor: 'rgba(240, 240, 255, 0.5)',
+                    backgroundColor: 'rgba(240, 240, 255, 0.7)',
                     borderRadius: '8px',
-                    padding: '10px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    padding: '12px',
                     position: 'relative'
                   }}>
-                    <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block', mb: 1 }}>
-                      Business Request Query:
+                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', display: 'block', mb: 1 }}>
+                      Business Request Query Parameters
                     </Typography>
 
-                    <Stack direction="column" spacing={1} sx={{ mb: 1 }}>
-                      {/* Query Filters */}
-                      {brQuery.query_filters && brQuery.query_filters.length > 0 && (
-                        <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                          {brQuery.query_filters.map((filter, index) => (
-                            <Chip
-                              key={index}
-                              label={`${filter.field || filter.name} ${filter.op || filter.operator} ${filter.value}`}
-                              size="small"
-                              variant="outlined"
-                              color="primary"
-                            />
-                          ))}
-                        </Stack>
-                      )}
-                      
-                      {/* Limit */}
-                      {brQuery.limit !== undefined && (
-                        <Chip
-                          label={`Limit = ${brQuery.limit}`}
-                          size="small"
-                          variant="outlined"
-                          color="default"
-                        />
-                      )}
-                      
-                      {/* Status */}
-                      {brQuery.status && (
-                        <Chip
-                          label={`Status = ${brQuery.status}`}
-                          size="small"
-                          variant="outlined"
-                          color="secondary"
-                        />
-                      )}
-                      
-                      {/* Statuses array */}
-                      {brQuery.statuses && Array.isArray(brQuery.statuses) && (
-                        <Chip
-                          label={`Statuses = ${brQuery.statuses.length > 0 ? brQuery.statuses.join(', ') : 'None'}`}
-                          size="small"
-                          variant="outlined"
-                          color="secondary"
-                        />
-                      )}
-                    </Stack>
+                    <Box sx={{ mb: 1, maxWidth: '100%', overflow: 'auto' }}>
+                      <table style={{ 
+                        borderCollapse: 'collapse', 
+                        width: '100%',
+                        backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                        borderRadius: '4px',
+                        overflow: 'hidden'
+                      }}>
+                        <thead>
+                          <tr style={{ backgroundColor: 'rgba(75, 62, 153, 0.1)' }}>
+                            <th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Parameter</th>
+                            <th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Value</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {/* Query Filters */}
+                          {brQuery.query_filters && brQuery.query_filters.length > 0 && 
+                            brQuery.query_filters.map((filter, index) => (
+                              <tr key={index} style={{ backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.5)' : 'rgba(240, 240, 255, 0.5)' }}>
+                                <td style={{ padding: '8px 12px', borderBottom: '1px solid #ddd', fontWeight: 'bold' }}>
+                                  {filter.field || filter.name}
+                                </td>
+                                <td style={{ padding: '8px 12px', borderBottom: '1px solid #ddd' }}>
+                                  {`${filter.op || filter.operator} ${filter.value}`}
+                                </td>
+                              </tr>
+                            ))
+                          }
+                          
+                          {/* Limit */}
+                          {brQuery.limit !== undefined && (
+                            <tr style={{ backgroundColor: (brQuery.query_filters?.length || 0) % 2 === 0 ? 'rgba(240, 240, 255, 0.5)' : 'rgba(255, 255, 255, 0.5)' }}>
+                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #ddd', fontWeight: 'bold' }}>
+                                Limit
+                              </td>
+                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #ddd' }}>
+                                {brQuery.limit}
+                              </td>
+                            </tr>
+                          )}
+                          
+                          {/* Status */}
+                          {brQuery.status && (
+                            <tr style={{ backgroundColor: ((brQuery.query_filters?.length || 0) + (brQuery.limit !== undefined ? 1 : 0)) % 2 === 0 ? 'rgba(240, 240, 255, 0.5)' : 'rgba(255, 255, 255, 0.5)' }}>
+                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #ddd', fontWeight: 'bold' }}>
+                                Status
+                              </td>
+                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #ddd' }}>
+                                {brQuery.status}
+                              </td>
+                            </tr>
+                          )}
+                          
+                          {/* Statuses array */}
+                          {brQuery.statuses && Array.isArray(brQuery.statuses) && (
+                            <tr style={{ backgroundColor: ((brQuery.query_filters?.length || 0) + (brQuery.limit !== undefined ? 1 : 0) + (brQuery.status ? 1 : 0)) % 2 === 0 ? 'rgba(240, 240, 255, 0.5)' : 'rgba(255, 255, 255, 0.5)' }}>
+                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #ddd', fontWeight: 'bold' }}>
+                                Statuses
+                              </td>
+                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #ddd' }}>
+                                {brQuery.statuses.length > 0 ? brQuery.statuses.join(', ') : 'None'}
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </Box>
 
                     <IconButton
                       onClick={() => setIsBrQueryExpanded(false)}
