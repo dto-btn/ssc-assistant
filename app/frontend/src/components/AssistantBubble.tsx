@@ -28,8 +28,6 @@ import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { visuallyHidden } from "@mui/utils";
 import Draggable from "react-draggable";
 import FitScreenIcon from "@mui/icons-material/FitScreen";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import InfoIcon from "@mui/icons-material/Info";
 import BusinessRequestCard from "./BusinessRequests/BusinessRequestCard";
 import { transformToBusinessRequest } from "../util/bits_utils";
 import BusinessRequestTable from "./BusinessRequests/BusinessRequestTable";
@@ -106,7 +104,6 @@ export const AssistantBubble = ({
   }
 
   const [brQuery, setBrQuery] = useState<BrQueryType | undefined>(undefined);
-  const [isBrQueryExpanded, setIsBrQueryExpanded] = useState(false);
 
   const components = {
     a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
@@ -507,17 +504,20 @@ export const AssistantBubble = ({
                 toggleShowProfileHandler={handleToggleShowProfiles}
               />
             )}
-            {toolsInfo && toolsInfo.length > 0 && (
+            {/* Combined tools and query parameters section */}
+            {(toolsInfo && toolsInfo.length > 0) || (brQuery && !isLoading) ? (
               <ToolsUsedBox>
                 <Paper
-                  sx={{ backgroundColor: "white", padding: 1 }}
+                  sx={{ backgroundColor: "white", padding: 1, width: '100%' }}
                   elevation={3}
                 >
-                  <Typography variant="caption" gutterBottom>
-                    {t("toolsUsed.short")}: {/*({toolsInfo.length}):*/}
+                  <Typography variant="caption" gutterBottom sx={{ display: 'block', mb: 1 }}>
+                    {t("toolsUsed.short")}:
                   </Typography>
-                  <Stack direction="row" spacing={1}>
-                    {toolsInfo.map((tool, index) => (
+
+                  {/* Tools section */}
+                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: toolsInfo && brQuery ? 1 : 0 }}>
+                    {toolsInfo && toolsInfo.map((tool, index) => (
                       <Tooltip title={t(tool.function_name)} key={index} arrow>
                         <Chip
                           icon={
@@ -529,131 +529,61 @@ export const AssistantBubble = ({
                             />
                           }
                           label={`${tool.function_name}()`}
+                          size="small"
                         />
                       </Tooltip>
                     ))}
                   </Stack>
+
+                  {/* Query parameters section */}
+                  {!isLoading && brQuery && (
+                    <>
+                      {/* Only show divider if both tools and query params exist */}
+                      {toolsInfo && toolsInfo.length > 0 && <Divider sx={{ my: 1 }} />}
+
+                      <Typography variant="caption" gutterBottom sx={{ display: 'block', mb: 1 }}>
+                        Query Parameters:
+                      </Typography>
+
+                      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                        {/* Query Filters */}
+                        {brQuery.query_filters && brQuery.query_filters.length > 0 &&
+                          brQuery.query_filters.map((filter, index) => (
+                            <Chip
+                              key={index}
+                              label={`${filter.field || filter.name} ${filter.op || filter.operator} ${filter.value}`}
+                              size="small"
+                              variant="outlined"
+                              color="primary"
+                            />
+                          ))
+                        }
+
+                        {/* Status - only if it has value */}
+                        {brQuery.status && (
+                          <Chip
+                            label={`Status: ${brQuery.status}`}
+                            size="small"
+                            variant="outlined"
+                            color="secondary"
+                          />
+                        )}
+
+                        {/* Statuses array - only if it has values */}
+                        {brQuery.statuses && Array.isArray(brQuery.statuses) && brQuery.statuses.length > 0 && (
+                          <Chip
+                            label={`Statuses: ${brQuery.statuses.join(', ')}`}
+                            size="small"
+                            variant="outlined"
+                            color="secondary"
+                          />
+                        )}
+                      </Stack>
+                    </>
+                  )}
                 </Paper>
               </ToolsUsedBox>
-            )}
-
-            {/* brQuery at the bottom of the bubble */}
-            {!isLoading && brQuery && (
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', padding: '0 15px 15px 15px' }}>
-                {!isBrQueryExpanded ? (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
-                      See Query Parameters
-                    </Typography>
-                    <IconButton
-                      onClick={() => setIsBrQueryExpanded(true)}
-                      size="small"
-                      sx={{
-                        color: 'primary.main',
-                        backgroundColor: 'rgba(240, 240, 255, 0.5)',
-                        '&:hover': { backgroundColor: 'rgba(240, 240, 255, 0.9)' },
-                      }}
-                    >
-                      <InfoIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                ) : (
-                  <Box sx={{
-                    maxWidth: '100%',
-                    backgroundColor: 'rgba(240, 240, 255, 0.7)',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    padding: '12px',
-                    position: 'relative'
-                  }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', display: 'block', mb: 1 }}>
-                      Business Request Query Parameters
-                    </Typography>
-
-                    <Box sx={{ mb: 1, maxWidth: '100%', overflow: 'auto' }}>
-                      <table style={{ 
-                        borderCollapse: 'collapse', 
-                        width: '100%',
-                        backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                        borderRadius: '4px',
-                        overflow: 'hidden'
-                      }}>
-                        <thead>
-                          <tr style={{ backgroundColor: 'rgba(75, 62, 153, 0.1)' }}>
-                            <th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Parameter</th>
-                            <th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>Value</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {/* Query Filters */}
-                          {brQuery.query_filters && brQuery.query_filters.length > 0 && 
-                            brQuery.query_filters.map((filter, index) => (
-                              <tr key={index} style={{ backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.5)' : 'rgba(240, 240, 255, 0.5)' }}>
-                                <td style={{ padding: '8px 12px', borderBottom: '1px solid #ddd', fontWeight: 'bold' }}>
-                                  {filter.field || filter.name}
-                                </td>
-                                <td style={{ padding: '8px 12px', borderBottom: '1px solid #ddd' }}>
-                                  {`${filter.op || filter.operator} ${filter.value}`}
-                                </td>
-                              </tr>
-                            ))
-                          }
-                          
-                          {/* Limit */}
-                          {brQuery.limit !== undefined && (
-                            <tr style={{ backgroundColor: (brQuery.query_filters?.length || 0) % 2 === 0 ? 'rgba(240, 240, 255, 0.5)' : 'rgba(255, 255, 255, 0.5)' }}>
-                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #ddd', fontWeight: 'bold' }}>
-                                Limit
-                              </td>
-                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #ddd' }}>
-                                {brQuery.limit}
-                              </td>
-                            </tr>
-                          )}
-                          
-                          {/* Status */}
-                          {brQuery.status && (
-                            <tr style={{ backgroundColor: ((brQuery.query_filters?.length || 0) + (brQuery.limit !== undefined ? 1 : 0)) % 2 === 0 ? 'rgba(240, 240, 255, 0.5)' : 'rgba(255, 255, 255, 0.5)' }}>
-                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #ddd', fontWeight: 'bold' }}>
-                                Status
-                              </td>
-                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #ddd' }}>
-                                {brQuery.status}
-                              </td>
-                            </tr>
-                          )}
-                          
-                          {/* Statuses array */}
-                          {brQuery.statuses && Array.isArray(brQuery.statuses) && (
-                            <tr style={{ backgroundColor: ((brQuery.query_filters?.length || 0) + (brQuery.limit !== undefined ? 1 : 0) + (brQuery.status ? 1 : 0)) % 2 === 0 ? 'rgba(240, 240, 255, 0.5)' : 'rgba(255, 255, 255, 0.5)' }}>
-                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #ddd', fontWeight: 'bold' }}>
-                                Statuses
-                              </td>
-                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #ddd' }}>
-                                {brQuery.statuses.length > 0 ? brQuery.statuses.join(', ') : 'None'}
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </Box>
-
-                    <IconButton
-                      onClick={() => setIsBrQueryExpanded(false)}
-                      size="small"
-                      sx={{
-                        position: 'absolute',
-                        top: '5px',
-                        right: '5px',
-                        padding: '2px',
-                      }}
-                    >
-                      <ExpandLessIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                )}
-              </Box>
-            )}
+            ) : null}
           </ChatBubbleInner>
         </Box>
         <Box>
