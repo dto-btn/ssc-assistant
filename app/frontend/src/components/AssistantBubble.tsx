@@ -669,4 +669,3 @@ const ConfirmBookingBox = styled(Box)`
   margin: 30px;
 `;
 
-// We no longer need the BrQueryBubble styled component as we're using a Box with inline styling
