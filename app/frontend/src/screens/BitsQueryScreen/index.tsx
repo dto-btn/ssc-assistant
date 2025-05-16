@@ -10,6 +10,7 @@ import { BusinessRequest } from "../../api/models";
 import BusinessRequestTable from "../../components/BusinessRequests/BusinessRequestTable";
 import BusinessRequestMetadata from "../../components/BusinessRequests/BusinessRequestMetadata";
 import { searchBits } from "../../api/bits.api";
+import ChatPanel from "./components/ChatPanel";
 
 const BitsQueryScreen: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -55,6 +56,7 @@ const BitsQueryScreen: React.FC = () => {
 
   return (
     <NewLayout
+      appDrawerContents={<ChatPanel />}
       appBar={<TopMenuHomePage 
         childrenLeftOfLogo={null} 
         enabledTools={appStore.tools.enabledTools} 
