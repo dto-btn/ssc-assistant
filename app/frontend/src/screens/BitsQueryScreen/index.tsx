@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Paper } from "@mui/material";
+import { Box, Typography, Paper, FormControlLabel, Switch } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import NewLayout from "../../components/layouts/NewLayout";
 import { TopMenuHomePage } from "../../components/TopMenu/TopMenuHomePage";
@@ -11,6 +11,7 @@ import BusinessRequestTable from "../../components/BusinessRequests/BusinessRequ
 import BusinessRequestMetadata from "../../components/BusinessRequests/BusinessRequestMetadata";
 import { searchBits } from "../../api/bits.api";
 import ChatPanel from "./components/ChatPanel";
+import BitsAgentPanel from "./components/BitsAgentPanel";
 
 const BitsQueryScreen: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -28,6 +29,9 @@ const BitsQueryScreen: React.FC = () => {
   const [metadata, setMetadata] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // State to toggle between Chat Panel and Agent Panel
+  const [useAgent, setUseAgent] = useState<boolean>(true);
 
   // Handle form submission
   const handleQuerySubmit = async (params: BitsQueryParams) => {
@@ -56,7 +60,29 @@ const BitsQueryScreen: React.FC = () => {
 
   return (
     <NewLayout
-      appDrawerContents={<ChatPanel />}
+      appDrawerContents={
+        <Box>
+          <Box sx={{
+            p: 2,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1px solid #e0e0e0'
+          }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={useAgent}
+                  onChange={(e) => setUseAgent(e.target.checked)}
+                  color="primary"
+                />
+              }
+              label={useAgent ? t("bits.agent.use.agent") : t("bits.chat.use.chat")}
+            />
+          </Box>
+          {useAgent ? <BitsAgentPanel /> : <ChatPanel />}
+        </Box>
+      }
       appBar={<TopMenuHomePage 
         childrenLeftOfLogo={null} 
         enabledTools={appStore.tools.enabledTools} 
