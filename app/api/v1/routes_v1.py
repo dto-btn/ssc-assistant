@@ -2,15 +2,18 @@ import json
 import logging
 import re
 import threading
-from typing import List
+from typing import List, Dict, Any, Optional
 import uuid
 import os
+import time
+import asyncio
 
 import openai
 import requests
 from apiflask import APIBlueprint, abort
-from flask import Response, jsonify, stream_with_context, request
+from flask import Response, jsonify, stream_with_context, request, Blueprint
 from openai.types.chat import ChatCompletion
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
 from src.service.suggestion_service import SuggestionService
 from utils.manage_message import SUGGEST_SYSTEM_PROMPT_FR, SUGGEST_SYSTEM_PROMPT_EN
@@ -596,3 +599,172 @@ def bits_br_information():
     except Exception as e:
         logger.error(f"Error getting BR information: {str(e)}")
         return jsonify({"error": f"Error processing request: {str(e)}"}), 500
+
+
+# OpenAI API-compatible proxy routes
+# These routes mimic the OpenAI API structure for easy integration with OpenAI clients
+
+# Define OpenAI API blueprint
+
+
+@api_v1.post("/ai/chat/completions")
+# @auth.login_required(role="chat")
+def openai_chat_completions():
+    """
+    OpenAI-compatible chat completions endpoint.
+
+    This endpoint accepts requests in the OpenAI API format and proxies them to Azure OpenAI.
+    It allows the frontend to use the OpenAI SDK with a custom base URL pointing to this route.
+    """
+    try:
+        data = request.json
+
+        # Basic validation
+        if not data or "messages" not in data:
+            return jsonify({"error": "Missing messages in request body"}), 400
+
+        # Extract request parameters
+        model = data.get("model", os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"))
+        messages = data.get("messages", [])
+        max_tokens = data.get("max_tokens", 500)
+        stream = data.get("stream", False)
+
+        # Log request details (excluding message content for privacy)
+        logger.info(f"OpenAI proxy request: model={model}, stream={stream}")
+
+        # Get Azure OpenAI API details
+        api_url = f"{os.getenv('AZURE_OPENAI_ENDPOINT')}/openai/deployments/{model}/chat/completions"
+        api_version = os.getenv("AZURE_OPENAI_VERSION", "2024-05-01-preview")
+        api_key = os.getenv("AZURE_OPENAI_KEY")
+
+        # Use Azure AD authentication if available
+        headers = {
+            "Content-Type": "application/json",
+        }
+
+        # Use API key if available, otherwise use Azure AD token
+        if api_key:
+            headers["api-key"] = api_key
+        else:
+            # Get Azure AD token using Azure Identity
+            token_provider = get_bearer_token_provider(
+                DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
+            )
+            token = token_provider()
+            headers["Authorization"] = f"Bearer {token}"
+
+        # Prepare the request payload
+        payload = {"messages": messages, "max_tokens": max_tokens, "stream": stream}
+
+        # Forward optional parameters if present in the original request
+        for param in [
+            "temperature",
+            "top_p",
+            "frequency_penalty",
+            "presence_penalty",
+            "stop",
+        ]:
+            if param in data:
+                payload[param] = data[param]
+
+        # Add API version to the URL
+        api_url = f"{api_url}?api-version={api_version}"
+
+        # Handle streaming responses
+        if stream:
+
+            def generate():
+                # Make request to Azure OpenAI with streaming enabled
+                response = requests.post(
+                    api_url, headers=headers, json=payload, stream=True, timeout=60
+                )
+
+                # Check for errors
+                if response.status_code != 200:
+                    error_content = response.content.decode("utf-8")
+                    logger.error(f"Azure OpenAI API error: {error_content}")
+                    # Format error as SSE
+                    yield f"data: {json.dumps({'error': {'message': f'Azure OpenAI API error: {error_content}'}})}\n\n"
+                    yield "data: [DONE]\n\n"
+                    return
+
+                # Stream response chunks
+                for chunk in response.iter_lines(decode_unicode=True):
+                    if chunk:
+                        # Skip the "data: " prefix if it exists in Azure's response
+                        if chunk.startswith("data: "):
+                            chunk = chunk[6:]
+                        # Only yield non-empty lines
+                        if chunk.strip():
+                            # Format as SSE
+                            yield f"data: {chunk}\n\n"
+
+                yield "data: [DONE]\n\n"
+
+            # Return streaming response
+            return Response(
+                stream_with_context(generate()),
+                content_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                    "X-Accel-Buffering": "no",
+                },
+            )
+
+        # Non-streaming response
+        max_retries = 3
+        retry_delay = 1  # seconds
+
+        for attempt in range(max_retries):
+            try:
+                response = requests.post(
+                    api_url, headers=headers, json=payload, timeout=30
+                )
+
+                response.raise_for_status()
+                return jsonify(response.json())
+            except requests.exceptions.RequestException as e:
+                if attempt == max_retries - 1:  # Last attempt
+                    logger.exception(
+                        f"Error calling Azure OpenAI API after {max_retries} attempts"
+                    )
+                    return jsonify(
+                        {
+                            "error": {
+                                "message": f"Error processing your request: {str(e)}"
+                            }
+                        }
+                    ), 500
+
+                # Wait before retrying with exponential backoff
+                time.sleep(retry_delay * (2**attempt))
+
+    except Exception as e:
+        logger.exception("Unexpected error in OpenAI proxy")
+        return jsonify({"error": {"message": f"Unexpected error: {str(e)}"}}), 500
+
+
+@api_v1.post("/models")
+# @auth.login_required(role="chat")
+def list_models():
+    """
+    OpenAI-compatible models endpoint.
+
+    This is a simplified version that returns the configured model.
+    """
+    model_id = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4o")
+
+    return jsonify(
+        {
+            "object": "list",
+            "data": [
+                {
+                    "id": model_id,
+                    "object": "model",
+                    "created": int(time.time()),
+                    "owned_by": "azure",
+                }
+            ],
+        }
+    )
