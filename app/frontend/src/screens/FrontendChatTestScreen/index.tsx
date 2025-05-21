@@ -8,8 +8,17 @@ export const FrontendChatTestScreen = () => {
     const [streamIncomingText, setStreamIncomingText] = useState<string | null>(null);
     const [finalResponse, setFinalResponse] = useState<OpenAI.Chat.Completions.ChatCompletion | null>(null);
 
+    const handleChatCompletionsCreate = async (...params: Parameters<OpenAI['chat']['completions']['create']>) => {
+        if (status === 'idle' || status === 'error') {
+            setStreamIncomingText(null); // Reset the streamIncomingText when starting a new request
+            setFinalResponse(null); // Reset the final response when starting a new request
+            chatCompletionsCreate(...params);
+        }
+    }
+
     const { chatCompletionsCreate } = useOpenAiClient({
         onNext: (chunk) => {
+            console.log(chunk);
             if (chunk.choices[0]?.delta.content) {
                 setStreamIncomingText((prev) => (prev || '') + chunk.choices[0].delta.content);
             }
@@ -18,22 +27,22 @@ export const FrontendChatTestScreen = () => {
             setStatus(status);
             if (status === 'idle') {
                 // Reset the streamIncomingText when the status is idle
-                setStreamIncomingText(null);
+                // setStreamIncomingText(null);
             }
         },
         onFinish: (response) => {
             setFinalResponse(response);
-            setStreamIncomingText(null); // Clear the stream text when finished
+            // setStreamIncomingText(null); // Clear the stream text when finished
         },
     });
     return (
         <div>
             <h1>Frontend Chat Test Screen</h1>
             <p>Status: {status}</p>
-            <button onClick={() => chatCompletionsCreate({
+            <button onClick={() => handleChatCompletionsCreate({
                 model: 'gpt-4o',
                 messages: [
-                    { role: 'user', content: 'Hello!' },
+                    { role: 'user', content: 'Write a long poem!' },
                 ],
                 stream: true,
             })}>Send Message</button>

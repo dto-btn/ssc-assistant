@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react"
+import { useRef } from "react"
 import { OpenAiClientNetworkStatus } from "./useChat.types"
 import { provideProxyOpenAiClient } from "../providers/provideProxyOpenAiClient";
 import OpenAI from "openai";
@@ -28,7 +28,7 @@ export const useOpenAiClient = (opts: Options) => {
 
     const chatCompletionsCreate = async (...params: Parameters<OpenAI['chat']['completions']['create']>) => {
         const client = provideProxyOpenAiClient();
-        const [firstParam, ...rest] = params;
+        const [firstParam] = params;
 
         if (firstParam.stream) {
             setStatus('streaming');
@@ -42,6 +42,10 @@ export const useOpenAiClient = (opts: Options) => {
                             streamRawChunks.current = [];
                         }
                         streamRawChunks.current.push(chunk);
+                        onNext(chunk);
+                        // setTimeout(() => {
+                        //     onNext(chunk);
+                        // }, 1)
                     }
                 }
 
