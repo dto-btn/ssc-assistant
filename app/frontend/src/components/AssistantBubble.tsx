@@ -86,7 +86,24 @@ export const AssistantBubble = ({
   const [brData, setBrData] = useState<BusinessRequest[] | undefined>(
     undefined
   );
-  const [brQuery, setBrQuery] = useState<string | undefined>(undefined);
+  // Define an interface for the brQuery structure
+  interface BrQueryFilter {
+    field?: string;
+    op?: string;
+    name?: string;
+    operator?: string;
+    value: string | number;
+  }
+
+  interface BrQueryType {
+    query_filters?: BrQueryFilter[];
+    status?: string;
+    statuses?: string[];
+    limit?: number;
+    [key: string]: any; // Allow for other properties we might not know about
+  }
+
+  const [brQuery, setBrQuery] = useState<BrQueryType | undefined>(undefined);
 
   const components = {
     a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
@@ -199,7 +216,7 @@ export const AssistantBubble = ({
 
         // BR Query
         if (payload?.brquery) {
-          setBrQuery(payload.brquery);
+          setBrQuery(payload.brquery); // This is already an object from the payload
         }
 
         // GEDS
@@ -254,6 +271,7 @@ export const AssistantBubble = ({
       >
         <Box>
           <ChatBubbleInner elevation={4} className={"assistant-bubble-paper"}>
+
             <MainContentWrapper>
               <IconWrapper>
                 <img
@@ -290,8 +308,8 @@ export const AssistantBubble = ({
                   {isLoading
                     ? `${text.replace(/\[doc(\d+)\]/g, "")}_`
                     : processedContent.processedText !== ""
-                    ? processedContent.processedText
-                    : text}
+                      ? processedContent.processedText
+                      : text}
                 </MarkdownHooks>
               </TextComponentsBox>
             </MainContentWrapper>
@@ -499,17 +517,20 @@ export const AssistantBubble = ({
                 toggleShowProfileHandler={handleToggleShowProfiles}
               />
             )}
-            {toolsInfo && toolsInfo.length > 0 && (
+            {/* Combined tools and query parameters section */}
+            {(toolsInfo && toolsInfo.length > 0) || (brQuery && !isLoading) ? (
               <ToolsUsedBox>
                 <Paper
-                  sx={{ backgroundColor: "white", padding: 1 }}
+                  sx={{ backgroundColor: "white", padding: 1, width: '100%' }}
                   elevation={3}
                 >
-                  <Typography variant="caption" gutterBottom>
-                    {t("toolsUsed.short")}: {/*({toolsInfo.length}):*/}
+                  <Typography variant="caption" gutterBottom sx={{ display: 'block', mb: 1 }}>
+                    {t("toolsUsed.short")}:
                   </Typography>
-                  <Stack direction="row" spacing={1}>
-                    {toolsInfo.map((tool, index) => (
+
+                  {/* Tools section */}
+                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: toolsInfo && brQuery ? 1 : 0 }}>
+                    {toolsInfo && toolsInfo.map((tool, index) => (
                       <Tooltip title={t(tool.function_name)} key={index} arrow>
                         <Chip
                           icon={
@@ -521,13 +542,61 @@ export const AssistantBubble = ({
                             />
                           }
                           label={`${tool.function_name}()`}
+                          size="small"
                         />
                       </Tooltip>
                     ))}
                   </Stack>
+
+                  {/* Query parameters section */}
+                  {!isLoading && brQuery && (
+                    <>
+                      {/* Only show divider if both tools and query params exist */}
+                      {toolsInfo && toolsInfo.length > 0 && <Divider sx={{ my: 1 }} />}
+
+                      <Typography variant="caption" gutterBottom sx={{ display: 'block', mb: 1 }}>
+                        Query Parameters:
+                      </Typography>
+
+                      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                        {/* Query Filters */}
+                        {brQuery.query_filters && brQuery.query_filters.length > 0 &&
+                          brQuery.query_filters.map((filter, index) => (
+                            <Chip
+                              key={index}
+                              label={`${filter.field || filter.name} ${filter.op || filter.operator} ${filter.value}`}
+                              size="small"
+                              variant="outlined"
+                              color="primary"
+                            />
+                          ))
+                        }
+
+                        {/* Status - only if it has value */}
+                        {brQuery.status && (
+                          <Chip
+                            label={`Status: ${brQuery.status}`}
+                            size="small"
+                            variant="outlined"
+                            color="secondary"
+                          />
+                        )}
+
+                        {/* Statuses array - only if it has values */}
+                        {brQuery.statuses && Array.isArray(brQuery.statuses) && brQuery.statuses.length > 0 && (
+                          <Chip
+                            label={`Statuses: ${brQuery.statuses.join(', ')}`}
+                            size="small"
+                            variant="outlined"
+                            color="secondary"
+                          />
+                        )}
+                      </Stack>
+                    </>
+                  )}
                 </Paper>
               </ToolsUsedBox>
-            )}
+            ) : null}
           </ChatBubbleInner>
         </Box>
         <Box>
@@ -612,3 +681,4 @@ const ConfirmBookingBox = styled(Box)`
   align-items: center;
   margin: 30px;
 `;
+
