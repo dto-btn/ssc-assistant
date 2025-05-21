@@ -15,7 +15,7 @@ import {
 import SendIcon from '@mui/icons-material/Send';
 import StopIcon from '@mui/icons-material/Stop';
 import { useTranslation } from "react-i18next";
-import { useChat, Message } from "../hooks/useChat";
+import { useChat, Message } from "../hooks-old/useChat";
 
 const ChatPanel: React.FC = () => {
     const { t } = useTranslation();

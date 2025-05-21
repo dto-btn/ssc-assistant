@@ -1,0 +1,1 @@
+export type OpenAiClientNetworkStatus = 'idle' | 'streaming' | 'non-streaming' | 'error';

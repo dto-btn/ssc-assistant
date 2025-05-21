@@ -5,6 +5,7 @@ import { AdminRoute } from "./admin";
 import { SuggestCallbackRoute } from "./SuggestCallbackRoute";
 import NewLayoutRoute from "./NewLayoutRoute";
 import { BitsQueryRoute } from "./bits-query";
+import { FrontendChatTestScreen } from '../screens/FrontendChatTestScreen';
 
 const router = createBrowserRouter([
     {
@@ -26,6 +27,10 @@ const router = createBrowserRouter([
     {
         path: "/bits-query",
         element: <BitsQueryRoute />
+    },
+    {
+        path: "/frontend-chat-test-screen",
+        element: <FrontendChatTestScreen />
     }
 ]);
 

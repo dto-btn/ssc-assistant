@@ -16,7 +16,7 @@ import {
 import SendIcon from '@mui/icons-material/Send';
 import StopIcon from '@mui/icons-material/Stop';
 import { useTranslation } from "react-i18next";
-import { useBitsAgent } from "../hooks/useBitsAgent";
+import { useBitsAgent } from "../hooks-old/useBitsAgent";
 
 const BitsAgentPanel: React.FC = () => {
     const { t } = useTranslation();
