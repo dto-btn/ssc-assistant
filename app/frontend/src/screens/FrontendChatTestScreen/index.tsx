@@ -1,12 +1,31 @@
+import { useState } from 'react';
 import { useOpenAiClient } from './hooks/useStreamingOpenAiClient'
+import OpenAI from 'openai';
+import { OpenAiClientNetworkStatus } from './hooks/useChat.types';
 
 export const FrontendChatTestScreen = () => {
-    const {
-        status,
-        chatCompletionsCreate,
-        finalResponse,
-        streamIncomingText,
-    } = useOpenAiClient();
+    const [status, setStatus] = useState<OpenAiClientNetworkStatus>('idle');
+    const [streamIncomingText, setStreamIncomingText] = useState<string | null>(null);
+    const [finalResponse, setFinalResponse] = useState<OpenAI.Chat.Completions.ChatCompletion | null>(null);
+
+    const { chatCompletionsCreate } = useOpenAiClient({
+        onNext: (chunk) => {
+            if (chunk.choices[0]?.delta.content) {
+                setStreamIncomingText((prev) => (prev || '') + chunk.choices[0].delta.content);
+            }
+        },
+        onStatusChange: (status) => {
+            setStatus(status);
+            if (status === 'idle') {
+                // Reset the streamIncomingText when the status is idle
+                setStreamIncomingText(null);
+            }
+        },
+        onFinish: (response) => {
+            setFinalResponse(response);
+            setStreamIncomingText(null); // Clear the stream text when finished
+        },
+    });
     return (
         <div>
             <h1>Frontend Chat Test Screen</h1>

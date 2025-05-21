@@ -5,14 +5,26 @@ import OpenAI from "openai";
 import type { Stream } from "openai/streaming.mjs";
 import { mergeOpenAIChunks } from "../utils/mergeOpenAiChunks";
 
+type Options = {
+    onNext: (chunk: OpenAI.Chat.Completions.ChatCompletionChunk) => void;
+    onStatusChange: (status: OpenAiClientNetworkStatus) => void;
+    onFinish: (response: OpenAI.Chat.Completions.ChatCompletion) => void;
+}
+
 /**
  * A custom hook that manages streaming state for the current OpenAI client.
  */
-export const useOpenAiClient = () => {
-    const [status, setStatus] = useState<OpenAiClientNetworkStatus>('idle');
-    const [streamIncomingText, setStreamIncomingText] = useState<string | null>(null);
-    const [finalResponse, setFinalResponse] = useState<OpenAI.Chat.Completions.ChatCompletion | null>(null);
+export const useOpenAiClient = (opts: Options) => {
+    const { onNext, onStatusChange, onFinish } = opts;
+
+    
+    const status = useRef<OpenAiClientNetworkStatus>('idle');
     const streamRawChunks = useRef<OpenAI.Chat.Completions.ChatCompletionChunk[] | null>(null);
+    
+    const setStatus = (newStatus: OpenAiClientNetworkStatus) => {
+        status.current = newStatus;
+        onStatusChange(newStatus);
+    }
 
     const chatCompletionsCreate = async (...params: Parameters<OpenAI['chat']['completions']['create']>) => {
         const client = provideProxyOpenAiClient();
@@ -30,7 +42,6 @@ export const useOpenAiClient = () => {
                             streamRawChunks.current = [];
                         }
                         streamRawChunks.current.push(chunk);
-                        setStreamIncomingText((prev) => (prev || '') + chunk.choices[0].delta.content);
                     }
                 }
 
@@ -40,8 +51,7 @@ export const useOpenAiClient = () => {
                     setStatus('error');
                     return;
                 }
-                setFinalResponse(mergeOpenAIChunks(streamRawChunks.current));
-                setStreamIncomingText(null);
+                onFinish(mergeOpenAIChunks(streamRawChunks.current));
                 setStatus('idle');
                 streamRawChunks.current = null; // Reset the streamRawChunks after processing
             } catch (e) {
@@ -50,21 +60,20 @@ export const useOpenAiClient = () => {
                 return;
             }
         } else {
-            let nonStreamingResponse: OpenAI.Chat.Completions.ChatCompletion;
-            try {
-                nonStreamingResponse = await client.chat.completions.create(...params) as OpenAI.Chat.Completions.ChatCompletion;
-            } catch (e) {
-                setStatus('error');
-                console.error('Error creating non-streaming response:', e);
-                return;
-            }
+            console.error('Non-streaming response is not supported yet.');
+            setStatus('error');
+            // let nonStreamingResponse: OpenAI.Chat.Completions.ChatCompletion;
+            // try {
+            //     nonStreamingResponse = await client.chat.completions.create(...params) as OpenAI.Chat.Completions.ChatCompletion;
+            // } catch (e) {
+            //     setStatus('error');
+            //     console.error('Error creating non-streaming response:', e);
+            //     return;
+            // }
         }
     }
 
     return {
-        status,
-        chatCompletionsCreate,
-        finalResponse,
-        streamIncomingText
-    }    
+        chatCompletionsCreate
+    }
 }
