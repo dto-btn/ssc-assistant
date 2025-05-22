@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 
 export const provideProxyOpenAiClient = () => {
-    const proxyBaseUrl = window.location.origin + '/api/1.0/ai';
+    const proxyBaseUrl = window.location.origin + '/api/2.0/ai';
 
     // Initialize the OpenAI client with the base URL and a dummy API key.
     const openai = new OpenAI({

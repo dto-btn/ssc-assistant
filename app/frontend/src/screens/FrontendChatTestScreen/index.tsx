@@ -21,6 +21,10 @@ export const FrontendChatTestScreen = () => {
             console.log(chunk);
             if (chunk.choices[0]?.delta.content) {
                 setStreamIncomingText((prev) => (prev || '') + chunk.choices[0].delta.content);
+
+                if (chunk.choices[0].delta.tool_calls) {
+                    // show chips for tool calls
+                };
             }
         },
         onStatusChange: (status) => {
@@ -42,7 +46,16 @@ export const FrontendChatTestScreen = () => {
             <button onClick={() => handleChatCompletionsCreate({
                 model: 'gpt-4o',
                 messages: [
+                    {
+                        role: 'system',
+                        content: 'You are a helpful assistant that writes poems.'
+                    },
                     { role: 'user', content: 'Write a long poem!' },
+                    // {
+                    //     role: 'function',
+                    //     name: 'get_current_time',
+
+                    // }
                 ],
                 stream: true,
             })}>Send Message</button>

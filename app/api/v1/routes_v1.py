@@ -53,6 +53,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 api_v1 = APIBlueprint("api_v1", __name__)
+api_v2 = APIBlueprint("api_v2", __name__)
 
 _BOUNDARY = "GPT-Interaction"
 
@@ -607,7 +608,7 @@ def bits_br_information():
 # Define OpenAI API blueprint
 
 
-@api_v1.post("/ai/chat/completions")
+@api_v2.post("/ai/chat/completions")
 # @auth.login_required(role="chat")
 def openai_chat_completions():
     """

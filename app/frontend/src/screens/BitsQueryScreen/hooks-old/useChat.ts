@@ -139,7 +139,7 @@ export function useChat(options: UseChatOptions = {}): UseChatResult {
     // Get environment-specific API URL if available or use the default
     const defaultOptions = {
         // baseURL: (window as any)?.ENV_CONFIG?.API_BASE_URL + '/ai',
-        baseUrl: import.meta.env.BASE_URL + '/api/1.0/ai',
+        baseUrl: import.meta.env.BASE_URL + '/api/2.0/ai',
         ...options
     };
 
