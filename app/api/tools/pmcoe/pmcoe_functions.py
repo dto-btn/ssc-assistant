@@ -13,7 +13,7 @@ logger.setLevel(logging.DEBUG)
         "type": "function",
         "function": {
             "name": "pmcoe",
-            "description": "The library contains bilingual gate templates (French and English), as well as Shared Services Canada (SSC) project management artifacts and standardized templates to support consistent project delivery and documentation.",
+            "description": "Project Management Center of Excellence (PMCOE) content. Provides information related to project management, gate templates, and standardized templates to support consistent project delivery and documentation.",
             "parameters": {
                 "type": "object",
                 "properties": {
