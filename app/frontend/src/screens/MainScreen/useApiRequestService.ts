@@ -137,7 +137,7 @@ export const useApiRequestService = () => {
         const request: MessageRequest = {
             messages: messages,
             max: MAX_MESSAGES_SENT,
-            top: 5,
+            top: 5, // actually unused in the API, fyi.. needs refactor
             tools: Object.keys(enabledTools).filter((key) => enabledTools[key]),
             uuid: chatStore.getCurrentChatHistory().uuid,
             quotedText: messagedQuoted,
