@@ -13,7 +13,7 @@ logger.setLevel(logging.DEBUG)
         "type": "function",
         "function": {
             "name": "pmcoe",
-            "description": "The library contains bilingual gate templates (French and English), as well as Shared Services Canada (SSC) project management artifacts and standardized templates to support consistent project delivery and documentation.",
+            "description": "Project Management Center of Excellence (PMCOE) content. Provides information related to project management, gate templates, and standardized templates to support consistent project delivery and documentation.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -28,4 +28,4 @@ logger.setLevel(logging.DEBUG)
 )
 def pmcoe(query: str):  # pylint: disable=unused-argument
     """returns the name of the telecom index name"""
-    return {"index_name": "pmcoe", "embedding_model": "text-embedding-3-large", "use_language_filter": True}
+    return {"index_name": "pmcoe", "embedding_model": "text-embedding-3-large", "use_language_filter": True, 'top_n_documents': 20}

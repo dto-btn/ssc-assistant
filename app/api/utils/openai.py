@@ -117,7 +117,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                                 extra_body=_create_azure_cognitive_search_data_source(
                                     index_config.index_name,
                                     embedding_model=index_config.embedding_model,
-                                    top=message_request.top,
+                                    top=index_config.top_n_documents,
                                     lang_filter=message_request.lang if index_config.use_language_filter else ""
                                 ),
                                 stream=stream
