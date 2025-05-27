@@ -31,6 +31,21 @@ class BRQueryFilter(BaseModel):
         """Check if the field is a date."""
         return str(self.name).endswith("_DATE")
 
+    def to_label_dict(self):
+        """Return a dict with en/fr labels instead of the raw name."""
+        field_info = BRFields.valid_search_fields_no_statuses.get(self.name, {})
+        return {
+            "name": self.name,
+            "en": field_info.get("en", self.name),
+            "fr": field_info.get("fr", self.name),
+            "value": self.value,
+            "operator": self.operator,
+        }
+
+    def model_dump(self, *args, **kwargs):
+        # Use the custom label dict for dumping
+        return self.to_label_dict()
+
 class BRQuery(BaseModel):
     """Represent the query that the AI does on behalf of the user"""
     query_filters: list[BRQueryFilter] = Field(..., description="List of filters to apply to the query.")
@@ -47,3 +62,9 @@ class BRQuery(BaseModel):
         if invalid:
             raise ValueError(f"Invalid STATUS_ID(s): {invalid}. Must be one of: {sorted(valid_statuses)}")
         return v
+
+    def model_dump(self, *args, **kwargs):
+        data = super().model_dump(*args, **kwargs)
+        # Replace query_filters with label dicts
+        data["query_filters"] = [f.to_label_dict() for f in self.query_filters]
+        return data
