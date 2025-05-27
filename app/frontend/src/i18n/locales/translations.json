@@ -537,15 +537,15 @@
     },
     "priority": {
         "en": "Priority",
-        "fr": "Priorité"
+        "fr": "Priorité de la demande"
     },
     "client.name": {
         "en": "Client Name",
-        "fr": "Nom du client"
+        "fr": "Client"
     },
     "client.subgroup": {
         "en": "Client Subgroup",
-        "fr": "Sous-groupe du client"
+        "fr": "Sous-client"
     },
     "create.date": {
         "en": "Create Date",
@@ -621,7 +621,7 @@
     },
     "REQST_IMPL_DATE": {
         "en": "Client Requested Implementation Date",
-        "fr": "Date de mise en œuvre demandée par le client"
+        "fr": "Date de mise en oeuvre demandée"
     },
     "RVSD_TARGET_IMPL_DATE": {
         "en": "Revised Implementation Date",
@@ -631,17 +631,17 @@
         "en": "Actual Implementation Date",
         "fr": "Date de mise en œuvre réelle"
     },
-    "business.request.title": {
+    "BR_SHORT_TITLE": {
         "en": "Title",
-        "fr": "Nom"
+        "fr": "Titre"
     },
     "complexity": {
         "en": "Complexity",
-        "fr": "Complexité"
+        "fr": "Niveau de complexité"
     },
     "scope": {
         "en": "Scope (OAR/PR)",
-        "fr": "Portée (OAR/PR)"
+        "fr": "Champ d'application (OAR/PR)"
     },
     "CLIENT_REQST_SOL_DATE": {
         "en": "Client Requested Specification Date",
@@ -649,7 +649,7 @@
     },
     "AGRMT_END_DATE": {
         "en": "Agreement End Date",
-        "fr": "Date de Fin de l'Accord"
+        "fr": "Date de fin de l'entente"
     },
     "PRPO_TARGET_DATE": {
         "en": "Target Specification Date",
@@ -693,7 +693,7 @@
     },
     "BR_OWNER": {
         "en": "BR OWNER",
-        "fr": "Propriétaire"
+        "fr": "Responsable de la DO"
     },
     "WIO_OPI": {
         "en": "Finance OPI",
@@ -745,7 +745,7 @@
     },
     "TARGET_IMPL_DATE": {
         "en": "Target Implementation Date",
-        "fr": "Date de mise en œuvre cible"
+        "fr": "Date cible de la mise en oeuvre"
     },
     "br.tab.1": {
         "en": "General",

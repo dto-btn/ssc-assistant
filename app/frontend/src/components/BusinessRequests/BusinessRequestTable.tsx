@@ -34,7 +34,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
     },
     {
       field: "BR_SHORT_TITLE",
-      headerName: t("business.request.title"),
+      headerName: t("BR_SHORT_TITLE"),
       width: 250,
     },
     {

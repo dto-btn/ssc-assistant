@@ -4,7 +4,7 @@ class BRFields:
     """
     # pylint: disable=line-too-long
     br_owner = {
-        'BR_OWNER': { 'db_field': 'opis.BR_OWNER', 'description': 'The OPI responsible for the BR. Typically a Service Delivery Manager. OPI means Office of Primary Interest.', 'is_user_field': True, 'en': 'BR OWNER', 'fr': 'Propriétaire'},
+        'BR_OWNER': { 'db_field': 'opis.BR_OWNER', 'description': 'The OPI responsible for the BR. Typically a Service Delivery Manager. OPI means Office of Primary Interest.', 'is_user_field': True, 'en': 'BR OWNER', 'fr': 'Responsable de la DO'},
     }
 
     status = {
@@ -13,35 +13,35 @@ class BRFields:
     }
 
     date_fields = {
-        'REQST_IMPL_DATE': { 'db_field': 'br.REQST_IMPL_DATE', 'description': 'The date requested by partner/client to have BR implementation completed. CRID acronym.', 'en': 'Client Requested Implementation Date', 'fr': 'Date de mise en œuvre demandée par le client'},
+        'REQST_IMPL_DATE': { 'db_field': 'br.REQST_IMPL_DATE', 'description': 'The date requested by partner/client to have BR implementation completed. CRID acronym.', 'en': 'Client Requested Implementation Date', 'fr': 'Date de mise en oeuvre demandée'},
         'SUBMIT_DATE': { 'db_field': 'br.SUBMIT_DATE', 'description': 'The date the BR was created in BITS.', 'en': 'Date Submited', 'fr': 'Date de soumission'},
         'RVSD_TARGET_IMPL_DATE': { 'db_field': 'br.RVSD_TARGET_IMPL_DATE', 'description': 'The revised implementation date of the BR.', 'en': 'Revised Implementation Date', 'fr': 'Date de mise en œuvre révisée'},
         'ACTUAL_IMPL_DATE': { 'db_field': 'br.ACTUAL_IMPL_DATE', 'description': 'Date that specifies when the service was delivered.', 'en': 'Actual Implementation Date', 'fr': 'Date de mise en œuvre réelle'},
-        'AGRMT_END_DATE': { 'db_field': 'br.AGRMT_END_DATE', 'description': 'The agreement end date associated with the BR.', 'en': 'Agreement End Date', 'fr': 'Date de Fin de l\'Accord'},
-        'PRPO_TARGET_DATE': { 'db_field': 'br.PRPO_TARGET_DATE', 'description': 'Proposed Target Date for the BR.', 'en': 'Target Specification Date', 'fr': 'Date de Spécification Cible'},
-        'IMPL_SGNOFF_DATE': { 'db_field': 'br.IMPL_SGNOFF_DATE', 'description': 'The date the partner/client confirms in writing the BR is fully implemented.', 'en': 'Client Sign-off Implementation Date', 'fr': 'Date de Mise en Œuvre de l\'Approbation du Client'},
-        'CLIENT_REQST_SOL_DATE': { 'db_field': 'br.CLIENT_REQST_SOL_DATE', 'description': 'Client Requested Solution Date.', 'en': 'Client Requested Specification Date', 'fr': 'Date de Spécification Demandée par le Client'},
-        'TARGET_IMPL_DATE': { 'db_field': 'br.TARGET_IMPL_DATE', 'description': 'Target Implementation Date.', 'en': 'Target Implementation Date', 'fr': 'Date de mise en œuvre cible'},
+        'AGRMT_END_DATE': { 'db_field': 'br.AGRMT_END_DATE', 'description': 'The agreement end date associated with the BR.', 'en': 'Agreement End Date', 'fr': 'Date de fin de l\'entente'},
+        #'PRPO_TARGET_DATE': { 'db_field': 'br.PRPO_TARGET_DATE', 'description': 'Proposed Target Date for the BR.', 'en': 'Target Specification Date', 'fr': 'Date de Spécification Cible'},
+        #'IMPL_SGNOFF_DATE': { 'db_field': 'br.IMPL_SGNOFF_DATE', 'description': 'The date the partner/client confirms in writing the BR is fully implemented.', 'en': 'Client Sign-off Implementation Date', 'fr': 'Date de Mise en Œuvre de l\'Approbation du Client'},
+        #'CLIENT_REQST_SOL_DATE': { 'db_field': 'br.CLIENT_REQST_SOL_DATE', 'description': 'Client Requested Solution Date.', 'en': 'Client Requested Specification Date', 'fr': 'Date de Spécification Demandée par le Client'},
+        'TARGET_IMPL_DATE': { 'db_field': 'br.TARGET_IMPL_DATE', 'description': 'Target Implementation Date.', 'en': 'Target Implementation Date', 'fr': 'Date cible de la mise en oeuvre'},
     }
 
     base_fields = {
         'LEAD_PRODUCT_EN': { 'db_field': 'products.PROD_DESC_EN', 'description': 'Lead Product', 'en': 'Lead Product', 'fr': 'Produit principal' },
         'LEAD_PRODUCT_FR': { 'db_field': 'products.PROD_DESC_FR', 'description': 'Produit principal', 'en': 'Lead Product', 'fr': 'Produit principal' },
-        'BR_SHORT_TITLE': { 'db_field': 'br.BR_SHORT_TITLE', 'description': 'Title which relates to the Business Request (BR).', 'en': 'Title', 'fr': 'Nom' },
-        'RPT_GC_ORG_NAME_EN': { 'db_field': 'br.RPT_GC_ORG_NAME_EN', 'description': 'Primary partner/client requesting the Business Request/service (BR)', 'en': 'Client Name', 'fr': 'Nom du client' },
-        'RPT_GC_ORG_NAME_FR': { 'db_field': 'br.RPT_GC_ORG_NAME_FR', 'description': 'Partenaire/client principal', 'en': 'Client Name', 'fr': 'Nom du client' },
+        'BR_SHORT_TITLE': { 'db_field': 'br.BR_SHORT_TITLE', 'description': 'Title which relates to the Business Request (BR).', 'en': 'Title', 'fr': 'Titre' },
+        'RPT_GC_ORG_NAME_EN': { 'db_field': 'br.RPT_GC_ORG_NAME_EN', 'description': 'Primary partner/client requesting the Business Request/service (BR)', 'en': 'Client Name', 'fr': 'Client' },
+        'RPT_GC_ORG_NAME_FR': { 'db_field': 'br.RPT_GC_ORG_NAME_FR', 'description': 'Partenaire/client principal', 'en': 'Client Name', 'fr': 'Client' },
         'ORG_TYPE_EN': { 'db_field': 'br.ORG_TYPE_EN', 'description': 'Organization type', 'en': 'Organization Type', 'fr': 'Type d\'organisation' },
         'ORG_TYPE_FR': { 'db_field': 'br.ORG_TYPE_FR', 'description': 'Type d\'organisation', 'en': 'Organization Type', 'fr': 'Type d\'organisation' },
         'BR_TYPE_EN': { 'db_field': 'br.BR_TYPE_EN', 'description': 'BR type', 'en': 'BR Type', 'fr': 'Type de DO' },
         'BR_TYPE_FR': { 'db_field': 'br.BR_TYPE_FR', 'description': 'Type de BR', 'en': 'BR Type', 'fr': 'Type de DO' },
-        'PRIORITY_EN': { 'db_field': 'br.PRIORITY_EN', 'description': 'Priority', 'en': 'Priority', 'fr': 'Priorité' },
-        'PRIORITY_FR': { 'db_field': 'br.PRIORITY_FR', 'description': 'Priorité', 'en': 'Priority', 'fr': 'Priorité' },
-        'CPLX_EN': { 'db_field': 'br.CPLX_EN', 'description': 'Complexity', 'en': 'Complexity', 'fr': 'Complexité' },
-        'CPLX_FR': { 'db_field': 'br.CPLX_FR', 'description': 'Complexité', 'en': 'Complexity', 'fr': 'Complexité' },
-        'SCOPE_EN': { 'db_field': 'br.SCOPE_EN', 'description': 'Scope', 'en': 'Scope (OAR/PR)', 'fr': 'Portée (OAR/PR)' },
-        'SCOPE_FR': { 'db_field': 'br.SCOPE_FR', 'description': 'Portée', 'en': 'Scope (OAR/PR)', 'fr': 'Portée (OAR/PR)' },
+        'PRIORITY_EN': { 'db_field': 'br.PRIORITY_EN', 'description': 'Priority', 'en': 'Priority', 'fr': 'Priorité de la demande' },
+        'PRIORITY_FR': { 'db_field': 'br.PRIORITY_FR', 'description': 'Priorité', 'en': 'Priority', 'fr': 'Priorité de la demande' },
+        'CPLX_EN': { 'db_field': 'br.CPLX_EN', 'description': 'Complexity', 'en': 'Complexity', 'fr': 'Niveau de complexité' },
+        'CPLX_FR': { 'db_field': 'br.CPLX_FR', 'description': 'Complexité', 'en': 'Complexity', 'fr': 'Niveau de complexité' },
+        'SCOPE_EN': { 'db_field': 'br.SCOPE_EN', 'description': 'Scope', 'en': 'Scope (OAR/PR)', 'fr': 'Champ d\'application (OAR/PR)' },
+        'SCOPE_FR': { 'db_field': 'br.SCOPE_FR', 'description': 'Portée', 'en': 'Scope (OAR/PR)', 'fr': 'Champ d\'application (OAR/PR)' },
         'CLIENT_SUBGRP_EN': { 'db_field': 'br.CLIENT_SUBGRP_EN', 'description': 'Client subgroup', 'en': 'Client Subgroup', 'fr': 'Sous-groupe du client' },
-        'CLIENT_SUBGRP_FR': { 'db_field': 'br.CLIENT_SUBGRP_FR', 'description': 'Sous-groupe client', 'en': 'Client Subgroup', 'fr': 'Sous-groupe du client' },
+        'CLIENT_SUBGRP_FR': { 'db_field': 'br.CLIENT_SUBGRP_FR', 'description': 'Sous-groupe client', 'en': 'Client Subgroup', 'fr': 'Sous-client' },
         'GROUP_EN': { 'db_field': 'br.GROUP_EN', 'description': 'Group', 'en': 'Group', 'fr': 'Groupe' },
         'GROUP_FR': { 'db_field': 'br.GROUP_FR', 'description': 'Groupe', 'en': 'Group', 'fr': 'Groupe' },
         'ASSOC_BRS': { 'db_field': 'br.ASSOC_BRS', 'description': 'Associated BRs to the BR.', 'en': 'Associated Business Request(s)', 'fr': 'Demande(s) opérationnelles associée(s)' },
