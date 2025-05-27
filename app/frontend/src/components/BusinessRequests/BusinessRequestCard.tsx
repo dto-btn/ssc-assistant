@@ -181,8 +181,8 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                   </TableCell>
                   <TableCell>
                     {data.ASSOC_BRS &&
-                    typeof data.ASSOC_BRS === "string" &&
-                    data.ASSOC_BRS.includes(",") ? (
+                      typeof data.ASSOC_BRS === "string" &&
+                      data.ASSOC_BRS.includes(",") ? (
                       data.ASSOC_BRS.split(",").map((br, index) => (
                         <React.Fragment key={index}>
                           <Link
@@ -247,34 +247,10 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                 </TableRow>
                 <TableRow>
                   <TableCell>
-                    <strong>{t("CLIENT_REQST_SOL_DATE")}</strong>
-                  </TableCell>
-                  <TableCell>
-                    <DateDisplay dateString={data.CLIENT_REQST_SOL_DATE} />
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>
                     <strong>{t("AGRMT_END_DATE")}</strong>
                   </TableCell>
                   <TableCell>
                     <DateDisplay dateString={data.AGRMT_END_DATE} />
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>
-                    <strong>{t("PRPO_TARGET_DATE")}</strong>
-                  </TableCell>
-                  <TableCell>
-                    <DateDisplay dateString={data.PRPO_TARGET_DATE} />
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>
-                    <strong>{t("IMPL_SGNOFF_DATE")}</strong>
-                  </TableCell>
-                  <TableCell>
-                    <DateDisplay dateString={data.IMPL_SGNOFF_DATE} />
                   </TableCell>
                 </TableRow>
                 <TableRow>

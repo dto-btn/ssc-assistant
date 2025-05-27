@@ -181,7 +181,7 @@ def get_organization_names():
     "type": "function",
     "function": {
         "name": "valid_search_fields",
-        "description": "Use this function to list all the valid search fields. This can be used to get the field names that are available to search for BRs.",
+        "description": "Use this function to list all the valid search fields. This can be used to get the field names that are available to search for BRs. French and english label are included. The user might use the labels to see what fields the users are refering to when they use language instead of directly typing the field names.",
         "parameters": {
             "type": "object",
             "properties": {},
@@ -197,11 +197,13 @@ def valid_search_fields():
     fields_with_descriptions = {
         key: {
             'description': value.get('description', ''),
-            'is_user_field': value.get('is_user_field', False)
+            'is_user_field': value.get('is_user_field', False),
+            'fr_label': value.get('fr', ''),
+            'en_label': value.get('en', '')
         }
         for key, value in BRFields.valid_search_fields_no_statuses.items()
     }
-    
+
     return {
         "field_names": json.dumps(fields_with_descriptions)
     }
