@@ -98,26 +98,8 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
       valueGetter: (value) => formatDate(value),
     },
     {
-      field: "CLIENT_REQST_SOL_DATE",
-      headerName: t("CLIENT_REQST_SOL_DATE"),
-      width: 150,
-      valueGetter: (value) => formatDate(value),
-    },
-    {
       field: "AGRMT_END_DATE",
       headerName: t("AGRMT_END_DATE"),
-      width: 150,
-      valueGetter: (value) => formatDate(value),
-    },
-    {
-      field: "PRPO_TARGET_DATE",
-      headerName: t("PRPO_TARGET_DATE"),
-      width: 150,
-      valueGetter: (value) => formatDate(value),
-    },
-    {
-      field: "IMPL_SGNOFF_DATE",
-      headerName: t("IMPL_SGNOFF_DATE"),
       width: 150,
       valueGetter: (value) => formatDate(value),
     },
