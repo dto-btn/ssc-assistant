@@ -128,11 +128,8 @@ interface BusinessRequest {
   AGRMT_END_DATE: string;
   SCOPE_EN: string;
   SCOPE_FR: string;
-  CLIENT_REQST_SOL_DATE: string;
   CLIENT_SUBGRP_EN: string;
   CLIENT_SUBGRP_FR: string;
-  PRPO_TARGET_DATE: string;
-  IMPL_SGNOFF_DATE: string;
   GROUP_EN: string;
   GROUP_FR: string;
   BR_ACTIVE_EN: string;

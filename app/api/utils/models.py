@@ -136,3 +136,5 @@ class IndexConfig(BaseModel):
                                 description="The embedding model to use for vector search")
     use_language_filter: bool = Field(default=False,
                                      description="Whether to apply language filtering to search results")
+    top_n_documents: int = Field(default=5,
+                                description="The number of top documents to return from the index")

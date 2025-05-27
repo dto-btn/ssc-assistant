@@ -7,6 +7,7 @@ from openai.types.chat import (ChatCompletionAssistantMessageParam,
                                ChatCompletionUserMessageParam)
 
 from tools.bits.bits_prompts import BITS_SYSTEM_PROMPT_EN, BITS_SYSTEM_PROMPT_FR
+from tools.pmcoe.pmcoe_prompts import PMCOE_SYSTEM_PROMPT_EN, PMCOE_SYSTEM_PROMPT_FR
 from utils.attachment_mapper import map_attachments
 from utils.models import MessageRequest
 
@@ -172,6 +173,14 @@ def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessage
             else:
                 system_msg += (f"\n Le nom complet de l'usager est: {message_request.fullName}."
                               " Utilisez ce nom si l'utilisateur essaie de trouver des DO pour lui-même.")
+        messages.append(ChatCompletionSystemMessageParam(content=system_msg, role="system"))
+    elif 'pmcoe' in message_request.tools:
+        system_msg = PMCOE_SYSTEM_PROMPT_EN if message_request.lang == 'en' else PMCOE_SYSTEM_PROMPT_FR
+        if message_request.fullName:
+            if message_request.lang == 'en':
+                system_msg += (f"\n The current user full name is: {message_request.fullName}.")
+            else:
+                system_msg += (f"\n Le nom complet de l'usager est: {message_request.fullName}.")
         messages.append(ChatCompletionSystemMessageParam(content=system_msg, role="system"))
     elif not message_request.messages or message_request.messages[0].role != "system":
         messages.append(ChatCompletionSystemMessageParam(
