@@ -1,9 +1,14 @@
 import OpenAI, { AzureOpenAI } from "openai";
 
 export class AgentCore {
+    private MAX_ITERATIONS = 10; // Maximum iterations to prevent infinite loops
+
     constructor(private openai: AzureOpenAI) {}
 
     async processQuery(query: string): Promise<string> {
+        // Limit for number of iterations, to prevent infinite loops.
+        // Set it to max 10.
+        let loopsRemaining = this.MAX_ITERATIONS;
         // Control variable for the autonomous loop
         let isTurnCompleted = false;
         // Store the final response to return to the user
@@ -13,7 +18,13 @@ export class AgentCore {
             {
                 role: 'system',
                 content: `
-You are an autonomous reasoning agent that can think through multiple steps before responding. When you receive a query, analyze what information you need and take any actions you need to. Then, continue your reasoning until you have a complete answer. Always conclude your reasoning by calling the 'iAmDone' tool with your comprehensive final answer as the 'finalAnswer' parameter - this is the ONLY way to deliver your response to the user.
+The current local time is ${new Date().toISOString()}. 
+
+You are an autonomous reasoning agent that can think through multiple steps before responding. When you receive a query, analyze what information you need and take any actions you need to. Then, continue your reasoning until you have a complete answer.
+
+Once you are satisfied that your work is complete, call 'iAmDone' tool with your comprehensive final answer as the 'finalAnswer' parameter - this is the ONLY way to deliver your response to the user.
+
+You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoning. Currently, you have ${loopsRemaining} out of ${this.MAX_ITERATIONS} iterations remaining.
                 `
             },
             { role: 'user', content: query }
@@ -64,9 +75,12 @@ You are an autonomous reasoning agent that can think through multiple steps befo
             }
         };
 
-        // Main autonomous reasoning loop
-        while (!isTurnCompleted) {
-            console.log("Current iteration of the autonomous loop");
+        // Main autonomous reasoning loop should be limited to a certain number of iterations
+        while (!isTurnCompleted && loopsRemaining > 0) {
+            // decrease the loop counter to prevent infinite loops
+            loopsRemaining--;
+            
+            console.log("Current iteration of the autonomous loop: ", );
             try {
                 // Call the OpenAI API
                 const response = await this.openai.chat.completions.create({

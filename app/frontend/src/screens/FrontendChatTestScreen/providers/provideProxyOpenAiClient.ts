@@ -1,13 +1,4 @@
-import OpenAI, {AzureOpenAI} from "openai";
-import {AzureLogger, setLogLevel} from "@azure/logger";
-setLogLevel("verbose")
-AzureLogger.log = (...args) => {
-    // Custom logger to handle Azure SDK logs
-    console.log("[az]", ...args);
-};
-// set this env var using nodejs 
-// AZURE_LOG_LEVEL=verbose
-process.env.AZURE_LOG_LEVEL = 'verbose';
+import {AzureOpenAI} from "openai";
 
 type Options = {
     apiRootDomain?: string;
