@@ -38,14 +38,33 @@ export class AgentCore {
         let isTurnCompleted = false;
         // Store the final response to return to the user
         let finalResponse: string = '';
+        
+        // Track ReAct progress
+        const progress = {
+            hasThought: false,
+            hasSoughtInformation: false,
+            hasObserved: false,
+            uniqueToolCalls: new Set<string>(),
+            reasoningSteps: 0,
+        };
+
         // Track conversation context
         const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
             {
                 role: 'system',
                 content: `
-The current local time is ${new Date().toISOString()}. 
+The current local time is ${new Date().toISOString()}.
 
-You are an autonomous reasoning agent that can think through multiple steps before responding. When you receive a query, analyze what information you need and take any actions you need to. Then, continue your reasoning until you have a complete answer.
+You are a ReAct (Reasoning and Acting) agent that follows a specific process:
+1. THINK: First, think about what you know and what you need to find out
+2. ACT: Take actions to gather information or make progress
+3. OBSERVE: Review the results of your actions
+4. REPEAT: Continue the process until you have a complete answer
+
+Follow this process for EACH step of your reasoning:
+- Use the 'think' tool to explicitly reason through your thoughts
+- Use the 'searchInformation' tool to look up information you need
+- Use the 'observe' tool to summarize what you've learned
 
 Once you are satisfied that your work is complete, call 'iAmDone' tool with your comprehensive final answer as the 'finalAnswer' parameter - this is the ONLY way to deliver your response to the user.
 
@@ -60,6 +79,20 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
             {
                 type: "function",
                 function: {
+                    name: 'think',
+                    description: 'Use this function to explicitly reason through your thoughts. This is the first step in the ReAct process.',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            reasoning: { type: 'string', description: 'Your step-by-step reasoning about the current situation' }
+                        },
+                        required: ['reasoning']
+                    }
+                }
+            },
+            {
+                type: "function",
+                function: {
                     name: 'searchInformation',
                     description: 'Search for information about a topic. When the user asks you to search for something, use this function to retrieve relevant information.',
                     parameters: {
@@ -68,6 +101,20 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                             topic: { type: 'string', description: 'The topic to search for' }
                         },
                         required: ['topic']
+                    }
+                }
+            },
+            {
+                type: "function",
+                function: {
+                    name: 'observe',
+                    description: 'Use this function to summarize what you have learned and observed so far. This is a crucial step in the ReAct process.',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            observation: { type: 'string', description: 'Your summary of what you have learned so far' }
+                        },
+                        required: ['observation']
                     }
                 }
             },
@@ -89,9 +136,25 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
 
         // Implement the available functions
         const availableFunctions: Record<string, Function> = {
+            think: async (args: { reasoning: string }) => {
+                // Update progress tracking
+                progress.hasThought = true;
+                progress.reasoningSteps++;
+                // Simulate explicit reasoning process
+                return `Reasoning process simulated: ${args.reasoning}`;
+            },
             searchInformation: async (args: { topic: string }) => {
+                // Update progress tracking
+                progress.hasSoughtInformation = true;
+                progress.uniqueToolCalls.add('searchInformation');
                 // Simulate retrieving information
                 return `Information about ${args.topic}: This is simulated search result data.`;
+            },
+            observe: async (args: { observation: string }) => {
+                // Update progress tracking
+                progress.hasObserved = true;
+                // Simulate summarizing observations
+                return `Observation summarized: ${args.observation}`;
             },
             iAmDone: (args: { finalAnswer: string }) => {
                 isTurnCompleted = true;
@@ -108,7 +171,7 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
             // decrease the loop counter to prevent infinite loops
             loopsRemaining--;
             
-            console.log("Current iteration of the autonomous loop: ", );
+            console.log(`Current iteration of the autonomous loop: ${this.MAX_ITERATIONS - loopsRemaining} of ${this.MAX_ITERATIONS}`);
             try {
                 // Call the OpenAI API
                 const response = await this.openai.chat.completions.create({
@@ -155,10 +218,10 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                     }
                 } else if (message.content) {
                     // If the AI responded with content instead of a tool call,
-                    // then do nothing
+                    // remind it to follow the ReAct pattern
                     messages.push({
                         role: 'user',
-                        content: 'Please call the iAmDone tool with your final answer to complete the interaction.'
+                        content: 'Please follow the ReAct pattern. Use the "think" tool to share your reasoning, "searchInformation" to gather data, "observe" to summarize findings, and "iAmDone" when you have a final answer.'
                     });
                 }
             } catch (error) {
@@ -173,9 +236,57 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
 
         // If we've reached the iteration limit without completion
         if (!isTurnCompleted) {
-            const errorMessage = `Maximum iterations (${this.MAX_ITERATIONS}) reached without completion`;
-            agentResponse.setResponseText(errorMessage);
-            agentResponse.triggerError(new Error(errorMessage));
+            console.log("Maximum iterations reached. Extracting final response from conversation history.");
+            // Extract the best possible response from conversation history
+            const extractedResponse = this.extractFinalResponseFromHistory(messages, progress);
+            agentResponse.setResponseText(extractedResponse);
+            agentResponse.triggerComplete();
         }
+    }
+
+    /**
+     * Extract a reasonable final response from the conversation history when the agent
+     * doesn't explicitly complete with iAmDone
+     * 
+     * @param messages The conversation history
+     * @param progress The progress tracking object
+     * @returns A reasonable final response based on the conversation history
+     */
+    private extractFinalResponseFromHistory(
+        messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+        progress: { hasThought: boolean; hasSoughtInformation: boolean; hasObserved: boolean; uniqueToolCalls: Set<string>; reasoningSteps: number }
+    ): string {
+        // If we have observations, those are most likely to contain useful summaries
+        const observations = messages
+            .filter(m => 
+                m.role === 'tool' && 
+                typeof m.content === 'string' && 
+                m.content.startsWith('Observation summarized:'))
+            .map(m => m.content as string);
+        
+        if (observations.length > 0) {
+            // Get the most recent observation as it likely has the most complete information
+            return observations[observations.length - 1].replace('Observation summarized: ', '');
+        }
+        
+        // If no observations, look for assistant messages with content
+        const assistantMessages = messages
+            .filter(m => 
+                m.role === 'assistant' && 
+                typeof m.content === 'string' && 
+                m.content.length > 0)
+            .map(m => m.content as string);
+        
+        if (assistantMessages.length > 0) {
+            // Get the longest message as it likely has the most information
+            return assistantMessages.sort((a, b) => b.length - a.length)[0];
+        }
+        
+        // If all else fails, provide a generic response
+        return "I've analyzed your request but couldn't formulate a complete response within the iteration limit. " +
+               "Based on the information gathered, here's my best answer: " +
+               (progress.hasSoughtInformation ? 
+                "I searched for some information but couldn't reach a definitive conclusion." : 
+                "I wasn't able to gather sufficient information to provide a complete answer.");
     }
 }
