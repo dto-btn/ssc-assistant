@@ -9,6 +9,7 @@ export interface AgentProgressData {
     reasoningSteps: number;
     uniqueToolCalls: Set<string>;
     lastAction?: string;
+    lastActionContent?: string;
 }
 
 export class AgentCoreConnection {

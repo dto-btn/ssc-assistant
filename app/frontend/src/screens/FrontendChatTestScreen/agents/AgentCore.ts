@@ -112,6 +112,7 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                 progress.hasThought = true;
                 progress.reasoningSteps++;
                 progress.lastAction = 'think';
+                progress.lastActionContent = args.reasoning;
                 
                 // Send progress update
                 agentResponse.triggerProgress({...progress});
@@ -123,6 +124,7 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                 // Update progress tracking
                 progress.hasObserved = true;
                 progress.lastAction = 'observe';
+                progress.lastActionContent = args.observation;
                 
                 // Send progress update
                 agentResponse.triggerProgress({...progress});
