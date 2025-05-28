@@ -1,10 +1,21 @@
 import { ListenerManager } from "./ListenerManager";
 import { Listener } from "./ListenerManager.types";
 
+export interface AgentProgressData {
+    currentIteration: number;
+    maxIterations: number;
+    hasThought: boolean;
+    hasObserved: boolean;
+    reasoningSteps: number;
+    uniqueToolCalls: Set<string>;
+    lastAction?: string;
+}
+
 export class AgentCoreConnection {
     private errorListeners: ListenerManager<unknown> = new ListenerManager<unknown>();
     private completeListeners: ListenerManager<void> = new ListenerManager<void>();
     private responseText: string = '';
+    private progressListeners: ListenerManager<AgentProgressData> = new ListenerManager<AgentProgressData>();
 
     constructor() {}
 
@@ -27,6 +38,15 @@ export class AgentCoreConnection {
     }
 
     /**
+     * Register a listener for progress events.
+     * The listener will be called with progress data during the agent's reasoning process.
+     * @param listener 
+     */
+    onProgress(listener: Listener<AgentProgressData>) {
+        this.progressListeners.addListener(listener);
+    }
+
+    /**
      * Trigger an error event.
      * This will call all registered error listeners with the error data.
      * @param error The error data to pass to the listeners
@@ -41,6 +61,15 @@ export class AgentCoreConnection {
      */
     triggerComplete() {
         this.completeListeners.notifyListeners();
+    }
+
+    /**
+     * Trigger a progress event.
+     * This will call all registered progress listeners with the progress data.
+     * @param progressData The progress data to pass to the listeners
+     */
+    triggerProgress(progressData: AgentProgressData) {
+        this.progressListeners.notifyListeners(progressData);
     }
 
     /**

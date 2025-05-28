@@ -1,5 +1,5 @@
 import OpenAI, { AzureOpenAI } from "openai";
-import { AgentCoreConnection } from "./AgentCoreResponse";
+import { AgentCoreConnection, AgentProgressData } from "./AgentCoreResponse";
 
 export class AgentCore {
     private MAX_ITERATIONS = 10; // Maximum iterations to prevent infinite loops
@@ -40,7 +40,9 @@ export class AgentCore {
         let finalResponse: string = '';
         
         // Track ReAct progress
-        const progress = {
+        const progress: AgentProgressData = {
+            currentIteration: 0,
+            maxIterations: this.MAX_ITERATIONS,
             hasThought: false,
             hasObserved: false,
             uniqueToolCalls: new Set<string>(),
@@ -109,12 +111,22 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                 // Update progress tracking
                 progress.hasThought = true;
                 progress.reasoningSteps++;
+                progress.lastAction = 'think';
+                
+                // Send progress update
+                agentResponse.triggerProgress({...progress});
+                
                 // Simulate explicit reasoning process
                 return `Reasoning process simulated: ${args.reasoning}`;
             },
             observe: async (args: { observation: string }) => {
                 // Update progress tracking
                 progress.hasObserved = true;
+                progress.lastAction = 'observe';
+                
+                // Send progress update
+                agentResponse.triggerProgress({...progress});
+                
                 // Simulate summarizing observations
                 return `Observation summarized: ${args.observation}`;
             }
@@ -125,7 +137,13 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
             // decrease the loop counter to prevent infinite loops
             loopsRemaining--;
             
-            console.log(`Current iteration of the autonomous loop: ${this.MAX_ITERATIONS - loopsRemaining} of ${this.MAX_ITERATIONS}`);
+            // Update iteration counter in progress tracking
+            progress.currentIteration = this.MAX_ITERATIONS - loopsRemaining;
+            
+            // Send progress update
+            agentResponse.triggerProgress({...progress});
+            
+            console.log(`Current iteration of the autonomous loop: ${progress.currentIteration} of ${this.MAX_ITERATIONS}`);
             try {
                 // Call the OpenAI API
                 const response = await this.openai.chat.completions.create({
@@ -150,6 +168,9 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                             const functionArgs = JSON.parse(toolCall.function.arguments);
                             
                             console.log(`Function called: ${functionName}`);
+                            
+                            // Track unique tool calls
+                            progress.uniqueToolCalls.add(functionName);
                             
                             if (availableFunctions[functionName]) {
                                 // Execute the function
@@ -177,6 +198,11 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                         // This appears to be a final answer after proper reasoning
                         isTurnCompleted = true;
                         finalResponse = message.content as string;
+                        
+                        // Update progress to show we've completed
+                        progress.lastAction = 'completed';
+                        agentResponse.triggerProgress({...progress});
+                        
                         agentResponse.setResponseText(finalResponse);
                         agentResponse.triggerComplete();
                     } else {
@@ -191,6 +217,11 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                 console.error("Error in autonomous loop:", error);
                 isTurnCompleted = true;
                 finalResponse = "An error occurred while processing your request.";
+                
+                // Update progress to show error
+                progress.lastAction = 'error';
+                agentResponse.triggerProgress({...progress});
+                
                 // Set the error response text and trigger error event
                 agentResponse.setResponseText(finalResponse);
                 agentResponse.triggerError(error);
@@ -200,6 +231,11 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
         // If we've reached the iteration limit without completion
         if (!isTurnCompleted) {
             console.log("Maximum iterations reached. Extracting final response from conversation history.");
+            // Update progress to show we've reached the maximum iterations
+            progress.currentIteration = this.MAX_ITERATIONS;
+            progress.lastAction = 'max_iterations_reached';
+            agentResponse.triggerProgress({...progress});
+            
             // Extract the best possible response from conversation history
             const extractedResponse = this.extractFinalResponseFromHistory(messages, progress);
             agentResponse.setResponseText(extractedResponse);
@@ -209,7 +245,7 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
 
     /**
      * Extract a reasonable final response from the conversation history when the agent
-     * doesn't explicitly complete with iAmDone
+     * doesn't explicitly complete with a final answer
      * 
      * @param messages The conversation history
      * @param progress The progress tracking object
@@ -217,7 +253,7 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
      */
     private extractFinalResponseFromHistory(
         messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
-        progress: { hasThought: boolean; hasObserved: boolean; uniqueToolCalls: Set<string>; reasoningSteps: number }
+        progress: AgentProgressData
     ): string {
         // If we have observations, those are most likely to contain useful summaries
         const observations = messages
