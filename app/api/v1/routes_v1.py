@@ -607,8 +607,10 @@ def bits_br_information():
 
 # Define OpenAI API blueprint
 
-
-@api_v2.post("/ai/chat/completions")
+# TODO: This is a hardcoded gpt-4o deployment
+# Instead, it should be configurable.
+# This is necessary because of how Azure OpenAI REST calls work.
+@api_v2.post("/ai/deployments/gpt-4o/chat/completions")
 # @auth.login_required(role="chat")
 def openai_chat_completions():
     """
@@ -656,6 +658,9 @@ def openai_chat_completions():
 
         # Prepare the request payload
         payload = {"messages": messages, "max_tokens": max_tokens, "stream": stream}
+        if data.get("tools"):
+            # If tools are provided, add them to the payload
+            payload["tools"] = data["tools"]
 
         # Forward optional parameters if present in the original request
         for param in [
