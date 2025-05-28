@@ -42,7 +42,6 @@ export class AgentCore {
         // Track ReAct progress
         const progress = {
             hasThought: false,
-            hasSoughtInformation: false,
             hasObserved: false,
             uniqueToolCalls: new Set<string>(),
             reasoningSteps: 0,
@@ -57,16 +56,14 @@ The current local time is ${new Date().toISOString()}.
 
 You are a ReAct (Reasoning and Acting) agent that follows a specific process:
 1. THINK: First, think about what you know and what you need to find out
-2. ACT: Take actions to gather information or make progress
-3. OBSERVE: Review the results of your actions
-4. REPEAT: Continue the process until you have a complete answer
+2. OBSERVE: Review your thoughts and form conclusions
 
-Follow this process for EACH step of your reasoning:
+Follow this process for your reasoning:
 - Use the 'think' tool to explicitly reason through your thoughts
-- Use the 'searchInformation' tool to look up information you need
 - Use the 'observe' tool to summarize what you've learned
 
-Once you are satisfied that your work is complete, call 'iAmDone' tool with your comprehensive final answer as the 'finalAnswer' parameter - this is the ONLY way to deliver your response to the user.
+After you've completed your reasoning process, respond directly to the user with your final answer.
+No need to call a special function - just provide your answer in a clear, concise way.
 
 You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoning. Currently, you have ${loopsRemaining} out of ${this.MAX_ITERATIONS} iterations remaining.
                 `
@@ -93,20 +90,6 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
             {
                 type: "function",
                 function: {
-                    name: 'searchInformation',
-                    description: 'Search for information about a topic. When the user asks you to search for something, use this function to retrieve relevant information.',
-                    parameters: {
-                        type: 'object',
-                        properties: {
-                            topic: { type: 'string', description: 'The topic to search for' }
-                        },
-                        required: ['topic']
-                    }
-                }
-            },
-            {
-                type: "function",
-                function: {
                     name: 'observe',
                     description: 'Use this function to summarize what you have learned and observed so far. This is a crucial step in the ReAct process.',
                     parameters: {
@@ -115,20 +98,6 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                             observation: { type: 'string', description: 'Your summary of what you have learned so far' }
                         },
                         required: ['observation']
-                    }
-                }
-            },
-            {
-                type: "function",
-                function: {
-                    name: 'iAmDone',
-                    description: 'Call this function when you have completed your reasoning and have a final answer',
-                    parameters: {
-                        type: 'object',
-                        properties: {
-                            finalAnswer: { type: 'string', description: 'Your final answer to the user' }
-                        },
-                        required: ['finalAnswer']
                     }
                 }
             }
@@ -143,26 +112,11 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                 // Simulate explicit reasoning process
                 return `Reasoning process simulated: ${args.reasoning}`;
             },
-            searchInformation: async (args: { topic: string }) => {
-                // Update progress tracking
-                progress.hasSoughtInformation = true;
-                progress.uniqueToolCalls.add('searchInformation');
-                // Simulate retrieving information
-                return `Information about ${args.topic}: This is simulated search result data.`;
-            },
             observe: async (args: { observation: string }) => {
                 // Update progress tracking
                 progress.hasObserved = true;
                 // Simulate summarizing observations
                 return `Observation summarized: ${args.observation}`;
-            },
-            iAmDone: (args: { finalAnswer: string }) => {
-                isTurnCompleted = true;
-                finalResponse = args.finalAnswer;
-                // Set the response text and trigger completion event
-                agentResponse.setResponseText(args.finalAnswer);
-                agentResponse.triggerComplete();
-                return "Reasoning completed.";
             }
         };
 
@@ -217,12 +171,21 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                         }
                     }
                 } else if (message.content) {
-                    // If the AI responded with content instead of a tool call,
-                    // remind it to follow the ReAct pattern
-                    messages.push({
-                        role: 'user',
-                        content: 'Please follow the ReAct pattern. Use the "think" tool to share your reasoning, "searchInformation" to gather data, "observe" to summarize findings, and "iAmDone" when you have a final answer.'
-                    });
+                    // If the AI responded with content, this might be the final answer
+                    // We check if it's a substantial message by looking at reasoning steps and observations
+                    if (progress.hasThought && progress.hasObserved && progress.reasoningSteps >= 1) {
+                        // This appears to be a final answer after proper reasoning
+                        isTurnCompleted = true;
+                        finalResponse = message.content as string;
+                        agentResponse.setResponseText(finalResponse);
+                        agentResponse.triggerComplete();
+                    } else {
+                        // Remind it to follow the ReAct pattern first
+                        messages.push({
+                            role: 'user',
+                            content: 'Please follow the ReAct pattern. Use the "think" tool to share your reasoning and "observe" tool to summarize findings before providing your final answer.'
+                        });
+                    }
                 }
             } catch (error) {
                 console.error("Error in autonomous loop:", error);
@@ -254,7 +217,7 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
      */
     private extractFinalResponseFromHistory(
         messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
-        progress: { hasThought: boolean; hasSoughtInformation: boolean; hasObserved: boolean; uniqueToolCalls: Set<string>; reasoningSteps: number }
+        progress: { hasThought: boolean; hasObserved: boolean; uniqueToolCalls: Set<string>; reasoningSteps: number }
     ): string {
         // If we have observations, those are most likely to contain useful summaries
         const observations = messages
@@ -285,8 +248,8 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
         // If all else fails, provide a generic response
         return "I've analyzed your request but couldn't formulate a complete response within the iteration limit. " +
                "Based on the information gathered, here's my best answer: " +
-               (progress.hasSoughtInformation ? 
-                "I searched for some information but couldn't reach a definitive conclusion." : 
+               (progress.uniqueToolCalls.size > 0 ? 
+                "I've done some analysis but couldn't reach a definitive conclusion." : 
                 "I wasn't able to gather sufficient information to provide a complete answer.");
     }
 }
