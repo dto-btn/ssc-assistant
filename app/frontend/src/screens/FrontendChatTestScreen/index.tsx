@@ -62,7 +62,7 @@ export const FrontendChatTestScreen = () => {
     const toggleStepExpansion = (index: number) => {
         setProgressSteps(prev => {
             console.log('Toggling step expansion for index:', index);
-            
+
             // Create a new array with all items
             return prev.map((step, i) => {
                 // Only modify the item at the specified index
