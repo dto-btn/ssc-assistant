@@ -1,78 +1,36 @@
 import { useState } from 'react';
-import { useOpenAiClient } from './hooks/useStreamingOpenAiClient'
-import OpenAI from 'openai';
-import { OpenAiClientNetworkStatus } from './hooks/useChat.types';
+import { useAgentCore } from './hooks/useAgentCore';
 
 export const FrontendChatTestScreen = () => {
-    const [status, setStatus] = useState<OpenAiClientNetworkStatus>('idle');
-    const [streamIncomingText, setStreamIncomingText] = useState<string | null>(null);
-    const [finalResponse, setFinalResponse] = useState<OpenAI.Chat.Completions.ChatCompletion | null>(null);
+    const [isBusy, setIsBusy] = useState<boolean>(false);
 
-    const handleChatCompletionsCreate = async (...params: Parameters<OpenAI['chat']['completions']['create']>) => {
-        if (status === 'idle' || status === 'error') {
-            setStreamIncomingText(null); // Reset the streamIncomingText when starting a new request
-            setFinalResponse(null); // Reset the final response when starting a new request
-            chatCompletionsCreate(...params);
-        }
+    const [agentCoreFinalResponse, setAgentCoreFinalResponse] = useState<string | null>(null);
+
+    const agentCore = useAgentCore();
+
+    const handleAgentCoreQuery = () => {
+        setIsBusy(true);
+        agentCore.processQuery('Write a long poem about the sea.')
+            .then((response) => {
+                console.log('Agent Core Response:', response);
+                setAgentCoreFinalResponse(response);
+                setIsBusy(false);
+            })
+            .catch((error) => {
+                console.error('Error processing query:', error);
+                setAgentCoreFinalResponse('Error processing query');
+                setIsBusy(false);
+            });
     }
 
-    const { chatCompletionsCreate } = useOpenAiClient({
-        onNext: (chunk) => {
-            console.log(chunk);
-            if (chunk.choices[0]?.delta.content) {
-                setStreamIncomingText((prev) => (prev || '') + chunk.choices[0].delta.content);
-
-                if (chunk.choices[0].delta.tool_calls) {
-                    // show chips for tool calls
-                };
-            }
-        },
-        onStatusChange: (status) => {
-            setStatus(status);
-            if (status === 'idle') {
-                // Reset the streamIncomingText when the status is idle
-                // setStreamIncomingText(null);
-            }
-        },
-        onFinish: (response) => {
-            setFinalResponse(response);
-            // setStreamIncomingText(null); // Clear the stream text when finished
-        },
-    });
     return (
         <div>
             <h1>Frontend Chat Test Screen</h1>
-            <p>Status: {status}</p>
-            <button onClick={() => handleChatCompletionsCreate({
-                model: 'gpt-4o',
-                messages: [
-                    {
-                        role: 'system',
-                        content: 'You are a helpful assistant that writes poems.'
-                    },
-                    { role: 'user', content: 'Write a long poem!' },
-                    // {
-                    //     role: 'function',
-                    //     name: 'get_current_time',
-
-                    // }
-                ],
-                stream: true,
-            })}>Send Message</button>
-            <div>
-                <h2>Stream Incoming Text</h2>
-                <p>{streamIncomingText}</p>
-            </div>
+            <p>Status: {isBusy ? 'Processing...' : 'Idle'}</p>
+            <button onClick={() => handleAgentCoreQuery()}>Send Message</button>
             <div>
                 <h2>Final Response</h2>
-                {finalResponse ? (
-                    <div>
-                        <h3>Final Response:</h3>
-                        <pre>{JSON.stringify(finalResponse, null, 2)}</pre>
-                    </div>
-                ) : (
-                    <p>No final response yet.</p>
-                )}
+                <pre>{agentCoreFinalResponse}</pre>
             </div>
 
         </div>
