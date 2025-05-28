@@ -10,27 +10,17 @@ import {
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import EmailIcon from "@mui/icons-material/Email";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import { useApiRequestService } from "../screens/MainScreen/useApiRequestService";
 import { useTranslation } from "react-i18next";
-import { useAppStore } from "../stores/AppStore";
 
 type SuggestionsProps = {
-  userData: any;
+  onSuggestionClicked: (suggestionText: string) => void;
 };
 
-const Suggestions = ({ userData }: SuggestionsProps) => {
+const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
   const { t } = useTranslation();
-  const appStore = useAppStore();
-  const apiRequestService = useApiRequestService();
 
   const sendMessage = (question: string) => {
-    apiRequestService.makeApiRequest(
-      question,
-      userData,
-      undefined,
-      undefined,
-      appStore.tools.enabledTools
-    );
+    onSuggestionClicked(question);
   };
 
   return (

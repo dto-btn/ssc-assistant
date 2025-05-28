@@ -464,8 +464,15 @@ const MainScreen = () => {
                 {t("how.can.i.help.submessage")}
               </Typography>
               <Suggestions
-                apiRequestService={apiRequestService}
-                userData={userData}
+                onSuggestionClicked={(question) =>
+                  apiRequestService.makeApiRequest(
+                    question,
+                    userData,
+                    undefined,
+                    undefined,
+                    appStore.tools.enabledTools
+                  )
+                }
               />
               <ChatInput
                 clearOnSend
