@@ -1,0 +1,1 @@
+export type Listener<DataType> = (data: DataType) => void;

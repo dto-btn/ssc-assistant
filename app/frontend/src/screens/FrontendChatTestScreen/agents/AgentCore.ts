@@ -1,11 +1,36 @@
 import OpenAI, { AzureOpenAI } from "openai";
+import { AgentCoreResponse } from "./AgentCoreResponse";
 
 export class AgentCore {
     private MAX_ITERATIONS = 10; // Maximum iterations to prevent infinite loops
 
     constructor(private openai: AzureOpenAI) {}
 
-    async processQuery(query: string): Promise<string> {
+    /**
+     * Process a query and return an AgentCoreResponse immediately.
+     * The response will be populated asynchronously as processing completes.
+     * 
+     * @param query The query to process
+     * @returns An AgentCoreResponse that will be populated with results
+     */
+    processQuery(query: string): AgentCoreResponse {
+        // Create a new AgentCoreResponse instance
+        const agentResponse = new AgentCoreResponse();
+        
+        // Start the processing in the background
+        this.processQueryAsync(query, agentResponse);
+        
+        // Return the response object immediately
+        return agentResponse;
+    }
+
+    /**
+     * Process a query asynchronously and populate the provided AgentCoreResponse.
+     * 
+     * @param query The query to process
+     * @param agentResponse The AgentCoreResponse to populate with results
+     */
+    private async processQueryAsync(query: string, agentResponse: AgentCoreResponse): Promise<void> {
         // Limit for number of iterations, to prevent infinite loops.
         // Set it to max 10.
         let loopsRemaining = this.MAX_ITERATIONS;
@@ -71,6 +96,9 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
             iAmDone: (args: { finalAnswer: string }) => {
                 isTurnCompleted = true;
                 finalResponse = args.finalAnswer;
+                // Set the response text and trigger completion event
+                agentResponse.setResponseText(args.finalAnswer);
+                agentResponse.triggerComplete();
                 return "Reasoning completed.";
             }
         };
@@ -137,9 +165,17 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                 console.error("Error in autonomous loop:", error);
                 isTurnCompleted = true;
                 finalResponse = "An error occurred while processing your request.";
+                // Set the error response text and trigger error event
+                agentResponse.setResponseText(finalResponse);
+                agentResponse.triggerError(error);
             }
         }
 
-        return finalResponse;
+        // If we've reached the iteration limit without completion
+        if (!isTurnCompleted) {
+            const errorMessage = `Maximum iterations (${this.MAX_ITERATIONS}) reached without completion`;
+            agentResponse.setResponseText(errorMessage);
+            agentResponse.triggerError(new Error(errorMessage));
+        }
     }
 }

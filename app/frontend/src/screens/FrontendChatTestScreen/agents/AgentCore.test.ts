@@ -3,13 +3,13 @@ import { AgentCore } from "./AgentCore";
 import { provideProxyOpenAiClient } from "../providers/provideProxyOpenAiClient";
 
 describe('AgentCore', () => {
-    it('can', async () => {
+    it('can', () => new Promise<void>((resolve, reject) => {
         const openai = provideProxyOpenAiClient({
             apiRootDomain: 'http://localhost:5001'
         });
         const agentCore = new AgentCore(openai);
         // A simple prompt that will force the agent to think at least 25 times before responding.
-        const x = await agentCore.processQuery(
+        const response = agentCore.processQuery(
 `You need to solve a complex problem using specific thinking tools. 
 
 Make sure you only respond with 1 step at a time.
@@ -35,7 +35,21 @@ For each step, you MUST use the format:
         For EACH thinking step, explain exactly what you're considering and why.
         DO NOT skip steps in your reasoning or provide a shortened analysis.`
         )
-        console.log(x);
-
-    }, 500000)
+        
+        // The response object is returned immediately, but processing happens asynchronously
+        console.log("Response object returned:", response);
+        
+        // Example of adding listeners to the response
+        response.onComplete(() => {
+            console.log("Processing completed!");
+            resolve();
+        });
+        
+        response.onError((error) => {
+            console.error("An error occurred:", error);
+            reject(error);
+        });
+    
+        
+    }), 500000)
 });
