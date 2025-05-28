@@ -1,5 +1,5 @@
 import OpenAI, { AzureOpenAI } from "openai";
-import { AgentCoreResponse } from "./AgentCoreResponse";
+import { AgentCoreConnection } from "./AgentCoreResponse";
 
 export class AgentCore {
     private MAX_ITERATIONS = 10; // Maximum iterations to prevent infinite loops
@@ -13,15 +13,15 @@ export class AgentCore {
      * @param query The query to process
      * @returns An AgentCoreResponse that will be populated with results
      */
-    processQuery(query: string): AgentCoreResponse {
+    processQuery(query: string): AgentCoreConnection {
         // Create a new AgentCoreResponse instance
-        const agentResponse = new AgentCoreResponse();
+        const cnx = new AgentCoreConnection();
         
         // Start the processing in the background
-        this.processQueryAsync(query, agentResponse);
+        this.processQueryAsync(query, cnx);
         
         // Return the response object immediately
-        return agentResponse;
+        return cnx;
     }
 
     /**
@@ -30,7 +30,7 @@ export class AgentCore {
      * @param query The query to process
      * @param agentResponse The AgentCoreResponse to populate with results
      */
-    private async processQueryAsync(query: string, agentResponse: AgentCoreResponse): Promise<void> {
+    private async processQueryAsync(query: string, agentResponse: AgentCoreConnection): Promise<void> {
         // Limit for number of iterations, to prevent infinite loops.
         // Set it to max 10.
         let loopsRemaining = this.MAX_ITERATIONS;

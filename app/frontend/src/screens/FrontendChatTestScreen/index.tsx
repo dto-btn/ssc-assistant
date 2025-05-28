@@ -10,17 +10,16 @@ export const FrontendChatTestScreen = () => {
 
     const handleAgentCoreQuery = () => {
         setIsBusy(true);
-        agentCore.processQuery('Write a long poem about the sea.')
-            .then((response) => {
-                console.log('Agent Core Response:', response);
-                setAgentCoreFinalResponse(response);
-                setIsBusy(false);
-            })
-            .catch((error) => {
-                console.error('Error processing query:', error);
-                setAgentCoreFinalResponse('Error processing query');
-                setIsBusy(false);
-            });
+        const cnx = agentCore.processQuery('Write a long poem about the sea.');
+        cnx.onComplete(() => {
+            setAgentCoreFinalResponse(cnx.getResponseText());
+            setIsBusy(false);
+        });
+        cnx.onError((error) => {
+            console.error('Error in AgentCore connection:', error);
+            setAgentCoreFinalResponse('Error processing query');
+            setIsBusy(false);
+        });
     }
 
     return (

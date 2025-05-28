@@ -1,7 +1,7 @@
 import { ListenerManager } from "./ListenerManager";
 import { Listener } from "./ListenerManager.types";
 
-class AgentCoreResponse {
+export class AgentCoreConnection {
     private errorListeners: ListenerManager<unknown> = new ListenerManager<unknown>();
     private completeListeners: ListenerManager<void> = new ListenerManager<void>();
     private responseText: string = '';
@@ -59,5 +59,3 @@ class AgentCoreResponse {
         return this.responseText;
     }
 }
-
-export { AgentCoreResponse };
