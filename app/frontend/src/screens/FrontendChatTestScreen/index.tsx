@@ -42,9 +42,10 @@ export const FrontendChatTestScreen = () => {
                 const actionType = progressData.lastAction;
 
                 if (actionType === 'think' || actionType === 'observe') {
+                    // Only add the step if it's actually from a tool call
                     setProgressSteps(prev => [...prev, {
                         type: actionType,
-                        content: actionType === 'think' ? 'Thinking' : 'Observation',
+                        content: actionType === 'think' ? `Thinking (Step ${progressData.reasoningSteps})` : 'Observation',
                         details: progressData.lastActionContent,
                         expanded: false
                     }]);

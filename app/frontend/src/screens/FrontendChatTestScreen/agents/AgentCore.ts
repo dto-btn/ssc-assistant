@@ -114,7 +114,7 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                 progress.lastAction = 'think';
                 progress.lastActionContent = args.reasoning;
                 
-                // Send progress update
+                // Send progress update with a copy of the progress object to avoid mutations
                 agentResponse.triggerProgress({...progress});
                 
                 // Simulate explicit reasoning process
@@ -126,7 +126,7 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                 progress.lastAction = 'observe';
                 progress.lastActionContent = args.observation;
                 
-                // Send progress update
+                // Send progress update with a copy of the progress object to avoid mutations
                 agentResponse.triggerProgress({...progress});
                 
                 // Simulate summarizing observations
@@ -141,9 +141,6 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
             
             // Update iteration counter in progress tracking
             progress.currentIteration = this.MAX_ITERATIONS - loopsRemaining;
-            
-            // Send progress update
-            agentResponse.triggerProgress({...progress});
             
             console.log(`Current iteration of the autonomous loop: ${progress.currentIteration} of ${this.MAX_ITERATIONS}`);
             try {
@@ -190,6 +187,11 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                                     tool_call_id: toolCall.id,
                                     content: JSON.stringify({ error: "Function not found" })
                                 });
+                                
+                                // Send a progress update for the "function not found" case
+                                progress.lastAction = 'error';
+                                progress.lastActionContent = `Function "${functionName}" not found`;
+                                agentResponse.triggerProgress({...progress});
                             }
                         }
                     }
