@@ -1,4 +1,12 @@
-import { Box, IconButton } from "@mui/material";
+import {
+  Box,
+  IconButton,
+  Grid,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+} from "@mui/material";
 import {
   ChatInput,
   Disclaimer,
@@ -21,7 +29,11 @@ import { useLocation } from "react-router";
 import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
 import { useAppStore } from "../../stores/AppStore";
 import Typography from "@mui/material/Typography";
-import { SNACKBAR_DEBOUNCE_KEYS, LEFT_MENU_WIDTH, MUTEX_TOOLS } from "../../constants";
+import {
+  SNACKBAR_DEBOUNCE_KEYS,
+  LEFT_MENU_WIDTH,
+  MUTEX_TOOLS,
+} from "../../constants";
 import VerticalSplitIcon from "@mui/icons-material/VerticalSplit";
 import NewLayout from "../../components/layouts/NewLayout";
 import { useChatStore } from "../../stores/ChatStore";
@@ -30,6 +42,7 @@ import { useChatService } from "../../hooks/useChatService";
 import { useApiRequestService } from "./useApiRequestService";
 import { defaultEnabledTools } from "../../allowedTools";
 import { tt } from "../../i18n/tt";
+import Suggestions from "../../components/Suggestions";
 
 const MainScreen = () => {
   const { t } = useTranslation();
@@ -170,7 +183,9 @@ const MainScreen = () => {
   };
 
   const handleUpdateEnabledTools = (name: string) => {
-    let updatedTools: Record<string, boolean> = { ...appStore.tools.enabledTools };
+    let updatedTools: Record<string, boolean> = {
+      ...appStore.tools.enabledTools,
+    };
     const toolIsTurningOn: boolean = !appStore.tools.enabledTools[name];
 
     // Archibus is mutually exclusive with all other tools. If 'archibus' is turned on,
@@ -188,7 +203,6 @@ const MainScreen = () => {
       updatedTools.archibus = false;
     }
 
-
     // We have a category of tools that are mutually exclusive. If one of them is turned
     // on, all others should be turned off. This is a temporary hack until we refactor
     // the tools to be more modular.
@@ -197,7 +211,6 @@ const MainScreen = () => {
         updatedTools[tool] = false;
       });
     }
-
 
     // Finally, update the specific tool's state
     updatedTools[name] = toolIsTurningOn;
@@ -445,10 +458,15 @@ const MainScreen = () => {
                 sx={{
                   maxWidth: "80%",
                   textAlign: "center",
+                  mb: 4,
                 }}
               >
                 {t("how.can.i.help.submessage")}
               </Typography>
+              <Suggestions
+                apiRequestService={apiRequestService}
+                userData={userData}
+              />
               <ChatInput
                 clearOnSend
                 placeholder={t("placeholder")}
