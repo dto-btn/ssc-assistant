@@ -40,21 +40,21 @@ const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
     {
       title: t("suggestions.general.hire"),
       tool: "corporate",
-      icon: <HelpOutlineIcon sx={{ color: "#3f51b5" }} />, // Purple
+      icon: <HelpOutlineIcon sx={{ color: "#3f51b5" }} />, // Blue
       category: "general",
       color: "#3f51b5",
     },
     {
       title: t("suggestions.business.find"),
       tool: "bits",
-      icon: <ReceiptIcon sx={{ color: "#8e24aa" }} />, // Green
+      icon: <ReceiptIcon sx={{ color: "#8e24aa" }} />, // Purple
       category: "br",
       color: "#8e24aa",
     },
     {
       title: t("suggestions.business.pspc"),
       tool: "bits",
-      icon: <ReceiptIcon sx={{ color: "#8e24aa" }} />, // Blue
+      icon: <ReceiptIcon sx={{ color: "#8e24aa" }} />, // Purple
       category: "br",
       color: "#8e24aa",
     },
@@ -69,57 +69,83 @@ const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
 
   return (
     <Box sx={{ width: "100%", mb: 3 }}>
-      <Grid container spacing={2} justifyContent="center">
+      {/* Using a fixed grid with equal column width and fixed card dimensions */}
+      <Grid
+        container
+        spacing={2}
+        justifyContent="center"
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr", // 1 column on mobile
+            sm: "repeat(2, 1fr)", // 2 columns on tablets
+            md: "repeat(3, 1fr)", // 3 columns on desktop
+          },
+          gap: 2,
+        }}
+      >
         {suggestionCards.map((card, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index}>
-            <Card
-              elevation={1}
+          <Card
+            key={index}
+            elevation={1}
+            sx={{
+              height: "150px", // Fixed card height
+              width: "100%", // Full width of grid cell
+              borderLeft: `4px solid ${card.color}`,
+              transition: "transform 0.2s, box-shadow 0.2s",
+              "&:hover": {
+                transform: "translateY(-5px)",
+                boxShadow: 3,
+              },
+            }}
+          >
+            <CardActionArea
+              onClick={() => onSuggestionClicked(card.title, card.tool)}
+              sx={{ height: "100%" }}
+            >                <CardContent
               sx={{
-                borderLeft: `4px solid ${card.color}`,
-                transition: "transform 0.2s, box-shadow 0.2s",
-                "&:hover": {
-                  transform: "translateY(-5px)",
-                  boxShadow: 3,
-                },
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                p: 2,
+                overflowY: "hidden", // Only prevent vertical overflow
               }}
             >
-              <CardActionArea
-                onClick={() => onSuggestionClicked(card.title, card.tool)}
-                sx={{ height: "100%" }}
-              >
-                <CardContent
+                <Box
                   sx={{
                     display: "flex",
-                    flexDirection: "column",
-                    gap: 1,
+                    alignItems: "center",
+                    gap: 1.5,
+                    width: "100%",
                   }}
                 >
-                  <Box
+                  {card.icon}
+                  <Typography
+                    variant="body1"
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1.5,
+                      // Allow full text display horizontally
+                      width: "100%",
                     }}
                   >
-                    {card.icon}
-                    <Typography variant="body1">{card.title}</Typography>
-                  </Box>
-                  <Box sx={{ alignSelf: "flex-end", mt: 1 }}>
-                    <Chip
-                      label={t(`suggestions.categories.${card.category}`)}
-                      size="small"
-                      sx={{
-                        backgroundColor: `${card.color}20`,
-                        color: card.color,
-                        fontWeight: "medium",
-                        fontSize: "0.7rem",
-                      }}
-                    />
-                  </Box>
-                </CardContent>
-              </CardActionArea>
-            </Card>
-          </Grid>
+                    {card.title}
+                  </Typography>
+                </Box>
+                <Box sx={{ alignSelf: "flex-end", mt: 2 }}>
+                  <Chip
+                    label={t(`suggestions.categories.${card.category}`)}
+                    size="small"
+                    sx={{
+                      backgroundColor: `${card.color}20`,
+                      color: card.color,
+                      fontWeight: "medium",
+                      fontSize: "0.7rem",
+                    }}
+                  />
+                </Box>
+              </CardContent>
+            </CardActionArea>
+          </Card>
         ))}
       </Grid>
     </Box>
