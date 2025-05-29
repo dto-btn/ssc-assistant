@@ -796,11 +796,15 @@
         "fr": "Pouvez-vous me dire comment trouver des informations sur l'embauche d'un étudiant?"
     },
     "suggestions.business.find": {
-        "en": "Help me find Business Requests (BR)",
-        "fr": "Aidez-moi à trouver des demandes opérationnelles (DO)"
+        "en": "What kind of questions can I ask about Business Requests (BR)?",
+        "fr": "Quel genre de questions puis-je poser sur les demandes opérationnelles (DO)?"
     },
     "suggestions.business.pspc": {
         "en": "Find all the BRs submited in the last 3 weeks that are from the client PSPC",
         "fr": "Trouvez toutes les demandes d'affaires soumises au cours des 3 dernières semaines provenant du client SPAC"
+    },
+    "suggestions.business.piechart": {
+        "en": "Give me a pie chart of BA OPI that worked on BRs for the month of March for the client ESDC for brs of high priority only.",
+        "fr": "Donnez-moi un graphique circulaire des BPR analystes qui ont travaillé sur des DO pour le mois de mars pour le client EDSC, pour les DO de priorité Élevée seulement."
     }
 }

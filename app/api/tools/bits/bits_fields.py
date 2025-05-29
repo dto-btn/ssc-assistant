@@ -12,6 +12,11 @@ class BRFields:
         'BITS_STATUS_FR': { 'db_field': 's.DISP_STATUS_FR', 'description': 'Statut BITS BR.', 'en': 'Status', 'fr': 'Statut'},
     }
 
+    active = {
+        'BR_ACTIVE_EN': { 'db_field': 's.BR_ACTIVE_EN', 'description': 'Indicates if the BR is active.', 'en': 'Active', 'fr': 'Actif' },
+        'BR_ACTIVE_FR': { 'db_field': 's.BR_ACTIVE_FR', 'description': 'Indique si la BR est active.', 'en': 'Active', 'fr': 'Actif' },
+    }
+
     date_fields = {
         'REQST_IMPL_DATE': { 'db_field': 'br.REQST_IMPL_DATE', 'description': 'The date requested by partner/client to have BR implementation completed. CRID acronym.', 'en': 'Client Requested Implementation Date', 'fr': 'Date de mise en oeuvre demandée'},
         'SUBMIT_DATE': { 'db_field': 'br.SUBMIT_DATE', 'description': 'The date the BR was created in BITS.', 'en': 'Date Submited', 'fr': 'Date de soumission'},
@@ -45,8 +50,6 @@ class BRFields:
         'GROUP_EN': { 'db_field': 'br.GROUP_EN', 'description': 'Group', 'en': 'Group', 'fr': 'Groupe' },
         'GROUP_FR': { 'db_field': 'br.GROUP_FR', 'description': 'Groupe', 'en': 'Group', 'fr': 'Groupe' },
         'ASSOC_BRS': { 'db_field': 'br.ASSOC_BRS', 'description': 'Associated BRs to the BR.', 'en': 'Associated Business Request(s)', 'fr': 'Demande(s) opérationnelles associée(s)' },
-        'BR_ACTIVE_EN': { 'db_field': 's.BR_ACTIVE_EN', 'description': 'Indicates if the BR is active.', 'en': 'Active', 'fr': 'Actif' },
-        'BR_ACTIVE_FR': { 'db_field': 's.BR_ACTIVE_FR', 'description': 'Indique si la BR est active.', 'en': 'Active', 'fr': 'Actif' },
         'ACC_MANAGER_OPI': { 'db_field': 'opis.ACC_MANAGER_OPI', 'description': 'Account Manager OPI.', 'is_user_field': True, 'en': 'Account Manager', 'fr': 'Gestionnaire de compte' },
         'AGR_OPI': { 'db_field': 'opis.AGR_OPI', 'description': 'The Agreement OPI associated with the BR.', 'is_user_field': True, 'en': 'Agreement OPI', 'fr': 'BPR Entente' },
         'BA_OPI': { 'db_field': 'opis.BA_OPI', 'description': 'The EBIDM BA responsible for costing the BR using the ePET.', 'is_user_field': True, 'en': 'BA OPI', 'fr': 'BPR analyste' },
@@ -79,5 +82,6 @@ class BRFields:
     valid_search_fields.update(br_owner)
     valid_search_fields.update(date_fields)
 
-    valid_search_fields_no_statuses = valid_search_fields.copy()
+    valid_search_fields_filterable = valid_search_fields.copy()
     valid_search_fields.update(status)
+    valid_search_fields.update(active)

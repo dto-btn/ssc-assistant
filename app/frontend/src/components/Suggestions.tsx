@@ -133,6 +133,7 @@ const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
                 onClick={() => onSuggestionClicked(t("suggestions.business.pspc"), "bits")}
                 sx={{
                   backgroundColor: "background.paper",
+                  mb: 2,
                   borderRadius: 1,
                   boxShadow: 1,
                   width: "100%",
@@ -144,6 +145,23 @@ const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
                   <ReceiptIcon color="primary" />
                 </ListItemIcon>
                 <ListItemText primary={t("suggestions.business.pspc")} />
+              </ListItem>
+              <ListItem
+                component="button"
+                onClick={() => onSuggestionClicked(t("suggestions.business.piechart"), "bits")}
+                sx={{
+                  backgroundColor: "background.paper",
+                  borderRadius: 1,
+                  boxShadow: 1,
+                  width: "100%",
+                  textAlign: "left",
+                  cursor: "pointer",
+                }}
+              >
+                <ListItemIcon>
+                  <ReceiptIcon color="primary" />
+                </ListItemIcon>
+                <ListItemText primary={t("suggestions.business.piechart")} />
               </ListItem>
             </List>
           </Box>

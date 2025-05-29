@@ -23,8 +23,8 @@ class BRQueryFilter(BaseModel):
     @classmethod
     def validate_name(cls, v: str) -> str:
         """Validate the name field.Ensure its a valid DB field"""
-        if v not in BRFields.valid_search_fields_no_statuses:
-            raise ValueError(f"Name must be one of {list(BRFields.valid_search_fields_no_statuses.keys())}")
+        if v not in BRFields.valid_search_fields_filterable:
+            raise ValueError(f"Name must be one of {list(BRFields.valid_search_fields_filterable.keys())}")
         return v
 
     def is_date(self) -> bool:
@@ -33,7 +33,7 @@ class BRQueryFilter(BaseModel):
 
     def to_label_dict(self):
         """Return a dict with en/fr labels instead of the raw name."""
-        field_info = BRFields.valid_search_fields_no_statuses.get(self.name, {})
+        field_info = BRFields.valid_search_fields_filterable.get(self.name, {})
         return {
             "name": self.name,
             "en": field_info.get("en", self.name),
@@ -51,6 +51,7 @@ class BRQuery(BaseModel):
     query_filters: list[BRQueryFilter] = Field(..., description="List of filters to apply to the query.")
     limit: int = Field(100, description="Maximum number of records to return. Optional. Defaults to 100.")
     statuses: list[str] = Field([], description="List of of STATUS_ID to filter by.")
+    active: bool = Field(True, description="If it should search for active BRs only, on by default.")
 
     # Validator for the 'statuses' field
     @field_validator("statuses")
