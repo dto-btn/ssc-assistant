@@ -21,7 +21,7 @@ interface SuggestionCard {
   title: string;
   tool: string;
   icon: JSX.Element;
-  category: "general" | "br";
+  category: "general" | "br" | "geds";
   color: string;
 }
 
@@ -31,32 +31,32 @@ const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
   // Define all suggestion cards with their properties
   const suggestionCards: SuggestionCard[] = [
     {
-      title: t("suggestions.general.email"),
-      tool: "corporate",
+      title: t("suggestions.general.contact"),
+      tool: "geds",
       icon: <EmailIcon sx={{ color: "#3f51b5" }} />, // Blue
-      category: "general",
+      category: "geds",
       color: "#3f51b5",
     },
     {
       title: t("suggestions.general.hire"),
       tool: "corporate",
-      icon: <HelpOutlineIcon sx={{ color: "#8e24aa" }} />, // Purple
+      icon: <HelpOutlineIcon sx={{ color: "#3f51b5" }} />, // Purple
       category: "general",
-      color: "#8e24aa",
+      color: "#3f51b5",
     },
     {
       title: t("suggestions.business.find"),
       tool: "bits",
-      icon: <ReceiptIcon sx={{ color: "#4caf50" }} />, // Green
+      icon: <ReceiptIcon sx={{ color: "#8e24aa" }} />, // Green
       category: "br",
-      color: "#4caf50",
+      color: "#8e24aa",
     },
     {
       title: t("suggestions.business.pspc"),
       tool: "bits",
-      icon: <ReceiptIcon sx={{ color: "#3f51b5" }} />, // Blue
+      icon: <ReceiptIcon sx={{ color: "#8e24aa" }} />, // Blue
       category: "br",
-      color: "#3f51b5",
+      color: "#8e24aa",
     },
     {
       title: t("suggestions.business.piechart"),
@@ -106,11 +106,7 @@ const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
                   </Box>
                   <Box sx={{ alignSelf: "flex-end", mt: 1 }}>
                     <Chip
-                      label={
-                        card.category === "general"
-                          ? "General"
-                          : "Business Request"
-                      }
+                      label={t(`suggestions.categories.${card.category}`)}
                       size="small"
                       sx={{
                         backgroundColor: `${card.color}20`,

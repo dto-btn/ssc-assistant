@@ -791,6 +791,10 @@
         "en": "Help me rewrite an email so it is more formal.",
         "fr": "Aidez-moi à réécrire un courriel pour qu'il soit plus formel."
     },
+    "suggestions.general.contact": {
+        "en": "I need to find contact information in GEDS.",
+        "fr": "Aidez-moi à trouver des coordonnées dans SAGE."
+    },
     "suggestions.general.hire": {
         "en": "Can you tell me how do I find information on how to hire a student?",
         "fr": "Pouvez-vous me dire comment trouver des informations sur l'embauche d'un étudiant?"
@@ -806,5 +810,17 @@
     "suggestions.business.piechart": {
         "en": "Give me a pie chart of BA OPI that worked on BRs for the month of March for the client ESDC for brs of high priority only.",
         "fr": "Donnez-moi un graphique circulaire des BPR analystes qui ont travaillé sur des DO pour le mois de mars pour le client EDSC, pour les DO de priorité Élevée seulement."
+    },
+    "suggestions.categories.general": {
+        "en": "General",
+        "fr": "Général"
+    },
+    "suggestions.categories.br": {
+        "en": "Business Requests",
+        "fr": "Demandes d'affaires"
+    },
+    "suggestions.categories.geds": {
+        "en": "GEDS",
+        "fr": "SAGE"
     }
 }

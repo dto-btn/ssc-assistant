@@ -384,7 +384,17 @@ const MainScreen = () => {
   }, [parsedSuggestionContext]);
 
   const onSuggestionClicked = (question: string, tool: string) => {
-    handleUpdateEnabledTools(tool, true);
+    let updatedTools: Record<string, boolean> = {
+      ...appStore.tools.enabledTools,
+    };
+    if (tool === "archibus" || tool === "bits") {
+      Object.keys(appStore.tools.enabledTools).forEach((t) => {
+        updatedTools[t] = false;
+      });
+    }
+    updatedTools[tool] = true;
+    appStore.tools.setEnabledTools(updatedTools);
+    PersistenceUtils.setEnabledTools(updatedTools);
     apiRequestService.makeApiRequest(
       question,
       userData,
