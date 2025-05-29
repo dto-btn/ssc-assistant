@@ -1,11 +1,6 @@
 import {
   Box,
   IconButton,
-  Grid,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
 } from "@mui/material";
 import {
   ChatInput,
