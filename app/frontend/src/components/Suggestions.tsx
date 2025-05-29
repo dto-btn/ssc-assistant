@@ -9,8 +9,10 @@ import {
 } from "@mui/material";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import EmailIcon from "@mui/icons-material/Email";
+import PersonIcon from "@mui/icons-material/Person";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { useTranslation } from "react-i18next";
+import { allowedToolsSet } from '../allowedTools';
 
 type SuggestionsProps = {
   onSuggestionClicked: (suggestion: string, tool: string) => void;
@@ -33,8 +35,15 @@ const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
     {
       title: t("suggestions.general.contact"),
       tool: "geds",
-      icon: <EmailIcon sx={{ color: "#3f51b5" }} />, // Blue
+      icon: <PersonIcon sx={{ color: "#3f51b5" }} />, // Blue
       category: "geds",
+      color: "#3f51b5",
+    },
+    {
+      title: t("suggestions.general.email"),
+      tool: "corporate",
+      icon: <EmailIcon sx={{ color: "#3f51b5" }} />, // Blue
+      category: "general",
       color: "#3f51b5",
     },
     {
@@ -67,6 +76,11 @@ const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
     },
   ];
 
+  // Filter suggestion cards based on the allowedToolsSet
+  const filteredSuggestionCards = suggestionCards.filter(card =>
+    allowedToolsSet.has(card.tool)
+  );
+
   return (
     <Box sx={{ width: "100%", mb: 3 }}>
       {/* Using a fixed grid with equal column width and fixed card dimensions */}
@@ -84,7 +98,7 @@ const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
           gap: 2,
         }}
       >
-        {suggestionCards.map((card, index) => (
+        {filteredSuggestionCards.map((card, index) => (
           <Card
             key={index}
             elevation={1}
@@ -102,16 +116,17 @@ const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
             <CardActionArea
               onClick={() => onSuggestionClicked(card.title, card.tool)}
               sx={{ height: "100%" }}
-            >                <CardContent
-              sx={{
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                p: 2,
-                overflowY: "hidden", // Only prevent vertical overflow
-              }}
             >
+              <CardContent
+                sx={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  p: 2,
+                  overflowY: "hidden", // Only prevent vertical overflow
+                }}
+              >
                 <Box
                   sx={{
                     display: "flex",
