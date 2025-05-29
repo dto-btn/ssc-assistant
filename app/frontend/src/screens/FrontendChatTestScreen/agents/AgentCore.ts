@@ -73,8 +73,8 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
             { role: 'user', content: query }
         ];
 
-        // Define available tools for the agent
-        const toolSchemas: OpenAI.Chat.Completions.ChatCompletionTool[] = [
+        // Define available tools for the inbuilt tools
+        const inbuiltToolSchemas: OpenAI.Chat.Completions.ChatCompletionTool[] = [
             {
                 type: "function",
                 function: {
@@ -105,8 +105,8 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
             }
         ];
 
-        // Implement the available functions
-        const availableFunctions: Record<string, Function> = {
+        // Implement the tool handlers for the inbuilt tools
+        const inbuiltToolHandlers: Record<string, Function> = {
             think: async (args: { reasoning: string }) => {
                 // Update progress tracking
                 progress.hasThought = true;
@@ -148,7 +148,7 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                 const response = await this.openai.chat.completions.create({
                     model: "gpt-4o", // Use appropriate model
                     messages: messages,
-                    tools: toolSchemas,
+                    tools: inbuiltToolSchemas,
                 });
 
                 const message = response.choices[0].message;
@@ -171,9 +171,9 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                             // Track unique tool calls
                             progress.uniqueToolCalls.add(functionName);
                             
-                            if (availableFunctions[functionName]) {
+                            if (inbuiltToolHandlers[functionName]) {
                                 // Execute the function
-                                const functionResult = await availableFunctions[functionName](functionArgs);
+                                const functionResult = await inbuiltToolHandlers[functionName](functionArgs);
                                 
                                 // Add the function result to the conversation
                                 messages.push({
