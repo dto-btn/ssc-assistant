@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAgentCore } from './hooks/useAgentCore';
-import { AgentProgressData } from './agents/AgentCoreResponse';
+import { AgentProgressData } from './agents/AgentCoreConnection';
 
 export const FrontendChatTestScreen = () => {
     const [isBusy, setIsBusy] = useState<boolean>(false);

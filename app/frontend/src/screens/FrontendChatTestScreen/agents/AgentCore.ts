@@ -1,5 +1,5 @@
 import OpenAI, { AzureOpenAI } from "openai";
-import { AgentCoreConnection, AgentProgressData } from "./AgentCoreResponse";
+import { AgentCoreConnection, AgentProgressData } from "./AgentCoreConnection";
 
 export class AgentCore {
     private MAX_ITERATIONS = 10; // Maximum iterations to prevent infinite loops
@@ -7,30 +7,30 @@ export class AgentCore {
     constructor(private openai: AzureOpenAI) {}
 
     /**
-     * Process a query and return an AgentCoreResponse immediately.
+     * Process a query and return an AgentCoreConnection immediately.
      * The response will be populated asynchronously as processing completes.
      * 
      * @param query The query to process
-     * @returns An AgentCoreResponse that will be populated with results
+     * @returns An AgentCoreConnection that will be populated with results
      */
     processQuery(query: string): AgentCoreConnection {
-        // Create a new AgentCoreResponse instance
+        // Create a new AgentCoreConnection instance
         const cnx = new AgentCoreConnection();
         
         // Start the processing in the background
         this.processQueryAsync(query, cnx);
         
-        // Return the response object immediately
+        // Return the connection object immediately
         return cnx;
     }
 
     /**
-     * Process a query asynchronously and populate the provided AgentCoreResponse.
+     * Process a query asynchronously and populate the provided AgentCoreConnection.
      * 
      * @param query The query to process
-     * @param agentResponse The AgentCoreResponse to populate with results
+     * @param cnx The AgentCoreConnection to populate with results
      */
-    private async processQueryAsync(query: string, agentResponse: AgentCoreConnection): Promise<void> {
+    private async processQueryAsync(query: string, cnx: AgentCoreConnection): Promise<void> {
         // Limit for number of iterations, to prevent infinite loops.
         // Set it to max 10.
         let loopsRemaining = this.MAX_ITERATIONS;
@@ -115,7 +115,7 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                 progress.lastActionContent = args.reasoning;
                 
                 // Send progress update with a copy of the progress object to avoid mutations
-                agentResponse.triggerProgress({...progress});
+                cnx.triggerProgress({...progress});
                 
                 // Simulate explicit reasoning process
                 return `Reasoning process simulated: ${args.reasoning}`;
@@ -127,7 +127,7 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                 progress.lastActionContent = args.observation;
                 
                 // Send progress update with a copy of the progress object to avoid mutations
-                agentResponse.triggerProgress({...progress});
+                cnx.triggerProgress({...progress});
                 
                 // Simulate summarizing observations
                 return `Observation summarized: ${args.observation}`;
@@ -191,7 +191,7 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                                 // Send a progress update for the "function not found" case
                                 progress.lastAction = 'error';
                                 progress.lastActionContent = `Function "${functionName}" not found`;
-                                agentResponse.triggerProgress({...progress});
+                                cnx.triggerProgress({...progress});
                             }
                         }
                     }
@@ -205,10 +205,10 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                         
                         // Update progress to show we've completed
                         progress.lastAction = 'completed';
-                        agentResponse.triggerProgress({...progress});
+                        cnx.triggerProgress({...progress});
                         
-                        agentResponse.setResponseText(finalResponse);
-                        agentResponse.triggerComplete();
+                        cnx.setResponseText(finalResponse);
+                        cnx.triggerComplete();
                     } else {
                         // Remind it to follow the ReAct pattern first
                         messages.push({
@@ -224,11 +224,11 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                 
                 // Update progress to show error
                 progress.lastAction = 'error';
-                agentResponse.triggerProgress({...progress});
+                cnx.triggerProgress({...progress});
                 
                 // Set the error response text and trigger error event
-                agentResponse.setResponseText(finalResponse);
-                agentResponse.triggerError(error);
+                cnx.setResponseText(finalResponse);
+                cnx.triggerError(error);
             }
         }
 
@@ -238,12 +238,12 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
             // Update progress to show we've reached the maximum iterations
             progress.currentIteration = this.MAX_ITERATIONS;
             progress.lastAction = 'max_iterations_reached';
-            agentResponse.triggerProgress({...progress});
+            cnx.triggerProgress({...progress});
             
             // Extract the best possible response from conversation history
             const extractedResponse = this.extractFinalResponseFromHistory(messages, progress);
-            agentResponse.setResponseText(extractedResponse);
-            agentResponse.triggerComplete();
+            cnx.setResponseText(extractedResponse);
+            cnx.triggerComplete();
         }
     }
 
