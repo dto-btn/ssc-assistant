@@ -464,16 +464,6 @@ const MainScreen = () => {
               >
                 {t("how.can.i.help")}
               </Typography>
-              <Typography
-                variant="body1"
-                sx={{
-                  maxWidth: "80%",
-                  textAlign: "center",
-                  mb: 4,
-                }}
-              >
-                {t("how.can.i.help.submessage")}
-              </Typography>
               <Suggestions
                 onSuggestionClicked={onSuggestionClicked}
               />

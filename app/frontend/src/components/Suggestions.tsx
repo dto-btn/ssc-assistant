@@ -2,10 +2,10 @@ import {
   Box,
   Grid,
   Typography,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
+  Card,
+  CardContent,
+  CardActionArea,
+  Chip,
 } from "@mui/material";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import EmailIcon from "@mui/icons-material/Email";
@@ -16,156 +16,115 @@ type SuggestionsProps = {
   onSuggestionClicked: (suggestion: string, tool: string) => void;
 };
 
+// Card type definitions with color and category info
+interface SuggestionCard {
+  title: string;
+  tool: string;
+  icon: JSX.Element;
+  category: "general" | "br";
+  color: string;
+}
+
 const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
   const { t } = useTranslation();
 
+  // Define all suggestion cards with their properties
+  const suggestionCards: SuggestionCard[] = [
+    {
+      title: t("suggestions.general.email"),
+      tool: "corporate",
+      icon: <EmailIcon sx={{ color: "#3f51b5" }} />, // Blue
+      category: "general",
+      color: "#3f51b5",
+    },
+    {
+      title: t("suggestions.general.hire"),
+      tool: "corporate",
+      icon: <HelpOutlineIcon sx={{ color: "#8e24aa" }} />, // Purple
+      category: "general",
+      color: "#8e24aa",
+    },
+    {
+      title: t("suggestions.business.find"),
+      tool: "bits",
+      icon: <ReceiptIcon sx={{ color: "#4caf50" }} />, // Green
+      category: "br",
+      color: "#4caf50",
+    },
+    {
+      title: t("suggestions.business.pspc"),
+      tool: "bits",
+      icon: <ReceiptIcon sx={{ color: "#3f51b5" }} />, // Blue
+      category: "br",
+      color: "#3f51b5",
+    },
+    {
+      title: t("suggestions.business.piechart"),
+      tool: "bits",
+      icon: <ReceiptIcon sx={{ color: "#8e24aa" }} />, // Purple
+      category: "br",
+      color: "#8e24aa",
+    },
+  ];
+
   return (
     <Box sx={{ width: "100%", mb: 3 }}>
-      <Grid container spacing={4} justifyContent="center">
-        <Grid item xs={12} md={5}>
-          <Box
-            sx={{
-              backgroundColor: "primary.light",
-              borderRadius: 2,
-              p: 3,
-              height: "100%",
-              boxShadow: 3,
-              transition: "transform 0.3s, box-shadow 0.3s",
-              "&:hover": {
-                transform: "translateY(-5px)",
-                boxShadow: 6,
-              },
-            }}
-          >
-            <Typography
-              variant="h6"
-              gutterBottom
-              align="center"
-              color="common.white"
-              sx={{ mb: 2, fontWeight: "bold" }}
+      <Grid container spacing={2} justifyContent="center">
+        {suggestionCards.map((card, index) => (
+          <Grid item xs={12} sm={6} md={4} key={index}>
+            <Card
+              elevation={1}
+              sx={{
+                borderLeft: `4px solid ${card.color}`,
+                transition: "transform 0.2s, box-shadow 0.2s",
+                "&:hover": {
+                  transform: "translateY(-5px)",
+                  boxShadow: 3,
+                },
+              }}
             >
-              {t("suggestions.general.title")}
-            </Typography>
-            <List>
-              <ListItem
-                component="button"
-                onClick={() => onSuggestionClicked(t("suggestions.general.email"), "corporate")}
-                sx={{
-                  backgroundColor: "background.paper",
-                  mb: 2,
-                  borderRadius: 1,
-                  boxShadow: 1,
-                  width: "100%",
-                  textAlign: "left",
-                  cursor: "pointer",
-                }}
+              <CardActionArea
+                onClick={() => onSuggestionClicked(card.title, card.tool)}
+                sx={{ height: "100%" }}
               >
-                <ListItemIcon>
-                  <EmailIcon color="primary" />
-                </ListItemIcon>
-                <ListItemText primary={t("suggestions.general.email",)} />
-              </ListItem>
-              <ListItem
-                component="button"
-                onClick={() => onSuggestionClicked(t("suggestions.general.hire"), "corporate")}
-                sx={{
-                  backgroundColor: "background.paper",
-                  borderRadius: 1,
-                  boxShadow: 1,
-                  width: "100%",
-                  textAlign: "left",
-                  cursor: "pointer",
-                }}
-              >
-                <ListItemIcon>
-                  <HelpOutlineIcon color="primary" />
-                </ListItemIcon>
-                <ListItemText primary={t("suggestions.general.hire")} />
-              </ListItem>
-            </List>
-          </Box>
-        </Grid>
-        <Grid item xs={12} md={5}>
-          <Box
-            sx={{
-              backgroundColor: "primary.light",
-              borderRadius: 2,
-              p: 3,
-              height: "100%",
-              boxShadow: 3,
-              transition: "transform 0.3s, box-shadow 0.3s",
-              "&:hover": {
-                transform: "translateY(-5px)",
-                boxShadow: 6,
-              },
-            }}
-          >
-            <Typography
-              variant="h6"
-              gutterBottom
-              align="center"
-              color="common.white"
-              sx={{ mb: 2, fontWeight: "bold" }}
-            >
-              {t("suggestions.business.title")}
-            </Typography>
-            <List>
-              <ListItem
-                component="button"
-                onClick={() => onSuggestionClicked(t("suggestions.business.find"), "bits")}
-                sx={{
-                  backgroundColor: "background.paper",
-                  mb: 2,
-                  borderRadius: 1,
-                  boxShadow: 1,
-                  width: "100%",
-                  textAlign: "left",
-                  cursor: "pointer",
-                }}
-              >
-                <ListItemIcon>
-                  <ReceiptIcon color="primary" />
-                </ListItemIcon>
-                <ListItemText primary={t("suggestions.business.find")} />
-              </ListItem>
-              <ListItem
-                component="button"
-                onClick={() => onSuggestionClicked(t("suggestions.business.pspc"), "bits")}
-                sx={{
-                  backgroundColor: "background.paper",
-                  mb: 2,
-                  borderRadius: 1,
-                  boxShadow: 1,
-                  width: "100%",
-                  textAlign: "left",
-                  cursor: "pointer",
-                }}
-              >
-                <ListItemIcon>
-                  <ReceiptIcon color="primary" />
-                </ListItemIcon>
-                <ListItemText primary={t("suggestions.business.pspc")} />
-              </ListItem>
-              <ListItem
-                component="button"
-                onClick={() => onSuggestionClicked(t("suggestions.business.piechart"), "bits")}
-                sx={{
-                  backgroundColor: "background.paper",
-                  borderRadius: 1,
-                  boxShadow: 1,
-                  width: "100%",
-                  textAlign: "left",
-                  cursor: "pointer",
-                }}
-              >
-                <ListItemIcon>
-                  <ReceiptIcon color="primary" />
-                </ListItemIcon>
-                <ListItemText primary={t("suggestions.business.piechart")} />
-              </ListItem>
-            </List>
-          </Box>
-        </Grid>
+                <CardContent
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1.5,
+                    }}
+                  >
+                    {card.icon}
+                    <Typography variant="body1">{card.title}</Typography>
+                  </Box>
+                  <Box sx={{ alignSelf: "flex-end", mt: 1 }}>
+                    <Chip
+                      label={
+                        card.category === "general"
+                          ? "General"
+                          : "Business Request"
+                      }
+                      size="small"
+                      sx={{
+                        backgroundColor: `${card.color}20`,
+                        color: card.color,
+                        fontWeight: "medium",
+                        fontSize: "0.7rem",
+                      }}
+                    />
+                  </Box>
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          </Grid>
+        ))}
       </Grid>
     </Box>
   );
