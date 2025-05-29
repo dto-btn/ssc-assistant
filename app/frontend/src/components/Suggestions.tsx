@@ -14,14 +14,16 @@ import { useTranslation } from "react-i18next";
 
 type SuggestionsProps = {
   onSuggestionClicked: (suggestionText: string) => void;
+  handleUpdateEnabledTools: (toolName: string, forceOn: boolean) => void;
 };
 
-const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
+const Suggestions = ({ onSuggestionClicked, handleUpdateEnabledTools }: SuggestionsProps) => {
   const { t } = useTranslation();
 
-  const sendMessage = (question: string) => {
+  const sendMessage = (question: string, tool: string) => {
+    handleUpdateEnabledTools(tool, true);
     onSuggestionClicked(question);
-  };
+  }
 
   return (
     <Box sx={{ width: "100%", mb: 3 }}>
@@ -53,7 +55,7 @@ const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
             <List>
               <ListItem
                 component="button"
-                onClick={() => sendMessage(t("suggestions.general.email"))}
+                onClick={() => sendMessage(t("suggestions.general.email"), "corporate")}
                 sx={{
                   backgroundColor: "background.paper",
                   mb: 2,
@@ -67,11 +69,11 @@ const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
                 <ListItemIcon>
                   <EmailIcon color="primary" />
                 </ListItemIcon>
-                <ListItemText primary={t("suggestions.general.email")} />
+                <ListItemText primary={t("suggestions.general.email",)} />
               </ListItem>
               <ListItem
                 component="button"
-                onClick={() => sendMessage(t("suggestions.general.hire"))}
+                onClick={() => sendMessage(t("suggestions.general.hire"), "corporate")}
                 sx={{
                   backgroundColor: "background.paper",
                   borderRadius: 1,
@@ -116,7 +118,7 @@ const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
             <List>
               <ListItem
                 component="button"
-                onClick={() => sendMessage(t("suggestions.business.find"))}
+                onClick={() => sendMessage(t("suggestions.business.find"), "bits")}
                 sx={{
                   backgroundColor: "background.paper",
                   mb: 2,
@@ -134,7 +136,7 @@ const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
               </ListItem>
               <ListItem
                 component="button"
-                onClick={() => sendMessage(t("suggestions.business.pspc"))}
+                onClick={() => sendMessage(t("suggestions.business.pspc"), "bits")}
                 sx={{
                   backgroundColor: "background.paper",
                   borderRadius: 1,

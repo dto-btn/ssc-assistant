@@ -182,11 +182,11 @@ const MainScreen = () => {
     });
   };
 
-  const handleUpdateEnabledTools = (name: string) => {
+  const handleUpdateEnabledTools = (name: string, forceOn?: boolean) => {
     let updatedTools: Record<string, boolean> = {
       ...appStore.tools.enabledTools,
     };
-    const toolIsTurningOn: boolean = !appStore.tools.enabledTools[name];
+    const toolIsTurningOn: boolean = forceOn == true ? true : !appStore.tools.enabledTools[name];
 
     // Archibus is mutually exclusive with all other tools. If 'archibus' is turned on,
     // all other tools should be disabled. On the other hand, if any other tool is turned on,
@@ -278,10 +278,10 @@ const MainScreen = () => {
   useEffect(() => {
     console.debug(
       "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-        isAuthenticated +
-        ", InProgress? " +
-        inProgress +
-        ")"
+      isAuthenticated +
+      ", InProgress? " +
+      inProgress +
+      ")"
     );
     if (
       isAuthenticated &&
@@ -464,7 +464,8 @@ const MainScreen = () => {
                 {t("how.can.i.help.submessage")}
               </Typography>
               <Suggestions
-                onSuggestionClicked={(question) =>
+                onSuggestionClicked={(question) => {
+                  debugger
                   apiRequestService.makeApiRequest(
                     question,
                     userData,
@@ -473,6 +474,8 @@ const MainScreen = () => {
                     appStore.tools.enabledTools
                   )
                 }
+                }
+                handleUpdateEnabledTools={handleUpdateEnabledTools}
               />
               <ChatInput
                 clearOnSend
@@ -508,7 +511,7 @@ const MainScreen = () => {
               paddingTop: "3rem",
               overflow: "auto",
             }}
-            // maxWidth="lg"
+          // maxWidth="lg"
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <ChatMessagesContainer
