@@ -13,17 +13,11 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { useTranslation } from "react-i18next";
 
 type SuggestionsProps = {
-  onSuggestionClicked: (suggestionText: string) => void;
-  handleUpdateEnabledTools: (toolName: string, forceOn: boolean) => void;
+  onSuggestionClicked: (suggestion: string, tool: string) => void;
 };
 
-const Suggestions = ({ onSuggestionClicked, handleUpdateEnabledTools }: SuggestionsProps) => {
+const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
   const { t } = useTranslation();
-
-  const sendMessage = (question: string, tool: string) => {
-    handleUpdateEnabledTools(tool, true);
-    onSuggestionClicked(question);
-  }
 
   return (
     <Box sx={{ width: "100%", mb: 3 }}>
@@ -55,7 +49,7 @@ const Suggestions = ({ onSuggestionClicked, handleUpdateEnabledTools }: Suggesti
             <List>
               <ListItem
                 component="button"
-                onClick={() => sendMessage(t("suggestions.general.email"), "corporate")}
+                onClick={() => onSuggestionClicked(t("suggestions.general.email"), "corporate")}
                 sx={{
                   backgroundColor: "background.paper",
                   mb: 2,
@@ -73,7 +67,7 @@ const Suggestions = ({ onSuggestionClicked, handleUpdateEnabledTools }: Suggesti
               </ListItem>
               <ListItem
                 component="button"
-                onClick={() => sendMessage(t("suggestions.general.hire"), "corporate")}
+                onClick={() => onSuggestionClicked(t("suggestions.general.hire"), "corporate")}
                 sx={{
                   backgroundColor: "background.paper",
                   borderRadius: 1,
@@ -118,7 +112,7 @@ const Suggestions = ({ onSuggestionClicked, handleUpdateEnabledTools }: Suggesti
             <List>
               <ListItem
                 component="button"
-                onClick={() => sendMessage(t("suggestions.business.find"), "bits")}
+                onClick={() => onSuggestionClicked(t("suggestions.business.find"), "bits")}
                 sx={{
                   backgroundColor: "background.paper",
                   mb: 2,
@@ -136,7 +130,7 @@ const Suggestions = ({ onSuggestionClicked, handleUpdateEnabledTools }: Suggesti
               </ListItem>
               <ListItem
                 component="button"
-                onClick={() => sendMessage(t("suggestions.business.pspc"), "bits")}
+                onClick={() => onSuggestionClicked(t("suggestions.business.pspc"), "bits")}
                 sx={{
                   backgroundColor: "background.paper",
                   borderRadius: 1,

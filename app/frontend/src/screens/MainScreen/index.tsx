@@ -383,6 +383,17 @@ const MainScreen = () => {
     }
   }, [parsedSuggestionContext]);
 
+  const onSuggestionClicked = (question: string, tool: string) => {
+    handleUpdateEnabledTools(tool, true);
+    apiRequestService.makeApiRequest(
+      question,
+      userData,
+      undefined,
+      undefined,
+      useAppStore.getState().tools.enabledTools
+    )
+  };
+
   return (
     <UserContext.Provider value={userData}>
       <NewLayout
@@ -464,18 +475,7 @@ const MainScreen = () => {
                 {t("how.can.i.help.submessage")}
               </Typography>
               <Suggestions
-                onSuggestionClicked={(question) => {
-                  debugger
-                  apiRequestService.makeApiRequest(
-                    question,
-                    userData,
-                    undefined,
-                    undefined,
-                    appStore.tools.enabledTools
-                  )
-                }
-                }
-                handleUpdateEnabledTools={handleUpdateEnabledTools}
+                onSuggestionClicked={onSuggestionClicked}
               />
               <ChatInput
                 clearOnSend

@@ -131,7 +131,6 @@ export const useAppStore = create<AppContext>((set, get) => ({
     tools: {
         enabledTools: { ...defaultEnabledTools },
         setEnabledTools: (tools: Record<string, boolean>) => {
-            debugger
             set((state) => produce(state, (draft) => {
                 draft.tools.enabledTools = { ...tools };
             }));
