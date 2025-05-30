@@ -33,6 +33,7 @@ export const ChatDemo = () => {
 
     // Handle form submission
     const handleSubmit = (e: React.FormEvent) => {
+        console.log('Form submitted with input:', input);
         e.preventDefault();
 
         if (!input.trim() || isProcessing) return;

@@ -224,7 +224,9 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                     } else if (message.content) {
                         // If the AI responded with content, this might be the final answer
                         // We check if it's a substantial message by looking at reasoning steps and observations
-                        if (hasThought && hasObserved && reasoningSteps >= 1) {
+                        const isDone = hasThought && hasObserved && reasoningSteps >= 1;
+                        
+                        if (isDone) {
                             // This appears to be a final answer after proper reasoning
                             
                             // Update progress to show we've completed
@@ -240,12 +242,6 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                             
                             // cnx.setResponseText(finalResponse);
                             // cnx.triggerComplete();
-                        } else {
-                            // Remind it to follow the ReAct pattern first
-                            messages.push({
-                                role: 'user',
-                                content: 'Please follow the ReAct pattern. Use the "think" tool to share your reasoning and "observe" tool to summarize findings before providing your final answer.'
-                            });
                         }
                     }
                 } catch (error) {
