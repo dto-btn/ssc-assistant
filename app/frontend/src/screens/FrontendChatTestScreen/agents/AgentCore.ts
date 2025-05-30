@@ -169,6 +169,12 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
     
                     // Add the AI's message to the conversation
                     messages.push(message);
+                    cnx.triggerEvent({
+                        type: 'message',
+                        data: {
+                            content: message.content || '',
+                        }
+                    });
     
                     // debug console log
                     console.log("[DEBUG] AI response:", message);
