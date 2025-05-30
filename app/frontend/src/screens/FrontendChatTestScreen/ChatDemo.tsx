@@ -3,7 +3,6 @@ import { Box, TextField, Button, Typography, Paper, Avatar, CircularProgress, Di
 import SendIcon from '@mui/icons-material/Send';
 import { useAgentCore } from './hooks/useAgentCore';
 import { AgentCoreEvent, ThoughtEvent, ObservationEvent, ErrorEvent, FinishedEvent } from './agents/AgentCoreEvent.types';
-import { TurnConnection } from './agents/TurnConnection';
 
 // Message types for our chat interface
 type MessageType = 'user' | 'agent' | 'thought' | 'observation' | 'error';

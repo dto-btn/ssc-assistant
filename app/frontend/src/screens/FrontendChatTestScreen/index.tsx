@@ -1,4 +1,4 @@
-import { Box, Container, Paper } from '@mui/material';
+import { Container, Paper } from '@mui/material';
 import { ChatDemo } from './ChatDemo';
 
 export const FrontendChatTestScreen = () => {

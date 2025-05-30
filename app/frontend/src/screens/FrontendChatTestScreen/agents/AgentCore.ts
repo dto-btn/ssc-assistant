@@ -44,7 +44,6 @@ export class AgentCore {
         // how many reasoning steps have been taken?
         let reasoningSteps = 0;
         // what was the last action taken by the agent?
-        let lastAction: string | undefined = undefined; // might not need this
         
         // Track ReAct progress
         // const progress: AgentProgressData = {
@@ -118,8 +117,6 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                 // Update progress tracking
                 hasThought = true;
                 reasoningSteps++;
-                lastAction = 'think';
-                // lastActionContent = args.reasoning;
                 
                 // Send progress update with a copy of the progress object to avoid mutations
                 cnx.triggerEvent({
@@ -135,8 +132,6 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
             observe: async (args: { observation: string }) => {
                 // Update progress tracking
                 hasObserved = true;
-                lastAction = 'observe';
-                // progress.lastActionContent = args.observation;
                 
                 // Send progress update with a copy of the progress object to avoid mutations
                 cnx.triggerEvent({
@@ -232,7 +227,6 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                                     // This appears to be a final answer after proper reasoning
                                     
                                     // Update progress to show we've completed
-                                    lastAction = 'completed';
                                     cnx.triggerEvent({
                                         type: 'finished',
                                         data: {
@@ -247,7 +241,6 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                                 // If evaluation fails, fall back to the simple heuristic
                                 const fallbackIsDone = hasThought && hasObserved && reasoningSteps >= 1;
                                 if (fallbackIsDone) {
-                                    lastAction = 'completed';
                                     cnx.triggerEvent({
                                         type: 'finished',
                                         data: {
@@ -262,9 +255,6 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                     console.error("Error in autonomous loop:", error);
                     isTurnCompleted = true;
                     const finalResponse = "An error occurred while processing your request.";
-                    
-                    // Update progress to show error
-                    lastAction = 'error';
     
                     cnx.triggerEvent({
                         type: 'error',
