@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AgentCoreMemory } from "./AgentCoreMemory";
 import { MemoryAccessError, MemoryValidationError } from "./AgentCoreErrors";
 
@@ -28,6 +28,16 @@ describe('AgentCoreMemory', () => {
             expect(turns[turnIndex]).toHaveProperty('type', 'turn:agent');
             expect(turns[turnIndex].actions).toEqual([]);
         });
+
+        it('should update listeners when a turn is added', () => {
+            const listener = vi.fn();
+            memory.onUpdate(listener);
+            memory.addUserTurn();
+            expect(listener).toHaveBeenCalled();
+            memory.addAgentTurn();
+            expect(listener).toHaveBeenCalledTimes(2);
+        });
+            
     });
 
     describe('During the UserTurn', () => {
@@ -35,26 +45,52 @@ describe('AgentCoreMemory', () => {
             memory.addUserTurn();
         });
 
-        it('should add a user message action', () => {
-            const turnIndex = 0; // The first turn is a user turn
-            memory.addTurnAction(turnIndex, { type: 'action:user-message', content: 'Hello' });
-            const turns = memory.export();
+        describe('success cases', () => {
+            it('should add a user message action', () => {
+                const turnIndex = 0; // The first turn is a user turn
+                memory.addTurnAction(turnIndex, { type: 'action:user-message', content: 'Hello' });
+                const turns = memory.export();
+    
+                expect(turns[turnIndex].actions.length).toBe(1);
+                expect(turns[turnIndex].actions[0]).toEqual({ type: 'action:user-message', content: 'Hello' });
+            });
 
-            expect(turns[turnIndex].actions.length).toBe(1);
-            expect(turns[turnIndex].actions[0]).toEqual({ type: 'action:user-message', content: 'Hello' });
+            it('should notify listeners when an action is added', () => {
+                const listener = vi.fn();
+                memory.onUpdate(listener);
+                const turnIndex = 0; // The first turn is a user turn
+                memory.addTurnAction(turnIndex, { type: 'action:user-message', content: 'Hello' });
+                expect(listener).toHaveBeenCalled();
+            });
         });
 
-        it('should throw an error when adding a non-UserAction to UserTurn', () => {
-            const turnIndex = 0; // The first turn is a user turn
-            expect(() => {
-                memory.addTurnAction(turnIndex, { type: 'action:agent-message', content: 'This should fail' });
-            }).toThrow(MemoryValidationError);
-        });
+        describe('error cases', () => {
+            it('should throw an error when adding a non-UserAction to UserTurn', () => {
+                const turnIndex = 0; // The first turn is a user turn
+                expect(() => {
+                    memory.addTurnAction(turnIndex, { type: 'action:agent-message', content: 'This should fail' });
+                }).toThrow(MemoryValidationError);
+            });
 
-        it('should throw an error when adding an action to a non-existent turn', () => {
-            expect(() => {
-                memory.addTurnAction(1, { type: 'action:user-message', content: 'This should fail' });
-            }).toThrow(MemoryAccessError);
+            it('should throw an error when adding an action to a non-existent turn', () => {
+                expect(() => {
+                    memory.addTurnAction(1, { type: 'action:user-message', content: 'This should fail' });
+                }).toThrow(MemoryAccessError);
+            });
+
+            it('should not notify listeners when an action fails to be added', () => {
+                const listener = vi.fn();
+                memory.onUpdate(listener);
+                expect(() => {
+                    memory.addTurnAction(1, { type: 'action:user-message', content: 'This should fail' });
+                }).toThrow(MemoryAccessError);
+                expect(listener).not.toHaveBeenCalled();
+                expect(() => {
+                    memory.addTurnAction(0, { type: 'action:agent-message', content: 'This should fail' });
+                }
+                ).toThrow(MemoryValidationError);
+                expect(listener).not.toHaveBeenCalled();
+            });
         });
     });
 
@@ -110,5 +146,13 @@ describe('AgentCoreMemory', () => {
             const exportedMemory = memory.export();
             expect(exportedMemory).toEqual([]);
         });
-    })
+
+        it('should not notify listeners on export', () => {
+            memory.addUserTurn();
+            const listener = vi.fn();
+            memory.onUpdate(listener);
+            memory.export();
+            expect(listener).not.toHaveBeenCalled();
+        });
+    });
 });
