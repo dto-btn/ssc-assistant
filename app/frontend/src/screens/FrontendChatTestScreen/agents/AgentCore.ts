@@ -217,32 +217,46 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                                         data: {
                                             content: `Function "${functionName}" not found. Please ensure the function is defined in the tool handlers.`
                                         }
-                                    })
+                                    });
                                 }
                             }
                         }
                     } else if (message.content) {
                         // If the AI responded with content, this might be the final answer
-                        // We check if it's a substantial message by looking at reasoning steps and observations
-                        const isDone = hasThought && hasObserved && reasoningSteps >= 1;
+                        // We'll use an LLM to evaluate whether this is the final response
                         
-                        if (isDone) {
-                            // This appears to be a final answer after proper reasoning
-                            
-                            // Update progress to show we've completed
-                            lastAction = 'completed';
-                            // cnx.triggerEvent({...progress});
-                            cnx.triggerEvent({
-                                type: 'finished',
-                                data: {
-                                    finishReason: 'stop'
+                        // First, create a prompt to evaluate completion
+                        await this.evaluateCompletionWithLLM(messages, cnx)
+                            .then(isDone => {
+                                if (isDone) {
+                                    // This appears to be a final answer after proper reasoning
+                                    
+                                    // Update progress to show we've completed
+                                    lastAction = 'completed';
+                                    cnx.triggerEvent({
+                                        type: 'finished',
+                                        data: {
+                                            finishReason: 'stop'
+                                        }
+                                    });
+                                    isTurnCompleted = true;
+                                }
+                            })
+                            .catch(error => {
+                                console.error("Error evaluating completion:", error);
+                                // If evaluation fails, fall back to the simple heuristic
+                                const fallbackIsDone = hasThought && hasObserved && reasoningSteps >= 1;
+                                if (fallbackIsDone) {
+                                    lastAction = 'completed';
+                                    cnx.triggerEvent({
+                                        type: 'finished',
+                                        data: {
+                                            finishReason: 'stop'
+                                        }
+                                    });
+                                    isTurnCompleted = true;
                                 }
                             });
-                            isTurnCompleted = true;
-                            
-                            // cnx.setResponseText(finalResponse);
-                            // cnx.triggerComplete();
-                        }
                     }
                 } catch (error) {
                     console.error("Error in autonomous loop:", error);
@@ -257,7 +271,7 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                         data: {
                             content: finalResponse
                         }
-                    })
+                    });
                     // cnx.triggerEvent({...progress});
                     // // Set the error response text and trigger error event
                     // cnx.setResponseText(finalResponse);
@@ -301,6 +315,122 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
             // const extractedResponse = this.extractFinalResponseFromHistory(messages, progress);
             // cnx.setResponseText(extractedResponse);
             // cnx.triggerComplete();
+        }
+    }
+
+    /**
+     * Evaluates whether the conversation has reached a natural conclusion by using an LLM
+     * to analyze the entire conversation history.
+     * 
+     * @param messages The complete conversation history
+     * @param cnx The TurnConnection for communicating events
+     * @returns A promise that resolves to a boolean indicating if the conversation is complete
+     */
+    private async evaluateCompletionWithLLM(
+        messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+        cnx: TurnConnection
+    ): Promise<boolean> {
+        // Create a system prompt that asks the LLM to evaluate if the conversation is complete
+        const evaluationPrompt: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+            {
+                role: 'system',
+                content: `
+You are an evaluator determining if a ReAct agent's conversation has reached a natural conclusion.
+
+You will analyze the entire history of a conversation and determine if the agent has provided a final answer to the user's query.
+
+A complete conversation MUST have the following:
+- A final response from the agent that directly and comprehensively answers the user's original query
+- OR, a question for the user that indicates a need for more information, clarification, or input to proceed.
+
+Specifically, if the agent's last message is asking the user for more details, clarification, or any form of input, ALWAYS mark the conversation as complete.
+
+Examples of agent questions that should be considered complete:
+- "Could you please provide more details about the specific plan you would like me to execute?"
+- "Can you clarify what you mean by X?"
+- "I need more information to help you with that. Could you explain...?"
+- "What specific aspects of X are you interested in?"
+
+Do NOT consider a conversation complete if:
+- The agent has stated or clearly implied that it will continue reasoning or acting independently.
+
+Analyze the following conversation and determine if it has reached a natural conclusion.
+Is it complete? Why or why not?
+                `
+            }
+        ];
+        
+        // Add a simplified version of the conversation history
+        // Convert the messages to a readable format for the evaluation LLM
+        const simplifiedHistory = messages.map(msg => {
+            if (msg.role === 'system') {
+                return `[System Instructions]`;
+            } else if (msg.role === 'user') {
+                return `User: ${msg.content}`;
+            } else if (msg.role === 'assistant') {
+                if (msg.content) {
+                    return `Agent: ${msg.content}`;
+                } else if (msg.tool_calls) {
+                    return `Agent: [Used tool: ${msg.tool_calls.map(t => t.function.name).join(', ')}]`;
+                }
+                return 'Agent: [No content]';
+            } else if (msg.role === 'tool') {
+                return `Tool Result: ${msg.content}`;
+            }
+            return `${msg.role}: ${JSON.stringify(msg)}`;
+        }).join('\n\n');
+        
+        evaluationPrompt.push({
+            role: 'user',
+            content: `Here is the conversation history:\n\n${simplifiedHistory}\n\nIs this conversation complete? Answer with ONLY 'true' or 'false'.`
+        });
+        
+        // Log the evaluation process
+        cnx.triggerEvent({
+            type: 'debug-log',
+            data: {
+                logLevel: 'debug',
+                logContent: 'Evaluating conversation completion with LLM'
+            }
+        });
+        
+        try {
+            // Call the LLM to evaluate if the conversation is complete
+            const response = await this.openai.chat.completions.create({
+                model: "gpt-4o", // Use the same model for consistency
+                messages: evaluationPrompt,
+                temperature: 0.1, // Low temperature for more deterministic responses
+                max_tokens: 10, // Only need a short response (true/false)
+            });
+
+            
+            const evaluationResult = response.choices[0].message.content || '';
+            const isDone = evaluationResult.trim().toLowerCase() === 'true';
+            
+            console.log("[DEBUG] Evaluation result:", evaluationResult, "Is done:", isDone);
+            
+            // Log the evaluation result
+            cnx.triggerEvent({
+                type: 'debug-log',
+                data: {
+                    logLevel: 'info',
+                    logContent: `Completion evaluation result: ${evaluationResult} (isDone: ${isDone})`
+                }
+            });
+            
+            return isDone;
+        } catch (error) {
+            console.error("Error during completion evaluation:", error);
+            cnx.triggerEvent({
+                type: 'debug-log',
+                data: {
+                    logLevel: 'error',
+                    logContent: `Error during completion evaluation: ${error}`
+                }
+            });
+            
+            // Re-throw to be handled by the caller
+            throw error;
         }
     }
 
