@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AgentProgressData } from '../agents/AgentCoreConnection';
+import { AgentProgressData } from "../agents/AgentCoreConnection.types";
 import { useAgentCore } from '../hooks/useAgentCore';
 
 /**

@@ -1,5 +1,6 @@
 import OpenAI, { AzureOpenAI } from "openai";
-import { AgentCoreConnection, AgentProgressData } from "./AgentCoreConnection";
+import { AgentCoreConnection } from "./AgentCoreConnection";
+import { AgentProgressData } from "./AgentCoreConnection.types";
 
 export class AgentCore {
     private MAX_ITERATIONS = 10; // Maximum iterations to prevent infinite loops

@@ -1,16 +1,6 @@
-import { ListenerManager } from "./ListenerManager";
-import { Listener } from "./ListenerManager.types";
-
-export interface AgentProgressData {
-    currentIteration: number;
-    maxIterations: number;
-    hasThought: boolean;
-    hasObserved: boolean;
-    reasoningSteps: number;
-    uniqueToolCalls: Set<string>;
-    lastAction?: string;
-    lastActionContent?: string;
-}
+import { AgentProgressData } from "./AgentCoreConnection.types";
+import { ListenerManager } from "./listenermanager/ListenerManager";
+import { Listener } from "./listenermanager/ListenerManager.types";
 
 export class AgentCoreConnection {
     private errorListeners: ListenerManager<unknown> = new ListenerManager<unknown>();

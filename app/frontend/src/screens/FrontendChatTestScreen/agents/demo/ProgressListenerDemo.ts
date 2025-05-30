@@ -1,5 +1,5 @@
 import { AgentCore } from "../AgentCore";
-import { AgentCoreConnection, AgentProgressData } from "../AgentCoreConnection";
+import { AgentProgressData } from "../AgentCoreConnection.types";
 import { AzureOpenAI } from "openai";
 
 // This demo shows how to use the AgentCoreConnection to listen for progress events
