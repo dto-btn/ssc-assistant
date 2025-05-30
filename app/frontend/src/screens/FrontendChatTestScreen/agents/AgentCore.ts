@@ -19,6 +19,10 @@ export class AgentCore {
         
         // Start the processing in the background
         this.processQueryAsync(query, cnx);
+
+        cnx.onEvent((event) => {
+            
+        });
         
         // Return the connection object immediately
         return cnx;
