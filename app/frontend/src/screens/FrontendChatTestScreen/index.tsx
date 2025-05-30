@@ -35,7 +35,7 @@ export const FrontendChatTestScreen = () => {
             setIsBusy(false);
         });
 
-        cnx.onProgress((progressData) => {
+        cnx.onEvent((progressData) => {
             setProgress(progressData);
 
             if (progressData.lastAction && progressData.lastActionContent) {

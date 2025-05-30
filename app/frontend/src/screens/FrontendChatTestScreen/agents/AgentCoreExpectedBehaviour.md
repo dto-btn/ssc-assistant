@@ -70,7 +70,7 @@ connection.onEvent((event: AgentCoreEvent) => {
                     break;
                 case 'error':
                     console.log('Agent finished due to an error.');
-                    console.error('Agent had error.', event.data.content);
+                    console.error('Agent had error.', event.data.errorReason);
                     break;
                 default:
                     break;
@@ -78,9 +78,6 @@ connection.onEvent((event: AgentCoreEvent) => {
             break;
         case 'error':
             console.error('Agent had error.', event.data.content);
-            break;
-        case 'finished':
-            console.log('Agent finished.');
             break;
         case 'debug-log':
             console.log("Log level:", event.data.logLevel); // error, info, debug

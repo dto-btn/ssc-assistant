@@ -32,7 +32,7 @@ export const AgentProgressDemo: React.FC = () => {
         const cnx = agentCore.processQuery(query);
 
         // Set up the progress listener
-        cnx.onProgress((progressData) => {
+        cnx.onEvent((progressData) => {
             // Update the progress state
             setProgress({ ...progressData });
 

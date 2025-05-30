@@ -100,7 +100,6 @@ export interface FinishedEvent extends AgentCoreEventBase {
   type: 'finished';
   data: {
     finishReason: FinishReason;
-    content?: string; // Optional, present when finishReason is 'error'
   };
 }
 
@@ -136,10 +135,3 @@ export type AgentCoreEvent =
   | FinishedEvent
   | ErrorEvent
   | DebugLogEvent;
-
-// TurnConnection interface for handling the agent turn
-export interface TurnConnection {
-  getEvents: () => AgentCoreEvent[];
-  getStatus: () => TurnConnectionStatus;
-  stop: () => void;
-}

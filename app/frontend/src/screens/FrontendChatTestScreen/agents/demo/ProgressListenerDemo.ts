@@ -18,7 +18,7 @@ export class ProgressListenerDemo {
         // Register listeners
         
         // Listen for progress events
-        connection.onProgress((progressData: AgentProgressData) => {
+        connection.onEvent((progressData: AgentProgressData) => {
             // Display progress data in a user-friendly format
             console.log("\n--- AGENT PROGRESS UPDATE ---");
             console.log(`Iteration: ${progressData.currentIteration}/${progressData.maxIterations}`);
