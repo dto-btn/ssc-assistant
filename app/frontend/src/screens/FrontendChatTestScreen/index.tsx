@@ -1,8 +1,20 @@
+import { Box, Container, Paper } from '@mui/material';
+import { ChatDemo } from './ChatDemo';
+
 export const FrontendChatTestScreen = () => {
     return (
-        <div>
-            <h1>Frontend Chat Test Screen</h1>
-            <p>This is a test screen for the frontend chat feature.</p>
-        </div>
+        <Container maxWidth="lg" sx={{ height: '100vh', py: 4 }}>
+            <Paper
+                elevation={3}
+                sx={{
+                    height: 'calc(100% - 2rem)',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}
+            >
+                <ChatDemo />
+            </Paper>
+        </Container>
     );
 }
