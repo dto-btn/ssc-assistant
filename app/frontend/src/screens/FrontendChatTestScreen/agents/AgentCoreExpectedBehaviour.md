@@ -8,7 +8,7 @@ const agentCore = AgentCore(openai, agentCoreMemory);
 
 // usage
 let incomingMessage = '';
-const cnx = agentCore.processQuery("What is an apple?");
+const turnCnx = agentCore.processQuery("What is an apple?");
 connection.onEvent((event: AgentCoreEvent) => {
     if (!event.type.startsWith('message-stream-')) {
         // non-streaming messages should reset the incomingMessage
@@ -82,23 +82,32 @@ connection.onEvent((event: AgentCoreEvent) => {
         case 'finished':
             console.log('Agent finished.');
             break;
+        case 'debug-log':
+            console.log("Log level:", event.data.logLevel); // error, info, debug
+            console.log("Log content:", event.data.logContent);
+            break;
         default:
             break;
     }
 });
 
-// You can also always get the latest events by querying the connection object.
-console.log(cnx.getEvents());
+// You can also always get the latest events by querying the turn connection object.
+console.log(turnCnx.getEvents());
 
-// Connection object can be queried
-switch(cnx.getStatus()) {
+// Turn connection object can be queried
+switch(turnCnx.getStatus()) {
     case 'active':
         console.log('is active');
         break;
     case 'finished':
         console.log('is finished');
         break;
+    case 'stopping':
+        console.log('is stopping by request of user');
     default:
         break;
 }
+
+// Turn can be stopped
+turnCnx.stop();
 ```
