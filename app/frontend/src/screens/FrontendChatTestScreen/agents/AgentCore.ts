@@ -19,10 +19,6 @@ export class AgentCore {
         
         // Start the processing in the background
         this.processQueryAsync(query, cnx);
-
-        cnx.onEvent((event) => {
-            
-        });
         
         // Return the connection object immediately
         return cnx;
@@ -42,21 +38,13 @@ export class AgentCore {
         let isTurnCompleted = false;
         // Store the final response to return to the user
         // let finalResponse: string = '';
-        // has the agent thought or observed anything yet?
-        let hasThought = false;
-        let hasObserved = false;
-        // how many reasoning steps have been taken?
-        let reasoningSteps = 0;
         // what was the last action taken by the agent?
         
         // Track ReAct progress
         // const progress: AgentProgressData = {
         //     currentIteration: 0,
         //     maxIterations: this.MAX_ITERATIONS,
-        //     hasThought: false,
-        //     hasObserved: false,
         //     uniqueToolCalls: new Set<string>(),
-        //     reasoningSteps: 0,
         // };
 
         // Track conversation context
@@ -119,8 +107,6 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
         const inbuiltToolHandlers: Record<string, Function> = {
             think: async (args: { reasoning: string }) => {
                 // Update progress tracking
-                hasThought = true;
-                reasoningSteps++;
                 
                 // Send progress update with a copy of the progress object to avoid mutations
                 cnx.triggerEvent({
@@ -134,9 +120,6 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                 return `Reasoning process simulated: ${args.reasoning}`;
             },
             observe: async (args: { observation: string }) => {
-                // Update progress tracking
-                hasObserved = true;
-                
                 // Send progress update with a copy of the progress object to avoid mutations
                 cnx.triggerEvent({
                     type: 'observation',
@@ -242,17 +225,13 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                             })
                             .catch(error => {
                                 console.error("Error evaluating completion:", error);
-                                // If evaluation fails, fall back to the simple heuristic
-                                const fallbackIsDone = hasThought && hasObserved && reasoningSteps >= 1;
-                                if (fallbackIsDone) {
-                                    cnx.triggerEvent({
-                                        type: 'finished',
-                                        data: {
-                                            finishReason: 'stop'
-                                        }
-                                    });
-                                    isTurnCompleted = true;
-                                }
+                                isTurnCompleted = true;
+                                cnx.triggerEvent({
+                                    type: 'finished',
+                                    data: {
+                                        finishReason: 'error'
+                                    }
+                                });
                             });
                     }
                 } catch (error) {
