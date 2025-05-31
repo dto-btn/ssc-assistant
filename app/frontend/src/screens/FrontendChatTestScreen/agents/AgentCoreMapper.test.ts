@@ -30,10 +30,6 @@ describe('AgentCoreMemory', () => {
                 });
             });
         });
-
-        it('should map', () => {
-            memory.loadFromOpenAI(response);
-        })
     });
 
     it('test', async () => {

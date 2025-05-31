@@ -24,6 +24,20 @@ export interface AgentObservation {
     content: string;
 }
 
+export interface AgentToolCall {
+    type: 'action:agent-tool-call';
+    toolCallId: string;
+    toolName: string;
+    toolArguments: string;
+}
+
+export interface AgentToolCallResponse {
+    type: 'action:agent-tool-call-response';
+    toolCallId: string;
+    toolName: string;
+    toolResponse: string;
+}
+
 export interface AgentError {
     type: 'action:agent-error';
     content: string;
@@ -44,6 +58,8 @@ export type AgentAction =
     | AgentMessage
     | AgentThought
     | AgentObservation
+    | AgentToolCall
+    | AgentToolCallResponse
     | AgentError
     | AgentDebugLog
     | UserTurn

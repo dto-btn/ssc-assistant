@@ -1,10 +1,105 @@
 import OpenAI, { AzureOpenAI } from "openai";
 import { TurnConnection } from "./TurnConnection";
+import { AgentCoreMemory } from "./AgentCoreMemory";
+import { AgentToolCall } from "./AgentCoreMemory.types";
+
+const mapMemoryExportToOpenAIMessage = (memory: AgentCoreMemory): OpenAI.Chat.Completions.ChatCompletionMessageParam[] => {
+    const turns = memory.export();
+
+    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
+
+    for (const turn of turns) {
+        if (turn.type === 'turn:user') {
+            for (const action of turn.actions) {
+                switch (action.type) {
+                    case 'action:user-message':
+                        messages.push({
+                            role: 'user',
+                            content: action.content
+                        });
+                        break;
+                    default:
+                        throw new Error(`Unknown user action type: ${action.type}`);
+                }
+            }
+        } else if (turn.type === 'turn:agent') {
+            let currentToolCalls: AgentToolCall[] | undefined = undefined;
+
+            for (const action of turn.actions) {
+                // If we have tool calls and the next action is not a tool call, we need to flush them
+                if (currentToolCalls !== undefined && action.type !== 'action:agent-tool-call') {
+                    messages.push({
+                        role: 'assistant',
+                        tool_calls: currentToolCalls.map(toolCall => ({
+                            id: toolCall.toolCallId,
+                            type: 'function',
+                            function: {
+                                name: toolCall.toolName,
+                                arguments: toolCall.toolArguments
+                            }
+                        }))
+                    });
+                    currentToolCalls = undefined; // Reset tool calls after flushing   
+                }
+
+                
+                switch (action.type) {
+                    case 'action:agent-message':
+                        messages.push({
+                            role: 'assistant',
+                            content: action.content
+                        });
+                        break;
+                    case 'action:agent-thought':
+                        messages.push({
+                            role: 'assistant',
+                            content: `Thought: ${action.content}`
+                        });
+                        break;
+                    case 'action:agent-observation':
+                        messages.push({
+                            role: 'assistant',
+                            content: `Observation: ${action.content}`
+                        });
+                        break;
+                    case 'action:agent-tool-call':
+                        // Tool calls in OpenAI appear inside assistant messages as an array.
+                        // However, we add separate messages for each tool call in our memory.
+                        // So we need to collect them until we hit a non-tool call action.
+                        if (!currentToolCalls) {
+                            currentToolCalls = [];
+                        }
+                        currentToolCalls.push(action);
+                        break;
+                    case 'action:agent-tool-call-response':
+                        messages.push({
+                            role: 'tool',
+                            tool_call_id: action.toolCallId,
+                            content: action.toolResponse
+                        });
+                        break;
+                    case 'action:agent-error':
+                        messages.push({
+                            role: 'assistant',
+                            content: `Error: ${action.content}`
+                        });
+                        break;
+                    default:
+                        throw new Error(`Unknown agent action type: ${action.type}`);
+                }
+            }
+        } else {
+            throw new Error(`Unknown turn type`, turn);
+        }
+    }
+
+    return messages;
+}
 
 export class AgentCore {
     private MAX_ITERATIONS = 10; // Maximum iterations to prevent infinite loops
 
-    constructor(private openai: AzureOpenAI) {}
+    constructor(private openai: AzureOpenAI, private memory: AgentCoreMemory) {}
 
     /**
      * Process a query and return an AgentCoreConnection immediately.
@@ -36,20 +131,11 @@ export class AgentCore {
         let loopsRemaining = this.MAX_ITERATIONS;
         // Control variable for the autonomous loop
         let isTurnCompleted = false;
-        // Store the final response to return to the user
-        // let finalResponse: string = '';
-        // what was the last action taken by the agent?
-        
-        // Track ReAct progress
-        // const progress: AgentProgressData = {
-        //     currentIteration: 0,
-        //     maxIterations: this.MAX_ITERATIONS,
-        //     uniqueToolCalls: new Set<string>(),
-        // };
+
+        const idx = this.memory.addUserTurn(); // Add a user turn to the memory
 
         // Track conversation context
-        const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-            {
+        const systemPrompt: OpenAI.Chat.Completions.ChatCompletionMessageParam = {
                 role: 'system',
                 content: `
 The current local time is ${new Date().toISOString()}.
@@ -67,9 +153,7 @@ No need to call a special function - just provide your answer in a clear, concis
 
 You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoning. Currently, you have ${loopsRemaining} out of ${this.MAX_ITERATIONS} iterations remaining.
                 `
-            },
-            { role: 'user', content: query }
-        ];
+        };
 
         // Define available tools for the inbuilt tools
         const inbuiltToolSchemas: OpenAI.Chat.Completions.ChatCompletionTool[] = [
@@ -133,6 +217,21 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
             }
         };
 
+        // add the memory to the messages
+        const memoryMessages = mapMemoryExportToOpenAIMessage(this.memory);
+
+        const userMessage: OpenAI.Chat.Completions.ChatCompletionMessageParam = {
+            role: 'user',
+            content: query
+        };
+        // Add the user message to the memory
+        this.memory.addTurnAction(idx, {
+            type: 'action:user-message',
+            content: query
+        });
+
+        this.memory.addAgentTurn();
+
         // Main autonomous reasoning loop should be limited to a certain number of iterations
         try {
             while (!isTurnCompleted && loopsRemaining > 0) {
@@ -140,22 +239,25 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                 loopsRemaining--;
                 
                 try {
+                    const messages = [
+                        systemPrompt,
+                        ...memoryMessages,
+                        userMessage
+                    ]
+
                     // Call the OpenAI API
                     const response = await this.openai.chat.completions.create({
                         model: "gpt-4o", // Use appropriate model
-                        messages: messages,
+                        messages,
                         tools: inbuiltToolSchemas,
                     });
+
+                    const idx = this.memory.addAgentTurn();
     
                     const message = response.choices[0].message;
-    
-                    // Add the AI's message to the conversation
-                    messages.push(message);
-                    cnx.triggerEvent({
-                        type: 'message',
-                        data: {
-                            content: message.content || '',
-                        }
+                    this.memory.addTurnAction(idx, {
+                        type: 'action:agent-message',
+                        content: message.content || '',
                     });
     
                     // debug console log
@@ -165,40 +267,40 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                     if (message.tool_calls && message.tool_calls.length > 0) {
                         for (const toolCall of message.tool_calls) {
                             if (toolCall.type === 'function') {
+                                // add the tool call to the memory
+                                this.memory.addTurnAction(idx, {
+                                    type: 'action:agent-tool-call',
+                                    toolArguments: toolCall.function.arguments,
+                                    toolCallId: toolCall.id,
+                                    toolName: toolCall.function.name
+                                })
+
+                                // deal with the tool call
                                 const functionName = toolCall.function.name;
                                 const functionArgs = JSON.parse(toolCall.function.arguments);
                                 
                                 console.log(`Function called: ${functionName}`);
                                 
-                                // Track unique tool calls
-                                // progress.uniqueToolCalls.add(functionName);
-                                
                                 if (inbuiltToolHandlers[functionName]) {
                                     // Execute the function
                                     const functionResult = await inbuiltToolHandlers[functionName](functionArgs);
                                     
-                                    // Add the function result to the conversation
-                                    messages.push({
-                                        role: 'tool',
-                                        tool_call_id: toolCall.id,
-                                        content: JSON.stringify(functionResult)
+                                    this.memory.addTurnAction(idx, {
+                                        type: 'action:agent-tool-call-response',
+                                        toolCallId: toolCall.id,
+                                        toolName: functionName,
+                                        toolResponse: JSON.stringify(functionResult)
                                     });
                                 } else {
-                                    messages.push({
-                                        role: 'tool',
-                                        tool_call_id: toolCall.id,
-                                        content: JSON.stringify({ error: "Function not found" })
+                                    this.memory.addTurnAction(idx, {
+                                        type: 'action:agent-tool-call-response',
+                                        toolCallId: toolCall.id,
+                                        toolName: functionName,
+                                        toolResponse: JSON.stringify({ error: "Function not found" })
                                     });
-                                    
-                                    // Send a progress update for the "function not found" case
-                                    // progress.lastAction = 'error';
-                                    // progress.lastActionContent = `Function "${functionName}" not found`;
-                                    // cnx.triggerEvent({...progress});
-                                    cnx.triggerEvent({
-                                        type: 'error',
-                                        data: {
-                                            content: `Function "${functionName}" not found. Please ensure the function is defined in the tool handlers.`
-                                        }
+                                    this.memory.addTurnAction(idx, {
+                                        type: 'action:agent-error',
+                                        content: `Function "${functionName}" not found. Please ensure the function is defined in the tool handlers.`
                                     });
                                 }
                             }
@@ -206,8 +308,8 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                     } else if (message.content) {
                         // If the AI responded with content, this might be the final answer
                         // We'll use an LLM to evaluate whether this is the final response
-                        
                         // First, create a prompt to evaluate completion
+                        const messages = mapMemoryExportToOpenAIMessage(this.memory);
                         await this.evaluateCompletionWithLLM(messages, cnx)
                             .then(isDone => {
                                 if (isDone) {
