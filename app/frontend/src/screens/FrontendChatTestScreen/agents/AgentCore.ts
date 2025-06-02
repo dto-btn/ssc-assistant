@@ -1,101 +1,10 @@
 import OpenAI, { AzureOpenAI } from "openai";
 import { TurnConnection } from "./TurnConnection";
 import { AgentCoreMemory } from "./AgentCoreMemory";
-import { AgentToolCall } from "./AgentCoreMemory.types";
 import { AgentToolRegistry } from "./AgentToolRegistry";
-
-const mapMemoryExportToOpenAIMessage = (memory: AgentCoreMemory): OpenAI.Chat.Completions.ChatCompletionMessageParam[] => {
-    const turns = memory.export();
-
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
-
-    for (const turn of turns) {
-        if (turn.type === 'turn:user') {
-            for (const action of turn.actions) {
-                switch (action.type) {
-                    case 'action:user-message':
-                        messages.push({
-                            role: 'user',
-                            content: action.content
-                        });
-                        break;
-                    default:
-                        throw new Error(`Unknown user action type: ${action.type}`);
-                }
-            }
-        } else if (turn.type === 'turn:agent') {
-            let currentToolCalls: AgentToolCall[] | undefined = undefined;
-
-            for (const action of turn.actions) {
-                // If we have tool calls and the next action is not a tool call, we need to flush them
-                if (currentToolCalls !== undefined && action.type !== 'action:agent-tool-call') {
-                    messages.push({
-                        role: 'assistant',
-                        tool_calls: currentToolCalls.map(toolCall => ({
-                            id: toolCall.toolCallId,
-                            type: 'function',
-                            function: {
-                                name: toolCall.toolName,
-                                arguments: toolCall.toolArguments
-                            }
-                        }))
-                    });
-                    currentToolCalls = undefined; // Reset tool calls after flushing   
-                }
-
-                
-                switch (action.type) {
-                    case 'action:agent-message':
-                        messages.push({
-                            role: 'assistant',
-                            content: action.content
-                        });
-                        break;
-                    case 'action:agent-thought':
-                        messages.push({
-                            role: 'assistant',
-                            content: `Thought: ${action.content}`
-                        });
-                        break;
-                    case 'action:agent-observation':
-                        messages.push({
-                            role: 'assistant',
-                            content: `Observation: ${action.content}`
-                        });
-                        break;
-                    case 'action:agent-tool-call':
-                        // Tool calls in OpenAI appear inside assistant messages as an array.
-                        // However, we add separate messages for each tool call in our memory.
-                        // So we need to collect them until we hit a non-tool call action.
-                        if (!currentToolCalls) {
-                            currentToolCalls = [];
-                        }
-                        currentToolCalls.push(action);
-                        break;
-                    case 'action:agent-tool-call-response':
-                        messages.push({
-                            role: 'tool',
-                            tool_call_id: action.toolCallId,
-                            content: action.toolResponse
-                        });
-                        break;
-                    case 'action:agent-error':
-                        messages.push({
-                            role: 'assistant',
-                            content: `Error: ${action.content}`
-                        });
-                        break;
-                    default:
-                        throw new Error(`Unknown agent action type: ${action.type}`);
-                }
-            }
-        } else {
-            throw new Error(`Unknown turn type`, turn);
-        }
-    }
-
-    return messages;
-}
+import { mapMemoryExportToOpenAIMessage } from "./AgentCoreMappers";
+import { buildSystemPromptContent } from "./prompt-templates/systemPrompt.template";
+import { evaluationPromptTemplate } from "./prompt-templates/evaluationPrompt.template";
 
 export class AgentCore {
     private MAX_ITERATIONS = 10; // Maximum iterations to prevent infinite loops
@@ -136,59 +45,7 @@ export class AgentCore {
         const userTurnIdx = this.memory.addUserTurn(); // Add a user turn to the memory
 
         // Track conversation context
-        const systemPrompt: OpenAI.Chat.Completions.ChatCompletionMessageParam = {
-                role: 'system',
-                content: `
-The current local time is ${new Date().toISOString()}.
-
-You are a ReAct (Reasoning and Acting) agent. When solving a problem, always take the most direct, efficient, and concise route to the solution. Avoid unnecessary intermediate steps, verbose reasoning, or repeating information. If a multi-step calculation can be performed in a single step, do so. Only use tools or break down the problem if absolutely necessary for correctness or clarity.
-
-Your process:
-- Think: Briefly reason through the problem only as much as needed to reach the answer efficiently.
-- Observe: Summarize what you have learned if it is essential for the answer.
-- Respond: Provide the final answer directly and concisely.
-
-After you've completed your reasoning process, respond directly to the user with your final answer. No need to call a special function - just provide your answer in a clear, concise way.
-
-You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoning. Currently, you have ${loopsRemaining} out of ${this.MAX_ITERATIONS} iterations remaining.
-                `
-        };
-
-        // Define available tools for the inbuilt tools
-        const inbuiltToolSchemas: OpenAI.Chat.Completions.ChatCompletionTool[] = [
-            {
-                type: "function",
-                function: {
-                    name: 'think',
-                    description: 'Use this function to explicitly reason through your thoughts. This is the first step in the ReAct process.',
-                    parameters: {
-                        type: 'object',
-                        properties: {
-                            reasoning: { type: 'string', description: 'Your step-by-step reasoning about the current situation' }
-                        },
-                        required: ['reasoning']
-                    }
-                }
-            },
-            {
-                type: "function",
-                function: {
-                    name: 'observe',
-                    description: 'Use this function to summarize what you have learned and observed so far. This is a crucial step in the ReAct process.',
-                    parameters: {
-                        type: 'object',
-                        properties: {
-                            observation: { type: 'string', description: 'Your summary of what you have learned so far' }
-                        },
-                        required: ['observation']
-                    }
-                }
-            }
-        ];
-
-        const toolSchemas = this.toolRegistry.exportToolSchemas();
-        // Merge inbuilt tools with registered tools
-        const allToolSchemas = [...inbuiltToolSchemas, ...toolSchemas];
+        const systemPrompt = buildSystemPromptContent(this.MAX_ITERATIONS, loopsRemaining);
 
         // Add the user message to the memory
         this.memory.addTurnAction(userTurnIdx, {
@@ -208,119 +65,114 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                 try {
                     // Refresh memory messages before each API call to include previous iterations
                     const currentMemoryMessages = mapMemoryExportToOpenAIMessage(this.memory);
-                    
-                    const messages = [
-                        systemPrompt,
-                        ...currentMemoryMessages
-                    ]
-                    
-                    // We don't need to add userMessage separately since it's already in memory
-                    // and included in currentMemoryMessages
-
-                    // Call the OpenAI API
+                    // Call OpenAI API with the current memory messages
                     const response = await this.openai.chat.completions.create({
                         model: "gpt-4o", // Use appropriate model
-                        messages,
-                        tools: allToolSchemas,
+                        messages: [
+                            systemPrompt,
+                            ...currentMemoryMessages
+                        ],
+                        tools: this.buildToolSchema(),
                     });
                     
                     // Use the existing agent turn index, don't create a new one
                     const message = response.choices[0].message;
+
                     this.memory.addTurnAction(agentTurnIdx, {
                         type: 'action:agent-message',
                         content: message.content || '',
                     });
     
-                    // debug console log
-                    console.log("[DEBUG] AI response:", message);
-    
                     // Check if the AI wants to call a tool
                     if (message.tool_calls && message.tool_calls.length > 0) {
                         for (const toolCall of message.tool_calls) {
-                            if (toolCall.type === 'function') {
-                                // deal with the tool call
-                                const functionName = toolCall.function.name;
-                                const functionArgs = JSON.parse(toolCall.function.arguments);
-                                
-                                console.log(`Function called: ${functionName}`);
-                                
-                                // Handle think or observe functions
-                                if (functionName === 'think' || functionName === 'observe') {
-                                    // Execute the function
-                                    switch(functionName) {
-                                        case 'think':
-                                            this.memory.addTurnAction(agentTurnIdx, {
-                                                type: 'action:agent-thought',
-                                                content: functionArgs.reasoning
-                                            });
-                                            break;
 
-                                        case 'observe':
-                                            this.memory.addTurnAction(agentTurnIdx, {
-                                                type: 'action:agent-observation',
-                                                content: functionArgs.observation
-                                            });
-                                            break;
-                                        default:
-                                            this.memory.addTurnAction(agentTurnIdx, {
-                                                type: 'action:agent-error',
-                                                content: `Unknown function "${functionName}" called. Please ensure the function is defined in the tool handlers.`
-                                            });
-                                            console.error(`Unknown function "${functionName}" called. Please ensure the function is defined in the tool handlers.`);
-                                            continue; // Skip to the next tool call
-                                    }
-                                } else {
-                                    // add the tool call to the memory
-                                    this.memory.addTurnAction(agentTurnIdx, {
-                                        type: 'action:agent-tool-call',
-                                        toolArguments: toolCall.function.arguments,
-                                        toolCallId: toolCall.id,
-                                        toolName: toolCall.function.name
-                                    })
+                            // If the tool call is not a function, we log an error and continue
+                            if (toolCall.type !== 'function') {
+                                const msg = `Tool call type "${toolCall.type}" is not supported. Please ensure the tool call is a function.`;
+                                this.memory.addTurnAction(agentTurnIdx, {
+                                    type: 'action:agent-error',
+                                    content: msg
+                                });
+                                console.error(msg);
+                                continue; // Skip to the next tool call
+                            }
+                        
+                            // deal with the tool call
+                            const functionName = toolCall.function.name;
+                            const functionArgs = JSON.parse(toolCall.function.arguments);
 
-                                    if (!this.toolRegistry.hasTool(toolCall.function.name)) {
-                                        // If the tool is not registered, we log an error and continue
-                                        const msg = `Function "${functionName}" not found. Please ensure the function is defined in the tool handlers.`
-                                        this.memory.addTurnAction(agentTurnIdx, {
-                                            type: 'action:agent-tool-call-response',
-                                            toolCallId: toolCall.id,
-                                            toolName: functionName,
-                                            toolResponse: JSON.stringify({ error: msg })
-                                        });
-                                        this.memory.addTurnAction(agentTurnIdx, {
-                                            type: 'action:agent-error',
-                                            content: msg
-                                        });
-                                        console.error(msg);
-                                    } else {
-                                        try {
-                                            const result = await this.toolRegistry.useTool(toolCall.function.name, functionArgs);
-                                            // If the tool call was successful, we log the response
-                                            this.memory.addTurnAction(agentTurnIdx, {
-                                                type: 'action:agent-tool-call-response',
-                                                toolCallId: toolCall.id,
-                                                toolName: functionName,
-                                                toolResponse: JSON.stringify(result)
-                                            });
-                                            console.log(`Tool call "${functionName}" succeeded with response:`, result);
-                                        } catch (error) {
-                                            const msg = `Error calling tool "${functionName}": ${error instanceof Error ? error.message : JSON.stringify(error)}`;
-                                            console.error(msg);
-                                            // If the tool call fails, we log it and continue
-                                            this.memory.addTurnAction(agentTurnIdx, {
-                                                type: 'action:agent-tool-call-response',
-                                                toolCallId: toolCall.id,
-                                                toolName: functionName,
-                                                toolResponse: JSON.stringify({ error: msg })
-                                            });
-        
-                                            this.memory.addTurnAction(agentTurnIdx, {
-                                                type: 'action:agent-error',
-                                                content: msg
-                                            });
-                                        }
-                                    }
-                                }
+                            // Handle internal function calls (think, observe)
+                            // These are special functions that don't require tool calls
+                            if (functionName === 'think') {
+                                this.memory.addTurnAction(agentTurnIdx, {
+                                    type: 'action:agent-thought',
+                                    content: functionArgs.reasoning
+                                });
+                                continue;
+                            }
+                            if (functionName === 'observe') {
+                                this.memory.addTurnAction(agentTurnIdx, {
+                                    type: 'action:agent-observation',
+                                    content: functionArgs.observation
+                                });
+                                continue;
+                            }
+
+                            // Now we know this is not an internal function call, so we can proceed with normal
+                            // tool call handling
+
+                            // add the tool call to the memory
+                            this.memory.addTurnAction(agentTurnIdx, {
+                                type: 'action:agent-tool-call',
+                                toolArguments: toolCall.function.arguments,
+                                toolCallId: toolCall.id,
+                                toolName: toolCall.function.name
+                            })
+
+                            if (!this.toolRegistry.hasTool(toolCall.function.name)) {
+                                // If the tool is not registered, we log an error and continue
+                                const msg = `Function "${functionName}" not found. Please ensure the function is defined in the tool handlers.`
+                                this.memory.addTurnAction(agentTurnIdx, {
+                                    type: 'action:agent-tool-call-response',
+                                    toolCallId: toolCall.id,
+                                    toolName: functionName,
+                                    toolResponse: JSON.stringify({ error: msg })
+                                });
+                                this.memory.addTurnAction(agentTurnIdx, {
+                                    type: 'action:agent-error',
+                                    content: msg
+                                });
+                                console.error(msg);
+                                continue;
+                            }
+
+                            // Tool call is valid, proceed to use the tool
+                            try {
+                                const result = await this.toolRegistry.useTool(toolCall.function.name, functionArgs);
+                                // If the tool call was successful, we log the response
+                                this.memory.addTurnAction(agentTurnIdx, {
+                                    type: 'action:agent-tool-call-response',
+                                    toolCallId: toolCall.id,
+                                    toolName: functionName,
+                                    toolResponse: JSON.stringify(result)
+                                });
+                                console.log(`Tool call "${functionName}" succeeded with response:`, result);
+                            } catch (error) {
+                                const msg = `Error calling tool "${functionName}": ${error instanceof Error ? error.message : JSON.stringify(error)}`;
+                                console.error(msg);
+                                // If the tool call fails, we log it and continue
+                                this.memory.addTurnAction(agentTurnIdx, {
+                                    type: 'action:agent-tool-call-response',
+                                    toolCallId: toolCall.id,
+                                    toolName: functionName,
+                                    toolResponse: JSON.stringify({ error: msg })
+                                });
+
+                                this.memory.addTurnAction(agentTurnIdx, {
+                                    type: 'action:agent-error',
+                                    content: msg
+                                });
                             }
                         }
                     } else if (message.content) {
@@ -425,32 +277,7 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
     ): Promise<boolean> {
         // Create a system prompt that asks the LLM to evaluate if the conversation is complete
         const evaluationPrompt: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-            {
-                role: 'system',
-                content: `
-You are an evaluator determining if a ReAct agent's conversation has reached a natural conclusion.
-
-You will analyze the entire history of a conversation and determine if the agent has provided a final answer to the user's query.
-
-A complete conversation MUST have the following:
-- A final response from the agent that directly and comprehensively answers the user's original query
-- OR, a question for the user that indicates a need for more information, clarification, or input to proceed.
-
-Specifically, if the agent's last message is asking the user for more details, clarification, or any form of input, ALWAYS mark the conversation as complete.
-
-Examples of agent questions that should be considered complete:
-- "Could you please provide more details about the specific plan you would like me to execute?"
-- "Can you clarify what you mean by X?"
-- "I need more information to help you with that. Could you explain...?"
-- "What specific aspects of X are you interested in?"
-
-Do NOT consider a conversation complete if:
-- The agent has stated or clearly implied that it will continue reasoning or acting independently.
-
-Analyze the following conversation and determine if it has reached a natural conclusion.
-Is it complete? Why or why not?
-                `
-            }
+            evaluationPromptTemplate()
         ];
         
         // Add a simplified version of the conversation history
@@ -525,5 +352,45 @@ Is it complete? Why or why not?
             // Re-throw to be handled by the caller
             throw error;
         }
+    }
+
+    private buildToolSchema() {
+        // Define available tools for the inbuilt tools
+        const inbuiltToolSchemas: OpenAI.Chat.Completions.ChatCompletionTool[] = [
+            {
+                type: "function",
+                function: {
+                    name: 'think',
+                    description: 'Use this function to explicitly reason through your thoughts. This is the first step in the ReAct process.',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            reasoning: { type: 'string', description: 'Your step-by-step reasoning about the current situation' }
+                        },
+                        required: ['reasoning']
+                    }
+                }
+            },
+            {
+                type: "function",
+                function: {
+                    name: 'observe',
+                    description: 'Use this function to summarize what you have learned and observed so far. This is a crucial step in the ReAct process.',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            observation: { type: 'string', description: 'Your summary of what you have learned so far' }
+                        },
+                        required: ['observation']
+                    }
+                }
+            }
+        ];
+
+        const toolSchemas = this.toolRegistry.exportToolSchemas();
+        // Merge inbuilt tools with registered tools
+        const allToolSchemas = [...inbuiltToolSchemas, ...toolSchemas];
+
+        return allToolSchemas;
     }
 }
