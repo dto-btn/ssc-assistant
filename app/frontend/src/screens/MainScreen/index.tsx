@@ -1,4 +1,7 @@
-import { Box, IconButton } from "@mui/material";
+import {
+  Box,
+  IconButton,
+} from "@mui/material";
 import {
   ChatInput,
   Disclaimer,
@@ -21,7 +24,11 @@ import { useLocation } from "react-router";
 import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
 import { useAppStore } from "../../stores/AppStore";
 import Typography from "@mui/material/Typography";
-import { SNACKBAR_DEBOUNCE_KEYS, LEFT_MENU_WIDTH, MUTEX_TOOLS } from "../../constants";
+import {
+  SNACKBAR_DEBOUNCE_KEYS,
+  LEFT_MENU_WIDTH,
+  MUTEX_TOOLS,
+} from "../../constants";
 import VerticalSplitIcon from "@mui/icons-material/VerticalSplit";
 import NewLayout from "../../components/layouts/NewLayout";
 import { useChatStore } from "../../stores/ChatStore";
@@ -30,6 +37,7 @@ import { useChatService } from "../../hooks/useChatService";
 import { useApiRequestService } from "./useApiRequestService";
 import { defaultEnabledTools } from "../../allowedTools";
 import { tt } from "../../i18n/tt";
+import Suggestions from "../../components/Suggestions";
 
 const MainScreen = () => {
   const { t } = useTranslation();
@@ -169,9 +177,11 @@ const MainScreen = () => {
     });
   };
 
-  const handleUpdateEnabledTools = (name: string) => {
-    let updatedTools: Record<string, boolean> = { ...appStore.tools.enabledTools };
-    const toolIsTurningOn: boolean = !appStore.tools.enabledTools[name];
+  const handleUpdateEnabledTools = (name: string, forceOn?: boolean) => {
+    let updatedTools: Record<string, boolean> = {
+      ...appStore.tools.enabledTools,
+    };
+    const toolIsTurningOn: boolean = forceOn == true ? true : !appStore.tools.enabledTools[name];
 
     // Archibus is mutually exclusive with all other tools. If 'archibus' is turned on,
     // all other tools should be disabled. On the other hand, if any other tool is turned on,
@@ -188,7 +198,6 @@ const MainScreen = () => {
       updatedTools.archibus = false;
     }
 
-
     // We have a category of tools that are mutually exclusive. If one of them is turned
     // on, all others should be turned off. This is a temporary hack until we refactor
     // the tools to be more modular.
@@ -197,7 +206,6 @@ const MainScreen = () => {
         updatedTools[tool] = false;
       });
     }
-
 
     // Finally, update the specific tool's state
     updatedTools[name] = toolIsTurningOn;
@@ -265,10 +273,10 @@ const MainScreen = () => {
   useEffect(() => {
     console.debug(
       "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-        isAuthenticated +
-        ", InProgress? " +
-        inProgress +
-        ")"
+      isAuthenticated +
+      ", InProgress? " +
+      inProgress +
+      ")"
     );
     if (
       isAuthenticated &&
@@ -370,6 +378,27 @@ const MainScreen = () => {
     }
   }, [parsedSuggestionContext]);
 
+  const onSuggestionClicked = (question: string, tool: string) => {
+    let updatedTools: Record<string, boolean> = {
+      ...appStore.tools.enabledTools,
+    };
+    if (tool === "archibus" || tool === "bits") {
+      Object.keys(appStore.tools.enabledTools).forEach((t) => {
+        updatedTools[t] = false;
+      });
+    }
+    updatedTools[tool] = true;
+    appStore.tools.setEnabledTools(updatedTools);
+    PersistenceUtils.setEnabledTools(updatedTools);
+    apiRequestService.makeApiRequest(
+      question,
+      userData,
+      undefined,
+      undefined,
+      useAppStore.getState().tools.enabledTools
+    )
+  };
+
   return (
     <UserContext.Provider value={userData}>
       <NewLayout
@@ -440,15 +469,9 @@ const MainScreen = () => {
               >
                 {t("how.can.i.help")}
               </Typography>
-              <Typography
-                variant="body1"
-                sx={{
-                  maxWidth: "80%",
-                  textAlign: "center",
-                }}
-              >
-                {t("how.can.i.help.submessage")}
-              </Typography>
+              <Suggestions
+                onSuggestionClicked={onSuggestionClicked}
+              />
               <ChatInput
                 clearOnSend
                 placeholder={t("placeholder")}
@@ -483,7 +506,7 @@ const MainScreen = () => {
               paddingTop: "3rem",
               overflow: "auto",
             }}
-            // maxWidth="lg"
+          // maxWidth="lg"
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <ChatMessagesContainer
