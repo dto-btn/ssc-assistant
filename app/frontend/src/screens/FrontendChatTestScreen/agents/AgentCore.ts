@@ -132,7 +132,7 @@ export class AgentCore {
         // Control variable for the autonomous loop
         let isTurnCompleted = false;
 
-        const idx = this.memory.addUserTurn(); // Add a user turn to the memory
+        const userTurnIdx = this.memory.addUserTurn(); // Add a user turn to the memory
 
         // Track conversation context
         const systemPrompt: OpenAI.Chat.Completions.ChatCompletionMessageParam = {
@@ -225,12 +225,13 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
             content: query
         };
         // Add the user message to the memory
-        this.memory.addTurnAction(idx, {
+        this.memory.addTurnAction(userTurnIdx, {
             type: 'action:user-message',
             content: query
         });
 
-        this.memory.addAgentTurn();
+        // Create a single agent turn outside the loop
+        const agentTurnIdx = this.memory.addAgentTurn();
 
         // Main autonomous reasoning loop should be limited to a certain number of iterations
         try {
@@ -239,11 +240,16 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                 loopsRemaining--;
                 
                 try {
+                    // Refresh memory messages before each API call to include previous iterations
+                    const currentMemoryMessages = mapMemoryExportToOpenAIMessage(this.memory);
+                    
                     const messages = [
                         systemPrompt,
-                        ...memoryMessages,
-                        userMessage
+                        ...currentMemoryMessages
                     ]
+                    
+                    // We don't need to add userMessage separately since it's already in memory
+                    // and included in currentMemoryMessages
 
                     // Call the OpenAI API
                     const response = await this.openai.chat.completions.create({
@@ -251,11 +257,10 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                         messages,
                         tools: inbuiltToolSchemas,
                     });
-
-                    const idx = this.memory.addAgentTurn();
-    
+                    
+                    // Use the existing agent turn index, don't create a new one
                     const message = response.choices[0].message;
-                    this.memory.addTurnAction(idx, {
+                    this.memory.addTurnAction(agentTurnIdx, {
                         type: 'action:agent-message',
                         content: message.content || '',
                     });
@@ -268,7 +273,7 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                         for (const toolCall of message.tool_calls) {
                             if (toolCall.type === 'function') {
                                 // add the tool call to the memory
-                                this.memory.addTurnAction(idx, {
+                                this.memory.addTurnAction(agentTurnIdx, {
                                     type: 'action:agent-tool-call',
                                     toolArguments: toolCall.function.arguments,
                                     toolCallId: toolCall.id,
@@ -285,20 +290,20 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                                     // Execute the function
                                     const functionResult = await inbuiltToolHandlers[functionName](functionArgs);
                                     
-                                    this.memory.addTurnAction(idx, {
+                                    this.memory.addTurnAction(agentTurnIdx, {
                                         type: 'action:agent-tool-call-response',
                                         toolCallId: toolCall.id,
                                         toolName: functionName,
                                         toolResponse: JSON.stringify(functionResult)
                                     });
                                 } else {
-                                    this.memory.addTurnAction(idx, {
+                                    this.memory.addTurnAction(agentTurnIdx, {
                                         type: 'action:agent-tool-call-response',
                                         toolCallId: toolCall.id,
                                         toolName: functionName,
                                         toolResponse: JSON.stringify({ error: "Function not found" })
                                     });
-                                    this.memory.addTurnAction(idx, {
+                                    this.memory.addTurnAction(agentTurnIdx, {
                                         type: 'action:agent-error',
                                         content: `Function "${functionName}" not found. Please ensure the function is defined in the tool handlers.`
                                     });
