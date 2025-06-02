@@ -718,33 +718,20 @@ def openai_chat_completions():
                 },
             )
 
-        # Non-streaming response
-        max_retries = 3
-        retry_delay = 1  # seconds
+        response = requests.post(
+            api_url, headers=headers, json=payload, timeout=30
+        )
 
-        for attempt in range(max_retries):
-            try:
-                response = requests.post(
-                    api_url, headers=headers, json=payload, timeout=30
-                )
+        response_status = response.status_code
+        response_content = response.content
 
-                response.raise_for_status()
-                return jsonify(response.json())
-            except requests.exceptions.RequestException as e:
-                if attempt == max_retries - 1:  # Last attempt
-                    logger.exception(
-                        f"Error calling Azure OpenAI API after {max_retries} attempts"
-                    )
-                    return jsonify(
-                        {
-                            "error": {
-                                "message": f"Error processing your request: {str(e)}"
-                            }
-                        }
-                    ), 500
-
-                # Wait before retrying with exponential backoff
-                time.sleep(retry_delay * (2**attempt))
+        return Response(
+            response_content,
+            status=response_status,
+            content_type = response.headers.get(
+                "Content-Type", "application/json"
+            )
+        )
 
     except Exception as e:
         logger.exception("Unexpected error in OpenAI proxy")
