@@ -310,31 +310,31 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                         // We'll use an LLM to evaluate whether this is the final response
                         // First, create a prompt to evaluate completion
                         const messages = mapMemoryExportToOpenAIMessage(this.memory);
-                        await this.evaluateCompletionWithLLM(messages, cnx)
-                            .then(isDone => {
-                                if (isDone) {
-                                    // This appears to be a final answer after proper reasoning
-                                    
-                                    // Update progress to show we've completed
-                                    cnx.triggerEvent({
-                                        type: 'finished',
-                                        data: {
-                                            finishReason: 'stop'
-                                        }
-                                    });
-                                    isTurnCompleted = true;
-                                }
-                            })
-                            .catch(error => {
-                                console.error("Error evaluating completion:", error);
-                                isTurnCompleted = true;
+                        try {
+                            const isDone = await this.evaluateCompletionWithLLM(messages, cnx)
+                            
+                            if (isDone) {
+                                // This appears to be a final answer after proper reasoning
+                                
+                                // Update progress to show we've completed
                                 cnx.triggerEvent({
                                     type: 'finished',
                                     data: {
-                                        finishReason: 'error'
+                                        finishReason: 'stop'
                                     }
                                 });
+                                isTurnCompleted = true;
+                            }
+                        } catch(error) {
+                            console.error("Error evaluating completion:", error);
+                            isTurnCompleted = true;
+                            cnx.triggerEvent({
+                                type: 'finished',
+                                data: {
+                                    finishReason: 'error'
+                                }
                             });
+                        };
                     }
                 } catch (error) {
                     console.error("Error in autonomous loop:", error);
