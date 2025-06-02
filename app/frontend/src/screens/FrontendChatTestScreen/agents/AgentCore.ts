@@ -61,7 +61,6 @@ export class AgentCore {
             while (!isTurnCompleted && loopsRemaining > 0) {
                 // decrease the loop counter to prevent infinite loops
                 loopsRemaining--;
-                
                 try {
                     // Refresh memory messages before each API call to include previous iterations
                     const currentMemoryMessages = mapMemoryExportToOpenAIMessage(this.memory);
@@ -86,94 +85,7 @@ export class AgentCore {
                     // Check if the AI wants to call a tool
                     if (message.tool_calls && message.tool_calls.length > 0) {
                         for (const toolCall of message.tool_calls) {
-
-                            // If the tool call is not a function, we log an error and continue
-                            if (toolCall.type !== 'function') {
-                                const msg = `Tool call type "${toolCall.type}" is not supported. Please ensure the tool call is a function.`;
-                                this.memory.addTurnAction(agentTurnIdx, {
-                                    type: 'action:agent-error',
-                                    content: msg
-                                });
-                                console.error(msg);
-                                continue; // Skip to the next tool call
-                            }
-                        
-                            // deal with the tool call
-                            const functionName = toolCall.function.name;
-                            const functionArgs = JSON.parse(toolCall.function.arguments);
-
-                            // Handle internal function calls (think, observe)
-                            // These are special functions that don't require tool calls
-                            if (functionName === 'think') {
-                                this.memory.addTurnAction(agentTurnIdx, {
-                                    type: 'action:agent-thought',
-                                    content: functionArgs.reasoning
-                                });
-                                continue;
-                            }
-                            if (functionName === 'observe') {
-                                this.memory.addTurnAction(agentTurnIdx, {
-                                    type: 'action:agent-observation',
-                                    content: functionArgs.observation
-                                });
-                                continue;
-                            }
-
-                            // Now we know this is not an internal function call, so we can proceed with normal
-                            // tool call handling
-
-                            // add the tool call to the memory
-                            this.memory.addTurnAction(agentTurnIdx, {
-                                type: 'action:agent-tool-call',
-                                toolArguments: toolCall.function.arguments,
-                                toolCallId: toolCall.id,
-                                toolName: toolCall.function.name
-                            })
-
-                            if (!this.toolRegistry.hasTool(toolCall.function.name)) {
-                                // If the tool is not registered, we log an error and continue
-                                const msg = `Function "${functionName}" not found. Please ensure the function is defined in the tool handlers.`
-                                this.memory.addTurnAction(agentTurnIdx, {
-                                    type: 'action:agent-tool-call-response',
-                                    toolCallId: toolCall.id,
-                                    toolName: functionName,
-                                    toolResponse: JSON.stringify({ error: msg })
-                                });
-                                this.memory.addTurnAction(agentTurnIdx, {
-                                    type: 'action:agent-error',
-                                    content: msg
-                                });
-                                console.error(msg);
-                                continue;
-                            }
-
-                            // Tool call is valid, proceed to use the tool
-                            try {
-                                const result = await this.toolRegistry.useTool(toolCall.function.name, functionArgs);
-                                // If the tool call was successful, we log the response
-                                this.memory.addTurnAction(agentTurnIdx, {
-                                    type: 'action:agent-tool-call-response',
-                                    toolCallId: toolCall.id,
-                                    toolName: functionName,
-                                    toolResponse: JSON.stringify(result)
-                                });
-                                console.log(`Tool call "${functionName}" succeeded with response:`, result);
-                            } catch (error) {
-                                const msg = `Error calling tool "${functionName}": ${error instanceof Error ? error.message : JSON.stringify(error)}`;
-                                console.error(msg);
-                                // If the tool call fails, we log it and continue
-                                this.memory.addTurnAction(agentTurnIdx, {
-                                    type: 'action:agent-tool-call-response',
-                                    toolCallId: toolCall.id,
-                                    toolName: functionName,
-                                    toolResponse: JSON.stringify({ error: msg })
-                                });
-
-                                this.memory.addTurnAction(agentTurnIdx, {
-                                    type: 'action:agent-error',
-                                    content: msg
-                                });
-                            }
+                            await this.handleToolCall(toolCall, agentTurnIdx);
                         }
                     } else if (message.content) {
                         // If the AI responded with content, this might be the final answer
@@ -351,6 +263,101 @@ export class AgentCore {
             
             // Re-throw to be handled by the caller
             throw error;
+        }
+    }
+
+    /**
+     * Handles a single tool call, including error handling and memory updates.
+     * @param toolCall The tool call object from OpenAI response
+     * @param agentTurnIdx The current agent turn index
+     */
+    private async handleToolCall(toolCall: any, agentTurnIdx: number): Promise<void> {
+        // If the tool call is not a function, we log an error and continue
+        if (toolCall.type !== 'function') {
+            const msg = `Tool call type "${toolCall.type}" is not supported. Please ensure the tool call is a function.`;
+            this.memory.addTurnAction(agentTurnIdx, {
+                type: 'action:agent-error',
+                content: msg
+            });
+            console.error(msg);
+            return;
+        }
+        const functionName = toolCall.function.name;
+        let functionArgs: any = {};
+        try {
+            functionArgs = JSON.parse(toolCall.function.arguments);
+        } catch (e) {
+            const msg = `Failed to parse arguments for function \"${functionName}\": ${e}`;
+            this.memory.addTurnAction(agentTurnIdx, {
+                type: 'action:agent-error',
+                content: msg
+            });
+            console.error(msg);
+            return;
+        }
+        // Handle internal function calls (think, observe)
+        if (functionName === 'think') {
+            this.memory.addTurnAction(agentTurnIdx, {
+                type: 'action:agent-thought',
+                content: functionArgs.reasoning
+            });
+            return;
+        }
+        if (functionName === 'observe') {
+            this.memory.addTurnAction(agentTurnIdx, {
+                type: 'action:agent-observation',
+                content: functionArgs.observation
+            });
+            return;
+        }
+        // Now we know this is not an internal function call, so we can proceed with normal tool call handling
+        this.memory.addTurnAction(agentTurnIdx, {
+            type: 'action:agent-tool-call',
+            toolArguments: toolCall.function.arguments,
+            toolCallId: toolCall.id,
+            toolName: toolCall.function.name
+        });
+        if (!this.toolRegistry.hasTool(functionName)) {
+            // If the tool is not registered, we log an error and continue
+            const msg = `Function \"${functionName}\" not found. Please ensure the function is defined in the tool handlers.`;
+            this.memory.addTurnAction(agentTurnIdx, {
+                type: 'action:agent-tool-call-response',
+                toolCallId: toolCall.id,
+                toolName: functionName,
+                toolResponse: JSON.stringify({ error: msg })
+            });
+            this.memory.addTurnAction(agentTurnIdx, {
+                type: 'action:agent-error',
+                content: msg
+            });
+            console.error(msg);
+            return;
+        }
+        // Tool call is valid, proceed to use the tool
+        try {
+            const result = await this.toolRegistry.useTool(functionName, functionArgs);
+            // If the tool call was successful, we log the response
+            this.memory.addTurnAction(agentTurnIdx, {
+                type: 'action:agent-tool-call-response',
+                toolCallId: toolCall.id,
+                toolName: functionName,
+                toolResponse: JSON.stringify(result)
+            });
+            console.log(`Tool call \"${functionName}\" succeeded with response:`, result);
+        } catch (error) {
+            const msg = `Error calling tool \"${functionName}\": ${error instanceof Error ? error.message : JSON.stringify(error)}`;
+            console.error(msg);
+            // If the tool call fails, we log it and continue
+            this.memory.addTurnAction(agentTurnIdx, {
+                type: 'action:agent-tool-call-response',
+                toolCallId: toolCall.id,
+                toolName: functionName,
+                toolResponse: JSON.stringify({ error: msg })
+            });
+            this.memory.addTurnAction(agentTurnIdx, {
+                type: 'action:agent-error',
+                content: msg
+            });
         }
     }
 
