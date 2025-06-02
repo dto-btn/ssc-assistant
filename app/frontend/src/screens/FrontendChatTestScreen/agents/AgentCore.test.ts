@@ -1,13 +1,15 @@
 import { describe, it } from "vitest";
 import { AgentCore } from "./AgentCore";
 import { provideProxyOpenAiClient } from "../providers/provideProxyOpenAiClient";
+import { AgentCoreMemory } from "./AgentCoreMemory";
 
 describe('AgentCore', () => {
     it('can', () => new Promise<void>((resolve, reject) => {
         const openai = provideProxyOpenAiClient({
             apiRootDomain: 'http://localhost:5001'
         });
-        const agentCore = new AgentCore(openai);
+        const memory = new AgentCoreMemory();
+        const agentCore = new AgentCore(openai, memory);
         // A simple prompt that will force the agent to think at least 25 times before responding.
         const response = agentCore.processQuery(
 `You need to solve a complex problem using specific thinking tools. 
@@ -40,16 +42,11 @@ For each step, you MUST use the format:
         console.log("Response object returned:", response);
         
         // Example of adding listeners to the response
-        response.onComplete(() => {
-            console.log("Processing completed!");
-            resolve();
+        memory.onUpdate((event) => {
+            console.log("Update event received:", event);
+            if (event.type === 'action-added') {
+                console.log("Action added to turn index", event.turnIndex, ":", event.action);
+            }
         });
-        
-        response.onError((error) => {
-            console.error("An error occurred:", error);
-            reject(error);
-        });
-    
-        
     }), 500000)
 });

@@ -66,3 +66,27 @@ export type AgentAction =
     | AgentTurn;
 
 export type TurnIndex = number;
+
+export type UpdateEventTurnAdded = {
+    type: 'turn-added',
+    category: 'user' | 'agent',
+    turnIndex: TurnIndex;
+}
+
+export type UpdateEventActionAdded = {
+    type: 'action-added',
+    turnIndex: TurnIndex;
+    action: UserAction | AgentAction,
+}
+
+export type UpdateEvent = UpdateEventTurnAdded | UpdateEventActionAdded;
+
+/**
+ * Callback type for when an action is added to the memory.
+ * This callback is called whenever a new action is added to the memory.
+ * It receives an `UpdateEvent` which contains information about the action added.
+ * This allows components to react to changes in the memory, such as re-rendering or updating the UI.
+ * @param event - The event containing information about the action added.
+ * 
+ */
+export type OnUpdateCallback = (event: UpdateEvent) => void;

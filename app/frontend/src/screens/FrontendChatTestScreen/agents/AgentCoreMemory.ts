@@ -1,11 +1,11 @@
 import { isAgentAction, isAgentTurn, isUserAction, isUserTurn } from "./AgentCore.utils";
 import { MemoryAccessError, MemoryValidationError } from "./AgentCoreErrors";
-import { AgentAction, AgentTurn, TurnIndex, UserAction, UserTurn } from "./AgentCoreMemory.types";
+import { AgentAction, AgentTurn, OnUpdateCallback, TurnIndex, UpdateEvent, UserAction, UserTurn } from "./AgentCoreMemory.types";
 import { ListenerManager } from "./listenermanager/ListenerManager";
 
 export class AgentCoreMemory {
     private turns: (AgentTurn | UserTurn)[] = [];
-    private listeners: ListenerManager<void> = new ListenerManager<void>();
+    private listeners: ListenerManager<UpdateEvent> = new ListenerManager<UpdateEvent>();
 
     addUserTurn(): TurnIndex {
         const userTurn: UserTurn = {
@@ -13,8 +13,13 @@ export class AgentCoreMemory {
             actions: []
         };
         this.turns.push(userTurn);
-        this.listeners.notifyListeners();
-        return this.turns.length - 1;
+        const turnIndex: TurnIndex = this.turns.length - 1;
+        this.listeners.notifyListeners({
+            type: 'turn-added',
+            category: 'user',
+            turnIndex: turnIndex
+        });
+        return turnIndex;
     }
 
     addAgentTurn(): TurnIndex {
@@ -23,8 +28,13 @@ export class AgentCoreMemory {
             actions: []
         };
         this.turns.push(agentTurn);
-        this.listeners.notifyListeners();
-        return this.turns.length - 1;
+        const turnIndex: TurnIndex = this.turns.length - 1;
+        this.listeners.notifyListeners({
+            type: 'turn-added',
+            category: 'agent',
+            turnIndex: turnIndex
+        });
+        return turnIndex;
     }
 
     addTurnAction(turnIndex: TurnIndex, action: AgentAction | UserAction): void {
@@ -44,13 +54,21 @@ export class AgentCoreMemory {
                 throw new MemoryValidationError('Tried to add non-UserAction to UserTurn. Object: ' + action);
             }
             turn.actions.push(action as UserAction);
-            this.listeners.notifyListeners();
+            this.listeners.notifyListeners({
+                type: 'action-added',
+                turnIndex,
+                action
+            });
         } else if (isAgentTurn(turn)) {
             if (!isAgentAction(action)) {
                 throw new MemoryValidationError('Tried to add non-AgentAction to AgentTurn. Object: ' + action);
             }
             turn.actions.push(action as AgentAction);
-            this.listeners.notifyListeners();
+            this.listeners.notifyListeners({
+                type: 'action-added',
+                turnIndex,
+                action
+            });
         } else {
             throw new MemoryValidationError(`Turn at index ${turnIndex} is neither a UserTurn nor an AgentTurn. Corrupted memory?`);
         }
@@ -60,7 +78,7 @@ export class AgentCoreMemory {
         return JSON.parse(JSON.stringify(this.turns));
     }
 
-    onUpdate(callback: () => void): void {
+    onUpdate(callback: OnUpdateCallback): void {
         this.listeners.addListener(callback);
     }
 }
