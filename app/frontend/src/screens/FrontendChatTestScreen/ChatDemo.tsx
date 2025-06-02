@@ -1,17 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { Box, TextField, Button, Typography, Paper, Avatar, CircularProgress, Divider } from '@mui/material';
+import { Box, TextField, Button, Typography, Paper, Avatar, CircularProgress, Divider, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useAgentCore, useMemoryExports } from './hooks/useAgentCore';
 import { AgentCoreEvent, ErrorEvent } from './agents/AgentCoreEvent.types';
-
-// Message types for our chat interface
-type MessageType = 'user' | 'agent' | 'thought' | 'observation' | 'error';
-
-interface Message {
-    id: string;
-    type: MessageType;
-    content: string;
-}
 
 export const ChatDemo = () => {
     const [input, setInput] = useState('');
@@ -57,121 +49,6 @@ export const ChatDemo = () => {
         });
     };
 
-    // Render a message based on its type
-    const renderMessage = (message: Message) => {
-        switch (message.type) {
-            case 'user':
-                return (
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }} key={message.id}>
-                        <Paper
-                            elevation={1}
-                            sx={{
-                                p: 2,
-                                maxWidth: '70%',
-                                bgcolor: 'primary.light',
-                                color: 'primary.contrastText',
-                                borderRadius: '1rem 0 1rem 1rem'
-                            }}
-                        >
-                            <Typography>{message.content}</Typography>
-                        </Paper>
-                    </Box>
-                );
-
-            case 'agent':
-                return (
-                    <Box sx={{ display: 'flex', mb: 2 }} key={message.id}>
-                        <Avatar sx={{ bgcolor: 'secondary.main', mr: 1 }}>AI</Avatar>
-                        <Paper
-                            elevation={1}
-                            sx={{
-                                p: 2,
-                                maxWidth: '70%',
-                                borderRadius: '0 1rem 1rem 1rem'
-                            }}
-                        >
-                            <Typography>{message.content}</Typography>
-                        </Paper>
-                    </Box>
-                );
-
-            case 'thought':
-                return (
-                    <Box sx={{ display: 'flex', mb: 2 }} key={message.id}>
-                        <Paper
-                            elevation={1}
-                            sx={{
-                                p: 2,
-                                maxWidth: '85%',
-                                ml: 5,
-                                borderRadius: '0.5rem',
-                                bgcolor: 'info.light',
-                                border: '1px dashed',
-                                borderColor: 'info.main'
-                            }}
-                        >
-                            <Typography variant="subtitle2" fontWeight="bold" color="info.dark">
-                                Thinking...
-                            </Typography>
-                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                                {message.content}
-                            </Typography>
-                        </Paper>
-                    </Box>
-                );
-
-            case 'observation':
-                return (
-                    <Box sx={{ display: 'flex', mb: 2 }} key={message.id}>
-                        <Paper
-                            elevation={1}
-                            sx={{
-                                p: 2,
-                                maxWidth: '85%',
-                                ml: 5,
-                                borderRadius: '0.5rem',
-                                bgcolor: 'success.light',
-                                border: '1px dashed',
-                                borderColor: 'success.main'
-                            }}
-                        >
-                            <Typography variant="subtitle2" fontWeight="bold" color="success.dark">
-                                Observation
-                            </Typography>
-                            <Typography variant="body2">
-                                {message.content}
-                            </Typography>
-                        </Paper>
-                    </Box>
-                );
-
-            case 'error':
-                return (
-                    <Box sx={{ display: 'flex', mb: 2 }} key={message.id}>
-                        <Paper
-                            elevation={1}
-                            sx={{
-                                p: 2,
-                                maxWidth: '85%',
-                                ml: 5,
-                                borderRadius: '0.5rem',
-                                bgcolor: 'error.light',
-                                border: '1px solid',
-                                borderColor: 'error.main'
-                            }}
-                        >
-                            <Typography variant="subtitle2" fontWeight="bold" color="error.dark">
-                                Error
-                            </Typography>
-                            <Typography variant="body2">
-                                {message.content}
-                            </Typography>
-                        </Paper>
-                    </Box>
-                );
-        }
-    };
-
     return (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Typography variant="h5" component="h1" sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
@@ -192,53 +69,151 @@ export const ChatDemo = () => {
                         </Typography>
                     </Box>
                 ) : (
-                    turns.flatMap((turn, turnIndex) => {
-                        if (turn.type === 'turn:user') {
-                            return turn.actions.map((action, actionIndex) => {
-                                if (action.type === 'action:user-message') {
-                                    return renderMessage({
-                                        id: `turn-${turnIndex}-action-${actionIndex}`,
-                                        type: 'user',
-                                        content: action.content
-                                    });
+                    turns.flatMap((turn, turnIndex) =>
+                        turn.actions.map((action, actionIndex) => {
+                            const id = `turn-${turnIndex}-action-${actionIndex}`;
+                            if (action.type === 'action:user-message') {
+                                return (
+                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }} key={id}>
+                                        <Paper
+                                            elevation={1}
+                                            sx={{
+                                                p: 2,
+                                                maxWidth: '70%',
+                                                bgcolor: 'primary.light',
+                                                color: 'primary.contrastText',
+                                                borderRadius: '1rem 0 1rem 1rem'
+                                            }}
+                                        >
+                                            <Typography>{action.content}</Typography>
+                                        </Paper>
+                                    </Box>
+                                );
+                            } else if (action.type === 'action:agent-message') {
+                                return (
+                                    <Box sx={{ display: 'flex', mb: 2 }} key={id}>
+                                        <Avatar sx={{ bgcolor: 'secondary.main', mr: 1 }}>AI</Avatar>
+                                        <Paper
+                                            elevation={1}
+                                            sx={{
+                                                p: 2,
+                                                maxWidth: '70%',
+                                                borderRadius: '0 1rem 1rem 1rem'
+                                            }}
+                                        >
+                                            <Typography>{action.content}</Typography>
+                                        </Paper>
+                                    </Box>
+                                );
+                            } else if (action.type === 'action:agent-thought') {
+                                return (
+                                    <Box sx={{ display: 'flex', mb: 2 }} key={id}>
+                                        <Paper
+                                            elevation={1}
+                                            sx={{
+                                                p: 2,
+                                                maxWidth: '85%',
+                                                ml: 5,
+                                                borderRadius: '0.5rem',
+                                                bgcolor: 'info.light',
+                                                border: '1px dashed',
+                                                borderColor: 'info.main'
+                                            }}
+                                        >
+                                            <Typography variant="subtitle2" fontWeight="bold" color="info.dark">
+                                                Thinking...
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                                                {action.content}
+                                            </Typography>
+                                        </Paper>
+                                    </Box>
+                                );
+                            } else if (action.type === 'action:agent-observation') {
+                                return (
+                                    <Box sx={{ display: 'flex', mb: 2 }} key={id}>
+                                        <Paper
+                                            elevation={1}
+                                            sx={{
+                                                p: 2,
+                                                maxWidth: '85%',
+                                                ml: 5,
+                                                borderRadius: '0.5rem',
+                                                bgcolor: 'success.light',
+                                                border: '1px dashed',
+                                                borderColor: 'success.main'
+                                            }}
+                                        >
+                                            <Typography variant="subtitle2" fontWeight="bold" color="success.dark">
+                                                Observation
+                                            </Typography>
+                                            <Typography variant="body2">
+                                                {action.content}
+                                            </Typography>
+                                        </Paper>
+                                    </Box>
+                                );
+                            } else if (action.type === 'action:agent-error') {
+                                return (
+                                    <Box sx={{ display: 'flex', mb: 2 }} key={id}>
+                                        <Paper
+                                            elevation={1}
+                                            sx={{
+                                                p: 2,
+                                                maxWidth: '85%',
+                                                ml: 5,
+                                                borderRadius: '0.5rem',
+                                                bgcolor: 'error.light',
+                                                border: '1px solid',
+                                                borderColor: 'error.main'
+                                            }}
+                                        >
+                                            <Typography variant="subtitle2" fontWeight="bold" color="error.dark">
+                                                Error
+                                            </Typography>
+                                            <Typography variant="body2">
+                                                {action.content}
+                                            </Typography>
+                                        </Paper>
+                                    </Box>
+                                );
+                            } else if (action.type === 'action:agent-tool-call') {
+                                let args = '';
+                                try {
+                                    args = JSON.stringify(JSON.parse(action.toolArguments), null, 2);
+                                } catch {
+                                    args = String(action.toolArguments);
                                 }
-                                return null;
-                            });
-                        } else if (turn.type === 'turn:agent') {
-                            return turn.actions.map((action, actionIndex) => {
-                                const id = `turn-${turnIndex}-action-${actionIndex}`;
-
-                                if (action.type === 'action:agent-message') {
-                                    return renderMessage({
-                                        id,
-                                        type: 'agent',
-                                        content: action.content
-                                    });
-                                } else if (action.type === 'action:agent-thought') {
-                                    return renderMessage({
-                                        id,
-                                        type: 'thought',
-                                        content: action.content
-                                    });
-                                } else if (action.type === 'action:agent-observation') {
-                                    return renderMessage({
-                                        id,
-                                        type: 'observation',
-                                        content: action.content
-                                    });
-                                } else if (action.type === 'action:agent-error') {
-                                    return renderMessage({
-                                        id,
-                                        type: 'error',
-                                        content: action.content
-                                    });
+                                // Parse out function name and arguments for display
+                                let funcName = '', funcArgs = '';
+                                const match = `${action.toolName}(${args})`.match(/^(\w+)\((.*)\)$/s);
+                                if (match) {
+                                    funcName = match[1];
+                                    funcArgs = match[2];
+                                } else {
+                                    funcName = action.toolName;
+                                    funcArgs = args;
                                 }
-                                // Tool calls and other action types aren't displayed directly
-                                return null;
-                            }).filter(Boolean); // Remove null values
-                        }
-                        return null;
-                    }).filter(msg => msg !== null) // Filter out any null messages
+                                return (
+                                    <Box sx={{ display: 'flex', mb: 2 }} key={id}>
+                                        <Accordion sx={{ width: '100%', ml: 5, bgcolor: 'warning.light', border: '1px dashed', borderColor: 'warning.main', fontFamily: 'monospace' }}>
+                                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                                <Typography variant="subtitle2" fontWeight="bold" color="warning.dark">
+                                                    Function Call: {funcName}
+                                                </Typography>
+                                            </AccordionSummary>
+                                            <AccordionDetails>
+                                                <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
+                                                    {funcArgs}
+                                                </Typography>
+                                            </AccordionDetails>
+                                        </Accordion>
+                                    </Box>
+                                );
+                            }
+                            return null;
+                        })
+                    ).filter(msg => msg !== null)
                 )}
 
                 {isProcessing && (
