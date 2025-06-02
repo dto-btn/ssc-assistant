@@ -2,6 +2,7 @@ import OpenAI, { AzureOpenAI } from "openai";
 import { TurnConnection } from "./TurnConnection";
 import { AgentCoreMemory } from "./AgentCoreMemory";
 import { AgentToolCall } from "./AgentCoreMemory.types";
+import { AgentToolRegistry } from "./AgentToolRegistry";
 
 const mapMemoryExportToOpenAIMessage = (memory: AgentCoreMemory): OpenAI.Chat.Completions.ChatCompletionMessageParam[] => {
     const turns = memory.export();
@@ -99,7 +100,7 @@ const mapMemoryExportToOpenAIMessage = (memory: AgentCoreMemory): OpenAI.Chat.Co
 export class AgentCore {
     private MAX_ITERATIONS = 10; // Maximum iterations to prevent infinite loops
 
-    constructor(private openai: AzureOpenAI, private memory: AgentCoreMemory) {}
+    constructor(private openai: AzureOpenAI, private memory: AgentCoreMemory, private toolRegistry: AgentToolRegistry) {}
 
     /**
      * Process a query and return an AgentCoreConnection immediately.
@@ -187,6 +188,10 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
             }
         ];
 
+        const toolSchemas = this.toolRegistry.exportToolSchemas();
+        // Merge inbuilt tools with registered tools
+        const allToolSchemas = [...inbuiltToolSchemas, ...toolSchemas];
+
         // Add the user message to the memory
         this.memory.addTurnAction(userTurnIdx, {
             type: 'action:user-message',
@@ -218,7 +223,7 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                     const response = await this.openai.chat.completions.create({
                         model: "gpt-4o", // Use appropriate model
                         messages,
-                        tools: inbuiltToolSchemas,
+                        tools: allToolSchemas,
                     });
                     
                     // Use the existing agent turn index, don't create a new one
@@ -275,17 +280,48 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                                         toolName: toolCall.function.name
                                     })
 
-                                    this.memory.addTurnAction(agentTurnIdx, {
-                                        type: 'action:agent-tool-call-response',
-                                        toolCallId: toolCall.id,
-                                        toolName: functionName,
-                                        toolResponse: JSON.stringify({ error: "Function not found" })
-                                    });
-
-                                    this.memory.addTurnAction(agentTurnIdx, {
-                                        type: 'action:agent-error',
-                                        content: `Function "${functionName}" not found. Please ensure the function is defined in the tool handlers.`
-                                    });
+                                    if (!this.toolRegistry.hasTool(toolCall.function.name)) {
+                                        // If the tool is not registered, we log an error and continue
+                                        const msg = `Function "${functionName}" not found. Please ensure the function is defined in the tool handlers.`
+                                        this.memory.addTurnAction(agentTurnIdx, {
+                                            type: 'action:agent-tool-call-response',
+                                            toolCallId: toolCall.id,
+                                            toolName: functionName,
+                                            toolResponse: JSON.stringify({ error: msg })
+                                        });
+                                        this.memory.addTurnAction(agentTurnIdx, {
+                                            type: 'action:agent-error',
+                                            content: msg
+                                        });
+                                        console.error(msg);
+                                    } else {
+                                        try {
+                                            const result = await this.toolRegistry.useTool(toolCall.function.name, functionArgs);
+                                            // If the tool call was successful, we log the response
+                                            this.memory.addTurnAction(agentTurnIdx, {
+                                                type: 'action:agent-tool-call-response',
+                                                toolCallId: toolCall.id,
+                                                toolName: functionName,
+                                                toolResponse: JSON.stringify(result)
+                                            });
+                                            console.log(`Tool call "${functionName}" succeeded with response:`, result);
+                                        } catch (error) {
+                                            const msg = `Error calling tool "${functionName}": ${error instanceof Error ? error.message : JSON.stringify(error)}`;
+                                            console.error(msg);
+                                            // If the tool call fails, we log it and continue
+                                            this.memory.addTurnAction(agentTurnIdx, {
+                                                type: 'action:agent-tool-call-response',
+                                                toolCallId: toolCall.id,
+                                                toolName: functionName,
+                                                toolResponse: JSON.stringify({ error: msg })
+                                            });
+        
+                                            this.memory.addTurnAction(agentTurnIdx, {
+                                                type: 'action:agent-error',
+                                                content: msg
+                                            });
+                                        }
+                                    }
                                 }
                             }
                         }
