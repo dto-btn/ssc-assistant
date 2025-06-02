@@ -4,6 +4,7 @@ import SendIcon from '@mui/icons-material/Send';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useAgentCore, useMemoryExports } from './hooks/useAgentCore';
 import { AgentCoreEvent, ErrorEvent } from './agents/AgentCoreEvent.types';
+import { AgentToolCallResponse } from './agents/AgentCoreMemory.types';
 
 export const ChatDemo = () => {
     const [input, setInput] = useState('');
@@ -184,7 +185,6 @@ export const ChatDemo = () => {
                                 } catch {
                                     args = String(action.toolArguments);
                                 }
-                                // Parse out function name and arguments for display
                                 let funcName = '', funcArgs = '';
                                 const match = `${action.toolName}(${args})`.match(/^(\w+)\((.*)\)$/s);
                                 if (match) {
@@ -194,22 +194,60 @@ export const ChatDemo = () => {
                                     funcName = action.toolName;
                                     funcArgs = args;
                                 }
-                                return (
-                                    <Box sx={{ display: 'flex', mb: 2 }} key={id}>
-                                        <Accordion sx={{ width: '100%', ml: 5, bgcolor: 'warning.light', border: '1px dashed', borderColor: 'warning.main', fontFamily: 'monospace' }}>
-                                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                                                <Typography variant="subtitle2" fontWeight="bold" color="warning.dark">
-                                                    Function Call: {funcName}
-                                                </Typography>
-                                            </AccordionSummary>
-                                            <AccordionDetails>
-                                                <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
-                                                    {funcArgs}
-                                                </Typography>
-                                            </AccordionDetails>
-                                        </Accordion>
-                                    </Box>
+                                // Find the next action that is a tool-call-response for this toolCallId
+                                const responseAction = turn.actions.slice(actionIndex + 1).find(
+                                    a => a.type === 'action:agent-tool-call-response' && a.toolCallId === action.toolCallId
                                 );
+                                return (
+                                    <React.Fragment key={id}>
+                                        <Box sx={{ display: 'flex', mb: 2 }}>
+                                            <Accordion sx={{ width: '100%', ml: 5, bgcolor: 'warning.light', border: '1px dashed', borderColor: 'warning.main', fontFamily: 'monospace' }}>
+                                                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                                    <Typography variant="subtitle2" fontWeight="bold" color="warning.dark">
+                                                        Function Call: {funcName}
+                                                    </Typography>
+                                                </AccordionSummary>
+                                                <AccordionDetails>
+                                                    <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
+                                                        {funcArgs}
+                                                    </Typography>
+                                                </AccordionDetails>
+                                            </Accordion>
+                                        </Box>
+                                        {responseAction && 'toolResponse' in responseAction && (
+                                            <Box sx={{ display: 'flex', mb: 2, ml: 5 }}>
+                                                <Paper
+                                                    elevation={1}
+                                                    sx={{
+                                                        p: 2,
+                                                        maxWidth: '85%',
+                                                        bgcolor: 'grey.100',
+                                                        border: '1px solid',
+                                                        borderColor: 'grey.400',
+                                                        fontFamily: 'monospace',
+                                                        whiteSpace: 'pre-wrap',
+                                                    }}
+                                                >
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        Tool Response
+                                                    </Typography>
+                                                    <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
+                                                        {(() => {
+                                                            try {
+                                                                return JSON.stringify(JSON.parse((responseAction as AgentToolCallResponse).toolResponse), null, 2);
+                                                            } catch {
+                                                                return String((responseAction as AgentToolCallResponse).toolResponse);
+                                                            }
+                                                        })()}
+                                                    </Typography>
+                                                </Paper>
+                                            </Box>
+                                        )}
+                                    </React.Fragment>
+                                );
+                            } else if (action.type === 'action:agent-tool-call-response') {
+                                // Already rendered with the tool call above
+                                return null;
                             }
                             return null;
                         })
