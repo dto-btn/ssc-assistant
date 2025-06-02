@@ -1,14 +1,36 @@
-import { useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { provideProxyOpenAiClient } from "../providers/provideProxyOpenAiClient";
 import { AgentCore } from "../agents/AgentCore";
 import { AgentCoreMemory } from "../agents/AgentCoreMemory";
 
 export const useAgentCore = () => {
-    const agentCore = useMemo(() => {
+    return useMemo(() => {
         const openai = provideProxyOpenAiClient();
         const memory = new AgentCoreMemory();
-        return new AgentCore(openai, memory);
-    }, []);
+        const agentCore = new AgentCore(openai, memory);
 
-    return agentCore;
+        return {
+            agentCore,
+            openai,
+            memory
+        }
+    }, []);
+}
+
+// subscribe to memory.exports
+export const useMemoryExports = (memory: AgentCoreMemory) => {
+    const [turns, setTurns] = useState(memory.export());
+
+    useEffect(() => {
+        const unsubscriber = memory.onUpdate((event) => {
+            console.log("Update event received:", event);
+            setTurns(memory.export());
+        });
+
+        return () => {
+            unsubscriber();
+        }
+    }, [memory]); 
+    
+    return turns;
 }

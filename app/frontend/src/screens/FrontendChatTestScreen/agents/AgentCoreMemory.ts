@@ -78,7 +78,11 @@ export class AgentCoreMemory {
         return JSON.parse(JSON.stringify(this.turns));
     }
 
-    onUpdate(callback: OnUpdateCallback): void {
+    onUpdate(callback: OnUpdateCallback): () => void {
         this.listeners.addListener(callback);
+        const unsubscriber = () => {
+            this.listeners.removeListener(callback);
+        }
+        return unsubscriber;
     }
 }

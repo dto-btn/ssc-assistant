@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Box, TextField, Button, Typography, Paper, Avatar, CircularProgress, Divider } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-import { useAgentCore } from './hooks/useAgentCore';
-import { AgentCoreEvent, ThoughtEvent, ObservationEvent, ErrorEvent, FinishedEvent } from './agents/AgentCoreEvent.types';
+import { useAgentCore, useMemoryExports } from './hooks/useAgentCore';
+import { AgentCoreEvent, ErrorEvent } from './agents/AgentCoreEvent.types';
 
 // Message types for our chat interface
 type MessageType = 'user' | 'agent' | 'thought' | 'observation' | 'error';
@@ -15,20 +15,14 @@ interface Message {
 
 export const ChatDemo = () => {
     const [input, setInput] = useState('');
-    const [messages, setMessages] = useState<Message[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const agentCore = useAgentCore();
+    const {
+        agentCore,
+        memory
+    } = useAgentCore();
 
-    // Auto-scroll to bottom when messages change
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
-
-    // Generate a unique ID for messages
-    const generateId = () => {
-        return Date.now().toString(36) + Math.random().toString(36).substring(2);
-    };
+    const turns = useMemoryExports(memory);
 
     // Handle form submission
     const handleSubmit = (e: React.FormEvent) => {
@@ -37,64 +31,26 @@ export const ChatDemo = () => {
 
         if (!input.trim() || isProcessing) return;
 
-        // Add user message
-        const userMessage: Message = {
-            id: generateId(),
-            type: 'user',
-            content: input.trim(),
-        };
-
-        setMessages(prev => [...prev, userMessage]);
+        const connection = agentCore.processQuery(input.trim());
         setInput('');
         setIsProcessing(true);
-
-        // Process the query using AgentCore
-        const connection = agentCore.processQuery(userMessage.content);
 
         // Set up event listeners
         connection.onEvent((event: AgentCoreEvent) => {
             console.log('Event received:', event);
 
             switch (event.type) {
-                case 'thought':
-                    const thoughtEvent = event as ThoughtEvent;
-                    setMessages(prev => [...prev, {
-                        id: generateId(),
-                        type: 'thought',
-                        content: thoughtEvent.data.content
-                    }]);
-                    break;
-
-                case 'observation':
-                    const observationEvent = event as ObservationEvent;
-                    setMessages(prev => [...prev, {
-                        id: generateId(),
-                        type: 'observation',
-                        content: observationEvent.data.content
-                    }]);
-                    break;
-
-                case 'message':
-                    setMessages(prev => [...prev, {
-                        id: generateId(),
-                        type: 'agent',
-                        content: event.data.content
-                    }]);
+                case 'started':
+                    setIsProcessing(true);
                     break;
 
                 case 'error':
                     const errorEvent = event as ErrorEvent;
-                    setMessages(prev => [...prev, {
-                        id: generateId(),
-                        type: 'error',
-                        content: errorEvent.data.content
-                    }]);
+                    console.error('Error occurred:', errorEvent.data.content);
                     setIsProcessing(false);
                     break;
 
                 case 'finished':
-                    const finishedEvent = event as FinishedEvent;
-                    console.log('Finished with reason:', finishedEvent.data.finishReason);
                     setIsProcessing(false);
                     break;
             }
@@ -223,7 +179,7 @@ export const ChatDemo = () => {
             </Typography>
 
             <Box sx={{ flexGrow: 1, p: 2, overflow: 'auto' }}>
-                {messages.length === 0 ? (
+                {turns.length === 0 ? (
                     <Box sx={{
                         display: 'flex',
                         justifyContent: 'center',
@@ -236,7 +192,53 @@ export const ChatDemo = () => {
                         </Typography>
                     </Box>
                 ) : (
-                    messages.map(message => renderMessage(message))
+                    turns.flatMap((turn, turnIndex) => {
+                        if (turn.type === 'turn:user') {
+                            return turn.actions.map((action, actionIndex) => {
+                                if (action.type === 'action:user-message') {
+                                    return renderMessage({
+                                        id: `turn-${turnIndex}-action-${actionIndex}`,
+                                        type: 'user',
+                                        content: action.content
+                                    });
+                                }
+                                return null;
+                            });
+                        } else if (turn.type === 'turn:agent') {
+                            return turn.actions.map((action, actionIndex) => {
+                                const id = `turn-${turnIndex}-action-${actionIndex}`;
+
+                                if (action.type === 'action:agent-message') {
+                                    return renderMessage({
+                                        id,
+                                        type: 'agent',
+                                        content: action.content
+                                    });
+                                } else if (action.type === 'action:agent-thought') {
+                                    return renderMessage({
+                                        id,
+                                        type: 'thought',
+                                        content: action.content
+                                    });
+                                } else if (action.type === 'action:agent-observation') {
+                                    return renderMessage({
+                                        id,
+                                        type: 'observation',
+                                        content: action.content
+                                    });
+                                } else if (action.type === 'action:agent-error') {
+                                    return renderMessage({
+                                        id,
+                                        type: 'error',
+                                        content: action.content
+                                    });
+                                }
+                                // Tool calls and other action types aren't displayed directly
+                                return null;
+                            }).filter(Boolean); // Remove null values
+                        }
+                        return null;
+                    }).filter(msg => msg !== null) // Filter out any null messages
                 )}
 
                 {isProcessing && (

@@ -187,43 +187,6 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
             }
         ];
 
-        // Implement the tool handlers for the inbuilt tools
-        const inbuiltToolHandlers: Record<string, Function> = {
-            think: async (args: { reasoning: string }) => {
-                // Update progress tracking
-                
-                // Send progress update with a copy of the progress object to avoid mutations
-                cnx.triggerEvent({
-                    type: 'thought',
-                    data: {
-                        content: args.reasoning
-                    }
-                })
-                
-                // Simulate explicit reasoning process
-                return `Reasoning process simulated: ${args.reasoning}`;
-            },
-            observe: async (args: { observation: string }) => {
-                // Send progress update with a copy of the progress object to avoid mutations
-                cnx.triggerEvent({
-                    type: 'observation',
-                    data: {
-                        content: args.observation
-                    }
-                });
-                
-                // Simulate summarizing observations
-                return `Observation summarized: ${args.observation}`;
-            }
-        };
-
-        // add the memory to the messages
-        const memoryMessages = mapMemoryExportToOpenAIMessage(this.memory);
-
-        const userMessage: OpenAI.Chat.Completions.ChatCompletionMessageParam = {
-            role: 'user',
-            content: query
-        };
         // Add the user message to the memory
         this.memory.addTurnAction(userTurnIdx, {
             type: 'action:user-message',
@@ -286,16 +249,31 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                                 
                                 console.log(`Function called: ${functionName}`);
                                 
-                                if (inbuiltToolHandlers[functionName]) {
+                                // Handle think or observe functions
+                                if (functionName === 'think' || functionName === 'observe') {
                                     // Execute the function
-                                    const functionResult = await inbuiltToolHandlers[functionName](functionArgs);
-                                    
-                                    this.memory.addTurnAction(agentTurnIdx, {
-                                        type: 'action:agent-tool-call-response',
-                                        toolCallId: toolCall.id,
-                                        toolName: functionName,
-                                        toolResponse: JSON.stringify(functionResult)
-                                    });
+                                    switch(functionName) {
+                                        case 'think':
+                                            this.memory.addTurnAction(agentTurnIdx, {
+                                                type: 'action:agent-thought',
+                                                content: functionArgs.reasoning
+                                            });
+                                            break;
+
+                                        case 'observe':
+                                            this.memory.addTurnAction(agentTurnIdx, {
+                                                type: 'action:agent-observation',
+                                                content: functionArgs.observation
+                                            });
+                                            break;
+                                        default:
+                                            this.memory.addTurnAction(agentTurnIdx, {
+                                                type: 'action:agent-error',
+                                                content: `Unknown function "${functionName}" called. Please ensure the function is defined in the tool handlers.`
+                                            });
+                                            console.error(`Unknown function "${functionName}" called. Please ensure the function is defined in the tool handlers.`);
+                                            continue; // Skip to the next tool call
+                                    }
                                 } else {
                                     this.memory.addTurnAction(agentTurnIdx, {
                                         type: 'action:agent-tool-call-response',

@@ -19,82 +19,6 @@ export interface StartedEvent extends AgentCoreEventBase {
   type: 'started';
 }
 
-// Event: Agent responded with a plaintext message
-export interface MessageEvent extends AgentCoreEventBase {
-  type: 'message';
-  data: {
-    content: string;
-  };
-}
-
-// Event: Agent started a streaming message
-export interface MessageStreamStartEvent extends AgentCoreEventBase {
-  type: 'message-stream-start';
-}
-
-// Event: Chunk of a streaming message received
-export interface MessageStreamChunkEvent extends AgentCoreEventBase {
-  type: 'message-stream-chunk';
-  data: {
-    content: string;
-  };
-}
-
-// Event: Streaming message completed
-export interface MessageStreamFinishEvent extends AgentCoreEventBase {
-  type: 'message-stream-finish';
-  data: {
-    success: boolean;
-  };
-}
-
-// Event: Agent thought
-export interface ThoughtEvent extends AgentCoreEventBase {
-  type: 'thought';
-  data: {
-    content: string;
-  };
-}
-
-// Event: Agent observation
-export interface ObservationEvent extends AgentCoreEventBase {
-  type: 'observation';
-  data: {
-    content: string;
-  };
-}
-
-// Event: Agent started using a tool
-export interface ToolStartEvent extends AgentCoreEventBase {
-  type: 'tool-start';
-  data: {
-    toolName: string;
-    toolId: string;
-    parameters: Record<string, any>;
-    invocationId: string;
-  };
-}
-
-// Event: Tool execution finished successfully
-export interface ToolFinishEvent extends AgentCoreEventBase {
-  type: 'tool-finish';
-  data: {
-    toolName: string;
-    toolId: string;
-    invocationId: string;
-  };
-}
-
-// Event: Tool execution had an error
-export interface ToolErrorEvent extends AgentCoreEventBase {
-  type: 'tool-error';
-  data: {
-    toolName: string;
-    toolId: string;
-    invocationId: string;
-  };
-}
-
 // Event: Agent finished processing
 export interface FinishedEvent extends AgentCoreEventBase {
   type: 'finished';
@@ -123,15 +47,6 @@ export interface DebugLogEvent extends AgentCoreEventBase {
 // Union type of all possible agent events
 export type AgentCoreEvent = 
   | StartedEvent
-  | MessageEvent
-  | MessageStreamStartEvent
-  | MessageStreamChunkEvent
-  | MessageStreamFinishEvent
-  | ThoughtEvent
-  | ObservationEvent
-  | ToolStartEvent
-  | ToolFinishEvent
-  | ToolErrorEvent
   | FinishedEvent
   | ErrorEvent
   | DebugLogEvent;
