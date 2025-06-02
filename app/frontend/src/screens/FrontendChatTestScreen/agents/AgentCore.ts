@@ -235,14 +235,6 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                     if (message.tool_calls && message.tool_calls.length > 0) {
                         for (const toolCall of message.tool_calls) {
                             if (toolCall.type === 'function') {
-                                // add the tool call to the memory
-                                this.memory.addTurnAction(agentTurnIdx, {
-                                    type: 'action:agent-tool-call',
-                                    toolArguments: toolCall.function.arguments,
-                                    toolCallId: toolCall.id,
-                                    toolName: toolCall.function.name
-                                })
-
                                 // deal with the tool call
                                 const functionName = toolCall.function.name;
                                 const functionArgs = JSON.parse(toolCall.function.arguments);
@@ -275,12 +267,21 @@ You have a maximum of ${this.MAX_ITERATIONS} iterations to complete your reasoni
                                             continue; // Skip to the next tool call
                                     }
                                 } else {
+                                    // add the tool call to the memory
+                                    this.memory.addTurnAction(agentTurnIdx, {
+                                        type: 'action:agent-tool-call',
+                                        toolArguments: toolCall.function.arguments,
+                                        toolCallId: toolCall.id,
+                                        toolName: toolCall.function.name
+                                    })
+
                                     this.memory.addTurnAction(agentTurnIdx, {
                                         type: 'action:agent-tool-call-response',
                                         toolCallId: toolCall.id,
                                         toolName: functionName,
                                         toolResponse: JSON.stringify({ error: "Function not found" })
                                     });
+
                                     this.memory.addTurnAction(agentTurnIdx, {
                                         type: 'action:agent-error',
                                         content: `Function "${functionName}" not found. Please ensure the function is defined in the tool handlers.`
