@@ -37,8 +37,8 @@ export class AgentCore {
      */
     private async processQueryAsync(query: string, cnx: TurnConnection): Promise<void> {
         // Limit for number of iterations, to prevent infinite loops.
-        // Set it to max 10.
         let loopsRemaining = this.MAX_ITERATIONS;
+
         // Control variable for the autonomous loop
         let isTurnCompleted = false;
 
@@ -59,7 +59,6 @@ export class AgentCore {
         // Main autonomous reasoning loop should be limited to a certain number of iterations
         try {
             while (!isTurnCompleted && loopsRemaining > 0) {
-                // decrease the loop counter to prevent infinite loops
                 loopsRemaining--;
                 try {
                     // Refresh memory messages before each API call to include previous iterations
@@ -74,7 +73,6 @@ export class AgentCore {
                         tools: this.buildToolSchema(),
                     });
                     
-                    // Use the existing agent turn index, don't create a new one
                     const message = response.choices[0].message;
 
                     this.memory.addTurnAction(agentTurnIdx, {
@@ -97,8 +95,6 @@ export class AgentCore {
                             
                             if (isDone) {
                                 // This appears to be a final answer after proper reasoning
-                                
-                                // Update progress to show we've completed
                                 cnx.triggerEvent({
                                     type: 'finished',
                                     data: {
@@ -129,10 +125,6 @@ export class AgentCore {
                             content: finalResponse
                         }
                     });
-                    // cnx.triggerEvent({...progress});
-                    // // Set the error response text and trigger error event
-                    // cnx.setResponseText(finalResponse);
-                    // cnx.triggerError(error);
                 }
             }
         } catch (e) {
@@ -157,21 +149,14 @@ export class AgentCore {
         // If we've reached the iteration limit without completion
         if (!isTurnCompleted) {
             console.log("Maximum iterations reached. Extracting final response from conversation history.");
-            // Update progress to show we've reached the maximum iterations
-            // progress.currentIteration = this.MAX_ITERATIONS;
             cnx.triggerEvent({
                 type: 'finished',
                 data: {
                     finishReason: 'iterationLimitReached'
                 }
             });
-            // lastAction = 'max_iterations_reached';
-            // cnx.triggerEvent({...progress});
-            
-            // // Extract the best possible response from conversation history
-            // const extractedResponse = this.extractFinalResponseFromHistory(messages, progress);
-            // cnx.setResponseText(extractedResponse);
-            // cnx.triggerComplete();
+
+            return;
         }
     }
 
