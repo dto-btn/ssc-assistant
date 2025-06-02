@@ -6,6 +6,82 @@ import { mapMemoryExportToOpenAIMessage } from "./AgentCoreMappers";
 import { buildSystemPromptContent } from "./prompt-templates/systemPrompt.template";
 import { evaluationPromptTemplate } from "./prompt-templates/evaluationPrompt.template";
 
+/**
+ * # AgentCore - The Brain of Our AI Assistant
+ * 
+ * ## What is AgentCore?
+ * Think of AgentCore as the "brain" that powers our AI assistant. When you ask a question,
+ * AgentCore doesn't just give you a quick response - it thinks step by step, uses tools
+ * when needed, and keeps working until it has a complete answer for you.
+ * 
+ * ## How Does It Work? (The Simple Version)
+ * 1. You ask a question
+ * 2. AgentCore thinks about it and decides what to do
+ * 3. It might use tools (like searching files, running code, etc.)
+ * 4. It checks if the answer is complete
+ * 5. If not complete, it goes back to step 2
+ * 6. When done, it gives you the final answer
+ * 
+ * ## Real Examples
+ * 
+ * **Example 1: Simple Question**
+ * - User: "What is 2+2?"
+ * - Agent thinks: "This is basic math, I can answer directly"
+ * - Agent responds: "2+2 equals 4"
+ * - Agent checks: "Is this complete?" → Yes
+ * - Result: Conversation finished
+ * 
+ * **Example 2: Complex Task**
+ * - User: "Find all TypeScript files in the project and count the lines"
+ * - Agent thinks: "I need to search for files and analyze them"
+ * - Agent uses file_search tool to find .ts files
+ * - Agent uses read_file tool to count lines in each file
+ * - Agent thinks: "Now I have all the data, let me summarize"
+ * - Agent responds: "Found 15 TypeScript files with 2,847 total lines"
+ * - Agent checks: "Is this complete?" → Yes
+ * - Result: Conversation finished
+ * 
+ * ## State Machine: The Agent's Journey
+ * 
+ * The agent moves through these states during processing:
+ * 
+ * ```
+ * [STARTING] → [THINKING] → [USING_TOOLS] → [EVALUATING] → [FINISHED]
+ *                  ↑            ↓              ↓
+ *                  └────────────┴──────────────┘
+ *                        (loops until done)
+ * ```
+ * 
+ * **State Descriptions:**
+ * 
+ * - **STARTING**: Agent receives your question and prepares to work
+ * - **THINKING**: Agent analyzes the situation and decides what to do next
+ * - **USING_TOOLS**: Agent executes tools (file searches, code runs, etc.)
+ * - **EVALUATING**: Agent checks if the task is complete or needs more work
+ * - **FINISHED**: Agent has completed the task and provides final answer
+ * 
+ * **Special States:**
+ * - **ERROR**: Something went wrong, agent stops and reports the issue
+ * - **TIMEOUT**: Agent hit the maximum iteration limit (safety feature)
+ * 
+ * ## Technical Details
+ * 
+ * The autonomous reasoning loop works as follows:
+ * 1. User query is stored in memory and a new conversation turn begins
+ * 2. Loop runs up to MAX_ITERATIONS (10) times or until completion
+ * 3. Each iteration:
+ *    - Memory is converted to OpenAI message format
+ *    - LLM is called with conversation history and available tools
+ *    - Response is stored in memory
+ *    - If response contains tool calls: execute each tool and store results
+ *    - If response is text: evaluate if conversation is complete using second LLM
+ *    - If complete: trigger 'finished' event
+ *    - If error: trigger 'error' event and stop
+ * 4. If max iterations reached: trigger 'iterationLimitReached' event
+ * 
+ * All state changes and events are communicated through the TurnConnection,
+ * allowing the UI to show real-time progress and results.
+ */
 export class AgentCore {
     private MAX_ITERATIONS = 10; // Maximum iterations to prevent infinite loops
 
@@ -53,48 +129,35 @@ export class AgentCore {
             content: query
         });
 
-        // Create a single agent turn outside the loop
         const agentTurnIdx = this.memory.addAgentTurn();
 
-        // Main autonomous reasoning loop should be limited to a certain number of iterations
         try {
             while (!isTurnCompleted && loopsRemaining > 0) {
                 loopsRemaining--;
                 try {
-                    // Refresh memory messages before each API call to include previous iterations
                     const currentMemoryMessages = mapMemoryExportToOpenAIMessage(this.memory);
-                    // Call OpenAI API with the current memory messages
                     const response = await this.openai.chat.completions.create({
-                        model: "gpt-4o", // Use appropriate model
+                        model: "gpt-4o",
                         messages: [
                             systemPrompt,
                             ...currentMemoryMessages
                         ],
                         tools: this.buildToolSchema(),
                     });
-                    
                     const message = response.choices[0].message;
-
                     this.memory.addTurnAction(agentTurnIdx, {
                         type: 'action:agent-message',
                         content: message.content || '',
                     });
-    
-                    // Check if the AI wants to call a tool
                     if (message.tool_calls && message.tool_calls.length > 0) {
                         for (const toolCall of message.tool_calls) {
                             await this.handleToolCall(toolCall, agentTurnIdx);
                         }
                     } else if (message.content) {
-                        // If the AI responded with content, this might be the final answer
-                        // We'll use an LLM to evaluate whether this is the final response
-                        // First, create a prompt to evaluate completion
                         const messages = mapMemoryExportToOpenAIMessage(this.memory);
                         try {
                             const isDone = await this.evaluateCompletionWithLLM(messages, cnx)
-                            
                             if (isDone) {
-                                // This appears to be a final answer after proper reasoning
                                 cnx.triggerEvent({
                                     type: 'finished',
                                     data: {
@@ -112,13 +175,12 @@ export class AgentCore {
                                     finishReason: 'error'
                                 }
                             });
-                        };
+                        }
                     }
                 } catch (error) {
                     console.error("Error in autonomous loop:", error);
                     isTurnCompleted = true;
                     const finalResponse = "An error occurred while processing your request.";
-    
                     cnx.triggerEvent({
                         type: 'error',
                         data: {
@@ -145,8 +207,6 @@ export class AgentCore {
         } finally {
             cnx.setStatus('finished');
         }
-        
-        // If we've reached the iteration limit without completion
         if (!isTurnCompleted) {
             console.log("Maximum iterations reached. Extracting final response from conversation history.");
             cnx.triggerEvent({
@@ -155,7 +215,6 @@ export class AgentCore {
                     finishReason: 'iterationLimitReached'
                 }
             });
-
             return;
         }
     }
