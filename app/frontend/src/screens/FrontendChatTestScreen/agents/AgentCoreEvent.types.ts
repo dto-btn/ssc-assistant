@@ -1,5 +1,3 @@
-// filepath: /home/monarch/workspace/ssc-assistant/app/frontend/src/screens/FrontendChatTestScreen/agents/AgentCoreEvent.ts
-
 // Base type for all agent events
 export interface AgentCoreEventBase {
   type: string;
