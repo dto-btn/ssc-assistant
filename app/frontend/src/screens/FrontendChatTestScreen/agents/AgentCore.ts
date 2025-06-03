@@ -113,9 +113,9 @@ export class AgentCore {
      * Process a query asynchronously and populate the provided AgentCoreConnection.
      * 
      * @param query The query to process
-     * @param cnx The TurnConnection for communicating results
+     * @param turnCnx The TurnConnection for communicating results
      */
-    private async processQueryAsync(query: string, cnx: TurnConnection): Promise<void> {
+    private async processQueryAsync(query: string, turnCnx: TurnConnection): Promise<void> {
         // Limit for number of iterations, to prevent infinite loops.
         let loopsRemaining = this.MAX_ITERATIONS;
 
@@ -138,83 +138,111 @@ export class AgentCore {
         try {
             while (!isTurnCompleted && loopsRemaining > 0) {
                 loopsRemaining--;
-                try {
-                    // TODO: Use new client here
-                    const currentMemoryMessages = mapMemoryExportToOpenAIMessage(this.memory);
-                    const response = await this.openai.chat.completions.create({
-                        model: "gpt-4o",
-                        messages: [
-                            systemPrompt,
-                            ...currentMemoryMessages
-                        ],
-                        tools: this.buildToolSchema(),
-                    });
-                    const message = response.choices[0].message;
-                    this.memory.addTurnAction(agentTurnIdx, {
-                        type: 'action:agent-message',
-                        content: message.content || '',
-                    });
-                    if (message.tool_calls && message.tool_calls.length > 0) {
-                        for (const toolCall of message.tool_calls) {
-                            await this.handleToolCall(toolCall, agentTurnIdx);
-                        }
-                    } else if (message.content) {
-                        const messages = mapMemoryExportToOpenAIMessage(this.memory);
-                        try {
-                            const isDone = await this.evaluateCompletionWithLLM(messages, cnx)
-                            if (isDone) {
-                                cnx.triggerEvent({
-                                    type: 'finished',
-                                    data: {
-                                        finishReason: 'stop'
+                
+                await new Promise<void>((resolve) => {
+                    try {
+                        const currentMemoryMessages = mapMemoryExportToOpenAIMessage(this.memory);
+                        const chatCompletionCnx = this.llmClientNonStreaming.createChatCompletion({
+                            model: "gpt-4o",
+                            messages: [
+                                systemPrompt,
+                                ...currentMemoryMessages
+                            ],
+                            tools: this.buildToolSchema(),
+                        });
+
+                        chatCompletionCnx.onEvent(async (evt) => {
+                            switch (evt.type) {
+                                case 'message': {
+                                    const message = evt.data;
+                                    if (message.tool_calls && message.tool_calls.length > 0) {
+                                        for (const toolCall of message.tool_calls) {
+                                            await this.handleToolCall(toolCall, agentTurnIdx);
+                                        }
+                                    } else if (message.content) {
+                                        this.memory.addTurnAction(agentTurnIdx, {
+                                            type: 'action:agent-message',
+                                            content: message.content || '',
+                                        });
+const messages = mapMemoryExportToOpenAIMessage(this.memory);
+                                        try {
+                                            // Evaluate if the conversation is complete using the LLM
+                                            const isDone = await this.evaluateCompletionWithLLM(messages, turnCnx)
+                                            if (isDone) {
+                                                turnCnx.triggerEvent({
+                                                    type: 'finished',
+                                                    data: {
+                                                        finishReason: 'stop'
+                                                    }
+                                                });
+                                                isTurnCompleted = true;
+                                            }
+                                        } catch(error) {
+                                            // If there was an error evaluating completion, log it and trigger an error event
+                                            console.error("Error evaluating completion:", error);
+                                            isTurnCompleted = true;
+                                            turnCnx.triggerEvent({
+                                                type: 'finished',
+                                                data: {
+                                                    finishReason: 'error'
+                                                }
+                                            });
+                                        }
                                     }
-                                });
-                                isTurnCompleted = true;
-                            }
-                        } catch(error) {
-                            console.error("Error evaluating completion:", error);
-                            isTurnCompleted = true;
-                            cnx.triggerEvent({
-                                type: 'finished',
-                                data: {
-                                    finishReason: 'error'
+                                    break;
                                 }
-                            });
-                        }
+                                case 'close': {
+                                    if (!evt.data.ok) {
+                                        // If the connection closed with an error, log it and trigger an error event
+                                        console.error("Connection closed with error:", evt.data.error);
+                                        isTurnCompleted = true;
+                                        turnCnx.triggerEvent({
+                                            type: 'error',
+                                            data: {
+                                                content: "An error occurred while processing your request."
+                                            }
+                                        });
+                                    }
+                                    break;
+                                }
+                            }
+                            resolve();
+                        })
+                    } catch (error) {
+                        console.error("Error in autonomous loop:", error);
+                        isTurnCompleted = true;
+                        const finalResponse = "An error occurred while processing your request.";
+                        turnCnx.triggerEvent({
+                            type: 'error',
+                            data: {
+                                content: finalResponse
+                            }
+                        });
+                        resolve();
                     }
-                } catch (error) {
-                    console.error("Error in autonomous loop:", error);
-                    isTurnCompleted = true;
-                    const finalResponse = "An error occurred while processing your request.";
-                    cnx.triggerEvent({
-                        type: 'error',
-                        data: {
-                            content: finalResponse
-                        }
-                    });
-                }
+                });
             }
         } catch (e) {
             console.error("Unexpected error during processing:", e);
             isTurnCompleted = true;
-            cnx.triggerEvent({
+            turnCnx.triggerEvent({
                 type: 'error',
                 data: {
                     content: "An unexpected error occurred while processing your request."
                 }
             });
-            cnx.triggerEvent({
+            turnCnx.triggerEvent({
                 type: 'finished',
                 data: {
                     finishReason: 'error'
                 }
             })
         } finally {
-            cnx.setStatus('finished');
+            turnCnx.setStatus('finished');
         }
         if (!isTurnCompleted) {
             console.log("Maximum iterations reached. Extracting final response from conversation history.");
-            cnx.triggerEvent({
+            turnCnx.triggerEvent({
                 type: 'finished',
                 data: {
                     finishReason: 'iterationLimitReached'
