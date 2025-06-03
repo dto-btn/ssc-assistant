@@ -5,6 +5,7 @@ import { AgentToolRegistry } from "./AgentToolRegistry";
 import { mapMemoryExportToOpenAIMessage } from "./AgentCoreMappers";
 import { buildSystemPromptContent } from "./prompt-templates/systemPrompt.template";
 import { evaluationPromptTemplate } from "./prompt-templates/evaluationPrompt.template";
+import { AgentCoreNonStreamingLlmClient } from "./AgentCoreLlmClientNonStreaming";
 
 /**
  * # AgentCore - The Brain of Our AI Assistant
@@ -84,8 +85,11 @@ import { evaluationPromptTemplate } from "./prompt-templates/evaluationPrompt.te
  */
 export class AgentCore {
     private MAX_ITERATIONS = 10; // Maximum iterations to prevent infinite loops
+    private llmClientNonStreaming: AgentCoreNonStreamingLlmClient;
 
-    constructor(private openai: AzureOpenAI, private memory: AgentCoreMemory, private toolRegistry: AgentToolRegistry) {}
+    constructor(private openai: AzureOpenAI, private memory: AgentCoreMemory, private toolRegistry: AgentToolRegistry) {
+        this.llmClientNonStreaming = new AgentCoreNonStreamingLlmClient(openai);
+    }
 
     /**
      * Process a query and return an AgentCoreConnection immediately.
@@ -135,6 +139,7 @@ export class AgentCore {
             while (!isTurnCompleted && loopsRemaining > 0) {
                 loopsRemaining--;
                 try {
+                    // TODO: Use new client here
                     const currentMemoryMessages = mapMemoryExportToOpenAIMessage(this.memory);
                     const response = await this.openai.chat.completions.create({
                         model: "gpt-4o",
