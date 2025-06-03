@@ -42,9 +42,21 @@ export interface DebugLogEvent extends AgentCoreEventBase {
   };
 }
 
+/**
+ * This event is used to update the streaming message content as it is being generated.
+ * It is emitted multiple times during the streaming process to provide real-time updates.
+ */
+export interface StreamingMessageUpdateEvent extends AgentCoreEventBase {
+  type: 'streaming-message-update';
+  data: {
+    content: string;
+  };
+}
+
 // Union type of all possible agent events
 export type AgentCoreEvent = 
   | StartedEvent
   | FinishedEvent
   | ErrorEvent
-  | DebugLogEvent;
+  | DebugLogEvent
+  | StreamingMessageUpdateEvent;

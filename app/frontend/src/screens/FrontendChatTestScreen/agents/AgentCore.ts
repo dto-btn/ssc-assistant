@@ -6,7 +6,10 @@ import { mapMemoryExportToOpenAIMessage } from "./AgentCoreMappers";
 import { buildSystemPromptContent } from "./prompt-templates/systemPrompt.template";
 import { evaluationPromptTemplate } from "./prompt-templates/evaluationPrompt.template";
 import { AgentCoreNonStreamingLlmClient } from "./AgentCoreLlmClientNonStreaming";
+import { AgentCoreLlmClientStreaming } from "./AgentCoreLlmClientStreaming";
+import { AgentCoreLlmClient } from "./AgentCoreLlmClient";
 import { FinishReason } from "./AgentCoreEvent.types";
+import { ProcessQueryOptions } from "./AgentCore.types";
 
 /**
  * # AgentCore - The Brain of Our AI Assistant
@@ -86,10 +89,16 @@ import { FinishReason } from "./AgentCoreEvent.types";
  */
 export class AgentCore {
     private MAX_ITERATIONS = 10; // Maximum iterations to prevent infinite loops
-    private llmClientNonStreaming: AgentCoreNonStreamingLlmClient;
+    private llmClientNonStreaming: AgentCoreLlmClient;
+    private llmClientStreaming: AgentCoreLlmClient;
 
-    constructor(private openai: AzureOpenAI, private memory: AgentCoreMemory, private toolRegistry: AgentToolRegistry) {
+    constructor(
+        private openai: AzureOpenAI, 
+        private memory: AgentCoreMemory, 
+        private toolRegistry: AgentToolRegistry
+    ) {
         this.llmClientNonStreaming = new AgentCoreNonStreamingLlmClient(openai);
+        this.llmClientStreaming = new AgentCoreLlmClientStreaming(openai);
     }
 
     /**
@@ -99,12 +108,18 @@ export class AgentCore {
      * @param query The query to process
      * @returns An AgentCoreConnection that will be populated with results
      */
-    processQuery(query: string): TurnConnection {
+    processQuery(query: string, options?: Partial<ProcessQueryOptions>): TurnConnection {
         // Create a new AgentCoreConnection instance
         const cnx = new TurnConnection();
+
+        // Set default options
+        const defaultOpts: ProcessQueryOptions = {
+            useStreaming: false
+        }
+        const parsedOpts: ProcessQueryOptions = { ...defaultOpts, ...options };
         
         // Start the processing in the background
-        this.processQueryAsync(query, cnx);
+        this.processQueryAsync(query, cnx, parsedOpts);
         
         // Return the connection object immediately
         return cnx;
@@ -116,7 +131,7 @@ export class AgentCore {
      * @param query The query to process
      * @param turnCnx The TurnConnection for communicating results
      */
-    private async processQueryAsync(query: string, turnCnx: TurnConnection): Promise<void> {
+    private async processQueryAsync(query: string, turnCnx: TurnConnection, options: ProcessQueryOptions): Promise<void> {
         // Create a state object to track iteration state
         const state = {
             isTurnCompleted: false,
@@ -144,7 +159,7 @@ export class AgentCore {
                     const currentMemoryMessages = mapMemoryExportToOpenAIMessage(this.memory);
 
                     // This will change in streaming mode, but for now we use the non-streaming client
-                    const response = await this.getLLMResponse(systemPrompt, currentMemoryMessages);
+                    const response = await this.getLLMResponse(turnCnx, systemPrompt, currentMemoryMessages, options);
                     
                     if (response.tool_calls && response.tool_calls.length > 0) {
                         await this.processToolCalls(response.tool_calls, agentTurnIdx);
@@ -361,12 +376,17 @@ export class AgentCore {
      * Gets a response from the LLM with the current conversation history
      */
     private async getLLMResponse(
+        turnCnx: TurnConnection,
         systemPrompt: OpenAI.Chat.Completions.ChatCompletionMessageParam,
-        messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[]
+        messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+        options: ProcessQueryOptions
     ): Promise<OpenAI.Chat.Completions.ChatCompletionMessage> {
         return new Promise((resolve, reject) => {
             try {
-                const chatCompletionCnx = this.llmClientNonStreaming.createChatCompletion({
+                // Choose the appropriate client based on the streaming flag
+                const llmClient = options.useStreaming ? this.llmClientStreaming : this.llmClientNonStreaming;
+                
+                const chatCompletionCnx = llmClient.createChatCompletion({
                     model: "gpt-4o",
                     messages: [
                         systemPrompt,
@@ -374,14 +394,28 @@ export class AgentCore {
                     ],
                     tools: this.buildToolSchema(),
                 });
-
+            
+                // For streaming, we need to handle partial updates
+                let accumulatedContent = '';
+                
                 chatCompletionCnx.onEvent((evt) => {
                     switch (evt.type) {
+                        case 'streaming-message-update':
+                            // Update the content as it streams in.
+                            // This only happens in streaming mode.
+                            accumulatedContent = evt.data.content;
+                            this.emitStreamingMessageUpdateEvent(turnCnx, accumulatedContent);
+                            break;
                         case 'message':
+                            // This is the final message with all data
+                            accumulatedContent = evt.data.content || '';
                             resolve(evt.data);
                             break;
                         case 'close':
+                            // Handle connection close
                             if (!evt.data.ok) {
+                                // If the connection closed with an error, reject the promise. This
+                                // is intented to catch cases of a network error.
                                 reject(new Error(`Connection closed with error: ${evt.data.error}`));
                             }
                             break;
@@ -449,6 +483,13 @@ export class AgentCore {
         turnCnx.triggerEvent({
             type: 'finished',
             data: { finishReason: reason }
+        });
+    }
+
+    private emitStreamingMessageUpdateEvent(turnCnx: TurnConnection, content: string): void {
+        turnCnx.triggerEvent({
+            type: 'streaming-message-update',
+            data: { content }
         });
     }
 

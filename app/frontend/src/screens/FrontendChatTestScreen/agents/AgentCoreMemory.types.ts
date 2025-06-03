@@ -79,7 +79,16 @@ export type UpdateEventActionAdded = {
     action: UserAction | AgentAction,
 }
 
-export type UpdateEvent = UpdateEventTurnAdded | UpdateEventActionAdded;
+/**
+ * The StreamingMessageUpdate does not represent a complete action, but rather an update to an ongoing message.
+ * It is used to stream updates to the UI as the agent generates a message.
+ */
+export type StreamingMessageUpdate = {
+    type: 'streaming:agent-message-update',
+    content: string;
+}
+
+export type UpdateEvent = UpdateEventTurnAdded | UpdateEventActionAdded | StreamingMessageUpdate;
 
 /**
  * Callback type for when an action is added to the memory.

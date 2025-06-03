@@ -9,6 +9,7 @@ import { AgentToolCallResponse } from './agents/AgentCoreMemory.types';
 export const ChatDemo = () => {
     const [input, setInput] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
+    const [streamingAgentOutput, setStreamingAgentOutput] = useState<string>('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const {
         agentCore,
@@ -24,7 +25,9 @@ export const ChatDemo = () => {
 
         if (!input.trim() || isProcessing) return;
 
-        const connection = agentCore.processQuery(input.trim());
+        const connection = agentCore.processQuery(input.trim(), {
+            useStreaming: false
+        });
         setInput('');
         setIsProcessing(true);
 
@@ -34,6 +37,7 @@ export const ChatDemo = () => {
 
             switch (event.type) {
                 case 'started':
+                    setStreamingAgentOutput('');
                     setIsProcessing(true);
                     break;
 
@@ -44,7 +48,21 @@ export const ChatDemo = () => {
                     break;
 
                 case 'finished':
+                    setStreamingAgentOutput('');
                     setIsProcessing(false);
+                    break;
+
+                case 'debug-log':
+                    console.debug('Debug log:', event.data.logContent);
+                    break;
+
+                case 'streaming-message-update':
+                    console.log('Streaming message update:', event.data.content);
+                    setStreamingAgentOutput(event.data.content);
+                    break;
+
+                default:
+                    console.error(`Received an unknown event type. All event types should be handled`, event);
                     break;
             }
         });
@@ -252,6 +270,23 @@ export const ChatDemo = () => {
                             return null;
                         })
                     ).filter(msg => msg !== null)
+                )}
+
+                {streamingAgentOutput && (
+                    <Box sx={{ display: 'flex', mb: 2 }}>
+                        <Avatar sx={{ bgcolor: 'secondary.main', mr: 1 }}>AI</Avatar>
+                        <Paper
+                            elevation={1}
+                            sx={{
+                                p: 2,
+                                maxWidth: '70%',
+                                borderRadius: '0 1rem 1rem 1rem'
+                            }}
+                        >
+                            <Typography>{streamingAgentOutput}</Typography>
+                        </Paper>
+                    </Box>
+
                 )}
 
                 {isProcessing && (
