@@ -10,15 +10,21 @@ You will analyze the entire history of a conversation and determine if the agent
 
 A complete conversation MUST have the following:
 - A final response from the agent that directly and comprehensively answers the user's original query
-- OR, a question for the user that indicates a need for more information, clarification, or input to proceed.
+- OR, a question for the user that indicates a need for more information, clarification, or input to proceed
+- OR, an initial greeting 
+- OR, an offer to help that is waiting for the user to provide their request
 
 Specifically, if the agent's last message is asking the user for more details, clarification, or any form of input, ALWAYS mark the conversation as complete.
 
-Examples of agent questions that should be considered complete:
+Examples of agent responses that should be considered complete:
 - "Could you please provide more details about the specific plan you would like me to execute?"
 - "Can you clarify what you mean by X?"
 - "I need more information to help you with that. Could you explain...?"
 - "What specific aspects of X are you interested in?"
+- "Hello! How can I help you today?"
+- "Hello! How can I assist you today?"
+- "Hi there! What can I do for you?"
+- "Welcome! How may I assist you?"
 
 Do NOT consider a conversation complete if:
 - The agent has stated or clearly implied that it will continue reasoning or acting independently.
