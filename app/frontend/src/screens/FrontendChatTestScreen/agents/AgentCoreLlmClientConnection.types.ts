@@ -2,7 +2,8 @@ import OpenAI from "openai";
 
 export type AgentCoreLlmClientConnectionEvent =
     | AgentCoreLlmClientConnectionEvent.Message
-    | AgentCoreLlmClientConnectionEvent.Close;
+    | AgentCoreLlmClientConnectionEvent.Close
+    | AgentCoreLlmClientConnectionEvent.StreamingMessageUpdate;
 
 export namespace AgentCoreLlmClientConnectionEvent {
     /**
@@ -21,6 +22,10 @@ export namespace AgentCoreLlmClientConnectionEvent {
             | { ok: false; error: unknown };
     }
 
+    export interface StreamingMessageUpdate {
+        type: 'streaming-message-update';
+        data: {
+            content: string; // Accumulated content from the stream
+        }
+    }
 }
-
-type X = AgentCoreLlmClientConnectionEvent

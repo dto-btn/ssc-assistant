@@ -1,7 +1,8 @@
 import OpenAI from "openai";
+import type { AgentCoreLlmClient } from "./AgentCoreLlmClient";
 import { AgentCoreLlmClientConnection } from "./AgentCoreLlmClientConnection";
 
-export class AgentCoreNonStreamingLlmClient {
+export class AgentCoreNonStreamingLlmClient implements AgentCoreLlmClient {
     constructor(private openai: OpenAI) {}
 
     createChatCompletion(
