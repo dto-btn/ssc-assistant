@@ -6,6 +6,7 @@ import { mapMemoryExportToOpenAIMessage } from "./AgentCoreMappers";
 import { buildSystemPromptContent } from "./prompt-templates/systemPrompt.template";
 import { evaluationPromptTemplate } from "./prompt-templates/evaluationPrompt.template";
 import { AgentCoreNonStreamingLlmClient } from "./AgentCoreLlmClientNonStreaming";
+import { FinishReason } from "./AgentCoreEvent.types";
 
 /**
  * # AgentCore - The Brain of Our AI Assistant
@@ -116,139 +117,57 @@ export class AgentCore {
      * @param turnCnx The TurnConnection for communicating results
      */
     private async processQueryAsync(query: string, turnCnx: TurnConnection): Promise<void> {
-        // Limit for number of iterations, to prevent infinite loops.
-        let loopsRemaining = this.MAX_ITERATIONS;
-
-        // Control variable for the autonomous loop
-        let isTurnCompleted = false;
-
-        const userTurnIdx = this.memory.addUserTurn(); // Add a user turn to the memory
-
-        // Track conversation context
-        const systemPrompt = buildSystemPromptContent(this.MAX_ITERATIONS, loopsRemaining);
-
-        // Add the user message to the memory
-        this.memory.addTurnAction(userTurnIdx, {
-            type: 'action:user-message',
-            content: query
-        });
-
-        const agentTurnIdx = this.memory.addAgentTurn();
+        // Create a state object to track iteration state
+        const state = {
+            isTurnCompleted: false,
+            loopsRemaining: this.MAX_ITERATIONS
+        };
 
         try {
-            while (!isTurnCompleted && loopsRemaining > 0) {
-                loopsRemaining--;
-                
-                await new Promise<void>((resolve) => {
-                    try {
-                        const currentMemoryMessages = mapMemoryExportToOpenAIMessage(this.memory);
-                        const chatCompletionCnx = this.llmClientNonStreaming.createChatCompletion({
-                            model: "gpt-4o",
-                            messages: [
-                                systemPrompt,
-                                ...currentMemoryMessages
-                            ],
-                            tools: this.buildToolSchema(),
-                        });
+            // Set up conversation context
+            const userTurnIdx = this.memory.addUserTurn();
+            const systemPrompt = buildSystemPromptContent(this.MAX_ITERATIONS, state.loopsRemaining);
+            
+            // Add the user message to the memory
+            this.memory.addTurnAction(userTurnIdx, {
+                type: 'action:user-message',
+                content: query
+            });
 
-                        chatCompletionCnx.onEvent(async (evt) => {
-                            switch (evt.type) {
-                                case 'message': {
-                                    const message = evt.data;
-                                    if (message.tool_calls && message.tool_calls.length > 0) {
-                                        for (const toolCall of message.tool_calls) {
-                                            await this.handleToolCall(toolCall, agentTurnIdx);
-                                        }
-                                    } else if (message.content) {
-                                        this.memory.addTurnAction(agentTurnIdx, {
-                                            type: 'action:agent-message',
-                                            content: message.content || '',
-                                        });
-const messages = mapMemoryExportToOpenAIMessage(this.memory);
-                                        try {
-                                            // Evaluate if the conversation is complete using the LLM
-                                            const isDone = await this.evaluateCompletionWithLLM(messages, turnCnx)
-                                            if (isDone) {
-                                                turnCnx.triggerEvent({
-                                                    type: 'finished',
-                                                    data: {
-                                                        finishReason: 'stop'
-                                                    }
-                                                });
-                                                isTurnCompleted = true;
-                                            }
-                                        } catch(error) {
-                                            // If there was an error evaluating completion, log it and trigger an error event
-                                            console.error("Error evaluating completion:", error);
-                                            isTurnCompleted = true;
-                                            turnCnx.triggerEvent({
-                                                type: 'finished',
-                                                data: {
-                                                    finishReason: 'error'
-                                                }
-                                            });
-                                        }
-                                    }
-                                    break;
-                                }
-                                case 'close': {
-                                    if (!evt.data.ok) {
-                                        // If the connection closed with an error, log it and trigger an error event
-                                        console.error("Connection closed with error:", evt.data.error);
-                                        isTurnCompleted = true;
-                                        turnCnx.triggerEvent({
-                                            type: 'error',
-                                            data: {
-                                                content: "An error occurred while processing your request."
-                                            }
-                                        });
-                                    }
-                                    break;
-                                }
-                            }
-                            resolve();
-                        })
-                    } catch (error) {
-                        console.error("Error in autonomous loop:", error);
-                        isTurnCompleted = true;
-                        const finalResponse = "An error occurred while processing your request.";
-                        turnCnx.triggerEvent({
-                            type: 'error',
-                            data: {
-                                content: finalResponse
-                            }
-                        });
-                        resolve();
+            const agentTurnIdx = this.memory.addAgentTurn();
+
+            // Main processing loop
+            while (!state.isTurnCompleted && state.loopsRemaining > 0) {
+                state.loopsRemaining--;
+                
+                try {
+                    const currentMemoryMessages = mapMemoryExportToOpenAIMessage(this.memory);
+
+                    // This will change in streaming mode, but for now we use the non-streaming client
+                    const response = await this.getLLMResponse(systemPrompt, currentMemoryMessages);
+                    
+                    if (response.tool_calls && response.tool_calls.length > 0) {
+                        await this.processToolCalls(response.tool_calls, agentTurnIdx);
+                    } else if (response.content) {
+                        await this.processContentResponse(response.content, agentTurnIdx, state, turnCnx);
                     }
-                });
+                } catch (error) {
+                    console.error("Error in autonomous loop:", error);
+                    state.isTurnCompleted = true;
+                    this.emitErrorEvent(turnCnx, "An error occurred while processing your request.");
+                }
             }
         } catch (e) {
             console.error("Unexpected error during processing:", e);
-            isTurnCompleted = true;
-            turnCnx.triggerEvent({
-                type: 'error',
-                data: {
-                    content: "An unexpected error occurred while processing your request."
-                }
-            });
-            turnCnx.triggerEvent({
-                type: 'finished',
-                data: {
-                    finishReason: 'error'
-                }
-            })
+            this.emitErrorEvent(turnCnx, "An unexpected error occurred while processing your request.");
+            this.emitFinishedEvent(turnCnx, 'error');
         } finally {
             turnCnx.setStatus('finished');
         }
-        if (!isTurnCompleted) {
+        
+        if (!state.isTurnCompleted) {
             console.log("Maximum iterations reached. Extracting final response from conversation history.");
-            turnCnx.triggerEvent({
-                type: 'finished',
-                data: {
-                    finishReason: 'iterationLimitReached'
-                }
-            });
-            return;
+            this.emitFinishedEvent(turnCnx, 'iterationLimitReached');
         }
     }
 
@@ -436,6 +355,101 @@ const messages = mapMemoryExportToOpenAIMessage(this.memory);
                 content: msg
             });
         }
+    }
+
+    /**
+     * Gets a response from the LLM with the current conversation history
+     */
+    private async getLLMResponse(
+        systemPrompt: OpenAI.Chat.Completions.ChatCompletionMessageParam,
+        messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[]
+    ): Promise<OpenAI.Chat.Completions.ChatCompletionMessage> {
+        return new Promise((resolve, reject) => {
+            try {
+                const chatCompletionCnx = this.llmClientNonStreaming.createChatCompletion({
+                    model: "gpt-4o",
+                    messages: [
+                        systemPrompt,
+                        ...messages
+                    ],
+                    tools: this.buildToolSchema(),
+                });
+
+                chatCompletionCnx.onEvent((evt) => {
+                    switch (evt.type) {
+                        case 'message':
+                            resolve(evt.data);
+                            break;
+                        case 'close':
+                            if (!evt.data.ok) {
+                                reject(new Error(`Connection closed with error: ${evt.data.error}`));
+                            }
+                            break;
+                    }
+                });
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    /**
+     * Processes all tool calls in the LLM response
+     */
+    private async processToolCalls(toolCalls: any[], agentTurnIdx: number): Promise<void> {
+        for (const toolCall of toolCalls) {
+            await this.handleToolCall(toolCall, agentTurnIdx);
+        }
+    }
+
+    /**
+     * Processes a content response from the LLM
+     */
+    private async processContentResponse(
+        content: string,
+        agentTurnIdx: number,
+        state: { isTurnCompleted: boolean },
+        turnCnx: TurnConnection
+    ): Promise<void> {
+        this.memory.addTurnAction(agentTurnIdx, {
+            type: 'action:agent-message',
+            content: content,
+        });
+        
+        try {
+            // Evaluate if the conversation is complete
+            const messages = mapMemoryExportToOpenAIMessage(this.memory);
+            const isDone = await this.evaluateCompletionWithLLM(messages, turnCnx);
+            
+            if (isDone) {
+                this.emitFinishedEvent(turnCnx, 'stop');
+                state.isTurnCompleted = true;
+            }
+        } catch (error) {
+            console.error("Error evaluating completion:", error);
+            state.isTurnCompleted = true;
+            this.emitFinishedEvent(turnCnx, 'error');
+        }
+    }
+
+    /**
+     * Emit an error event to the TurnConnection
+     */
+    private emitErrorEvent(turnCnx: TurnConnection, message: string): void {
+        turnCnx.triggerEvent({
+            type: 'error',
+            data: { content: message }
+        });
+    }
+
+    /**
+     * Emit a finished event to the TurnConnection
+     */
+    private emitFinishedEvent(turnCnx: TurnConnection, reason: FinishReason): void {
+        turnCnx.triggerEvent({
+            type: 'finished',
+            data: { finishReason: reason }
+        });
     }
 
     private buildToolSchema() {
