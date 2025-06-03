@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { AgentCoreLlmClient } from "./AgentCoreLlmClient";
 import { AgentCoreLlmClientConnection } from "./AgentCoreLlmClientConnection";
-import { mergeDelta } from "./AgentCoreLlmClientStreaming.utils";
+import { mergeOpenAiDelta } from "./AgentCoreLlmClientStreaming.utils";
 
 export class AgentCoreLlmClientStreaming implements AgentCoreLlmClient {
     constructor(private openai: OpenAI) {}
@@ -120,7 +120,7 @@ export class AgentCoreLlmClientStreaming implements AgentCoreLlmClient {
                     }
                     
                     // Merge the deltas into the accumulator
-                    mergeDelta(messageAcc, delta);
+                    mergeOpenAiDelta(messageAcc, delta);
                 } catch (chunkError) {
                     console.error("Error processing chunk:", chunkError);
                     // Continue processing other chunks even if one fails

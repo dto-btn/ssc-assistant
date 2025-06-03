@@ -11,7 +11,7 @@
  * @param source The source object to merge from
  * @returns void
  */
-export const mergeDelta = (target: any, source: any): void => {
+export const mergeOpenAiDelta = (target: any, source: any): void => {
     if (typeof source !== 'object' || source === null) {
         return; // Base case, nothing to merge
     }
@@ -38,14 +38,14 @@ export const mergeDelta = (target: any, source: any): void => {
                     if (index >= target[key].length) {
                         if (typeof item === 'object' && item !== null) {
                             target[key][index] = Array.isArray(item) ? [] : {};
-                            mergeDelta(target[key][index], item);
+                            mergeOpenAiDelta(target[key][index], item);
                         } else {
                             target[key][index] = item;
                         }
                     } 
                     // For existing indexes with objects, merge recursively
                     else if (typeof item === 'object' && item !== null && typeof target[key][index] === 'object') {
-                        mergeDelta(target[key][index], item);
+                        mergeOpenAiDelta(target[key][index], item);
                     }
                     // For existing indexes with non-objects, replace
                     else if (item !== undefined) {
@@ -59,7 +59,7 @@ export const mergeDelta = (target: any, source: any): void => {
                 if (typeof target[key] !== 'object' || target[key] === null) {
                     target[key] = {};
                 }
-                mergeDelta(target[key], sourceValue); // Recurse
+                mergeOpenAiDelta(target[key], sourceValue); // Recurse
             } 
             else {
                 // Special handling for certain fields that should not be concatenated

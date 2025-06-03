@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { mergeDelta } from "./AgentCoreLlmClientStreaming.utils";
+import { mergeOpenAiDelta } from "./AgentCoreLlmClientStreaming.utils";
 import OpenAI from "openai";
 
 describe('AgentCoreLlmClientStreaming utils', () => {
-    describe('mergeDelta', () => {
+    describe('mergeOpenAiDelta', () => {
         it('should merge nested objects correctly', () => {
             const target = { a: { b: 1, c: 2 }, d: 3 };
             const source = { a: { b: 4, e: 5 }, d: 6, f: 7 };
             const expected = { a: { b: 4, c: 2, e: 5 }, d: 6, f: 7 };   
-            mergeDelta(target, source);
+            mergeOpenAiDelta(target, source);
             expect(target).toEqual(expected);
         });
 
@@ -37,7 +37,7 @@ describe('AgentCoreLlmClientStreaming utils', () => {
                 d: 6,
                 f: 7
             };
-            mergeDelta(target, source);
+            mergeOpenAiDelta(target, source);
             expect(target).toEqual(expected);
         })
 
@@ -61,7 +61,7 @@ describe('AgentCoreLlmClientStreaming utils', () => {
                     tool_calls: [{ id: 'tool1', type: 'function', function: { name: 'testFunction', arguments: "{}" } }]
                 };
 
-                mergeDelta(target, source);
+                mergeOpenAiDelta(target, source);
                 expect(target).toEqual(expected);
             });
 
@@ -90,17 +90,13 @@ describe('AgentCoreLlmClientStreaming utils', () => {
                         { id: 'tool2', type: 'function', function: { name: 'anotherFunction', arguments: '{"param2": "value2"}' } }
                     ]
                 };
-                mergeDelta(target, source);
+                mergeOpenAiDelta(target, source);
                 expect(target).toEqual(expected);
             });
 
             it('should handle merging tool calls where the parameters come in as multiple deltas', () => {
                 const target: Partial<OpenAI.Chat.Completions.ChatCompletionMessage> = {
-                    role: 'assistant',
-                    content: '',
-                    tool_calls: [
-                        { id: 'tool1', type: 'function', function: { name: 'testFunction', arguments: "" } }
-                    ]
+
                 };
 
                 const sources: Partial<OpenAI.Chat.Completions.ChatCompletionMessage>[] = [
@@ -135,7 +131,7 @@ describe('AgentCoreLlmClientStreaming utils', () => {
                         { id: 'tool2', type: 'function', function: { name: 'anotherFunction', arguments: '{"param2": "value2"}' } }
                     ]
                 };
-                sources.forEach(source => mergeDelta(target, source));
+                sources.forEach(source => mergeOpenAiDelta(target, source));
                 expect(target).toEqual(expected);
             });
 

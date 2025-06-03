@@ -6,7 +6,7 @@ type Options = {
 
 export const provideProxyOpenAiClient = (options: Options = {}) => {
     const defaultOptions: Options = {
-        apiRootDomain: window.location.origin
+        apiRootDomain: typeof window === 'undefined' ? '' : window.location.origin
     };
     options = { ...defaultOptions, ...options };
 
