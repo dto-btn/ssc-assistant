@@ -26,7 +26,7 @@ export const ChatDemo = () => {
         if (!input.trim() || isProcessing) return;
 
         const connection = agentCore.processQuery(input.trim(), {
-            useStreaming: false
+            useStreaming: true
         });
         setInput('');
         setIsProcessing(true);

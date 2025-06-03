@@ -386,6 +386,9 @@ export class AgentCore {
                 // Choose the appropriate client based on the streaming flag
                 const llmClient = options.useStreaming ? this.llmClientStreaming : this.llmClientNonStreaming;
                 
+                // Track if we've already resolved or rejected this promise
+                let isSettled = false;
+                
                 const chatCompletionCnx = llmClient.createChatCompletion({
                     model: "gpt-4o",
                     messages: [
@@ -399,26 +402,41 @@ export class AgentCore {
                 let accumulatedContent = '';
                 
                 chatCompletionCnx.onEvent((evt) => {
-                    switch (evt.type) {
-                        case 'streaming-message-update':
-                            // Update the content as it streams in.
-                            // This only happens in streaming mode.
-                            accumulatedContent = evt.data.content;
-                            this.emitStreamingMessageUpdateEvent(turnCnx, accumulatedContent);
-                            break;
-                        case 'message':
-                            // This is the final message with all data
-                            accumulatedContent = evt.data.content || '';
-                            resolve(evt.data);
-                            break;
-                        case 'close':
-                            // Handle connection close
-                            if (!evt.data.ok) {
-                                // If the connection closed with an error, reject the promise. This
-                                // is intented to catch cases of a network error.
-                                reject(new Error(`Connection closed with error: ${evt.data.error}`));
-                            }
-                            break;
+                    try {
+                        switch (evt.type) {
+                            case 'streaming-message-update':
+                                // Update the content as it streams in.
+                                // This only happens in streaming mode.
+                                if (evt.data && evt.data.content !== undefined) {
+                                    accumulatedContent = evt.data.content || '';
+                                    this.emitStreamingMessageUpdateEvent(turnCnx, accumulatedContent);
+                                }
+                                break;
+                            case 'message':
+                                // This is the final message with all data
+                                if (!isSettled) {
+                                    isSettled = true;
+                                    if (evt.data && evt.data.content !== undefined) {
+                                        accumulatedContent = evt.data.content || '';
+                                    }
+                                    resolve(evt.data);
+                                }
+                                break;
+                            case 'close':
+                                // Handle connection close
+                                if (!evt.data.ok && !isSettled) {
+                                    // If the connection closed with an error and we haven't settled yet, reject the promise
+                                    isSettled = true;
+                                    reject(new Error(`Connection closed with error: ${evt.data.error}`));
+                                }
+                                break;
+                        }
+                    } catch (eventError) {
+                        console.error("Error handling event:", eventError);
+                        if (!isSettled) {
+                            isSettled = true;
+                            reject(eventError);
+                        }
                     }
                 });
             } catch (error) {

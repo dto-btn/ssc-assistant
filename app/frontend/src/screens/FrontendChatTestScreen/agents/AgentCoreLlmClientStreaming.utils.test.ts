@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { mergeDelta } from "./AgentCoreLlmClientStreaming.utils";
+import OpenAI from "openai";
 
 describe('AgentCoreLlmClientStreaming utils', () => {
     describe('mergeDelta', () => {
@@ -38,6 +39,108 @@ describe('AgentCoreLlmClientStreaming utils', () => {
             };
             mergeDelta(target, source);
             expect(target).toEqual(expected);
+        })
+
+        describe('openai', () => {
+            it('should merge OpenAI chat completion message deltas correctly', () => {
+                const target: Partial<OpenAI.Chat.Completions.ChatCompletionMessage> = {
+                    role: 'assistant',
+                    content: '',
+                    tool_calls: []
+                };
+
+                const source: Partial<OpenAI.Chat.Completions.ChatCompletionMessage> = {
+                    role: 'assistant',
+                    content: 'Hello, ',
+                    tool_calls: [{ id: 'tool1', type: 'function', function: { name: 'testFunction', arguments: "{}" } }]
+                };
+
+                const expected: Partial<OpenAI.Chat.Completions.ChatCompletionMessage> = {
+                    role: 'assistant',
+                    content: 'Hello, ',
+                    tool_calls: [{ id: 'tool1', type: 'function', function: { name: 'testFunction', arguments: "{}" } }]
+                };
+
+                mergeDelta(target, source);
+                expect(target).toEqual(expected);
+            });
+
+            it('should handle merging tool calls with deltas', () => {
+                const target: Partial<OpenAI.Chat.Completions.ChatCompletionMessage> = {
+                    role: 'assistant',
+                    content: '',
+                    tool_calls: [
+                        { id: 'tool1', type: 'function', function: { name: 'testFunction', arguments: "{}" } }
+                    ]
+                };
+                const source: Partial<OpenAI.Chat.Completions.ChatCompletionMessage> = {
+                    role: 'assistant',
+                    content: 'Executing tool calls.',
+                    tool_calls: [
+                        { id: 'tool1', type: 'function', function: { name: 'testFunction', arguments: '{"param": "value"}' } },
+                        { id: 'tool2', type: 'function', function: { name: 'anotherFunction', arguments: '{"param2": "value2"}' } }
+                    ]
+                };
+
+                const expected: Partial<OpenAI.Chat.Completions.ChatCompletionMessage> = {
+                    role: 'assistant',
+                    content: 'Executing tool calls.',
+                    tool_calls: [
+                        { id: 'tool1', type: 'function', function: { name: 'testFunction', arguments: '{"param": "value"}' } },
+                        { id: 'tool2', type: 'function', function: { name: 'anotherFunction', arguments: '{"param2": "value2"}' } }
+                    ]
+                };
+                mergeDelta(target, source);
+                expect(target).toEqual(expected);
+            });
+
+            it('should handle merging tool calls where the parameters come in as multiple deltas', () => {
+                const target: Partial<OpenAI.Chat.Completions.ChatCompletionMessage> = {
+                    role: 'assistant',
+                    content: '',
+                    tool_calls: [
+                        { id: 'tool1', type: 'function', function: { name: 'testFunction', arguments: "" } }
+                    ]
+                };
+
+                const sources: Partial<OpenAI.Chat.Completions.ChatCompletionMessage>[] = [
+                    {
+                        role: 'assistant',
+                        content: 'Executing tool calls.',
+                        tool_calls: [
+                            { id: 'tool1', type: 'function', function: { name: 'testFunction', arguments: '{"param":' } }
+                        ]
+                    },
+                    {
+                        role: 'assistant',
+                        content: '',
+                        tool_calls: [
+                            { id: 'tool1', type: 'function', function: { name: 'testFunction', arguments: '"value"}' } }
+                        ]
+                    },
+                    {
+                        role: 'assistant',
+                        content: '',
+                        tool_calls: [
+                            { id: 'tool2', type: 'function', function: { name: 'anotherFunction', arguments: '{"param2": "value2"}' } }
+                        ]
+                    }
+                ];
+
+                const expected: Partial<OpenAI.Chat.Completions.ChatCompletionMessage> = {
+                    role: 'assistant',
+                    content: 'Executing tool calls.',
+                    tool_calls: [
+                        { id: 'tool1', type: 'function', function: { name: 'testFunction', arguments: '{"param":"value"}' } },
+                        { id: 'tool2', type: 'function', function: { name: 'anotherFunction', arguments: '{"param2": "value2"}' } }
+                    ]
+                };
+                sources.forEach(source => mergeDelta(target, source));
+                expect(target).toEqual(expected);
+            });
+
+
+                
         })
     });
 
