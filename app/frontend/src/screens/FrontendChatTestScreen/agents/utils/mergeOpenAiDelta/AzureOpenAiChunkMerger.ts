@@ -65,12 +65,12 @@ export class AzureOpenAiChunkMerger {
             this.mergeChoiceDelta(destinationDelta, originChoice.delta);
         }
 
-        // If the choice is a text delta, we accumulate it
-        if (destinationDelta.content) {
+        // If the originChoice has a text delta, we emit the accumulated text
+        if (originChoice.delta.content) {
             this.listeners.notifyListeners({
                 type: "streaming-text-accumulated",
                 choiceIndex: choiceIndex,
-                data: destinationDelta.content
+                data: destinationDelta.content || "" // Note this is destinationDelta, not originChoice.delta
             });
         }
     }
