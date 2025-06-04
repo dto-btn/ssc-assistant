@@ -25,24 +25,69 @@ describe('AzureOpenAiChunkMerger', () => {
             unsubscribe();
             vi.clearAllMocks();
         })
-        it('should register and notify listeners on chunk processing', () => {
-            // Arrange - Read the first chunk to trigger the listener
-            merger.readChunk(simpleChatFirst6Chunks[0]);
+        describe('listeners and registration', () => {
+            it('should unsubscribe successfully', () => {
+                // Arrange - Read the first chunk to trigger the listener
+                merger.readChunk(simpleChatFirst6Chunks[0]);
+                // Act - Unsubscribe the listener
+                unsubscribe();
+                // Act - Read another chunk
+                merger.readChunk(simpleChatFirst6Chunks[1]);
+                // Assert - Check if the listener was not called again
+                expect(mockListener).toHaveBeenCalledTimes(1);
+                expect(mockListener.mock.calls).toEqual([[{ type: "started" }]]);
+            });
+        });
 
-            // Assert - Check if the listener was called with the correct event type
-            expect(mockListener.mock.calls).toEqual([[{ type: "started" }]]);
-        });
-        it('should unsubscribe successfully', () => {
-            // Arrange - Read the first chunk to trigger the listener
-            merger.readChunk(simpleChatFirst6Chunks[0]);
-            // Act - Unsubscribe the listener
-            unsubscribe();
-            // Act - Read another chunk
-            merger.readChunk(simpleChatFirst6Chunks[1]);
-            // Assert - Check if the listener was not called again
-            expect(mockListener).toHaveBeenCalledTimes(1);
-            expect(mockListener.mock.calls).toEqual([[{ type: "started" }]]);
-        });
+        describe('event types', () => {
+            describe('started', () => {
+                it('should notify on processing', () => {
+                    // Arrange - Read the first chunk to trigger the listener
+                    expect(mockListener).toHaveBeenCalledTimes(0);
+                    merger.readChunk(simpleChatFirst6Chunks[0]);
+        
+                    // Assert - Check if the listener was called with the correct event type
+                    expect(mockListener.mock.calls).toEqual([[{ type: "started" }]]);
+                });
+            });
+
+            describe('incomingText', () => {
+                it('should notify on text accumulation', () => {
+                    // Hello! I'm just a computer
+                    // Arrange - Read the first chunk to trigger the listener
+                    let accumulatedText = ""; // Initialize accumulated text
+                    
+                    let currChunk = 0; // function to get the next chunk
+                    const getNextChunk = () => simpleChatFirst6Chunks[currChunk++];
+
+                    const unsubscriber = merger.onEvent((event) => {
+                        if (event.type === "incomingText") {
+                            accumulatedText += event.data;
+                        }
+                    });
+
+                    try {
+                        expect(mockListener).toHaveBeenCalledTimes(0);
+    
+                        // Act - Read chunks and accumulate text
+                        merger.readChunk(getNextChunk());
+                        expect(accumulatedText).toBe("");
+                        merger.readChunk(getNextChunk());
+                        expect(accumulatedText).toBe("Hello, ");
+                        merger.readChunk(getNextChunk());
+                        expect(accumulatedText).toBe("Hello, I'm");
+                        merger.readChunk(getNextChunk());
+                        expect(accumulatedText).toBe("Hello, I'm just");
+                        merger.readChunk(getNextChunk());
+                        expect(accumulatedText).toBe("Hello, I'm just a");
+                        merger.readChunk(getNextChunk());
+                        expect(accumulatedText).toBe("Hello, I'm just a computer");
+                    } finally {
+                        unsubscriber(); // Unsubscribe after test
+                    }
+                });
+            });
+        })
     });
     
     describe('readChunk', () => {
