@@ -1,17 +1,13 @@
 import { describe, expect, it, beforeEach, vi, afterEach, Mock } from "vitest";
 import { AzureOpenAiChunkMerger } from "./AzureOpenAiChunkMerger";
 import type { ChatCompletionChunk } from "@azure/openai/types";
-import simple_chat from "./testHelpers/simple_chat.json";
+import {simpleChat} from "./testHelpers/simple_chat"
 
 describe('AzureOpenAiChunkMerger', () => {
     let merger: AzureOpenAiChunkMerger;
-    let simpleChatFirst6Chunks: ChatCompletionChunk[];
     
     beforeEach(() => {
         merger = new AzureOpenAiChunkMerger();
-
-        // Take the first 6 chunks from the test data
-        simpleChatFirst6Chunks = (simple_chat as Array<ChatCompletionChunk>).slice(0, 6);
     });
 
     describe('onEvent', () => {
@@ -28,26 +24,26 @@ describe('AzureOpenAiChunkMerger', () => {
         describe('listeners and registration', () => {
             it('should unsubscribe successfully', () => {
                 // Arrange - Read the first chunk to trigger the listener
-                merger.readChunk(simpleChatFirst6Chunks[0]);
+                merger.readChunk(simpleChat[0]);
                 // Act - Unsubscribe the listener
                 unsubscribe();
                 // Act - Read another chunk
-                merger.readChunk(simpleChatFirst6Chunks[1]);
+                merger.readChunk(simpleChat[1]);
                 // Assert - Check if the listener was not called again
                 expect(mockListener).toHaveBeenCalledTimes(1);
-                expect(mockListener.mock.calls).toEqual([[{ type: "started" }]]);
+                expect(mockListener.mock.calls).toEqual([[{ type: "all-started" }]]);
             });
         });
 
         describe('event types', () => {
-            describe('started', () => {
+            describe('all-started', () => {
                 it('should notify on processing', () => {
                     // Arrange - Read the first chunk to trigger the listener
                     expect(mockListener).toHaveBeenCalledTimes(0);
-                    merger.readChunk(simpleChatFirst6Chunks[0]);
+                    merger.readChunk(simpleChat[0]);
         
                     // Assert - Check if the listener was called with the correct event type
-                    expect(mockListener.mock.calls).toEqual([[{ type: "started" }]]);
+                    expect(mockListener.mock.calls).toEqual([[{ type: "all-started" }]]);
                 });
             });
 
@@ -58,7 +54,7 @@ describe('AzureOpenAiChunkMerger', () => {
                     let accumulatedText = ""; // Initialize accumulated text
                     
                     let currChunk = 0; // function to get the next chunk
-                    const getNextChunk = () => simpleChatFirst6Chunks[currChunk++];
+                    const getNextChunk = () => simpleChat[currChunk++];
 
                     const unsubscriber = merger.onEvent((event) => {
                         if (event.type === "incomingText") {
@@ -73,15 +69,19 @@ describe('AzureOpenAiChunkMerger', () => {
                         merger.readChunk(getNextChunk());
                         expect(accumulatedText).toBe("");
                         merger.readChunk(getNextChunk());
-                        expect(accumulatedText).toBe("Hello, ");
+                        expect(accumulatedText).toBe("");
                         merger.readChunk(getNextChunk());
-                        expect(accumulatedText).toBe("Hello, I'm");
+                        expect(accumulatedText).toBe("Hello");
                         merger.readChunk(getNextChunk());
-                        expect(accumulatedText).toBe("Hello, I'm just");
+                        expect(accumulatedText).toBe("Hello!");
                         merger.readChunk(getNextChunk());
-                        expect(accumulatedText).toBe("Hello, I'm just a");
+                        expect(accumulatedText).toBe("Hello! I'm");
                         merger.readChunk(getNextChunk());
-                        expect(accumulatedText).toBe("Hello, I'm just a computer");
+                        expect(accumulatedText).toBe("Hello! I'm just");
+                        merger.readChunk(getNextChunk());
+                        expect(accumulatedText).toBe("Hello! I'm just a");
+                        merger.readChunk(getNextChunk());
+                        expect(accumulatedText).toBe("Hello! I'm just a computer");
                     } finally {
                         unsubscriber(); // Unsubscribe after test
                     }
@@ -93,14 +93,14 @@ describe('AzureOpenAiChunkMerger', () => {
     describe('readChunk', () => {
         it('should correctly process and store incoming chunks', () => {
             // Act - Process each chunk
-            for (const chunk of simpleChatFirst6Chunks) {
+            for (const chunk of simpleChat) {
                 merger.readChunk(chunk);
             }
             
             // Assert - Check internal state using public methods or test-specific getters if available
-            expect(merger.getChunkHistoryLength()).toBe(simpleChatFirst6Chunks.length);
-            for (let i = 0; i < simpleChatFirst6Chunks.length; i++) {
-                expect(merger.getChunkAt(i)).toEqual(simpleChatFirst6Chunks[i]);
+            expect(merger.getChunkHistoryLength()).toBe(simpleChat.length);
+            for (let i = 0; i < simpleChat.length; i++) {
+                expect(merger.getChunkAt(i)).toEqual(simpleChat[i]);
             }
         });
     });

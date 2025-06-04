@@ -1,4 +1,4 @@
-import { ChatCompletionChunk } from "@azure/openai/types";
+import { ChatCompletionChunk, ChatCompletion } from "@azure/openai/types";
 import { ListenerManager } from "../../listenermanager/ListenerManager";
 import type { AzureOpenAiChunkMerger as $ } from "./AzureOpenAiChunkMerger.types";
 import { Listener } from "../../listenermanager/ListenerManager.types";
@@ -19,10 +19,14 @@ export class AzureOpenAiChunkMerger {
      * This variable accumulates the messages and tool calls from the OpenAI API.
      * It is used to build a complete message as chunks are received.
      */
-    private accumulatedMessage: ChatCompletionChunk[] = [];
+    private choices: ChatCompletionChunk.Choice.Delta[] = [];
+    
+
+    constructor() {
+    }
 
     readChunk(chunk: ChatCompletionChunk): void {
-        this.listeners.notifyListeners({ type: "started" });
+        this.listeners.notifyListeners({ type: "all-started" });
         this.chunkHistory.push(chunk);
         this.processChunk(chunk);
     }
@@ -42,9 +46,39 @@ export class AzureOpenAiChunkMerger {
         for (let [i, choice] of chunk.choices.entries()) {
             // we skip empty deltas
             if (!choice.delta) {
+                console.error("Received empty choice in chunk. This should never happen.", chunk);
                 continue;
             }
+
+            const choiceIndex = choice.index;
+
+            let target = this.choices[choiceIndex];
+
+            if (!target) {
+                // If the choice does not exist, create a new one
+                this.choices[choiceIndex] = choice.delta;
+                continue;
+            }
+
+            // If the choice exists, we merge the delta into it
+            this.mergeChoiceDelta(target, choice.delta);
+
+            // If the choice is a text delta, we accumulate it
+            if (choice.delta.content) {
+                this.listeners.notifyListeners({
+                    type: "incomingText",
+                    choiceIndex: choiceIndex,
+                    data: choice.delta.content
+                });
+            }
         }
+    }
+
+    private mergeChoiceDelta(
+        target: ChatCompletionChunk.Choice.Delta,
+        delta: ChatCompletionChunk.Choice.Delta
+    ): void {
+
     }
     
     /**

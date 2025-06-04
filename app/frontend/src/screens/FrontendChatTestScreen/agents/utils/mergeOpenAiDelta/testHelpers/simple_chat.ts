@@ -1,9 +1,12 @@
-[
+import { ChatCompletionChunk } from "@azure/openai/types";
+
+export const simpleChat: ChatCompletionChunk[] = [
   {
     "choices": [],
     "created": 0,
     "id": "",
     "model": "",
+    // @ts-expect-error - Azure OpenAI SDK has incorrect type for object.
     "object": "",
     "prompt_filter_results": [
       {

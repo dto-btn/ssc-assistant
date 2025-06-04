@@ -4,8 +4,8 @@ export namespace AzureOpenAiChunkMerger {
     export type Events = 
         | Events.MergeStarted
         | Events.StreamingTextAccumulated
-        | Events.FinishedError
-        | Events.FinishedOk;
+        | Events.AllFinishedError
+        | Events.AllFinishedOk;
 
     export namespace Events {
 
@@ -13,7 +13,7 @@ export namespace AzureOpenAiChunkMerger {
          * Indicates that the streaming process has started, and the first chunk is being processed.
          */
         export interface MergeStarted {
-            type: "started";
+            type: "all-started";
         }
 
         /**
@@ -23,17 +23,18 @@ export namespace AzureOpenAiChunkMerger {
         export interface StreamingTextAccumulated {
             type: "incomingText";
             data: string;
+            choiceIndex: number;
         }
 
-        export interface FinishedError {
-            type: "finished:error";
+        export interface AllFinishedError {
+            type: "all-finished:error";
             data: {
                 error: unknown;
             }
         }
 
-        export interface FinishedOk {
-            type: "finished:ok";
+        export interface AllFinishedOk {
+            type: "all-finished:ok";
             data: {
                 history: ChatCompletionChunk[];
                 accumulatedMessages: ChatCompletionChunk[];
