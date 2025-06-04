@@ -8,8 +8,6 @@ import { Listener } from "../../listenermanager/ListenerManager.types";
  * It accumulates messages and tool calls from the OpenAI API streaming responses.
  */
 export class AzureOpenAiChunkMerger {
-    private _isFinished: boolean = false;
-
     /**
      * This variable contains the chunk history for debugging purposes.
      */
