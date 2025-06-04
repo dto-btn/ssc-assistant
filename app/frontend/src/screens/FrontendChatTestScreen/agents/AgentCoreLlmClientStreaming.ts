@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import { AgentCoreLlmClient } from "./AgentCoreLlmClient";
 import { AgentCoreLlmClientConnection } from "./AgentCoreLlmClientConnection";
-import { mergeOpenAiDelta } from "./AgentCoreLlmClientStreaming.utils";
+import { mergeOpenAiDelta } from "./utils/mergeOpenAiDelta/mergeOpenAiDelta";
 
 export class AgentCoreLlmClientStreaming implements AgentCoreLlmClient {
     constructor(private openai: OpenAI) {}

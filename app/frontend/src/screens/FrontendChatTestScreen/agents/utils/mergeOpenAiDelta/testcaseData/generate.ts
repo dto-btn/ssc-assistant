@@ -1,7 +1,7 @@
 // To run:
 // pnpm tsx src/screens/FrontendChatTestScreen/agents/testcases/generate.ts
 
-import { provideProxyOpenAiClient } from "../../providers/provideProxyOpenAiClient";
+import { provideProxyOpenAiClient } from "../../../../providers/provideProxyOpenAiClient";
 import fs from 'fs';
 import OpenAI from "openai";
 import path from 'path';
