@@ -1,4 +1,7 @@
 import { ChatCompletionChunk } from "@azure/openai/types";
+import { ListenerManager } from "../../listenermanager/ListenerManager";
+import type { AzureOpenAiChunkMerger as $ } from "./AzureOpenAiChunkMerger.types";
+import { Listener } from "../../listenermanager/ListenerManager.types";
 
 /**
  * A stateful class that merges OpenAI chunk streams in an event-driven manner.
@@ -10,6 +13,8 @@ export class AzureOpenAiChunkMerger {
      */
     private chunkHistory: ChatCompletionChunk[] = [];
 
+    private listeners: ListenerManager<$.Events> = new ListenerManager();
+
     /**
      * This variable accumulates the messages and tool calls from the OpenAI API.
      * It is used to build a complete message as chunks are received.
@@ -17,9 +22,16 @@ export class AzureOpenAiChunkMerger {
     private accumulatedMessage: ChatCompletionChunk[] = [];
 
     readChunk(chunk: ChatCompletionChunk): void {
-        // If the chunk has no choices, skip it
+        this.listeners.notifyListeners({ type: "started" });
         this.chunkHistory.push(chunk);
         this.processChunk(chunk);
+    }
+
+    onEvent(listener: Listener<$.Events>): () => void {
+        this.listeners.addListener(listener);
+        return () => {
+            this.listeners.removeListener(listener);
+        }
     }
 
     private processChunk(chunk: ChatCompletionChunk): void {

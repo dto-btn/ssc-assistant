@@ -1,46 +1,62 @@
-import { describe, expect, it, beforeEach } from "vitest";
-import { AzureOpenAiChunkMerger } from "./mergeOpenAiDelta";
+import { describe, expect, it, beforeEach, vi, afterEach, Mock } from "vitest";
+import { AzureOpenAiChunkMerger } from "./AzureOpenAiChunkMerger";
 import type { ChatCompletionChunk } from "@azure/openai/types";
 import simple_chat from "./testHelpers/simple_chat.json";
 
 describe('AzureOpenAiChunkMerger', () => {
     let merger: AzureOpenAiChunkMerger;
-    let chunks: ChatCompletionChunk[];
+    let simpleChatFirst6Chunks: ChatCompletionChunk[];
     
     beforeEach(() => {
         merger = new AzureOpenAiChunkMerger();
+
         // Take the first 6 chunks from the test data
-        chunks = (simple_chat as Array<ChatCompletionChunk>).slice(0, 6);
+        simpleChatFirst6Chunks = (simple_chat as Array<ChatCompletionChunk>).slice(0, 6);
+    });
+
+    describe('onEvent', () => {
+        let mockListener: Mock;
+        let unsubscribe: () => void;
+        beforeEach(() => {
+            mockListener = vi.fn();
+            unsubscribe = merger.onEvent(mockListener);
+        })
+        afterEach(() => {
+            unsubscribe();
+            vi.clearAllMocks();
+        })
+        it('should register and notify listeners on chunk processing', () => {
+            // Arrange - Read the first chunk to trigger the listener
+            merger.readChunk(simpleChatFirst6Chunks[0]);
+
+            // Assert - Check if the listener was called with the correct event type
+            expect(mockListener.mock.calls).toEqual([[{ type: "started" }]]);
+        });
+        it('should unsubscribe successfully', () => {
+            // Arrange - Read the first chunk to trigger the listener
+            merger.readChunk(simpleChatFirst6Chunks[0]);
+            // Act - Unsubscribe the listener
+            unsubscribe();
+            // Act - Read another chunk
+            merger.readChunk(simpleChatFirst6Chunks[1]);
+            // Assert - Check if the listener was not called again
+            expect(mockListener).toHaveBeenCalledTimes(1);
+            expect(mockListener.mock.calls).toEqual([[{ type: "started" }]]);
+        });
     });
     
     describe('readChunk', () => {
         it('should correctly process and store incoming chunks', () => {
             // Act - Process each chunk
-            for (const chunk of chunks) {
+            for (const chunk of simpleChatFirst6Chunks) {
                 merger.readChunk(chunk);
             }
             
             // Assert - Check internal state using public methods or test-specific getters if available
-            // This is better than accessing private members directly
-            expect(merger.getChunkHistoryLength()).toBe(chunks.length);
-            for (let i = 0; i < chunks.length; i++) {
-                expect(merger.getChunkAt(i)).toEqual(chunks[i]);
+            expect(merger.getChunkHistoryLength()).toBe(simpleChatFirst6Chunks.length);
+            for (let i = 0; i < simpleChatFirst6Chunks.length; i++) {
+                expect(merger.getChunkAt(i)).toEqual(simpleChatFirst6Chunks[i]);
             }
-        });
-        
-        it('should test the main functionality of merging chunks', () => {
-            // Assuming the main functionality is to build a complete message from chunks
-            // Arrange - Setup expectations based on what the class should do
-            
-            // Act - Process each chunk
-            for (const chunk of chunks) {
-                merger.readChunk(chunk);
-            }
-            
-            // Assert - Test the actual functionality, not just the internal state
-            // This depends on what the class actually does, but might be something like:
-            // expect(merger.getMergedContent()).toEqual("Hello! I'm just a computer");
-            // Or test specific accumulated data from the chunks
         });
     });
     
