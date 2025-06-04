@@ -36,41 +36,12 @@ export class AzureOpenAiChunkMerger {
         }
     }
 
-    private processChunk(chunk: ChatCompletionChunk): void {
-        if (!chunk.choices || chunk.choices.length === 0) {
-            return;
-        }
-
-        for (let [_, originChoice] of chunk.choices.entries()) {
-            this.processChoice(originChoice);
-        }
+    getDeltas(): ChatCompletionChunk.Choice.Delta[] {
+        return this.deltas;
     }
 
-    private mergeChoiceDelta(
-        destination: ChatCompletionChunk.Choice.Delta,
-        origin: ChatCompletionChunk.Choice.Delta
-    ): void {
-        if (origin.content) {
-            // If the delta has content, we append it to the target
-            destination.content = (destination.content || "") + origin.content;
-        }
-    }
-    
-    /**
-     * Get the number of chunks in the history
-     * @returns The length of the chunk history array
-     */
-    getChunkHistoryLength(): number {
-        return this.chunkHistory.length;
-    }
-    
-    /**
-     * Get a chunk at a specific index
-     * @param index The index of the chunk to retrieve
-     * @returns The chunk at the specified index
-     */
-    getChunkAt(index: number): ChatCompletionChunk {
-        return this.chunkHistory[index];
+    getChunkHistory(): ChatCompletionChunk[] {
+        return this.chunkHistory;
     }
 
     private processChoice(
@@ -97,22 +68,32 @@ export class AzureOpenAiChunkMerger {
         // If the choice is a text delta, we accumulate it
         if (destinationDelta.content) {
             this.listeners.notifyListeners({
-                type: "incomingText",
+                type: "streaming-text-accumulated",
                 choiceIndex: choiceIndex,
                 data: destinationDelta.content
             });
         }
     }
 
-    get isFinished(): boolean {
-        return this._isFinished;
+    
+    private processChunk(chunk: ChatCompletionChunk): void {
+        if (!chunk.choices || chunk.choices.length === 0) {
+            return;
+        }
+
+        for (let [_, originChoice] of chunk.choices.entries()) {
+            this.processChoice(originChoice);
+        }
     }
 
-    getChoices(): ChatCompletionChunk.Choice.Delta[] {
-        return this.deltas;
+    private mergeChoiceDelta(
+        destination: ChatCompletionChunk.Choice.Delta,
+        origin: ChatCompletionChunk.Choice.Delta
+    ): void {
+        if (origin.content) {
+            // If the delta has content, we append it to the target
+            destination.content = (destination.content || "") + origin.content;
+        }
     }
 
-    getHistory(): ChatCompletionChunk[] {
-        return this.chunkHistory;
-    }
 }

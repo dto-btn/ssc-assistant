@@ -47,7 +47,7 @@ describe('AzureOpenAiChunkMerger', () => {
                 });
             });
 
-            describe('incomingText', () => {
+            describe('streaming-text-accumulated', () => {
                 it('should notify on text accumulation', () => {
                     // Hello! I'm just a computer
                     // Arrange - Read the first chunk to trigger the listener
@@ -57,7 +57,7 @@ describe('AzureOpenAiChunkMerger', () => {
                     const getNextChunk = () => simpleChat[currChunk++];
 
                     const unsubscriber = merger.onEvent((event) => {
-                        if (event.type !== "incomingText") {
+                        if (event.type !== "streaming-text-accumulated") {
                             return;
                         }
                         
@@ -94,21 +94,18 @@ describe('AzureOpenAiChunkMerger', () => {
     
     describe('readChunk', () => {
         it('should correctly process and store incoming chunks', () => {
-            expect(merger.getChunkHistoryLength()).toBe(0);
-            expect(merger.getChoices()).toEqual([]); 
-            expect(merger.getHistory()).toEqual([]);
+            expect(merger.getChunkHistory().length).toBe(0);
+            expect(merger.getDeltas()).toEqual([]); 
+            expect(merger.getChunkHistory()).toEqual([]);
             // Act - Process each chunk
             for (const chunk of simpleChat) {
                 merger.readChunk(chunk);
             }
             
             // Assert - Check internal state using public methods or test-specific getters if available
-            expect(merger.getChunkHistoryLength()).toBe(simpleChat.length);
-            for (let i = 0; i < simpleChat.length; i++) {
-                expect(merger.getChunkAt(i)).toEqual(simpleChat[i]);
-            }
-            expect(merger.getHistory()).toEqual(simpleChat);
-            const choices = merger.getChoices();
+            expect(merger.getChunkHistory().length).toBe(simpleChat.length);
+            expect(merger.getChunkHistory()).toEqual(simpleChat);
+            const choices = merger.getDeltas();
             expect(choices).toEqual([{
                 content: "Hello! I'm just a computer program, so I don't have feelings, but I'm here and ready to help you. How can I assist you today?",
                 refusal: null,
@@ -133,7 +130,7 @@ describe('AzureOpenAiChunkMerger', () => {
             expect(() => merger.readChunk(emptyChunk)).not.toThrow();
             
             // Assert - Verify state is maintained correctly
-            expect(merger.getChunkHistoryLength()).toBe(1);
+            expect(merger.getChunkHistory().length).toBe(1);
         });
         
         it('should handle null or undefined choices', () => {
@@ -150,7 +147,7 @@ describe('AzureOpenAiChunkMerger', () => {
             expect(() => merger.readChunk(chunkWithNullChoices)).not.toThrow();
             
             // Assert - Verify state is maintained correctly
-            expect(merger.getChunkHistoryLength()).toBe(1);
+            expect(merger.getChunkHistory().length).toBe(1);
         });
     });
 });

@@ -21,7 +21,7 @@ export namespace AzureOpenAiChunkMerger {
          * for displaying the assistant's response in real-time as it is being generated.
          */
         export interface StreamingTextAccumulated {
-            type: "incomingText";
+            type: "streaming-text-accumulated";
             data: string;
             choiceIndex: number;
         }
