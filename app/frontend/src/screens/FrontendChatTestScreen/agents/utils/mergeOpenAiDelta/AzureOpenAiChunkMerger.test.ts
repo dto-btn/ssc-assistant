@@ -51,15 +51,17 @@ describe('AzureOpenAiChunkMerger', () => {
                 it('should notify on text accumulation', () => {
                     // Hello! I'm just a computer
                     // Arrange - Read the first chunk to trigger the listener
-                    let accumulatedText = ""; // Initialize accumulated text
+                    let latestData = ""; // Initialize accumulated text
                     
                     let currChunk = 0; // function to get the next chunk
                     const getNextChunk = () => simpleChat[currChunk++];
 
                     const unsubscriber = merger.onEvent((event) => {
-                        if (event.type === "incomingText") {
-                            accumulatedText += event.data;
+                        if (event.type !== "incomingText") {
+                            return;
                         }
+                        
+                        latestData = event.data;
                     });
 
                     try {
@@ -67,21 +69,21 @@ describe('AzureOpenAiChunkMerger', () => {
     
                         // Act - Read chunks and accumulate text
                         merger.readChunk(getNextChunk());
-                        expect(accumulatedText).toBe("");
+                        expect(latestData).toBe("");
                         merger.readChunk(getNextChunk());
-                        expect(accumulatedText).toBe("");
+                        expect(latestData).toBe("");
                         merger.readChunk(getNextChunk());
-                        expect(accumulatedText).toBe("Hello");
+                        expect(latestData).toBe("Hello");
                         merger.readChunk(getNextChunk());
-                        expect(accumulatedText).toBe("Hello!");
+                        expect(latestData).toBe("Hello!");
                         merger.readChunk(getNextChunk());
-                        expect(accumulatedText).toBe("Hello! I'm");
+                        expect(latestData).toBe("Hello! I'm");
                         merger.readChunk(getNextChunk());
-                        expect(accumulatedText).toBe("Hello! I'm just");
+                        expect(latestData).toBe("Hello! I'm just");
                         merger.readChunk(getNextChunk());
-                        expect(accumulatedText).toBe("Hello! I'm just a");
+                        expect(latestData).toBe("Hello! I'm just a");
                         merger.readChunk(getNextChunk());
-                        expect(accumulatedText).toBe("Hello! I'm just a computer");
+                        expect(latestData).toBe("Hello! I'm just a computer");
                     } finally {
                         unsubscriber(); // Unsubscribe after test
                     }
@@ -92,6 +94,9 @@ describe('AzureOpenAiChunkMerger', () => {
     
     describe('readChunk', () => {
         it('should correctly process and store incoming chunks', () => {
+            expect(merger.getChunkHistoryLength()).toBe(0);
+            expect(merger.getChoices()).toEqual([]); 
+            expect(merger.getHistory()).toEqual([]);
             // Act - Process each chunk
             for (const chunk of simpleChat) {
                 merger.readChunk(chunk);
@@ -102,6 +107,13 @@ describe('AzureOpenAiChunkMerger', () => {
             for (let i = 0; i < simpleChat.length; i++) {
                 expect(merger.getChunkAt(i)).toEqual(simpleChat[i]);
             }
+            expect(merger.getHistory()).toEqual(simpleChat);
+            const choices = merger.getChoices();
+            expect(choices).toEqual([{
+                content: "Hello! I'm just a computer program, so I don't have feelings, but I'm here and ready to help you. How can I assist you today?",
+                refusal: null,
+                role: 'assistant'
+            }]);
         });
     });
     

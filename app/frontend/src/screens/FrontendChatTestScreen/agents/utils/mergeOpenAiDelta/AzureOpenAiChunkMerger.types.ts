@@ -36,9 +36,8 @@ export namespace AzureOpenAiChunkMerger {
         export interface AllFinishedOk {
             type: "all-finished:ok";
             data: {
-                history: ChatCompletionChunk[];
-                accumulatedMessages: ChatCompletionChunk[];
-                incomingText: string;
+                chunks: ChatCompletionChunk[];
+                choices: ChatCompletionChunk.Choice.Delta[];
             }
         }
     }

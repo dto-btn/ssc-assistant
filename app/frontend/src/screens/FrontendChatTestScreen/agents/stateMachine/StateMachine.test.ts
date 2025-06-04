@@ -194,7 +194,7 @@ describe('StateMachine', () => {
 
   test('should allow state handlers to check current state', () => {
     fsm
-      .state('idle', (event, machine) => {
+      .state('idle', (_, machine) => {
         expect(machine.is('idle')).toBe(true);
         expect(machine.currentState).toBe('idle');
         return 'next';
