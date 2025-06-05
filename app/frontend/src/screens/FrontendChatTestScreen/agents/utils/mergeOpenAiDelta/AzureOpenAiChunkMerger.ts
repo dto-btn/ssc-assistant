@@ -88,9 +88,23 @@ export class AzureOpenAiChunkMerger {
         destination: ChatCompletionChunk.Choice.Delta,
         origin: ChatCompletionChunk.Choice.Delta
     ): void {
+        if (origin.role) {
+            // If the delta has a role, we set it on the target
+            destination.role = origin.role;
+        }
+
         if (origin.content) {
             // If the delta has content, we append it to the target
             destination.content = (destination.content || "") + origin.content;
+        }
+
+        if (origin.refusal) {
+            // If the delta has a refusal, we set it on the target
+            destination.refusal = (destination.refusal || "") + origin.refusal;
+        }
+
+        if (origin.context) {
+            // TODO. This thing has citations.
         }
     }
 
