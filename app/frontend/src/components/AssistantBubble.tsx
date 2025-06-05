@@ -88,10 +88,10 @@ export const AssistantBubble = ({
   );
   // Define an interface for the brQuery structure
   interface BrQueryFilter {
-    field?: string;
-    op?: string;
-    name?: string;
-    operator?: string;
+    name: string;
+    en: string;
+    fr: string;
+    operator: string;
     value: string | number;
   }
 
@@ -271,7 +271,6 @@ export const AssistantBubble = ({
       >
         <Box>
           <ChatBubbleInner elevation={4} className={"assistant-bubble-paper"}>
-
             <MainContentWrapper>
               <IconWrapper>
                 <img
@@ -308,8 +307,8 @@ export const AssistantBubble = ({
                   {isLoading
                     ? `${text.replace(/\[doc(\d+)\]/g, "")}_`
                     : processedContent.processedText !== ""
-                      ? processedContent.processedText
-                      : text}
+                    ? processedContent.processedText
+                    : text}
                 </MarkdownHooks>
               </TextComponentsBox>
             </MainContentWrapper>
@@ -521,56 +520,86 @@ export const AssistantBubble = ({
             {(toolsInfo && toolsInfo.length > 0) || (brQuery && !isLoading) ? (
               <ToolsUsedBox>
                 <Paper
-                  sx={{ backgroundColor: "white", padding: 1, width: '100%' }}
+                  sx={{ backgroundColor: "white", padding: 1, width: "100%" }}
                   elevation={3}
                 >
-                  <Typography variant="caption" gutterBottom sx={{ display: 'block', mb: 1 }}>
+                  <Typography
+                    variant="caption"
+                    gutterBottom
+                    sx={{ display: "block", mb: 1 }}
+                  >
                     {t("toolsUsed.short")}:
                   </Typography>
 
                   {/* Tools section */}
-                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: toolsInfo && brQuery ? 1 : 0 }}>
-                    {toolsInfo && toolsInfo.map((tool, index) => (
-                      <Tooltip title={t(tool.function_name)} key={index} arrow>
-                        <Chip
-                          icon={
-                            <HandymanIcon
-                              style={{
-                                fontSize: 16,
-                                color: "#4b3e99",
-                              }}
-                            />
-                          }
-                          label={`${tool.function_name}()`}
-                          size="small"
-                        />
-                      </Tooltip>
-                    ))}
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    useFlexGap
+                    flexWrap="wrap"
+                    sx={{ mb: toolsInfo && brQuery ? 1 : 0 }}
+                  >
+                    {toolsInfo &&
+                      toolsInfo.map((tool, index) => (
+                        <Tooltip
+                          title={t(tool.function_name)}
+                          key={index}
+                          arrow
+                        >
+                          <Chip
+                            icon={
+                              <HandymanIcon
+                                style={{
+                                  fontSize: 16,
+                                  color: "#4b3e99",
+                                }}
+                              />
+                            }
+                            label={`${tool.function_name}()`}
+                            size="small"
+                          />
+                        </Tooltip>
+                      ))}
                   </Stack>
 
                   {/* Query parameters section */}
                   {!isLoading && brQuery && (
                     <>
                       {/* Only show divider if both tools and query params exist */}
-                      {toolsInfo && toolsInfo.length > 0 && <Divider sx={{ my: 1 }} />}
+                      {toolsInfo && toolsInfo.length > 0 && (
+                        <Divider sx={{ my: 1 }} />
+                      )}
 
-                      <Typography variant="caption" gutterBottom sx={{ display: 'block', mb: 1 }}>
+                      <Typography
+                        variant="caption"
+                        gutterBottom
+                        sx={{ display: "block", mb: 1 }}
+                      >
                         Query Parameters:
                       </Typography>
 
-                      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        useFlexGap
+                        flexWrap="wrap"
+                      >
                         {/* Query Filters */}
-                        {brQuery.query_filters && brQuery.query_filters.length > 0 &&
+                        {brQuery.query_filters &&
+                          brQuery.query_filters.length > 0 &&
                           brQuery.query_filters.map((filter, index) => (
                             <Chip
                               key={index}
-                              label={`${filter.field || filter.name} ${filter.op || filter.operator} ${filter.value}`}
+                              label={`${
+                                i18n.language == "en" ? filter.en : filter.fr
+                              } (${filter.name}) ${filter.operator} ${
+                                filter.value
+                              }`}
                               size="small"
                               variant="outlined"
                               color="primary"
                             />
-                          ))
-                        }
+                          ))}
 
                         {/* Status - only if it has value */}
                         {brQuery.status && (
@@ -583,14 +612,16 @@ export const AssistantBubble = ({
                         )}
 
                         {/* Statuses array - only if it has values */}
-                        {brQuery.statuses && Array.isArray(brQuery.statuses) && brQuery.statuses.length > 0 && (
-                          <Chip
-                            label={`Statuses: ${brQuery.statuses.join(', ')}`}
-                            size="small"
-                            variant="outlined"
-                            color="secondary"
-                          />
-                        )}
+                        {brQuery.statuses &&
+                          Array.isArray(brQuery.statuses) &&
+                          brQuery.statuses.length > 0 && (
+                            <Chip
+                              label={`Statuses: ${brQuery.statuses.join(", ")}`}
+                              size="small"
+                              variant="outlined"
+                              color="secondary"
+                            />
+                          )}
                       </Stack>
                     </>
                   )}
@@ -681,4 +712,3 @@ const ConfirmBookingBox = styled(Box)`
   align-items: center;
   margin: 30px;
 `;
-
