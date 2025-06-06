@@ -37,7 +37,7 @@ export const Disclaimer = () => {
     },
     {
       text: "br.disclaimer",
-      text2: "",
+      text2: "br.disclaimer2",
       cookieName: "br_disclaimer_accepted",
       accepted: brEnabled
         ? Cookies.get("br_disclaimer_accepted") === "true"
