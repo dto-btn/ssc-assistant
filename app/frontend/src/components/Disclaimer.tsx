@@ -18,6 +18,7 @@ interface Disclaimer {
   key: string;
   text: string;
   text2: string;
+  title?: string;
   cookieName: string;
   accepted: boolean;
 }
@@ -41,6 +42,7 @@ export const Disclaimer = () => {
       key: "br",
       text: "br.disclaimer",
       text2: "br.disclaimer2",
+      title: "bits",
       cookieName: "br_disclaimer_accepted",
       accepted: brEnabled
         ? Cookies.get("br_disclaimer_accepted") === "true"
@@ -80,7 +82,11 @@ export const Disclaimer = () => {
   return (
     <div>
       <Dialog open={!hideDialog && !!currentDisclaimer} fullWidth>
-        <DialogTitle>{t("disclaimer")}</DialogTitle>
+        <DialogTitle>
+          {currentDisclaimer?.title
+            ? t("disclaimer") + " - " + t(currentDisclaimer.title)
+            : t("disclaimer")}
+        </DialogTitle>
         <DialogContent>
           {currentDisclaimer?.text && <p>{t(currentDisclaimer.text)}</p>}
           {currentDisclaimer?.text2 && (
