@@ -15,6 +15,7 @@ import { useAppStore } from "../stores/AppStore";
 import { allowedToolsSet } from "../allowedTools";
 
 interface Disclaimer {
+  key: string;
   text: string;
   text2: string;
   cookieName: string;
@@ -28,14 +29,16 @@ export const Disclaimer = () => {
   const appStore = useAppStore();
 
   const brEnabled: boolean = allowedToolsSet.has("bits");
-  const disclaimers: Disclaimer[] = [
+  const [disclaimers, setDisclaimers] = useState<Disclaimer[]>([
     {
+      key: "main",
       text: "disclaimer.desc",
       text2: "disclaimer.desc2",
       cookieName: "disclaimer_accepted",
       accepted: Cookies.get("disclaimer_accepted") === "true",
     },
     {
+      key: "br",
       text: "br.disclaimer",
       text2: "br.disclaimer2",
       cookieName: "br_disclaimer_accepted",
@@ -43,7 +46,9 @@ export const Disclaimer = () => {
         ? Cookies.get("br_disclaimer_accepted") === "true"
         : true,
     },
-  ];
+  ]);
+
+  // Find the first unaccepted disclaimer
   const currentDisclaimer = disclaimers.find((d) => !d.accepted);
 
   useEffect(() => {
@@ -53,11 +58,17 @@ export const Disclaimer = () => {
     ) {
       setHideDialog(false);
     }
-  }, []);
+  }, [disclaimers, inProgress]);
 
-  const handleAccept = (cookie_name: string) => {
-    setDisclaimerCookie(cookie_name);
-    setHideDialog(true);
+  const handleAccept = (key: string) => {
+    const updatedDisclaimers = disclaimers.map((d) => {
+      if (d.key === key) {
+        setDisclaimerCookie(d.cookieName); // Call your function here
+        return { ...d, accepted: true };
+      }
+      return d;
+    });
+    setDisclaimers(updatedDisclaimers);
   };
 
   const setDisclaimerCookie = (cookie_name: string) => {
@@ -80,7 +91,7 @@ export const Disclaimer = () => {
           <Button
             style={{ backgroundColor: "#4b3e99", color: "white" }}
             onClick={() =>
-              currentDisclaimer && handleAccept(currentDisclaimer.cookieName)
+              currentDisclaimer && handleAccept(currentDisclaimer.key)
             }
           >
             {t("accept")}
