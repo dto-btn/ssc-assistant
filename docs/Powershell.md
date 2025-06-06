@@ -10,6 +10,7 @@ In powershell run the following commands:
 
 ```powershell
 Connect-AzAccount
+$app = Get-AzADApplication -DisplayName "SSC-Assistant-Dev"
 $app = Get-AzADApplication -DisplayName "Robot conversationnel - Azure OpenAI - Chatbot"
 Get-AzADApplication -ObjectId $app.Id
 ```
@@ -18,7 +19,7 @@ Get-AzADApplication -ObjectId $app.Id
 
 ```powershell
 Connect-AzureAD
-$app_name = "Robot conversationnel - Azure OpenAI - Chatbot"
+$app_name = "SSC-Assistant-Dev"
 $sp = Get-AzureADServicePrincipal -Filter "displayName eq '$app_name'"
 Get-AzureADServicePrincipalOwner -ObjectId $sp.ObjectId
 Get-AzureADServiceAppRoleAssignment -ObjectId $sp.ObjectId

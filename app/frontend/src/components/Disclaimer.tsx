@@ -12,6 +12,14 @@ import Cookies from "js-cookie";
 import { useMsal } from "@azure/msal-react";
 import { InteractionStatus } from "@azure/msal-browser";
 import { useAppStore } from "../stores/AppStore";
+import { allowedToolsSet } from "../allowedTools";
+
+interface Disclaimer {
+  text: string;
+  text2: string;
+  cookieName: string;
+  accepted: boolean;
+}
 
 export const Disclaimer = () => {
   const { t } = useTranslation();
@@ -19,41 +27,68 @@ export const Disclaimer = () => {
   const { inProgress } = useMsal();
   const appStore = useAppStore();
 
+  const brEnabled: boolean = allowedToolsSet.has("bits");
+  const disclaimers: Disclaimer[] = [
+    {
+      text: "disclaimer.desc",
+      text2: "disclaimer.desc2",
+      cookieName: "disclaimer_accepted",
+      accepted: Cookies.get("disclaimer_accepted") === "true",
+    },
+    {
+      text: "br.disclaimer",
+      text2: "",
+      cookieName: "br_disclaimer_accepted",
+      accepted: brEnabled
+        ? Cookies.get("br_disclaimer_accepted") === "true"
+        : true,
+    },
+  ];
+  const currentDisclaimer = disclaimers.find((d) => !d.accepted);
+
   useEffect(() => {
-    const disclaimerAccepted = Cookies.get("disclaimer_accepted");
-    if (!disclaimerAccepted && inProgress === InteractionStatus.None) {
+    if (
+      !disclaimers.every((d) => d.accepted) &&
+      inProgress === InteractionStatus.None
+    ) {
       setHideDialog(false);
     }
   }, []);
 
-  const handleAccept = () => {
-    setDisclaimerCookie();
+  const handleAccept = (cookie_name: string) => {
+    setDisclaimerCookie(cookie_name);
     setHideDialog(true);
   };
 
-  const setDisclaimerCookie = () => {
-    Cookies.set("disclaimer_accepted", "true", {
-      expires: 30 // 30 days
+  const setDisclaimerCookie = (cookie_name: string) => {
+    Cookies.set(cookie_name, "true", {
+      expires: 30, // 30 days
     });
   };
 
   return (
     <div>
-      <Dialog open={!hideDialog} fullWidth>
+      <Dialog open={!hideDialog && !!currentDisclaimer} fullWidth>
         <DialogTitle>{t("disclaimer")}</DialogTitle>
         <DialogContent>
-          <p>{t("disclaimer.desc")}</p>
-          <p style={{ fontWeight: "bold" }}>{t("disclaimer.desc2")}</p>
+          {currentDisclaimer?.text && <p>{t(currentDisclaimer.text)}</p>}
+          {currentDisclaimer?.text2 && (
+            <p style={{ fontWeight: "bold" }}>{t(currentDisclaimer.text2)}</p>
+          )}
         </DialogContent>
         <DialogActions>
           <Button
             style={{ backgroundColor: "#4b3e99", color: "white" }}
-            onClick={handleAccept}
+            onClick={() =>
+              currentDisclaimer && handleAccept(currentDisclaimer.cookieName)
+            }
           >
             {t("accept")}
           </Button>
           <Button
-            onClick={() => { appStore.languageService.changeLanguage() }}
+            onClick={() => {
+              appStore.languageService.changeLanguage();
+            }}
           >
             {t("langlink")}
           </Button>
