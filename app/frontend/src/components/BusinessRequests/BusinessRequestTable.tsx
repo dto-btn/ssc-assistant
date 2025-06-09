@@ -128,6 +128,16 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
       headerName: t("complexity"),
       width: 150,
     },
+    {
+      field: isEnglish ? "GCIT_CAT_EN" : "GCIT_CAT_FR",
+      headerName: t("GCIT_CAT"),
+      width: 200,
+    },
+    {
+      field: isEnglish ? "GCIT_PRIORITY_EN" : "GCIT_PRIORITY_FR",
+      headerName: t("GCIT_PRIORITY"),
+      width: 200,
+    },
   ];
 
   const paginationModel = { page: 0, pageSize: 10 };
