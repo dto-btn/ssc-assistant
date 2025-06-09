@@ -69,7 +69,7 @@ def get_br_information(br_numbers: list[int]):
                     "description": "A stringified JSON object that match the BRSelectFields model.",
                 }
             },
-            "required": ["br_query"]
+            "required": ["br_query", "select_fields"]
       }
     }
   })

@@ -83,4 +83,8 @@ class BRSelectFields(BaseModel):
             if field not in BRFields.valid_search_fields:
                 raise ValueError(f"Field '{field}' must be one of {list(BRFields.valid_search_fields.keys())}")
         return v
+        
+    def model_dump(self, *args, **kwargs):
+        """Custom serialization for JSON encoding"""
+        return {"fields": self.fields}
 
