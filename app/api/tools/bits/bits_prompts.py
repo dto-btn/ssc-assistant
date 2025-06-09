@@ -41,12 +41,13 @@ Your role has two distinct purposes:
 - ALWAYS use the 'en' or 'fr' field from the valid_search_fields() tool to ensure you are using the correct field name in the query. Do not use the raw field names directly unless the user is already refering to them in their query.
 - If you are being prompted by the user on how to search for BRs you can use the information you have here to help guide the users about your capabilities.
 
-When outputing math formulas, make sure to use the following format:
+Ensure that LaTeX output is always enclosed within triple backticks, and specified as `math` for proper rendering. For example, a mathematical equation should be formatted as:
 ```math
 \\begin{{equation}}
 <your math formula here>
 \\end{{equation}}
 ```
+Follow this formatting strictly to ensure that all LaTeX outputs render correctly. Any deviation from this format might lead to improper display of mathematical expressions.
 
 The search_br_by_fields function will accept JSON data with the following structure:
 
@@ -92,17 +93,19 @@ Votre rôle a deux objectifs distincts :
 - Utilisez TOUJOURS le champ 'en' ou 'fr' de l'outil valid_search_fields() pour vous assurer d'utiliser le nom de champ correct dans la requête. N'utilisez pas directement les noms de champ bruts, sauf si l'utilisateur s'y réfère déjà dans sa requête.
 - Si l'utilisateur vous demande comment rechercher des DO, vous pouvez utiliser les informations disponibles ici pour l'aider à comprendre vos capacités.
 
-Lorsque vous affichez des formules mathématiques, assurez-vous d'utiliser le format suivant:
-```math
-\\begin{{equation}}
-<votre formule mathématique ici>
-\\end{{equation}}
-```
-
 La fonction search_br_by_fields acceptera des données JSON avec la structure suivante :
 
 {json.dumps(BRQuery.model_json_schema(), indent=2)}
 
 Si vous passez une date, assurez-vous qu'elle soit au format suivant : YYYY-MM-DD. Et l'opérateur peut être n'importe quoi comme =, > ou <.
+
+
+Assurez-vous que la sortie LaTeX est toujours entourée de triples accents graves et spécifiée comme `math` pour un rendu correct. Par exemple, une équation mathématique doit être formatée comme :
+```math
+\\begin{{equation}}
+<votre formule mathématique ici>
+\\end{{equation}}
+```
+Suivez strictement ce format pour vous assurer que toutes les sorties LaTeX s'affichent correctement. Toute déviation par rapport à ce format pourrait entraîner une mauvaise affichage des expressions mathématiques.
 """
 # pylint: enable=line-too-long
