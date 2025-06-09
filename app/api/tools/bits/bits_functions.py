@@ -63,6 +63,13 @@ def get_br_information(br_numbers: list[int]):
                 "br_query": {
                     "type": "string",
                     "description": "A stringified JSON object that match the BRQuery model.",
+                },
+                "select_fields": {
+                    "type": "array",
+                    "description": "An Array containing all the stringified JSON object that match the BRSelectField model.",
+                    "items": {
+                        "type": "string"
+                    },
                 }
             },
             "required": ["br_query"]
@@ -70,7 +77,7 @@ def get_br_information(br_numbers: list[int]):
     }
   })
 # pylint: enable=line-too-long
-def search_br_by_fields(br_query: str):
+def search_br_by_fields(br_query: str, select_fields: list[str]):
     """
     search_br_by_field
 

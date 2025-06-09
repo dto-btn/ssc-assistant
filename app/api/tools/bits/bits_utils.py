@@ -7,7 +7,7 @@ from typing import List, Optional
 import pymssql
 
 from tools.bits.bits_fields import BRFields
-from tools.bits.bits_models import BRQueryFilter
+from tools.bits.bits_models import BRQueryFilter, BRSelectField
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -82,11 +82,28 @@ class DatabaseConnection:
 class BRQueryBuilder:
     """Class to build BITS queries."""
 
+    DEFAULT_SELECT_FIELDS_EN: List[BRSelectField] = [BRSelectField(name="BR_SHORT_TITLE"),
+                BRSelectField(name="RPT_GC_ORG_NAME_EN"),
+                BRSelectField(name="BITS_STATUS_EN"),
+                BRSelectField(name="BR_OWNER"),
+                BRSelectField(name="SUBMIT_DATE"),]
+    
+    DEFAULT_SELECT_FIELDS_FR: List[BRSelectField] = [BRSelectField(name="BR_SHORT_TITLE"),
+                BRSelectField(name="RPT_GC_ORG_NAME_FR"),
+                BRSelectField(name="BITS_STATUS_FR"),
+                BRSelectField(name="BR_OWNER"),
+                BRSelectField(name="SUBMIT_DATE"),]
+
+    def get_br_select_statement(self, br_filters: Optional[List[BRQueryFilter]] = None, ) -> List[BRSelectField]:
+        """Function that will return the fields (valid) to use in the SELECT statement"""
+        return []
+
     def get_br_query(self, br_number_count: int = 0,
                     status: int = 0,
                     limit: bool = False,
                     active: bool = True,
-                    br_filters: Optional[List[BRQueryFilter]] = None) -> str:
+                    br_filters: Optional[List[BRQueryFilter]] = None,
+                    select_fields: Optional[List[BRSelectField]] = None) -> str:
         """Function that will build the select statement for retreiving BRs
         
         Parameters order for the execute query should be as follow:
@@ -105,8 +122,13 @@ class BRQueryBuilder:
         """
 
         # Default select statement from BR_ITEMS & other tables
-        query += "br.BR_NMBR as BR_NMBR, br.EXTRACTION_DATE as EXTRACTION_DATE, " + ", ".join([f"{value['db_field']} as {key}" for key, value in BRFields.valid_search_fields.items()])
+        query += "br.BR_NMBR as BR_NMBR, br.EXTRACTION_DATE as EXTRACTION_DATE, "
 
+        if select_fields:
+            #todo
+            query = query
+        else:
+            query += ", ".join([f"{value['db_field']} as {key}" for key, value in BRFields.valid_search_fields.items()])
         # Default FROM statement
         query += """
         FROM

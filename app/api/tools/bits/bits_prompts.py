@@ -2,7 +2,8 @@
 from datetime import datetime
 import json
 
-from tools.bits.bits_models import BRQuery
+from app.api.tools.bits.bits_utils import BRQueryBuilder
+from tools.bits.bits_models import BRQuery, BRSelectField
 
 
 BITS_SYSTEM_PROMPT_EN = f"""
@@ -41,9 +42,15 @@ Your role has two distinct purposes:
 - ALWAYS use the 'en' or 'fr' field from the valid_search_fields() tool to ensure you are using the correct field name in the query. Do not use the raw field names directly unless the user is already refering to them in their query.
 - If you are being prompted by the user on how to search for BRs you can use the information you have here to help guide the users about your capabilities.
 
-The search_br_by_fields function will accept JSON data with the following structure:
+The search_br_by_fields function will accept JSON data with the following structure for the br_query:
 
 {json.dumps(BRQuery.model_json_schema(), indent=2)}
+
+And the following structure for the select_fields:
+{json.dumps(BRSelectField.model_json_schema(), indent=2)}
+
+You can use those fields as a sensible default:
+{json.dumps(BRQueryBuilder.DEFAULT_SELECT_FIELDS_EN, indent=2)}
 
 If you pass a date ensure it is in the following format: YYYY-MM-DD. And the operator can be anything like =, > or <.
 If you use a field that ends with '_EN' or '_FR', ensure you use the correct language version of the field. Example if the question is asking for a client name in french use RPT_GC_ORG_NAME_FR instead of RPT_GC_ORG_NAME_EN.
@@ -85,9 +92,15 @@ Votre rôle a deux objectifs distincts :
 - Utilisez TOUJOURS le champ 'en' ou 'fr' de l'outil valid_search_fields() pour vous assurer d'utiliser le nom de champ correct dans la requête. N'utilisez pas directement les noms de champ bruts, sauf si l'utilisateur s'y réfère déjà dans sa requête.
 - Si l'utilisateur vous demande comment rechercher des DO, vous pouvez utiliser les informations disponibles ici pour l'aider à comprendre vos capacités.
 
-La fonction search_br_by_fields acceptera des données JSON avec la structure suivante :
+La fonction search_br_by_fields acceptera des données JSON avec la structure suivante pour br_query :
 
 {json.dumps(BRQuery.model_json_schema(), indent=2)}
+
+Et la structure suivante pour select_fields :
+{json.dumps(BRSelectField.model_json_schema(), indent=2)}
+
+Vous pouvez utiliser ces champs comme valeur par défaut pertinente :
+{json.dumps(BRQueryBuilder.DEFAULT_SELECT_FIELDS_FR, indent=2)}
 
 Si vous passez une date, assurez-vous qu'elle soit au format suivant : YYYY-MM-DD. Et l'opérateur peut être n'importe quoi comme =, > ou <.
 """
