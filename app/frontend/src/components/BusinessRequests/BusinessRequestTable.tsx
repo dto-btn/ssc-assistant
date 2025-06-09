@@ -168,7 +168,6 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
                 REQST_IMPL_DATE: false,
                 RVSD_TARGET_IMPL_DATE: false,
                 ACTUAL_IMPL_DATE: false,
-                CLIENT_REQST_SOL_DATE: false,
                 AGRMT_END_DATE: false,
                 IMPL_SGNOFF_DATE: false,
                 TARGET_IMPL_DATE: false,
