@@ -138,3 +138,12 @@ az ad app update --id <appId> \
 az ad app update --id <appId> \
   --web-redirect-uris https://localhost:8080/.auth/login/aad/callback https://assistant-dev.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca/.auth/login/aad/callback
 ```
+
+## SP Assignement Required
+
+This is a very important setting that must be turned **ON** else the groups associated to the Application will **NOT** be
+enforced.
+
+On the main *Application* screen under the general configuration ensure that the setting *Assigned required* is **ON**:
+
+![AssignmentRequiredSetting](assignmentreq.png)
