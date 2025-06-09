@@ -99,7 +99,8 @@ class BRQueryBuilder:
                     limit: bool = False,
                     active: bool = True,
                     br_filters: Optional[List[BRQueryFilter]] = None,
-                    select_fields: Optional[BRSelectFields] = None) -> str:
+                    select_fields: Optional[BRSelectFields] = None,
+                    show_all: bool = False) -> str:
         """Function that will build the select statement for retreiving BRs
         
         Parameters order for the execute query should be as follow:
@@ -131,25 +132,26 @@ class BRQueryBuilder:
             [EDR_CARZ].[DIM_DEMAND_BR_ITEMS] br
         """
 
-        # Processing BR SNAPSHOT clause
-        snapshot_where_clause = ["snp.PERIOD_END_DATE = @MAX_DATE"]
-        if status:
-            placeholders = ", ".join(["%s"] * status)
-            snapshot_where_clause.append(f"snp.STATUS_ID IN ({placeholders})")
+        if status or show_all:
+            # Processing BR SNAPSHOT clause
+            snapshot_where_clause = ["snp.PERIOD_END_DATE = @MAX_DATE"]
+            if status:
+                placeholders = ", ".join(["%s"] * status)
+                snapshot_where_clause.append(f"snp.STATUS_ID IN ({placeholders})")
 
-        snapshot_where_clause = " AND ".join(snapshot_where_clause)
-        query += f"""
-        INNER JOIN
-            [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT] snp
-        ON snp.BR_NMBR = br.BR_NMBR AND {snapshot_where_clause}
-        """
+            snapshot_where_clause = " AND ".join(snapshot_where_clause)
+            query += f"""
+            INNER JOIN
+                [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT] snp
+            ON snp.BR_NMBR = br.BR_NMBR AND {snapshot_where_clause}
+            """
 
-        # Processing BR STATUS clause
-        query += """
-        INNER JOIN
-            [EDR_CARZ].[DIM_BITS_STATUS] s
-        ON s.STATUS_ID = snp.STATUS_ID
-        """
+            # Processing BR STATUS clause
+            query += """
+            INNER JOIN
+                [EDR_CARZ].[DIM_BITS_STATUS] s
+            ON s.STATUS_ID = snp.STATUS_ID
+            """
 
         # Processing BR OPIS clause - Using CASE statements with better join logic
         query += """
