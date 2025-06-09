@@ -169,7 +169,6 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
                 ACTUAL_IMPL_DATE: false,
                 CLIENT_REQST_SOL_DATE: false,
                 AGRMT_END_DATE: false,
-                PRPO_TARGET_DATE: false,
                 IMPL_SGNOFF_DATE: false,
                 TARGET_IMPL_DATE: false,
                 ACC_MANAGER_OPI: false,
@@ -188,6 +187,8 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
                 PROD_OPI: false,
                 CPLX_EN: false,
                 CPLX_FR: false,
+                GCIT_CAT: false,
+                GCIT_PRIORITY: false,
               },
             },
           }}

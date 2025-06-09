@@ -651,10 +651,6 @@
         "en": "Agreement End Date",
         "fr": "Date de fin de l'entente"
     },
-    "PRPO_TARGET_DATE": {
-        "en": "Target Specification Date",
-        "fr": "Date de Spécification Cible"
-    },
     "IMPL_SGNOFF_DATE": {
         "en": "Client Sign-off Implementation Date",
         "fr": "Date de Mise en Œuvre de l'Approbation du Client"
