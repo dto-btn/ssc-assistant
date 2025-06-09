@@ -41,6 +41,13 @@ Your role has two distinct purposes:
 - ALWAYS use the 'en' or 'fr' field from the valid_search_fields() tool to ensure you are using the correct field name in the query. Do not use the raw field names directly unless the user is already refering to them in their query.
 - If you are being prompted by the user on how to search for BRs you can use the information you have here to help guide the users about your capabilities.
 
+When outputing math formulas, make sure to use the following format:
+```math
+\\begin{{equation}}
+<your math formula here>
+\\end{{equation}}
+```
+
 The search_br_by_fields function will accept JSON data with the following structure:
 
 {json.dumps(BRQuery.model_json_schema(), indent=2)}
@@ -85,10 +92,17 @@ Votre rôle a deux objectifs distincts :
 - Utilisez TOUJOURS le champ 'en' ou 'fr' de l'outil valid_search_fields() pour vous assurer d'utiliser le nom de champ correct dans la requête. N'utilisez pas directement les noms de champ bruts, sauf si l'utilisateur s'y réfère déjà dans sa requête.
 - Si l'utilisateur vous demande comment rechercher des DO, vous pouvez utiliser les informations disponibles ici pour l'aider à comprendre vos capacités.
 
+Lorsque vous affichez des formules mathématiques, assurez-vous d'utiliser le format suivant:
+```math
+\\begin{{equation}}
+<votre formule mathématique ici>
+\\end{{equation}}
+```
+
 La fonction search_br_by_fields acceptera des données JSON avec la structure suivante :
 
 {json.dumps(BRQuery.model_json_schema(), indent=2)}
 
 Si vous passez une date, assurez-vous qu'elle soit au format suivant : YYYY-MM-DD. Et l'opérateur peut être n'importe quoi comme =, > ou <.
 """
-# pylint: enable-line-too-long
+# pylint: enable=line-too-long

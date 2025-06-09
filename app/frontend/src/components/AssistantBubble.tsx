@@ -17,6 +17,7 @@ import { MarkdownHooks } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import rehypeMermaid from "rehype-mermaid";
+import rehypeMathjax from 'rehype-mathjax'
 import "highlight.js/styles/github.css";
 import { useEffect, useState, Fragment } from "react";
 import { useTranslation } from "react-i18next";
@@ -293,6 +294,7 @@ export const AssistantBubble = ({
                   components={components}
                   rehypePlugins={[
                     rehypeHighlight,
+                    rehypeMathjax,
                     [
                       rehypeMermaid,
                       {
@@ -307,8 +309,8 @@ export const AssistantBubble = ({
                   {isLoading
                     ? `${text.replace(/\[doc(\d+)\]/g, "")}_`
                     : processedContent.processedText !== ""
-                    ? processedContent.processedText
-                    : text}
+                      ? processedContent.processedText
+                      : text}
                 </MarkdownHooks>
               </TextComponentsBox>
             </MainContentWrapper>
@@ -577,11 +579,9 @@ export const AssistantBubble = ({
                           brQuery.query_filters.map((filter, index) => (
                             <Chip
                               key={index}
-                              label={`${
-                                i18n.language == "en" ? filter.en : filter.fr
-                              } (${filter.name}) ${filter.operator} ${
-                                filter.value
-                              }`}
+                              label={`${i18n.language == "en" ? filter.en : filter.fr
+                                } (${filter.name}) ${filter.operator} ${filter.value
+                                }`}
                               size="small"
                               variant="outlined"
                               color="primary"
