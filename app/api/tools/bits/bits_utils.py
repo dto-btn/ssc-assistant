@@ -121,9 +121,14 @@ class BRQueryBuilder:
         # Default select statement from BR_ITEMS & other tables
         query += "br.BR_NMBR as BR_NMBR, br.EXTRACTION_DATE as EXTRACTION_DATE, "
 
-        if select_fields:
-            #todo
-            query = query
+        if select_fields and not show_all:
+            # Join only the fields specified in select_fields
+            selected_fields = []
+            for field_name in select_fields.fields:
+                if field_name in BRFields.valid_search_fields:
+                    field_info = BRFields.valid_search_fields[field_name]
+                    selected_fields.append(f"{field_info['db_field']} as {field_name}")
+            query += ", ".join(selected_fields)
         else:
             query += ", ".join([f"{value['db_field']} as {key}" for key, value in BRFields.valid_search_fields.items()])
         # Default FROM statement
@@ -210,15 +215,16 @@ class BRQueryBuilder:
         """
 
         # PRODUCTS - Optimized with better join hint
-        query += """
-        LEFT JOIN
-            (SELECT BR_NMBR, PROD_ID 
-             FROM [EDR_CARZ].[FCT_DEMAND_BR_PRODUCTS] WITH (FORCESEEK)
-             WHERE PROD_TYPE = 'LEAD') br_products
-        ON br_products.BR_NMBR = br.BR_NMBR
-        LEFT JOIN [EDR_CARZ].[DIM_BITS_PRODUCT] products WITH (NOLOCK)
-        ON products.PROD_ID = br_products.PROD_ID
-        """
+        if show_all or (select_fields and ("LEAD_PRODUCT_EN" or "LEAD_PRODUCT_FR" in select_fields.fields)):
+            query += """
+            LEFT JOIN
+                (SELECT BR_NMBR, PROD_ID, PROD_TYPE
+                 FROM [EDR_CARZ].[FCT_DEMAND_BR_PRODUCTS] WITH (FORCESEEK)
+                 WHERE PROD_TYPE IN ('PRODUCT', 'SERVICE')) br_products
+            ON br_products.BR_NMBR = br.BR_NMBR
+            LEFT JOIN [EDR_CARZ].[DIM_BITS_PRODUCT] products WITH (NOLOCK)
+            ON products.PROD_ID = br_products.PROD_ID
+            """
 
         # WHERE CLAUSE PROCESSING (BR_NMBR and ACTIVE, etc)
         base_where_clause = []
