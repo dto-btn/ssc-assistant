@@ -153,7 +153,8 @@ class BRQueryBuilder:
                 SISDOPI,
                 SR_OWNER as BR_OWNER,
                 TEAMLEADER,
-                WIO_OPI
+                WIO_OPI,
+                SOLN_OPI
             FROM
             (
                 SELECT opis.BR_NMBR, opis.BUS_OPI_ID, person.FULL_NAME
@@ -180,7 +181,8 @@ class BRQueryBuilder:
                     SISDOPI,
                     SR_OWNER,
                     TEAMLEADER,
-                    WIO_OPI
+                    WIO_OPI,
+                    SOLN_OPI
                 )
             ) AS PivotTable
         ) AS opis
