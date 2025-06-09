@@ -82,17 +82,17 @@ class DatabaseConnection:
 class BRQueryBuilder:
     """Class to build BITS queries."""
 
-    DEFAULT_SELECT_FIELDS_EN: BRSelectFields = BRSelectFields(fields=["BR_SHORT_TITLE",
-                "RPT_GC_ORG_NAME_EN",
-                "BITS_STATUS_EN",
-                "BR_OWNER",
-                "SUBMIT_DATE",])
+    # DEFAULT_SELECT_FIELDS_EN: BRSelectFields = BRSelectFields(fields=["BR_SHORT_TITLE",
+    #             "RPT_GC_ORG_NAME_EN",
+    #             "BITS_STATUS_EN",
+    #             "BR_OWNER",
+    #             "SUBMIT_DATE",])
     
-    DEFAULT_SELECT_FIELDS_FR: BRSelectFields = BRSelectFields(fields=["BR_SHORT_TITLE",
-                "RPT_GC_ORG_NAME_FR",
-                "BITS_STATUS_FR",
-                "BR_OWNER",
-                "SUBMIT_DATE",])
+    # DEFAULT_SELECT_FIELDS_FR: BRSelectFields = BRSelectFields(fields=["BR_SHORT_TITLE",
+    #             "RPT_GC_ORG_NAME_FR",
+    #             "BITS_STATUS_FR",
+    #             "BR_OWNER",
+    #             "SUBMIT_DATE",])
 
     def get_br_query(self, br_number_count: int = 0,
                     status: int = 0,

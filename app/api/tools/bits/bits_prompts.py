@@ -2,7 +2,6 @@
 from datetime import datetime
 import json
 
-from tools.bits.bits_utils import BRQueryBuilder
 from tools.bits.bits_models import BRQuery, BRSelectFields
 
 
