@@ -6,7 +6,7 @@ from datetime import datetime
 from pydantic import ValidationError
 from src.constants.tools import TOOL_BR
 from tools.bits.bits_fields import BRFields
-from tools.bits.bits_models import BRQuery
+from tools.bits.bits_models import BRQuery, BRSelectFields
 from tools.bits.bits_statuses_cache import StatusesCache
 from tools.bits.bits_utils import BRQueryBuilder, DatabaseConnection
 from utils.decorators import (discover_subfolder_functions_with_metadata,
@@ -65,11 +65,8 @@ def get_br_information(br_numbers: list[int]):
                     "description": "A stringified JSON object that match the BRQuery model.",
                 },
                 "select_fields": {
-                    "type": "array",
-                    "description": "An Array containing all the stringified JSON object that match the BRSelectField model.",
-                    "items": {
-                        "type": "string"
-                    },
+                    "type": "string",
+                    "description": "A stringified JSON object that match the BRSelectFields model.",
                 }
             },
             "required": ["br_query"]
@@ -77,7 +74,7 @@ def get_br_information(br_numbers: list[int]):
     }
   })
 # pylint: enable=line-too-long
-def search_br_by_fields(br_query: str, select_fields: list[str]):
+def search_br_by_fields(br_query: str, select_fields: BRSelectFields):
     """
     search_br_by_field
 
@@ -86,6 +83,8 @@ def search_br_by_fields(br_query: str, select_fields: list[str]):
     try:
         user_query = BRQuery.model_validate_json(br_query)
         logger.info("Valided query: %s", user_query)
+
+        logger.info("Valided select fields: %s", select_fields)
 
         # Prepare the SQL statement for this request.
         sql_query = query_builder.get_br_query(limit=bool(user_query.limit),

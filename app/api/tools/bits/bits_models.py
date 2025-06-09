@@ -70,15 +70,17 @@ class BRQuery(BaseModel):
         data["query_filters"] = [f.to_label_dict() for f in self.query_filters]
         return data
     
-class BRSelectField(BaseModel):
+class BRSelectFields(BaseModel):
     """Fields to use for the SELECT statement in the BITS query."""
-    name: str = Field(..., description="Name of the database field", )
+    fields: list[str]= Field(..., description="List of database field names to include in the select statement", )
 
-    # Validator for the 'name' field
-    @field_validator("name")
+    # Validator for the 'fields' field
+    @field_validator("fields")
     @classmethod
-    def validate_name(cls, v: str) -> str:
-        """Validate the name field.Ensure its a valid DB field"""
-        if v not in BRFields.valid_search_fields_filterable:
-            raise ValueError(f"Name must be one of {list(BRFields.valid_search_fields.keys())}")
+    def validate_fields(cls, v: list[str]) -> list[str]:
+        """Validate each field name to ensure it's a valid DB field"""
+        for field in v:
+            if field not in BRFields.valid_search_fields:
+                raise ValueError(f"Field '{field}' must be one of {list(BRFields.valid_search_fields.keys())}")
         return v
+

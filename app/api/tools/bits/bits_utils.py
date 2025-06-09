@@ -7,7 +7,7 @@ from typing import List, Optional
 import pymssql
 
 from tools.bits.bits_fields import BRFields
-from tools.bits.bits_models import BRQueryFilter, BRSelectField
+from tools.bits.bits_models import BRQueryFilter, BRSelectFields
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -82,28 +82,24 @@ class DatabaseConnection:
 class BRQueryBuilder:
     """Class to build BITS queries."""
 
-    DEFAULT_SELECT_FIELDS_EN: List[BRSelectField] = [BRSelectField(name="BR_SHORT_TITLE"),
-                BRSelectField(name="RPT_GC_ORG_NAME_EN"),
-                BRSelectField(name="BITS_STATUS_EN"),
-                BRSelectField(name="BR_OWNER"),
-                BRSelectField(name="SUBMIT_DATE"),]
+    DEFAULT_SELECT_FIELDS_EN: BRSelectFields = BRSelectFields(fields=["BR_SHORT_TITLE",
+                "RPT_GC_ORG_NAME_EN",
+                "BITS_STATUS_EN",
+                "BR_OWNER",
+                "SUBMIT_DATE",])
     
-    DEFAULT_SELECT_FIELDS_FR: List[BRSelectField] = [BRSelectField(name="BR_SHORT_TITLE"),
-                BRSelectField(name="RPT_GC_ORG_NAME_FR"),
-                BRSelectField(name="BITS_STATUS_FR"),
-                BRSelectField(name="BR_OWNER"),
-                BRSelectField(name="SUBMIT_DATE"),]
-
-    def get_br_select_statement(self, br_filters: Optional[List[BRQueryFilter]] = None, ) -> List[BRSelectField]:
-        """Function that will return the fields (valid) to use in the SELECT statement"""
-        return []
+    DEFAULT_SELECT_FIELDS_FR: BRSelectFields = BRSelectFields(fields=["BR_SHORT_TITLE",
+                "RPT_GC_ORG_NAME_FR",
+                "BITS_STATUS_FR",
+                "BR_OWNER",
+                "SUBMIT_DATE",])
 
     def get_br_query(self, br_number_count: int = 0,
                     status: int = 0,
                     limit: bool = False,
                     active: bool = True,
                     br_filters: Optional[List[BRQueryFilter]] = None,
-                    select_fields: Optional[List[BRSelectField]] = None) -> str:
+                    select_fields: Optional[BRSelectFields] = None) -> str:
         """Function that will build the select statement for retreiving BRs
         
         Parameters order for the execute query should be as follow:

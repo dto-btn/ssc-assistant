@@ -2,8 +2,8 @@
 from datetime import datetime
 import json
 
-from app.api.tools.bits.bits_utils import BRQueryBuilder
-from tools.bits.bits_models import BRQuery, BRSelectField
+from tools.bits.bits_utils import BRQueryBuilder
+from tools.bits.bits_models import BRQuery, BRSelectFields
 
 
 BITS_SYSTEM_PROMPT_EN = f"""
@@ -47,7 +47,7 @@ The search_br_by_fields function will accept JSON data with the following struct
 {json.dumps(BRQuery.model_json_schema(), indent=2)}
 
 And the following structure for the select_fields:
-{json.dumps(BRSelectField.model_json_schema(), indent=2)}
+{json.dumps(BRSelectFields.model_json_schema(), indent=2)}
 
 You can use those fields as a sensible default:
 {json.dumps(BRQueryBuilder.DEFAULT_SELECT_FIELDS_EN, indent=2)}
@@ -97,7 +97,7 @@ La fonction search_br_by_fields acceptera des données JSON avec la structure su
 {json.dumps(BRQuery.model_json_schema(), indent=2)}
 
 Et la structure suivante pour select_fields :
-{json.dumps(BRSelectField.model_json_schema(), indent=2)}
+{json.dumps(BRSelectFields.model_json_schema(), indent=2)}
 
 Vous pouvez utiliser ces champs comme valeur par défaut pertinente :
 {json.dumps(BRQueryBuilder.DEFAULT_SELECT_FIELDS_FR, indent=2)}
