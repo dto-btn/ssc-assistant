@@ -158,64 +158,68 @@ class BRQueryBuilder:
             ON s.STATUS_ID = snp.STATUS_ID
             """
 
-        # Processing BR OPIS clause - Using CASE statements with better join logic
-        query += """
-        LEFT JOIN
-            (SELECT
-                BR_NMBR,
-                ACC_MANAGER_OPI,
-                AGR_OPI,
-                BA_OPI,
-                BA_PRICING_OPI,
-                BA_PRICING_TL,
-                BA_TL,
-                CSM_DIRECTOR,
-                EAOPI,
-                PM_OPI,
-                PROD_OPI,
-                QA_OPI,
-                SDM_TL_OPI,
-                SISDOPI,
-                SR_OWNER as BR_OWNER,
-                TEAMLEADER,
-                WIO_OPI,
-                SOLN_OPI
-            FROM
-            (
-                SELECT opis.BR_NMBR, opis.BUS_OPI_ID, person.FULL_NAME
-                FROM [EDR_CARZ].[FCT_DEMAND_BR_OPIS] opis
-                INNER JOIN [EDR_CARZ].[DIM_BITS_PERSON] person
-                ON opis.PERSON_ID = person.PERSON_ID
-            ) AS SourceTable
-            PIVOT
-            (
-                MAX(FULL_NAME)
-                FOR BUS_OPI_ID IN (
-                    ACC_MANAGER_OPI,
-                    AGR_OPI,
-                    BA_OPI,
-                    BA_PRICING_OPI,
-                    BA_PRICING_TL,
-                    BA_TL,
-                    CSM_DIRECTOR,
-                    EAOPI,
-                    PM_OPI,
-                    PROD_OPI,
-                    QA_OPI,
-                    SDM_TL_OPI,
-                    SISDOPI,
-                    SR_OWNER,
-                    TEAMLEADER,
-                    WIO_OPI,
-                    SOLN_OPI
-                )
-            ) AS PivotTable
-        ) AS opis
-        ON opis.BR_NMBR = br.BR_NMBR
-        """
+        # Check if any user fields are included in select_fields or if show_all is True
+        has_user_fields = show_all or (select_fields and any(
+            field_name in BRFields.valid_search_fields and 
+            BRFields.valid_search_fields[field_name].get('is_user_field', False) 
+            for field_name in select_fields.fields
+        ))
 
+        # Processing BR OPIS clause - Only include if user fields are selected or show_all is True
+        if has_user_fields:
+            # Extract the selected user fields if select_fields is provided and show_all is False
+            user_field_names = []
+            if select_fields and not show_all:
+                user_field_names = [field_name for field_name in select_fields.fields 
+                                 if field_name in BRFields.valid_search_fields 
+                                 and BRFields.valid_search_fields[field_name].get('is_user_field', False)]
+            
+            # If no specific user fields are selected but show_all is True, include all user fields
+            if not user_field_names and show_all:
+                user_field_names = [key for key, value in BRFields.valid_search_fields.items() 
+                                  if value.get('is_user_field', False)]
+
+            # Build the PIVOT fields dynamically from the selected user fields
+            pivot_fields = []
+            for field_name in user_field_names:
+                # Extract the field ID from the db_field value (e.g., 'opis.BR_OWNER' -> 'BR_OWNER')
+                field_id = BRFields.valid_search_fields[field_name]['db_field'].split('.')[1]
+                pivot_fields.append(field_id)
+
+            # Add the BR_OWNER field if needed (special case since it's SR_OWNER in the database)
+            if 'BR_OWNER' in user_field_names:
+                # Ensure SR_OWNER is included in pivot_fields if it's not already
+                if 'SR_OWNER' not in pivot_fields:
+                    pivot_fields.append('SR_OWNER')
+            
+            # Build the PIVOT list string
+            pivot_list = ",\n                    ".join(pivot_fields)
+            
+            query += f"""
+            LEFT JOIN
+                (SELECT
+                    BR_NMBR,
+                    {', '.join(pivot_fields)}
+                FROM
+                (
+                    SELECT opis.BR_NMBR, opis.BUS_OPI_ID, person.FULL_NAME
+                    FROM [EDR_CARZ].[FCT_DEMAND_BR_OPIS] opis
+                    INNER JOIN [EDR_CARZ].[DIM_BITS_PERSON] person
+                    ON opis.PERSON_ID = person.PERSON_ID
+                ) AS SourceTable
+                PIVOT
+                (
+                    MAX(FULL_NAME)
+                    FOR BUS_OPI_ID IN (
+                        {pivot_list}
+                    )
+                ) AS PivotTable
+            ) AS opis
+            ON opis.BR_NMBR = br.BR_NMBR
+            """
+    
         # PRODUCTS - Optimized with better join hint
-        if show_all or (select_fields and ("LEAD_PRODUCT_EN" or "LEAD_PRODUCT_FR" in select_fields.fields)):
+        if show_all or (select_fields and ("LEAD_PRODUCT_EN" in select_fields.fields or "LEAD_PRODUCT_FR" in select_fields.fields)):
             query += """
             LEFT JOIN
                 (SELECT BR_NMBR, PROD_ID, PROD_TYPE
