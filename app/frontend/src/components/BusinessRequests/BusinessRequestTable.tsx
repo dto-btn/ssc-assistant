@@ -123,6 +123,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
     { field: "TEAMLEADER", headerName: t("TEAMLEADER"), width: 150 },
     { field: "WIO_OPI", headerName: t("WIO_OPI"), width: 150 },
     { field: "PROD_OPI", headerName: t("PROD_OPI"), width: 150 },
+    { field: "SOLN_OPI", headerName: t("SOLN_OPI"), width: 150 },
     {
       field: isEnglish ? "CPLX_EN" : "CPLX_FR",
       headerName: t("complexity"),
@@ -189,6 +190,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
                 CPLX_FR: false,
                 GCIT_CAT: false,
                 GCIT_PRIORITY: false,
+                SOLN_OPI: false,
               },
             },
           }}

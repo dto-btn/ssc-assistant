@@ -162,6 +162,7 @@ interface BusinessRequest {
   PROD_OPI: string;
   PHASE_EN: string;
   PHASE_FR: string;
+  SOLN_OPI: string;
 }
 
 interface BrMetadata {

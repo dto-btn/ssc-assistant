@@ -73,6 +73,7 @@ class BRFields:
         'PROD_OPI': { 'db_field': 'opis.PROD_OPI', 'description': 'The Service Lead for the BR.', 'is_user_field': True, 'en': 'Service Lead', 'fr': 'BPR des services' },
         'PHASE_EN': { 'db_field': 's.BITS_PHASE_EN', 'description': 'The current phase of the BR. Phase denotes where in the EBIDM process the BR is currently.', 'en': 'Phase', 'fr': 'Phase' },
         'PHASE_FR': { 'db_field': 's.BITS_PHASE_EN', 'description': 'Phase de la BR.', 'en': 'Phase', 'fr': 'Phase' },
+        'SOLN_OPI': { 'db_field': 'opis.SOLN_OPI', 'description': 'Conceptual Designer', 'is_user_field': True, 'en': 'Conceptual Designer', 'fr': 'Créateur Conceptuel' },
     }
     # pylint: enable=line-too-long
 
