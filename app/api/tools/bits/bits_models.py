@@ -71,8 +71,8 @@ class BRQuery(BaseModel):
         return data
     
 class BRSelectFields(BaseModel):
-    """Fields to use for the SELECT statement in the BITS query."""
-    fields: list[str]= Field(..., description="List of database field names to include in the select statement", )
+    """Fields to use for the SELECT statement in the BITS query **AND** fields that will displayed to the user."""
+    fields: list[str]= Field(..., description="List of database field names to include in the select statement and that will display to the user in the answer", )
 
     # Validator for the 'fields' field
     @field_validator("fields")
@@ -82,6 +82,16 @@ class BRSelectFields(BaseModel):
         for field in v:
             if field not in BRFields.valid_search_fields:
                 raise ValueError(f"Field '{field}' must be one of {list(BRFields.valid_search_fields.keys())}")
+        return v
+    
+    @field_validator("fields")
+    @classmethod
+    def validate_size(cls, v: list[str]) -> list[str]:
+        """Ensure the fields list is not empty and does not exceed a reasonable size."""
+        if not v:
+            raise ValueError("At least one field must be specified.")
+        if len(v) > 10:
+            raise ValueError("Too many fields specified. Maximum is 10.")
         return v
         
     def model_dump(self, *args, **kwargs):
