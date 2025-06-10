@@ -195,22 +195,20 @@ class BRQueryBuilder:
             for field_name in user_field_names:
                 # Extract the field ID from the db_field value (e.g., 'opis.BR_OWNER' -> 'BR_OWNER')
                 field_id = BRFields.valid_search_fields[field_name]['db_field'].split('.')[1]
-                pivot_fields.append(field_id)
-
-            # Add the BR_OWNER field if needed (special case since it's SR_OWNER in the database)
-            if 'BR_OWNER' in user_field_names:
-                # Ensure SR_OWNER is included in pivot_fields if it's not already
-                if 'SR_OWNER' not in pivot_fields:
-                    pivot_fields.append('SR_OWNER')
+                # Add the BR_OWNER field if needed (special case since it's SR_OWNER in the database)
+                if field_id != 'BR_OWNER':
+                    pivot_fields.append(field_id)
 
             # Build the PIVOT list string
-            pivot_list = ",\n                    ".join(pivot_fields)
+            pivot_list = ",\n".join(pivot_fields)
+            if pivot_list:
+                pivot_list = "," + pivot_list
 
             query += f"""
             LEFT JOIN
                 (SELECT
-                    BR_NMBR,
-                    {', '.join(pivot_fields)}
+                    BR_NMBR, SR_OWNER as BR_OWNER
+                    {',' + ', '.join(pivot_fields) if pivot_fields else ''}
                 FROM
                 (
                     SELECT opis.BR_NMBR, opis.BUS_OPI_ID, person.FULL_NAME
@@ -221,7 +219,7 @@ class BRQueryBuilder:
                 PIVOT
                 (
                     MAX(FULL_NAME)
-                    FOR BUS_OPI_ID IN (
+                    FOR BUS_OPI_ID IN ( SR_OWNER
                         {pivot_list}
                     )
                 ) AS PivotTable
