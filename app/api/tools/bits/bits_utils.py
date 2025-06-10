@@ -87,12 +87,19 @@ class BRQueryBuilder:
     #             "BITS_STATUS_EN",
     #             "BR_OWNER",
     #             "SUBMIT_DATE",])
-    
+
     # DEFAULT_SELECT_FIELDS_FR: BRSelectFields = BRSelectFields(fields=["BR_SHORT_TITLE",
     #             "RPT_GC_ORG_NAME_FR",
     #             "BITS_STATUS_FR",
     #             "BR_OWNER",
     #             "SUBMIT_DATE",])
+    def ensure_query_fields_present_in_select(self, br_filters: List[BRQueryFilter],
+                                              select_fields: BRSelectFields) -> BRSelectFields:
+        """Ensure that all fields in the BR filters are present in the select fields."""
+        for br_filter in br_filters:
+            if br_filter.name not in select_fields.fields:
+                select_fields.fields.append(br_filter.name)
+        return select_fields
 
     def get_br_query(self, br_number_count: int = 0,
                     status: int = 0,
@@ -119,7 +126,11 @@ class BRQueryBuilder:
         """
 
         # Default select statement from BR_ITEMS & other tables
-        query += "br.BR_NMBR as BR_NMBR, br.EXTRACTION_DATE as EXTRACTION_DATE, "
+        query += """br.BR_NMBR as BR_NMBR,
+                    br.EXTRACTION_DATE as EXTRACTION_DATE,
+                    s.BR_ACTIVE_EN as BR_ACTIVE_EN,
+                    s.BR_ACTIVE_FR as BR_ACTIVE_FR,
+                    """
 
         if select_fields and not show_all:
             # Join only the fields specified in select_fields
@@ -137,7 +148,7 @@ class BRQueryBuilder:
             [EDR_CARZ].[DIM_DEMAND_BR_ITEMS] br
         """
 
-        if status or show_all:
+        if status or show_all or active:
             # Processing BR SNAPSHOT clause
             snapshot_where_clause = ["snp.PERIOD_END_DATE = @MAX_DATE"]
             if status:
@@ -161,7 +172,7 @@ class BRQueryBuilder:
         # Check if any user fields are included in select_fields or if show_all is True
         has_user_fields = show_all or (select_fields and any(
             field_name in BRFields.valid_search_fields and 
-            BRFields.valid_search_fields[field_name].get('is_user_field', False) 
+            BRFields.valid_search_fields[field_name].get('is_user_field', False)
             for field_name in select_fields.fields
         ))
 
@@ -173,7 +184,7 @@ class BRQueryBuilder:
                 user_field_names = [field_name for field_name in select_fields.fields 
                                  if field_name in BRFields.valid_search_fields 
                                  and BRFields.valid_search_fields[field_name].get('is_user_field', False)]
-            
+
             # If no specific user fields are selected but show_all is True, include all user fields
             if not user_field_names and show_all:
                 user_field_names = [key for key, value in BRFields.valid_search_fields.items() 
@@ -191,10 +202,10 @@ class BRQueryBuilder:
                 # Ensure SR_OWNER is included in pivot_fields if it's not already
                 if 'SR_OWNER' not in pivot_fields:
                     pivot_fields.append('SR_OWNER')
-            
+
             # Build the PIVOT list string
             pivot_list = ",\n                    ".join(pivot_fields)
-            
+
             query += f"""
             LEFT JOIN
                 (SELECT
@@ -217,7 +228,7 @@ class BRQueryBuilder:
             ) AS opis
             ON opis.BR_NMBR = br.BR_NMBR
             """
-    
+
         # PRODUCTS - Optimized with better join hint
         if show_all or (select_fields and ("LEAD_PRODUCT_EN" in select_fields.fields or "LEAD_PRODUCT_FR" in select_fields.fields)):
             query += """

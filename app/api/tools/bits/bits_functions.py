@@ -71,7 +71,7 @@ def get_br_information(br_numbers: list[int]):
     }
   })
 # pylint: enable=line-too-long
-def search_br_by_fields(br_query: str, select_fields: BRSelectFields):
+def search_br_by_fields(br_query: str, select_fields: str):
     """
     search_br_by_field
 
@@ -81,14 +81,16 @@ def search_br_by_fields(br_query: str, select_fields: BRSelectFields):
         user_query = BRQuery.model_validate_json(br_query)
         logger.info("Valided query: %s", user_query)
 
-        logger.info("Valided select fields: %s", select_fields)
+        fields: BRSelectFields = BRSelectFields.model_validate_json(select_fields)
+        fields = query_builder.ensure_query_fields_present_in_select(user_query.query_filters, fields)
+        logger.info("Valided select fields (after filtering): %s", select_fields)
 
         # Prepare the SQL statement for this request.
         sql_query = query_builder.get_br_query(limit=bool(user_query.limit),
                                             br_filters=user_query.query_filters,
                                             active=user_query.active,
                                             status=len(user_query.statuses) if user_query.statuses else 0,
-                                            select_fields=select_fields,)
+                                            select_fields=fields,)
 
         # Build query parameters dynamically, #1 statuses, #2 all other fields, #3 limit
         query_params = []
