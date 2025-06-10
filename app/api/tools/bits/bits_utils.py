@@ -9,6 +9,8 @@ import pymssql
 from tools.bits.bits_fields import BRFields
 from tools.bits.bits_models import BRQueryFilter, BRSelectFields
 
+import tiktoken
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -100,6 +102,14 @@ class BRQueryBuilder:
             if br_filter.name not in select_fields.fields:
                 select_fields.fields.append(br_filter.name)
         return select_fields
+
+    def count_tokens_for_gpt4o(self, data) -> int:
+        """
+        Counts tokens for the given data using tiktoken for GPT-4o (128K context).
+        """
+        enc = tiktoken.encoding_for_model("gpt-4o")
+        json_str = json.dumps(data, ensure_ascii=False)
+        return len(enc.encode(json_str))
 
     def get_br_query(self, br_number_count: int = 0,
                     status: int = 0,
