@@ -49,7 +49,7 @@ class BRQueryFilter(BaseModel):
 class BRQuery(BaseModel):
     """Represent the query that the AI does on behalf of the user"""
     query_filters: list[BRQueryFilter] = Field(..., description="List of filters to apply to the query.")
-    limit: int = Field(99999, description="Maximum number of records to return. Optional. Defaults to 99999.")
+    limit: int = Field(750, description="Maximum number of records to return. Optional. Defaults to 750.")
     statuses: list[str] = Field([], description="List of of STATUS_ID to filter by.")
     active: bool = Field(True, description="If it should search for active BRs only, on by default.")
 

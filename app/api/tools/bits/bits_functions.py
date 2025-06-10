@@ -103,7 +103,6 @@ def search_br_by_fields(br_query: str, select_fields: str):
                 query_params.append(f"%{query_filter.value}%")
         query_params.append(user_query.limit)
         result = db.execute_query(sql_query, *query_params)
-        tokens = query_builder.count_tokens_for_gpt4o(result["br"])
         # Append the original query to the result
         result["brquery"] = user_query.model_dump()
         result["brselect"] = fields.model_dump()
