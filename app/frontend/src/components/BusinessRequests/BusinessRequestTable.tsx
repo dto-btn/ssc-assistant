@@ -7,11 +7,13 @@ import { formatDate } from "./subcomponents/DateDisplay";
 interface BusinessRequestTableProps {
   data: Array<BusinessRequest>;
   lang: string;
+  show_fields: string[];
 }
 
 const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
   data,
   lang,
+  show_fields,
 }) => {
   const isEnglish = lang === "en";
   const { t } = useTranslation();
@@ -35,7 +37,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
     {
       field: "BR_SHORT_TITLE",
       headerName: t("BR_SHORT_TITLE"),
-      width: 250,
+      flex: 1,
     },
     {
       field: isEnglish ? "RPT_GC_ORG_NAME_EN" : "RPT_GC_ORG_NAME_FR",

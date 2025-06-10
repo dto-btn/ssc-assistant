@@ -105,6 +105,7 @@ def search_br_by_fields(br_query: str, select_fields: str):
         result = db.execute_query(sql_query, *query_params)
         # Append the original query to the result
         result["brquery"] = user_query.model_dump()
+        result["brselect"] = fields.model_dump()
         return result
 
     except (json.JSONDecodeError, ValidationError) as e:
