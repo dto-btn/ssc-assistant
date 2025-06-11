@@ -1,3 +1,4 @@
+import { DisclaimerKey, DisclaimerState} from "../../types";
 import { DEFAULT_CHAT_MODEL } from "../constants/models";
 
 const cleanChatHistories = (histories: (ChatHistory | null)[]) => {
@@ -54,5 +55,30 @@ export class PersistenceUtils {
             console.error("Error parsing enabled tools from localStorage. Returning empty object.", e);
             return {};
         }
+    }
+
+    /**
+     * Returns the state of disclaimers from localStorage. If the disclaimer is accepted, it will be set to true.
+     * Otherwise, it will either be false or not present in the localStorage.
+     */
+    static getDisclaimerAcceptedState(): DisclaimerState {
+        let obj = {} as DisclaimerState;
+        try {
+            obj = JSON.parse(localStorage.getItem("disclaimerState") || "{}");
+        } catch (e) {
+            console.error("Error parsing disclaimers from localStorage. Returning empty array.", e);
+        }
+        return obj;
+    }
+
+    static getIsDisclaimerAccepted(key: DisclaimerKey): boolean {
+        const state = this.getDisclaimerAcceptedState();
+        return !!state[key];
+    }
+
+    static setDisclaimerAccepted(key: DisclaimerKey): void {
+        const state = this.getDisclaimerAcceptedState();
+        state[key] = true;
+        localStorage.setItem("disclaimerState", JSON.stringify(state));
     }
 }

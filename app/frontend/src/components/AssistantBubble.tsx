@@ -104,7 +104,14 @@ export const AssistantBubble = ({
     [key: string]: any; // Allow for other properties we might not know about
   }
 
+  interface BrSelectFields {
+    fields: string[];
+  }
+
   const [brQuery, setBrQuery] = useState<BrQueryType | undefined>(undefined);
+  const [brSelectFields, setBrSelectFields] = useState<
+    BrSelectFields | undefined
+  >(undefined);
 
   const components = {
     a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
@@ -218,6 +225,11 @@ export const AssistantBubble = ({
         // BR Query
         if (payload?.brquery) {
           setBrQuery(payload.brquery); // This is already an object from the payload
+        }
+
+        // BR Select Fields
+        if (payload?.brselect) {
+          setBrSelectFields(payload.brselect); // This is already an object from the payload
         }
 
         // GEDS
@@ -471,6 +483,9 @@ export const AssistantBubble = ({
                       <BusinessRequestTable
                         data={brData}
                         lang={i18n.language}
+                        show_fields={
+                          brSelectFields ? brSelectFields.fields : []
+                        }
                       />
                     </Box>
                   )}
@@ -686,6 +701,16 @@ const TextComponentsBox = styled(Box)`
     overflow-x: auto;
     padding: 4px 2px;
     margin: 5px 5px 5px 0px;
+  }
+
+  /* Mermaid diagram sizing fix */
+  svg[id^="mermaid-"] {
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100%;
+    display: block;
+    margin: 0 auto;
+    min-height: 600px;
   }
 `;
 

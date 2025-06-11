@@ -651,10 +651,6 @@
         "en": "Agreement End Date",
         "fr": "Date de fin de l'entente"
     },
-    "PRPO_TARGET_DATE": {
-        "en": "Target Specification Date",
-        "fr": "Date de Spécification Cible"
-    },
     "IMPL_SGNOFF_DATE": {
         "en": "Client Sign-off Implementation Date",
         "fr": "Date de Mise en Œuvre de l'Approbation du Client"
@@ -822,5 +818,13 @@
     "suggestions.categories.geds": {
         "en": "GEDS",
         "fr": "SAGE"
+    },
+    "br.disclaimer2": {
+        "en": "Please note that the data retrieved from the Enterprise Data Repository (EDR), sourced from the Business Intake and Tracking System (BITS), may be up to 48 hours old.",
+        "fr": "Veuillez noter que les données récupérées du Référentiel de données d'entreprise (EDR), provenant du Système de réception et de suivi des demandes d'affaires (BITS), peuvent dater de jusqu'à 48 heures."
+    },
+    "br.disclaimer": {
+        "en": "This system is currently in a testing phase, and as such, data accuracy and system functionality are continuously being improved. AI-generated responses can only process up to 100 records at the time.",
+        "fr": "Ce système est actuellement en phase de test et, en tant que tel, l'exactitude des données et la fonctionnalité du système sont continuellement améliorées. Les réponses générées par l’IA peuvent traiter jusqu’à 100 enregistrements à la fois."
     }
 }

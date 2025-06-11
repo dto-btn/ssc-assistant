@@ -338,6 +338,10 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                   <TableCell>{t("PROD_OPI")}</TableCell>
                   <TableCell>{data.PROD_OPI}</TableCell>
                 </TableRow>
+                <TableRow>
+                  <TableCell>{t("SOLN_OPI")}</TableCell>
+                  <TableCell>{data.SOLN_OPI}</TableCell>
+                </TableRow>
               </TableBody>
             </Table>
           )}
