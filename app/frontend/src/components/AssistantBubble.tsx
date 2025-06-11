@@ -702,6 +702,16 @@ const TextComponentsBox = styled(Box)`
     padding: 4px 2px;
     margin: 5px 5px 5px 0px;
   }
+
+  /* Mermaid diagram sizing fix */
+  svg[id^="mermaid-"] {
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100%;
+    display: block;
+    margin: 0 auto;
+    min-height: 300px;
+  }
 `;
 
 const FloorPlanView = styled(Box)({
