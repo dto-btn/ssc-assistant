@@ -710,7 +710,7 @@ const TextComponentsBox = styled(Box)`
     max-width: 100%;
     display: block;
     margin: 0 auto;
-    min-height: 300px;
+    min-height: 600px;
   }
 `;
 
