@@ -55,5 +55,6 @@ export const transformToBusinessRequest = (data: any): BusinessRequest => {
     PROD_OPI: data.PROD_OPI,
     PHASE_EN: data.PHASE_EN,
     PHASE_FR: data.PHASE_FR,
+    SOLN_OPI: data.SOLN_OPI,
   };
 };
