@@ -196,19 +196,13 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
       "BR_OWNER",
     ];
 
-    // If select_fields is empty, return the default model (all false)
-    if (!show_fields || show_fields.length === 0) {
-      return allFields.reduce((acc, field) => ({ ...acc, [field]: false }), {});
+    const columnVisibilityModel: { [key: string]: boolean } = {};
+    for (const field of allFields) {
+      columnVisibilityModel[field] = !!(
+        show_fields && show_fields.includes(field)
+      );
     }
-
-    // Otherwise, set to true if in select_fields, false otherwise
-    return allFields.reduce(
-      (acc, field) => ({
-        ...acc,
-        [field]: show_fields.includes(field),
-      }),
-      {}
-    );
+    return columnVisibilityModel;
   };
 
   return (
