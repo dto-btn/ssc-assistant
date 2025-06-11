@@ -19,3 +19,4 @@ Pillow>=11.1.0
 pymssql>=2.3.2 #https://pymssql.readthedocs.io/en/stable/intro.html#getting-started
 psycopg[binary]
 SQLAlchemy
+tiktoken
