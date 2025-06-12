@@ -38,8 +38,6 @@ General Guidelines:
 - ALWAYS use the 'en' or 'fr' field from the valid_search_fields() tool to ensure you are using the correct field name in the query. Do not use the raw field names directly unless the user is already refering to them in their query.
 - If you are being prompted by the user on how to search for BRs you can use the information you have here to help guide the users about your capabilities.
 
-################################################
-
 Tools (functions) guidelines:
 
 1. **search_br_by_fields**:
@@ -56,6 +54,14 @@ Tools (functions) guidelines:
 2. **valid_search_fields**:
 
    Some fields in the valid_search_fields() tool output have an 'is_user_field' property set to true. These fields are used to filter BRs by a user's full name (e.g., 'Ryley Robinson').
+
+Ensure that LaTeX output is always enclosed within triple backticks, and specified as `math` for proper rendering. For example, a mathematical equation should be formatted as:
+```math
+\\begin{{equation}}
+<your math formula here>
+\\end{{equation}}
+```
+Follow this formatting strictly to ensure that all LaTeX outputs render correctly. Any deviation from this format might lead to improper display of mathematical expressions.
 """
 
 BITS_SYSTEM_PROMPT_FR = f"""
@@ -109,5 +115,16 @@ Directives relatives aux outils (fonctions) :
 2. **valid_search_fields** :
 
    Certains champs dans la sortie de l’outil valid_search_fields() possèdent la propriété « is_user_field » à true. Ces champs servent à filtrer les DA par nom complet d’utilisateur (par exemple, « Ryley Robinson »).
+
+   Si vous passez une date, assurez-vous qu'elle soit au format suivant : YYYY-MM-DD. Et l'opérateur peut être n'importe quoi comme =, > ou <.
+
+
+Assurez-vous que la sortie LaTeX est toujours entourée de triples accents graves et spécifiée comme `math` pour un rendu correct. Par exemple, une équation mathématique doit être formatée comme :
+```math
+\\begin{{equation}}
+<votre formule mathématique ici>
+\\end{{equation}}
+```
+Suivez strictement ce format pour vous assurer que toutes les sorties LaTeX s'affichent correctement. Toute déviation par rapport à ce format pourrait entraîner une mauvaise affichage des expressions mathématiques.
 """
-# pylint: enable-line-too-long
+# pylint: enable=line-too-long

@@ -12,6 +12,7 @@ from src.service.tool_service import ToolService
 from utils.manage_message import load_messages
 from utils.models import (Citation, Completion, Context, IndexConfig, Message,
                           MessageRequest, ToolInfo)
+from urllib import parse as urllib_parse
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -172,6 +173,20 @@ def build_completion_response(content: str,
             url=cit['url'],
             title=cit['title']
         ) for cit in context_dict['citations']]
+
+        # This is a hack to make sure PMCOE responses are cited correctly.
+        # We currently don't get the URL of the original files for PMCOE index.
+        # Because of this, we need to manually create the correct URL for PMCOE citations.
+        # Luckily we have the filename, so it is a matter of prepending the correct URL.
+        if tools_info and any(tool.tool_type == TOOL_PMCOE for tool in tools_info):
+            for citation in citations:
+                if not citation.url:
+                    filename = citation.title
+                    # Hardcoded path for PMCOE documents
+                    folder_path_english = "/sites/PMBContinuousImprovementSolutions/Shared Documents/General/FINAL ARTIFACTS_CONTENT FOR POSTING TO SP/English Documents/"
+                    id_param = urllib_parse.quote(f"{folder_path_english}{filename}", safe='')
+                    path_param = urllib_parse.quote(folder_path_english, safe='')
+                    citation.url = f"https://163gc.sharepoint.com/sites/PMBContinuousImprovementSolutions/Shared%20Documents/Forms/AllItems.aspx?id={id_param}&parent={path_param}"
 
         context = Context(role=role, citations=citations, intent=[json.loads(context_dict['intent'])])
 
