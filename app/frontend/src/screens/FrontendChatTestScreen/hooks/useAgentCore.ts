@@ -11,6 +11,13 @@ export const useAgentCore = () => {
         const openai = provideProxyOpenAiClient();
         const memory = new AgentCoreMemory();
         const toolRegistry = new AgentToolRegistry();
+        
+        toolRegistry.registerMcp({
+            name: 'ssc',
+            version: '1.0',
+            type: 'streamable-http',
+            url: 'https://br-mcp-server-app.azurewebsites.net/mcp/',
+        });
 
         // Register an adder tool as an example
         toolRegistry.registerTool({

@@ -132,6 +132,9 @@ export class AgentCore {
      * @param turnCnx The TurnConnection for communicating results
      */
     private async processQueryAsync(query: string, turnCnx: TurnConnection, options: ProcessQueryOptions): Promise<void> {
+        // initialize the MCP tools
+        await this.toolRegistry.initializeMcpClients();
+
         // Create a state object to track iteration state
         const state = {
             isTurnCompleted: false,
@@ -139,9 +142,16 @@ export class AgentCore {
         };
 
         try {
+            // Fetch MCP prompts and resources dynamically
+            const mcpPrompts = await this.toolRegistry.getMcpPrompts();
+            const mcpResources = await this.toolRegistry.getMcpResources();
+
             // Set up conversation context
             const userTurnIdx = this.memory.addUserTurn();
-            const systemPrompt = buildSystemPromptContent(this.MAX_ITERATIONS, state.loopsRemaining);
+            
+            // Build enhanced system prompt with MCP context
+            const baseSystemPrompt = buildSystemPromptContent(this.MAX_ITERATIONS, state.loopsRemaining);
+            const enhancedSystemPrompt = await this.enhanceSystemPromptWithMcpContext(baseSystemPrompt, mcpPrompts, mcpResources);
             
             // Add the user message to the memory
             this.memory.addTurnAction(userTurnIdx, {
@@ -159,7 +169,7 @@ export class AgentCore {
                     const currentMemoryMessages = mapMemoryExportToOpenAIMessage(this.memory);
 
                     // This will change in streaming mode, but for now we use the non-streaming client
-                    const response = await this.getLLMResponse(turnCnx, systemPrompt, currentMemoryMessages, options);
+                    const response = await this.getLLMResponse(turnCnx, enhancedSystemPrompt, currentMemoryMessages, options);
                     
                     if (response.tool_calls && response.tool_calls.length > 0) {
                         await this.processToolCalls(response.tool_calls, agentTurnIdx);
@@ -328,7 +338,12 @@ export class AgentCore {
             toolCallId: toolCall.id,
             toolName: toolCall.function.name
         });
-        if (!this.toolRegistry.hasTool(functionName)) {
+        
+        // Check if tool exists (including MCP tools)
+        const hasLocalTool = this.toolRegistry.hasTool(functionName);
+        const hasMcpTool = !hasLocalTool ? await this.toolRegistry.hasToolAsync(functionName) : false;
+        
+        if (!hasLocalTool && !hasMcpTool) {
             // If the tool is not registered, we log an error and continue
             const msg = `Function \"${functionName}\" not found. Please ensure the function is defined in the tool handlers.`;
             this.memory.addTurnAction(agentTurnIdx, {
@@ -381,7 +396,7 @@ export class AgentCore {
         messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
         options: ProcessQueryOptions
     ): Promise<OpenAI.Chat.Completions.ChatCompletionMessage> {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             try {
                 // Choose the appropriate client based on the streaming flag
                 const llmClient = options.useStreaming ? this.llmClientStreaming : this.llmClientNonStreaming;
@@ -389,13 +404,16 @@ export class AgentCore {
                 // Track if we've already resolved or rejected this promise
                 let isSettled = false;
                 
+                // Build tool schema (including MCP tools)
+                const toolSchema = await this.buildToolSchema();
+                
                 const chatCompletionCnx = llmClient.createChatCompletion({
                     model: "gpt-4o",
                     messages: [
                         systemPrompt,
                         ...messages
                     ],
-                    tools: this.buildToolSchema(),
+                    tools: toolSchema,
                 });
             
                 // For streaming, we need to handle partial updates
@@ -511,7 +529,7 @@ export class AgentCore {
         });
     }
 
-    private buildToolSchema() {
+    private async buildToolSchema(): Promise<OpenAI.Chat.Completions.ChatCompletionTool[]> {
         // Define available tools for the inbuilt tools
         const inbuiltToolSchemas: OpenAI.Chat.Completions.ChatCompletionTool[] = [
             {
@@ -544,10 +562,60 @@ export class AgentCore {
             }
         ];
 
-        const toolSchemas = this.toolRegistry.exportToolSchemas();
-        // Merge inbuilt tools with registered tools
-        const allToolSchemas = [...inbuiltToolSchemas, ...toolSchemas];
+        // Get tool schemas including MCP tools
+        const registryToolSchemas = await this.toolRegistry.exportToolSchemasAsync();
+        
+        // Merge inbuilt tools with registered tools (including MCP tools)
+        const allToolSchemas = [...inbuiltToolSchemas, ...registryToolSchemas];
 
         return allToolSchemas;
+    }
+
+    /**
+     * Enhances the system prompt with MCP prompts and resources context
+     */
+    private async enhanceSystemPromptWithMcpContext(
+        basePrompt: OpenAI.Chat.Completions.ChatCompletionMessageParam,
+        mcpPrompts: any[],
+        mcpResources: any[]
+    ): Promise<OpenAI.Chat.Completions.ChatCompletionMessageParam> {
+        let enhancedContent = basePrompt.content as string;
+
+        // Add MCP tools context
+        try {
+            const mcpTools = await this.toolRegistry.getMcpTools();
+            if (mcpTools.length > 0) {
+                const toolsContext = mcpTools.map(tool => 
+                    `- ${tool.name}: ${tool.description || 'No description available'}`
+                ).join('\n');
+                
+                enhancedContent += `\n\n## Available MCP Tools\nYou have access to the following tools from MCP servers:\n${toolsContext}`;
+            }
+        } catch (error) {
+            console.error('Error fetching MCP tools for system prompt:', error);
+        }
+
+        // Add MCP prompts context
+        if (mcpPrompts.length > 0) {
+            const promptsContext = mcpPrompts.map(prompt => 
+                `- ${prompt.name}: ${prompt.description || 'No description available'}`
+            ).join('\n');
+            
+            enhancedContent += `\n\n## Available MCP Prompts\nYou have access to the following prompts that can help structure your responses:\n${promptsContext}`;
+        }
+
+        // Add MCP resources context
+        if (mcpResources.length > 0) {
+            const resourcesContext = mcpResources.map(resource => 
+                `- ${resource.uri}: ${resource.description || resource.name || 'Resource available'}`
+            ).join('\n');
+            
+            enhancedContent += `\n\n## Available MCP Resources\nYou have access to the following resources for additional context:\n${resourcesContext}`;
+        }
+
+        return {
+            ...basePrompt,
+            content: enhancedContent
+        };
     }
 }
