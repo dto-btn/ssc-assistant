@@ -7,11 +7,13 @@ import { formatDate } from "./subcomponents/DateDisplay";
 interface BusinessRequestTableProps {
   data: Array<BusinessRequest>;
   lang: string;
+  show_fields: string[];
 }
 
 const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
   data,
   lang,
+  show_fields,
 }) => {
   const isEnglish = lang === "en";
   const { t } = useTranslation();
@@ -35,7 +37,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
     {
       field: "BR_SHORT_TITLE",
       headerName: t("BR_SHORT_TITLE"),
-      width: 250,
+      flex: 1,
     },
     {
       field: isEnglish ? "RPT_GC_ORG_NAME_EN" : "RPT_GC_ORG_NAME_FR",
@@ -123,14 +125,85 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
     { field: "TEAMLEADER", headerName: t("TEAMLEADER"), width: 150 },
     { field: "WIO_OPI", headerName: t("WIO_OPI"), width: 150 },
     { field: "PROD_OPI", headerName: t("PROD_OPI"), width: 150 },
+    { field: "SOLN_OPI", headerName: t("SOLN_OPI"), width: 150 },
     {
       field: isEnglish ? "CPLX_EN" : "CPLX_FR",
       headerName: t("complexity"),
       width: 150,
     },
+    {
+      field: isEnglish ? "GCIT_CAT_EN" : "GCIT_CAT_FR",
+      headerName: t("GCIT_CAT"),
+      width: 200,
+    },
+    {
+      field: isEnglish ? "GCIT_PRIORITY_EN" : "GCIT_PRIORITY_FR",
+      headerName: t("GCIT_PRIORITY"),
+      width: 200,
+    },
   ];
 
   const paginationModel = { page: 0, pageSize: 10 };
+
+  // Build columnVisibilityModel based on select_fields
+  const getColumnVisibilityModel = () => {
+    // List all possible fields that are currently set to false by default
+    const allFields = [
+      "LEAD_PRODUCT_EN",
+      "LEAD_PRODUCT_FR",
+      "BR_TYPE_EN",
+      "BR_TYPE_FR",
+      "SCOPE_EN",
+      "SCOPE_FR",
+      "REQST_IMPL_DATE",
+      "RVSD_TARGET_IMPL_DATE",
+      "ACTUAL_IMPL_DATE",
+      "AGRMT_END_DATE",
+      "IMPL_SGNOFF_DATE",
+      "TARGET_IMPL_DATE",
+      "ACC_MANAGER_OPI",
+      "AGR_OPI",
+      "BA_OPI",
+      "BA_PRICING_OPI",
+      "BA_PRICING_TL",
+      "BA_TL",
+      "CSM_DIRECTOR",
+      "EAOPI",
+      "PM_OPI",
+      "QA_OPI",
+      "SDM_TL_OPI",
+      "TEAMLEADER",
+      "WIO_OPI",
+      "PROD_OPI",
+      "CPLX_EN",
+      "CPLX_FR",
+      "GCIT_CAT",
+      "GCIT_PRIORITY",
+      "SOLN_OPI",
+      "GCIT_PRIORITY_EN",
+      "GCIT_PRIORITY_FR",
+      "BR_SHORT_TITLE",
+      "PHASE_EN",
+      "PHASE_FR",
+      "PRIORITY_EN",
+      "PRIORITY_FR",
+      "BITS_STATUS_EN",
+      "BITS_STATUS_FR",
+      "GCIT_CAT_EN",
+      "GCIT_CAT_FR",
+      "RPT_GC_ORG_NAME_EN",
+      "RPT_GC_ORG_NAME_FR",
+      "BR_OWNER",
+    ];
+
+    const columnVisibilityModel: { [key: string]: boolean } = {};
+    for (const field of allFields) {
+      columnVisibilityModel[field] = !!(
+        show_fields && show_fields.includes(field)
+      );
+    }
+    return columnVisibilityModel;
+  };
 
   return (
     <Box>
@@ -147,38 +220,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
               paginationModel,
             },
             columns: {
-              columnVisibilityModel: {
-                LEAD_PRODUCT_EN: false,
-                LEAD_PRODUCT_FR: false,
-                BR_TYPE_EN: false,
-                BR_TYPE_FR: false,
-                SCOPE_EN: false,
-                SCOPE_FR: false,
-                REQST_IMPL_DATE: false,
-                RVSD_TARGET_IMPL_DATE: false,
-                ACTUAL_IMPL_DATE: false,
-                CLIENT_REQST_SOL_DATE: false,
-                AGRMT_END_DATE: false,
-                PRPO_TARGET_DATE: false,
-                IMPL_SGNOFF_DATE: false,
-                TARGET_IMPL_DATE: false,
-                ACC_MANAGER_OPI: false,
-                AGR_OPI: false,
-                BA_OPI: false,
-                BA_PRICING_OPI: false,
-                BA_PRICING_TL: false,
-                BA_TL: false,
-                CSM_DIRECTOR: false,
-                EAOPI: false,
-                PM_OPI: false,
-                QA_OPI: false,
-                SDM_TL_OPI: false,
-                TEAMLEADER: false,
-                WIO_OPI: false,
-                PROD_OPI: false,
-                CPLX_EN: false,
-                CPLX_FR: false,
-              },
+              columnVisibilityModel: getColumnVisibilityModel(),
             },
           }}
           pageSizeOptions={[5, 10]}

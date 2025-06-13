@@ -12,10 +12,10 @@ class BRFields:
         'BITS_STATUS_FR': { 'db_field': 's.DISP_STATUS_FR', 'description': 'Statut BITS BR.', 'en': 'Status', 'fr': 'Statut'},
     }
 
-    active = {
-        'BR_ACTIVE_EN': { 'db_field': 's.BR_ACTIVE_EN', 'description': 'Indicates if the BR is active.', 'en': 'Active', 'fr': 'Actif' },
-        'BR_ACTIVE_FR': { 'db_field': 's.BR_ACTIVE_FR', 'description': 'Indique si la BR est active.', 'en': 'Active', 'fr': 'Actif' },
-    }
+    # active = {
+    #     'BR_ACTIVE_EN': { 'db_field': 's.BR_ACTIVE_EN', 'description': 'Indicates if the BR is active.', 'en': 'Active', 'fr': 'Actif' },
+    #     'BR_ACTIVE_FR': { 'db_field': 's.BR_ACTIVE_FR', 'description': 'Indique si la BR est active.', 'en': 'Active', 'fr': 'Actif' },
+    # }
 
     date_fields = {
         'REQST_IMPL_DATE': { 'db_field': 'br.REQST_IMPL_DATE', 'description': 'The date requested by partner/client to have BR implementation completed. CRID acronym.', 'en': 'Client Requested Implementation Date', 'fr': 'Date de mise en oeuvre demandée'},
@@ -73,6 +73,7 @@ class BRFields:
         'PROD_OPI': { 'db_field': 'opis.PROD_OPI', 'description': 'The Service Lead for the BR.', 'is_user_field': True, 'en': 'Service Lead', 'fr': 'BPR des services' },
         'PHASE_EN': { 'db_field': 's.BITS_PHASE_EN', 'description': 'The current phase of the BR. Phase denotes where in the EBIDM process the BR is currently.', 'en': 'Phase', 'fr': 'Phase' },
         'PHASE_FR': { 'db_field': 's.BITS_PHASE_EN', 'description': 'Phase de la BR.', 'en': 'Phase', 'fr': 'Phase' },
+        'SOLN_OPI': { 'db_field': 'opis.SOLN_OPI', 'description': 'Conceptual Designer', 'is_user_field': True, 'en': 'Conceptual Designer', 'fr': 'Créateur Conceptuel' },
     }
     # pylint: enable=line-too-long
 
@@ -84,4 +85,4 @@ class BRFields:
 
     valid_search_fields_filterable = valid_search_fields.copy()
     valid_search_fields.update(status)
-    valid_search_fields.update(active)
+    # valid_search_fields.update(active)

@@ -1,16 +1,13 @@
 import json
 import logging
 import os
-from datetime import datetime
 
 from pydantic import ValidationError
-from src.constants.tools import TOOL_BR
 from tools.bits.bits_fields import BRFields
-from tools.bits.bits_models import BRQuery
+from tools.bits.bits_models import BRQuery, BRSelectFields
 from tools.bits.bits_statuses_cache import StatusesCache
 from tools.bits.bits_utils import BRQueryBuilder, DatabaseConnection
-from utils.decorators import (discover_subfolder_functions_with_metadata,
-                              tool_metadata)
+from utils.decorators import tool_metadata
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -48,7 +45,7 @@ def get_br_information(br_numbers: list[int]):
     """
     gets br information
     """
-    query = query_builder.get_br_query(len(br_numbers), active=False) #BRs here do not need to be active to be returned
+    query = query_builder.get_br_query(len(br_numbers), active=False, show_all=True) #BRs here do not need to be active to be returned
     return db.execute_query(query, *br_numbers)
 
 # pylint: disable=line-too-long
@@ -63,14 +60,18 @@ def get_br_information(br_numbers: list[int]):
                 "br_query": {
                     "type": "string",
                     "description": "A stringified JSON object that match the BRQuery model.",
+                },
+                "select_fields": {
+                    "type": "string",
+                    "description": "A stringified JSON object that match the BRSelectFields model.",
                 }
             },
-            "required": ["br_query"]
+            "required": ["br_query", "select_fields"]
       }
     }
   })
 # pylint: enable=line-too-long
-def search_br_by_fields(br_query: str):
+def search_br_by_fields(br_query: str, select_fields: str):
     """
     search_br_by_field
 
@@ -80,11 +81,16 @@ def search_br_by_fields(br_query: str):
         user_query = BRQuery.model_validate_json(br_query)
         logger.info("Valided query: %s", user_query)
 
+        fields: BRSelectFields = BRSelectFields.model_validate_json(select_fields)
+        fields = query_builder.ensure_query_fields_present_in_select(user_query.query_filters, fields)
+        logger.info("Valided select fields (after filtering): %s", select_fields)
+
         # Prepare the SQL statement for this request.
         sql_query = query_builder.get_br_query(limit=bool(user_query.limit),
                                             br_filters=user_query.query_filters,
                                             active=user_query.active,
-                                            status=len(user_query.statuses) if user_query.statuses else 0)
+                                            status=len(user_query.statuses) if user_query.statuses else 0,
+                                            select_fields=fields,)
 
         # Build query parameters dynamically, #1 statuses, #2 all other fields, #3 limit
         query_params = []
@@ -99,6 +105,7 @@ def search_br_by_fields(br_query: str):
         result = db.execute_query(sql_query, *query_params)
         # Append the original query to the result
         result["brquery"] = user_query.model_dump()
+        result["brselect"] = fields.model_dump()
         return result
 
     except (json.JSONDecodeError, ValidationError) as e:
