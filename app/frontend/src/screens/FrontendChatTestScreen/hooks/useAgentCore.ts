@@ -159,6 +159,168 @@ export const useAgentCore = () => {
             }
         });
 
+        // Register Wikipedia/Wikimedia tools
+        toolRegistry.registerTool({
+            name: 'search_wikipedia',
+            description: 'Search Wikipedia articles by title or content. Returns a list of matching articles with titles, descriptions, and URLs. ' +
+                        'USAGE: Provide a search query string to find relevant Wikipedia articles. ' +
+                        'PURPOSE: Use this tool to find Wikipedia articles related to topics the user is asking about. Good for finding background information, definitions, or context. ' +
+                        'INPUT: {"query": "search terms"} where search terms can be keywords, phrases, or topics. ' +
+                        'RESPONSE: Returns array of search results with title, description/snippet, and page URL. ' +
+                        'EXAMPLES: {"query": "artificial intelligence"}, {"query": "Government of Canada"}, {"query": "machine learning algorithms"}. ' +
+                        'FOLLOW-UP: Use wikipedia_get_content or wikipedia_get_summary to get detailed information about specific articles found.',
+            func: async (args: { query: string, limit?: number }) => {
+                if (!args.query || typeof args.query !== 'string') {
+                    throw new Error("Invalid input: 'query' must be a non-empty string.");
+                }
+
+                const limit = Math.min(args.limit || 10, 50); // Cap at 50 results
+                const searchUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(args.query)}`;
+                
+                try {
+                    // First try direct page lookup
+                    const directResponse = await fetch(searchUrl, {
+                        headers: {
+                            'User-Agent': 'SSC-Assistant/1.0 (Government of Canada BITS System)',
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (directResponse.ok) {
+                        const directResult = await directResponse.json();
+                        return {
+                            success: true,
+                            data: [directResult],
+                            message: `Found direct match for "${args.query}"`
+                        };
+                    }
+
+                    // Fall back to search API
+                    const opensearchUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(args.query)}`;
+                    const searchApiUrl = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(args.query)}&limit=${limit}&namespace=0&format=json&origin=*`;
+                    
+                    const response = await fetch(searchApiUrl, {
+                        headers: {
+                            'User-Agent': 'SSC-Assistant/1.0 (Government of Canada BITS System)',
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Wikipedia API error: ${response.status}`);
+                    }
+
+                    const [query, titles, descriptions, urls] = await response.json();
+                    const results = titles.map((title: string, index: number) => ({
+                        title,
+                        description: descriptions[index] || '',
+                        url: urls[index] || ''
+                    }));
+
+                    return {
+                        success: true,
+                        data: results,
+                        message: `Found ${results.length} Wikipedia articles for "${args.query}"`
+                    };
+                } catch (error) {
+                    throw new Error(`Failed to search Wikipedia: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+            }
+        });
+
+        toolRegistry.registerTool({
+            name: 'wikipedia_get_summary',
+            description: 'Get a summary of a specific Wikipedia article by title. Returns the article introduction, key facts, and basic information. ' +
+                        'USAGE: Provide the exact title of a Wikipedia article to get its summary. ' +
+                        'PURPOSE: Use this tool to get concise information about a specific topic without retrieving the full article content. ' +
+                        'INPUT: {"title": "exact_article_title"} where exact_article_title is the Wikipedia page title (usually from search results). ' +
+                        'RESPONSE: Returns article summary with title, extract (first few paragraphs), page URL, and basic metadata. ' +
+                        'EXAMPLES: {"title": "Artificial intelligence"}, {"title": "Government of Canada"}, {"title": "Machine learning"}. ' +
+                        'NOTE: Use the exact title from search_wikipedia results for best accuracy.',
+            func: async (args: { title: string }) => {
+                if (!args.title || typeof args.title !== 'string') {
+                    throw new Error("Invalid input: 'title' must be a non-empty string.");
+                }
+
+                const summaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(args.title)}`;
+                
+                try {
+                    const response = await fetch(summaryUrl, {
+                        headers: {
+                            'User-Agent': 'SSC-Assistant/1.0 (Government of Canada BITS System)',
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            throw new Error(`Wikipedia article "${args.title}" not found`);
+                        }
+                        throw new Error(`Wikipedia API error: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    return {
+                        success: true,
+                        data: result,
+                        message: `Retrieved summary for Wikipedia article "${args.title}"`
+                    };
+                } catch (error) {
+                    throw new Error(`Failed to get Wikipedia summary: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+            }
+        });
+
+        toolRegistry.registerTool({
+            name: 'wikipedia_get_content',
+            description: 'Get the full content of a specific Wikipedia article by title. Returns the complete article text in various formats. ' +
+                        'USAGE: Provide the exact title of a Wikipedia article to get its full content. ' +
+                        'PURPOSE: Use this tool when you need detailed information from a Wikipedia article beyond just the summary. ' +
+                        'INPUT: {"title": "exact_article_title", "format": "html|wikitext|plain"} where format defaults to "html". ' +
+                        'RESPONSE: Returns full article content, title, revision info, and metadata. ' +
+                        'FORMATS: "html" for formatted content, "wikitext" for raw wiki markup, "plain" for plain text. ' +
+                        'EXAMPLES: {"title": "Artificial intelligence", "format": "html"}, {"title": "Government of Canada"}. ' +
+                        'WARNING: Full articles can be very long. Use wikipedia_get_summary for shorter content.',
+            func: async (args: { title: string, format?: string }) => {
+                if (!args.title || typeof args.title !== 'string') {
+                    throw new Error("Invalid input: 'title' must be a non-empty string.");
+                }
+
+                const format = args.format || 'html';
+                const validFormats = ['html', 'wikitext', 'plain'];
+                if (!validFormats.includes(format)) {
+                    throw new Error(`Invalid format: must be one of ${validFormats.join(', ')}`);
+                }
+
+                const contentUrl = `https://en.wikipedia.org/api/rest_v1/page/${format}/${encodeURIComponent(args.title)}`;
+                
+                try {
+                    const response = await fetch(contentUrl, {
+                        headers: {
+                            'User-Agent': 'SSC-Assistant/1.0 (Government of Canada BITS System)',
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            throw new Error(`Wikipedia article "${args.title}" not found`);
+                        }
+                        throw new Error(`Wikipedia API error: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    return {
+                        success: true,
+                        data: result,
+                        message: `Retrieved full content for Wikipedia article "${args.title}" in ${format} format`
+                    };
+                } catch (error) {
+                    throw new Error(`Failed to get Wikipedia content: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+            }
+        });
+
         const agentCore = new AgentCore(
             openai,
             memory,
