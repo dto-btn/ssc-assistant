@@ -8,6 +8,7 @@ export interface BitsQueryParams {
     query_filters: BitsQueryFilter[];
     limit: number;
     statuses: string[];
+    select_fields: string[];
 }
 
 export interface BitsStatus {

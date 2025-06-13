@@ -1,5 +1,4 @@
 import { BitsQueryParams, BitsStatus, BitsFieldMap } from "../screens/BitsQueryScreen/types";
-import { BusinessRequest } from "./models";
 
 interface BitsResponse {
     br: BusinessRequest[];

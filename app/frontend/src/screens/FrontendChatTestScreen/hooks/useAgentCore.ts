@@ -68,20 +68,24 @@ export const useAgentCore = () => {
         toolRegistry.registerTool({
             name: 'search_bits_data',
             description: 'Search the BITS (Business Information Technology Services) database for business requests. This tool allows you to find business requests using flexible filtering criteria. ' +
-                        'USAGE: Use filters to search by specific field values, statuses to filter by request status, and limit to control result count. ' +
+                        'USAGE: Use filters to search by specific field values, statuses to filter by request status, select_fields to choose which fields to return, and limit to control result count. ' +
                         'FILTERS: Each filter has a "name" (field name like "BR_NUMBER", "BRANCH_NAME_EN", "STATUS_NAME_EN"), "value" (what to search for), and "operator" (=, <, >, <=, >=). ' +
                         'STATUSES: Array of status names like ["Open", "In Progress", "Closed", "Cancelled"]. ' +
+                        'SELECT_FIELDS: Array of field names to return. If not provided, throws an error. Use get_bits_fields to see available field names. This is a required field. Empty array is a bad value. It must be populated with at least 1 field.' +
                         'EXAMPLES: Search for open requests: {"statuses": ["Open"]}. Search by BR number: {"filters": [{"name": "BR_NUMBER", "value": "12345", "operator": "="}]}. ' +
                         'Search by branch: {"filters": [{"name": "BRANCH_NAME_EN", "value": "Ottawa", "operator": "="}]}. ' +
+                        'Specify fields: {"filters": [...], "select_fields": ["BR_NUMBER", "STATUS_NAME_EN", "BRANCH_NAME_EN"]}. ' +
                         'LIMIT: Defaults to 50, maximum 1000. Use get_bits_fields first to see available field names.',
-            func: async (args: { filters?: BitsQueryFilter[], statuses?: string[], limit?: number }) => {
+            func: async (args: { filters?: BitsQueryFilter[], statuses?: string[], select_fields?: string[], limit?: number }) => {
                 const filters: BitsQueryFilter[] = args.filters || [];
                 const statuses: string[] = args.statuses || [];
+                const select_fields: string[] = args.select_fields || []; // Empty array means all fields
                 const limit: number = Math.min(args.limit || 50, 1000); // Cap at 1000
 
                 const queryParams: BitsQueryParams = {
                     query_filters: filters,
                     statuses: statuses,
+                    select_fields: select_fields,
                     limit: limit
                 };
 

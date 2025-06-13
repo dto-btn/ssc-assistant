@@ -535,7 +535,7 @@ def bits_search():
             return jsonify({"error": "Missing br_query parameter"}), 400
         
         # Pass the stringified JSON to the backend function
-        result = search_br_by_fields(data['br_query'])
+        result = search_br_by_fields(data['br_query'], data.get('select_fields', '[]'))
         return jsonify(result)
     except Exception as e:
         logger.error(f"Error in BITS search: {str(e)}")
