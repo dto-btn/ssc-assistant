@@ -72,6 +72,11 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
       width: 200,
     },
     {
+      field: isEnglish ? "PRODUCTS_EN" : "PRODUCTS_FR",
+      headerName: t("PRODUCTS"),
+      width: 200,
+    },
+    {
       field: isEnglish ? "BR_TYPE_EN" : "BR_TYPE_FR",
       headerName: t("br.type"),
       width: 200,

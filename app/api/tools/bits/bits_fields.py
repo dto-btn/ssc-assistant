@@ -30,8 +30,10 @@ class BRFields:
     }
 
     base_fields = {
-        'LEAD_PRODUCT_EN': { 'db_field': 'products.PROD_DESC_EN', 'description': 'Lead Product', 'en': 'Lead Product', 'fr': 'Produit principal' },
-        'LEAD_PRODUCT_FR': { 'db_field': 'products.PROD_DESC_FR', 'description': 'Produit principal', 'en': 'Lead Product', 'fr': 'Produit principal' },
+        'LEAD_PRODUCT_EN': { 'db_field': 'pl.PROD_DESC_EN', 'description': 'Lead Product', 'en': 'Lead Product', 'fr': 'Produit principal' },
+        'LEAD_PRODUCT_FR': { 'db_field': 'pl.PROD_DESC_FR', 'description': 'Produit principal', 'en': 'Lead Product', 'fr': 'Produit principal' },
+        'PRODUCTS_EN': { 'db_field': 'pl.PRODUCTS_EN', 'description': 'Products', 'en': 'Products', 'fr': 'Produits' },
+        'PRODUCTS_FR': { 'db_field': 'pl.PRODUCTS_FR', 'description': 'Produit principal', 'en': 'Lead Product', 'fr': 'Produits' },
         'BR_SHORT_TITLE': { 'db_field': 'br.BR_SHORT_TITLE', 'description': 'Title which relates to the Business Request (BR).', 'en': 'Title', 'fr': 'Titre' },
         'RPT_GC_ORG_NAME_EN': { 'db_field': 'br.RPT_GC_ORG_NAME_EN', 'description': 'Primary partner/client requesting the Business Request/service (BR)', 'en': 'Client Name', 'fr': 'Client' },
         'RPT_GC_ORG_NAME_FR': { 'db_field': 'br.RPT_GC_ORG_NAME_FR', 'description': 'Partenaire/client principal', 'en': 'Client Name', 'fr': 'Client' },

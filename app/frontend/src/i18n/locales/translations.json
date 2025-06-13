@@ -826,5 +826,9 @@
     "br.disclaimer": {
         "en": "This system is currently in a testing phase, and as such, data accuracy and system functionality are continuously being improved. AI-generated responses can only process up to 100 records at the time.",
         "fr": "Ce système est actuellement en phase de test et, en tant que tel, l'exactitude des données et la fonctionnalité du système sont continuellement améliorées. Les réponses générées par l’IA peuvent traiter jusqu’à 100 enregistrements à la fois."
+    },
+    "PRODUCTS": {
+        "en": "Products",
+        "fr": "Produits"
     }
 }
