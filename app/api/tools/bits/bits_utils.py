@@ -122,10 +122,27 @@ class BRQueryBuilder:
 
         query = """
         DECLARE @MAX_DATE DATETIME = (SELECT MAX(PERIOD_END_DATE) FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT]);
+        """
 
+        if show_all or (select_fields and ("LEAD_PRODUCT_EN" in select_fields.fields or "LEAD_PRODUCT_FR" in select_fields.fields)):
+            query += """
+            WITH ProductsList AS (
+                SELECT 
+                    BR_NMBR,
+                    STRING_AGG(products.PROD_DESC_EN, ', ') AS PRODUCTS_EN
+                    STRING_AGG(products.PROD_DESC_FR, ', ') AS PRODUCTS_FR
+                FROM [EDR_CARZ].[FCT_DEMAND_BR_PRODUCTS] br_products
+                LEFT JOIN [EDR_CARZ].[DIM_BITS_PRODUCT] products WITH (NOLOCK)
+                ON products.PROD_ID = br_products.PROD_ID
+                GROUP BY BR_NMBR
+            ),
+            """
+
+        query += """
         WITH FilteredResults AS (
         SELECT
         """
+
 
         # Default select statement from BR_ITEMS & other tables
         query += """br.BR_NMBR as BR_NMBR,
@@ -232,13 +249,8 @@ class BRQueryBuilder:
         # PRODUCTS - Optimized with better join hint
         if show_all or (select_fields and ("LEAD_PRODUCT_EN" in select_fields.fields or "LEAD_PRODUCT_FR" in select_fields.fields)):
             query += """
-            LEFT JOIN
-                (SELECT BR_NMBR, PROD_ID, PROD_TYPE
-                 FROM [EDR_CARZ].[FCT_DEMAND_BR_PRODUCTS] WITH (FORCESEEK)
-                 WHERE PROD_TYPE IN ('PRODUCT', 'SERVICE')) br_products
-            ON br_products.BR_NMBR = br.BR_NMBR
-            LEFT JOIN [EDR_CARZ].[DIM_BITS_PRODUCT] products WITH (NOLOCK)
-            ON products.PROD_ID = br_products.PROD_ID
+            LEFT JOIN ProductsList pl
+            ON pl.BR_NMBR = br.BR_NMBR
             """
 
         # WHERE CLAUSE PROCESSING (BR_NMBR and ACTIVE, etc)

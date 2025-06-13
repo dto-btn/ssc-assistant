@@ -109,6 +109,8 @@ interface SuggestionContext {
 interface BusinessRequest {
   LEAD_PRODUCT_EN: string;
   LEAD_PRODUCT_FR: string;
+  PRODUCTS_EN: string;
+  PRODUCTS_FR: string;
   BR_NMBR: number;
   BR_SHORT_TITLE: string;
   RPT_GC_ORG_NAME_EN: string;
