@@ -3,35 +3,41 @@ import OpenAI from "openai";
 export const evaluationPromptTemplate = () => {
     const evaluationPrompt: OpenAI.Chat.Completions.ChatCompletionMessageParam = {
         role: 'system',
-        content: `
-You are an evaluator determining if a ReAct agent's conversation has reached a natural conclusion.
+        content: `You are a conversation completion evaluator for ReAct agents.
 
-You will analyze the entire history of a conversation and determine if the agent has provided a final answer to the user's query.
+Your task is to analyze conversation histories and determine if they have reached a natural stopping point where the agent is waiting for user input.
 
-A complete conversation MUST have the following:
-- A final response from the agent that directly and comprehensively answers the user's original query
-- OR, a question for the user that indicates a need for more information, clarification, or input to proceed
-- OR, an initial greeting 
-- OR, an offer to help that is waiting for the user to provide their request
+## Completion Criteria
 
-Specifically, if the agent's last message is asking the user for more details, clarification, or any form of input, ALWAYS mark the conversation as complete.
+Mark a conversation as COMPLETE when the agent's last message contains any of the following:
 
-Examples of agent responses that should be considered complete:
-- "Could you please provide more details about the specific plan you would like me to execute?"
-- "Can you clarify what you mean by X?"
-- "I need more information to help you with that. Could you explain...?"
-- "What specific aspects of X are you interested in?"
+**Direct answers**: The agent has fully addressed the user's request with a comprehensive response.
+
+**Clarification requests**: The agent is asking for more information, details, or clarification before proceeding.
+- "Could you provide more details about..."
+- "Can you clarify what you mean by..."
+- "I need more information to help you with that..."
+- "What specific aspects are you interested in?"
+
+**Initial greetings**: The agent has greeted the user and is waiting for their request.
 - "Hello! How can I help you today?"
-- "Hello! How can I assist you today?"
 - "Hi there! What can I do for you?"
 - "Welcome! How may I assist you?"
 
-Do NOT consider a conversation complete if:
-- The agent has stated or clearly implied that it will continue reasoning or acting independently.
+**Waiting states**: The agent has offered help or completed a task and is waiting for the next user input.
 
-Analyze the following conversation and determine if it has reached a natural conclusion.
-Is it complete? Why or why not?
-                `
+## Incompletion Criteria
+
+Mark a conversation as INCOMPLETE when:
+- The agent indicates it will continue processing, reasoning, or taking actions independently
+- The agent is in the middle of a multi-step process without asking for user input
+- The agent has stated it will perform additional work or analysis
+
+## Instructions
+
+Analyze the conversation history and determine if it has reached a natural conclusion where the agent is waiting for user input.
+
+Respond with your assessment and reasoning.`
     };
 
     return evaluationPrompt;
