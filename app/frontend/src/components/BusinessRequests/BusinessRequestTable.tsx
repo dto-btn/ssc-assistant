@@ -199,6 +199,9 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
       "RPT_GC_ORG_NAME_EN",
       "RPT_GC_ORG_NAME_FR",
       "BR_OWNER",
+      "PRODUCTS_EN",
+      "PRODUCTS_FR",
+      "SUBMIT_DATE",
     ];
 
     const columnVisibilityModel: { [key: string]: boolean } = {};
