@@ -9,8 +9,6 @@ import pymssql
 from tools.bits.bits_fields import BRFields
 from tools.bits.bits_models import BRQueryFilter, BRSelectFields
 
-import tiktoken
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -111,7 +109,6 @@ class BRQueryBuilder:
         return select_fields
 
     def get_br_query(self, br_number_count: int = 0,
-                    status: int = 0,
                     limit: bool = False,
                     active: bool = True,
                     br_filters: Optional[List[BRQueryFilter]] = None,
@@ -177,18 +174,12 @@ class BRQueryBuilder:
             [EDR_CARZ].[DIM_DEMAND_BR_ITEMS] br
         """
 
-        if status or show_all or active:
+        if show_all or active:
             # Processing BR SNAPSHOT clause
-            snapshot_where_clause = ["snp.PERIOD_END_DATE = @MAX_DATE"]
-            if status:
-                placeholders = ", ".join(["%s"] * status)
-                snapshot_where_clause.append(f"snp.STATUS_ID IN ({placeholders})")
-
-            snapshot_where_clause = " AND ".join(snapshot_where_clause)
-            query += f"""
+            query += """
             INNER JOIN
                 [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT] snp
-            ON snp.BR_NMBR = br.BR_NMBR AND {snapshot_where_clause}
+            ON snp.BR_NMBR = br.BR_NMBR AND snp.PERIOD_END_DATE = @MAX_DATE
             """
 
             # Processing BR STATUS clause

@@ -7,11 +7,6 @@ class BRFields:
         'BR_OWNER': { 'db_field': 'opis.BR_OWNER', 'description': 'The OPI responsible for the BR. Typically a Service Delivery Manager. OPI means Office of Primary Interest.', 'is_user_field': True, 'en': 'BR OWNER', 'fr': 'Responsable de la DO'},
     }
 
-    status = {
-        'BITS_STATUS_EN': { 'db_field': 's.DISP_STATUS_EN', 'description': 'The current BITS BR status. Status denoting where in the EBIDM process the BR is currently.', 'en': 'Status', 'fr': 'Statut'},
-        'BITS_STATUS_FR': { 'db_field': 's.DISP_STATUS_FR', 'description': 'Statut BITS BR.', 'en': 'Status', 'fr': 'Statut'},
-    }
-
     # active = {
     #     'BR_ACTIVE_EN': { 'db_field': 's.BR_ACTIVE_EN', 'description': 'Indicates if the BR is active.', 'en': 'Active', 'fr': 'Actif' },
     #     'BR_ACTIVE_FR': { 'db_field': 's.BR_ACTIVE_FR', 'description': 'Indique si la BR est active.', 'en': 'Active', 'fr': 'Actif' },
@@ -30,6 +25,8 @@ class BRFields:
     }
 
     base_fields = {
+        'BITS_STATUS_EN': { 'db_field': 's.DISP_STATUS_EN', 'description': 'The current BITS BR status. Status denoting where in the EBIDM process the BR is currently.', 'en': 'Status', 'fr': 'Statut'},
+        'BITS_STATUS_FR': { 'db_field': 's.DISP_STATUS_FR', 'description': 'Statut BITS BR.', 'en': 'Status', 'fr': 'Statut'},
         'LEAD_PRODUCT_EN': { 'db_field': 'pl.PROD_DESC_EN', 'description': 'Lead Product', 'en': 'Lead Product', 'fr': 'Produit principal' },
         'LEAD_PRODUCT_FR': { 'db_field': 'pl.PROD_DESC_FR', 'description': 'Produit principal', 'en': 'Lead Product', 'fr': 'Produit principal' },
         'PRODUCTS_EN': { 'db_field': 'pl.PRODUCTS_EN', 'description': 'Products', 'en': 'Products', 'fr': 'Produits' },
@@ -86,5 +83,4 @@ class BRFields:
     valid_search_fields.update(date_fields)
 
     valid_search_fields_filterable = valid_search_fields.copy()
-    valid_search_fields.update(status)
     # valid_search_fields.update(active)
