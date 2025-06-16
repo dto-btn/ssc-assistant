@@ -65,7 +65,7 @@ class DatabaseConnection:
 
             # Remove both TotalCount and ExtractionDate from the result if they exist
             cleaned_result = [
-                {k: v for k, v in item.items() if k not in ["TotalCount", "EXTRACTION_DATE"]}
+                {k: v for k, v in item.items() if k not in ["TotalCount", "EXTRACTION_DATE", "BR_ACTIVE_EN", "BR_ACTIVE_FR"]}
                 for item in result
             ]
 
