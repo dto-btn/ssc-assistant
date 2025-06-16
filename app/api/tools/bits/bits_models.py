@@ -50,19 +50,7 @@ class BRQuery(BaseModel):
     """Represent the query that the AI does on behalf of the user"""
     query_filters: list[BRQueryFilter] = Field(..., description="List of filters to apply to the query.")
     limit: int = Field(750, description="Maximum number of records to return. Optional. Defaults to 750.")
-    statuses: list[str] = Field([], description="List of of STATUS_ID to filter by.")
     active: bool = Field(True, description="If it should search for active BRs only, on by default.")
-
-    # Validator for the 'statuses' field
-    @field_validator("statuses")
-    @classmethod
-    def validate_statuses(cls, v: list[str]) -> list[str]:
-        """Validate the statuses field."""
-        valid_statuses = StatusesCache.get_status_ids()
-        invalid = [status for status in v if status not in valid_statuses]
-        if invalid:
-            raise ValueError(f"Invalid STATUS_ID(s): {invalid}. Must be one of: {sorted(valid_statuses)}")
-        return v
 
     def model_dump(self, *args, **kwargs):
         data = super().model_dump(*args, **kwargs)

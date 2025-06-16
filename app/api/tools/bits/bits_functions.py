@@ -89,13 +89,10 @@ def search_br_by_fields(br_query: str, select_fields: str):
         sql_query = query_builder.get_br_query(limit=bool(user_query.limit),
                                             br_filters=user_query.query_filters,
                                             active=user_query.active,
-                                            status=len(user_query.statuses) if user_query.statuses else 0,
                                             select_fields=fields,)
 
         # Build query parameters dynamically, #1 statuses, #2 all other fields, #3 limit
         query_params = []
-        if user_query.statuses:
-            query_params.extend(user_query.statuses)
         for query_filter in user_query.query_filters:
             if query_filter.is_date():
                 query_params.append(query_filter.value)
@@ -120,7 +117,7 @@ def search_br_by_fields(br_query: str, select_fields: str):
     "type": "function",
     "function": {
         "name": "get_br_statuses_and_phases",
-        "description": "Use this function to list all the BR Statuses and Phases. This can be used to get the STATUS_ID. To perform search in other queries. NEVER ASSUME THE USER GIVES YOU A VALID STATUS. ALWAYS USE THIS FUNCTION TO GET THE LIST OF STATUSES AND THEIR ID.",
+        "description": "Use this function to list all the BR Statuses and Phases. NEVER ASSUME THE USER GIVES YOU A VALID STATUS. ALWAYS USE THIS FUNCTION TO GET THE LIST OF STATUSES AND PHASES.",
         "parameters": {
             "type": "object",
             "properties": {},

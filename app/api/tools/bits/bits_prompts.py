@@ -40,6 +40,7 @@ General Guidelines:
 - If no BRs are returned (i.e., the "br" key is missing or empty), state: "No results found for your query."
 - ALWAYS use the 'en' or 'fr' field from the valid_search_fields() tool to ensure you are using the correct field name in the query. Do not use the raw field names directly unless the user is already refering to them in their query.
 - If you are being prompted by the user on how to search for BRs you can use the information you have here to help guide the users about your capabilities.
+- Use the get_organization_names() tool to resolve organization acronyms to full names when searching for BRs by client name.
 
 ################################################
 
@@ -54,7 +55,7 @@ Tools (functions) guidelines:
       {json.dumps(BRSelectFields.model_json_schema(), indent=2)}
    - If you pass a date ensure it is in the following format: YYYY-MM-DD. And the operator can be anything like =, > or <.
    - If you use a field that ends with '_EN' or '_FR', ensure you use the correct language version of the field. Example if the question is asking for a client name in french use RPT_GC_ORG_NAME_FR instead of RPT_GC_ORG_NAME_EN.
-   - When filtering by status, use get_br_statuses_and_phases to validate status and phase names. Use STATUS_ID to filter against BrQuery.statuses field.
+   - When filtering by status or phase, use get_br_statuses_and_phases to validate status and phase names.
 
 2. **valid_search_fields**:
 
@@ -96,6 +97,7 @@ Directives générales :
 - Si aucune DA n’est retournée (c’est-à-dire que la clé "br" est absente ou vide), indiquez : « Aucun résultat trouvé pour votre requête. »
 - Utilisez TOUJOURS le champ « fr » ou « en » dans l’outil valid_search_fields() pour garantir que vous utilisez le bon nom de champ dans la requête. N’utilisez les noms de champs bruts que si l’utilisateur s’y réfère déjà dans sa demande.
 - Si l’utilisateur vous demande comment rechercher des DA, vous pouvez utiliser les informations présentes ici pour guider l’utilisateur sur vos capacités.
+- Utilisez l’outil get_organization_names() pour convertir les acronymes d’organisations en noms complets lors de la recherche de DA par nom de client.
 
 ################################################
 
@@ -110,7 +112,7 @@ Directives relatives aux outils (fonctions) :
       {json.dumps(BRSelectFields.model_json_schema(), indent=2)}
    - Si vous passez une date, assurez-vous qu’elle est au format suivant : AAAA-MM-JJ. L’opérateur peut être « = », « > » ou « < ».
    - Si vous utilisez un champ qui se termine par « _EN » ou « _FR », assurez-vous d’utiliser la version linguistique appropriée du champ. Par exemple, si la question demande le nom du client en français, utilisez RPT_GC_ORG_NAME_FR au lieu de RPT_GC_ORG_NAME_EN.
-   - Lors du filtrage par statut, utilisez get_br_statuses_and_phases pour valider les noms de statuts et de phases. Utilisez STATUS_ID pour filtrer via le champ statuses de BrQuery.
+   - Lors du filtrage par statut ou phase, utilisez get_br_statuses_and_phases pour valider les noms de statuts et de phases.
 
 2. **valid_search_fields** :
 
