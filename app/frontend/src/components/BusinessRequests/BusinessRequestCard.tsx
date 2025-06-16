@@ -77,6 +77,14 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                 </TableRow>
                 <TableRow>
                   <TableCell>
+                    <strong>{t("PRODUCTS")}</strong>
+                  </TableCell>
+                  <TableCell>
+                    {isEnglish ? data.PRODUCTS_EN : data.PRODUCTS_FR}
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
                     <strong>{t("br.type")}</strong>
                   </TableCell>
                   <TableCell>

@@ -60,15 +60,22 @@ class DatabaseConnection:
             result = [{columns[i]: row[i] for i in range(len(columns))} for row in rows] # type: ignore
             logger.debug("Found %s results!", len(result))
 
-            total_count = next((item.get("TotalCount") for item in result if "TotalCount" in item), None)
+            extraction_date = result[0].get("EXTRACTION_DATE") if result else None
+            total_count = result[0].get("TotalCount") if result else None
+
+            # Remove both TotalCount and ExtractionDate from the result if they exist
+            cleaned_result = [
+                {k: v for k, v in item.items() if k not in ["TotalCount", "EXTRACTION_DATE", "BR_ACTIVE_EN", "BR_ACTIVE_FR"]}
+                for item in result
+            ]
 
             final_result = {
-                result_key: result,
+                result_key: cleaned_result,
                 'metadata': {
                     'execution_time': execution_time,
                     'results': len(result),
                     'total_rows': total_count,
-                    'extraction_date': result[0].get("EXTRACTION_DATE") if result else None,
+                    'extraction_date': extraction_date,
                 }
             }
 
@@ -122,10 +129,30 @@ class BRQueryBuilder:
 
         query = """
         DECLARE @MAX_DATE DATETIME = (SELECT MAX(PERIOD_END_DATE) FROM [EDR_CARZ].[FCT_DEMAND_BR_SNAPSHOT]);
+        WITH
+        """
 
-        WITH FilteredResults AS (
+        if show_all or (select_fields and any(field in select_fields.fields for field in ["LEAD_PRODUCT_EN", "LEAD_PRODUCT_FR", "PRODUCTS_EN", "PRODUCTS_FR"])):
+            query += """
+            ProductsList AS (
+                SELECT 
+                    BR_NMBR,
+                    STRING_AGG(CASE WHEN br_products.PROD_TYPE != 'LEAD' THEN products.PROD_DESC_EN END, ', ') AS PRODUCTS_EN,
+                    STRING_AGG(CASE WHEN br_products.PROD_TYPE != 'LEAD' THEN products.PROD_DESC_FR END, ', ') AS PRODUCTS_FR,
+                    MAX(CASE WHEN br_products.PROD_TYPE = 'LEAD' THEN products.PROD_DESC_EN END) AS PROD_DESC_EN,
+                    MAX(CASE WHEN br_products.PROD_TYPE = 'LEAD' THEN products.PROD_DESC_FR END) AS PROD_DESC_FR
+                FROM [EDR_CARZ].[FCT_DEMAND_BR_PRODUCTS] br_products
+                LEFT JOIN [EDR_CARZ].[DIM_BITS_PRODUCT] products WITH (NOLOCK)
+                ON products.PROD_ID = br_products.PROD_ID
+                GROUP BY BR_NMBR
+            ),
+            """
+
+        query += """
+        FilteredResults AS (
         SELECT
         """
+
 
         # Default select statement from BR_ITEMS & other tables
         query += """br.BR_NMBR as BR_NMBR,
@@ -229,16 +256,10 @@ class BRQueryBuilder:
             ON opis.BR_NMBR = br.BR_NMBR
             """
 
-        # PRODUCTS - Optimized with better join hint
-        if show_all or (select_fields and ("LEAD_PRODUCT_EN" in select_fields.fields or "LEAD_PRODUCT_FR" in select_fields.fields)):
+        if show_all or (select_fields and any(field in select_fields.fields for field in ["LEAD_PRODUCT_EN", "LEAD_PRODUCT_FR", "PRODUCTS_EN", "PRODUCTS_FR"])):
             query += """
-            LEFT JOIN
-                (SELECT BR_NMBR, PROD_ID, PROD_TYPE
-                 FROM [EDR_CARZ].[FCT_DEMAND_BR_PRODUCTS] WITH (FORCESEEK)
-                 WHERE PROD_TYPE IN ('PRODUCT', 'SERVICE')) br_products
-            ON br_products.BR_NMBR = br.BR_NMBR
-            LEFT JOIN [EDR_CARZ].[DIM_BITS_PRODUCT] products WITH (NOLOCK)
-            ON products.PROD_ID = br_products.PROD_ID
+            LEFT JOIN ProductsList pl
+            ON pl.BR_NMBR = br.BR_NMBR
             """
 
         # WHERE CLAUSE PROCESSING (BR_NMBR and ACTIVE, etc)

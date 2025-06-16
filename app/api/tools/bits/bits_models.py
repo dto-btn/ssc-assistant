@@ -94,6 +94,14 @@ class BRSelectFields(BaseModel):
         if len(v) > 10:
             raise ValueError("Too many fields specified. Maximum is 10.")
         return v
+    
+    @field_validator("fields")
+    @classmethod
+    def validate_no_duplicates(cls, v: list[str]) -> list[str]:
+        """Ensure there are no duplicate fields in the list."""
+        if len(v) != len(set(v)):
+            raise ValueError("Duplicate fields are not allowed.")
+        return v
 
     def model_dump(self, *args, **kwargs):
         """Custom serialization for JSON encoding"""
