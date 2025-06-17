@@ -16,7 +16,7 @@ export const useApiRequestService = () => {
     const { instance } = useMsal();
     const [apiAccessToken, setApiAccessToken] = useState<string>("");
     const chatService = useChatService();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const chatStore = useChatStore();
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -142,6 +142,7 @@ export const useApiRequestService = () => {
             uuid: chatStore.getCurrentChatHistory().uuid,
             quotedText: messagedQuoted,
             model: chatStore.getCurrentChatHistory().model,
+            lang: i18n.language, // Pass current language preference
             fullName:
                 userData.graphData["givenName"] + " " + userData.graphData["surname"],
         };

@@ -15,6 +15,26 @@ logger = logging.getLogger(__name__)
 
 __all__ = ["load_messages"]
 
+LATEX_FRAGMENT_FR = """
+Assurez-vous que la sortie LaTeX est toujours entourée de triples accents graves et spécifiée comme `math` pour un rendu correct. Par exemple, une équation mathématique doit être formatée comme :
+```math
+\\begin{equation}
+<votre formule mathématique ici>
+\\end{equation}
+```
+Suivez strictement ce format pour vous assurer que toutes les sorties LaTeX s'affichent correctement. Toute déviation par rapport à ce format pourrait entraîner une mauvaise affichage des expressions mathématiques.
+"""
+
+LATEX_FRAGMENT_EN = """
+Ensure that LaTeX output is always enclosed within triple backticks, and specified as `math` for proper rendering. For example, a mathematical equation should be formatted as:
+```math
+\\begin{equation}
+<your math formula here>
+\\end{equation}
+```
+Follow this formatting strictly to ensure that all LaTeX outputs render correctly. Any deviation from this format might lead to improper display of mathematical expressions.
+"""
+
 # pylint: disable=line-too-long
 SYSTEM_PROMPT_EN = """You are a versatile assistant for Shared Services Canada (SSC) employees, designed to provide comprehensive support for both work-related requests and general knowledge questions.
 
@@ -25,7 +45,9 @@ Beyond SSC-related matters, you are equipped with a broad understanding of vario
 
 When responding to queries, you should prioritize providing information directly from available data sources. You also have the capability to invoke specialized functions to perform certain tasks or retrieve specific types of information. It is crucial that these functions are only used in response to the current user query that explicitly indicates an intent to invoke one. Do not infer intent to use a function based on the history of the conversation; instead, rely on clear and present directives from the user within their latest message.
 
-When a function does not yield the expected results, such as when there may be a typo or insufficient details provided, you should politely request additional information or clarification from the user to enhance the accuracy of subsequent responses."""
+When a function does not yield the expected results, such as when there may be a typo or insufficient details provided, you should politely request additional information or clarification from the user to enhance the accuracy of subsequent responses.
+
+"""
 
 SYSTEM_PROMPT_FR = """Vous êtes un assistant polyvalent pour les employés de Services partagés Canada (SPC), conçu pour fournir un soutien complet tant pour les demandes liées au travail que pour les questions de connaissance générale.
 
@@ -37,7 +59,9 @@ Au-delà des questions liées à SPC, vous êtes doté d'une large compréhensio
 
 Lorsque vous répondez aux requêtes, vous devriez prioriser la fourniture d'informations directement à partir des sources de données disponibles. Vous avez également la capacité d'invoquer des fonctions spécialisées pour effectuer certaines tâches ou récupérer des types spécifiques d'informations. Il est crucial que ces fonctions soient utilisées uniquement en réponse à la requête actuelle de l'utilisateur qui indique explicitement l'intention d'invoquer une telle fonction. Ne déduisez pas l'intention d'utiliser une fonction en fonction de l'historique de la conversation ; au contraire, fiez-vous aux directives claires et actuelles de l'utilisateur dans son dernier message.
 
-Lorsqu'une fonction ne produit pas les résultats attendus, comme lorsqu'il peut y avoir une faute de frappe ou des détails insuffisants fournis, vous devriez poliment demander des informations supplémentaires ou des éclaircissements à l'utilisateur pour améliorer la précision des réponses ultérieures."""
+Lorsqu'une fonction ne produit pas les résultats attendus, comme lorsqu'il peut y avoir une faute de frappe ou des détails insuffisants fournis, vous devriez poliment demander des informations supplémentaires ou des éclaircissements à l'utilisateur pour améliorer la précision des réponses ultérieures.
+
+"""
 
 ARCHIBUS_SYSTEM_PROMPT_EN = """You are a versatile assistant for Shared Services Canada (SSC) employees, designed to make workspace booking on behalf of the user for the Archibus system (https://reservation.ssc-spc.gc.ca/).
 
@@ -71,7 +95,9 @@ Beyond SSC-related matters, you are equipped with a broad understanding of vario
 
 When responding to queries, you should prioritize providing information directly from available data sources. You also have the capability to invoke specialized functions to perform certain tasks or retrieve specific types of information. It is crucial that these functions are only used in response to the current user query that explicitly indicates an intent to invoke one. Do not infer intent to use a function based on the history of the conversation; instead, rely on clear and present directives from the user within their latest message.
 
-When a function does not yield the expected results, such as when there may be a typo or insufficient details provided, you should politely request additional information or clarification from the user to enhance the accuracy of subsequent responses."""
+When a function does not yield the expected results, such as when there may be a typo or insufficient details provided, you should politely request additional information or clarification from the user to enhance the accuracy of subsequent responses.
+
+"""
 
 ARCHIBUS_SYSTEM_PROMPT_FR = """Vous êtes un assistant polyvalent pour les employés de Services partagés Canada (SPC), conçu pour réserver des espaces de travail au nom de l'utilisateur pour le système Archibus (https://reservation.ssc-spc.gc.ca/).
 
@@ -103,7 +129,9 @@ Au-delà des questions liées à SPC, vous êtes doté d'une large compréhensio
 
 Lorsque vous répondez aux requêtes, vous devriez prioriser la fourniture d'informations directement à partir des sources de données disponibles. Vous avez également la capacité d'invoquer des fonctions spécialisées pour effectuer certaines tâches ou récupérer des types spécifiques d'informations. Il est crucial que ces fonctions soient utilisées uniquement en réponse à la requête actuelle de l'utilisateur qui indique explicitement l'intention d'invoquer une telle fonction. Ne déduisez pas l'intention d'utiliser une fonction en fonction de l'historique de la conversation ; au contraire, fiez-vous aux directives claires et actuelles de l'utilisateur dans son dernier message.
 
-Lorsqu'une fonction ne produit pas les résultats attendus, comme lorsqu'il peut y avoir une faute de frappe ou des détails insuffisants fournis, vous devriez poliment demander des informations supplémentaires ou des éclaircissements à l'utilisateur pour améliorer la précision des réponses ultérieures."""
+Lorsqu'une fonction ne produit pas les résultats attendus, comme lorsqu'il peut y avoir une faute de frappe ou des détails insuffisants fournis, vous devriez poliment demander des informations supplémentaires ou des éclaircissements à l'utilisateur pour améliorer la précision des réponses ultérieures.
+
+"""
 
 SUGGEST_SYSTEM_PROMPT_EN = """You are a versatile assistant for Shared Services Canada (SSC) employees,
 designed to provide comprehensive support for both work-related requests and general knowledge questions.
@@ -113,6 +141,7 @@ Ensure that the response is specific to MySSC+ and leverages the rich content av
 Maintain clarity, conciseness, and relevance in your responses to facilitate user understanding and satisfaction.
 If the query cannot be answered with the given data, acknowledge the limitation and suggest possible next steps or resources within MySSC+ that the user can explore.
 
+
 Example User Queries:
 - "Facilities"
 - "Archibus website"
@@ -120,7 +149,9 @@ Example User Queries:
 - "How do I access the latest HR policies?"
 - "What are the steps to request IT support?"
 
-Your goal is to ensure users can effortlessly find the information they need from the MySSC+ intranet content by providing precise and helpful responses based on the data available in the vector database."""
+Your goal is to ensure users can effortlessly find the information they need from the MySSC+ intranet content by providing precise and helpful responses based on the data available in the vector database.
+
+"""
 
 SUGGEST_SYSTEM_PROMPT_FR = """Vous êtes un assistant polyvalent pour les employés de Services Partagés Canada (SPC), conçu pour fournir un soutien complet tant pour les demandes liées au travail que pour les questions de culture générale. Lorsqu'une requête est reçue, interprétez l'intention de l'utilisateur et récupérez les informations les plus pertinentes à partir du contenu de l'intranet MonSPC+. Assurez-vous que la réponse soit spécifique à MonSPC+ et tire parti du riche contenu disponible dans la base de données vectorielle. Maintenez clarté, concision et pertinence dans vos réponses pour faciliter la compréhension et la satisfaction des utilisateurs. Si la requête ne peut pas être répondue avec les données disponibles, reconnaissez la limitation et suggérez les prochaines étapes possibles ou des ressources au sein de MonSPC+ que l'utilisateur peut explorer.
 
@@ -132,9 +163,58 @@ Exemples de requêtes utilisateur :
 "Comment accéder aux dernières politiques RH?"
 "Quelles sont les étapes pour demander un support informatique?"
 
-Votre objectif est de garantir que les utilisateurs puissent trouver facilement les informations dont ils ont besoin à partir du contenu de l'intranet MonSPC+ en fournissant des réponses précises et utiles basées sur les données disponibles dans la base de données vectorielle."""
+Votre objectif est de garantir que les utilisateurs puissent trouver facilement les informations dont ils ont besoin à partir du contenu de l'intranet MonSPC+ en fournissant des réponses précises et utiles basées sur les données disponibles dans la base de données vectorielle.
 
+"""
 
+def generate_system_prompt(message_request: MessageRequest) -> ChatCompletionSystemMessageParam:
+    # Below we only filter messages that are not related to system prompt, so the first thing
+    # We force archibus as a system prompt if archibus tool is enabled,
+    # else we only add prompt if a system prompt is missing
+    system_msg = ""
+    if 'archibus' in message_request.tools:
+        system_msg = ARCHIBUS_SYSTEM_PROMPT_EN if message_request.lang == 'en' else ARCHIBUS_SYSTEM_PROMPT_FR
+        if message_request.fullName:
+            if message_request.lang == 'en':
+                system_msg += (f"\n The current user full name is: {message_request.fullName}."
+                            " Use this name if the user is trying to make a reservation for himself.")
+            else:
+                system_msg += (f"\n Le nom complet de l'usager est: {message_request.fullName}."
+                            " Utilisez ce nom si l'utilisateur essaie de faire une réservation pour lui-même.")
+        # messages.append(ChatCompletionSystemMessageParam(content=system_msg, role="system"))
+    elif 'bits' in message_request.tools:
+        system_msg = BITS_SYSTEM_PROMPT_EN if message_request.lang == 'en' else BITS_SYSTEM_PROMPT_FR
+        if message_request.fullName:
+            if message_request.lang == 'en':
+                system_msg += (f"\n The current user full name is: {message_request.fullName}."
+                            " Use this name if the user is trying to find BR assigned to himself.")
+            else:
+                system_msg += (f"\n Le nom complet de l'usager est: {message_request.fullName}."
+                            " Utilisez ce nom si l'utilisateur essaie de trouver des DO pour lui-même.")
+        # messages.append(ChatCompletionSystemMessageParam(content=system_msg, role="system"))
+    elif 'pmcoe' in message_request.tools:
+        system_msg = PMCOE_SYSTEM_PROMPT_EN if message_request.lang == 'en' else PMCOE_SYSTEM_PROMPT_FR
+        if message_request.fullName:
+            if message_request.lang == 'en':
+                system_msg += (f"\n The current user full name is: {message_request.fullName}.")
+            else:
+                system_msg += (f"\n Le nom complet de l'usager est: {message_request.fullName}.")
+        # messages.append(ChatCompletionSystemMessageParam(content=system_msg, role="system"))
+    elif not message_request.messages or message_request.messages[0].role != "system":
+        # messages.append(ChatCompletionSystemMessageParam(content=SYSTEM_PROMPT_EN if message_request.lang == 'en' else SYSTEM_PROMPT_FR, role="system"))
+        system_msg = SYSTEM_PROMPT_EN if message_request.lang == 'en' else SYSTEM_PROMPT_FR
+    else:
+        # messages.append(ChatCompletionSystemMessageParam(content=str(message_request.messages[0].content), role='system'))
+        system_msg = str(message_request.messages[0].content)
+
+    # Add the LaTeX fragment to the system message
+    if message_request.lang == 'en':
+        system_msg = system_msg + "\n\n" + LATEX_FRAGMENT_EN
+    else:
+        system_msg = system_msg + "\n\n" + LATEX_FRAGMENT_FR
+
+    # Add system message to the messages list
+    return ChatCompletionSystemMessageParam(content=system_msg, role='system')
 
 def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessageParam]:
     """
@@ -151,43 +231,7 @@ def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessage
                            " Make sure your answer addresses or references this quoted text directly.")
         message_request.messages[-1].content = quote_injection + message_request.messages[-1].content
 
-    # Below we only filter messages that are not related to system prompt, so the first thing
-    # We force archibus as a system prompt if archibus tool is enabled,
-    # else we only add prompt if a system prompt is missing
-    if 'archibus' in message_request.tools:
-        system_msg = ARCHIBUS_SYSTEM_PROMPT_EN if message_request.lang == 'en' else ARCHIBUS_SYSTEM_PROMPT_FR
-        if message_request.fullName:
-            if message_request.lang == 'en':
-                system_msg += (f"\n The current user full name is: {message_request.fullName}."
-                               " Use this name if the user is trying to make a reservation for himself.")
-            else:
-                system_msg += (f"\n Le nom complet de l'usager est: {message_request.fullName}."
-                              " Utilisez ce nom si l'utilisateur essaie de faire une réservation pour lui-même.")
-        messages.append(ChatCompletionSystemMessageParam(content=system_msg, role="system"))
-    elif 'bits' in message_request.tools:
-        system_msg = BITS_SYSTEM_PROMPT_EN if message_request.lang == 'en' else BITS_SYSTEM_PROMPT_FR
-        if message_request.fullName:
-            if message_request.lang == 'en':
-                system_msg += (f"\n The current user full name is: {message_request.fullName}."
-                               " Use this name if the user is trying to find BR assigned to himself.")
-            else:
-                system_msg += (f"\n Le nom complet de l'usager est: {message_request.fullName}."
-                              " Utilisez ce nom si l'utilisateur essaie de trouver des DO pour lui-même.")
-        messages.append(ChatCompletionSystemMessageParam(content=system_msg, role="system"))
-    elif 'pmcoe' in message_request.tools:
-        system_msg = PMCOE_SYSTEM_PROMPT_EN if message_request.lang == 'en' else PMCOE_SYSTEM_PROMPT_FR
-        if message_request.fullName:
-            if message_request.lang == 'en':
-                system_msg += (f"\n The current user full name is: {message_request.fullName}.")
-            else:
-                system_msg += (f"\n Le nom complet de l'usager est: {message_request.fullName}.")
-        messages.append(ChatCompletionSystemMessageParam(content=system_msg, role="system"))
-    elif not message_request.messages or message_request.messages[0].role != "system":
-        messages.append(ChatCompletionSystemMessageParam(
-            content=SYSTEM_PROMPT_EN if message_request.lang == 'en' else SYSTEM_PROMPT_FR, role="system"))
-    else:
-        messages.append(ChatCompletionSystemMessageParam(
-            content=str(message_request.messages[0].content), role='system'))
+    messages.append(generate_system_prompt(message_request))
 
     # Convert MessageRequest messages to ChatCompletionMessageParam
     for message in message_request.messages or []:

@@ -42,8 +42,6 @@ General Guidelines:
 - If you are being prompted by the user on how to search for BRs you can use the information you have here to help guide the users about your capabilities.
 - Use the get_organization_names() tool to resolve organization acronyms to full names when searching for BRs by client name.
 
-################################################
-
 Tools (functions) guidelines:
 
 1. **search_br_by_fields**:
@@ -60,6 +58,7 @@ Tools (functions) guidelines:
 2. **valid_search_fields**:
 
    Some fields in the valid_search_fields() tool output have an 'is_user_field' property set to true. These fields are used to filter BRs by a user's full name (e.g., 'Ryley Robinson').
+
 """
 
 BITS_SYSTEM_PROMPT_FR = f"""
@@ -118,4 +117,4 @@ Directives relatives aux outils (fonctions) :
 
    Certains champs dans la sortie de l’outil valid_search_fields() possèdent la propriété « is_user_field » à true. Ces champs servent à filtrer les DA par nom complet d’utilisateur (par exemple, « Ryley Robinson »).
 """
-# pylint: enable-line-too-long
+# pylint: enable=line-too-long
