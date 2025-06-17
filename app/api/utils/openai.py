@@ -137,7 +137,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
         stream=stream
     ))
 
-def convert_chat_with_data_response(chat_completion: ChatCompletion) -> Completion:
+def convert_chat_with_data_response(chat_completion: ChatCompletion, lang: str = 'en') -> Completion:
     """
     Converts the OpenAI ChatCompletion response to a custom response (Completion)
     """
@@ -149,11 +149,13 @@ def convert_chat_with_data_response(chat_completion: ChatCompletion) -> Completi
                                      role=chat_completion.choices[0].message.role,
                                      completion_tokens=chat_completion.usage.completion_tokens,
                                      prompt_tokens=chat_completion.usage.prompt_tokens,
-                                     total_tokens=chat_completion.usage.total_tokens)
+                                     total_tokens=chat_completion.usage.total_tokens,
+                                     lang=lang)
     else:
         return build_completion_response(content=str(chat_completion.choices[0].message.content),
                                      chat_completion_dict=chat_completion_dict,
-                                     role=chat_completion.choices[0].message.role)
+                                     role=chat_completion.choices[0].message.role,
+                                     lang=lang)
 
 def build_completion_response(content: str,
                               chat_completion_dict: dict[str, Any] | None,
@@ -161,7 +163,8 @@ def build_completion_response(content: str,
                               completion_tokens: int = 0,
                               prompt_tokens: int = 0,
                               total_tokens: int = 0,
-                              tools_info: Optional[List[ToolInfo]] = None):
+                              tools_info: Optional[List[ToolInfo]] = None,
+                              lang: str = 'en'):
     """
     Builds a completion response based on the context given and the content
     """
@@ -182,9 +185,12 @@ def build_completion_response(content: str,
             for citation in citations:
                 if not citation.url:
                     filename = citation.title
-                    # Hardcoded path for PMCOE documents
-                    folder_path_english = "/pmcoe-dev/en"
-                    citation.url = f"{folder_path_english}/{filename}"
+                    # Choose path based on user's language preference
+                    if lang == 'en':
+                        folder_path = "/pmcoe-dev/en"
+                    else:
+                        folder_path = "/pmcoe-dev/fr"
+                    citation.url = f"{folder_path}/{filename}"
 
         context = Context(role=role, citations=citations, intent=[json.loads(context_dict['intent'])])
 
