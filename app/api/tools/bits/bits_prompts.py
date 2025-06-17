@@ -108,8 +108,5 @@ Directives relatives aux outils (fonctions) :
 2. **valid_search_fields** :
 
    Certains champs dans la sortie de l’outil valid_search_fields() possèdent la propriété « is_user_field » à true. Ces champs servent à filtrer les DA par nom complet d’utilisateur (par exemple, « Ryley Robinson »).
-
-   Si vous passez une date, assurez-vous qu'elle soit au format suivant : YYYY-MM-DD. Et l'opérateur peut être n'importe quoi comme =, > ou <.
-
 """
 # pylint: enable=line-too-long
