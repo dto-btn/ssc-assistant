@@ -183,10 +183,8 @@ def build_completion_response(content: str,
                 if not citation.url:
                     filename = citation.title
                     # Hardcoded path for PMCOE documents
-                    folder_path_english = "/sites/PMBContinuousImprovementSolutions/Shared Documents/General/FINAL ARTIFACTS_CONTENT FOR POSTING TO SP/English Documents/"
-                    id_param = urllib_parse.quote(f"{folder_path_english}{filename}", safe='')
-                    path_param = urllib_parse.quote(folder_path_english, safe='')
-                    citation.url = f"https://163gc.sharepoint.com/sites/PMBContinuousImprovementSolutions/Shared%20Documents/Forms/AllItems.aspx?id={id_param}&parent={path_param}"
+                    folder_path_english = "/pmcoe-dev/en"
+                    citation.url = f"{folder_path_english}/{filename}"
 
         context = Context(role=role, citations=citations, intent=[json.loads(context_dict['intent'])])
 
