@@ -117,11 +117,19 @@ export const useChatService = () => {
     };
 
     const deleteAllChatHistory = () => {
-        PersistenceUtils.setChatHistories([]);
-        chatStoreSetCurrentChatIndex(0);
-        setChatHistoriesDescriptions([]);
+        // create a new chat history with default values
+        const newChat = buildDefaultChatHistory()
+        const newDescription = "Conversation 1";
+        newChat.description = newDescription;
+
+        // update the in-memory state
+        setChatHistoriesDescriptions([newDescription]);
+        setCurrentChatHistory(newChat);
+        setCurrentChatIndex(0);
+        
+        // update the persisted state
+        PersistenceUtils.setChatHistories([newChat]);
         PersistenceUtils.setCurrentChatIndex(0);
-        setTimeout(() => {handleNewChat();}, 1);
     }
 
     const memoized = useMemo(() => {
