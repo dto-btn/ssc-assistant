@@ -16,6 +16,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import { useEffect, useRef, useState } from "react";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
@@ -29,7 +30,7 @@ interface DrawerMenuProps {
   handleDeleteSavedChat: (index: number) => void;
   handleLoadSavedChat: (index: number) => void;
   renameChat: (newChatDescription: string, index: number) => void;
-  onNewChat: () => void;
+  onNewChat: (tool?: string) => void;
 }
 
 export const DrawerMenu = ({
@@ -150,6 +151,18 @@ export const DrawerMenu = ({
               primary={t("new.conversation")}
               aria-description={t("new.conversation.aria.description")}
               aria-label={t("new.conversation")}
+            />
+          </ListItemButton>
+        </ListItem>
+        <ListItem key="newChat" disablePadding>
+          <ListItemButton onClick={() => onNewChat("bits")}>
+            <ListItemIcon sx={{ minWidth: "0px", marginRight: "10px" }}>
+              <ReceiptLongIcon fontSize="small" color="primary" />
+            </ListItemIcon>
+            <ListItemText
+              primary={t("new.conversation.br")}
+              aria-description={t("new.conversation.br.aria.description")}
+              aria-label={t("new.conversation.br")}
             />
           </ListItemButton>
         </ListItem>

@@ -440,8 +440,8 @@
         "fr": "Sélectionnez la version du modèle"
     },
     "new.conversation.aria.description": {
-        "en": "Use this button to start a new conversation while keeping your current history.<br /><br />Note: You can have up to 10 conversations at once.",
-        "fr": "Utilisez ce bouton pour commencer une nouvelle conversation tout en conservant votre historique actuel. Remarque : vous pouvez avoir jusqu'à 10 conversations en cours."
+        "en": "Use this button to start a new conversation while keeping your current history.",
+        "fr": "Utilisez ce bouton pour commencer une nouvelle conversation tout en conservant votre historique actuel."
     },
     "select.conversation": {
         "en": "Select Conversation",
@@ -454,6 +454,22 @@
     "rename": {
         "en": "Rename",
         "fr": "Renommer"
+    },
+    "settings": {
+        "en": "Settings",
+        "fr": "Paramètres"
+    },
+    "settings.delete.all.conversations": {
+        "en": "Delete all conversations",
+        "fr": "Supprimer toutes les conversations"
+    },
+    "settings.delete.all.conversations.confirmation": {
+        "en": "Are you sure you want to delete all conversations? This action cannot be undone.",
+        "fr": "Êtes-vous sûr de vouloir supprimer toutes les conversations? Cette action ne peut pas être annulée."
+    },
+    "settings.delete.all.conversations.title": {
+        "en": "Delete All Conversations",
+        "fr": "Supprimer toutes les conversations"
     },
     "delete.conversation.title": {
         "en": "Delete Conversation",
@@ -830,5 +846,12 @@
     "PRODUCTS": {
         "en": "Products",
         "fr": "Produits"
+    },
+    "new.conversation.br": {
+        "en": "New Business Request Chat",
+        "fr": "Chat Demande opérationnelle"
+    },"new.conversation.br.aria.description": {
+        "en": "Business request chat button to start a new conversation while keeping your current history.",
+        "fr": "Chat Demande opérationnelle pour commencer une nouvelle conversation tout en conservant votre historique actuel."
     }
 }
