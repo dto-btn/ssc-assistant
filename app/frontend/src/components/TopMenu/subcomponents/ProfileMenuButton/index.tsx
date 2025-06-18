@@ -65,7 +65,9 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
     // Add the mutex tools to the end of the list
     .concat(MUTEX_TOOLS)
     // Only show the tools that are enabled and in the allowedToolsSet
-    .filter((tool) => allowedToolsSet.has(tool));
+    .filter((tool) => allowedToolsSet.has(tool))
+    //Don't show BR tool
+    .filter((tool) => tool != "bits");
 
   const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     handleSelectedModelChanged((event.target as HTMLInputElement).value);

@@ -11,6 +11,7 @@ export const useChatService = () => {
     const { t } = useTranslation()
     const chatStore = useChatStore();
     const snackbars = useAppStore((state) => state.snackbars);
+    const appStore = useAppStore();
     const { currentChatIndex, chatHistoriesDescriptions, setChatIndexToLoadOrDelete, setChatHistoriesDescriptions, setDefaultChatHistory, setCurrentChatHistory, setCurrentChatIndex: chatStoreSetCurrentChatIndex } = useChatStore();
     // This is a custom hook that provides chat-related services. We use useMemo to
     // memoize the value of the service to avoid unnecessary re-renders.
@@ -91,6 +92,27 @@ export const useChatService = () => {
                 ...chatHistoriesDescriptions,
                 newDescription
             ]);
+
+            // Process tools for this new chat
+            let updatedTools: Record<string, boolean> = {
+                ...appStore.tools.enabledTools,
+            };
+            Object.keys(appStore.tools.enabledTools).forEach((t) => {
+                updatedTools[t] = false;
+            });
+            if(tool){
+                if (tool && (tool === "archibus" || tool === "bits")) {
+                    Object.keys(appStore.tools.enabledTools).forEach((t) => {
+                        updatedTools[t] = false;
+                    });
+                }
+                updatedTools[tool] = true;
+            } else {
+                updatedTools['corporate'] = true;
+                updatedTools['geds'] = true;
+            }
+            appStore.tools.setEnabledTools(updatedTools);
+            PersistenceUtils.setEnabledTools(updatedTools);
         }
     };
 
