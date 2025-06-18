@@ -71,7 +71,7 @@ export const useChatService = () => {
         }
     };
 
-    const handleNewChat = () => {
+    const handleNewChat = (tool?: string) => {
         const chatHistories = PersistenceUtils.getChatHistories();
         const newChatIndex = chatHistoriesDescriptions.length;
         if (chatHistories.length === MAX_CHAT_HISTORIES_LENGTH || newChatIndex >= MAX_CHAT_HISTORIES_LENGTH) {

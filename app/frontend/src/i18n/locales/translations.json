@@ -440,8 +440,8 @@
         "fr": "Sélectionnez la version du modèle"
     },
     "new.conversation.aria.description": {
-        "en": "Use this button to start a new conversation while keeping your current history.<br /><br />Note: You can have up to 10 conversations at once.",
-        "fr": "Utilisez ce bouton pour commencer une nouvelle conversation tout en conservant votre historique actuel. Remarque : vous pouvez avoir jusqu'à 10 conversations en cours."
+        "en": "Use this button to start a new conversation while keeping your current history.",
+        "fr": "Utilisez ce bouton pour commencer une nouvelle conversation tout en conservant votre historique actuel."
     },
     "select.conversation": {
         "en": "Select Conversation",
@@ -830,5 +830,12 @@
     "PRODUCTS": {
         "en": "Products",
         "fr": "Produits"
+    },
+    "new.conversation.br": {
+        "en": "New Business Request Chat",
+        "fr": "Chat Demande opérationnelle"
+    },"new.conversation.br.aria.description": {
+        "en": "Business request chat button to start a new conversation while keeping your current history.",
+        "fr": "Chat Demande opérationnelle pour commencer une nouvelle conversation tout en conservant votre historique actuel."
     }
 }

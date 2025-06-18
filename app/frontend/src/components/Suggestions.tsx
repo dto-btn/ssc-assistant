@@ -7,15 +7,16 @@ import {
   CardActionArea,
   Chip,
 } from "@mui/material";
-import ReceiptIcon from "@mui/icons-material/Receipt";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import EmailIcon from "@mui/icons-material/Email";
 import PersonIcon from "@mui/icons-material/Person";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { useTranslation } from "react-i18next";
-import { allowedToolsSet } from '../allowedTools';
+import { allowedToolsSet } from "../allowedTools";
 
 type SuggestionsProps = {
   onSuggestionClicked: (suggestion: string, tool: string) => void;
+  tools?: string[]; //if specified only display cards for those tools
 };
 
 // Card type definitions with color and category info
@@ -27,7 +28,7 @@ interface SuggestionCard {
   color: string;
 }
 
-const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
+const Suggestions = ({ onSuggestionClicked, tools = [] }: SuggestionsProps) => {
   const { t } = useTranslation();
 
   // Define all suggestion cards with their properties
@@ -35,50 +36,52 @@ const Suggestions = ({ onSuggestionClicked }: SuggestionsProps) => {
     {
       title: t("suggestions.general.contact"),
       tool: "geds",
-      icon: <PersonIcon sx={{ color: "#3f51b5" }} />, // Blue
+      icon: <PersonIcon sx={{ color: "#3f51b5" }} />,
       category: "geds",
       color: "#3f51b5",
     },
     {
       title: t("suggestions.general.email"),
       tool: "corporate",
-      icon: <EmailIcon sx={{ color: "#3f51b5" }} />, // Blue
+      icon: <EmailIcon sx={{ color: "#3f51b5" }} />,
       category: "general",
       color: "#3f51b5",
     },
     {
       title: t("suggestions.general.hire"),
       tool: "corporate",
-      icon: <HelpOutlineIcon sx={{ color: "#3f51b5" }} />, // Blue
+      icon: <HelpOutlineIcon sx={{ color: "#3f51b5" }} />,
       category: "general",
       color: "#3f51b5",
     },
     {
       title: t("suggestions.business.find"),
       tool: "bits",
-      icon: <ReceiptIcon sx={{ color: "#8e24aa" }} />, // Purple
+      icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
       category: "br",
       color: "#8e24aa",
     },
     {
       title: t("suggestions.business.pspc"),
       tool: "bits",
-      icon: <ReceiptIcon sx={{ color: "#8e24aa" }} />, // Purple
+      icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
       category: "br",
       color: "#8e24aa",
     },
     {
       title: t("suggestions.business.piechart"),
       tool: "bits",
-      icon: <ReceiptIcon sx={{ color: "#8e24aa" }} />, // Purple
+      icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
       category: "br",
       color: "#8e24aa",
     },
   ];
 
   // Filter suggestion cards based on the allowedToolsSet
-  const filteredSuggestionCards = suggestionCards.filter(card =>
-    allowedToolsSet.has(card.tool)
+  const filteredSuggestionCards = suggestionCards.filter(
+    (card) =>
+      allowedToolsSet.has(card.tool) &&
+      (!tools || tools.length === 0 || tools.includes(card.tool))
   );
 
   return (
