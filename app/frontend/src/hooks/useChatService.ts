@@ -116,6 +116,14 @@ export const useChatService = () => {
         }
     };
 
+    const deleteAllChatHistory = () => {
+        PersistenceUtils.setChatHistories([]);
+        chatStoreSetCurrentChatIndex(0);
+        setChatHistoriesDescriptions([]);
+        PersistenceUtils.setCurrentChatIndex(0);
+        setTimeout(() => {handleNewChat();}, 1);
+    }
+
     const memoized = useMemo(() => {
         return {
             setCurrentChatIndex,
@@ -185,6 +193,7 @@ export const useChatService = () => {
                     return updatedChatHistory;
                 });
             },
+            deleteAllChatHistory
         }
     }, [chatStore, snackbars])
 

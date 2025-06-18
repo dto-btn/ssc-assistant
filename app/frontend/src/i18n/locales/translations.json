@@ -455,6 +455,22 @@
         "en": "Rename",
         "fr": "Renommer"
     },
+    "settings": {
+        "en": "Settings",
+        "fr": "Paramètres"
+    },
+    "settings.delete.all.conversations": {
+        "en": "Delete all conversations",
+        "fr": "Supprimer toutes les conversations"
+    },
+    "settings.delete.all.conversations.confirmation": {
+        "en": "Are you sure you want to delete all conversations? This action cannot be undone.",
+        "fr": "Êtes-vous sûr de vouloir supprimer toutes les conversations? Cette action ne peut pas être annulée."
+    },
+    "settings.delete.all.conversations.title": {
+        "en": "Delete All Conversations",
+        "fr": "Supprimer toutes les conversations"
+    },
     "delete.conversation.title": {
         "en": "Delete Conversation",
         "fr": "Supprimer la conversation"

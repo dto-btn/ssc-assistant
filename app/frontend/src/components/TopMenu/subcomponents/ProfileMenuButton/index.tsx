@@ -13,6 +13,7 @@ import {
 import { UserProfilePicture } from "./ProfilePicture";
 import { useTranslation } from "react-i18next";
 import LanguageIcon from "@mui/icons-material/Language";
+import SettingsIcon from "@mui/icons-material/Settings";
 import { useAppStore } from "../../../../stores/AppStore";
 import { allowedToolsSet } from "../../../../allowedTools";
 import { useIsAuthenticated } from "@azure/msal-react";
@@ -21,6 +22,7 @@ import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import MenuDivider from "./MenuDivider";
 import { tt } from "../../../../i18n/tt";
 import { MUTEX_TOOLS } from "../../../../constants";
+import { SettingsModal } from "../../../SettingsModal";
 
 interface ProfilePictureOnClickMenuProps {
   size?: string;
@@ -45,6 +47,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
   const { t } = useTranslation();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [isOpen, setIsOpen] = React.useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
   const handleOpen = (
     event: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>
   ) => {
@@ -54,6 +57,13 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
   const handleClose = () => {
     setAnchorEl(null);
     setIsOpen(false);
+  };
+  const handleSettingsOpen = () => {
+    setIsSettingsOpen(true);
+    handleClose(); // Close the profile menu when opening settings
+  };
+  const handleSettingsClose = () => {
+    setIsSettingsOpen(false);
   };
   const appStore = useAppStore();
 
@@ -213,6 +223,16 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
         {isAuthenticated && (
           <>
             <MenuDivider />
+            <MenuItem
+              title={tt("settings")}
+              onClick={handleSettingsOpen}
+              key="settings"
+            >
+              <ListItemIcon>
+                <SettingsIcon color="disabled" fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary={tt("settings")} />
+            </MenuItem>
             <MenuItem title={tt("logout")} onClick={logout} key="logout">
               <ListItemIcon>
                 <LogoutIcon color="disabled" fontSize="small"></LogoutIcon>
@@ -222,6 +242,8 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
           </>
         )}
       </Menu>
+
+      <SettingsModal open={isSettingsOpen} onClose={handleSettingsClose} />
     </>
   );
 };
