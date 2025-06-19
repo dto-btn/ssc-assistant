@@ -1,4 +1,10 @@
 import { Box, Paper, Avatar, Typography } from '@mui/material';
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import rehypeMermaid from "rehype-mermaid";
+import rehypeMathjax from 'rehype-mathjax';
+import "highlight.js/styles/github.css";
 import ToolCallChip, { ToolCallStatus } from './ToolCallChip';
 
 export function groupChatTurnElements(turns: any[]) {
@@ -195,7 +201,23 @@ export function groupChatTurnElements(turns: any[]) {
                                 borderRadius: '0 1rem 1rem 1rem'
                             }}
                         >
-                            <Typography>{action.content}</Typography>
+                            <Markdown
+                                rehypePlugins={[
+                                    rehypeHighlight,
+                                    rehypeMathjax,
+                                    [
+                                        rehypeMermaid,
+                                        {
+                                            errorFallback: () => {
+                                                return <div>Invalid diagram format!</div>;
+                                            },
+                                        },
+                                    ],
+                                ]}
+                                remarkPlugins={[remarkGfm]}
+                            >
+                                {action.content}
+                            </Markdown>
                         </Paper>
                     </Box>
                 );

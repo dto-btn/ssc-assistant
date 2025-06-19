@@ -1,10 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { Box, TextField, Button, Typography, Paper, Avatar, CircularProgress, Divider } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import rehypeMermaid from "rehype-mermaid";
+import rehypeMathjax from 'rehype-mathjax';
+import "highlight.js/styles/github.css";
 import { useAgentCore, useMemoryExports } from './hooks/useAgentCore';
 import { AgentCoreEvent, ErrorEvent } from './agents/AgentCoreEvent.types';
-import { AgentToolCallResponse } from './agents/AgentCoreMemory.types';
-import ToolCallChip from './ToolCallChip';
 import { groupChatTurnElements } from './groupChatTurnElements';
 
 export const ChatDemo = () => {
@@ -103,10 +107,25 @@ export const ChatDemo = () => {
                                 borderRadius: '0 1rem 1rem 1rem'
                             }}
                         >
-                            <Typography>{streamingAgentOutput}</Typography>
+                            <Markdown
+                                rehypePlugins={[
+                                    rehypeHighlight,
+                                    rehypeMathjax,
+                                    [
+                                        rehypeMermaid,
+                                        {
+                                            errorFallback: () => {
+                                                return <div>Invalid diagram format!</div>;
+                                            },
+                                        },
+                                    ],
+                                ]}
+                                remarkPlugins={[remarkGfm]}
+                            >
+                                {streamingAgentOutput}
+                            </Markdown>
                         </Paper>
                     </Box>
-
                 )}
 
                 {isProcessing && (
