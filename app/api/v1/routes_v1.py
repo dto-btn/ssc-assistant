@@ -123,7 +123,7 @@ def completion_chat(message_request: MessageRequest):
         thread.start()
 
         completion: ChatCompletion = chat_with_data(message_request)  # type: ignore
-        completion_response = convert_chat_with_data_response(completion)
+        completion_response = convert_chat_with_data_response(completion, message_request.lang)
 
         thread = threading.Thread(
             target=store_completion, args=(completion_response, convo_uuid, user)
@@ -176,7 +176,7 @@ def completion_chat_stream(message_request: MessageRequest):
         tools_info, completion = chat_with_data(message_request, stream=True)
 
         if isinstance(completion, ChatCompletion):
-            completion_response = convert_chat_with_data_response(completion)
+            completion_response = convert_chat_with_data_response(completion, message_request.lang)
             thread = threading.Thread(
                 target=store_completion, args=(completion_response, convo_uuid, user)
             )
@@ -219,7 +219,7 @@ def completion_chat_stream(message_request: MessageRequest):
             yield f"\r\n--{_BOUNDARY}\r\n"
             yield "Content-Type: application/json\r\n\r\n"
             response = build_completion_response(
-                content=content_txt, chat_completion_dict=context, tools_info=tools_info
+                content=content_txt, chat_completion_dict=context, tools_info=tools_info, lang=message_request.lang
             )
             thread = threading.Thread(
                 target=store_completion, args=(response, convo_uuid, user)

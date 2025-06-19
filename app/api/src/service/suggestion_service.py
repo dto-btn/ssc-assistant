@@ -193,7 +193,7 @@ class SuggestionService:
             }
 
         # # Convert ChatCompletion to Completion
-        completion_response = convert_chat_with_data_response(completion)
+        completion_response = convert_chat_with_data_response(completion, message_request.lang)
 
         # Generate list of citations, for later use
         if getattr(completion_response.message, "context", None) is None:

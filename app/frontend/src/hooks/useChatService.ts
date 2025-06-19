@@ -11,6 +11,7 @@ export const useChatService = () => {
     const { t } = useTranslation()
     const chatStore = useChatStore();
     const snackbars = useAppStore((state) => state.snackbars);
+    const appStore = useAppStore();
     const { currentChatIndex, chatHistoriesDescriptions, setChatIndexToLoadOrDelete, setChatHistoriesDescriptions, setDefaultChatHistory, setCurrentChatHistory, setCurrentChatIndex: chatStoreSetCurrentChatIndex } = useChatStore();
     // This is a custom hook that provides chat-related services. We use useMemo to
     // memoize the value of the service to avoid unnecessary re-renders.
@@ -71,7 +72,7 @@ export const useChatService = () => {
         }
     };
 
-    const handleNewChat = () => {
+    const handleNewChat = (tool?: string) => {
         const chatHistories = PersistenceUtils.getChatHistories();
         const newChatIndex = chatHistoriesDescriptions.length;
         if (chatHistories.length === MAX_CHAT_HISTORIES_LENGTH || newChatIndex >= MAX_CHAT_HISTORIES_LENGTH) {
@@ -91,8 +92,45 @@ export const useChatService = () => {
                 ...chatHistoriesDescriptions,
                 newDescription
             ]);
+
+            // Process tools for this new chat
+            let updatedTools: Record<string, boolean> = {
+                ...appStore.tools.enabledTools,
+            };
+            Object.keys(appStore.tools.enabledTools).forEach((t) => {
+                updatedTools[t] = false;
+            });
+            if(tool){
+                if (tool && (tool === "archibus" || tool === "bits")) {
+                    Object.keys(appStore.tools.enabledTools).forEach((t) => {
+                        updatedTools[t] = false;
+                    });
+                }
+                updatedTools[tool] = true;
+            } else {
+                updatedTools['corporate'] = true;
+                updatedTools['geds'] = true;
+            }
+            appStore.tools.setEnabledTools(updatedTools);
+            PersistenceUtils.setEnabledTools(updatedTools);
         }
     };
+
+    const deleteAllChatHistory = () => {
+        // create a new chat history with default values
+        const newChat = buildDefaultChatHistory()
+        const newDescription = "Conversation 1";
+        newChat.description = newDescription;
+
+        // update the in-memory state
+        setChatHistoriesDescriptions([newDescription]);
+        setCurrentChatHistory(newChat);
+        setCurrentChatIndex(0);
+        
+        // update the persisted state
+        PersistenceUtils.setChatHistories([newChat]);
+        PersistenceUtils.setCurrentChatIndex(0);
+    }
 
     const memoized = useMemo(() => {
         return {
@@ -163,6 +201,7 @@ export const useChatService = () => {
                     return updatedChatHistory;
                 });
             },
+            deleteAllChatHistory
         }
     }, [chatStore, snackbars])
 

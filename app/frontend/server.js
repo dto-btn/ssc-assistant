@@ -21,15 +21,21 @@ app.use('/api/*', createProxyMiddleware({
     onProxyReq: onProxyReqMiddleware,
 }));
 
-
-app.use('/assistant-chat-files/*', createProxyMiddleware({
+/**
+ * Creates a route that proxies requests to the blob storage URL with the SAS token.
+ * @returns Proxy middleware for blob storage routes
+ */
+const blobStorageProxyRoute = () => createProxyMiddleware({
     target: blobStorageUrl,
     changeOrigin: true,
     pathRewrite: (path) => {
         // Append the SAS token directly to the path
         return path + '?' + sasToken; // Append the SAS token as a query string
     },
-}));
+});
+
+app.use('/assistant-chat-files/*', blobStorageProxyRoute());
+app.use('/pmcoe-dev/*', blobStorageProxyRoute());
 
 ViteExpress.listen(app, (Number(process.env.PORT) || 8080), () => {
     console.log("Server is listening on: http://localhost:" + (Number(process.env.PORT) || 8080));
