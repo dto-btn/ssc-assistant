@@ -60,10 +60,13 @@ export function groupChatTurnElements(turns: any[]) {
                 if (responseAction) {
                     actionIndex = actions.indexOf(responseAction);
                 }
-                // If next action is not a tool call or agent error, flush the group
+                // If next action is not a tool call, agent error, thought, or observation, flush the group
                 if (
                     actionIndex + 1 >= actions.length ||
-                    (actions[actionIndex + 1].type !== 'action:agent-tool-call' && actions[actionIndex + 1].type !== 'action:agent-error')
+                    (actions[actionIndex + 1].type !== 'action:agent-tool-call' &&
+                        actions[actionIndex + 1].type !== 'action:agent-error' &&
+                        actions[actionIndex + 1].type !== 'action:agent-thought' &&
+                        actions[actionIndex + 1].type !== 'action:agent-observation')
                 ) {
                     if (toolCallGroup.length > 0) {
                         groupedElements.push(
@@ -80,12 +83,68 @@ export function groupChatTurnElements(turns: any[]) {
                 toolCallGroup.push({
                     id: id,
                     status: 'error',
-                    error: action.content
+                    error: action.content,
+                    toolName: 'Agent Error'
                 });
-                // If next action is not a tool call or agent error, flush the group
+                // If next action is not a tool call, agent error, thought, or observation, flush the group
                 if (
                     actionIndex + 1 >= actions.length ||
-                    (actions[actionIndex + 1].type !== 'action:agent-tool-call' && actions[actionIndex + 1].type !== 'action:agent-error')
+                    (actions[actionIndex + 1].type !== 'action:agent-tool-call' &&
+                        actions[actionIndex + 1].type !== 'action:agent-error' &&
+                        actions[actionIndex + 1].type !== 'action:agent-thought' &&
+                        actions[actionIndex + 1].type !== 'action:agent-observation')
+                ) {
+                    if (toolCallGroup.length > 0) {
+                        groupedElements.push(
+                            <Box sx={{ display: 'flex', mb: 2, ml: 5 }} key={`toolcallchip-${id}`}>
+                                <ToolCallChip toolCalls={toolCallGroup} />
+                            </Box>
+                        );
+                        toolCallGroup = [];
+                    }
+                }
+                continue;
+            } else if (action.type === 'action:agent-thought') {
+                // Add agent thoughts to the tool call group
+                toolCallGroup.push({
+                    id: id,
+                    status: 'success',
+                    toolName: 'Thinking',
+                    outputParams: action.content
+                });
+                // If next action is not a tool call, agent error, thought, or observation, flush the group
+                if (
+                    actionIndex + 1 >= actions.length ||
+                    (actions[actionIndex + 1].type !== 'action:agent-tool-call' &&
+                        actions[actionIndex + 1].type !== 'action:agent-error' &&
+                        actions[actionIndex + 1].type !== 'action:agent-thought' &&
+                        actions[actionIndex + 1].type !== 'action:agent-observation')
+                ) {
+                    if (toolCallGroup.length > 0) {
+                        groupedElements.push(
+                            <Box sx={{ display: 'flex', mb: 2, ml: 5 }} key={`toolcallchip-${id}`}>
+                                <ToolCallChip toolCalls={toolCallGroup} />
+                            </Box>
+                        );
+                        toolCallGroup = [];
+                    }
+                }
+                continue;
+            } else if (action.type === 'action:agent-observation') {
+                // Add agent observations to the tool call group
+                toolCallGroup.push({
+                    id: id,
+                    status: 'success',
+                    toolName: 'Observation',
+                    outputParams: action.content
+                });
+                // If next action is not a tool call, agent error, thought, or observation, flush the group
+                if (
+                    actionIndex + 1 >= actions.length ||
+                    (actions[actionIndex + 1].type !== 'action:agent-tool-call' &&
+                        actions[actionIndex + 1].type !== 'action:agent-error' &&
+                        actions[actionIndex + 1].type !== 'action:agent-thought' &&
+                        actions[actionIndex + 1].type !== 'action:agent-observation')
                 ) {
                     if (toolCallGroup.length > 0) {
                         groupedElements.push(
@@ -140,56 +199,8 @@ export function groupChatTurnElements(turns: any[]) {
                         </Paper>
                     </Box>
                 );
-            } else if (action.type === 'action:agent-thought') {
-                groupedElements.push(
-                    <Box sx={{ display: 'flex', mb: 2 }} key={id}>
-                        <Paper
-                            elevation={1}
-                            sx={{
-                                p: 2,
-                                maxWidth: '85%',
-                                ml: 5,
-                                borderRadius: '0.5rem',
-                                bgcolor: 'info.light',
-                                border: '1px dashed',
-                                borderColor: 'info.main'
-                            }}
-                        >
-                            <Typography variant="subtitle2" fontWeight="bold" color="info.dark">
-                                Thinking...
-                            </Typography>
-                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                                {action.content}
-                            </Typography>
-                        </Paper>
-                    </Box>
-                );
-            } else if (action.type === 'action:agent-observation') {
-                groupedElements.push(
-                    <Box sx={{ display: 'flex', mb: 2 }} key={id}>
-                        <Paper
-                            elevation={1}
-                            sx={{
-                                p: 2,
-                                maxWidth: '85%',
-                                ml: 5,
-                                borderRadius: '0.5rem',
-                                bgcolor: 'success.light',
-                                border: '1px dashed',
-                                borderColor: 'success.main'
-                            }}
-                        >
-                            <Typography variant="subtitle2" fontWeight="bold" color="success.dark">
-                                Observation
-                            </Typography>
-                            <Typography variant="body2">
-                                {action.content}
-                            </Typography>
-                        </Paper>
-                    </Box>
-                );
             }
-            // Note: action:agent-error is now handled in the tool call grouping above
+            // Note: action:agent-error, action:agent-thought, and action:agent-observation are now handled in the tool call grouping above
         }
         return groupedElements;
     }).filter(msg => msg !== null);
