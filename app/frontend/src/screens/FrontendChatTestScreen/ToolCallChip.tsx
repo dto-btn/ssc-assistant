@@ -1,23 +1,35 @@
 import React, { useState } from 'react';
-import { Box, Tooltip, Paper, Typography, Collapse } from '@mui/material';
+import { Box, Tooltip, Paper, Typography, Drawer, IconButton } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
+import CloseIcon from '@mui/icons-material/Close';
 
 export type ToolCallStatus = 'success' | 'error';
 
 export interface ToolCallChipProps {
-    toolCalls: { id: string; status: ToolCallStatus; error?: string }[];
+    toolCalls: {
+        id: string;
+        status: ToolCallStatus;
+        error?: string;
+        toolName?: string;
+        inputParams?: string;
+        outputParams?: string;
+    }[];
 }
 
 const ToolCallChip: React.FC<ToolCallChipProps> = ({ toolCalls }) => {
-    const [expanded, setExpanded] = useState(false);
+    const [drawerOpen, setDrawerOpen] = useState(false);
 
     const handleChipClick = () => {
-        setExpanded(!expanded);
+        setDrawerOpen(true);
+    };
+
+    const handleDrawerClose = () => {
+        setDrawerOpen(false);
     };
 
     return (
-        <Box>
+        <>
             <Box
                 onClick={handleChipClick}
                 sx={{
@@ -50,31 +62,81 @@ const ToolCallChip: React.FC<ToolCallChipProps> = ({ toolCalls }) => {
                     </Tooltip>
                 ))}
             </Box>
-            <Collapse in={expanded}>
-                <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+
+            <Drawer
+                anchor="right"
+                open={drawerOpen}
+                onClose={handleDrawerClose}
+                sx={{
+                    '& .MuiDrawer-paper': {
+                        width: 400,
+                        p: 2,
+                    },
+                }}
+            >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6">Tool Call Details</Typography>
+                    <IconButton onClick={handleDrawerClose}>
+                        <CloseIcon />
+                    </IconButton>
+                </Box>
+
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     {toolCalls.map((call) => (
                         <Paper
                             key={call.id}
                             elevation={1}
                             sx={{
                                 p: 2,
-                                bgcolor: call.status === 'error' ? 'error.light' : 'success.light',
+                                bgcolor: '#fafafa',
                                 border: '1px solid',
                                 borderColor: call.status === 'error' ? 'error.main' : 'success.main',
+                                position: 'relative',
                             }}
                         >
-                            <Typography variant="subtitle2" fontWeight="bold"
-                                color={call.status === 'error' ? 'error.dark' : 'success.dark'}>
-                                {call.status === 'error' ? 'Error' : 'Success'}
+                            <Box sx={{ position: 'absolute', top: 8, right: 8 }}>
+                                {call.status === 'success' ? (
+                                    <CheckCircleIcon color="success" fontSize="small" />
+                                ) : (
+                                    <ErrorIcon color="error" fontSize="small" />
+                                )}
+                            </Box>
+
+                            <Typography variant="subtitle2" fontWeight="bold" sx={{ pr: 4 }}>
+                                {call.toolName || 'Tool Call'}
                             </Typography>
-                            <Typography variant="body2">
-                                {call.error || `Tool call ${call.id} completed successfully`}
-                            </Typography>
+
+                            {call.inputParams && (
+                                <Box sx={{ mt: 2 }}>
+                                    <Typography variant="caption" fontWeight="bold">Input Parameters:</Typography>
+                                    <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', bgcolor: '#f5f5f5', p: 1, borderRadius: 1, mt: 0.5 }}>
+                                        {call.inputParams}
+                                    </Typography>
+                                </Box>
+                            )}
+
+                            {call.outputParams && call.status === 'success' && (
+                                <Box sx={{ mt: 2 }}>
+                                    <Typography variant="caption" fontWeight="bold">Output:</Typography>
+                                    <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', bgcolor: '#f5f5f5', p: 1, borderRadius: 1, mt: 0.5 }}>
+                                        {call.outputParams}
+                                    </Typography>
+                                </Box>
+                            )}
+
+                            {call.error && (
+                                <Box sx={{ mt: 2 }}>
+                                    <Typography variant="caption" fontWeight="bold" color="error">Error Details:</Typography>
+                                    <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', bgcolor: '#f5f5f5', p: 1, borderRadius: 1, mt: 0.5 }}>
+                                        {call.error}
+                                    </Typography>
+                                </Box>
+                            )}
                         </Paper>
                     ))}
                 </Box>
-            </Collapse>
-        </Box>
+            </Drawer>
+        </>
     );
 };
 

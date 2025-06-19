@@ -4,7 +4,7 @@ import ToolCallChip, { ToolCallStatus } from './ToolCallChip';
 export function groupChatTurnElements(turns: any[]) {
     return turns.flatMap((turn, turnIndex) => {
         const groupedElements = [];
-        let toolCallGroup: { id: string; status: ToolCallStatus; error?: string }[] = [];
+        let toolCallGroup: { id: string; status: ToolCallStatus; error?: string; toolName?: string; inputParams?: string; outputParams?: string }[] = [];
         const actions = turn.actions;
         for (let actionIndex = 0; actionIndex < actions.length; actionIndex++) {
             const action = actions[actionIndex];
@@ -30,10 +30,31 @@ export function groupChatTurnElements(turns: any[]) {
                     status = 'error';
                     errorMsg = parseError;
                 }
+
+                // Prepare input and output parameters
+                let inputParams = '';
+                try {
+                    inputParams = JSON.stringify(JSON.parse(action.toolArguments), null, 2);
+                } catch {
+                    inputParams = String(action.toolArguments);
+                }
+
+                let outputParams = '';
+                if (responseAction && responseAction.toolResponse && !responseAction.error) {
+                    try {
+                        outputParams = JSON.stringify(JSON.parse(responseAction.toolResponse), null, 2);
+                    } catch {
+                        outputParams = String(responseAction.toolResponse);
+                    }
+                }
+
                 toolCallGroup.push({
                     id: action.toolCallId || id,
                     status: status,
-                    error: errorMsg
+                    error: errorMsg,
+                    toolName: action.toolName,
+                    inputParams: inputParams,
+                    outputParams: outputParams
                 });
                 // Skip the response action in the next iteration
                 if (responseAction) {
