@@ -21,6 +21,7 @@ from src.context.build_context import build_prod_context
 
 from tools.archibus.archibus_functions import make_api_call
 from tools.bits.bits_functions import search_br_by_fields, get_br_statuses_and_phases, valid_search_fields, get_br_information
+from tools.geds.geds_functions import get_employee_information
 from tools.bits.bits_fields import BRFields
 from tools.bits.bits_statuses_cache import StatusesCache
 from utils.auth import auth, user_ad
@@ -736,6 +737,45 @@ def openai_chat_completions():
     except Exception as e:
         logger.exception("Unexpected error in OpenAI proxy")
         return jsonify({"error": {"message": f"Unexpected error: {str(e)}"}}), 500
+
+
+@api_v2.post("/geds/search")
+@auth.login_required(role="chat")
+def geds_search():
+    """
+    Search GEDS (Government Employee Directory System) for employee information.
+    
+    This endpoint accepts a JSON body with 'employee_firstname' and 'employee_lastname' fields.
+    """
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "Missing request body"}), 400
+        
+        employee_firstname = data.get('employee_firstname', '').strip()
+        employee_lastname = data.get('employee_lastname', '').strip()
+        
+        if not employee_lastname:
+            return jsonify({"error": "Missing required field: employee_lastname"}), 400
+        
+        if not employee_firstname:
+            return jsonify({"error": "Missing required field: employee_firstname"}), 400
+        
+        # Call the GEDS function
+        result = get_employee_information(employee_lastname, employee_firstname)
+        
+        return jsonify({
+            "success": True,
+            "data": result,
+            "message": f"GEDS search completed for {employee_firstname} {employee_lastname}"
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in GEDS search: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": f"Error processing GEDS request: {str(e)}"
+        }), 500
 
 
 @api_v1.post("/models")
