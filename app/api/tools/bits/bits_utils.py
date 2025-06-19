@@ -191,7 +191,7 @@ class BRQueryBuilder:
 
         # Check if any user fields are included in select_fields or if show_all is True
         has_user_fields = show_all or (select_fields and any(
-            field_name in BRFields.valid_search_fields and 
+            field_name in BRFields.valid_search_fields and
             BRFields.valid_search_fields[field_name].get('is_user_field', False)
             for field_name in select_fields.fields
         ))
@@ -272,7 +272,8 @@ class BRQueryBuilder:
                         base_where_clause.append(f"CONVERT(DATE, {field_name['db_field']}) {br_filter.operator} %s")
                     else:
                         # Handle other fields, defaulting to LIKE operator since they are mostly strings ...
-                        base_where_clause.append(f"{field_name['db_field']} LIKE %s")
+                        _op = "LIKE" if br_filter.operator != '!=' else "NOT LIKE"
+                        base_where_clause.append(f"{field_name['db_field']} {_op} %s")
 
         if base_where_clause:
             query += "WHERE " + " AND ".join(base_where_clause)
