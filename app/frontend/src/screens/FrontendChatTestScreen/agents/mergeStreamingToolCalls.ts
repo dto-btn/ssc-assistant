@@ -115,16 +115,20 @@ export function mergeStreamingToolCalls(chunks: StreamingToolCallChunk[]): Accum
             
             // Process each tool call delta
             for (const toolCallDelta of delta.tool_calls) {
+                debugger;
                 // Skip if the tool call has no useful information
-                if (!toolCallDelta || (!toolCallDelta.id && !toolCallDelta.function)) {
+                if (!toolCallDelta || (toolCallDelta.index === undefined && !toolCallDelta.id && !toolCallDelta.function)) {
                     continue;
                 }
                 
-                // Get the tool call ID or create a placeholder if missing
-                const toolCallId = toolCallDelta.id || `temp_id_${Math.random().toString(36).substring(2, 9)}`;
+                // Create a unique key using both index and id to handle multiple tool calls properly
+                // The index is the primary identifier for streaming tool calls
+                const toolCallIndex = toolCallDelta.index !== undefined ? toolCallDelta.index : 0;
+                const toolCallId = toolCallDelta.id || `temp_id_${toolCallIndex}`;
+                const toolCallKey = `${toolCallIndex}_${toolCallId}`;
                 
                 // Get or create the tool call in our map
-                let toolCall = toolCallsMap.get(toolCallId);
+                let toolCall = toolCallsMap.get(toolCallKey);
                 if (!toolCall) {
                     toolCall = {
                         id: toolCallId,
@@ -134,12 +138,17 @@ export function mergeStreamingToolCalls(chunks: StreamingToolCallChunk[]): Accum
                             arguments: ''
                         }
                     };
-                    toolCallsMap.set(toolCallId, toolCall);
+                    toolCallsMap.set(toolCallKey, toolCall);
                 }
                 
                 // Update the tool call with new information
                 if (toolCallDelta.type) {
                     toolCall.type = toolCallDelta.type;
+                }
+                
+                // Update the ID if it becomes available
+                if (toolCallDelta.id && toolCall.id.startsWith('temp_id_')) {
+                    toolCall.id = toolCallDelta.id;
                 }
                 
                 if (toolCallDelta.function) {

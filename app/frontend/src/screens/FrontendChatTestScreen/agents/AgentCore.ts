@@ -306,6 +306,7 @@ export class AgentCore {
         const functionName = toolCall.function.name;
         let functionArgs: any = {};
         try {
+            debugger
             functionArgs = JSON.parse(toolCall.function.arguments);
         } catch (e) {
             const msg = `Failed to parse arguments for function \"${functionName}\": ${e}`;

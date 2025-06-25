@@ -13,12 +13,12 @@ export const useAgentCore = () => {
         const memory = new AgentCoreMemory();
         const toolRegistry = new AgentToolRegistry();
         
-        toolRegistry.registerMcp({
-            name: 'ssc',
-            version: '1.0',
-            type: 'streamable-http',
-            url: 'https://br-mcp-server-app.azurewebsites.net/mcp/',
-        });
+        // toolRegistry.registerMcp({
+        //     name: 'ssc',
+        //     version: '1.0',
+        //     type: 'streamable-http',
+        //     url: 'https://br-mcp-server-app.azurewebsites.net/mcp/',
+        // });
 
         // Register an adder tool as an example
         toolRegistry.registerTool({
@@ -170,14 +170,15 @@ export const useAgentCore = () => {
         // Register GEDS tools
         toolRegistry.registerTool({
             name: 'search_geds_employee',
-            description: 'Search the GEDS (Government Employee Directory System) for Government of Canada employee information by name. ' +
+            description: 'Search the GEDS (Government Employee Directory System) for Government of Canada employee information by name. This is for a SINGLE employee.' +
                         'USAGE: Provide both first name and last name to find employee contact information, department, title, and organizational details. ' +
                         'PURPOSE: Use this tool to find contact information for specific government employees when you have their name. ' +
                         'REQUIRED FIELDS: Both employee_firstname and employee_lastname are required for accurate search results. ' +
                         'RESPONSE: Returns employee details including name, title, department, organization, email, phone, address, and GEDS profile URL. ' +
-                        'EXAMPLES: {"employee_firstname": "John", "employee_lastname": "Smith"} to find John Smith. ' +
+                        'EXAMPLES: {"employee_firstname": "John", "employee_lastname": "Smith"} to find John Smith. But to find Jane Doe, {"employee_firstname": "Jane", "employee_lastname": "Doe"}' +
                         'PRIVACY: Only use this tool when explicitly asked to find contact information for a specific person. Do not use for general directory browsing. ' +
-                        'NOTE: This searches the official Government of Canada employee directory and returns publicly available contact information.',
+                        'NOTE: This searches the official Government of Canada employee directory and returns publicly available contact information.' +
+                        'MULTIPLE EMPLOYEES: If you need to search for multiple employees, call this tool separately for each employee. Do not concatenate names in a single call.',
             func: async (args: { employee_firstname: string, employee_lastname: string }) => {
                 if (!args.employee_firstname || !args.employee_lastname) {
                     throw new Error("Invalid input: both 'employee_firstname' and 'employee_lastname' are required.");
@@ -356,34 +357,6 @@ export const useAgentCore = () => {
                 } catch (error) {
                     throw new Error(`Failed to get Wikipedia content: ${error instanceof Error ? error.message : 'Unknown error'}`);
                 }
-            }
-        });
-
-        // Register GEDS tools
-        toolRegistry.registerTool({
-            name: 'search_geds_employee',
-            description: 'Search the GEDS (Government Employee Directory System) for Government of Canada employee information by name. ' +
-                        'USAGE: Provide both first name and last name to find employee contact information, department, title, and organizational details. ' +
-                        'PURPOSE: Use this tool to find contact information for specific government employees when you have their name. ' +
-                        'REQUIRED FIELDS: Both employee_firstname and employee_lastname are required for accurate search results. ' +
-                        'RESPONSE: Returns employee details including name, title, department, organization, email, phone, address, and GEDS profile URL. ' +
-                        'EXAMPLES: {"employee_firstname": "John", "employee_lastname": "Smith"} to find John Smith. ' +
-                        'PRIVACY: Only use this tool when explicitly asked to find contact information for a specific person. Do not use for general directory browsing. ' +
-                        'NOTE: This searches the official Government of Canada employee directory and returns publicly available contact information.',
-            func: async (args: { employee_firstname: string, employee_lastname: string }) => {
-                if (!args.employee_firstname || !args.employee_lastname) {
-                    throw new Error("Invalid input: both 'employee_firstname' and 'employee_lastname' are required.");
-                }
-
-                const searchParams: GedsSearchParams = {
-                    employee_firstname: args.employee_firstname.trim(),
-                    employee_lastname: args.employee_lastname.trim()
-                };
-
-                const result = await searchGedsEmployee(searchParams);
-                return result.success
-                    ? result.data
-                    : `Search failed: ${result.error || 'Unknown error'}. You may modify the input parameters and try again, if you wish.`;
             }
         });
 

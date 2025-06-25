@@ -91,6 +91,7 @@ export class AgentCoreLlmClientStreaming implements AgentCoreLlmClient {
                         
                         // Process each tool call delta
                         delta.tool_calls.forEach((toolCallDelta, index) => {
+                                                        // debugger;
                             // Initialize corresponding tool call in accumulator if needed
                             if (!messageAcc.tool_calls![index]) {
                                 messageAcc.tool_calls![index] = {
@@ -108,7 +109,7 @@ export class AgentCoreLlmClientStreaming implements AgentCoreLlmClient {
                             
                             if (toolCallDelta.function) {
                                 if (toolCallDelta.function.name) {
-                                    accToolCall.function.name += toolCallDelta.function.name;
+                                    accToolCall.function.name = toolCallDelta.function.name;
                                 }
                                 
                                 if (toolCallDelta.function.arguments) {

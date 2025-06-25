@@ -116,6 +116,7 @@ describe('mergeStreamingToolCalls', () => {
                             content: null,
                             tool_calls: [
                                 {
+                                    index: 0,
                                     id: 'call_1',
                                     type: 'function',
                                     function: {
@@ -134,6 +135,7 @@ describe('mergeStreamingToolCalls', () => {
                         delta: {
                             tool_calls: [
                                 {
+                                    index: 1,
                                     id: 'call_2',
                                     type: 'function',
                                     function: {
@@ -183,5 +185,144 @@ describe('mergeStreamingToolCalls', () => {
         const result = mergeStreamingToolCalls(chunks);
         expect(result.role).toBe('assistant');
         expect(result.content).toBe('Hello');
+    });
+
+    it('should handle multiple tool calls with different indexes correctly (not concatenate)', () => {
+        // This test specifically addresses the issue where multiple tool calls
+        // with different indexes were being concatenated instead of treated separately
+        const chunks = [
+            {
+                choices: [
+                    {
+                        delta: {
+                            role: 'assistant',
+                            tool_calls: [
+                                {
+                                    index: 0,
+                                    type: 'function',
+                                    function: {
+                                        name: 'search_geds_employee',
+                                        arguments: '{"employee_firstname": "John",'
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                choices: [
+                    {
+                        delta: {
+                            tool_calls: [
+                                {
+                                    index: 0,
+                                    function: {
+                                        arguments: ' "employee_lastname": "Smith"}'
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                choices: [
+                    {
+                        delta: {
+                            tool_calls: [
+                                {
+                                    index: 1,
+                                    type: 'function',
+                                    function: {
+                                        name: 'search_geds_employee',
+                                        arguments: '{"employee_firstname": "Jane",'
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                choices: [
+                    {
+                        delta: {
+                            tool_calls: [
+                                {
+                                    index: 1,
+                                    function: {
+                                        arguments: ' "employee_lastname": "Doe"}'
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                choices: [
+                    {
+                        delta: {
+                            tool_calls: [
+                                {
+                                    index: 2,
+                                    function: {
+                                        name: 'search_geds_employee',
+                                        arguments: '{"employee_firstname": "Alice", '
+                                    }
+                                },
+                                {
+                                    index: 2,
+                                    function: {
+                                        arguments: '"employee_lastname": "Johnson"}'
+                                    }
+                                },
+                                {
+                                    index: 3,
+                                    type: 'function',
+                                    function: {
+                                        name: 'search_geds_employee',
+                                        arguments: '{"employee_firstname": "Bob", '
+                                    }
+                                },
+                                {
+                                    index: 3,
+                                    function: {
+                                        arguments: '"employee_lastname": "Brown"}'
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ];
+
+        const result = mergeStreamingToolCalls(chunks);
+        
+        expect(result.role).toBe('assistant');
+        expect(result.content).toBeNull();
+        expect(result.tool_calls).toHaveLength(4);
+        
+        // First tool call (index 0)
+        expect(result.tool_calls![0].function.name).toBe('search_geds_employee');
+        expect(result.tool_calls![0].function.arguments).toBe('{"employee_firstname": "John", "employee_lastname": "Smith"}');
+        
+        // Second tool call (index 1) - should be separate, not concatenated
+        expect(result.tool_calls![1].function.name).toBe('search_geds_employee');
+        expect(result.tool_calls![1].function.arguments).toBe('{"employee_firstname": "Jane", "employee_lastname": "Doe"}');
+
+        // Third tool call (index 2)
+        expect(result.tool_calls![2].function.name).toBe('search_geds_employee');
+        expect(result.tool_calls![2].function.arguments).toBe('{"employee_firstname": "Alice", "employee_lastname": "Johnson"}');
+
+        // Fourth tool call (index 3)
+        expect(result.tool_calls![3].function.name).toBe('search_geds_employee');
+        expect(result.tool_calls![3].function.arguments).toBe('{"employee_firstname": "Bob", "employee_lastname": "Brown"}');
+        
+        // Verify they are NOT concatenated
+        expect(result.tool_calls![0].function.arguments).not.toContain('Jane');
+        expect(result.tool_calls![1].function.arguments).not.toContain('John');
     });
 });

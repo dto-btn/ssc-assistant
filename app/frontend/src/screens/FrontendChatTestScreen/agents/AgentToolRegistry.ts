@@ -32,6 +32,9 @@ export class AgentToolRegistry {
     private mcpClients: Record<string, Record<string, McpClient>> = {}; // name, version -> McpClient
 
     registerTool(tool: AgentTool) {
+        if (this.tools.has(tool.name)) {
+            throw new Error(`Tool with name "${tool.name}" is already registered.`);
+        }
         this.tools.set(tool.name, tool);
     }
 
