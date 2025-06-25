@@ -7,6 +7,8 @@ resource "azurerm_service_plan" "api" {
   location            = azurerm_resource_group.main.location
   sku_name            = "S1"
   os_type             = "Linux"
+  worker_count = 3
+  
 }
 
 resource "azurerm_monitor_metric_alert" "http_5xx_alert" {
@@ -127,6 +129,10 @@ resource "azurerm_linux_web_app" "api" {
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
     #PORT = 5001
     SQL_CONNECTION_STRING         = module.postgress.postgres_connection_string
+    BITS_DB_SERVER                = var.bits_database_config.URL
+    BITS_DB_DATABASE              = var.bits_database_config.DB_NAME
+    BITS_DB_USERNAME              = var.bits_database_config.USERNAME
+    BITS_DB_PWD                   = var.bits_database_config.PASSWORD
   }
 
   sticky_settings { # settings that are the same regardless of deployment slot..
