@@ -100,3 +100,15 @@ variable "password_postgress" {
     sensitive = true
     description = "password for the username of postgress server"
 }
+
+variable "bits_database_config" {
+  description = "Configuration for the database connection"
+  type = object({
+    URL      = string
+    DB_NAME  = string
+    USERNAME = string
+    PASSWORD = string
+  })
+  default = null
+  sensitive = true
+}
