@@ -1,20 +1,25 @@
 import InfoIcon from "@mui/icons-material/Info";
 import CloseIcon from "@mui/icons-material/Close";
 import Send from "@mui/icons-material/Send";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
+import DocumentScannerRounded from "@mui/icons-material/DocumentScannerRounded";
 import {
   Box,
   CircularProgress,
   Container,
   IconButton,
   InputBase,
+  Menu,
+  MenuItem,
   Paper,
   Typography,
   useTheme,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import UploadFileButton from "./UploadFileButton";
+import { UploadFileButtonMenuItem } from "./UploadFileButtonMenuItem";
 import { disabledFeaturesSet } from "../allowedTools";
+import { StyledIconButton } from './StyledIconButton';
 
 interface ChatInputProps {
   onSend: (question: string, files: Attachment[]) => void;
@@ -38,6 +43,8 @@ export const ChatInput = ({
   const theme = useTheme();
   const [file, setFile] = useState<Attachment | undefined>(undefined);
   const inputFieldRef = React.useRef<HTMLInputElement>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
 
   const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "";
 
@@ -68,6 +75,13 @@ export const ChatInput = ({
 
   const handleRemoveFile = () => {
     setFile(undefined);
+  };
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
   };
 
   // this useEffect focuses the chatInput whenever quotedText is added
@@ -149,7 +163,34 @@ export const ChatInput = ({
         }}
       >
         {!disabledFeaturesSet.has("file_upload") && !file && (
-          <UploadFileButton disabled={disabled} onFileUpload={onFileUpload} />
+          <>
+            <IconButton
+              aria-label="upload options"
+              onClick={handleMenuClick}
+              disabled={disabled}
+              size="large"
+            >
+              <AttachFileIcon />
+            </IconButton>
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleMenuClose}
+              style={{
+                // make it look sleeck and fit the content
+                maxWidth: "300px",
+                minWidth: "200px",
+              }}
+            >
+              <UploadFileButtonMenuItem disabled={disabled} onFileUpload={onFileUpload} />
+              <MenuItem>
+                <StyledIconButton>
+                  <DocumentScannerRounded />
+                </StyledIconButton>
+                {t("attach.document")}
+              </MenuItem>
+            </Menu>
+          </>
         )}
         <InputBase
           sx={{ ml: 1, flex: 1 }}

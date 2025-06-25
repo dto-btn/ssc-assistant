@@ -1,12 +1,13 @@
 import { AccountInfo } from "@azure/msal-browser";
 import { useMsal } from "@azure/msal-react";
 import AddPhotoAlternateOutlinedIcon from "@mui/icons-material/AddPhotoAlternateOutlined";
-import IconButton from "@mui/material/Button";
 import { styled } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { useRef, useState } from "react";
 import { uploadFile } from "../api/api";
 import { apiUse } from "../authConfig";
+import { MenuItem } from '@mui/material';
+import { StyledIconButton } from './StyledIconButton';
 
 interface UploadFileButtonProps {
   disabled: boolean;
@@ -23,13 +24,14 @@ const isValidFileType = (file: File) => {
   return acceptedFileTypesFormatted.includes(file.type);
 };
 
-export default function InputFileUpload({
+export function UploadFileButtonMenuItem({
   disabled,
   onFileUpload,
 }: UploadFileButtonProps) {
   const { instance } = useMsal();
   const [uploading, setUploading] = useState(false);
   const [fileInputKey, setFileInputKey] = useState(Date.now());
+  const menuItemRef = useRef<HTMLLIElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { t } = useTranslation();
 
@@ -78,32 +80,29 @@ export default function InputFileUpload({
     }
   };
 
-  const handleKeyPress = (ev: React.KeyboardEvent<Element>) => {
-    if (ev.key === "Enter" && !ev.shiftKey) {
-      ev.preventDefault();
-      fileInputRef.current?.click(); //Trigger file input click
-    }
-  };
-
   return (
-    <StyledIconButton
-      aria-label={uploading ? t("upload.uploading") : t("upload.image")}
-      tabIndex={-1}
-      disabled={disabled || uploading}
-      onKeyDown={handleKeyPress}
+    <MenuItem
+      autoFocus
       onClick={() => fileInputRef.current?.click()}
-      loading={uploading}
-      size="large"
     >
-      <AddPhotoAlternateOutlinedIcon />
-      <VisuallyHiddenInput
-        type="file"
-        key={fileInputKey}
-        ref={fileInputRef}
-        onChange={encodeAndUploadFile}
-        accept={acceptedImageTypes.map((type) => "." + type).toString()}
-      />
-    </StyledIconButton>
+      <StyledIconButton
+        aria-label={uploading ? t("upload.uploading") : t("upload.image")}
+        tabIndex={-1}
+        disabled={disabled || uploading}
+        loading={uploading}
+        size="large"
+      >
+        <AddPhotoAlternateOutlinedIcon />
+        <VisuallyHiddenInput
+          type="file"
+          key={fileInputKey}
+          ref={fileInputRef}
+          onChange={encodeAndUploadFile}
+          accept={acceptedImageTypes.map((type) => "." + type).toString()}
+        />
+      </StyledIconButton>
+      {t("attach.image")}
+    </MenuItem>
   );
 }
 
@@ -117,13 +116,4 @@ const VisuallyHiddenInput = styled("input")({
   left: 0,
   whiteSpace: "nowrap",
   width: 1,
-});
-
-const StyledIconButton = styled(IconButton)({
-  borderRadius: "50%", // Makes the button round
-  minWidth: 0, // Prevent default min width
-  padding: "12px",
-  "&:hover": {
-    backgroundColor: "rgba(0, 0, 0, 0.2)", // Optional hover effect
-  },
 });

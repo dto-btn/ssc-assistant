@@ -853,5 +853,13 @@
     },"new.conversation.br.aria.description": {
         "en": "Business request chat button to start a new conversation while keeping your current history.",
         "fr": "Chat Demande opérationnelle pour commencer une nouvelle conversation tout en conservant votre historique actuel."
+    },
+    "attach.image": {
+        "en": "Attach Image",
+        "fr": "Joindre une image"
+    },
+    "attach.document": {
+        "en": "Attach Document",
+        "fr": "Joindre un document"
     }
 }
