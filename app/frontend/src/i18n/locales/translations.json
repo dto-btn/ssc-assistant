@@ -848,10 +848,10 @@
         "fr": "Produits"
     },
     "new.conversation.br": {
-        "en": "New Business Request Chat",
-        "fr": "Chat Demande opérationnelle"
+        "en": "EBIDM Business Request Chat",
+        "fr": "Chat Demande opérationnelle IOEGD"
     },"new.conversation.br.aria.description": {
-        "en": "Business request chat button to start a new conversation while keeping your current history.",
-        "fr": "Chat Demande opérationnelle pour commencer une nouvelle conversation tout en conservant votre historique actuel."
+        "en": "Enterprise Business Intake and Demand Management (EBIDM) Business request chat button to start a new conversation while keeping your current history.",
+        "fr": "La Division de l'intégration opérationnelle d'entreprise et gestion de la demande (IOEGD). Chat Demande opérationnelle pour commencer une nouvelle conversation tout en conservant votre historique actuel."
     }
 }
