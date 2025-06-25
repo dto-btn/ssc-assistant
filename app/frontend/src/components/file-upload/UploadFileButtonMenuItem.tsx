@@ -5,7 +5,8 @@ import { useTranslation } from "react-i18next";
 import { useRef, useState } from "react";
 import { MenuItem } from '@mui/material';
 import { StyledIconButton } from './StyledIconButton';
-import { acceptedImageTypes, getTokenAndUploadFile, isValidFileType } from './fileUploadUtils';
+import { getTokenAndUploadFile, isValidFileType } from './fileUploadUtils';
+import { validFileTypeDefinitions } from './validFiletypeDefinitions';
 
 interface UploadFileButtonProps {
   disabled: boolean;
@@ -69,7 +70,9 @@ export function UploadFileButtonMenuItem({
           key={fileInputKey}
           ref={fileInputRef}
           onChange={encodeAndUploadFile}
-          accept={acceptedImageTypes.map((type) => "." + type).toString()}
+          accept={validFileTypeDefinitions.flatMap((def) => {
+            return def.fileExtensions.map(ext => `.${ext}`);
+          }).join(", ")}
         />
       </StyledIconButton>
       {t("attach.image")}

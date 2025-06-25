@@ -1,17 +1,13 @@
 import { AccountInfo, IPublicClientApplication } from "@azure/msal-browser";
 import { apiUse } from "../../authConfig";
 import { uploadFile } from "../../api/api";
+import { validFileTypeDefinitions } from "./validFiletypeDefinitions";
 
 
 export const isValidFileType = (file: File) => {
-  // only validates images for now, eventually should validate other file types
-  const acceptedFileTypesFormatted = acceptedImageTypes.map(
-    (type) => "image/" + type
-  );
+  const acceptedFileTypesFormatted = validFileTypeDefinitions.map((type) => type.fileType);
   return acceptedFileTypesFormatted.includes(file.type);
 };
-
-export const acceptedImageTypes = ["jpg", "jpeg", "png", "webp"];
 
 type UploadFileResult = 
 | { success: false; }
