@@ -1,28 +1,16 @@
-import { AccountInfo } from "@azure/msal-browser";
 import { useMsal } from "@azure/msal-react";
 import AddPhotoAlternateOutlinedIcon from "@mui/icons-material/AddPhotoAlternateOutlined";
 import { styled } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { useRef, useState } from "react";
-import { uploadFile } from "../../api/api";
-import { apiUse } from "../../authConfig";
 import { MenuItem } from '@mui/material';
 import { StyledIconButton } from './StyledIconButton';
+import { acceptedImageTypes, getTokenAndUploadFile, isValidFileType } from './fileUploadUtils';
 
 interface UploadFileButtonProps {
   disabled: boolean;
   onFileUpload: (file: Attachment) => void;
 }
-
-const acceptedImageTypes = ["jpg", "jpeg", "png", "webp"];
-
-const isValidFileType = (file: File) => {
-  // only validates images for now, eventually should validate other file types
-  const acceptedFileTypesFormatted = acceptedImageTypes.map(
-    (type) => "image/" + type
-  );
-  return acceptedFileTypesFormatted.includes(file.type);
-};
 
 export function UploadFileButtonMenuItem({
   disabled,
@@ -31,13 +19,12 @@ export function UploadFileButtonMenuItem({
   const { instance } = useMsal();
   const [uploading, setUploading] = useState(false);
   const [fileInputKey, setFileInputKey] = useState(Date.now());
-  const menuItemRef = useRef<HTMLLIElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { t } = useTranslation();
 
-  const encodeAndUploadFile = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    console.log("in encodeAndUploadFile");
+  const encodeAndUploadFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file: File | undefined = event.target.files?.[0];
+
     if (file) {
       if (!isValidFileType(file)) {
         event.preventDefault();
@@ -47,36 +34,20 @@ export function UploadFileButtonMenuItem({
       }
 
       setUploading(true);
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const encodedFile = reader.result as string;
-        try {
-          const response = await instance.acquireTokenSilent({
-            ...apiUse,
-            account: instance.getActiveAccount() as AccountInfo,
-            forceRefresh: true,
-          });
+      debugger;
+      const attachment = await getTokenAndUploadFile(file, instance);
+      switch (attachment.success) {
+        case true:
+          onFileUpload(attachment.attachment);
+          break;
+        case false:
+          const errorMessage = t("error.uploading.file");
+          console.error(errorMessage);
+          alert(errorMessage);
+          break;
+      }
 
-          var fileUpload = await uploadFile(
-            encodedFile,
-            file.name,
-            response.accessToken
-          );
-
-          //TODO: Detect file type here I assume, in this case we force it to image
-          fileUpload.type = "image";
-
-          console.log("fileUpload", fileUpload);
-          onFileUpload(fileUpload);
-        } catch (error) {
-          console.error("Error uploading file");
-          throw error;
-        } finally {
-          setUploading(false);
-          setFileInputKey(Date.now());
-        }
-      };
-      reader.readAsDataURL(file);
+      setUploading(false);
     }
   };
 
