@@ -2,24 +2,21 @@ import InfoIcon from "@mui/icons-material/Info";
 import CloseIcon from "@mui/icons-material/Close";
 import Send from "@mui/icons-material/Send";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
-import DocumentScannerRounded from "@mui/icons-material/DocumentScannerRounded";
 import {
   Box,
   CircularProgress,
   Container,
   IconButton,
   InputBase,
-  Menu,
-  MenuItem,
   Paper,
   Typography,
   useTheme,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { UploadFileButtonMenuItem } from "./UploadFileButtonMenuItem";
 import { disabledFeaturesSet } from "../allowedTools";
-import { StyledIconButton } from './StyledIconButton';
+import { NewFileUploadButton } from './file-upload/NewFileUploadButton';
+import { useDetectedDrag } from './file-upload/useDetectedDrag';
 
 interface ChatInputProps {
   onSend: (question: string, files: Attachment[]) => void;
@@ -43,9 +40,7 @@ export const ChatInput = ({
   const theme = useTheme();
   const [file, setFile] = useState<Attachment | undefined>(undefined);
   const inputFieldRef = React.useRef<HTMLInputElement>(null);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
-  const [dragActive, setDragActive] = useState(false);
+  const hasDetectedDrag = useDetectedDrag();
 
   const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "";
 
@@ -78,13 +73,6 @@ export const ChatInput = ({
     setFile(undefined);
   };
 
-  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
   // this useEffect focuses the chatInput whenever quotedText is added
   useEffect(() => {
     if (quotedText) {
@@ -92,46 +80,6 @@ export const ChatInput = ({
       chatInput?.focus();
     }
   }, [quotedText]);
-
-  // Drag event handlers for visual dropbox (now on window)
-  useEffect(() => {
-    const hasFiles = (e: DragEvent) => {
-      if (!e.dataTransfer) return false;
-      // Prefer items for modern browsers
-      if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
-        return Array.from(e.dataTransfer.items).some(item => item.kind === 'file');
-      }
-      // Fallback for types
-      if (e.dataTransfer.types) {
-        return Array.from(e.dataTransfer.types).includes('Files');
-      }
-      return false;
-    };
-    const handleWindowDragEnter = (e: DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (hasFiles(e)) setDragActive(true);
-    };
-    const handleWindowDragLeave = (e: DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setDragActive(false);
-    };
-    const handleWindowDragOver = (e: DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (hasFiles(e)) setDragActive(true);
-      else setDragActive(false);
-    };
-    window.addEventListener('dragenter', handleWindowDragEnter);
-    window.addEventListener('dragleave', handleWindowDragLeave);
-    window.addEventListener('dragover', handleWindowDragOver);
-    return () => {
-      window.removeEventListener('dragenter', handleWindowDragEnter);
-      window.removeEventListener('dragleave', handleWindowDragLeave);
-      window.removeEventListener('dragover', handleWindowDragOver);
-    };
-  }, []);
 
   return (
     <Container
@@ -198,15 +146,15 @@ export const ChatInput = ({
           display: "flex",
           alignItems: "center",
           borderRadius: file ? "0 0 30px 30px" : "40px",
-          borderColor: dragActive ? theme.palette.secondary.main : theme.palette.primary.main,
+          borderColor: hasDetectedDrag ? theme.palette.secondary.main : theme.palette.primary.main,
           borderWidth: file ? "0 1px 1px 1px" : "1px",
           borderStyle: "solid",
-          background: dragActive ? theme.palette.action.hover : undefined,
+          background: hasDetectedDrag ? theme.palette.action.hover : undefined,
           transition: 'background 0.2s, border-color 0.2s',
-          minHeight: dragActive ? 90 : undefined,
+          minHeight: hasDetectedDrag ? 90 : undefined,
         }}
       >
-        {dragActive && (
+        {hasDetectedDrag && (
           <Box
             sx={{
               position: 'absolute',
@@ -232,34 +180,10 @@ export const ChatInput = ({
           </Box>
         )}
         {!disabledFeaturesSet.has("file_upload") && !file && (
-          <>
-            <IconButton
-              aria-label="upload options"
-              onClick={handleMenuClick}
-              disabled={disabled}
-              size="large"
-            >
-              <AttachFileIcon />
-            </IconButton>
-            <Menu
-              anchorEl={anchorEl}
-              open={open}
-              onClose={handleMenuClose}
-              style={{
-                // make it look sleeck and fit the content
-                maxWidth: "300px",
-                minWidth: "200px",
-              }}
-            >
-              <UploadFileButtonMenuItem disabled={disabled} onFileUpload={onFileUpload} />
-              <MenuItem>
-                <StyledIconButton>
-                  <DocumentScannerRounded />
-                </StyledIconButton>
-                {t("attach.document")}
-              </MenuItem>
-            </Menu>
-          </>
+          <NewFileUploadButton
+            onFileUpload={onFileUpload}
+            disabled={disabled}
+          />
         )}
         <InputBase
           sx={{ ml: 1, flex: 1 }}

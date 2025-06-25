@@ -4,8 +4,8 @@ import AddPhotoAlternateOutlinedIcon from "@mui/icons-material/AddPhotoAlternate
 import { styled } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { useRef, useState } from "react";
-import { uploadFile } from "../api/api";
-import { apiUse } from "../authConfig";
+import { uploadFile } from "../../api/api";
+import { apiUse } from "../../authConfig";
 import { MenuItem } from '@mui/material';
 import { StyledIconButton } from './StyledIconButton';
 
