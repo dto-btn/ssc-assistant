@@ -93,22 +93,45 @@ export const ChatInput = ({
     }
   }, [quotedText]);
 
-  // Drag event handlers for visual dropbox
-  const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(true);
-  };
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-  };
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(true);
-  };
+  // Drag event handlers for visual dropbox (now on window)
+  useEffect(() => {
+    const hasFiles = (e: DragEvent) => {
+      if (!e.dataTransfer) return false;
+      // Prefer items for modern browsers
+      if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+        return Array.from(e.dataTransfer.items).some(item => item.kind === 'file');
+      }
+      // Fallback for types
+      if (e.dataTransfer.types) {
+        return Array.from(e.dataTransfer.types).includes('Files');
+      }
+      return false;
+    };
+    const handleWindowDragEnter = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (hasFiles(e)) setDragActive(true);
+    };
+    const handleWindowDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
+    };
+    const handleWindowDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (hasFiles(e)) setDragActive(true);
+      else setDragActive(false);
+    };
+    window.addEventListener('dragenter', handleWindowDragEnter);
+    window.addEventListener('dragleave', handleWindowDragLeave);
+    window.addEventListener('dragover', handleWindowDragOver);
+    return () => {
+      window.removeEventListener('dragenter', handleWindowDragEnter);
+      window.removeEventListener('dragleave', handleWindowDragLeave);
+      window.removeEventListener('dragover', handleWindowDragOver);
+    };
+  }, []);
 
   return (
     <Container
@@ -182,9 +205,6 @@ export const ChatInput = ({
           transition: 'background 0.2s, border-color 0.2s',
           minHeight: dragActive ? 90 : undefined,
         }}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDragOver={handleDragOver}
       >
         {dragActive && (
           <Box
