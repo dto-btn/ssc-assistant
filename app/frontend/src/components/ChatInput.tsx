@@ -45,6 +45,7 @@ export const ChatInput = ({
   const inputFieldRef = React.useRef<HTMLInputElement>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  const [dragActive, setDragActive] = useState(false);
 
   const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "";
 
@@ -91,6 +92,23 @@ export const ChatInput = ({
       chatInput?.focus();
     }
   }, [quotedText]);
+
+  // Drag event handlers for visual dropbox
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
 
   return (
     <Container
@@ -157,11 +175,42 @@ export const ChatInput = ({
           display: "flex",
           alignItems: "center",
           borderRadius: file ? "0 0 30px 30px" : "40px",
-          borderColor: theme.palette.primary.main,
+          borderColor: dragActive ? theme.palette.secondary.main : theme.palette.primary.main,
           borderWidth: file ? "0 1px 1px 1px" : "1px",
           borderStyle: "solid",
+          background: dragActive ? theme.palette.action.hover : undefined,
+          transition: 'background 0.2s, border-color 0.2s',
+          minHeight: dragActive ? 90 : undefined,
         }}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
       >
+        {dragActive && (
+          <Box
+            sx={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              width: '100%',
+              height: '100%',
+              bgcolor: `${theme.palette.background.paper}`,
+              // inset dropshadow instead of border
+              border: `3px dashed ${theme.palette.primary.main}`,
+              zIndex: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              pointerEvents: 'none',
+              fontWeight: 600,
+              fontSize: 18,
+              color: theme.palette.text.primary,
+            }}
+          >
+            <AttachFileIcon sx={{ mr: 1 }} />
+            Drop file to upload
+          </Box>
+        )}
         {!disabledFeaturesSet.has("file_upload") && !file && (
           <>
             <IconButton
