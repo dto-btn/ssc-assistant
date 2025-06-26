@@ -531,14 +531,14 @@ def bits_br_information():
         return jsonify(result)
     except ValueError as e:
         logger.error("Error getting BR information: %s", str(e))
-        return jsonify({"error": f"Error processing request: {str(e)}"}), 500
+        return jsonify({"error": "Error processing request"}), 500
     except KeyError as e:
         logger.error("Missing key in request data: %s", str(e))
-        return jsonify({"error": f"Missing key in request data: {str(e)}"}), 400
+        return jsonify({"error": "Missing key in request data"}), 400
     except TypeError as e:
         logger.error("Type error getting BR information: %s", str(e))
-        return jsonify({"error": f"Type error processing request: {str(e)}"}), 500
+        return jsonify({"error": "Type error processing request"}), 500
     except Exception as e:
         # For truly unexpected errors, still log and return 500, but this should be rare.
         logger.error("Unexpected error getting BR information: %s", str(e))
-        return jsonify({"error": f"Unexpected error processing request: {str(e)}"}), 500
+        return jsonify({"error": "Unexpected error processing request"}), 500
