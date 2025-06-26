@@ -62,7 +62,13 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
       headerName: t("business.request.number.short"),
       width: 75,
       renderCell: (params) => (
-        <Link onClick={() => handlePopupOpen(params.value)} style={{ cursor: "pointer" }}>
+        <Link
+          onClick={(event) => {
+            event.stopPropagation(); // Prevent row selection
+            handlePopupOpen(params.value);
+          }}
+          style={{ cursor: "pointer" }}
+        >
           #{params.value}
         </Link>
       ), 
