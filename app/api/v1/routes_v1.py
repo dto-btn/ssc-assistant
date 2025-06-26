@@ -13,6 +13,7 @@ from flask import Response, jsonify, stream_with_context, request
 from openai.types.chat import ChatCompletion
 
 from src.service.suggestion_service import SuggestionService
+from tools.bits.bits_functions import get_br_information
 from utils.manage_message import SUGGEST_SYSTEM_PROMPT_FR, SUGGEST_SYSTEM_PROMPT_EN
 from src.context.build_context import build_prod_context
 
@@ -511,3 +512,24 @@ def generate_monthly_user_engagement_report():
     ctx = build_prod_context()
     weekly_report = ctx["stats_report_service"].get_monthly_user_engagement_report()
     return jsonify(weekly_report), 200
+
+
+@api_v1.post("/bits/br")
+@auth.login_required(role="chat")
+def bits_br_information():
+    """
+    Get information about specific BR numbers.
+    
+    This endpoint accepts a JSON body with a 'br_numbers' field containing an array of BR numbers.
+    """
+    try:
+        data = request.json
+        if not data or 'br_numbers' not in data or not isinstance(data['br_numbers'], list):
+            return jsonify({"error": "Missing or invalid br_numbers parameter"}), 400
+        
+        # Call the backend function to get BR information
+        result = get_br_information(data['br_numbers'])
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"Error getting BR information: {str(e)}")
+        return jsonify({"error": f"Error processing request: {str(e)}"}), 500

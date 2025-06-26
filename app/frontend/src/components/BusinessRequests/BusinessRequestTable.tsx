@@ -1,23 +1,61 @@
-import React from "react";
-import { Box, Link, Paper, TableContainer, useTheme } from "@mui/material";
+import React, { useState } from "react";
+import { Box, Link, Paper, TableContainer, useTheme, Modal, Button } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { formatDate } from "./subcomponents/DateDisplay";
+import BusinessRequestCard from "./BusinessRequestCard";
+import { transformToBusinessRequest } from "../../util/bits_utils";
 
 interface BusinessRequestTableProps {
   data: Array<BusinessRequest>;
   lang: string;
   show_fields: string[];
+  brRequest?: BusinessRequest;
 }
 
 const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
   data,
   lang,
   show_fields,
+  brRequest,
 }) => {
   const isEnglish = lang === "en";
   const { t } = useTranslation();
   const theme = useTheme();
+  const [open, setOpen] = useState(false);
+  const [brData, setBrData] = useState<BusinessRequest | undefined>(undefined);
+
+  const handlePopupOpen = (BR: string) => {
+    fetchBRData(BR)
+      .then((data) => {
+        brRequest = transformToBusinessRequest(data.br[0]);
+        setBrData(brRequest);
+        setOpen(true);
+      })
+      .catch((error) => {
+        console.error("Error fetching BR data:", error);
+      });
+  };
+
+  const fetchBRData = async (BR: string) => {
+    const response = await fetch("api/1.0/bits/br", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ br_numbers: [BR] }),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    return result && Array.isArray(result) ? result[0] : result;
+  };
+
+  const handlePopupClose = () => {
+    setOpen(false);
+    setBrData(undefined);
+  };
 
   const columns: GridColDef[] = [
     {
@@ -25,14 +63,10 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
       headerName: t("business.request.number.short"),
       width: 75,
       renderCell: (params) => (
-        <Link
-          href={`https://bitsprod.ssc-spc.gc.ca/BR/${params.value}`}
-          rel="noopener"
-          target="_blank"
-        >
+        <Link onClick={() => handlePopupOpen(params.value)} style={{ cursor: "pointer" }}>
           #{params.value}
         </Link>
-      ),
+      ), 
     },
     {
       field: "BR_SHORT_TITLE",
@@ -148,8 +182,6 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
     },
   ];
 
-  const paginationModel = { page: 0, pageSize: 10 };
-
   // Build columnVisibilityModel based on select_fields
   const getColumnVisibilityModel = () => {
     // List all possible fields that are currently set to false by default
@@ -225,7 +257,8 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
           getRowId={(row) => row.BR_NMBR}
           initialState={{
             pagination: {
-              paginationModel,
+              page: 0,
+              pageSize: 10,
             },
             columns: {
               columnVisibilityModel: getColumnVisibilityModel(),
@@ -240,8 +273,42 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
           showToolbar
         />
       </TableContainer>
+      <Modal open={open} onClose={handlePopupClose}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 4,
+            minWidth: 400,
+            maxWidth: "90vw",
+            maxHeight: "90vh",
+            overflow: "auto",
+            borderRadius: 2,
+          }}
+        >
+          <h2>{t("business.request.details")}</h2>
+          {brData && (
+            <BusinessRequestCard
+              key={brData.BR_NMBR}
+              data={brData}
+              lang={lang}
+            />
+          )}
+          <Box mt={2} textAlign="right">
+            <Button onClick={handlePopupClose} color="primary" variant="contained">
+              {t("close")}
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
     </Box>
   );
 };
 
 export default BusinessRequestTable;
+
+
