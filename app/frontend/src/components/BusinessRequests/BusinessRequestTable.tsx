@@ -187,6 +187,9 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
     },
   ];
 
+  const paginationModel = { page: 0, pageSize: 10 };
+
+
   // Build columnVisibilityModel based on select_fields
   const getColumnVisibilityModel = () => {
     // List all possible fields that are currently set to false by default
@@ -253,65 +256,66 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
   return (
     <Box>
       <TableContainer
-        component={Paper}
-        sx={{ backgroundColor: theme.palette.secondary.contrastText }}
+      component={Paper}
+      sx={{ backgroundColor: theme.palette.secondary.contrastText }}
       >
-        <DataGrid
-          rows={data}
-          columns={columns}
-          getRowId={(row) => row.BR_NMBR}
-          initialState={{
-            pagination: {
-              page: 0,
-              pageSize: 10,
-            },
-            columns: {
-              columnVisibilityModel: getColumnVisibilityModel(),
-            },
-          }}
-          pageSizeOptions={[5, 10]}
-          checkboxSelection
-          sx={{
-            border: 0,
-            backgroundColor: theme.palette.secondary.contrastText,
-          }}
-          showToolbar
-        />
+      <DataGrid
+        rows={data}
+        columns={columns}
+        getRowId={(row) => row.BR_NMBR}
+        initialState={{
+        pagination: {
+          paginationModel,
+        },
+        columns: {
+          columnVisibilityModel: getColumnVisibilityModel(),
+        },
+        }}
+        pageSizeOptions={[5, 10]}
+        checkboxSelection
+        sx={{
+        border: 0,
+        backgroundColor: theme.palette.secondary.contrastText,
+        }}
+        showToolbar
+      />
       </TableContainer>
       <Modal open={open} onClose={handlePopupClose}>
-        <Box
-          sx={{
-            bgcolor: theme.palette.background.paper,
-            borderRadius: 3,
-            boxShadow: 24,
-            p: 4,
-            minWidth: 400,
-            maxWidth: 600,
-            width: "90vw",
-            maxHeight: "95vh",
-            overflowY: "auto",
-            mx: "auto",
-            my: "5vh",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            outline: "none",
-            border: "1px solid " + theme.palette.divider,
-          }}
-        >
-          {brData && (
-            <BusinessRequestCard
-              key={brData.BR_NMBR}
-              data={brData}
-              lang={lang}
-            />
-          )}
-          <Box sx={{ mt: 2, width: "100%", display: "flex", justifyContent: "flex-end" }}>
-            <Button onClick={handlePopupClose} color="primary" variant="contained">
-              {t("close")}
-            </Button>
-          </Box>
+      <Box
+        sx={{
+        bgcolor: theme.palette.background.paper,
+        borderRadius: 3,
+        boxShadow: 24,
+        p: 4,
+        minWidth: 400,
+        maxWidth: 600,
+        width: "90vw",
+        maxHeight: "95vh",
+        overflowY: "auto",
+        mx: "auto",
+        my: "5vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        outline: "none",
+        border: "1px solid " + theme.palette.divider,
+        }}
+      >
+        {brData && (
+        <Box sx={{ width: "100%", overflow: "auto", maxHeight: "70vh" }}>
+          <BusinessRequestCard
+          key={brData.BR_NMBR}
+          data={brData}
+          lang={lang}
+          />
         </Box>
+        )}
+        <Box sx={{ mt: 2, width: "100%", display: "flex", justifyContent: "flex-end" }}>
+        <Button onClick={handlePopupClose} color="primary" variant="contained">
+          {t("close")}
+        </Button>
+        </Box>
+      </Box>
       </Modal>
     </Box>
   );
