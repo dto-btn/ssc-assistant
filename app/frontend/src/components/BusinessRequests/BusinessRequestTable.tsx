@@ -290,7 +290,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
             borderRadius: 2,
           }}
         >
-          <h2>{t("business.request.details")}</h2>
+          
           {brData && (
             <BusinessRequestCard
               key={brData.BR_NMBR}
