@@ -279,8 +279,8 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
             borderRadius: 3,
             boxShadow: 24,
             p: 4,
-            minWidth: 400, 
-            maxWidth: "100%", // Make modal max width match parent
+            minWidth: 400,
+            maxWidth: 600,
             width: "90vw",
             maxHeight: "95vh",
             overflowY: "auto",
