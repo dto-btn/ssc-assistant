@@ -519,17 +519,26 @@ def generate_monthly_user_engagement_report():
 def bits_br_information():
     """
     Get information about specific BR numbers.
-    
+
     This endpoint accepts a JSON body with a 'br_numbers' field containing an array of BR numbers.
     """
     try:
         data = request.json
         if not data or 'br_numbers' not in data or not isinstance(data['br_numbers'], list):
             return jsonify({"error": "Missing or invalid br_numbers parameter"}), 400
-        
         # Call the backend function to get BR information
         result = get_br_information(data['br_numbers'])
         return jsonify(result)
-    except Exception as e:
-        logger.error(f"Error getting BR information: {str(e)}")
+    except ValueError as e:
+        logger.error("Error getting BR information: %s", str(e))
         return jsonify({"error": f"Error processing request: {str(e)}"}), 500
+    except KeyError as e:
+        logger.error("Missing key in request data: %s", str(e))
+        return jsonify({"error": f"Missing key in request data: {str(e)}"}), 400
+    except TypeError as e:
+        logger.error("Type error getting BR information: %s", str(e))
+        return jsonify({"error": f"Type error processing request: {str(e)}"}), 500
+    except Exception as e:
+        # For truly unexpected errors, still log and return 500, but this should be rare.
+        logger.error("Unexpected error getting BR information: %s", str(e))
+        return jsonify({"error": f"Unexpected error processing request: {str(e)}"}), 500
