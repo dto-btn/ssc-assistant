@@ -17,7 +17,6 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
   data,
   lang,
   show_fields,
-  brRequest,
 }) => {
   const isEnglish = lang === "en";
   const { t } = useTranslation();
@@ -28,8 +27,8 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
   const handlePopupOpen = (BR: string) => {
     fetchBRData(BR)
       .then((data) => {
-        brRequest = transformToBusinessRequest(data.br[0]);
-        setBrData(brRequest);
+        const transformed = transformToBusinessRequest(data.br[0]);
+        setBrData(transformed);
         setOpen(true);
       })
       .catch((error) => {
@@ -276,21 +275,24 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
       <Modal open={open} onClose={handlePopupClose}>
         <Box
           sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            bgcolor: "background.paper",
+            bgcolor: theme.palette.background.paper,
+            borderRadius: 3,
             boxShadow: 24,
             p: 4,
-            minWidth: 400,
-            maxWidth: "90vw",
-            maxHeight: "90vh",
-            overflow: "auto",
-            borderRadius: 2,
+            minWidth: 400, 
+            maxWidth: "100%", // Make modal max width match parent
+            width: "90vw",
+            maxHeight: "95vh",
+            overflowY: "auto",
+            mx: "auto",
+            my: "5vh",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            outline: "none",
+            border: "1px solid " + theme.palette.divider,
           }}
         >
-          
           {brData && (
             <BusinessRequestCard
               key={brData.BR_NMBR}
@@ -298,7 +300,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
               lang={lang}
             />
           )}
-          <Box mt={2} textAlign="right">
+          <Box sx={{ mt: 2, width: "100%", display: "flex", justifyContent: "flex-end" }}>
             <Button onClick={handlePopupClose} color="primary" variant="contained">
               {t("close")}
             </Button>
