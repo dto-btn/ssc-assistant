@@ -10,6 +10,8 @@ interface ChatMessagesContainerProps {
   replayChat: () => void;
   handleRemoveToastMessage: (index: number) => void;
   handleBookReservation: (bookingDetails: BookingConfirmation) => void;
+  containerRef: React.RefObject<HTMLDivElement>;
+  handleScroll: () => void;
 }
 
 const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
@@ -20,18 +22,23 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     replayChat,
     handleRemoveToastMessage,
     handleBookReservation,
+    containerRef,
+    handleScroll,
   } = props;
 
   return (
     <Box
+      ref={containerRef}
+      onScroll={handleScroll}
       sx={{
+        height: "calc(100vh - 200px)", // or whatever fits your layout
+        overflowY: "auto",
         padding: "0.5rem",
         paddingBottom: 0,
         alignItems: "flex-end",
-        overflowY: '',
         maxWidth: "lg",
-        margin: 'auto',
-        width: "100%"
+        margin: "auto",
+        width: "100%",
       }}
       aria-live="polite"
       aria-relevant="additions"
