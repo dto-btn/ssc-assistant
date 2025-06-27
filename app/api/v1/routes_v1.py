@@ -13,6 +13,7 @@ from flask import Response, jsonify, stream_with_context, request
 from openai.types.chat import ChatCompletion
 
 from src.service.suggestion_service import SuggestionService
+from tools.bits.bits_functions import get_br_information
 from utils.manage_message import SUGGEST_SYSTEM_PROMPT_FR, SUGGEST_SYSTEM_PROMPT_EN
 from src.context.build_context import build_prod_context
 
@@ -511,3 +512,33 @@ def generate_monthly_user_engagement_report():
     ctx = build_prod_context()
     weekly_report = ctx["stats_report_service"].get_monthly_user_engagement_report()
     return jsonify(weekly_report), 200
+
+
+@api_v1.post("/bits/br")
+@auth.login_required(role="chat")
+def bits_br_information():
+    """
+    Get information about specific BR numbers.
+
+    This endpoint accepts a JSON body with a 'br_numbers' field containing an array of BR numbers.
+    """
+    try:
+        data = request.json
+        if not data or 'br_numbers' not in data or not isinstance(data['br_numbers'], list):
+            return jsonify({"error": "Missing or invalid br_numbers parameter"}), 400
+        # Call the backend function to get BR information
+        result = get_br_information(data['br_numbers'])
+        return jsonify(result)
+    except ValueError as e:
+        logger.error("Error getting BR information: %s", str(e))
+        return jsonify({"error": "Error processing request"}), 500
+    except KeyError as e:
+        logger.error("Missing key in request data: %s", str(e))
+        return jsonify({"error": "Missing key in request data"}), 400
+    except TypeError as e:
+        logger.error("Type error getting BR information: %s", str(e))
+        return jsonify({"error": "Type error processing request"}), 500
+    except Exception as e:
+        # For truly unexpected errors, still log and return 500, but this should be rare.
+        logger.error("Unexpected error getting BR information: %s", str(e))
+        return jsonify({"error": "Unexpected error processing request"}), 500
