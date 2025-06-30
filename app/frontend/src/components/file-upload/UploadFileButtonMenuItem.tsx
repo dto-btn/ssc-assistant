@@ -6,16 +6,22 @@ import { useRef, useState } from "react";
 import { MenuItem } from '@mui/material';
 import { StyledIconButton } from './StyledIconButton';
 import { getTokenAndUploadFile, isValidFileType } from './fileUploadUtils';
-import { validFileTypeDefinitions } from './validFiletypeDefinitions';
+import { type ValidFileTypeDefinition } from './validFiletypeDefinitions';
 
 interface UploadFileButtonProps {
   disabled: boolean;
   onFileUpload: (file: Attachment) => void;
+  icon: React.ReactNode;
+  fileTypes: ValidFileTypeDefinition[];
+  label: string; // Optional label for the button
 }
 
 export function UploadFileButtonMenuItem({
   disabled,
   onFileUpload,
+  icon,
+  fileTypes,
+  label
 }: UploadFileButtonProps) {
   const { instance } = useMsal();
   const [uploading, setUploading] = useState(false);
@@ -58,24 +64,25 @@ export function UploadFileButtonMenuItem({
       onClick={() => fileInputRef.current?.click()}
     >
       <StyledIconButton
-        aria-label={uploading ? t("upload.uploading") : t("upload.image")}
+        aria-label={uploading ? t("upload.uploading") : label}
         tabIndex={-1}
         disabled={disabled || uploading}
         loading={uploading}
         size="large"
       >
-        <AddPhotoAlternateOutlinedIcon />
+        {/* <AddPhotoAlternateOutlinedIcon /> */}
+        {icon}
         <VisuallyHiddenInput
           type="file"
           key={fileInputKey}
           ref={fileInputRef}
           onChange={encodeAndUploadFile}
-          accept={validFileTypeDefinitions.flatMap((def) => {
+          accept={fileTypes.flatMap((def) => {
             return def.fileExtensions.map(ext => `.${ext}`);
           }).join(", ")}
         />
       </StyledIconButton>
-      {t("attach.image")}
+      {label}
     </MenuItem>
   );
 }

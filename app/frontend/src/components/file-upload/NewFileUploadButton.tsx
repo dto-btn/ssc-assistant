@@ -1,4 +1,5 @@
 import AttachFileIcon from "@mui/icons-material/AttachFile";
+import AddPhotoAlternateOutlinedIcon from "@mui/icons-material/AddPhotoAlternateOutlined";
 import DocumentScannerRounded from "@mui/icons-material/DocumentScannerRounded";
 import {
     IconButton,
@@ -9,6 +10,7 @@ import { UploadFileButtonMenuItem } from "../file-upload/UploadFileButtonMenuIte
 import { StyledIconButton } from './StyledIconButton';
 import React, { useState } from 'react';
 import { tt } from '../../i18n/tt';
+import { validFileTypeDefinitions } from './validFiletypeDefinitions';
 
 type NewFileUploadButtonProps = {
     onFileUpload: (file: Attachment) => void;
@@ -45,13 +47,20 @@ export const NewFileUploadButton: React.FC<NewFileUploadButtonProps> = ({ onFile
                     minWidth: "200px",
                 }}
             >
-                <UploadFileButtonMenuItem disabled={disabled} onFileUpload={onFileUpload} />
-                <MenuItem>
-                    <StyledIconButton>
-                        <DocumentScannerRounded />
-                    </StyledIconButton>
-                    {tt("attach.document")}
-                </MenuItem>
+                <UploadFileButtonMenuItem
+                    disabled={disabled}
+                    onFileUpload={onFileUpload}
+                    icon={<AddPhotoAlternateOutlinedIcon />}
+                    fileTypes={validFileTypeDefinitions.filter(def => def.category === "image")}
+                    label={tt("attach.image")}
+                />
+                <UploadFileButtonMenuItem
+                    disabled={disabled}
+                    onFileUpload={onFileUpload}
+                    icon={<DocumentScannerRounded />}
+                    fileTypes={validFileTypeDefinitions.filter(def => def.category === "document")}
+                    label={tt("attach.document")}
+                />
             </Menu>
         </>
     )
