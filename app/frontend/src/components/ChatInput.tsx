@@ -13,6 +13,7 @@ import {
   useTheme,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
+import { createPortal } from 'react-dom';
 import { useTranslation } from "react-i18next";
 import { disabledFeaturesSet } from "../allowedTools";
 import { NewFileUploadButton } from './file-upload/NewFileUploadButton';
@@ -155,29 +156,46 @@ export const ChatInput = ({
         }}
       >
         {hasDetectedDrag && (
-          <Box
-            sx={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              width: '100%',
-              height: '100%',
-              bgcolor: `${theme.palette.background.paper}`,
-              // inset dropshadow instead of border
-              border: `3px dashed ${theme.palette.primary.main}`,
-              zIndex: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              pointerEvents: 'none',
-              fontWeight: 600,
-              fontSize: 18,
-              color: theme.palette.text.primary,
-            }}
-          >
-            <AttachFileIcon sx={{ mr: 1 }} />
-            Drop file to upload
-          </Box>
+          createPortal(
+            <Box
+              sx={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                width: '100vw',
+                height: '100vh',
+                bgcolor: `${theme.palette.background.paper}`,
+                // inset dropshadow instead of border
+                border: `3px dashed ${theme.palette.primary.main}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                pointerEvents: 'none',
+                fontWeight: 600,
+                fontSize: 18,
+                // color: theme.palette.text.primary,
+                zIndex: 9999,
+                opacity: 0.85,
+                color: theme.palette.primary.main,
+                flexDirection: 'column',
+                gap: 1,
+              }}
+            >
+              <AttachFileIcon sx={{
+                borderRadius: '10%',
+                backgroundColor: theme.palette.background.paper,
+                padding: '10px',
+                boxShadow: `0 0 5px ${theme.palette.secondary.main}`,
+                marginBottom: '10px',
+                fontSize: '64px',
+                color: theme.palette.secondary.main,
+              }} />
+              <Typography fontSize="24px" >
+                Drop file to upload
+              </Typography>
+            </Box>,
+            document.body
+          )
         )}
         {!disabledFeaturesSet.has("file_upload") && !file && (
           <NewFileUploadButton
