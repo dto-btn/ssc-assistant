@@ -7,17 +7,18 @@ import { isValidFileType, getTokenAndUploadFile } from './fileUploadUtils';
 export const useFileUploadManager = (
     onFileUpload: (file: Attachment) => void
 ) => {
-    const [uploading, setUploading] = useState(false);
+    const [isUploading, setUploading] = useState(false);
     const { t } = useTranslation();
     const { instance } = useMsal();
 
     return useMemo(() => {
-        const encodeAndUploadFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
-            const file: File | undefined = event.target.files?.[0];
+        const doUpload = async (file: File | undefined) => {
+            // const file: File | undefined = event.target.files?.[0];
 
             if (file) {
                 if (!isValidFileType(file)) {
-                    event.preventDefault();
+                    // TODO: What to do when invalid file type?
+                    // event.preventDefault();
                     const invalidFileType = t("invalid.file.type");
                     alert(invalidFileType);
                     throw Error(invalidFileType);
@@ -43,8 +44,8 @@ export const useFileUploadManager = (
         };
 
         return {
-            uploading,
-            encodeAndUploadFile
+            isUploading,
+            doUpload
         };
     }, [
         onFileUpload,

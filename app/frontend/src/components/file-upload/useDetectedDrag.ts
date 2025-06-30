@@ -1,6 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
-export const useDetectedDrag = (): boolean => {
+type UseDetectedDragProps = {
+    onDrop?: (e: React.DragEvent) => void;
+}
+
+export const useDetectedDrag = (
+    props: UseDetectedDragProps = {}
+): boolean => {
     const numDrags = useRef(0);
     const [detectedDrag, setDetectedDrag] = useState(false);
 
@@ -61,6 +67,7 @@ export const useDetectedDrag = (): boolean => {
                 // If we just dropped files, we reset the drag count
                 numDrags.current = 0;
                 updateDragState();
+                props.onDrop?.(e);
             }
         };
         const handleWindowFocus = () => {
@@ -82,7 +89,7 @@ export const useDetectedDrag = (): boolean => {
             window.removeEventListener('dragover', handleWindowDragOver);
 
         };
-    }, []);
+    }, [props]);
 
     return detectedDrag;
 }
