@@ -1,12 +1,10 @@
-import { useMsal } from "@azure/msal-react";
-import AddPhotoAlternateOutlinedIcon from "@mui/icons-material/AddPhotoAlternateOutlined";
 import { styled } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import { MenuItem } from '@mui/material';
 import { StyledIconButton } from './StyledIconButton';
-import { getTokenAndUploadFile, isValidFileType } from './fileUploadUtils';
 import { type ValidFileTypeDefinition } from './validFiletypeDefinitions';
+import { useFileUploadManager } from './useFileUploadManager';
 
 interface UploadFileButtonProps {
   disabled: boolean;
@@ -23,40 +21,12 @@ export function UploadFileButtonMenuItem({
   fileTypes,
   label
 }: UploadFileButtonProps) {
-  const { instance } = useMsal();
-  const [uploading, setUploading] = useState(false);
+
   const [fileInputKey, setFileInputKey] = useState(Date.now());
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { t } = useTranslation();
 
-  const encodeAndUploadFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file: File | undefined = event.target.files?.[0];
-
-    if (file) {
-      if (!isValidFileType(file)) {
-        event.preventDefault();
-        const invalidFileType = t("invalid.file.type");
-        alert(invalidFileType);
-        throw Error(invalidFileType);
-      }
-
-      setUploading(true);
-      debugger;
-      const attachment = await getTokenAndUploadFile(file, instance);
-      switch (attachment.success) {
-        case true:
-          onFileUpload(attachment.attachment);
-          break;
-        case false:
-          const errorMessage = t("error.uploading.file");
-          console.error(errorMessage);
-          alert(errorMessage);
-          break;
-      }
-
-      setUploading(false);
-    }
-  };
+  const { uploading, encodeAndUploadFile } = useFileUploadManager(onFileUpload);
 
   return (
     <MenuItem
