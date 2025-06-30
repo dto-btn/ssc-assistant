@@ -31,7 +31,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
       ref={containerRef}
       onScroll={handleScroll}
       sx={{
-        height: "calc(100vh - 200px)", // or whatever fits your layout
+        height: "100%",
         overflowY: "auto",
         padding: "0.5rem",
         paddingBottom: 0,
