@@ -37,18 +37,20 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
   };
 
   const fetchBRData = async (BR: string) => {
-    const response = await fetch("api/1.0/bits/br", {
-      method: "POST",
+    if (!/^\d+$/.test(BR)) {
+      throw new Error("BR must be all numbers.");
+    }
+    const response = await fetch(`api/1.0/bits/br/${encodeURIComponent(BR)}`, {
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ br_numbers: [BR] }),
     });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const result = await response.json();
-    return result && Array.isArray(result) ? result[0] : result;
+    return result;
   };
 
   const handlePopupClose = () => {
@@ -254,35 +256,35 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
   };
 
   return (
-    <Box>
-      <TableContainer
-      component={Paper}
-      sx={{ backgroundColor: theme.palette.secondary.contrastText }}
-      >
-      <DataGrid
-        rows={data}
-        columns={columns}
-        getRowId={(row) => row.BR_NMBR}
-        initialState={{
-        pagination: {
-          paginationModel,
-        },
-        columns: {
-          columnVisibilityModel: getColumnVisibilityModel(),
-        },
-        }}
-        pageSizeOptions={[5, 10]}
-        checkboxSelection
-        sx={{
-        border: 0,
-        backgroundColor: theme.palette.secondary.contrastText,
-        }}
-        showToolbar
-      />
-      </TableContainer>
-      <Modal open={open} onClose={handlePopupClose}>
-      <Box
-        sx={{
+<Box>
+  <TableContainer
+    component={Paper}
+    sx={{ backgroundColor: theme.palette.secondary.contrastText }}
+  >
+  <DataGrid
+    rows={data}
+    columns={columns}
+    getRowId={(row) => row.BR_NMBR}
+    initialState={{
+    pagination: {
+      paginationModel,
+    },
+    columns: {
+      columnVisibilityModel: getColumnVisibilityModel(),
+    },
+    }}
+    pageSizeOptions={[5, 10]}
+      checkboxSelection
+      sx={{
+      border: 0,
+      backgroundColor: theme.palette.secondary.contrastText,
+    }}
+    showToolbar
+  />
+  </TableContainer>
+  <Modal open={open} onClose={handlePopupClose}>
+    <Box
+      sx={{
         bgcolor: theme.palette.background.paper,
         borderRadius: 3,
         boxShadow: 24,
@@ -299,28 +301,26 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
         alignItems: "center",
         outline: "none",
         border: "1px solid " + theme.palette.divider,
-        }}
-      >
-        {brData && (
-        <Box sx={{ width: "100%", overflow: "auto", maxHeight: "70vh" }}>
-          <BusinessRequestCard
-          key={brData.BR_NMBR}
-          data={brData}
-          lang={lang}
-          />
-        </Box>
-        )}
-        <Box sx={{ mt: 2, width: "100%", display: "flex", justifyContent: "flex-end" }}>
+      }}
+    >
+      {brData && (
+      <Box sx={{ width: "100%", overflow: "auto", maxHeight: "70vh" }}>
+        <BusinessRequestCard
+        key={brData.BR_NMBR}
+        data={brData}
+        lang={lang}
+        />
+      </Box>
+      )}
+      <Box sx={{ mt: 2, width: "100%", display: "flex", justifyContent: "flex-end" }}>
         <Button onClick={handlePopupClose} color="primary" variant="contained">
           {t("close")}
         </Button>
-        </Box>
       </Box>
-      </Modal>
     </Box>
+  </Modal>
+</Box>
   );
 };
 
 export default BusinessRequestTable;
-
-
