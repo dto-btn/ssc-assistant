@@ -6,7 +6,6 @@ export type ValidFileTypeDefinition = {
 }
 
 export const validFileTypeDefinitions: ValidFileTypeDefinition[] = [
-    // images
     {
         fileType: "image/jpeg",
         fileExtensions: ["jpg", "jpeg"],
@@ -25,7 +24,6 @@ export const validFileTypeDefinitions: ValidFileTypeDefinition[] = [
         description: "WebP image",
         category: "image"
     },
-    // documents
     {
         fileType: "application/pdf",
         fileExtensions: ["pdf"],
@@ -42,6 +40,42 @@ export const validFileTypeDefinitions: ValidFileTypeDefinition[] = [
         fileType: "application/vnd.ms-excel",
         fileExtensions: ["xls", "xlsx"],
         description: "Microsoft Excel spreadsheet",
+        category: "document"
+    },
+    {
+        fileType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        fileExtensions: ["docx"],
+        description: "OpenXML Word document",
+        category: "document"
+    },
+    {
+        fileType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        fileExtensions: ["xlsx"],
+        description: "OpenXML Excel spreadsheet",
+        category: "document"
+    },
+    {
+        fileType: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        fileExtensions: ["pptx"],
+        description: "OpenXML PowerPoint presentation",
+        category: "document"
+    },
+    {
+        fileType: "application/vnd.ms-powerpoint",
+        fileExtensions: ["ppt"],
+        description: "Microsoft PowerPoint presentation",
+        category: "document"
+    },
+    {
+        fileType: "text/plain",
+        fileExtensions: ["txt"],
+        description: "Text file",
+        category: "document"
+    },
+    {
+        fileType: "text/csv",
+        fileExtensions: ["csv"],
+        description: "CSV file",
         category: "document"
     }
 ];
