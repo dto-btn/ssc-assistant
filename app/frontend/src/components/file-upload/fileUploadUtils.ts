@@ -2,6 +2,7 @@ import { AccountInfo, IPublicClientApplication } from "@azure/msal-browser";
 import { apiUse } from "../../authConfig";
 import { uploadFile } from "../../api/api";
 import { validFileTypeDefinitions } from "./validFiletypeDefinitions";
+import { AttachmentUtils } from "./AttachmentUtils";
 
 
 export const isValidFileType = (file: File) => {
@@ -36,11 +37,8 @@ export const getTokenAndUploadFile = async (file: File, msalInstance: IPublicCli
                     response.accessToken
                 );
 
-                // get filetype from encodedFile
-                const mimeType = encodedFile.split(';')[0].split(':')[1];
-                const fileTypeDefinition = validFileTypeDefinitions.find(def => def.fileType === mimeType);
-                fileUpload.type = fileTypeDefinition?.category || "document";
-                console.log("fileUpload", fileUpload);
+                fileUpload.type = AttachmentUtils.getMimetypeFromEncodedFile(encodedFile);
+                
                 resolve(fileUpload);
             }
             reader.readAsDataURL(file);

@@ -3,14 +3,12 @@ import AddPhotoAlternateOutlinedIcon from "@mui/icons-material/AddPhotoAlternate
 import DocumentScannerRounded from "@mui/icons-material/DocumentScannerRounded";
 import {
     IconButton,
-    Menu,
-    MenuItem,
+    Menu
 } from "@mui/material";
 import { UploadFileButtonMenuItem } from "../file-upload/UploadFileButtonMenuItem";
-import { StyledIconButton } from './StyledIconButton';
 import React, { useState } from 'react';
 import { tt } from '../../i18n/tt';
-import { validFileTypeDefinitions } from './validFiletypeDefinitions';
+import { AttachmentUtils } from './AttachmentUtils';
 
 type NewFileUploadButtonProps = {
     onFileUpload: (file: Attachment) => void;
@@ -51,14 +49,14 @@ export const NewFileUploadButton: React.FC<NewFileUploadButtonProps> = ({ onFile
                     disabled={disabled}
                     onFileUpload={onFileUpload}
                     icon={<AddPhotoAlternateOutlinedIcon />}
-                    fileTypes={validFileTypeDefinitions.filter(def => def.category === "image")}
+                    fileTypes={AttachmentUtils.getImageTypeDefs()}
                     label={tt("attach.image")}
                 />
                 <UploadFileButtonMenuItem
                     disabled={disabled}
                     onFileUpload={onFileUpload}
                     icon={<DocumentScannerRounded />}
-                    fileTypes={validFileTypeDefinitions.filter(def => def.category === "document")}
+                    fileTypes={AttachmentUtils.getDocumentTypeDefs()}
                     label={tt("attach.document")}
                 />
             </Menu>
