@@ -79,3 +79,6 @@ export const validFileTypeDefinitions: ValidFileTypeDefinition[] = [
         category: "document"
     }
 ];
+
+// a type for just the filetypes
+export type FileTypes = typeof validFileTypeDefinitions[number]['fileType']; 

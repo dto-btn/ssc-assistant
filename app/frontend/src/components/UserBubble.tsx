@@ -5,6 +5,7 @@ import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github.css";
 import { visuallyHidden } from "@mui/utils";
 import { useTranslation } from "react-i18next";
+import { AttachmentPreview } from './file-upload/AttachmentPreview';
 
 interface UserChatProps {
   text: string | null | undefined;
@@ -15,8 +16,6 @@ interface UserChatProps {
 export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
   const { t } = useTranslation();
   // keeping this here for typesafety because we are ts-expect-error down in the return
-  const url: string | undefined =
-    attachments && attachments[0]?.blob_storage_url;
 
   return (
     <Box sx={{ display: "flex", justifyContent: "flex-end", my: "1rem" }}>
@@ -52,16 +51,13 @@ export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
           </QuoteContainer>
         )}
         <UserBubbleContainer tabIndex={0}>
-          {url && (
-            <ImageContainer>
-              <img
-                src={url}
-                aria-description={t("user.file.upload")}
-                height="100%"
-                width="100%"
-              />
-            </ImageContainer>
-          )}
+          {
+            attachments && attachments.map((attachment, idx) => {
+              return (
+                <AttachmentPreview attachment={attachment} key={`${idx}~~${attachment.file_name}`} />
+              )
+            })
+          }
           <Typography sx={visuallyHidden}>{t("aria.user.question")}</Typography>{" "}
           {/* Hidden div for screen reader */}
           <Markdown
@@ -92,6 +88,3 @@ const QuoteContainer = styled(Box)`
   border-radius: 10px;
 `;
 
-const ImageContainer = styled(Box)`
-  padding-top: 15px;
-`;

@@ -24,7 +24,7 @@ export const getTokenAndUploadFile = async (file: File, msalInstance: IPublicCli
         const attachment = await new Promise<Attachment>((resolve) => {
             const reader = new FileReader();
             reader.onloadend = async () => {
-                const encodedFile = reader.result as string;
+                const encodedFile: string = reader.result as string;
                 const response = await msalInstance.acquireTokenSilent({
                     ...apiUse,
                     account: msalInstance.getActiveAccount() as AccountInfo,
@@ -36,7 +36,10 @@ export const getTokenAndUploadFile = async (file: File, msalInstance: IPublicCli
                     response.accessToken
                 );
 
-                fileUpload.type = "image"; // Assuming we are uploading an image
+                // get filetype from encodedFile
+                const mimeType = encodedFile.split(';')[0].split(':')[1];
+                const fileTypeDefinition = validFileTypeDefinitions.find(def => def.fileType === mimeType);
+                fileUpload.type = fileTypeDefinition?.category || "document";
                 console.log("fileUpload", fileUpload);
                 resolve(fileUpload);
             }
