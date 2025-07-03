@@ -1,10 +1,3 @@
-export type ValidFileTypeDefinition = {
-    fileType: string; // e.g., "image/jpeg"
-    fileExtensions: string[]; // e.g., ["jpg"]
-    description: string; // e.g., "JPEG image"
-    category: "image" | "document"; // this is used for different button definitions
-}
-
 export const validFileTypeDefinitions: ValidFileTypeDefinition[] = [
     {
         fileType: "image/jpeg",
@@ -80,5 +73,4 @@ export const validFileTypeDefinitions: ValidFileTypeDefinition[] = [
     }
 ];
 
-// a type for just the filetypes
-export type FileTypes = typeof validFileTypeDefinitions[number]['fileType']; 
+export type ValidFileTypes = typeof validFileTypeDefinitions[number]['fileType']; 
