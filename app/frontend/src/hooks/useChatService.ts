@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { PersistenceUtils } from "../util/persistence";
 import { useChatStore } from "../stores/ChatStore";
 import { useAppStore } from "../stores/AppStore";
@@ -12,6 +12,7 @@ export const useChatService = () => {
     const chatStore = useChatStore();
     const snackbars = useAppStore((state) => state.snackbars);
     const appStore = useAppStore();
+    const messageThreshold = 4;
     const { currentChatIndex, chatHistoriesDescriptions, setChatIndexToLoadOrDelete, setChatHistoriesDescriptions, setDefaultChatHistory, setCurrentChatHistory, setCurrentChatIndex: chatStoreSetCurrentChatIndex } = useChatStore();
     // This is a custom hook that provides chat-related services. We use useMemo to
     // memoize the value of the service to avoid unnecessary re-renders.
@@ -22,6 +23,33 @@ export const useChatService = () => {
         // Update the state
         chatStoreSetCurrentChatIndex(index);
     }
+
+    
+    /**
+     * Generates a new array of chat histories with updated topic status.
+     *
+     * Iterates over the existing `chatHistories` array and checks each `chatHistory` object.
+     * If a chat history contains at least 4 chat items and its `isTopicSet` property is `false`,
+     * it updates the `isTopicSet` property to `true` and marks the `updated` flag as `true`.
+     * Otherwise, the chat history is returned unchanged.
+     *
+     * @param chatHistories - The array of chat history objects to process.
+     * @returns A new array of chat histories with updated `isTopicSet` status where applicable.
+    */
+    useEffect(() => {
+        const chatHistories = PersistenceUtils.getChatHistories();
+        let updated = false;
+        const updatedChatHistories = chatHistories.map((chatHistory) => {
+            if (chatHistory.chatItems.length >= messageThreshold && chatHistory.isTopicSet === false) {
+                updated = true;
+                return { ...chatHistory, isTopicSet: true };
+            }
+            return chatHistory;
+        });
+        if (updated) {
+            PersistenceUtils.setChatHistories(updatedChatHistories);
+        }
+    },[])
 
     const saveChatHistories = (updatedChatHistory: ChatHistory) => {
         try {
@@ -40,7 +68,9 @@ export const useChatService = () => {
                 );
             }
             console.error("Failed to save to localStorage:", error);
+            return Promise.reject(error);
         }
+        return Promise.resolve(updatedChatHistory);
     }
 
     const renameChat = (newDescription: string, indexToUpdate: number) => {
@@ -49,6 +79,7 @@ export const useChatService = () => {
         const updatedChatHistory: ChatHistory = {
             ...chatHistories[indexToUpdate],
             description: newDescription,
+            isTopicSet: true,
         };
         updatedChatHistories[indexToUpdate] = updatedChatHistory;
         PersistenceUtils.setChatHistories(updatedChatHistories);
@@ -172,6 +203,7 @@ export const useChatService = () => {
                 setChatIndexToLoadOrDelete(null);
                 PersistenceUtils.setChatHistories(updatedChatHistories);
             },
+
             updateLastMessage(message_chunk: string) {
                 setCurrentChatHistory((prevChatHistory) => {
                     const updatedChatItems = prevChatHistory?.chatItems.map(
@@ -197,7 +229,11 @@ export const useChatService = () => {
                         chatItems: updatedChatItems,
                     };
 
-                    saveChatHistories(updatedChatHistory);
+                    saveChatHistories(updatedChatHistory).then(() => {
+                        if(updatedChatHistory.chatItems.length >= messageThreshold && updatedChatHistory.isTopicSet === false){ 
+                            renameChat("Testing Conversation " + (currentChatIndex + 1), currentChatIndex); //TODO dynamically set topic via LLM
+                        }
+                    });
                     return updatedChatHistory;
                 });
             },
