@@ -231,7 +231,24 @@ export const useChatService = () => {
 
                     saveChatHistories(updatedChatHistory).then(() => {
                         if(updatedChatHistory.chatItems.length >= messageThreshold && updatedChatHistory.isTopicSet === false){ 
-                            renameChat("Testing Conversation " + (currentChatIndex + 1), currentChatIndex); //TODO dynamically set topic via LLM
+                            // Call the /summerize endpoint to get a title
+                            (async () => {
+                                try {
+                                    const response = await fetch("/api/1.0/summerize", {
+                                        method: "POST",
+                                        headers: {
+                                            "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({ chathistory: updatedChatHistory.chatItems }),
+                                    });
+                                    const data = await response.json();
+                                    const title = data.title || ("Conversation " + (currentChatIndex + 1));
+                                    renameChat(title, currentChatIndex);
+                                } catch (error) {
+                                    // fallback if API fails
+                                    renameChat("Conversation " + (currentChatIndex + 1), currentChatIndex);
+                                }
+                            })();
                         }
                     });
                     return updatedChatHistory;
