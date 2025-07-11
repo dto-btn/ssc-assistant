@@ -67,7 +67,6 @@ const MainScreen = () => {
 
   const [isTailing, setIsTailing] = useState(true);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
-  const userScrolling = useRef(false);
 
   const { instance, inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
@@ -154,26 +153,6 @@ const MainScreen = () => {
     });
   };
 
-  // Set userScrolling to true on user-initiated events
-  useEffect(() => {
-    const chatRef = chatContainerRef.current;
-    if (chatRef) {
-      const setUserScrollingTrue = () => {
-        userScrolling.current = true;
-      };
-
-      chatRef.addEventListener("wheel", setUserScrollingTrue, { passive: true });
-      chatRef.addEventListener("pointerdown", setUserScrollingTrue, { passive: true });
-      chatRef.addEventListener("touchstart", setUserScrollingTrue, { passive: true });
-
-      return () => {
-        chatRef.removeEventListener("wheel", setUserScrollingTrue);
-        chatRef.removeEventListener("pointerdown", setUserScrollingTrue);
-        chatRef.removeEventListener("touchstart", setUserScrollingTrue);
-      };
-    }
-  }, []);
-
   // Handle scroll events to determine if we are in tailing mode or free-scrolling
   const handleScroll = () => {
     const chatRef = chatContainerRef.current;
@@ -185,18 +164,12 @@ const MainScreen = () => {
       return;
     }
 
-    const isAtBottom =
-      Math.abs(chatRef.scrollHeight - chatRef.scrollTop - chatRef.clientHeight) < 8;
+    const isAtBottom = Math.abs(chatRef.scrollHeight - chatRef.scrollTop - chatRef.clientHeight) < 20;
 
-    // Only change mode if userScrolling is true
-    if (userScrolling.current) {
-      if (isAtBottom && !isTailing) {
-        setIsTailing(true);
-      } else if (!isAtBottom && isTailing) {
-        setIsTailing(false);
-      }
-      // Reset userScrolling after handling
-      userScrolling.current = false;
+    if (isAtBottom && !isTailing) {
+      setIsTailing(true);
+    } else if (!isAtBottom && isTailing) {
+      setIsTailing(false);
     }
   };
 
@@ -204,10 +177,7 @@ const MainScreen = () => {
   useEffect(() => {
     if (isTailing && chatContainerRef.current) {
       // Add a small offset to ensure the last message is fully visible
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight + 10;
-      console.log("Auto-scrolling to bottom of chat container");
-      console.log("Current scroll position:", chatContainerRef.current.scrollTop);
-      console.log("Current scroll height:", chatContainerRef.current.scrollHeight);
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight + 100;
     }
   }, [getCurrentChatHistory().chatItems, isTailing]);
 
