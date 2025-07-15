@@ -578,4 +578,5 @@ def summerize_post():
         title = summerizeChatWithChatGPT(chathistory)
         return jsonify({"title": title}), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        logger.error("Unexpected error occurred during summarization: %s", str(e))
+        return jsonify({"error": "Unexpected error occurred while processing your request"}), 500
