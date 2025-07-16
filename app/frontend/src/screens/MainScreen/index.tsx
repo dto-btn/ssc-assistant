@@ -158,13 +158,13 @@ const MainScreen = () => {
     const chatRef = chatContainerRef.current;
     if (!chatRef) return;
 
-    // If not scrollable, always tail
-    if (chatRef.scrollHeight <= chatRef.clientHeight) {
+    // If not scrollable, always tail, add offset to force tailing for first message upto a certain point
+    if (chatRef.scrollHeight <= chatRef.clientHeight + 200) {
       if (!isTailing) setIsTailing(true);
       return;
     }
 
-    const isAtBottom = Math.abs(chatRef.scrollHeight - chatRef.scrollTop - chatRef.clientHeight) < 20;
+    const isAtBottom = Math.abs(chatRef.scrollHeight - chatRef.scrollTop - chatRef.clientHeight) < 30;
 
     if (isAtBottom && !isTailing) {
       setIsTailing(true);
