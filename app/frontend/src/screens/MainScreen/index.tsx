@@ -164,7 +164,7 @@ const MainScreen = () => {
       return;
     }
 
-    const isAtBottom = Math.abs(chatRef.scrollHeight - chatRef.scrollTop - chatRef.clientHeight) < 30;
+    const isAtBottom = Math.abs(chatRef.scrollHeight - chatRef.scrollTop - chatRef.clientHeight) < 50;
 
     if (isAtBottom && !isTailing) {
       setIsTailing(true);
