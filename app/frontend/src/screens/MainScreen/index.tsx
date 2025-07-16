@@ -155,6 +155,7 @@ const MainScreen = () => {
 
   // Handle scroll events to determine if we are in tailing mode or free-scrolling
   const handleScroll = () => {
+    console.log("tailing = " + isTailing);
     const chatRef = chatContainerRef.current;
     if (!chatRef) return;
 
@@ -176,8 +177,7 @@ const MainScreen = () => {
   // Auto-scroll to bottom if in tailing mode
   useEffect(() => {
     if (isTailing && chatContainerRef.current) {
-      // Add a small offset to ensure the last message is fully visible
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight + 100;
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [getCurrentChatHistory().chatItems, isTailing]);
 
