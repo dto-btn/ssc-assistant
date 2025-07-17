@@ -155,7 +155,6 @@ const MainScreen = () => {
 
   // Handle scroll events to determine if we are in tailing mode or free-scrolling
   const handleScroll = () => {
-    console.log("tailing = " + isTailing);
     const chatRef = chatContainerRef.current;
     if (!chatRef) return;
 
@@ -165,7 +164,7 @@ const MainScreen = () => {
       return;
     }
 
-    const isAtBottom = Math.abs(chatRef.scrollHeight - chatRef.scrollTop - chatRef.clientHeight) < 50;
+    const isAtBottom = Math.abs(chatRef.scrollHeight - chatRef.scrollTop - chatRef.clientHeight) < 60;
 
     if (isAtBottom && !isTailing) {
       setIsTailing(true);
