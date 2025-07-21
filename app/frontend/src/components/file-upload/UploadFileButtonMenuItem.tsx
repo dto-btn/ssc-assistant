@@ -1,10 +1,9 @@
 import { styled } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
-import { useRef, useState, useCallback, ChangeEvent } from "react";
-import { MenuItem } from '@mui/material';
-import { StyledIconButton } from './StyledIconButton';
-import { type ValidFileTypeDefinition } from './validFiletypeDefinitions';
-import { useFileUploadManager } from './useFileUploadManager';
+import { useRef, useState, ChangeEvent } from "react";
+import { MenuItem } from "@mui/material";
+import { StyledIconButton } from "./StyledIconButton";
+import { useFileUploadManager } from "./useFileUploadManager";
 
 interface UploadFileButtonProps {
   disabled: boolean;
@@ -19,14 +18,14 @@ export function UploadFileButtonMenuItem({
   onFileUpload,
   icon,
   fileTypes,
-  label
+  label,
 }: UploadFileButtonProps) {
-
   const [fileInputKey, setFileInputKey] = useState(Date.now());
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { t } = useTranslation();
 
-  const { isUploading: uploading, doUpload } = useFileUploadManager(onFileUpload);
+  const { isUploading: uploading, doUpload } =
+    useFileUploadManager(onFileUpload);
 
   const handleUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -38,13 +37,10 @@ export function UploadFileButtonMenuItem({
       // Reset the input to allow re-uploading the same file
       setFileInputKey(Date.now());
     }
-  }
+  };
 
   return (
-    <MenuItem
-      autoFocus
-      onClick={() => fileInputRef.current?.click()}
-    >
+    <MenuItem autoFocus onClick={() => fileInputRef.current?.click()}>
       <StyledIconButton
         aria-label={uploading ? t("upload.uploading") : label}
         tabIndex={-1}
@@ -59,9 +55,11 @@ export function UploadFileButtonMenuItem({
           key={fileInputKey}
           ref={fileInputRef}
           onChange={handleUpload}
-          accept={fileTypes.flatMap((def) => {
-            return def.fileExtensions.map(ext => `.${ext}`);
-          }).join(", ")}
+          accept={fileTypes
+            .flatMap((def) => {
+              return def.fileExtensions.map((ext) => `.${ext}`);
+            })
+            .join(", ")}
         />
       </StyledIconButton>
       {label}
