@@ -42,8 +42,8 @@ locals {
       user_principal_name = "david.simard@ssc-spc.gc.ca"
     },
     { 
-      name = "dev-mw"
-      user_principal_name = "Monarch.Wadia@ssc-spc.gc.ca"
+      name = "dev-cr"
+      user_principal_name = "Cody.Robillard@ssc-spc.gc.ca"
     },
   ]
 }

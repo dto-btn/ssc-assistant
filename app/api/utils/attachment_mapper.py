@@ -70,11 +70,12 @@ def map_attachments(message: Message):
     if message.attachments:
         for attachment in message.attachments:
             processed_url = attachment.blob_storage_url
+            logger.debug("Processing file type ...: %s", attachment.type)
             try:
-                image_bytes = _download_attachment(processed_url)
-                if isinstance(image_bytes, bytes):
-                    encoded_image = _encode_image_to_base64(image_bytes)
+                file_bytes = _download_attachment(processed_url)
+                if isinstance(file_bytes, bytes):
                     if attachment.type == "image":
+                        encoded_image = _encode_image_to_base64(file_bytes)
                         content.append(
                             {
                                 "type": "image_url",
@@ -83,6 +84,8 @@ def map_attachments(message: Message):
                                     "detail": "auto" # would be interesting to parameterize this.
                                 }
                             })
+                    else:
+                        logger.info("Not an image, processing into a vector database.")
             except Exception as e:
                 logger.error("Error processing attachment skipping: %s", e)
 
