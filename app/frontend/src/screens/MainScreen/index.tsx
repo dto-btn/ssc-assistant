@@ -65,6 +65,9 @@ const MainScreen = () => {
   >(null);
   const [showDeleteChatDialog, setShowDeleteChatDialog] = useState(false);
 
+  const [isTailing, setIsTailing] = useState(true);
+  const chatContainerRef = useRef<HTMLDivElement | null>(null);
+
   const { instance, inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
 
@@ -150,10 +153,32 @@ const MainScreen = () => {
     });
   };
 
-  // Scrolls the last updated message (if its streaming, or once done) into view
+  // Handle scroll events to determine if we are in tailing mode or free-scrolling
+  const handleScroll = () => {
+    const chatRef = chatContainerRef.current;
+    if (!chatRef) return;
+
+    // If not scrollable, always tail, add offset to force tailing for first message upto a certain point
+    if (chatRef.scrollHeight <= chatRef.clientHeight + 200) {
+      if (!isTailing) setIsTailing(true);
+      return;
+    }
+
+    const isAtBottom = Math.abs(chatRef.scrollHeight - chatRef.scrollTop - chatRef.clientHeight) < 60;
+
+    if (isAtBottom && !isTailing) {
+      setIsTailing(true);
+    } else if (!isAtBottom && isTailing) {
+      setIsTailing(false);
+    }
+  };
+
+  // Auto-scroll to bottom if in tailing mode
   useEffect(() => {
-    chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" });
-  }, [getCurrentChatHistory().chatItems]);
+    if (isTailing && chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [getCurrentChatHistory().chatItems, isTailing]);
 
   // Load chat histories and persisted tools if present
   useEffect(() => {
@@ -271,10 +296,10 @@ const MainScreen = () => {
   useEffect(() => {
     console.debug(
       "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-        isAuthenticated +
-        ", InProgress? " +
-        inProgress +
-        ")"
+      isAuthenticated +
+      ", InProgress? " +
+      inProgress +
+      ")"
     );
     if (
       isAuthenticated &&
@@ -505,9 +530,7 @@ const MainScreen = () => {
               right: 0,
               bottom: 0,
               paddingTop: "3rem",
-              overflow: "auto",
             }}
-            // maxWidth="lg"
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <ChatMessagesContainer
@@ -517,6 +540,8 @@ const MainScreen = () => {
               replayChat={replayChat}
               handleRemoveToastMessage={handleRemoveToastMessage}
               handleBookReservation={handleBookReservation}
+              containerRef={chatContainerRef}
+              handleScroll={handleScroll}
             />
             <div ref={chatMessageStreamEnd} style={{ height: "50px" }} />
             <Box
