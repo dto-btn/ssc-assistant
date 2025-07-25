@@ -173,7 +173,7 @@ export const ChatInput = ({
         >
           {!disabledFeaturesSet.has("file_upload") && !file && (
             <NewFileUploadButton
-              onFileUpload={onFileUpload}
+              onFileUpload={doUpload}
               disabled={disabled}
             />
           )}
@@ -202,7 +202,7 @@ export const ChatInput = ({
           />
           <IconButton
             onClick={sendQuestion}
-            disabled={disabled}
+            disabled={disabled || isUploading}
             sx={{
               "&:hover": {
                 backgroundColor: "rgba(0, 0, 0, 0.2)",
@@ -211,7 +211,7 @@ export const ChatInput = ({
             aria-label={t("send")}
             size="large"
           >
-            {disabled ? (
+            {disabled || isUploading ? (
               <CircularProgress size={24} aria-label={t("generating")} />
             ) : (
               <Send sx={{ color: "primary.main" }} aria-label={t("send")} />
@@ -241,7 +241,7 @@ export const ChatInput = ({
           </Typography>
         </Box>
       </Container>
-      {hasDetectedDrag && (
+      {!disabledFeaturesSet.has("file_upload") && hasDetectedDrag && (
         createPortal(
           <Box
             sx={{

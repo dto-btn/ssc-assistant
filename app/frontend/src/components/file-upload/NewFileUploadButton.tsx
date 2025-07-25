@@ -11,7 +11,7 @@ import { tt } from '../../i18n/tt';
 import { AttachmentUtils } from './AttachmentUtils';
 
 type NewFileUploadButtonProps = {
-    onFileUpload: (file: Attachment) => void;
+    onFileUpload: (file: File) => void;
     disabled: boolean;
 }
 

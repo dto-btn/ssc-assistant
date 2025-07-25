@@ -7,7 +7,7 @@ import { useFileUploadManager } from "./useFileUploadManager";
 
 interface UploadFileButtonProps {
   disabled: boolean;
-  onFileUpload: (file: Attachment) => void;
+  onFileUpload: (file: File) => void;
   icon: React.ReactNode;
   fileTypes: ValidFileTypeDefinition[];
   label: string; // Optional label for the button
@@ -22,18 +22,11 @@ export function UploadFileButtonMenuItem({
 }: UploadFileButtonProps) {
   const [fileInputKey, setFileInputKey] = useState(Date.now());
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const { t } = useTranslation();
-
-  const { isUploading: uploading, doUpload } =
-    useFileUploadManager(onFileUpload);
 
   const handleUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      doUpload(file).catch((error) => {
-        console.error("Error uploading file:", error);
-        alert(t("error.uploading.file"));
-      });
+      onFileUpload(file);
       // Reset the input to allow re-uploading the same file
       setFileInputKey(Date.now());
     }
@@ -42,10 +35,9 @@ export function UploadFileButtonMenuItem({
   return (
     <MenuItem autoFocus onClick={() => fileInputRef.current?.click()}>
       <StyledIconButton
-        aria-label={uploading ? t("upload.uploading") : label}
+        aria-label={label}
         tabIndex={-1}
-        disabled={disabled || uploading}
-        loading={uploading}
+        disabled={disabled}
         size="large"
       >
         {/* <AddPhotoAlternateOutlinedIcon /> */}
