@@ -118,7 +118,7 @@ def flag_conversation(message_request: MessageRequest, conversation_uuid: str):
       except Exception as e:
           logger.error(e)
 
-def save_file(file: FilePayload) -> str:
+def save_file(file: FilePayload, user: User) -> str:
     '''
     Store the feedback in the database, we store what we received (history and question) and the completion (answer)
     NOTE: We do not store the user here since the file tied to the user operation 
@@ -131,6 +131,11 @@ def save_file(file: FilePayload) -> str:
     # encode file to bytes
     file_as_byte = base64.b64decode(file.encoded_file.split(",")[1])
     blob_client.upload_blob(file_as_byte, blob_type="BlockBlob", overwrite=False)
+    metadata = {
+        "user_id": user.token['oid'] if user.token and 'oid' in user.token else "unknown",
+    }
+    blob_client.set_blob_metadata(metadata)
+    logger.debug("File uploaded to blob storage with metadata: %s", metadata)
     return blob_client.url
 
 def store_suggestion(message_request: MessageRequest, user: User):

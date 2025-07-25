@@ -295,9 +295,13 @@ def book_reservation(booking_confirmation: BookingConfirmation):
 @api_v1.doc(security="ApiKeyAuth")
 @auth.login_required(role="chat")
 @api_v1.input(FilePayload.Schema, arg_name="file", location="json")  # pylint: disable=no-member # type: ignore
+@user_ad.login_required
 def upload_file(file: FilePayload):
     """Allow users to uploaded encoded files and to decode and store them in Azure blob storage"""
-    url = save_file(file)
+    user = user_ad.current_user()
+    if user is None:
+        abort(401, "User not authenticated")
+    url = save_file(file, user)
     return jsonify({"message": "File received", "file_url": url}), 200
 
 
