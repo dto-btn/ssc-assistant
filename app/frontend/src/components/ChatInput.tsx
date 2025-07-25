@@ -64,7 +64,10 @@ export const ChatInput = ({
 
     if (clearOnSend) {
       setQuestion("");
-      setFile(undefined);
+      // Only clear the file if it was an image.
+      if (file && /\.(jpeg|jpg|gif|png|webp|bmp|svg)$/i.test(file.blob_storage_url)) {
+        setFile(undefined);
+      }
     }
   };
 
@@ -143,7 +146,6 @@ export const ChatInput = ({
                 }}
               />
             ) : (
-              //leaving this code in but it's not used at the moment since we disabled non-image uploads
               <Box
                 component="a"
                 href={file.blob_storage_url}
