@@ -11,6 +11,7 @@ const cleanChatHistories = (histories: (ChatHistory | null)[]) => {
                 model: DEFAULT_CHAT_MODEL,
                 employeeProfile: null,
                 createdAt: new Date(),
+                isTopicSet: false, // Default value for isTopicSet
             }
         } else {
             return history;

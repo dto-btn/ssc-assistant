@@ -341,6 +341,7 @@ const MainScreen = () => {
           description: parsedSuggestionContext.context.original_query,
           uuid: uuidv4(),
           model: getDefaultModel(),
+          isTopicSet: true, // Set to true since we have a topic
         };
         setCurrentChatHistory(newChatHistory);
         setChatHistoriesDescriptions([
