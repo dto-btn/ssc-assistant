@@ -176,6 +176,7 @@ export const useApiRequestService = () => {
 
     const abortRequest = () => {
         abortRef.current = true;
+        setIsLoading(false);
     };
 
     const memoized = useMemo(() => ({
