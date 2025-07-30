@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useRef, useMemo, useState } from "react";
 import { isTokenExpired } from "../../util/token";
 import { useMsal } from "@azure/msal-react";
 import { apiUse } from "../../authConfig";
@@ -11,7 +11,6 @@ import { isACompletion, isAToastMessage } from "../../utils";
 import { convertChatHistoryToMessages } from "./utils";
 import { MAX_MESSAGES_SENT } from "../../constants";
 
-
 export const useApiRequestService = () => {
     const { instance } = useMsal();
     const [apiAccessToken, setApiAccessToken] = useState<string>("");
@@ -19,8 +18,12 @@ export const useApiRequestService = () => {
     const { t, i18n } = useTranslation();
     const chatStore = useChatStore();
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const abortRef = useRef(false);
 
     const sendApiRequest = async (request: MessageRequest) => {
+        abortRef.current = false; // Reset abort flag at start of request
+        setIsLoading(true);
+
         try {
             let token = apiAccessToken;
             if (!apiAccessToken || isTokenExpired(apiAccessToken)) {
@@ -35,9 +38,14 @@ export const useApiRequestService = () => {
 
             if (!token) throw new Error(t("no.token"));
 
-            const completionResponse = await completionMySSC({
+            await completionMySSC({
                 request: request,
-                updateLastMessage: chatService.updateLastMessage,
+                updateLastMessage: (message_chunk: string) => {
+                    // Only update if not aborted
+                    if (!abortRef.current) {
+                        chatService.updateLastMessage(message_chunk);
+                    }
+                },
                 accessToken: token,
             });
 
@@ -46,7 +54,8 @@ export const useApiRequestService = () => {
                     (item, itemIndex) => {
                         if (
                             itemIndex === prevChatHistory.chatItems.length - 1 &&
-                            isACompletion(item)
+                            isACompletion(item) &&
+                            !abortRequest
                         ) {
                             return {
                                 ...item,
@@ -108,6 +117,8 @@ export const useApiRequestService = () => {
         quotedTextFromRegenerate?: string,
         enabledTools: Record<string, boolean> = {}
     ) => {
+        abortRef.current = false; // Reset abort flag at start of request
+
         // set is loading so we disable some interactive functionality while we load the response
         setIsLoading(true);
         const messagedQuoted = quotedTextFromRegenerate
@@ -165,12 +176,40 @@ export const useApiRequestService = () => {
         chatStore.quotedText = undefined
     };
 
-    const memoized = useMemo(() => {
-        return {
-            makeApiRequest,
-            isLoading
-        }
-    }, [isLoading, chatStore, chatService]);
+    const abortRequest = () => {
+        abortRef.current = true;
+        // setAborted(true);
+
+        // Append "You've stopped this response" to the last assistant message
+        chatStore.setCurrentChatHistory((prevChatHistory) => {
+            const chatItems = [...prevChatHistory.chatItems];
+            if (chatItems.length === 0) return prevChatHistory;
+            const lastIndex = chatItems.length - 1;
+            const lastItem = chatItems[lastIndex];
+
+            if (lastItem && lastItem.message && typeof lastItem.message.content === "string") {
+                chatItems[lastIndex] = {
+                    ...lastItem,
+                    message: {
+                        ...lastItem.message,
+                        content: lastItem.message.content + "\n\nYou've stopped this response",
+                    },
+                };
+            }
+            const updatedChatHistory = {
+                ...prevChatHistory,
+                chatItems,
+            };
+            chatService.saveChatHistories(updatedChatHistory);
+            return updatedChatHistory;
+        });
+    };
+
+    const memoized = useMemo(() => ({
+        makeApiRequest,
+        isLoading,
+        abortRequest,
+    }), [isLoading, chatStore, chatService]);
 
     return memoized;
-}
+};

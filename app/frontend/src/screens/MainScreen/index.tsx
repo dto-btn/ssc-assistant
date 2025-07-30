@@ -100,6 +100,33 @@ const MainScreen = () => {
     }
   };
 
+  const stopChat = () => {
+    console.log("Stopping chat...", getCurrentChatHistory().chatItems);
+    apiRequestService.abortRequest();
+
+    setCurrentChatHistory((prevChatHistory) => {
+      const newChatItems = prevChatHistory.chatItems.slice(
+        0,
+        prevChatHistory.chatItems.length - 1
+      );
+
+      newChatItems.push({
+        message: {
+          content: "You've stopped this response",
+          role: "assistant",
+        },
+      });
+
+      const updatedChatHistory = {
+        ...prevChatHistory,
+        chatItems: newChatItems,
+      };
+
+      chatService.saveChatHistories(updatedChatHistory);
+      return updatedChatHistory;
+    });
+  };
+
   const loadChatHistoriesFromStorage = () => {
     const parsedChatHistories = PersistenceUtils.getChatHistories();
     if (parsedChatHistories.length > 0) {
@@ -511,6 +538,7 @@ const MainScreen = () => {
                     appStore.tools.enabledTools
                   )
                 }
+                onStop={stopChat}
                 quotedText={quotedText}
                 selectedModel={getCurrentChatHistory().model}
               />
@@ -567,6 +595,7 @@ const MainScreen = () => {
                     appStore.tools.enabledTools
                   )
                 }
+                onStop={stopChat}
                 quotedText={quotedText}
                 selectedModel={getCurrentChatHistory().model}
               />
