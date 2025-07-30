@@ -22,7 +22,6 @@ export const useApiRequestService = () => {
 
     const sendApiRequest = async (request: MessageRequest) => {
         abortRef.current = false; // Reset abort flag at start of request
-        // setIsLoading(true);
 
         try {
             let token = apiAccessToken;
@@ -41,7 +40,7 @@ export const useApiRequestService = () => {
             const completionResponse = await completionMySSC({
                 request: request,
                 updateLastMessage: (message_chunk: string) => {
-                    // Only update if not aborted
+                    // Only update if not stopped by user
                     if (!abortRef.current) {
                         chatService.updateLastMessage(message_chunk);
                     }
@@ -54,8 +53,7 @@ export const useApiRequestService = () => {
                     (item, itemIndex) => {
                         if (
                             itemIndex === prevChatHistory.chatItems.length - 1 &&
-                            isACompletion(item) &&
-                            !abortRequest
+                            isACompletion(item)
                         ) {
                             return {
                                 ...item,

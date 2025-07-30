@@ -4,7 +4,6 @@ import StopCircleIcon from '@mui/icons-material/StopCircle';
 import Send from "@mui/icons-material/Send";
 import {
   Box,
-  CircularProgress,
   Container,
   IconButton,
   InputBase,
