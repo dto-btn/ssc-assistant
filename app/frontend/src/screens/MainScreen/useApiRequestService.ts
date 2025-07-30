@@ -21,7 +21,10 @@ export const useApiRequestService = () => {
     const abortRef = useRef(false);
 
     const sendApiRequest = async (request: MessageRequest) => {
-        abortRef.current = false; // Reset abort flag at start of request
+        if (abortRef.current) {  // If an abort was requested, do not proceed with the request
+            abortRef.current = false;
+            return;
+        }
 
         try {
             let token = apiAccessToken;
@@ -47,6 +50,11 @@ export const useApiRequestService = () => {
                 },
                 accessToken: token,
             });
+
+            if (abortRef.current) {  // If an abort was requested, do not proceed with the request
+                abortRef.current = false;
+                return;
+            }
 
             chatStore.setCurrentChatHistory((prevChatHistory) => {
                 const updatedChatItems = prevChatHistory?.chatItems.map(
@@ -115,8 +123,6 @@ export const useApiRequestService = () => {
         quotedTextFromRegenerate?: string,
         enabledTools: Record<string, boolean> = {}
     ) => {
-        abortRef.current = false; // Reset abort flag at start of request
-
         // set is loading so we disable some interactive functionality while we load the response
         setIsLoading(true);
         const messagedQuoted = quotedTextFromRegenerate
@@ -169,6 +175,11 @@ export const useApiRequestService = () => {
             chatService.saveChatHistories(updatedChatHistory);
             return updatedChatHistory;
         });
+
+        if (abortRef.current) {  // If an abort was requested, do not proceed with the request
+            abortRef.current = false;
+            return;
+        }
 
         sendApiRequest(request);
         chatStore.quotedText = undefined
