@@ -22,7 +22,7 @@ export const useApiRequestService = () => {
 
     const sendApiRequest = async (request: MessageRequest) => {
         abortRef.current = false; // Reset abort flag at start of request
-        setIsLoading(true);
+        // setIsLoading(true);
 
         try {
             let token = apiAccessToken;
@@ -38,7 +38,7 @@ export const useApiRequestService = () => {
 
             if (!token) throw new Error(t("no.token"));
 
-            await completionMySSC({
+            const completionResponse = await completionMySSC({
                 request: request,
                 updateLastMessage: (message_chunk: string) => {
                     // Only update if not aborted
@@ -178,31 +178,6 @@ export const useApiRequestService = () => {
 
     const abortRequest = () => {
         abortRef.current = true;
-        // setAborted(true);
-
-        // Append "You've stopped this response" to the last assistant message
-        chatStore.setCurrentChatHistory((prevChatHistory) => {
-            const chatItems = [...prevChatHistory.chatItems];
-            if (chatItems.length === 0) return prevChatHistory;
-            const lastIndex = chatItems.length - 1;
-            const lastItem = chatItems[lastIndex];
-
-            if (lastItem && lastItem.message && typeof lastItem.message.content === "string") {
-                chatItems[lastIndex] = {
-                    ...lastItem,
-                    message: {
-                        ...lastItem.message,
-                        content: lastItem.message.content + "\n\nYou've stopped this response",
-                    },
-                };
-            }
-            const updatedChatHistory = {
-                ...prevChatHistory,
-                chatItems,
-            };
-            chatService.saveChatHistories(updatedChatHistory);
-            return updatedChatHistory;
-        });
     };
 
     const memoized = useMemo(() => ({
@@ -212,4 +187,4 @@ export const useApiRequestService = () => {
     }), [isLoading, chatStore, chatService]);
 
     return memoized;
-};
+}
