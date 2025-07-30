@@ -101,7 +101,6 @@ const MainScreen = () => {
   };
 
   const stopChat = () => {
-    console.log("Stopping chat...", getCurrentChatHistory().chatItems);
     apiRequestService.abortRequest();
 
     setCurrentChatHistory((prevChatHistory) => {
