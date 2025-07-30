@@ -176,7 +176,9 @@ export const useApiRequestService = () => {
 
     const abortRequest = () => {
         abortRef.current = true;
-        setIsLoading(false);
+        setIsLoading(false); // Is this needed? 
+        // It avoids delay in transition after stop button click, 
+        // but can cause issues if users asks a follow up question quickly after
     };
 
     const memoized = useMemo(() => ({
