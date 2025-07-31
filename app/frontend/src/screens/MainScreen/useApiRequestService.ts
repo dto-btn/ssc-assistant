@@ -19,12 +19,10 @@ export const useApiRequestService = () => {
     const chatStore = useChatStore();
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const abortRef = useRef(false);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     const sendApiRequest = async (request: MessageRequest) => {
-        if (abortRef.current) {  // If an abort was requested, do not proceed with the request
-            abortRef.current = false;
-            return;
-        }
+        console.log("Preparing to send API request:", request);
 
         try {
             let token = apiAccessToken;
@@ -40,6 +38,9 @@ export const useApiRequestService = () => {
 
             if (!token) throw new Error(t("no.token"));
 
+            console.log("Using access token:", token);
+            abortControllerRef.current = new AbortController();
+
             const completionResponse = await completionMySSC({
                 request: request,
                 updateLastMessage: (message_chunk: string) => {
@@ -49,12 +50,12 @@ export const useApiRequestService = () => {
                     }
                 },
                 accessToken: token,
+                signal: abortControllerRef.current.signal,
             });
 
-            if (abortRef.current) {  // If an abort was requested, do not proceed with the request
-                abortRef.current = false;
-                return;
-            }
+            console.log("Received completion response:", completionResponse);
+
+            console.log("Updating chat history with completion response...");
 
             chatStore.setCurrentChatHistory((prevChatHistory) => {
                 const updatedChatItems = prevChatHistory?.chatItems.map(
@@ -76,6 +77,8 @@ export const useApiRequestService = () => {
                     }
                 );
 
+                console.log("Updated chat items:", updatedChatItems);
+
                 const updatedChatHistory: ChatHistory = {
                     ...prevChatHistory,
                     chatItems: updatedChatItems,
@@ -87,6 +90,8 @@ export const useApiRequestService = () => {
                     chatItems: updatedChatItems.filter((item) => !isAToastMessage(item)),
                 };
 
+                console.log("Filtered chat history:", filteredChatHistory);
+
                 chatService.saveChatHistories(filteredChatHistory);
                 return updatedChatHistory;
             });
@@ -94,6 +99,12 @@ export const useApiRequestService = () => {
             let errorMessage: string;
 
             if (error instanceof Error) {
+                if (error.name === "AbortError") {
+                    abortRef.current = false; // Reset abort flag
+                    setIsLoading(false); // Ensure loading state is reset
+                    console.log("Request was aborted by user.");
+                    return; // Exit if the request was aborted
+                }
                 errorMessage = error.message;
             } else {
                 errorMessage = t("chat.unknownError");
@@ -113,6 +124,7 @@ export const useApiRequestService = () => {
             });
         } finally {
             setIsLoading(false);
+            abortControllerRef.current = null;
         }
     };
 
@@ -176,20 +188,18 @@ export const useApiRequestService = () => {
             return updatedChatHistory;
         });
 
-        if (abortRef.current) {  // If an abort was requested, do not proceed with the request
-            abortRef.current = false;
-            return;
-        }
-
         sendApiRequest(request);
         chatStore.quotedText = undefined
     };
 
     const abortRequest = () => {
+        console.log("Aborting request...");
         abortRef.current = true;
-        // setIsLoading(false); // Is this needed? 
-        // It avoids delay in transition after stop button click, 
-        // but can cause issues if users asks a follow up question quickly after
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+            console.log("Request aborted by user.");
+        }
     };
 
     const memoized = useMemo(() => ({
