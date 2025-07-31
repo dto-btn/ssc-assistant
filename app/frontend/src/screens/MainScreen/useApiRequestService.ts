@@ -22,8 +22,6 @@ export const useApiRequestService = () => {
     const abortControllerRef = useRef<AbortController | null>(null);
 
     const sendApiRequest = async (request: MessageRequest) => {
-        console.log("Preparing to send API request:", request);
-
         try {
             let token = apiAccessToken;
             if (!apiAccessToken || isTokenExpired(apiAccessToken)) {
@@ -53,10 +51,6 @@ export const useApiRequestService = () => {
                 signal: abortControllerRef.current.signal,
             });
 
-            console.log("Received completion response:", completionResponse);
-
-            console.log("Updating chat history with completion response...");
-
             chatStore.setCurrentChatHistory((prevChatHistory) => {
                 const updatedChatItems = prevChatHistory?.chatItems.map(
                     (item, itemIndex) => {
@@ -77,8 +71,6 @@ export const useApiRequestService = () => {
                     }
                 );
 
-                console.log("Updated chat items:", updatedChatItems);
-
                 const updatedChatHistory: ChatHistory = {
                     ...prevChatHistory,
                     chatItems: updatedChatItems,
@@ -90,8 +82,6 @@ export const useApiRequestService = () => {
                     chatItems: updatedChatItems.filter((item) => !isAToastMessage(item)),
                 };
 
-                console.log("Filtered chat history:", filteredChatHistory);
-
                 chatService.saveChatHistories(filteredChatHistory);
                 return updatedChatHistory;
             });
@@ -102,7 +92,6 @@ export const useApiRequestService = () => {
                 if (error.name === "AbortError") {
                     abortRef.current = false; // Reset abort flag
                     setIsLoading(false); // Ensure loading state is reset
-                    console.log("Request was aborted by user.");
                     return; // Exit if the request was aborted
                 }
                 errorMessage = error.message;
@@ -193,12 +182,10 @@ export const useApiRequestService = () => {
     };
 
     const abortRequest = () => {
-        console.log("Aborting request...");
         abortRef.current = true;
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
             abortControllerRef.current = null;
-            console.log("Request aborted by user.");
         }
     };
 
