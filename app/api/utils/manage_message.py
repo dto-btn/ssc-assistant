@@ -167,9 +167,6 @@ Votre objectif est de garantir que les utilisateurs puissent trouver facilement 
 
 """
 
-SUMMERIZECHATWITHCHATGPT_MESSAGE = """Given the following conversation, generate a concise, specific, and descriptive title (max 4 words) that best summarizes the main topic. Avoid generic words like 'conversation', 'chat', or 'discussion'. Only output the title, no quotes or punctuation:"""
-
-
 def generate_system_prompt(message_request: MessageRequest) -> ChatCompletionSystemMessageParam:
     # Below we only filter messages that are not related to system prompt, so the first thing
     # We force archibus as a system prompt if archibus tool is enabled,

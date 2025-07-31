@@ -43,7 +43,6 @@ from utils.openai import (
     chat_with_data,
     convert_chat_with_data_response,
 )
-from utils.common import summerizeChatWithChatGPT
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -554,29 +553,3 @@ def bits_br_information(brnumber):
     except Exception as e:
         logger.error("Unexpected error getting BR information: %s", str(e))
         return jsonify({"error": "Unexpected error processing request"}), 500
-
-
-@api_v1.post("/summerize")
-@auth.login_required(role="chat")
-def summerize_post():
-    """Summarize a given text."""
-    data = request.get_json()
-    if not data or "chathistory" not in data:
-        return jsonify({"error": "Missing chathistory in request body"}), 400
-
-    chathistory = data["chathistory"]
-    if isinstance(chathistory, str):
-        return jsonify({"error": "chathistory must be a list"}), 400
-    if not isinstance(chathistory, list):
-        return jsonify({"error": "chathistory must be a list"}), 400
-
-    # Optionally: Validate that each item is a dict (if your chat items are dicts)
-    if not all(isinstance(item, dict) for item in chathistory):
-        return jsonify({"error": "All items in chathistory must be dicts"}), 400
-
-    try:
-        title = summerizeChatWithChatGPT(chathistory)
-        return jsonify({"title": title}), 200
-    except Exception as e:
-        logger.error("Unexpected error occurred during summarization: %s", str(e))
-        return jsonify({"error": "Unexpected error occurred while processing your request"}), 500
