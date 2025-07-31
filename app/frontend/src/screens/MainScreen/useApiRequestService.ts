@@ -36,7 +36,6 @@ export const useApiRequestService = () => {
 
             if (!token) throw new Error(t("no.token"));
 
-            console.log("Using access token:", token);
             abortControllerRef.current = new AbortController();
 
             const completionResponse = await completionMySSC({
