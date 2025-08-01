@@ -10,8 +10,8 @@ from openai.types.completion_usage import CompletionUsage
 from src.constants.tools import TOOL_CORPORATE, TOOL_PMCOE, TOOL_TELECOM
 from src.service.tool_service import ToolService
 from utils.manage_message import load_messages
-from utils.models import (Citation, Completion, Context, IndexConfig, Message,
-                          MessageRequest, ToolInfo)
+from utils.models import (Citation, Completion, Context, Message,
+                          MessageRequest, ToolInfo, AzureCognitiveSearchDataSourceConfig)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -31,21 +31,21 @@ client = AzureOpenAI(
     azure_ad_token_provider=token_provider,
 )
 
-def _create_azure_cognitive_search_data_source(index_name: str, embedding_model: str, top: int=3, lang_filter: str="") -> dict:
+def _create_azure_cognitive_search_data_source(config: AzureCognitiveSearchDataSourceConfig) -> dict:
     current_filter=""
-    if lang_filter == 'en' or lang_filter == 'fr':
-        current_filter = f"langcode eq '{lang_filter}'"
+    if config.lang_filter == 'en' or config.lang_filter == 'fr':
+        current_filter = f"langcode eq '{config.lang_filter}'"
         logger.debug("Adding langfilter to datasource query %s", current_filter)
     return {"data_sources":
         [{
             "type": "azure_search",
             "parameters": {
                 "endpoint": service_endpoint,
-                "index_name": index_name,
+                "index_name": config.index_name,
                 "in_scope": True,
-                "top_n_documents": top,
+                "top_n_documents": config.top_n_documents,
                 "semantic_configuration": "default",
-                "query_type": "vector_simple_hybrid",
+                "query_type": config.query_type,
                 "fields_mapping": {},
                 "authentication": {
                     "type": "api_key",
@@ -54,7 +54,7 @@ def _create_azure_cognitive_search_data_source(index_name: str, embedding_model:
                 "filter": current_filter,
                 "embedding_dependency": {
                     "type": "deployment_name",
-                    "deployment_name": embedding_model
+                    "deployment_name": config.embedding_model
                 },
             }
         }]
@@ -107,19 +107,17 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                         # Parse the tool response into the IndexConfig Pydantic model
                         try:
                             tool_response = json.loads(str(last_message['content']))
-                            index_config = IndexConfig(**tool_response)
-                            print(index_config)
 
-                            # Use the validated model's properties for creating the data source
+                            # Create the search config directly with language filter applied
+                            search_config = AzureCognitiveSearchDataSourceConfig(
+                                **tool_response,
+                                lang_filter=message_request.lang if tool_response.get('use_language_filter', False) else ""
+                            )
+
                             return (tool_service.tools_info, client.chat.completions.create(
                                 messages=messages,
                                 model=model,
-                                extra_body=_create_azure_cognitive_search_data_source(
-                                    index_config.index_name,
-                                    embedding_model=index_config.embedding_model,
-                                    top=index_config.top_n_documents,
-                                    lang_filter=message_request.lang if index_config.use_language_filter else ""
-                                ),
+                                extra_body=_create_azure_cognitive_search_data_source(search_config),
                                 stream=stream
                             ))
                         except Exception as e:
