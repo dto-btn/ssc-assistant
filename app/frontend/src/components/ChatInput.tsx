@@ -1,9 +1,9 @@
 import InfoIcon from "@mui/icons-material/Info";
 import CloseIcon from "@mui/icons-material/Close";
+import StopCircleIcon from '@mui/icons-material/StopCircle';
 import Send from "@mui/icons-material/Send";
 import {
   Box,
-  CircularProgress,
   Container,
   IconButton,
   InputBase,
@@ -18,6 +18,7 @@ import { disabledFeaturesSet } from "../allowedTools";
 
 interface ChatInputProps {
   onSend: (question: string, files: Attachment[]) => void;
+  onStop: () => void;
   disabled: boolean;
   placeholder?: string;
   clearOnSend?: boolean;
@@ -27,6 +28,7 @@ interface ChatInputProps {
 
 export const ChatInput = ({
   onSend,
+  onStop,
   disabled,
   clearOnSend,
   quotedText,
@@ -176,7 +178,6 @@ export const ChatInput = ({
         />
         <IconButton
           onClick={sendQuestion}
-          disabled={disabled}
           sx={{
             "&:hover": {
               backgroundColor: "rgba(0, 0, 0, 0.2)",
@@ -186,7 +187,7 @@ export const ChatInput = ({
           size="large"
         >
           {disabled ? (
-            <CircularProgress size={24} aria-label={t("generating")} />
+            <StopCircleIcon sx={{ color: '#4B3E99' }} aria-label={t("stop generating")} onClick={onStop} />
           ) : (
             <Send sx={{ color: "primary.main" }} aria-label={t("send")} />
           )}
