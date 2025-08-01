@@ -36,8 +36,6 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         padding: "0.5rem",
         paddingBottom: 0,
         alignItems: "flex-end",
-        maxWidth: "lg",
-        margin: "auto",
         width: "100%",
       }}
       aria-live="polite"
