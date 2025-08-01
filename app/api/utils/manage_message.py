@@ -1,5 +1,4 @@
 import logging
-import os
 from typing import List
 
 from openai.types.chat import (ChatCompletionAssistantMessageParam,
@@ -11,13 +10,12 @@ from tools.bits.bits_prompts import BITS_SYSTEM_PROMPT_EN, BITS_SYSTEM_PROMPT_FR
 from tools.pmcoe.pmcoe_prompts import PMCOE_SYSTEM_PROMPT_EN, PMCOE_SYSTEM_PROMPT_FR
 from utils.attachment_mapper import map_attachments
 from utils.models import MessageRequest
-from utils.file_manager import FileManager
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["load_messages"]
 
-GPT4O_MAX_TOKENS = 128000
+GPT4O_TOKEN_LIMIT = 128000
 
 LATEX_FRAGMENT_FR = """
 Assurez-vous que la sortie LaTeX est toujours entourée de triples accents graves et spécifiée comme `math` pour un rendu correct. Par exemple, une équation mathématique doit être formatée comme :
@@ -220,108 +218,44 @@ def generate_system_prompt(message_request: MessageRequest) -> ChatCompletionSys
     # Add system message to the messages list
     return ChatCompletionSystemMessageParam(content=system_msg, role='system')
 
-def load_messages(message_request: MessageRequest) -> tuple[List[ChatCompletionMessageParam], list[str]]:
+def load_messages(message_request: MessageRequest, token_limit: int = GPT4O_TOKEN_LIMIT) -> List[ChatCompletionMessageParam]:
     """
     Main method responsible for loading in the messages sent to the API and making sure they are converted in something
     suitable to send to the (Azure) OpenAI API.
     """
     messages: List[ChatCompletionMessageParam] = []
     logger.info("in manage messages")
-
-    # For returning blob urls if context is too large
-    file_blob_urls: list[str] = []
-
     # Check if the user quoted text in their query
     if message_request.quotedText and message_request.messages and message_request.messages[-1].content:
         quote_injection = ("The user has quoted specific text in their question."
                            "Please direct your response specifically to the quoted text:"
-                           f'"{message_request.quotedText}".'
+                           f"\"{message_request.quotedText}\"."
                            " Make sure your answer addresses or references this quoted text directly.")
         message_request.messages[-1].content = quote_injection + message_request.messages[-1].content
 
     messages.append(generate_system_prompt(message_request))
 
-    # Calculate current token count for all messages and system prompt
-    import tiktoken
-    encoding = tiktoken.get_encoding("cl100k_base")
-    def count_tokens(text: str) -> int:
-        return len(encoding.encode(text))
-
-    current_token_count = 0
-    # Count tokens for system prompt
-    if messages and 'content' in messages[0]:
-        current_token_count += count_tokens(str(messages[0]['content']))
-    # Count tokens for all other messages
+    # Convert MessageRequest messages to ChatCompletionMessageParam
+    token_count = 0
     for message in message_request.messages or []:
-        if hasattr(message, 'content'):
-            current_token_count += count_tokens(str(message.content))
 
-    # Pre-calculate file tokens for all non-image attachments
-    file_token_sum = 0
-    file_token_info = []  # (att, file_text, token_count)
-    for message in message_request.messages or []:
         if message.attachments and message.role == "user":
-            for att in message.attachments:
-                if att.type != "image":
-                    try:
-                        file_manager = FileManager(att.blob_storage_url)
-                        file_text, token_count = file_manager.get_text_and_token_count()
-                        file_token_sum += token_count
-                        file_token_info.append((att, file_text, token_count))
-                    except Exception as e:
-                        logger.error(f"Failed to process attachment {att.blob_storage_url}: {e}")
-
-    # If total tokens would exceed model max, return blob urls for non-image files
-    if current_token_count + file_token_sum > GPT4O_MAX_TOKENS:
-        # Add all non-image file blob urls to file_blob_urls
-        for att, _, _ in file_token_info:
-            file_blob_urls.append(att.blob_storage_url)
-        # For all messages, add images as before, but skip file content injection
-        for message in message_request.messages or []:
-            if message.attachments and message.role == "user":
-                for att in message.attachments:
-                    if att.type == "image":
-                        image_message = ChatCompletionUserMessageParam(content=map_attachments(message), role='user')
-                        messages.append(image_message)
-                messages.append(ChatCompletionUserMessageParam(content=str(message.content), role='user'))
-            elif not message.attachments and message.role == "user":
-                messages.append(ChatCompletionUserMessageParam(content=str(message.content), role='user'))
-            elif message.role == "assistant":
-                messages.append(ChatCompletionAssistantMessageParam(content=message.content, role='assistant'))
-        # ...existing code for query str and history_max...
-        if len(messages) == 1:
-            messages.append(ChatCompletionUserMessageParam(content=str(message_request.query), role='user'))
-        history_max = min(message_request.max, 20)
-        if len(messages) - 1 > history_max:
-            messages = [messages[0]] + (messages[-(history_max-1):] if history_max > 1 else [])
-        return messages, file_blob_urls
-
-    # Else, include file content as before
-    for message in message_request.messages or []:
-        if message.attachments and message.role == "user":
-            for att in message.attachments:
-                if att.type == "image":
-                    image_message = ChatCompletionUserMessageParam(content=map_attachments(message), role='user')
-                    messages.append(image_message)
-                else:
-                    # Find file_text and token_count from file_token_info
-                    for att2, file_text, token_count in file_token_info:
-                        if att2 == att:
-                            file_content_msg = (
-                                f"The following is the content of the uploaded document by the user (file: {os.path.basename(att.blob_storage_url)}):\n\n"
-                                f"{file_text}\n\n[Token count: {token_count}]"
-                            )
-                            messages.append(ChatCompletionUserMessageParam(content=file_content_msg, role='user'))
-                            break
-            messages.append(ChatCompletionUserMessageParam(content=str(message.content), role='user'))
+            message_with_attachment = ChatCompletionUserMessageParam(content=map_attachments(message), role='user')
+            messages.append(message_with_attachment)
         elif not message.attachments and message.role == "user":
             messages.append(ChatCompletionUserMessageParam(content=str(message.content), role='user'))
         elif message.role == "assistant":
             messages.append(ChatCompletionAssistantMessageParam(content=message.content, role='assistant'))
+        # Add other conditions if there are other roles like tools perhaps??
 
+    # if messages is still one, meaning we didn't add a message it means query was passed via query str
     if len(messages) == 1:
         messages.append(ChatCompletionUserMessageParam(content=str(message_request.query), role='user'))
+
+    # parameter message history via max attribute
     history_max = min(message_request.max, 20)
     if len(messages) - 1 > history_max:
+        # else if 1 we end up with -0 wich is interpreted as 0: (whole list)
         messages = [messages[0]] + (messages[-(history_max-1):] if history_max > 1 else [])
-    return messages, file_blob_urls
+
+    return messages

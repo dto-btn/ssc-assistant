@@ -84,8 +84,6 @@ def map_attachments(message: Message):
                                     "detail": "auto" # would be interesting to parameterize this.
                                 }
                             })
-                    else:
-                        logger.info("Not an image, processing into a vector database.")
             except Exception as e:
                 logger.error("Error processing attachment skipping: %s", e)
 

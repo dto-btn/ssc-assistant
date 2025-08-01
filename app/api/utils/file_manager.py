@@ -9,31 +9,20 @@ from openpyxl import load_workbook
 from pptx import Presentation
 
 class FileManager:
-    def __init__(self, blob_storage_url: str):
-        self.blob_storage_url = blob_storage_url
-        self.filetype, _ = mimetypes.guess_type(blob_storage_url)
+    def __init__(self, data: bytes, filetype: str):
+        self.data = data
+        self.filetype = filetype
         self.content = None
 
-    def download_file(self) -> bytes:
-        # Assumes blob_storage_url is accessible via HTTP(S) or local path
-        if self.blob_storage_url.startswith('http'):
-            resp = requests.get(self.blob_storage_url)
-            resp.raise_for_status()
-            return resp.content
-        else:
-            with open(self.blob_storage_url, 'rb') as f:
-                return f.read()
-
     def extract_text(self) -> str:
-        data = self.download_file()
         if self.filetype == 'application/pdf':
-            return self._extract_pdf(data)
+            return self._extract_pdf(self.data)
         elif self.filetype == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-            return self._extract_docx(data)
+            return self._extract_docx(self.data)
         elif self.filetype == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-            return self._extract_xlsx(data)
+            return self._extract_xlsx(self.data)
         elif self.filetype == 'application/vnd.openxmlformats-officedocument.presentationml.presentation':
-            return self._extract_pptx(data)
+            return self._extract_pptx(self.data)
         else:
             return "[Unsupported file type]"
 
