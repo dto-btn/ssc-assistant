@@ -12,7 +12,6 @@ from src.service.tool_service import ToolService
 from utils.manage_message import load_messages
 from utils.models import (Citation, Completion, Context, IndexConfig, Message,
                           MessageRequest, ToolInfo)
-from urllib import parse as urllib_parse
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
