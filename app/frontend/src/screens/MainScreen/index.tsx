@@ -104,21 +104,27 @@ const MainScreen = () => {
     apiRequestService.abortRequest();
 
     setCurrentChatHistory((prevChatHistory) => {
-      const newChatItems = prevChatHistory.chatItems.slice(
-        0,
-        prevChatHistory.chatItems.length - 1
-      );
+      const chatItems = [...prevChatHistory.chatItems];
+      if (chatItems.length === 0) return prevChatHistory;
 
-      newChatItems.push({
-        message: {
-          content: "You've stopped this response",
-          role: "assistant",
-        },
-      });
+      // Get the last assistant message
+      const lastIndex = chatItems.length - 1;
+      const lastItem = chatItems[lastIndex];
+
+      // If it's an assistant message, append the stop text
+      if (lastItem && lastItem.message && typeof lastItem.message.content === "string") {
+        chatItems[lastIndex] = {
+          ...lastItem,
+          message: {
+            ...lastItem.message,
+            content: lastItem.message.content + "\n\nYou've stopped this response",
+          },
+        };
+      }
 
       const updatedChatHistory = {
         ...prevChatHistory,
-        chatItems: newChatItems,
+        chatItems,
       };
 
       chatService.saveChatHistories(updatedChatHistory);
