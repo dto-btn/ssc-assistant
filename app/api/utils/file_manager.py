@@ -3,10 +3,11 @@ import requests
 from typing import Tuple
 
 import tiktoken
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 from docx import Document
 from openpyxl import load_workbook
 from pptx import Presentation
+from io import BytesIO
 
 class FileManager:
     def __init__(self, data: bytes, filetype: str):
@@ -27,19 +28,16 @@ class FileManager:
             return "[Unsupported file type]"
 
     def _extract_pdf(self, data: bytes) -> str:
-        from io import BytesIO
         reader = PdfReader(BytesIO(data))
         text = "\n".join(page.extract_text() or '' for page in reader.pages)
         return text
 
     def _extract_docx(self, data: bytes) -> str:
-        from io import BytesIO
         doc = Document(BytesIO(data))
         text = "\n".join([p.text for p in doc.paragraphs])
         return text
 
     def _extract_xlsx(self, data: bytes) -> str:
-        from io import BytesIO
         wb = load_workbook(BytesIO(data), read_only=True)
         text = []
         for ws in wb.worksheets:
@@ -48,7 +46,6 @@ class FileManager:
         return "\n".join(text)
 
     def _extract_pptx(self, data: bytes) -> str:
-        from io import BytesIO
         prs = Presentation(BytesIO(data))
         text = []
         for slide in prs.slides:

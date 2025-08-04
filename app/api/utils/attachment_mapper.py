@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 from openai.types.chat.chat_completion_content_part_param import \
     ChatCompletionContentPartParam
 from PIL import Image
+from utils.file_manager import FileManager
 from utils.azure_clients import get_blob_service_client
 from utils.models import Message
 
@@ -83,6 +84,15 @@ def map_attachments(message: Message) -> Iterable[ChatCompletionContentPartParam
                                     "url": encoded_image,
                                     "detail": "auto" # would be interesting to parameterize this.
                                 }
+                            })
+                    else:
+                        # File is a non-image. We will try to load it as text. And return it asa it for now.
+                        file_manager = FileManager(file_bytes, attachment.type)
+                        text = file_manager.extract_text()
+                        content.append(
+                            {
+                                "type": "text",
+                                "text": text
                             })
             except Exception as e:
                 logger.error("Error processing attachment skipping: %s", e)
