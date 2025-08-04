@@ -47,6 +47,30 @@
         "en": "Invalid file type. Please select a supported file format.",
         "fr": "Type de fichier non valide. Veuillez sélectionner un format de fichier pris en charge."
     },
+    "file.too.large": {
+        "en": "File too large. Maximum file size allowed is {{maxSize}}MB.",
+        "fr": "Fichier trop volumineux. La taille maximale autorisée est de {{maxSize}}Mo."
+    },
+    "file.read.failed": {
+        "en": "Failed to read file: {{fileName}}. Please try again.",
+        "fr": "Échec de la lecture du fichier : {{fileName}}. Veuillez réessayer."
+    },
+    "file.read.timeout": {
+        "en": "File reading timeout after {{seconds}} seconds for file: {{fileName}}",
+        "fr": "Délai d'attente de lecture du fichier après {{seconds}} secondes pour le fichier : {{fileName}}"
+    },
+    "file.invalid.format": {
+        "en": "Invalid file format for: {{fileName}}. Expected a valid data format.",
+        "fr": "Format de fichier invalide pour : {{fileName}}. Format de données valide attendu."
+    },
+    "file.read.error": {
+        "en": "Error reading file: {{fileName}}",
+        "fr": "Erreur lors de la lecture du fichier : {{fileName}}"
+    },
+    "file.read.aborted": {
+        "en": "File reading was aborted for: {{fileName}}",
+        "fr": "La lecture du fichier a été interrompue pour : {{fileName}}"
+    },
     "login.required": {
         "en": "Login Required to Proceed",
         "fr": "Connexion requise pour continuer"

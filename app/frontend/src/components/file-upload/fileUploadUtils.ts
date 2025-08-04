@@ -11,27 +11,63 @@ export const isValidFileType = (file: File) => {
 };
 
 type UploadFileResult = 
-| { success: false; }
+| { success: false; error?: string; }
 | { success: true; attachment: Attachment };
 
 /**
  * This should never throw an error, it will always return a result
  * @param file 
  * @param msalInstance 
+ * @param t - Translation function from useTranslation()
  * @returns 
  */
-export const getTokenAndUploadFile = async (file: File, msalInstance: IPublicClientApplication): Promise<UploadFileResult> => {
+export const getTokenAndUploadFile = async (
+    file: File, 
+    msalInstance: IPublicClientApplication,
+    t: (key: string, options?: any) => string
+): Promise<UploadFileResult> => {
     try {
+        // Check file size - browser memory limitations for base64 encoding
+        const maxFileSize = 25 * 1024 * 1024; // 25MB in bytes
+        if (file.size > maxFileSize) {
+            const maxSizeMB = Math.round(maxFileSize / (1024 * 1024));
+            const errorMessage = t("file.too.large", { maxSize: maxSizeMB });
+            return { success: false, error: errorMessage };
+        }
+        
         const attachment = await new Promise<Attachment>((resolve, reject) => {
             const reader = new FileReader();
+            
+            // Add timeout for large files (30 seconds)
+            const timeout = setTimeout(() => {
+                reader.abort();
+                const errorMessage = t("file.read.timeout", { seconds: 30, fileName: file.name });
+                reject(new Error(errorMessage));
+            }, 30000);
+            
             reader.onloadend = async () => {
+                clearTimeout(timeout);
                 try {
                     const encodedFile: string = reader.result as string;
+                    
+                    // Check if the result is valid
+                    if (!encodedFile || typeof encodedFile !== 'string') {
+                        const errorMessage = t("file.read.failed", { fileName: file.name });
+                        throw new Error(errorMessage);
+                    }
+                    
+                    // Validate the data URL format
+                    if (!encodedFile.startsWith('data:')) {
+                        const errorMessage = t("file.invalid.format", { fileName: file.name });
+                        throw new Error(errorMessage);
+                    }
+                    
                     const response = await msalInstance.acquireTokenSilent({
                         ...apiUse,
                         account: msalInstance.getActiveAccount() as AccountInfo,
                         forceRefresh: true
                     });
+
                     const fileUpload = await uploadFile(
                         encodedFile,
                         file.name,
@@ -44,7 +80,20 @@ export const getTokenAndUploadFile = async (file: File, msalInstance: IPublicCli
                 } catch (error) {
                     reject(error);
                 }
-            }
+            };
+            
+            reader.onerror = () => {
+                clearTimeout(timeout);
+                const errorMessage = t("file.read.error", { fileName: file.name });
+                reject(new Error(errorMessage));
+            };
+            
+            reader.onabort = () => {
+                clearTimeout(timeout);
+                const errorMessage = t("file.read.aborted", { fileName: file.name });
+                reject(new Error(errorMessage));
+            };
+            
             reader.readAsDataURL(file);
         });
 
@@ -53,6 +102,7 @@ export const getTokenAndUploadFile = async (file: File, msalInstance: IPublicCli
             attachment
         }
     } catch (e) {
-        return { success: false };
+        const errorMessage = e instanceof Error ? e.message : t("error.uploading.file");
+        return { success: false, error: errorMessage };
     }
 }

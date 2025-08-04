@@ -24,14 +24,14 @@ export const useFileUploadManager = (
 
           setUploading(true);
 
-          const attachment = await getTokenAndUploadFile(file, instance);
+          const attachment = await getTokenAndUploadFile(file, instance, t);
           switch (attachment.success) {
             case true:
               onFileUpload(attachment.attachment);
               break;
             case false:
-              const errorMessage = t("error.uploading.file");
-              console.error(errorMessage);
+              const errorMessage =
+                attachment.error || t("error.uploading.file");
               if (onError) {
                 onError({
                   toastMessage: errorMessage,
@@ -43,7 +43,6 @@ export const useFileUploadManager = (
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : t("error.uploading.file");
-          console.error("File upload error:", errorMessage);
           if (onError) {
             onError({
               toastMessage: errorMessage,
