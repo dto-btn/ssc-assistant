@@ -111,7 +111,7 @@ const MainScreen = () => {
       const lastIndex = chatItems.length - 1;
       const lastItem = chatItems[lastIndex];
 
-      // If it's an assistant message, append the stop text
+      // If it's an assistant message (Message type), append the stop text
       if (lastItem && lastItem.message && typeof lastItem.message.content === "string") {
         chatItems[lastIndex] = {
           ...lastItem,
