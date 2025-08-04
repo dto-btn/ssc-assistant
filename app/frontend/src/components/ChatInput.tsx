@@ -13,12 +13,12 @@ import {
   useTheme,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { createPortal } from 'react-dom';
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { disabledFeaturesSet } from "../allowedTools";
-import { NewFileUploadButton } from './file-upload/NewFileUploadButton';
-import { useDetectedDrag } from './file-upload/useDetectedDrag';
-import { useFileUploadManager } from './file-upload/useFileUploadManager';
+import { NewFileUploadButton } from "./file-upload/NewFileUploadButton";
+import { useDetectedDrag } from "./file-upload/useDetectedDrag";
+import { useFileUploadManager } from "./file-upload/useFileUploadManager";
 
 interface ChatInputProps {
   onSend: (question: string, files: Attachment[]) => void;
@@ -27,6 +27,8 @@ interface ChatInputProps {
   clearOnSend?: boolean;
   quotedText?: string;
   selectedModel: string;
+  file?: Attachment;
+  setFile?: (file?: Attachment) => void;
 }
 
 export const ChatInput = ({
@@ -35,12 +37,13 @@ export const ChatInput = ({
   clearOnSend,
   quotedText,
   selectedModel,
+  file,
+  setFile,
 }: ChatInputProps) => {
   const [question, setQuestion] = useState<string>("");
   const { t } = useTranslation();
   const [error, setError] = useState(false);
   const theme = useTheme();
-  const [file, setFile] = useState<Attachment | undefined>(undefined);
   const inputFieldRef = React.useRef<HTMLInputElement>(null);
   const hasDetectedDrag = useDetectedDrag({
     onDrop: (event: React.DragEvent) => {
@@ -65,8 +68,11 @@ export const ChatInput = ({
     if (clearOnSend) {
       setQuestion("");
       // Only clear the file if it was an image.
-      if (file && /\.(jpeg|jpg|gif|png|webp|bmp|svg)$/i.test(file.blob_storage_url)) {
-        setFile(undefined);
+      if (
+        file &&
+        /\.(jpeg|jpg|gif|png|webp|bmp|svg)$/i.test(file.blob_storage_url)
+      ) {
+        setFile?.(undefined);
       }
     }
   };
@@ -78,19 +84,16 @@ export const ChatInput = ({
     }
   };
 
-  const onFileUpload = (file: Attachment) => {
-    setFile(file);
+  const onFileUpload = (newFile: Attachment) => {
+    setFile?.(newFile);
     inputFieldRef.current?.focus();
   };
 
   const handleRemoveFile = () => {
-    setFile(undefined);
+    setFile?.(undefined);
   };
 
-  const {
-    doUpload,
-    isUploading
-  } = useFileUploadManager(onFileUpload);
+  const { doUpload, isUploading } = useFileUploadManager(onFileUpload);
 
   // this useEffect focuses the chatInput whenever quotedText is added
   useEffect(() => {
@@ -133,7 +136,9 @@ export const ChatInput = ({
             >
               <CloseIcon color="primary" />
             </IconButton>
-            {/\.(jpeg|jpg|gif|png|webp|bmp|svg)$/i.test(file.blob_storage_url) ? (
+            {/\.(jpeg|jpg|gif|png|webp|bmp|svg)$/i.test(
+              file.blob_storage_url
+            ) ? (
               <Box
                 component="img"
                 src={file.blob_storage_url}
@@ -165,19 +170,20 @@ export const ChatInput = ({
             display: "flex",
             alignItems: "center",
             borderRadius: file ? "0 0 30px 30px" : "40px",
-            borderColor: hasDetectedDrag ? theme.palette.secondary.main : theme.palette.primary.main,
+            borderColor: hasDetectedDrag
+              ? theme.palette.secondary.main
+              : theme.palette.primary.main,
             borderWidth: file ? "0 1px 1px 1px" : "1px",
             borderStyle: "solid",
-            background: hasDetectedDrag ? theme.palette.action.hover : undefined,
-            transition: 'background 0.2s, border-color 0.2s',
+            background: hasDetectedDrag
+              ? theme.palette.action.hover
+              : undefined,
+            transition: "background 0.2s, border-color 0.2s",
             minHeight: hasDetectedDrag ? 90 : undefined,
           }}
         >
           {!disabledFeaturesSet.has("file_upload") && !file && (
-            <NewFileUploadButton
-              onFileUpload={doUpload}
-              disabled={disabled}
-            />
+            <NewFileUploadButton onFileUpload={doUpload} disabled={disabled} />
           )}
           <InputBase
             sx={{ ml: 1, flex: 1 }}
@@ -185,10 +191,12 @@ export const ChatInput = ({
               input: {
                 tabIndex: 0,
                 autoFocus: true,
-              }
+              },
             }}
-            placeholder={`${t("ask.question")}. ${t("model.version.disclaimer")} ${modelName}.`}
-            inputProps={{ "aria-label": t("ask.question"), "tabIndex": 1 }}
+            placeholder={`${t("ask.question")}. ${t(
+              "model.version.disclaimer"
+            )} ${modelName}.`}
+            inputProps={{ "aria-label": t("ask.question"), tabIndex: 1 }}
             error={error}
             id="ask-question"
             onKeyDown={onEnterPress}
@@ -220,71 +228,72 @@ export const ChatInput = ({
             )}
           </IconButton>
         </Paper>
-        <Box sx={{
-          width: "100%",
-          // center items
-          display: "flex",
-          justifyContent: "center",
-          gap: "5px",
-          alignItems: "center",
-          pt: "5px",
-          pb: "5px",
-          verticalAlign: "middle",
-        }}>
-          <InfoIcon fontSize="inherit" color='info' /> {t("ai.disclaimer")}
+        <Box
+          sx={{
+            width: "100%",
+            // center items
+            display: "flex",
+            justifyContent: "center",
+            gap: "5px",
+            alignItems: "center",
+            pt: "5px",
+            pb: "5px",
+            verticalAlign: "middle",
+          }}
+        >
+          <InfoIcon fontSize="inherit" color="info" /> {t("ai.disclaimer")}
           <Typography
             sx={{
               fontSize: "12px",
               ml: "50px",
               display: "inline",
-              // vertically align 
+              // vertically align
             }}
-          >
-          </Typography>
+          ></Typography>
         </Box>
       </Container>
-      {!disabledFeaturesSet.has("file_upload") && hasDetectedDrag && (
+      {!disabledFeaturesSet.has("file_upload") &&
+        hasDetectedDrag &&
         createPortal(
           <Box
             sx={{
-              position: 'absolute',
+              position: "absolute",
               left: 0,
               top: 0,
-              width: '100vw',
-              height: '100vh',
+              width: "100vw",
+              height: "100vh",
               bgcolor: `${theme.palette.background.paper}`,
               // inset dropshadow instead of border
               border: `3px dashed ${theme.palette.primary.main}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              pointerEvents: 'none',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              pointerEvents: "none",
               fontWeight: 600,
               fontSize: 18,
               // color: theme.palette.text.primary,
               zIndex: 9999,
               opacity: 0.85,
               color: theme.palette.primary.main,
-              flexDirection: 'column',
+              flexDirection: "column",
               gap: 1,
             }}
           >
-            <AttachFileIcon sx={{
-              borderRadius: '10%',
-              backgroundColor: theme.palette.background.paper,
-              padding: '10px',
-              boxShadow: `0 0 5px ${theme.palette.secondary.main}`,
-              marginBottom: '10px',
-              fontSize: '64px',
-              color: theme.palette.secondary.main,
-            }} />
-            <Typography fontSize="24px" >
-              Drop file to upload
-            </Typography>
+            <AttachFileIcon
+              sx={{
+                borderRadius: "10%",
+                backgroundColor: theme.palette.background.paper,
+                padding: "10px",
+                boxShadow: `0 0 5px ${theme.palette.secondary.main}`,
+                marginBottom: "10px",
+                fontSize: "64px",
+                color: theme.palette.secondary.main,
+              }}
+            />
+            <Typography fontSize="24px">Drop file to upload</Typography>
           </Box>,
           document.body
-        )
-      )}
+        )}
     </>
   );
-}
+};

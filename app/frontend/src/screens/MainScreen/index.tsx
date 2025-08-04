@@ -397,6 +397,11 @@ const MainScreen = () => {
     );
   };
 
+  // Add file state for ChatInput
+  const [chatInputFile, setChatInputFile] = useState<Attachment | undefined>(
+    undefined
+  );
+
   return (
     <UserContext.Provider value={userData}>
       <NewLayout
@@ -488,6 +493,8 @@ const MainScreen = () => {
                 }
                 quotedText={quotedText}
                 selectedModel={getCurrentChatHistory().model}
+                file={chatInputFile}
+                setFile={setChatInputFile}
               />
             </Box>
           </Box>
@@ -544,6 +551,8 @@ const MainScreen = () => {
                 }
                 quotedText={quotedText}
                 selectedModel={getCurrentChatHistory().model}
+                file={chatInputFile}
+                setFile={setChatInputFile}
               />
             </Box>
           </Box>
