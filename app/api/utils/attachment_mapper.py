@@ -16,7 +16,7 @@ logger.setLevel(logging.DEBUG)
 
 __all__ = ["map_attachments"]
 
-def map_attachments(message: Message):
+def map_attachments(message: Message) -> Iterable[ChatCompletionContentPartParam]:
     """
     This will map attachments so it can be read directly from the OpenAI API. API will accept the following structure:
     {
