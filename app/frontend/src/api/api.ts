@@ -157,6 +157,10 @@ export async function bookReservation(bookingDetails: BookingConfirmation): Prom
 export async function uploadFile(encodedFile: string, name: string, accessToken: string): Promise<Attachment> {
   const url = "/api/1.0/upload";
 
+  if (!encodedFile || !name) {
+    throw new Error("Encoded file and name are required for upload.");
+  }
+
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -171,11 +175,12 @@ export async function uploadFile(encodedFile: string, name: string, accessToken:
     throw new Error(`Failed to upload file: ${errorMessage}`);
   }
 
-  const responseData = await response.json().catch(
-    (error) => {
-      console.error("Error while reading the stream:", error);
-      throw error;
-  });
+  let responseData;
+  try {
+    responseData = await response.json();
+  } catch (error) {
+    throw error;
+  }
 
   const response_url = new URL(responseData.file_url);
 

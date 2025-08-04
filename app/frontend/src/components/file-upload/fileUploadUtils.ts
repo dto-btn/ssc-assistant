@@ -22,24 +22,28 @@ type UploadFileResult =
  */
 export const getTokenAndUploadFile = async (file: File, msalInstance: IPublicClientApplication): Promise<UploadFileResult> => {
     try {
-        const attachment = await new Promise<Attachment>((resolve) => {
+        const attachment = await new Promise<Attachment>((resolve, reject) => {
             const reader = new FileReader();
             reader.onloadend = async () => {
-                const encodedFile: string = reader.result as string;
-                const response = await msalInstance.acquireTokenSilent({
-                    ...apiUse,
-                    account: msalInstance.getActiveAccount() as AccountInfo,
-                    forceRefresh: true
-                });
-                const fileUpload = await uploadFile(
-                    encodedFile,
-                    file.name,
-                    response.accessToken
-                );
+                try {
+                    const encodedFile: string = reader.result as string;
+                    const response = await msalInstance.acquireTokenSilent({
+                        ...apiUse,
+                        account: msalInstance.getActiveAccount() as AccountInfo,
+                        forceRefresh: true
+                    });
+                    const fileUpload = await uploadFile(
+                        encodedFile,
+                        file.name,
+                        response.accessToken
+                    );
 
-                fileUpload.type = AttachmentUtils.getMimetypeFromEncodedFile(encodedFile);
-                
-                resolve(fileUpload);
+                    fileUpload.type = AttachmentUtils.getMimetypeFromEncodedFile(encodedFile);
+                    
+                    resolve(fileUpload);
+                } catch (error) {
+                    reject(error);
+                }
             }
             reader.readAsDataURL(file);
         });
@@ -49,7 +53,6 @@ export const getTokenAndUploadFile = async (file: File, msalInstance: IPublicCli
             attachment
         }
     } catch (e) {
-        console.error("Error uploading file", e);
         return { success: false };
     }
 }

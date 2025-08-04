@@ -19,6 +19,7 @@ import { disabledFeaturesSet } from "../allowedTools";
 import { NewFileUploadButton } from "./file-upload/NewFileUploadButton";
 import { useDetectedDrag } from "./file-upload/useDetectedDrag";
 import { useFileUploadManager } from "./file-upload/useFileUploadManager";
+import { FileIconUtils } from "./file-upload/FileIconUtils";
 
 interface ChatInputProps {
   onSend: (question: string, files: Attachment[]) => void;
@@ -152,13 +153,53 @@ export const ChatInput = ({
               />
             ) : (
               <Box
-                component="a"
-                href={file.blob_storage_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                sx={{ color: "blue", textDecoration: "underline" }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "8px 16px",
+                  background: "#f5f7fa",
+                  borderRadius: "20px",
+                  margin: "4px 8px",
+                  maxWidth: "350px",
+                }}
               >
-                {file.file_name}
+                <Box
+                  sx={{
+                    fontSize: "2rem",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  {FileIconUtils.getFileIcon(file.file_name, file.type)}
+                </Box>
+                <Box
+                  component="a"
+                  href={file.blob_storage_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{
+                    color: FileIconUtils.getFileTypeColor(
+                      file.file_name,
+                      file.type
+                    ),
+                    textDecoration: "none",
+                    fontWeight: 600,
+                    fontSize: "0.95rem",
+                    wordBreak: "break-all",
+                    maxWidth: "280px",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    "&:hover": {
+                      textDecoration: "underline",
+                    },
+                  }}
+                >
+                  {file.file_name}
+                </Box>
               </Box>
             )}
           </Paper>
@@ -182,7 +223,7 @@ export const ChatInput = ({
             minHeight: hasDetectedDrag ? 90 : undefined,
           }}
         >
-          {!disabledFeaturesSet.has("file_upload") && !file && (
+          {!disabledFeaturesSet.has("file_upload") && !file && !isUploading && (
             <NewFileUploadButton onFileUpload={doUpload} disabled={disabled} />
           )}
           <InputBase
