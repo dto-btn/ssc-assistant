@@ -30,6 +30,7 @@ interface ChatInputProps {
   selectedModel: string;
   file?: Attachment;
   setFile?: (file?: Attachment) => void;
+  onError?: (error: ToastMessage) => void;
 }
 
 export const ChatInput = ({
@@ -40,6 +41,7 @@ export const ChatInput = ({
   selectedModel,
   file,
   setFile,
+  onError,
 }: ChatInputProps) => {
   const [question, setQuestion] = useState<string>("");
   const { t } = useTranslation();
@@ -94,7 +96,7 @@ export const ChatInput = ({
     setFile?.(undefined);
   };
 
-  const { doUpload, isUploading } = useFileUploadManager(onFileUpload);
+  const { doUpload, isUploading } = useFileUploadManager(onFileUpload, onError);
 
   // this useEffect focuses the chatInput whenever quotedText is added
   useEffect(() => {

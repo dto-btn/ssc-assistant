@@ -243,6 +243,17 @@ const MainScreen = () => {
     setChatIndexToLoadOrDelete(null);
   };
 
+  const handleFileUploadError = (toast: ToastMessage) => {
+    setCurrentChatHistory((prevChatHistory) => {
+      const updatedChatHistory = {
+        ...prevChatHistory,
+        chatItems: [...prevChatHistory.chatItems, toast],
+      };
+      chatService.saveChatHistories(updatedChatHistory);
+      return updatedChatHistory;
+    });
+  };
+
   const handleBookReservation = async (bookingDetails: BookingConfirmation) => {
     let toast: ToastMessage;
     try {
@@ -495,6 +506,7 @@ const MainScreen = () => {
                 selectedModel={getCurrentChatHistory().model}
                 file={chatInputFile}
                 setFile={setChatInputFile}
+                onError={handleFileUploadError}
               />
             </Box>
           </Box>
@@ -553,6 +565,7 @@ const MainScreen = () => {
                 selectedModel={getCurrentChatHistory().model}
                 file={chatInputFile}
                 setFile={setChatInputFile}
+                onError={handleFileUploadError}
               />
             </Box>
           </Box>

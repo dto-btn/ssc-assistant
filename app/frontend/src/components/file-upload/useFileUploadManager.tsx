@@ -4,7 +4,8 @@ import { useTranslation } from "react-i18next";
 import { isValidFileType, getTokenAndUploadFile } from "./fileUploadUtils";
 
 export const useFileUploadManager = (
-  onFileUpload: (file: Attachment) => void
+  onFileUpload: (file: Attachment) => void,
+  onError?: (error: ToastMessage) => void
 ) => {
   const [isUploading, setUploading] = useState(false);
   const { t } = useTranslation();
@@ -15,25 +16,43 @@ export const useFileUploadManager = (
       // const file: File | undefined = event.target.files?.[0];
 
       if (file) {
-        if (!isValidFileType(file)) {
-          const invalidFileType = t("invalid.file.type");
-          throw Error(invalidFileType);
+        try {
+          if (!isValidFileType(file)) {
+            const invalidFileType = t("invalid.file.type");
+            throw Error(invalidFileType);
+          }
+
+          setUploading(true);
+
+          const attachment = await getTokenAndUploadFile(file, instance);
+          switch (attachment.success) {
+            case true:
+              onFileUpload(attachment.attachment);
+              break;
+            case false:
+              const errorMessage = t("error.uploading.file");
+              console.error(errorMessage);
+              if (onError) {
+                onError({
+                  toastMessage: errorMessage,
+                  isError: true,
+                });
+              }
+              break;
+          }
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : t("error.uploading.file");
+          console.error("File upload error:", errorMessage);
+          if (onError) {
+            onError({
+              toastMessage: errorMessage,
+              isError: true,
+            });
+          }
+        } finally {
+          setUploading(false);
         }
-
-        setUploading(true);
-
-        const attachment = await getTokenAndUploadFile(file, instance);
-        switch (attachment.success) {
-          case true:
-            onFileUpload(attachment.attachment);
-            break;
-          case false:
-            const errorMessage = t("error.uploading.file");
-            console.error(errorMessage);
-            break;
-        }
-
-        setUploading(false);
       }
     };
 

@@ -39,6 +39,14 @@
         "en": "An unknown error occurred",
         "fr": "Une erreur inconnue est survenue"
     },
+    "error.uploading.file": {
+        "en": "Error uploading file. Please try again.",
+        "fr": "Erreur lors du téléchargement du fichier. Veuillez réessayer."
+    },
+    "invalid.file.type": {
+        "en": "Invalid file type. Please select a supported file format.",
+        "fr": "Type de fichier non valide. Veuillez sélectionner un format de fichier pris en charge."
+    },
     "login.required": {
         "en": "Login Required to Proceed",
         "fr": "Connexion requise pour continuer"
