@@ -2,8 +2,7 @@ import { Box } from '@mui/material';
 import styled from '@mui/material/styles/styled';
 import { useTranslation } from 'react-i18next';
 import { AttachmentUtils } from './AttachmentUtils';
-
-import DescriptionIcon from '@mui/icons-material/Description';
+import { FileIconUtils } from "./FileIconUtils";
 
 type AttachmentPreviewProps = {
   attachment: Attachment;
@@ -19,8 +18,7 @@ export const AttachmentPreview = ({ attachment }: AttachmentPreviewProps) => {
         <img
           src={url}
           aria-description={t("user.file.upload")}
-          height="100%"
-          width="100%"
+          style={{ maxHeight: "400px", borderRadius: "25px", height: "100%", width: "100%" }}
         />
       </ImageContainer>
     );
@@ -33,7 +31,7 @@ export const AttachmentPreview = ({ attachment }: AttachmentPreviewProps) => {
         target="_blank"
         rel="noopener noreferrer"
       >
-        <DocumentIconStyled />
+        {FileIconUtils.getFileIcon(attachment.file_name, attachment.type)}
         <FileName title={attachment.file_name}>{attachment.file_name}</FileName>
       </AttachmentCard>
     );
@@ -48,16 +46,6 @@ export const AttachmentPreview = ({ attachment }: AttachmentPreviewProps) => {
 
 const ImageContainer = styled(Box)`
   padding-top: 15px;
-`;
-
-const DocumentIconStyled = styled(DescriptionIcon)`
-  font-size: 2.2rem;
-  color: #1976d2;
-  transition: color 0.2s;
-  margin-right: 4px;
-  &:hover {
-    color: #1565c0;
-  }
 `;
 
 const AttachmentCard = styled('a')`

@@ -172,10 +172,7 @@ export const ChatInput = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   sx={{
-                    color: FileIconUtils.getFileTypeColor(
-                      file.file_name,
-                      file.type
-                    ),
+                    color: theme.palette.primary.main,
                     textDecoration: "none",
                     fontWeight: 600,
                     fontSize: "0.95rem",
