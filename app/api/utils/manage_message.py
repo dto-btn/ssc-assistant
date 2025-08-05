@@ -241,9 +241,7 @@ def load_messages(message_request: MessageRequest, token_limit: int = GPT4O_TOKE
     messages.append(generate_system_prompt(message_request))
 
     # Convert MessageRequest messages to ChatCompletionMessageParam
-    token_count = 0
     for message in message_request.messages or []:
-
         if message.attachments and message.role == "user":
             message_with_attachment = ChatCompletionUserMessageParam(content=map_attachments(message), role='user')
             messages.append(message_with_attachment)

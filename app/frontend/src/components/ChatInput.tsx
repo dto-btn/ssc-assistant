@@ -28,8 +28,6 @@ interface ChatInputProps {
   clearOnSend?: boolean;
   quotedText?: string;
   selectedModel: string;
-  file?: Attachment;
-  setFile?: (file?: Attachment) => void;
   onError?: (error: ToastMessage) => void;
 }
 
@@ -39,14 +37,13 @@ export const ChatInput = ({
   clearOnSend,
   quotedText,
   selectedModel,
-  file,
-  setFile,
   onError,
 }: ChatInputProps) => {
   const [question, setQuestion] = useState<string>("");
   const { t } = useTranslation();
   const [error, setError] = useState(false);
   const theme = useTheme();
+  const [file, setFile] = useState<Attachment | undefined>(undefined);
   const inputFieldRef = React.useRef<HTMLInputElement>(null);
   const hasDetectedDrag = useDetectedDrag({
     onDrop: (event: React.DragEvent) => {
@@ -70,13 +67,7 @@ export const ChatInput = ({
 
     if (clearOnSend) {
       setQuestion("");
-      // Only clear the file if it was an image.
-      if (
-        file &&
-        /\.(jpeg|jpg|gif|png|webp|bmp|svg)$/i.test(file.blob_storage_url)
-      ) {
-        setFile?.(undefined);
-      }
+      setFile(undefined);
     }
   };
 
@@ -88,12 +79,12 @@ export const ChatInput = ({
   };
 
   const onFileUpload = (newFile: Attachment) => {
-    setFile?.(newFile);
+    setFile(newFile);
     inputFieldRef.current?.focus();
   };
 
   const handleRemoveFile = () => {
-    setFile?.(undefined);
+    setFile(undefined);
   };
 
   const { doUpload, isUploading } = useFileUploadManager(onFileUpload, onError);

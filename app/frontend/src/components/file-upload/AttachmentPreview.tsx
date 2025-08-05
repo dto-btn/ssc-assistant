@@ -2,48 +2,48 @@ import { Box } from '@mui/material';
 import styled from '@mui/material/styles/styled';
 import { useTranslation } from 'react-i18next';
 import { AttachmentUtils } from './AttachmentUtils';
-import DownloadIcon from '@mui/icons-material/Download';
+
 import DescriptionIcon from '@mui/icons-material/Description';
 
 type AttachmentPreviewProps = {
-    attachment: Attachment;
+  attachment: Attachment;
 };
 
 export const AttachmentPreview = ({ attachment }: AttachmentPreviewProps) => {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
 
-    if (attachment.type === "image") {
-        const url: string | undefined = attachment.blob_storage_url;
-        return (
-            <ImageContainer>
-                <img
-                    src={url}
-                    aria-description={t("user.file.upload")}
-                    height="100%"
-                    width="100%"
-                />
-            </ImageContainer>
-        );
-    }
-
-    if (AttachmentUtils.isDocumentType(attachment.type)) {
-        return (
-            <AttachmentCard
-                href={attachment.blob_storage_url}
-                target="_blank"
-                rel="noopener noreferrer"
-            >
-                <DocumentIconStyled />
-                <FileName title={attachment.file_name}>{attachment.file_name}</FileName>
-            </AttachmentCard>
-        );
-    }
-
-    console.log(attachment.type);
-
+  if (attachment.type === "image") {
+    const url: string | undefined = attachment.blob_storage_url;
     return (
-        <span>Unsupported file type</span>
-    )
+      <ImageContainer>
+        <img
+          src={url}
+          aria-description={t("user.file.upload")}
+          height="100%"
+          width="100%"
+        />
+      </ImageContainer>
+    );
+  }
+
+  if (AttachmentUtils.isDocumentType(attachment.type)) {
+    return (
+      <AttachmentCard
+        href={attachment.blob_storage_url}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <DocumentIconStyled />
+        <FileName title={attachment.file_name}>{attachment.file_name}</FileName>
+      </AttachmentCard>
+    );
+  }
+
+  console.log(attachment.type);
+
+  return (
+    <span>Unsupported file type</span>
+  )
 }
 
 const ImageContainer = styled(Box)`

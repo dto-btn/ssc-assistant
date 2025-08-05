@@ -18,57 +18,61 @@ export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
   // keeping this here for typesafety because we are ts-expect-error down in the return
 
   return (
-    <Box sx={{ display: "flex", justifyContent: "flex-end", my: "1rem" }}>
-      <Paper
-        sx={{
-          bgcolor: "primary.main",
-          color: "primary.contrastText",
-          borderRadius: "20px",
-          borderTopRightRadius: 0,
-          maxWidth: "70%",
-        }}
-        elevation={4}
-      >
-        {quote && (
-          <QuoteContainer>
-            <Typography
-              variant="body1"
-              sx={{
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                maxWidth: "calc(100% - 10px)",
-                pl: "10px",
-                fontSize: "14px",
-                color: "black",
-                flex: 1,
-              }}
+    <>
+      {
+        attachments && attachments.map((attachment, idx) => {
+          return (
+            <Box sx={{ display: "flex", justifyContent: "flex-end", my: "1rem" }}>
+              <AttachmentPreview attachment={attachment} key={`${idx}~~${attachment.file_name}`} />
+            </Box>
+          )
+        })
+      }
+      <Box sx={{ display: "flex", justifyContent: "flex-end", my: "1rem" }}>
+        <Paper
+          sx={{
+            bgcolor: "primary.main",
+            color: "primary.contrastText",
+            borderRadius: "20px",
+            borderTopRightRadius: 0,
+            maxWidth: "70%",
+          }}
+          elevation={4}
+        >
+          {quote && (
+            <QuoteContainer>
+              <Typography
+                variant="body1"
+                sx={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  maxWidth: "calc(100% - 10px)",
+                  pl: "10px",
+                  fontSize: "14px",
+                  color: "black",
+                  flex: 1,
+                }}
+              >
+                "{quote}"
+              </Typography>
+            </QuoteContainer>
+          )}
+          <UserBubbleContainer tabIndex={0}>
+            <Typography sx={visuallyHidden}>{t("aria.user.question")}</Typography>{" "}
+            {/* Hidden div for screen reader */}
+            <Markdown
+              rehypePlugins={[rehypeHighlight]}
+              remarkPlugins={[remarkGfm]}
             >
-              "{quote}"
-            </Typography>
-          </QuoteContainer>
-        )}
-        <UserBubbleContainer tabIndex={0}>
-          {
-            attachments && attachments.map((attachment, idx) => {
-              return (
-                <AttachmentPreview attachment={attachment} key={`${idx}~~${attachment.file_name}`} />
-              )
-            })
-          }
-          <Typography sx={visuallyHidden}>{t("aria.user.question")}</Typography>{" "}
-          {/* Hidden div for screen reader */}
-          <Markdown
-            rehypePlugins={[rehypeHighlight]}
-            remarkPlugins={[remarkGfm]}
-          >
-            {text}
-          </Markdown>
-        </UserBubbleContainer>
-      </Paper>
-    </Box>
+              {text}
+            </Markdown>
+          </UserBubbleContainer>
+        </Paper>
+      </Box>
+    </>
   );
 };
 

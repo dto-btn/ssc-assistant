@@ -282,10 +282,10 @@ const MainScreen = () => {
   useEffect(() => {
     console.debug(
       "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-        isAuthenticated +
-        ", InProgress? " +
-        inProgress +
-        ")"
+      isAuthenticated +
+      ", InProgress? " +
+      inProgress +
+      ")"
     );
     if (
       isAuthenticated &&
@@ -408,11 +408,6 @@ const MainScreen = () => {
     );
   };
 
-  // Add file state for ChatInput
-  const [chatInputFile, setChatInputFile] = useState<Attachment | undefined>(
-    undefined
-  );
-
   return (
     <UserContext.Provider value={userData}>
       <NewLayout
@@ -504,8 +499,6 @@ const MainScreen = () => {
                 }
                 quotedText={quotedText}
                 selectedModel={getCurrentChatHistory().model}
-                file={chatInputFile}
-                setFile={setChatInputFile}
                 onError={handleFileUploadError}
               />
             </Box>
@@ -526,7 +519,7 @@ const MainScreen = () => {
               paddingTop: "3rem",
               overflow: "auto",
             }}
-            // maxWidth="lg"
+          // maxWidth="lg"
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <ChatMessagesContainer
@@ -563,8 +556,6 @@ const MainScreen = () => {
                 }
                 quotedText={quotedText}
                 selectedModel={getCurrentChatHistory().model}
-                file={chatInputFile}
-                setFile={setChatInputFile}
                 onError={handleFileUploadError}
               />
             </Box>
