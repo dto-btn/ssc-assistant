@@ -1,9 +1,7 @@
 import { styled } from "@mui/material/styles";
-import { useTranslation } from "react-i18next";
 import { useRef, useState, ChangeEvent } from "react";
 import { MenuItem } from "@mui/material";
 import { StyledIconButton } from "./StyledIconButton";
-import { useFileUploadManager } from "./useFileUploadManager";
 
 interface UploadFileButtonProps {
   disabled: boolean;
