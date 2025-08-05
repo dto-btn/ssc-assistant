@@ -12,6 +12,7 @@ export const buildDefaultChatHistory = () => {
         description: "",
         uuid: uuidv4(),
         model: buildDefaultModel(),
+        isTopicSet: false, // Default value for isTopicSet
     };
     return defaultChatHistory
 }
