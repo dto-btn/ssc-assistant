@@ -134,7 +134,8 @@ class AzureCognitiveSearchDataSourceConfig(BaseModel):
     index_name: str = Field(..., description="The name of the Azure Cognitive Search index")
     embedding_model: str = Field(..., description="The embedding model deployment name to use for vector search")
     top_n_documents: int = Field(default=3, description="The number of top documents to return from the index")
-    use_language_filter: bool = Field(default=False, description="Whether to apply language filtering to search results")
+    use_language_filter: bool = Field(default=False,
+                                      description="Whether to apply language filtering to search results")
     lang_filter: str = Field(default="", description="Language filter for search results (e.g., 'en', 'fr')")
-    query_type: str = Field(default="vector_simple_hybrid", 
-                           description="The type of query to perform on the search index, eg. 'vector_semantic_hybrid'")
+    query_type: str = Field(default="vector_simple_hybrid",
+                           description="The type of query to perform on the search index, eg. 'vector_semantic_hybrid' or 'vector_simple_hybrid'")

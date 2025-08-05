@@ -70,7 +70,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
         - https://learn.microsoft.com/en-us/azure/ai-services/openai/reference#completions-extensions
     """
     model = message_request.model
-    messages, _ = load_messages(message_request)
+    messages = load_messages(message_request)
     # 1. Check if we are to use tools
     tool_service = ToolService(message_request.tools if message_request.tools else [])
     if message_request.tools:
@@ -107,13 +107,11 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                         # Parse the tool response into the AzureCognitiveSearchDataSourceConfig Pydantic model
                         try:
                             tool_response = json.loads(str(last_message['content']))
-                            
                             # Create the search config directly with language filter applied
                             search_config = AzureCognitiveSearchDataSourceConfig(
                                 **tool_response,
                                 lang_filter=message_request.lang if tool_response.get('use_language_filter', False) else ""
                             )
-                            
                             return (tool_service.tools_info, client.chat.completions.create(
                                 messages=messages,
                                 model=model,

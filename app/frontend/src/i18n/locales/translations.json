@@ -880,11 +880,12 @@
         "fr": "Produits"
     },
     "new.conversation.br": {
-        "en": "New Business Request Chat",
-        "fr": "Chat Demande opérationnelle"
-    },"new.conversation.br.aria.description": {
-        "en": "Business request chat button to start a new conversation while keeping your current history.",
-        "fr": "Chat Demande opérationnelle pour commencer une nouvelle conversation tout en conservant votre historique actuel."
+        "en": "EBIDM Business Request Agent",
+        "fr": "Agent de demande opérationnelle IOEGD"
+    },
+    "new.conversation.br.aria.description": {
+        "en": "Enterprise Business Intake and Demand Management (EBIDM) Business request chat button to start a new conversation while keeping your current history.",
+        "fr": "La Division de l'intégration opérationnelle d'entreprise et gestion de la demande (IOEGD). Chat Demande opérationnelle pour commencer une nouvelle conversation tout en conservant votre historique actuel."
     },
     "attach.image": {
         "en": "Attach Image",
@@ -893,5 +894,9 @@
     "attach.document": {
         "en": "Attach Document",
         "fr": "Joindre un document"
+    },
+    "summerize.conversation": {
+        "en": "Given the following conversation, generate a concise, specific, and descriptive title (max 4 words) that best summarizes the main topic. Avoid generic words like 'conversation', 'chat', or 'discussion'. Only output the title, no quotes or punctuation:",
+        "fr": "À partir de la conversation suivante, générez un titre concis, spécifique et descriptif (maximum 4 mots) qui résume le mieux le sujet principal. Évitez les mots génériques comme 'conversation', 'discussion' ou 'échange'. Affichez uniquement le titre, sans guillemets ni ponctuation."
     }
 }

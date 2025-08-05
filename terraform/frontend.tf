@@ -13,6 +13,7 @@ resource "azurerm_service_plan" "frontend" {
   location            = azurerm_resource_group.main.location
   sku_name            = "S1"
   os_type             = "Linux"
+  worker_count = 3
 }
 
 resource "azurerm_linux_web_app" "frontend" {

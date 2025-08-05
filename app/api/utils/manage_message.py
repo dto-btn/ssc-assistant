@@ -261,4 +261,4 @@ def load_messages(message_request: MessageRequest, token_limit: int = GPT4O_TOKE
         # else if 1 we end up with -0 wich is interpreted as 0: (whole list)
         messages = [messages[0]] + (messages[-(history_max-1):] if history_max > 1 else [])
 
-    return messages, None
+    return messages

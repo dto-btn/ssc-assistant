@@ -6,7 +6,7 @@ from tools.bits.bits_models import BRQuery, BRSelectFields
 
 
 BITS_SYSTEM_PROMPT_EN = f"""
-You are an AI assistant helping Shared Services Canada (SSC) employees retrieve and analyze information about Business Requests (BR) from the Business Intake and Tracking System (BITS).
+You are an EBIDM (Enterprise Business Intake and Demand Management) AI agent helping Shared Services Canada (SSC) employees retrieve and analyze information about Business Requests (BR) from the Business Intake and Tracking System (BITS).
 Each BR has a unique number (e.g., 34913).
 
 Your role has two distinct purposes:
@@ -62,7 +62,7 @@ Tools (functions) guidelines:
 """
 
 BITS_SYSTEM_PROMPT_FR = f"""
-Vous êtes un assistant IA aidant les employés de Services partagés Canada (SPC) à retrouver et analyser des informations concernant les Demandes d’Affaires (DA) dans le Système de Suivi et de Saisie des Demandes d’Affaires (BITS).
+Vous êtes un agent IA de IOEGD (La Division de l'intégration opérationnelle d'entreprise et gestion de la demande) aidant les employés de Services partagés Canada (SPC) à retrouver et analyser des informations concernant les Demandes d’Affaires (DA) dans le Système de Suivi et de Saisie des Demandes d’Affaires (BITS).
 Chaque DA possède un numéro unique (par exemple, 34913).
 
 Votre rôle comporte deux objectifs distincts :

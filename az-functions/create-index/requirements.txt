@@ -5,7 +5,7 @@ python-dotenv==1.0.1
 azure-functions-durable==1.2.9
 tenacity==8.3.0
 openai==1.30.2
-llama-index==0.10.54
+llama-index>=0.12.28
 llama-index-llms-azure-openai==0.1.8
 llama-index-embeddings-azure-openai==0.1.10
 llama-index-vector-stores-azureaisearch==0.1.9
