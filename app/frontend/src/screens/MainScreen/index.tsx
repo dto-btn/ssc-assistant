@@ -109,7 +109,8 @@ const MainScreen = () => {
 
       // Get the last assistant message
       const lastIndex = chatItems.length - 1;
-      const lastItem = chatItems[lastIndex];
+      // Should use a guard, but asserting because last chatItem is always the completion
+      const lastItem = chatItems[lastIndex] as Completion;
 
       // If it's an assistant message (Message type), append the stop text
       if (lastItem && lastItem.message && typeof lastItem.message.content === "string") {
