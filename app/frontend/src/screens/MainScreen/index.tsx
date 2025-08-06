@@ -576,6 +576,7 @@ const MainScreen = () => {
               handleBookReservation={handleBookReservation}
               containerRef={chatContainerRef}
               handleScroll={handleScroll}
+              isTailing={isTailing}
             />
             <div ref={chatMessageStreamEnd} style={{ height: "50px" }} />
             <Box
