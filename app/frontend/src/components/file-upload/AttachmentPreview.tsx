@@ -1,7 +1,7 @@
-import { Box } from '@mui/material';
-import styled from '@mui/material/styles/styled';
-import { useTranslation } from 'react-i18next';
-import { AttachmentUtils } from './AttachmentUtils';
+import { Box } from "@mui/material";
+import styled from "@mui/material/styles/styled";
+import { useTranslation } from "react-i18next";
+import { AttachmentUtils } from "./AttachmentUtils";
 import { FileIconUtils } from "./FileIconUtils";
 
 type AttachmentPreviewProps = {
@@ -18,7 +18,12 @@ export const AttachmentPreview = ({ attachment }: AttachmentPreviewProps) => {
         <img
           src={url}
           aria-description={t("user.file.upload")}
-          style={{ maxHeight: "400px", borderRadius: "25px", height: "100%", width: "100%" }}
+          style={{
+            maxHeight: "400px",
+            borderRadius: "25px",
+            height: "100%",
+            width: "100%",
+          }}
         />
       </ImageContainer>
     );
@@ -37,18 +42,14 @@ export const AttachmentPreview = ({ attachment }: AttachmentPreviewProps) => {
     );
   }
 
-  console.log(attachment.type);
-
-  return (
-    <span>Unsupported file type</span>
-  )
-}
+  return <span>Unsupported file type</span>;
+};
 
 const ImageContainer = styled(Box)`
   padding-top: 15px;
 `;
 
-const AttachmentCard = styled('a')`
+const AttachmentCard = styled("a")`
   display: flex;
   align-items: center;
   gap: 14px;
@@ -73,7 +74,7 @@ const AttachmentCard = styled('a')`
   }
 `;
 
-const FileName = styled('span')`
+const FileName = styled("span")`
   font-size: 1.12rem;
   font-weight: 600;
   color: #1a237e;

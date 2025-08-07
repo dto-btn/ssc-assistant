@@ -25,20 +25,16 @@ export const useFileUploadManager = (
           setUploading(true);
 
           const attachment = await getTokenAndUploadFile(file, instance, t);
-          switch (attachment.success) {
-            case true:
-              onFileUpload(attachment.attachment);
-              break;
-            case false:
-              const errorMessage =
-                attachment.error || t("error.uploading.file");
-              if (onError) {
-                onError({
-                  toastMessage: errorMessage,
-                  isError: true,
-                });
-              }
-              break;
+          if (attachment.success) {
+            onFileUpload(attachment.attachment);
+          } else {
+            const errorMessage = attachment.error || t("error.uploading.file");
+            if (onError) {
+              onError({
+                toastMessage: errorMessage,
+                isError: true,
+              });
+            }
           }
         } catch (error) {
           const errorMessage =

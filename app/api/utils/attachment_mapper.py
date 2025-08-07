@@ -86,7 +86,7 @@ def map_attachments(message: Message) -> Iterable[ChatCompletionContentPartParam
                                 }
                             })
                     else:
-                        # File is a non-image. We will try to load it as text. And return it asa it for now.
+                        # File is a non-image. We will try to load it as text. And return as it is for now.
                         file_manager = FileManager(file_bytes, attachment.type)
                         text = file_manager.extract_text()
                         content.append(
