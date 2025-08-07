@@ -43,7 +43,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         const containerHeight = containerRef.current.clientHeight;
         const messageHeight = lastUserMessageRef.current.clientHeight;
         setSkeletonHeight(containerHeight - messageHeight - 60);
-        setSkeletonColor("grey.300");
+        // setSkeletonColor("grey.300");
         console.log("Container height:", containerHeight, "Message height:", messageHeight);
         if (isTailing) {
           setTimeout(() => {
@@ -59,15 +59,17 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         const messageHeight = lastUserMessageRef.current.clientHeight;
         const completionHeight = completionRef.current.clientHeight;
 
-        if (completionHeight > (containerHeight - messageHeight - 60)) {
-          setSkeletonHeight(0);
-          console.log("Completion height is greater than container height minus message height, setting skeleton height to 0");
-        }
-        else {
-          setSkeletonHeight(containerHeight - messageHeight - completionHeight - 60);
-          setSkeletonColor("#F5F5F5");
-          console.log("Container height:", containerHeight, "Message height:", messageHeight, "Completion height:", completionHeight);
-        }
+        setSkeletonHeight(0);
+
+        // if (completionHeight > (containerHeight - messageHeight - 60)) {
+        //   setSkeletonHeight(0);
+        //   console.log("Completion height is greater than container height minus message height, setting skeleton height to 0");
+        // }
+        // else {
+        //   setSkeletonHeight(containerHeight - messageHeight - completionHeight - 60);
+        //   setSkeletonColor("#F5F5F5");
+        //   console.log("Container height:", containerHeight, "Message height:", messageHeight, "Completion height:", completionHeight);
+        // }
       }
     }
 
@@ -161,7 +163,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
           variant="text"
           width="85%"
           height={`${skeletonHeight}px`}
-          sx={{ ml: "4%", bgcolor: skeletonColour }}
+        // sx={{ ml: "4%", bgcolor: skeletonColour }}
         />
       )}
       {/* 
