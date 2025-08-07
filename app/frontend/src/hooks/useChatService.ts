@@ -85,54 +85,6 @@ export const useChatService = () => {
         }
     };
 
-    
-/**
- * Updates chat histories and generates titles using `fetchChatTitleAndRename` 
- * if certain conditions are met (e.g., topic is not set, message count exceeds the threshold,
- * or title is a default placeholder like 'Conversation #').
- *
- * @param messageThreshold - Specifies the number of messages required for title generation.
- * @param renameChat - Callback function to rename a chat based on its new title.
- */
-useEffect(() => {
-    const chatHistories = PersistenceUtils.getChatHistories();
-    const messageThreshold = 4; // Example threshold - can be passed as a prop or computed
-    let updated = false;
-
-    const updatedChatHistories = chatHistories.map((chatHistory, chatIndex) => {
-        const { chatItems, isTopicSet, description } = chatHistory;
-
-        // Check if the chat title is a default placeholder by matching 'Conversation #' pattern
-        const isDefaultTitle = description?.startsWith("Conversation ");
-
-        // Trigger title fetching logic if:
-        // - The topic is not set, OR
-        // - The message count exceeds the threshold, OR
-        // - The title matches the default pattern ('Conversation #')
-        if (!isTopicSet && chatItems.length > messageThreshold && isDefaultTitle) {
-            updated = true;
-
-            // Call `fetchChatTitleAndRename` to generate a title dynamically
-            fetchChatTitleAndRename(chatHistory, chatIndex, (newTitle: string, index: number) => {
-            // Ensure the updated title is applied through renameChat callback
-                chatHistories[index] = { ...chatHistory, description: newTitle, isTopicSet: true };
-                PersistenceUtils.setChatHistories(chatHistories);
-            });
-
-            // Update the `isTopicSet` flag locally so it reflects changes
-            return { ...chatHistory, isTopicSet: true };
-        }
-
-        // Return unchanged chat history if no updates are necessary
-        return chatHistory;
-    });
-
-    //Persist updated chat histories if changes were made
-    if (updated) {
-        PersistenceUtils.setChatHistories(updatedChatHistories);
-    }
-}, []); // Runs on component mount
-
     const saveChatHistories = (updatedChatHistory: ChatHistory) => {
         try {
             const chatHistories = PersistenceUtils.getChatHistories();
@@ -393,7 +345,7 @@ function summerizeChatWithChatGPT(chat: Message[]): MessageRequest {
         messages: messages,
         query: prompt,
         quotedText: "",
-        model: "gpt-4o",
+        model: "gpt-4.1-nano",
     };
 
     return messageRequest;

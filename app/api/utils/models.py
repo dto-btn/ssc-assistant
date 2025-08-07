@@ -66,7 +66,7 @@ class MessageRequest:
     query: Optional[str]
     messages: Optional[List[Message]]
     quotedText: Optional[str]
-    model: Literal['gpt-4o', 'gpt-35-turbo-1106']
+    model: Literal['gpt-4o', 'gpt-4.1-nano']
     top: int = field(default=3)
     lang: str = field(default='en')
     max: int = field(default=10)
