@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react"
+import { useMemo } from "react"
 import { PersistenceUtils } from "../util/persistence";
 import { useChatStore } from "../stores/ChatStore";
 import { useAppStore } from "../stores/AppStore";
@@ -73,7 +73,7 @@ export const useChatService = () => {
             const data = await makeBasicApiRequest(request);
 
             // Extract the title from the response or use a fallback if unavailable
-            const title = data.message.content || `Conversation ${currentChatIndex + 1}`;
+            const title = data.json.message.content || `Conversation ${currentChatIndex + 1}`;
 
             // Apply the title to the current chat using the provided callback
             renameChat(title, currentChatIndex);
