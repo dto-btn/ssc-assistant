@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react"
+import { useMemo } from "react"
 import { PersistenceUtils } from "../util/persistence";
 import { useChatStore } from "../stores/ChatStore";
 import { useAppStore } from "../stores/AppStore";
@@ -73,7 +73,7 @@ export const useChatService = () => {
             const data = await makeBasicApiRequest(request);
 
             // Extract the title from the response or use a fallback if unavailable
-            const title = data.message.content || `Conversation ${currentChatIndex + 1}`;
+            const title = data.json.message.content || `Conversation ${currentChatIndex + 1}`;
 
             // Apply the title to the current chat using the provided callback
             renameChat(title, currentChatIndex);
@@ -84,54 +84,6 @@ export const useChatService = () => {
             renameChat(`Conversation ${currentChatIndex + 1}`, currentChatIndex);
         }
     };
-
-    
-/**
- * Updates chat histories and generates titles using `fetchChatTitleAndRename` 
- * if certain conditions are met (e.g., topic is not set, message count exceeds the threshold,
- * or title is a default placeholder like 'Conversation #').
- *
- * @param messageThreshold - Specifies the number of messages required for title generation.
- * @param renameChat - Callback function to rename a chat based on its new title.
- */
-useEffect(() => {
-    const chatHistories = PersistenceUtils.getChatHistories();
-    const messageThreshold = 4; // Example threshold - can be passed as a prop or computed
-    let updated = false;
-
-    const updatedChatHistories = chatHistories.map((chatHistory, chatIndex) => {
-        const { chatItems, isTopicSet, description } = chatHistory;
-
-        // Check if the chat title is a default placeholder by matching 'Conversation #' pattern
-        const isDefaultTitle = description?.startsWith("Conversation ");
-
-        // Trigger title fetching logic if:
-        // - The topic is not set, OR
-        // - The message count exceeds the threshold, OR
-        // - The title matches the default pattern ('Conversation #')
-        if (!isTopicSet && chatItems.length > messageThreshold && isDefaultTitle) {
-            updated = true;
-
-            // Call `fetchChatTitleAndRename` to generate a title dynamically
-            fetchChatTitleAndRename(chatHistory, chatIndex, (newTitle: string, index: number) => {
-            // Ensure the updated title is applied through renameChat callback
-                chatHistories[index] = { ...chatHistory, description: newTitle, isTopicSet: true };
-                PersistenceUtils.setChatHistories(chatHistories);
-            });
-
-            // Update the `isTopicSet` flag locally so it reflects changes
-            return { ...chatHistory, isTopicSet: true };
-        }
-
-        // Return unchanged chat history if no updates are necessary
-        return chatHistory;
-    });
-
-    //Persist updated chat histories if changes were made
-    if (updated) {
-        PersistenceUtils.setChatHistories(updatedChatHistories);
-    }
-}, []); // Runs on component mount
 
     const saveChatHistories = (updatedChatHistory: ChatHistory) => {
         try {
@@ -393,7 +345,7 @@ function summerizeChatWithChatGPT(chat: Message[]): MessageRequest {
         messages: messages,
         query: prompt,
         quotedText: "",
-        model: "gpt-4o",
+        model: "gpt-4.1-nano",
     };
 
     return messageRequest;

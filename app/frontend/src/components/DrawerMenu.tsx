@@ -154,7 +154,7 @@ export const DrawerMenu = ({
             />
           </ListItemButton>
         </ListItem>
-        <ListItem key="newChatBits" disablePadding>
+        <ListItem key="newChatp-bits" disablePadding>
           <ListItemButton onClick={() => onNewChat("bits")}>
             <ListItemIcon sx={{ minWidth: "0px", marginRight: "10px" }}>
               <ReceiptLongIcon fontSize="small" color="primary" />
