@@ -1,0 +1,70 @@
+import { styled } from "@mui/material/styles";
+import { useRef, useState, ChangeEvent } from "react";
+import { MenuItem } from "@mui/material";
+import { StyledIconButton } from "./StyledIconButton";
+
+interface UploadFileButtonProps {
+  disabled: boolean;
+  onFileUpload: (file: File) => void;
+  icon: React.ReactNode;
+  fileTypes: ValidFileTypeDefinition[];
+  label: string; // Optional label for the button
+}
+
+export function UploadFileButtonMenuItem({
+  disabled,
+  onFileUpload,
+  icon,
+  fileTypes,
+  label,
+}: UploadFileButtonProps) {
+  const [fileInputKey, setFileInputKey] = useState(Date.now());
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onFileUpload(file);
+      // Reset the input to allow re-uploading the same file
+      setFileInputKey(Date.now());
+    }
+  };
+
+  return (
+    <MenuItem autoFocus onClick={() => fileInputRef.current?.click()}>
+      <StyledIconButton
+        aria-label={label}
+        tabIndex={-1}
+        disabled={disabled}
+        size="large"
+      >
+        {/* <AddPhotoAlternateOutlinedIcon /> */}
+        {icon}
+        <VisuallyHiddenInput
+          type="file"
+          key={fileInputKey}
+          ref={fileInputRef}
+          onChange={handleUpload}
+          accept={fileTypes
+            .flatMap((def) => {
+              return def.fileExtensions.map((ext) => `.${ext}`);
+            })
+            .join(", ")}
+        />
+      </StyledIconButton>
+      {label}
+    </MenuItem>
+  );
+}
+
+const VisuallyHiddenInput = styled("input")({
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
+  height: 1,
+  overflow: "hidden",
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  whiteSpace: "nowrap",
+  width: 1,
+});

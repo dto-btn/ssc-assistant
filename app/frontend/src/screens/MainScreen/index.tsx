@@ -243,6 +243,17 @@ const MainScreen = () => {
     setChatIndexToLoadOrDelete(null);
   };
 
+  const handleFileUploadError = (toast: ToastMessage) => {
+    setCurrentChatHistory((prevChatHistory) => {
+      const updatedChatHistory = {
+        ...prevChatHistory,
+        chatItems: [...prevChatHistory.chatItems, toast],
+      };
+      chatService.saveChatHistories(updatedChatHistory);
+      return updatedChatHistory;
+    });
+  };
+
   const handleBookReservation = async (bookingDetails: BookingConfirmation) => {
     let toast: ToastMessage;
     try {
@@ -271,10 +282,10 @@ const MainScreen = () => {
   useEffect(() => {
     console.debug(
       "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-        isAuthenticated +
-        ", InProgress? " +
-        inProgress +
-        ")"
+      isAuthenticated +
+      ", InProgress? " +
+      inProgress +
+      ")"
     );
     if (
       isAuthenticated &&
@@ -489,6 +500,7 @@ const MainScreen = () => {
                 }
                 quotedText={quotedText}
                 selectedModel={getCurrentChatHistory().model}
+                onError={handleFileUploadError}
               />
             </Box>
           </Box>
@@ -508,7 +520,7 @@ const MainScreen = () => {
               paddingTop: "3rem",
               overflow: "auto",
             }}
-            // maxWidth="lg"
+          // maxWidth="lg"
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <ChatMessagesContainer
@@ -545,6 +557,7 @@ const MainScreen = () => {
                 }
                 quotedText={quotedText}
                 selectedModel={getCurrentChatHistory().model}
+                onError={handleFileUploadError}
               />
             </Box>
           </Box>

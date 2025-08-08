@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from typing import Any, List, Optional, Tuple, Union, Dict
+from typing import Any, List, Optional, Tuple, Union
 
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from openai import AzureOpenAI, Stream
@@ -104,16 +104,14 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                     tool_messages = tool_service.call_tools(completion_tools.choices[0].message.tool_calls, messages)
                     last_message = tool_messages[-1]
                     if isinstance(last_message, dict) and "content" in last_message:
-                        # Parse the tool response into the IndexConfig Pydantic model
+                        # Parse the tool response into the AzureCognitiveSearchDataSourceConfig Pydantic model
                         try:
                             tool_response = json.loads(str(last_message['content']))
-
                             # Create the search config directly with language filter applied
                             search_config = AzureCognitiveSearchDataSourceConfig(
                                 **tool_response,
                                 lang_filter=message_request.lang if tool_response.get('use_language_filter', False) else ""
                             )
-
                             return (tool_service.tools_info, client.chat.completions.create(
                                 messages=messages,
                                 model=model,
@@ -121,7 +119,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                                 stream=stream
                             ))
                         except Exception as e:
-                            logger.error("Failed to parse tool response into IndexConfig: %s", e)
+                            logger.error("Failed to parse tool response into AzureCognitiveSearchDataSourceConfig: %s", e)
 
                 # this will modify the messages array we send to OpenAI to contain the function_calls **it** requested
                 # and that we processed on it's behalf.

@@ -39,6 +39,38 @@
         "en": "An unknown error occurred",
         "fr": "Une erreur inconnue est survenue"
     },
+    "error.uploading.file": {
+        "en": "Error uploading file. Please try again.",
+        "fr": "Erreur lors du téléchargement du fichier. Veuillez réessayer."
+    },
+    "invalid.file.type": {
+        "en": "Invalid file type. Please select a supported file format.",
+        "fr": "Type de fichier non valide. Veuillez sélectionner un format de fichier pris en charge."
+    },
+    "file.too.large": {
+        "en": "File too large. Maximum file size allowed is {{maxSize}}MB.",
+        "fr": "Fichier trop volumineux. La taille maximale autorisée est de {{maxSize}}Mo."
+    },
+    "file.read.failed": {
+        "en": "Failed to read file: {{fileName}}. Please try again.",
+        "fr": "Échec de la lecture du fichier : {{fileName}}. Veuillez réessayer."
+    },
+    "file.read.timeout": {
+        "en": "File reading timeout after {{seconds}} seconds for file: {{fileName}}",
+        "fr": "Délai d'attente de lecture du fichier après {{seconds}} secondes pour le fichier : {{fileName}}"
+    },
+    "file.invalid.format": {
+        "en": "Invalid file format for: {{fileName}}. Expected a valid data format.",
+        "fr": "Format de fichier invalide pour : {{fileName}}. Format de données valide attendu."
+    },
+    "file.read.error": {
+        "en": "Error reading file: {{fileName}}",
+        "fr": "Erreur lors de la lecture du fichier : {{fileName}}"
+    },
+    "file.read.aborted": {
+        "en": "File reading was aborted for: {{fileName}}",
+        "fr": "La lecture du fichier a été interrompue pour : {{fileName}}"
+    },
     "login.required": {
         "en": "Login Required to Proceed",
         "fr": "Connexion requise pour continuer"
@@ -850,12 +882,41 @@
     "new.conversation.br": {
         "en": "EBIDM Business Request Agent",
         "fr": "Agent de demande opérationnelle IOEGD"
-    },"new.conversation.br.aria.description": {
+    },
+    "new.conversation.br.aria.description": {
         "en": "Enterprise Business Intake and Demand Management (EBIDM) Business request chat button to start a new conversation while keeping your current history.",
         "fr": "La Division de l'intégration opérationnelle d'entreprise et gestion de la demande (IOEGD). Chat Demande opérationnelle pour commencer une nouvelle conversation tout en conservant votre historique actuel."
+    },
+    "attach.image": {
+        "en": "Attach Image",
+        "fr": "Joindre une image"
+    },
+    "attach.document": {
+        "en": "Attach Document",
+        "fr": "Joindre un document"
     },
     "summerize.conversation": {
         "en": "Given the following conversation, generate a concise, specific, and descriptive title (max 4 words) that best summarizes the main topic. Avoid generic words like 'conversation', 'chat', or 'discussion'. Only output the title, no quotes or punctuation:",
         "fr": "À partir de la conversation suivante, générez un titre concis, spécifique et descriptif (maximum 4 mots) qui résume le mieux le sujet principal. Évitez les mots génériques comme 'conversation', 'discussion' ou 'échange'. Affichez uniquement le titre, sans guillemets ni ponctuation."
+    },
+    "file.unsupported.type.generic": {
+        "en": "Unsupported file type",
+        "fr": "Type de fichier non pris en charge"
+    },
+    "file.unsupported.type": {
+        "en": "Unsupported file type: {{mimeType}}",
+        "fr": "Type de fichier non pris en charge : {{mimeType}}"
+    },
+    "file.encoded.invalid.format": {
+        "en": "Invalid encoded file format. Expected a data URL starting with 'data:' followed by a valid MIME type.",
+        "fr": "Format de fichier encodé invalide. Une URL de données commençant par 'data:' suivie d'un type MIME valide est attendue."
+    },
+    "upload.options": {
+        "en": "Upload options",
+        "fr": "Options de téléversement"
+    },
+    "user.file.upload": {
+        "en": "User file upload",
+        "fr": "Téléversement de fichier utilisateur"
     }
 }
