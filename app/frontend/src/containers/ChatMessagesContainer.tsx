@@ -41,10 +41,9 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         const messageHeight = lastUserMessageRef.current.clientHeight;
 
         // Calculate skeleton height as a percentage based on the container and message heights with an offset
-        const heightPercent = ((containerHeight - messageHeight) / containerHeight) * 85;
+        const heightPercent = ((containerHeight - messageHeight) / containerHeight) * 75;
 
         setSkeletonHeight(`${heightPercent}%`);
-        console.log("heightPercent:", heightPercent);
         if (isTailing) {
           setTimeout(() => {
             containerRef.current?.scrollTo({
@@ -58,8 +57,6 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         setSkeletonHeight("0%");
       }
     }
-
-    console.log("Skeleton height set to:", skeletonHeight);
   }, [chatHistory.chatItems, isLoading]);
 
   return (
@@ -144,31 +141,31 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
           </Fragment>
         ))
       )}
-      {isLoading && (
-        <div style={{ height: skeletonHeight, display: "flex", alignItems: "center", marginLeft: "1%" }}>
+      {isLoading && skeletonHeight !== "0%" && (
+        <div style={{ height: skeletonHeight, width: "90%", display: "flex", alignItems: "center", marginLeft: "1%" }}>
           <Skeleton
             variant="circular"
-            width="2.5%"
-            height="8%"
-            sx={{ position: "relative", top: "-24%" }}
+            height="35px"
+            width="35px"
+            sx={{ position: "relative", top: "-23%" }}
           />
           <Stack direction="column" sx={{ position: "relative", top: "20%", height: "100%", width: "95%" }}>
             <Skeleton
               variant="text"
               width="85%"
-              height="10%"
+              height="30px"
               sx={{ ml: "1%" }}
             />
             <Skeleton
               variant="text"
               width="85%"
-              height="10%"
+              height="30px"
               sx={{ ml: "1%" }}
             />
             <Skeleton
               variant="text"
               width="85%"
-              height="10%"
+              height="30px"
               sx={{ ml: "1%" }}
             />
           </Stack>
