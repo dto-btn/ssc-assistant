@@ -211,10 +211,7 @@ export const completionBasic = async (request: MessageRequest, accessToken: Stri
   }
 
   // Parse the response
-  const { json, plainTexts } = await parseMixedResponse(response);
-
-  // Log the extracted plain text sections (if any)
-  console.log("Plain text sections:", plainTexts);
+  const json  = await parseMixedResponse(response);
 
   // Return the JSON response or handle it as needed
   if (json) {
@@ -227,8 +224,6 @@ export const completionBasic = async (request: MessageRequest, accessToken: Stri
 const parseMixedResponse = async (response: Response) => {
     // Read the response as text
     const rawText = await response.text();
-
-    console.log("Raw response received:", rawText);
 
     // Split the response by the custom delimiter
     const sections = rawText.split("--GPT-Interaction").map((section) => section.trim());
@@ -247,7 +242,6 @@ const parseMixedResponse = async (response: Response) => {
                     // Extract the JSON substring and parse it
                     const jsonString = section.substring(jsonStartIndex);
                     parsedJson = JSON.parse(jsonString);
-                    console.log("Parsed JSON object:", parsedJson);
                 } catch (error) {
                     console.error("Failed to parse JSON section:", error, section);
                 }
