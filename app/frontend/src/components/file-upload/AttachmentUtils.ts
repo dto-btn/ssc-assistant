@@ -13,11 +13,14 @@ export class AttachmentUtils {
             .filter(def => def.category === "document")
     }
 
-    static getMimetypeFromEncodedFile(encodedFile: string): string {
+    static getMimetypeFromEncodedFile(
+        encodedFile: string,
+        t: (key: string, options?: any) => string
+    ): string {
         // validate with regex to ensure it starts with "data:" and contains a valid MIME type
         const dataUrlPattern = /^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-+.]+);base64,/;
         if (!dataUrlPattern.test(encodedFile)) {
-            const msg = "Invalid encoded file format. Expected a data URL starting with 'data:' followed by a valid MIME type.";
+            const msg = t("file.encoded.invalid.format");
             console.error(msg);
             throw new Error(msg);
         }
@@ -26,7 +29,7 @@ export class AttachmentUtils {
         const fileTypeDefinition = validFileTypeDefinitions.find(def => def.fileType === mimeType);
 
         if (!fileTypeDefinition) {
-            const msg = `Unsupported file type: ${mimeType}`;
+            const msg = t("file.unsupported.type", { mimeType });
             console.error(msg);
             throw new Error(msg);
         }

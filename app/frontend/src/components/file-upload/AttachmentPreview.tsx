@@ -42,7 +42,7 @@ export const AttachmentPreview = ({ attachment }: AttachmentPreviewProps) => {
     );
   }
 
-  return <span>Unsupported file type</span>;
+  return <span>{t("file.unsupported.type.generic")}</span>;
 };
 
 const ImageContainer = styled(Box)`

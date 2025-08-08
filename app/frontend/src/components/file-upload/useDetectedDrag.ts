@@ -67,7 +67,24 @@ export const useDetectedDrag = (
                 // If we just dropped files, we reset the drag count
                 numDrags.current = 0;
                 updateDragState();
-                props.onDrop?.(e);
+                if (props.onDrop) {
+                    // Create a synthetic React.DragEvent from the native event
+                    const syntheticEvent = {
+                        ...e,
+                        nativeEvent: e,
+                        currentTarget: window as unknown as EventTarget & Element,
+                        target: e.target as EventTarget & Element,
+                        isDefaultPrevented: () => e.defaultPrevented,
+                        isPropagationStopped: () => false,
+                        persist: () => {},
+                        preventDefault: () => e.preventDefault(),
+                        stopPropagation: () => e.stopPropagation(),
+                        bubbles: e.bubbles,
+                        cancelable: e.cancelable,
+                        // Add any other properties as needed
+                    } as unknown as React.DragEvent;
+                    props.onDrop(syntheticEvent);
+                }
             }
         };
         const handleWindowFocus = () => {

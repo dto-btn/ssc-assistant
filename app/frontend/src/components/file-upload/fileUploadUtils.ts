@@ -74,7 +74,7 @@ export const getTokenAndUploadFile = async (
                         response.accessToken
                     );
 
-                    fileUpload.type = AttachmentUtils.getMimetypeFromEncodedFile(encodedFile);
+                    fileUpload.type = AttachmentUtils.getMimetypeFromEncodedFile(encodedFile, t);
                     
                     resolve(fileUpload);
                 } catch (error) {

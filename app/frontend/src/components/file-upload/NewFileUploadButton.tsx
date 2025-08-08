@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import { UploadFileButtonMenuItem } from "../file-upload/UploadFileButtonMenuItem";
 import React, { useState } from 'react';
+import { useTranslation } from "react-i18next";
 import { tt } from '../../i18n/tt';
 import { AttachmentUtils } from './AttachmentUtils';
 
@@ -18,6 +19,7 @@ type NewFileUploadButtonProps = {
 export const NewFileUploadButton: React.FC<NewFileUploadButtonProps> = ({ onFileUpload, disabled }) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
+    const { t } = useTranslation();
 
     const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -28,7 +30,7 @@ export const NewFileUploadButton: React.FC<NewFileUploadButtonProps> = ({ onFile
     return (
         <>
             <IconButton
-                aria-label="upload options"
+                aria-label={t("upload.options")}
                 onClick={handleMenuClick}
                 disabled={disabled}
                 size="large"

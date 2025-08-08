@@ -898,5 +898,25 @@
     "summerize.conversation": {
         "en": "Given the following conversation, generate a concise, specific, and descriptive title (max 4 words) that best summarizes the main topic. Avoid generic words like 'conversation', 'chat', or 'discussion'. Only output the title, no quotes or punctuation:",
         "fr": "À partir de la conversation suivante, générez un titre concis, spécifique et descriptif (maximum 4 mots) qui résume le mieux le sujet principal. Évitez les mots génériques comme 'conversation', 'discussion' ou 'échange'. Affichez uniquement le titre, sans guillemets ni ponctuation."
+    },
+    "file.unsupported.type.generic": {
+        "en": "Unsupported file type",
+        "fr": "Type de fichier non pris en charge"
+    },
+    "file.unsupported.type": {
+        "en": "Unsupported file type: {{mimeType}}",
+        "fr": "Type de fichier non pris en charge : {{mimeType}}"
+    },
+    "file.encoded.invalid.format": {
+        "en": "Invalid encoded file format. Expected a data URL starting with 'data:' followed by a valid MIME type.",
+        "fr": "Format de fichier encodé invalide. Une URL de données commençant par 'data:' suivie d'un type MIME valide est attendue."
+    },
+    "upload.options": {
+        "en": "Upload options",
+        "fr": "Options de téléversement"
+    },
+    "user.file.upload": {
+        "en": "User file upload",
+        "fr": "Téléversement de fichier utilisateur"
     }
 }
