@@ -1,4 +1,4 @@
-import { Box, CircularProgress, Skeleton } from "@mui/material";
+import { Box, CircularProgress, Skeleton, Stack } from "@mui/material";
 import { Fragment, RefObject, useEffect, useState, useRef } from "react";
 import { AlertBubble, AssistantBubble, UserBubble } from "../components";
 import { isACompletion, isAMessage, isAToastMessage } from "../utils";
@@ -30,19 +30,21 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
 
   const lastUserMessageRef = useRef<HTMLDivElement>(null);
   const completionRef = useRef<HTMLDivElement>(null);
-  const [skeletonHeight, setSkeletonHeight] = useState(200);
+  const [skeletonHeight, setSkeletonHeight] = useState<string>("20%");
 
   useEffect(() => {
     var lastCompletion = chatHistory.chatItems[chatHistory.chatItems.length - 1] as Completion;
-
-    console.log(lastCompletion.message.content === "")
 
     if (lastCompletion && lastCompletion.message && typeof lastCompletion.message.content === "string" && isLoading) {
       if (!completionRef.current && lastUserMessageRef.current && containerRef.current) {
         const containerHeight = containerRef.current.clientHeight;
         const messageHeight = lastUserMessageRef.current.clientHeight;
-        setSkeletonHeight(containerHeight - messageHeight - 60);
-        console.log("Container height:", containerHeight, "Message height:", messageHeight);
+
+        // Calculate skeleton height as a percentage based on the container and message heights with an offset
+        const heightPercent = ((containerHeight - messageHeight) / containerHeight) * 85;
+
+        setSkeletonHeight(`${heightPercent}%`);
+        console.log("heightPercent:", heightPercent);
         if (isTailing) {
           setTimeout(() => {
             containerRef.current?.scrollTo({
@@ -53,7 +55,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         }
       }
       else {
-        setSkeletonHeight(0);
+        setSkeletonHeight("0%");
       }
     }
 
@@ -143,20 +145,33 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         ))
       )}
       {isLoading && (
-        // Use skeleton of avatar and (rectangle or 3 lines)
         <div style={{ height: skeletonHeight, display: "flex", alignItems: "center", marginLeft: "1%" }}>
           <Skeleton
             variant="circular"
-            width="3.5%"
-            height="10%"
-            sx={{ position: "relative", top: "-20%" }}
+            width="2.5%"
+            height="8%"
+            sx={{ position: "relative", top: "-24%" }}
           />
-          <Skeleton
-            variant="text"
-            width="75%"
-            height="100%"
-            sx={{ ml: "1%" }}
-          />
+          <Stack direction="column" sx={{ position: "relative", top: "20%", height: "100%", width: "95%" }}>
+            <Skeleton
+              variant="text"
+              width="85%"
+              height="10%"
+              sx={{ ml: "1%" }}
+            />
+            <Skeleton
+              variant="text"
+              width="85%"
+              height="10%"
+              sx={{ ml: "1%" }}
+            />
+            <Skeleton
+              variant="text"
+              width="85%"
+              height="10%"
+              sx={{ ml: "1%" }}
+            />
+          </Stack>
         </div>
       )}
       {/* 
