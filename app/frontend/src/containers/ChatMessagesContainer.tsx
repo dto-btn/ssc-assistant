@@ -159,12 +159,21 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         ))
       )}
       {isLoading && (
-        <Skeleton
-          variant="text"
-          width="85%"
-          height={`${skeletonHeight}px`}
-        // sx={{ ml: "4%", bgcolor: skeletonColour }}
-        />
+        // Use skeleton of avatar and (rectangle or 3 lines)
+        <div style={{ height: skeletonHeight, display: "flex", alignItems: "center" }}>
+          <Skeleton
+            variant="circular"
+            width="3.5%"
+            height="10%"
+          // sx={{ padding: "4%", mb: 1 }}
+          />
+          <Skeleton
+            variant="text"
+            width="85%"
+            height="100%"
+            sx={{ ml: "1%" }}
+          />
+        </div>
       )}
       {/* 
         We need this to be at the bottom so that we scroll PAST the last message. 
