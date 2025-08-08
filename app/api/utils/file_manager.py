@@ -1,8 +1,3 @@
-import mimetypes
-import requests
-from typing import Tuple
-
-import tiktoken
 from pypdf import PdfReader
 from docx import Document
 from openpyxl import load_workbook
@@ -51,14 +46,6 @@ class FileManager:
         for slide in prs.slides:
             for shape in slide.shapes:
                 if hasattr(shape, "text"):
-                    text.append(shape.text)
+                    text.append(shape.text) # type: ignore
         return "\n".join(text)
 
-    def count_tokens(self, text: str, encoding_name: str = "cl100k_base") -> int:
-        encoding = tiktoken.get_encoding(encoding_name)
-        return len(encoding.encode(text))
-
-    def get_text_and_token_count(self) -> Tuple[str, int]:
-        text = self.extract_text()
-        token_count = self.count_tokens(text)
-        return text, token_count
