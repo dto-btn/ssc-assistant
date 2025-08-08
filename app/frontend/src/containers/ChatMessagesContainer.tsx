@@ -31,7 +31,6 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
   const lastUserMessageRef = useRef<HTMLDivElement>(null);
   const completionRef = useRef<HTMLDivElement>(null);
   const [skeletonHeight, setSkeletonHeight] = useState(200);
-  const [skeletonColour, setSkeletonColor] = useState("gray.900");
 
   useEffect(() => {
     var lastCompletion = chatHistory.chatItems[chatHistory.chatItems.length - 1] as Completion;
@@ -43,7 +42,6 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         const containerHeight = containerRef.current.clientHeight;
         const messageHeight = lastUserMessageRef.current.clientHeight;
         setSkeletonHeight(containerHeight - messageHeight - 60);
-        // setSkeletonColor("grey.300");
         console.log("Container height:", containerHeight, "Message height:", messageHeight);
         if (isTailing) {
           setTimeout(() => {
@@ -54,22 +52,8 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
           }, 100);
         }
       }
-      else if (completionRef.current && lastUserMessageRef.current && containerRef.current) {
-        const containerHeight = containerRef.current.clientHeight;
-        const messageHeight = lastUserMessageRef.current.clientHeight;
-        const completionHeight = completionRef.current.clientHeight;
-
+      else {
         setSkeletonHeight(0);
-
-        // if (completionHeight > (containerHeight - messageHeight - 60)) {
-        //   setSkeletonHeight(0);
-        //   console.log("Completion height is greater than container height minus message height, setting skeleton height to 0");
-        // }
-        // else {
-        //   setSkeletonHeight(containerHeight - messageHeight - completionHeight - 60);
-        //   setSkeletonColor("#F5F5F5");
-        //   console.log("Container height:", containerHeight, "Message height:", messageHeight, "Completion height:", completionHeight);
-        // }
       }
     }
 
@@ -160,16 +144,16 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
       )}
       {isLoading && (
         // Use skeleton of avatar and (rectangle or 3 lines)
-        <div style={{ height: skeletonHeight, display: "flex", alignItems: "center" }}>
+        <div style={{ height: skeletonHeight, display: "flex", alignItems: "center", marginLeft: "1%" }}>
           <Skeleton
             variant="circular"
             width="3.5%"
             height="10%"
-          // sx={{ padding: "4%", mb: 1 }}
+            sx={{ position: "relative", top: "-20%" }}
           />
           <Skeleton
             variant="text"
-            width="85%"
+            width="75%"
             height="100%"
             sx={{ ml: "1%" }}
           />
