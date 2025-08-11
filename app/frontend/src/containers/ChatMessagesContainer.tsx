@@ -31,7 +31,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
   const lastUserMessageRef = useRef<HTMLDivElement>(null);
   const completionRef = useRef<HTMLDivElement>(null);
   const [skeletonHeight, setSkeletonHeight] = useState<string>("20%");
-  const [skeletonColour, setSkeletonColour] = useState<string>("gray.900");
+  const [showSkeleton, setShowSkeleton] = useState<boolean>(false);
 
   // Effect to handle the height of the skeleton when a question is asked
   useEffect(() => {
@@ -41,6 +41,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     if (lastCompletion && lastCompletion.message && typeof lastCompletion.message.content === "string" && isLoading) {
       // If the completion is not yet rendered, we calculate the height based on the container and last user message
       if (!completionRef.current && lastUserMessageRef.current && containerRef.current) {
+
         const containerHeight = containerRef.current.clientHeight;
         const messageHeight = lastUserMessageRef.current.clientHeight;
 
@@ -48,6 +49,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         const heightPercent = ((containerHeight - messageHeight) / containerHeight) * 75;
 
         setSkeletonHeight(`${heightPercent}%`);
+        setShowSkeleton(true);
 
         // Scroll to the bottom if we are tailing (Pushes question to the top)
         if (isTailing) {
@@ -71,7 +73,9 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
           const heightPercent = ((containerHeight - messageHeight - completionHeight) / containerHeight) * 75;
 
           setSkeletonHeight(`${heightPercent}%`);
-          console.log("Setting skeleton height to: ", heightPercent);
+
+          // If the completion is being rendered, hide skeleton
+          setShowSkeleton(false);
 
           if (isTailing) {
             setTimeout(() => {
@@ -171,36 +175,38 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
           </Fragment>
         ))
       )}
-      {isLoading && skeletonHeight !== "0%" && (
-        <div style={{ height: skeletonHeight, width: "90%", display: "flex", alignItems: "center", marginLeft: "1%" }}>
-          <Skeleton
-            variant="circular"
-            height="35px"
-            width="35px"
-            sx={{ position: "relative", top: "-23%" }}
-          />
-          <Stack direction="column" sx={{ position: "relative", top: "20%", height: "100%", width: "95%" }}>
+      <div style={{ height: skeletonHeight, width: "90%", display: "flex", alignItems: "center", marginLeft: "1%" }}>
+        {showSkeleton && (
+          <>
             <Skeleton
-              variant="text"
-              width="85%"
-              height="30px"
-              sx={{ ml: "1%" }}
+              variant="circular"
+              height="35px"
+              width="35px"
+              sx={{ position: "relative", top: "-23%" }}
             />
-            <Skeleton
-              variant="text"
-              width="85%"
-              height="30px"
-              sx={{ ml: "1%" }}
-            />
-            <Skeleton
-              variant="text"
-              width="85%"
-              height="30px"
-              sx={{ ml: "1%" }}
-            />
-          </Stack>
-        </div>
-      )}
+            <Stack direction="column" sx={{ position: "relative", top: "20%", height: "100%", width: "95%" }}>
+              <Skeleton
+                variant="text"
+                width="85%"
+                height="30px"
+                sx={{ ml: "1%" }}
+              />
+              <Skeleton
+                variant="text"
+                width="85%"
+                height="30px"
+                sx={{ ml: "1%" }}
+              />
+              <Skeleton
+                variant="text"
+                width="85%"
+                height="30px"
+                sx={{ ml: "1%" }}
+              />
+            </Stack>
+          </>
+        )}
+      </div>
       {/* 
         We need this to be at the bottom so that we scroll PAST the last message. 
         Otherwise, the last message will not be fully visible.
