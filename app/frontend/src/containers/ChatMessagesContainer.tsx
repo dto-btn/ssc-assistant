@@ -31,6 +31,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
   const lastUserMessageRef = useRef<HTMLDivElement>(null);
   const completionRef = useRef<HTMLDivElement>(null);
   const [skeletonHeight, setSkeletonHeight] = useState<string>("20%");
+  const [skeletonColour, setSkeletonColour] = useState<string>("gray.900");
 
   // Effect to handle the height of the skeleton when a question is asked
   useEffect(() => {
@@ -58,8 +59,32 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
           }, 100);
         }
       }
-      else { // If the completion is already rendered, we set the skeleton height to 0%
-        setSkeletonHeight("0%");
+      else if (completionRef.current && lastUserMessageRef.current && containerRef.current) {
+
+        // If the completion is shorter than the container, calucate the height based on the completion, container & question
+        if (completionRef.current.clientHeight < containerRef.current.clientHeight) {
+          const containerHeight = containerRef.current.clientHeight;
+          const messageHeight = lastUserMessageRef.current.clientHeight;
+          const completionHeight = completionRef.current.clientHeight;
+
+          // Calculate skeleton height as a percentage based on the container and message heights with an offset
+          const heightPercent = ((containerHeight - messageHeight - completionHeight) / containerHeight) * 75;
+
+          setSkeletonHeight(`${heightPercent}%`);
+          console.log("Setting skeleton height to: ", heightPercent);
+
+          if (isTailing) {
+            setTimeout(() => {
+              containerRef.current?.scrollTo({
+                top: containerRef.current.scrollHeight,
+                behavior: "smooth",
+              });
+            }, 100);
+          }
+        }
+        else { // If the completion is already rendered, set the skeleton height to 0%
+          setSkeletonHeight("0%");
+        }
       }
     }
   }, [chatHistory.chatItems, isLoading]);
