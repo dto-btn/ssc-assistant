@@ -2,7 +2,7 @@ import { useMemo, useState, useCallback } from "react"
 import { isTokenExpired } from "../../util/token";
 import { useMsal } from "@azure/msal-react";
 import { apiUse } from "../../authConfig";
-import { completionBasic, completionMySSC } from "../../api/api";
+import { completionBasic, completion } from "../../api/api";
 import { AccountInfo } from "@azure/msal-browser";
 import { useChatService } from "../../hooks/useChatService";
 import { useTranslation } from "react-i18next";
@@ -35,7 +35,7 @@ export const useApiRequestService = () => {
 
             if (!token) throw new Error(t("no.token"));
 
-            const completionResponse = await completionMySSC({
+            const completionResponse = await completion({
                 request: request,
                 updateLastMessage: chatService.updateLastMessage,
                 accessToken: token,

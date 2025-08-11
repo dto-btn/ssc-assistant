@@ -148,7 +148,11 @@ export const useChatService = () => {
         } else {
             const newChat = buildDefaultChatHistory()
             chatHistories.push(newChat);
-            const newDescription = "Conversation " + (chatHistoriesDescriptions.length + 1);
+            const newDescription = "...";
+            // If tool(s) are enforced specifically here for this new chat, we set them in the convo staticTools
+            if (tool) {
+                newChat.staticTools = [tool];
+            }
             newChat.description = newDescription;
             PersistenceUtils.setChatHistories(chatHistories);
             setCurrentChatIndex(chatHistories.length - 1);
@@ -166,7 +170,7 @@ export const useChatService = () => {
                 updatedTools[t] = false;
             });
             if(tool){
-                if (tool && (tool === "archibus" || tool === "bits")) {
+                if (tool === "archibus" || tool === "bits") {
                     Object.keys(appStore.tools.enabledTools).forEach((t) => {
                         updatedTools[t] = false;
                     });
@@ -324,8 +328,6 @@ function mergeChatItem(chatItem: { role?: string; content?: any }): string {
 }
 
 function summerizeChatWithChatGPT(chat: Message[]): MessageRequest {
- 
-
     // Merge all chat items (filter undefined or null items)
     const mergeChatItems = chat
         .filter(item => item !== null && item !== undefined)
@@ -335,7 +337,6 @@ function summerizeChatWithChatGPT(chat: Message[]): MessageRequest {
     const mergedText = mergeChatItems.join("\n");
 
     // Build the prompt for ChatGPT
-    
     const SUMMERIZECHATWITHCHATGPT_MESSAGE = t("summerize.conversation");
     const prompt = `${SUMMERIZECHATWITHCHATGPT_MESSAGE}:\n\n${mergedText}`;
 

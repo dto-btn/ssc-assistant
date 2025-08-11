@@ -282,10 +282,10 @@ const MainScreen = () => {
   useEffect(() => {
     console.debug(
       "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-      isAuthenticated +
-      ", InProgress? " +
-      inProgress +
-      ")"
+        isAuthenticated +
+        ", InProgress? " +
+        inProgress +
+        ")"
     );
     if (
       isAuthenticated &&
@@ -353,6 +353,7 @@ const MainScreen = () => {
           uuid: uuidv4(),
           model: getDefaultModel(),
           isTopicSet: true, // Set to true since we have a topic
+          staticTools: [],
         };
         setCurrentChatHistory(newChatHistory);
         setChatHistoriesDescriptions([
@@ -520,7 +521,7 @@ const MainScreen = () => {
               paddingTop: "3rem",
               overflow: "auto",
             }}
-          // maxWidth="lg"
+            // maxWidth="lg"
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <ChatMessagesContainer

@@ -33,7 +33,7 @@ function convertRequestForAPI(request: MessageRequest): ApiMessageRequestDto {
   };
 }
 
-export async function completionMySSC({ request, updateLastMessage, accessToken }: CompletionProps): Promise<Completion> {
+export async function completion({ request, updateLastMessage, accessToken }: CompletionProps): Promise<Completion> {
   let completion: Completion | undefined;
   const url = "/api/1.0/completion/chat/stream";
 
