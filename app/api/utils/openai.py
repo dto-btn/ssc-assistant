@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from typing import Any, List, Optional, Tuple, Union, Dict
+from typing import Any, List, Optional, Tuple, Union
 
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from openai import AzureOpenAI, Stream
@@ -10,9 +10,8 @@ from openai.types.completion_usage import CompletionUsage
 from src.constants.tools import TOOL_CORPORATE, TOOL_PMCOE, TOOL_TELECOM
 from src.service.tool_service import ToolService
 from utils.manage_message import load_messages
-from utils.models import (Citation, Completion, Context, IndexConfig, Message,
-                          MessageRequest, ToolInfo)
-from urllib import parse as urllib_parse
+from utils.models import (Citation, Completion, Context, Message,
+                          MessageRequest, ToolInfo, AzureCognitiveSearchDataSourceConfig)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -32,21 +31,21 @@ client = AzureOpenAI(
     azure_ad_token_provider=token_provider,
 )
 
-def _create_azure_cognitive_search_data_source(index_name: str, embedding_model: str, top: int=3, lang_filter: str="") -> dict:
+def _create_azure_cognitive_search_data_source(config: AzureCognitiveSearchDataSourceConfig) -> dict:
     current_filter=""
-    if lang_filter == 'en' or lang_filter == 'fr':
-        current_filter = f"langcode eq '{lang_filter}'"
+    if config.lang_filter == 'en' or config.lang_filter == 'fr':
+        current_filter = f"langcode eq '{config.lang_filter}'"
         logger.debug("Adding langfilter to datasource query %s", current_filter)
     return {"data_sources":
         [{
             "type": "azure_search",
             "parameters": {
                 "endpoint": service_endpoint,
-                "index_name": index_name,
+                "index_name": config.index_name,
                 "in_scope": True,
-                "top_n_documents": top,
+                "top_n_documents": config.top_n_documents,
                 "semantic_configuration": "default",
-                "query_type": "vector_simple_hybrid",
+                "query_type": config.query_type,
                 "fields_mapping": {},
                 "authentication": {
                     "type": "api_key",
@@ -55,7 +54,7 @@ def _create_azure_cognitive_search_data_source(index_name: str, embedding_model:
                 "filter": current_filter,
                 "embedding_dependency": {
                     "type": "deployment_name",
-                    "deployment_name": embedding_model
+                    "deployment_name": config.embedding_model
                 },
             }
         }]
@@ -105,26 +104,22 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
                     tool_messages = tool_service.call_tools(completion_tools.choices[0].message.tool_calls, messages)
                     last_message = tool_messages[-1]
                     if isinstance(last_message, dict) and "content" in last_message:
-                        # Parse the tool response into the IndexConfig Pydantic model
+                        # Parse the tool response into the AzureCognitiveSearchDataSourceConfig Pydantic model
                         try:
                             tool_response = json.loads(str(last_message['content']))
-                            index_config = IndexConfig(**tool_response)
-                            print(index_config)
-
-                            # Use the validated model's properties for creating the data source
+                            # Create the search config directly with language filter applied
+                            search_config = AzureCognitiveSearchDataSourceConfig(
+                                **tool_response,
+                                lang_filter=message_request.lang if tool_response.get('use_language_filter', False) else ""
+                            )
                             return (tool_service.tools_info, client.chat.completions.create(
                                 messages=messages,
                                 model=model,
-                                extra_body=_create_azure_cognitive_search_data_source(
-                                    index_config.index_name,
-                                    embedding_model=index_config.embedding_model,
-                                    top=index_config.top_n_documents,
-                                    lang_filter=message_request.lang if index_config.use_language_filter else ""
-                                ),
+                                extra_body=_create_azure_cognitive_search_data_source(search_config),
                                 stream=stream
                             ))
                         except Exception as e:
-                            logger.error("Failed to parse tool response into IndexConfig: %s", e)
+                            logger.error("Failed to parse tool response into AzureCognitiveSearchDataSourceConfig: %s", e)
 
                 # this will modify the messages array we send to OpenAI to contain the function_calls **it** requested
                 # and that we processed on it's behalf.

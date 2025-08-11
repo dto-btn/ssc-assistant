@@ -12,7 +12,7 @@ resource "azuread_group" "owners" {
 resource "azuread_group" "contributors" {
   display_name = "ScSc-CIO_ECT_Subscription_Contributors"
   # owners # Managed by Infra group, do not alter.
-  members = [ data.azuread_user.users["dev-gt"].object_id ]
+  members = [ data.azuread_user.users["dev-gt"].object_id, data.azuread_user.users["dev-cr"].object_id ]
   security_enabled = true
 }
 
@@ -42,8 +42,8 @@ locals {
       user_principal_name = "david.simard@ssc-spc.gc.ca"
     },
     { 
-      name = "dev-mw"
-      user_principal_name = "Monarch.Wadia@ssc-spc.gc.ca"
+      name = "dev-cr"
+      user_principal_name = "Cody.Robillard@ssc-spc.gc.ca"
     },
   ]
 }

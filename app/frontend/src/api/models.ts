@@ -75,6 +75,8 @@ interface ChatHistory {
   description: string;
   uuid: string;
   model: string;
+  isTopicSet: boolean;
+  staticTools: string[];
 }
 
 interface BookingConfirmation {

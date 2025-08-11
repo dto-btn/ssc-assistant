@@ -1,13 +1,16 @@
-import React from "react";
-import { Box, Link, Paper, TableContainer, useTheme } from "@mui/material";
+import React, { useState } from "react";
+import { Box, Link, Paper, TableContainer, useTheme, Modal, Button } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { formatDate } from "./subcomponents/DateDisplay";
+import BusinessRequestCard from "./BusinessRequestCard";
+import { transformToBusinessRequest } from "../../util/bits_utils";
 
 interface BusinessRequestTableProps {
   data: Array<BusinessRequest>;
   lang: string;
   show_fields: string[];
+  brRequest?: BusinessRequest;
 }
 
 const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
@@ -18,6 +21,42 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
   const isEnglish = lang === "en";
   const { t } = useTranslation();
   const theme = useTheme();
+  const [open, setOpen] = useState(false);
+  const [brData, setBrData] = useState<BusinessRequest | undefined>(undefined);
+
+  const handlePopupOpen = (BR: string) => {
+    fetchBRData(BR)
+      .then((data) => {
+        const transformed = transformToBusinessRequest(data.br[0]);
+        setBrData(transformed);
+        setOpen(true);
+      })
+      .catch((error) => {
+        console.error("Error fetching BR data:", error);
+      });
+  };
+
+  const fetchBRData = async (BR: string) => {
+    if (!/^\d+$/.test(BR)) {
+      throw new Error("BR must be all numbers.");
+    }
+    const response = await fetch(`api/1.0/bits/br/${encodeURIComponent(BR)}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    return result;
+  };
+
+  const handlePopupClose = () => {
+    setOpen(false);
+    setBrData(undefined);
+  };
 
   const columns: GridColDef[] = [
     {
@@ -26,13 +65,15 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
       width: 75,
       renderCell: (params) => (
         <Link
-          href={`https://bitsprod.ssc-spc.gc.ca/BR/${params.value}`}
-          rel="noopener"
-          target="_blank"
+          onClick={(event) => {
+            event.stopPropagation(); // Prevent row selection
+            handlePopupOpen(params.value);
+          }}
+          style={{ cursor: "pointer" }}
         >
           #{params.value}
         </Link>
-      ),
+      ), 
     },
     {
       field: "BR_SHORT_TITLE",
@@ -150,6 +191,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
 
   const paginationModel = { page: 0, pageSize: 10 };
 
+
   // Build columnVisibilityModel based on select_fields
   const getColumnVisibilityModel = () => {
     // List all possible fields that are currently set to false by default
@@ -214,33 +256,70 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
   };
 
   return (
-    <Box>
-      <TableContainer
-        component={Paper}
-        sx={{ backgroundColor: theme.palette.secondary.contrastText }}
-      >
-        <DataGrid
-          rows={data}
-          columns={columns}
-          getRowId={(row) => row.BR_NMBR}
-          initialState={{
-            pagination: {
-              paginationModel,
-            },
-            columns: {
-              columnVisibilityModel: getColumnVisibilityModel(),
-            },
-          }}
-          pageSizeOptions={[5, 10]}
-          checkboxSelection
-          sx={{
-            border: 0,
-            backgroundColor: theme.palette.secondary.contrastText,
-          }}
-          showToolbar
+<Box>
+  <TableContainer
+    component={Paper}
+    sx={{ backgroundColor: theme.palette.secondary.contrastText }}
+  >
+  <DataGrid
+    rows={data}
+    columns={columns}
+    getRowId={(row) => row.BR_NMBR}
+    initialState={{
+    pagination: {
+      paginationModel,
+    },
+    columns: {
+      columnVisibilityModel: getColumnVisibilityModel(),
+    },
+    }}
+    pageSizeOptions={[5, 10]}
+      checkboxSelection
+      sx={{
+      border: 0,
+      backgroundColor: theme.palette.secondary.contrastText,
+    }}
+    showToolbar
+  />
+  </TableContainer>
+  <Modal open={open} onClose={handlePopupClose}>
+    <Box
+      sx={{
+        bgcolor: theme.palette.background.paper,
+        borderRadius: 3,
+        boxShadow: 24,
+        p: 4,
+        minWidth: 400,
+        maxWidth: 600,
+        width: "90vw",
+        maxHeight: "95vh",
+        overflowY: "auto",
+        mx: "auto",
+        my: "5vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        outline: "none",
+        border: "1px solid " + theme.palette.divider,
+      }}
+    >
+      {brData && (
+      <Box sx={{ width: "100%", overflow: "auto", maxHeight: "70vh" }}>
+        <BusinessRequestCard
+        key={brData.BR_NMBR}
+        data={brData}
+        lang={lang}
         />
-      </TableContainer>
+      </Box>
+      )}
+      <Box sx={{ mt: 2, width: "100%", display: "flex", justifyContent: "flex-end" }}>
+        <Button onClick={handlePopupClose} color="primary" variant="contained">
+          {t("close")}
+        </Button>
+      </Box>
     </Box>
+  </Modal>
+</Box>
   );
 };
 

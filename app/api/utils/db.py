@@ -118,7 +118,7 @@ def flag_conversation(message_request: MessageRequest, conversation_uuid: str):
       except Exception as e:
           logger.error(e)
 
-def save_file(file: FilePayload) -> str:
+def save_file(file: FilePayload, user: User) -> str:
     '''
     Store the feedback in the database, we store what we received (history and question) and the completion (answer)
     NOTE: We do not store the user here since the file tied to the user operation 
@@ -128,9 +128,23 @@ def save_file(file: FilePayload) -> str:
     file_name_uuid = str(uuid.uuid4()) + '-' + file.name
     blob_client = get_blob_service_client().get_blob_client(container="assistant-chat-files", blob=file_name_uuid)
     logger.info("Blob client created for container 'assistant-chat-files' and blob '%s'.", file_name_uuid)
-    # encode file to bytes
-    file_as_byte = base64.b64decode(file.encoded_file.split(",")[1])
+
+    # Handle different encoded file formats
+    try:
+        # Data URL format: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+        base64_data = file.encoded_file.split(",", 1)[1]
+        file_as_byte = base64.b64decode(base64_data)
+        logger.debug("Successfully decoded base64 file data, size: %d bytes", len(file_as_byte))
+    except Exception as e:
+        logger.error("Failed to decode base64 file data: %s", e)
+        raise ValueError(f"Invalid base64 file data: {e}")
+
     blob_client.upload_blob(file_as_byte, blob_type="BlockBlob", overwrite=False)
+    metadata = {
+        "user_id": user.token['oid'] if user.token and 'oid' in user.token else "unknown",
+    }
+    blob_client.set_blob_metadata(metadata)
+    logger.debug("File uploaded to blob storage with metadata: %s", metadata)
     return blob_client.url
 
 def store_suggestion(message_request: MessageRequest, user: User):

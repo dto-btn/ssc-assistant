@@ -12,6 +12,8 @@ export const buildDefaultChatHistory = () => {
         description: "",
         uuid: uuidv4(),
         model: buildDefaultModel(),
+        isTopicSet: false, // Default value for isTopicSet
+        staticTools: [] // Default value for staticTools
     };
     return defaultChatHistory
 }

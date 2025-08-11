@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 from openai.types.chat.chat_completion_content_part_param import \
     ChatCompletionContentPartParam
 from PIL import Image
+from utils.file_manager import FileManager
 from utils.azure_clients import get_blob_service_client
 from utils.models import Message
 
@@ -16,7 +17,7 @@ logger.setLevel(logging.DEBUG)
 
 __all__ = ["map_attachments"]
 
-def map_attachments(message: Message):
+def map_attachments(message: Message) -> Iterable[ChatCompletionContentPartParam]:
     """
     This will map attachments so it can be read directly from the OpenAI API. API will accept the following structure:
     {
@@ -70,11 +71,12 @@ def map_attachments(message: Message):
     if message.attachments:
         for attachment in message.attachments:
             processed_url = attachment.blob_storage_url
+            logger.debug("Processing file type ...: %s", attachment.type)
             try:
-                image_bytes = _download_attachment(processed_url)
-                if isinstance(image_bytes, bytes):
-                    encoded_image = _encode_image_to_base64(image_bytes)
+                file_bytes = _download_attachment(processed_url)
+                if isinstance(file_bytes, bytes):
                     if attachment.type == "image":
+                        encoded_image = _encode_image_to_base64(file_bytes)
                         content.append(
                             {
                                 "type": "image_url",
@@ -82,6 +84,15 @@ def map_attachments(message: Message):
                                     "url": encoded_image,
                                     "detail": "auto" # would be interesting to parameterize this.
                                 }
+                            })
+                    else:
+                        # File is a non-image. We will try to load it as text. And return as it is for now.
+                        file_manager = FileManager(file_bytes, attachment.type)
+                        text = file_manager.extract_text()
+                        content.append(
+                            {
+                                "type": "text",
+                                "text": text
                             })
             except Exception as e:
                 logger.error("Error processing attachment skipping: %s", e)

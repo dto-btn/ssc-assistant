@@ -1,19 +1,23 @@
 import logging
-from typing import List
+from typing import List, Optional, Tuple
 
 from openai.types.chat import (ChatCompletionAssistantMessageParam,
                                ChatCompletionMessageParam,
                                ChatCompletionSystemMessageParam,
                                ChatCompletionUserMessageParam)
-
-from tools.bits.bits_prompts import BITS_SYSTEM_PROMPT_EN, BITS_SYSTEM_PROMPT_FR
-from tools.pmcoe.pmcoe_prompts import PMCOE_SYSTEM_PROMPT_EN, PMCOE_SYSTEM_PROMPT_FR
+from tools.bits.bits_prompts import (BITS_SYSTEM_PROMPT_EN,
+                                     BITS_SYSTEM_PROMPT_FR)
+from tools.pmcoe.pmcoe_prompts import (PMCOE_SYSTEM_PROMPT_EN,
+                                       PMCOE_SYSTEM_PROMPT_FR)
 from utils.attachment_mapper import map_attachments
-from utils.models import MessageRequest
+from utils.models import AzureCognitiveSearchDataSourceConfig, MessageRequest
+from typing import List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["load_messages"]
+
+GPT4O_TOKEN_LIMIT = 128000
 
 LATEX_FRAGMENT_FR = """
 Assurez-vous que la sortie LaTeX est toujours entourée de triples accents graves et spécifiée comme `math` pour un rendu correct. Par exemple, une équation mathématique doit être formatée comme :
@@ -168,9 +172,11 @@ Votre objectif est de garantir que les utilisateurs puissent trouver facilement 
 """
 
 def generate_system_prompt(message_request: MessageRequest) -> ChatCompletionSystemMessageParam:
-    # Below we only filter messages that are not related to system prompt, so the first thing
-    # We force archibus as a system prompt if archibus tool is enabled,
-    # else we only add prompt if a system prompt is missing
+    """
+        Below we only filter messages that are not related to system prompt, so the first thing
+        We force archibus as a system prompt if archibus tool is enabled,
+        else we only add prompt if a system prompt is missing
+    """
     system_msg = ""
     if 'archibus' in message_request.tools:
         system_msg = ARCHIBUS_SYSTEM_PROMPT_EN if message_request.lang == 'en' else ARCHIBUS_SYSTEM_PROMPT_FR
@@ -216,7 +222,8 @@ def generate_system_prompt(message_request: MessageRequest) -> ChatCompletionSys
     # Add system message to the messages list
     return ChatCompletionSystemMessageParam(content=system_msg, role='system')
 
-def load_messages(message_request: MessageRequest) -> List[ChatCompletionMessageParam]:
+
+def load_messages(message_request: MessageRequest, token_limit: int = GPT4O_TOKEN_LIMIT) -> Tuple[List[ChatCompletionMessageParam], Optional[AzureCognitiveSearchDataSourceConfig]]:
     """
     Main method responsible for loading in the messages sent to the API and making sure they are converted in something
     suitable to send to the (Azure) OpenAI API.

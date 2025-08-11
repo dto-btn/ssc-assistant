@@ -66,7 +66,7 @@ class MessageRequest:
     query: Optional[str]
     messages: Optional[List[Message]]
     quotedText: Optional[str]
-    model: Literal['gpt-4o', 'gpt-35-turbo-1106']
+    model: Literal['gpt-4o', 'gpt-4.1-nano']
     top: int = field(default=3)
     lang: str = field(default='en')
     max: int = field(default=10)
@@ -127,14 +127,15 @@ class SuggestionApiRequest:
     query: str
     opts: Dict[str, Any]
 
-class IndexConfig(BaseModel):
+class AzureCognitiveSearchDataSourceConfig(BaseModel):
     """
-    Configuration for Azure Cognitive Search index used by tool functions
+    Configuration for Azure Cognitive Search data source used in OpenAI chat completions
     """
     index_name: str = Field(..., description="The name of the Azure Cognitive Search index")
-    embedding_model: str = Field(default="text-embedding-ada-002",
-                                description="The embedding model to use for vector search")
+    embedding_model: str = Field(..., description="The embedding model deployment name to use for vector search")
+    top_n_documents: int = Field(default=3, description="The number of top documents to return from the index")
     use_language_filter: bool = Field(default=False,
-                                     description="Whether to apply language filtering to search results")
-    top_n_documents: int = Field(default=5,
-                                description="The number of top documents to return from the index")
+                                      description="Whether to apply language filtering to search results")
+    lang_filter: str = Field(default="", description="Language filter for search results (e.g., 'en', 'fr')")
+    query_type: str = Field(default="vector_simple_hybrid",
+                           description="The type of query to perform on the search index, eg. 'vector_semantic_hybrid' or 'vector_simple_hybrid'")

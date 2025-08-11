@@ -13,6 +13,7 @@ from flask import Response, jsonify, stream_with_context, request
 from openai.types.chat import ChatCompletion
 
 from src.service.suggestion_service import SuggestionService
+from tools.bits.bits_functions import get_br_information
 from utils.manage_message import SUGGEST_SYSTEM_PROMPT_FR, SUGGEST_SYSTEM_PROMPT_EN
 from src.context.build_context import build_prod_context
 
@@ -295,9 +296,13 @@ def book_reservation(booking_confirmation: BookingConfirmation):
 @api_v1.doc(security="ApiKeyAuth")
 @auth.login_required(role="chat")
 @api_v1.input(FilePayload.Schema, arg_name="file", location="json")  # pylint: disable=no-member # type: ignore
+@user_ad.login_required
 def upload_file(file: FilePayload):
     """Allow users to uploaded encoded files and to decode and store them in Azure blob storage"""
-    url = save_file(file)
+    user = user_ad.current_user()
+    if user is None:
+        abort(401, "User not authenticated")
+    url = save_file(file, user)
     return jsonify({"message": "File received", "file_url": url}), 200
 
 
@@ -511,3 +516,44 @@ def generate_monthly_user_engagement_report():
     ctx = build_prod_context()
     weekly_report = ctx["stats_report_service"].get_monthly_user_engagement_report()
     return jsonify(weekly_report), 200
+
+
+@api_v1.get("/bits/br/<brnumber>")
+
+@auth.login_required(role="chat")
+def bits_br_information(brnumber):
+    """
+        Retrieve information for one or more BR (Business Requirement) numbers.
+
+        Args:
+            brnumber (str): A comma-separated string of BR numbers.
+
+        Returns:
+            Response: A JSON response containing BR information or an error message.
+
+        Raises:
+            ValueError: If there is an error processing the BR numbers.
+            Exception: For any unexpected errors during processing.
+
+        Notes:
+            - Only users with the "chat" role are authorized to access this endpoint.
+            - All BR numbers must be numeric; otherwise, a 400 error is returned.
+            - If no valid BR numbers are provided, a 400 error is returned.
+            - On backend or unexpected errors, a 500 error is returned.
+    """
+    # Ensure all provided BR numbers are numeric
+    brnumbers = [br.strip() for br in brnumber.split(",") if br.strip()]
+    if not brnumbers:
+        return jsonify({"error": "No valid BR numbers provided"}), 400
+    if not all(br.isdigit() for br in brnumbers):
+        return jsonify({"error": "All BR numbers must be numeric"}), 400
+    try:
+        # Call the backend function to get BR information
+        result = get_br_information(brnumbers)
+        return jsonify(result)
+    except ValueError as e:
+        logger.error("Error getting BR information: %s", str(e))
+        return jsonify({"error": "Error processing request"}), 500
+    except Exception as e:
+        logger.error("Unexpected error getting BR information: %s", str(e))
+        return jsonify({"error": "Unexpected error processing request"}), 500

@@ -1,8 +1,8 @@
-import { useRef, useMemo, useState } from "react";
+import { useRef, useMemo, useState, useCallback } from "react";
 import { isTokenExpired } from "../../util/token";
 import { useMsal } from "@azure/msal-react";
 import { apiUse } from "../../authConfig";
-import { completionMySSC } from "../../api/api";
+import { completionBasic, completion } from "../../api/api";
 import { AccountInfo } from "@azure/msal-browser";
 import { useChatService } from "../../hooks/useChatService";
 import { useTranslation } from "react-i18next";
@@ -38,14 +38,9 @@ export const useApiRequestService = () => {
 
             abortControllerRef.current = new AbortController();
 
-            const completionResponse = await completionMySSC({
+            const completionResponse = await completion({
                 request: request,
-                updateLastMessage: (message_chunk: string) => {
-                    // Only update if not stopped by user
-                    if (!abortRef.current) {
-                        chatService.updateLastMessage(message_chunk);
-                    }
-                },
+                updateLastMessage: chatService.updateLastMessage,
                 accessToken: token,
                 signal: abortControllerRef.current.signal,
             });
@@ -196,3 +191,42 @@ export const useApiRequestService = () => {
 
     return memoized;
 }
+
+
+export const useBasicApiRequestService = () => {
+    const { instance } = useMsal(); // MSAL instance for token operations
+    const [apiAccessToken, setApiAccessToken] = useState<string>(""); // Manage access token state
+
+    // Function to perform the API request
+    const makeBasicApiRequest = useCallback(async (request: MessageRequest) => {
+        try {
+            // Check if the access token is expired or missing; refresh if needed
+            let token = apiAccessToken;
+
+            if (!apiAccessToken || isTokenExpired(apiAccessToken)) {
+                const response = await instance.acquireTokenSilent({
+                    ...apiUse,
+                    account: instance.getActiveAccount() as AccountInfo,
+                    forceRefresh: true, // Force token refresh
+                });
+
+                setApiAccessToken(response.accessToken); // Update token state
+                token = response.accessToken; // Use the refreshed token
+            }
+
+            // Ensure token is available
+            if (!token) throw new Error("No API access token available");
+
+            // Make the API call with the provided request and token
+            const completeBasisResponse = await completionBasic(request, token);
+
+            // Return the API response
+            return completeBasisResponse;
+        } catch (error) {
+            console.error("Error in makeBasicApiRequest:", error);
+            throw error; // Re-throw error to be handled by the caller
+        }
+    }, [apiAccessToken, instance]); // Dependencies for the function
+
+    return makeBasicApiRequest; // Return the function for use in components/services
+};

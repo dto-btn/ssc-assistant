@@ -53,6 +53,19 @@ const MainScreen = () => {
   const chatService = useChatService();
   const apiRequestService = useApiRequestService();
 
+  // Computes tools to send to API: if conversation has staticTools, they take precedence; otherwise use current enabledTools from app store
+  const getEffectiveEnabledTools = (): Record<string, boolean> => {
+    const staticTools = getCurrentChatHistory().staticTools || [];
+    if (staticTools.length > 0) {
+      const record: Record<string, boolean> = {};
+      staticTools.forEach((tool) => {
+        record[tool] = true;
+      });
+      return record;
+    }
+    return appStore.tools.enabledTools;
+  };
+
   const [userData, setUserData] = useState({
     graphData: null,
     profilePictureURL: "",
@@ -95,7 +108,7 @@ const MainScreen = () => {
         userData,
         undefined,
         lastQuestion.quotedText,
-        appStore.tools.enabledTools
+        getEffectiveEnabledTools()
       );
     }
   };
@@ -303,6 +316,17 @@ const MainScreen = () => {
     setChatIndexToLoadOrDelete(null);
   };
 
+  const handleFileUploadError = (toast: ToastMessage) => {
+    setCurrentChatHistory((prevChatHistory) => {
+      const updatedChatHistory = {
+        ...prevChatHistory,
+        chatItems: [...prevChatHistory.chatItems, toast],
+      };
+      chatService.saveChatHistories(updatedChatHistory);
+      return updatedChatHistory;
+    });
+  };
+
   const handleBookReservation = async (bookingDetails: BookingConfirmation) => {
     let toast: ToastMessage;
     try {
@@ -401,6 +425,8 @@ const MainScreen = () => {
           description: parsedSuggestionContext.context.original_query,
           uuid: uuidv4(),
           model: getDefaultModel(),
+          isTopicSet: true, // Set to true since we have a topic
+          staticTools: [],
         };
         setCurrentChatHistory(newChatHistory);
         setChatHistoriesDescriptions([
@@ -453,7 +479,7 @@ const MainScreen = () => {
       userData,
       undefined,
       undefined,
-      useAppStore.getState().tools.enabledTools
+      getEffectiveEnabledTools()
     );
   };
 
@@ -543,12 +569,13 @@ const MainScreen = () => {
                     userData,
                     attachments,
                     undefined,
-                    appStore.tools.enabledTools
+                    getEffectiveEnabledTools()
                   )
                 }
                 onStop={stopChat}
                 quotedText={quotedText}
                 selectedModel={getCurrentChatHistory().model}
+                onError={handleFileUploadError}
               />
             </Box>
           </Box>
@@ -601,12 +628,13 @@ const MainScreen = () => {
                     userData,
                     attachments,
                     undefined,
-                    appStore.tools.enabledTools
+                    getEffectiveEnabledTools()
                   )
                 }
                 onStop={stopChat}
                 quotedText={quotedText}
                 selectedModel={getCurrentChatHistory().model}
+                onError={handleFileUploadError}
               />
             </Box>
           </Box>
