@@ -190,6 +190,14 @@ export const DrawerMenu = ({
                       backgroundColor: "lightgrey",
                     },
                     transition: "none",
+                    // Hide the more button by default; show on hover or focus within for accessibility
+                    "& .more-button": {
+                      opacity: 0,
+                      transition: "opacity 0.15s ease-in-out",
+                    },
+                    "&:hover .more-button, &:focus-within .more-button": {
+                      opacity: 1,
+                    },
                   }}
                 >
                   {(editingIndex === null || editingIndex !== index) && (
@@ -216,6 +224,7 @@ export const DrawerMenu = ({
                     </ListItemButton>
                   )}
                   <IconButton
+                    className="more-button"
                     onClick={(event) => handleMoreMenuClick(event, index)}
                     id="chat-history-options-button"
                     aria-label="more"
@@ -258,34 +267,6 @@ export const DrawerMenu = ({
                       <MoreHorizIcon tabIndex={-1} />
                     </Tooltip>
                   </IconButton>
-                  <Menu
-                    id="chat-history-menu"
-                    MenuListProps={{
-                      "aria-labelledby": "chat-history-options-button",
-                    }}
-                    anchorEl={moreMenuAnchor}
-                    open={moreMenuOpen}
-                    onClose={() => setMoreMenuAnchor(null)}
-                    transformOrigin={{
-                      vertical: "top",
-                      horizontal: "center",
-                    }}
-                    sx={{
-                      "& .MuiPaper-root": {
-                        marginLeft: "-25px", // Move the menu to the left a bit
-                      },
-                    }}
-                  >
-                    <MenuItem onClick={handleDeleteChatClicked} tabIndex={0}>
-                      <DeleteIcon color="error" sx={{ mr: "15px" }} />
-                      <Typography color="error">{t("delete")}</Typography>
-                    </MenuItem>
-                    <MenuItem onClick={handleRenameClicked} tabIndex={0}>
-                      <EditIcon sx={{ mr: "15px" }} />
-                      <Typography>{t("rename")}</Typography>
-                    </MenuItem>
-                  </Menu>
-
                   {editingIndex !== null && editingIndex === index && (
                     <TextField
                       inputRef={textFieldRef}
@@ -312,6 +293,25 @@ export const DrawerMenu = ({
               );
             })}
         </Collapse>
+        {/* Single shared Menu to avoid multiple overlapping Menus causing stacked shadows */}
+        <Menu
+          id="chat-history-menu"
+          MenuListProps={{
+            "aria-labelledby": "chat-history-options-button",
+          }}
+          anchorEl={moreMenuAnchor}
+          open={moreMenuOpen}
+          onClose={() => setMoreMenuAnchor(null)}
+        >
+          <MenuItem onClick={handleDeleteChatClicked} tabIndex={0}>
+            <DeleteIcon sx={{ mr: "15px" }} />
+            <Typography>{t("delete")}</Typography>
+          </MenuItem>
+          <MenuItem onClick={handleRenameClicked} tabIndex={0}>
+            <EditIcon sx={{ mr: "15px" }} />
+            <Typography>{t("rename")}</Typography>
+          </MenuItem>
+        </Menu>
       </List>
     </Box>
   );
