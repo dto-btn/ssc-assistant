@@ -12,6 +12,7 @@ const cleanChatHistories = (histories: (ChatHistory | null)[]) => {
                 employeeProfile: null,
                 createdAt: new Date(),
                 isTopicSet: false, // Default value for isTopicSet
+                staticTools: [], // Default value for staticTools
             }
         } else {
             return history;

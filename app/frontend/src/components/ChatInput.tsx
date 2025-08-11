@@ -2,6 +2,7 @@ import InfoIcon from "@mui/icons-material/Info";
 import CloseIcon from "@mui/icons-material/Close";
 import Send from "@mui/icons-material/Send";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
+import PersonIcon from "@mui/icons-material/Person";
 import {
   Box,
   CircularProgress,
@@ -11,6 +12,8 @@ import {
   Paper,
   Typography,
   useTheme,
+  Chip,
+  Stack,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -20,6 +23,7 @@ import { NewFileUploadButton } from "./file-upload/NewFileUploadButton";
 import { useDetectedDrag } from "./file-upload/useDetectedDrag";
 import { useFileUploadManager } from "./file-upload/useFileUploadManager";
 import { FileIconUtils } from "./file-upload/FileIconUtils";
+import { useChatStore } from "../stores/ChatStore";
 
 interface ChatInputProps {
   onSend: (question: string, files: Attachment[]) => void;
@@ -55,6 +59,9 @@ export const ChatInput = ({
       }
     },
   });
+
+  const { getCurrentChatHistory } = useChatStore();
+  const staticTools = getCurrentChatHistory().staticTools || [];
 
   const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "";
 
@@ -194,6 +201,7 @@ export const ChatInput = ({
             )}
           </Paper>
         )}
+
         <Paper
           component="form"
           sx={{
@@ -216,6 +224,34 @@ export const ChatInput = ({
           {!disabledFeaturesSet.has("file_upload") && !file && !isUploading && (
             <NewFileUploadButton onFileUpload={doUpload} disabled={disabled} />
           )}
+
+          {/* Inline static tools chips inside the input container */}
+          {staticTools.length > 0 && (
+            <Stack
+              direction="row"
+              spacing={0.5}
+              useFlexGap
+              flexWrap="wrap"
+              sx={{ ml: 1, mr: 1, py: 0.5, alignItems: "center" }}
+              aria-label={t("tools.active")}
+            >
+              {staticTools.map((tool) => (
+                <Chip
+                  key={tool}
+                  size="small"
+                  variant="outlined"
+                  icon={<PersonIcon sx={{ fontSize: 16, color: "#4b3e99" }} />}
+                  label={t(tool)}
+                  sx={{
+                    bgcolor: (theme) =>
+                      theme.palette.mode === "dark" ? "transparent" : "#f6f7f9",
+                    padding: "8px",
+                  }}
+                />
+              ))}
+            </Stack>
+          )}
+
           <InputBase
             sx={{ ml: 1, flex: 1 }}
             slotProps={{
