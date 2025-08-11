@@ -100,8 +100,10 @@ const MainScreen = () => {
     }
   };
 
+  // Function to stop the chat and append a message indicating the response was stopped
   const stopChat = () => {
-    apiRequestService.abortRequest();
+    apiRequestService.abortRequest(); // Abort the ongoing request to stop the response
+
 
     setCurrentChatHistory((prevChatHistory) => {
       const chatItems = [...prevChatHistory.chatItems];
