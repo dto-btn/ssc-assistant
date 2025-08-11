@@ -14,11 +14,6 @@ locals {
       dev = false
     },
     { 
-      name = "dev-mw"
-      user_principal_name = "Monarch.Wadia@ssc-spc.gc.ca"
-      dev = true
-    },
-    { 
       name = "codyrobillard"
       user_principal_name = "cody.robillard@ssc-spc.gc.ca"
       dev = false
