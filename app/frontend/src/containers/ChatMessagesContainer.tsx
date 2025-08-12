@@ -187,13 +187,25 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
               />
               <Skeleton
                 variant="text"
-                width="85%"
+                width="82%"
                 height="30px"
                 sx={{ ml: "1%" }}
               />
               <Skeleton
                 variant="text"
-                width="85%"
+                width="88%"
+                height="30px"
+                sx={{ ml: "1%" }}
+              />
+              <Skeleton
+                variant="text"
+                width="84%"
+                height="30px"
+                sx={{ ml: "1%" }}
+              />
+              <Skeleton
+                variant="text"
+                width="87%"
                 height="30px"
                 sx={{ ml: "1%" }}
               />
