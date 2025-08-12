@@ -209,7 +209,7 @@ const MainScreen = () => {
     if (chatContainerRef.current) {
       // Set true if not at the bottom and container is scrollable
       setScrollable(
-        (chatContainerRef.current.scrollHeight > (chatContainerRef.current.scrollTop + 500)) &&
+        (chatContainerRef.current.scrollHeight > (chatContainerRef.current.scrollTop + 800)) &&
         (chatContainerRef.current.scrollHeight > chatContainerRef.current.clientHeight)
       );
 

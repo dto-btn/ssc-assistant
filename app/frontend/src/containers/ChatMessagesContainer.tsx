@@ -14,7 +14,7 @@ interface ChatMessagesContainerProps {
   containerRef: React.RefObject<HTMLDivElement>;
   handleScroll: () => void;
   onScrollArrowClick: () => void;
-  scrollable?: boolean;
+  scrollable: boolean;
 }
 
 const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
@@ -28,7 +28,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     containerRef,
     handleScroll,
     onScrollArrowClick,
-    scrollable = false,
+    scrollable,
   } = props;
 
   const lastUserMessageRef = useRef<HTMLDivElement>(null);
@@ -83,6 +83,12 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         else { // If the completion is already rendered, set the skeleton height to 0%
           setSkeletonHeight("0%");
         }
+      }
+    }
+    else if (!isLoading && completionRef.current && lastUserMessageRef.current && containerRef.current) {
+      // If rendered, then make sure that there is no white space for completions that are longer than the screen
+      if (completionRef.current.clientHeight > containerRef.current.clientHeight) {
+        setSkeletonHeight("0%");
       }
     }
   }, [chatHistory.chatItems, isLoading]);
