@@ -207,32 +207,34 @@ const MainScreen = () => {
   const handleScroll = () => {
 
     if (chatContainerRef.current) {
+      // Set true if not at the bottom and container is scrollable
       setScrollable(
         (chatContainerRef.current.scrollHeight > (chatContainerRef.current.scrollTop + 500)) &&
         (chatContainerRef.current.scrollHeight > chatContainerRef.current.clientHeight)
       );
 
+      // Set tailing to false if user scrolled up
       if (chatContainerRef.current.scrollTop < prevScrollTop) {
         setIsTailing(false);
       }
-      setPrevScrollTop(chatContainerRef.current.scrollTop);
+      setPrevScrollTop(chatContainerRef.current.scrollTop); // Update scroll position for future comparison
     }
   };
 
   // Scroll to the bottom of the chat container when the scroll arrow is clicked
   const onScrollArrowClick = () => {
-    console.log("onScrollArrowClick called");
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTo({
         top: chatContainerRef.current.scrollHeight,
         behavior: "smooth",
       });
     }
-    if (apiRequestService.isLoading) {
+    if (apiRequestService.isLoading) { // If clicked during completion render, switch to tailing mode
       setIsTailing(true);
     }
   }
 
+  // Tailing behaviour during completion render
   useEffect(() => {
     if (isTailing && chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
