@@ -78,8 +78,10 @@ const MainScreen = () => {
   >(null);
   const [showDeleteChatDialog, setShowDeleteChatDialog] = useState(false);
 
-  const [isTailing, setIsTailing] = useState(true);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
+  const [scrollable, setScrollable] = useState<boolean>(true);
+  const [isTailing, setIsTailing] = useState<boolean>(true);
+  const [prevScrollTop, setPrevScrollTop] = useState(0);
 
   const { instance, inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
@@ -201,32 +203,41 @@ const MainScreen = () => {
     });
   };
 
-  // Handle scroll events to determine if we are in tailing mode or free-scrolling
+  // Check if the chat container is scrollable after a scroll
   const handleScroll = () => {
-    const chatRef = chatContainerRef.current;
-    if (!chatRef) return;
 
-    // If not scrollable, always tail, add offset to force tailing for first message upto a certain point
-    if (chatRef.scrollHeight <= chatRef.clientHeight + 200) {
-      if (!isTailing) setIsTailing(true);
-      return;
-    }
+    if (chatContainerRef.current) {
+      setScrollable(
+        (chatContainerRef.current.scrollHeight > (chatContainerRef.current.scrollTop + 500)) &&
+        (chatContainerRef.current.scrollHeight > chatContainerRef.current.clientHeight)
+      );
 
-    const isAtBottom = Math.abs(chatRef.scrollHeight - chatRef.scrollTop - chatRef.clientHeight) < 60;
-
-    if (isAtBottom && !isTailing) {
-      setIsTailing(true);
-    } else if (!isAtBottom && isTailing) {
-      setIsTailing(false);
+      if (chatContainerRef.current.scrollTop < prevScrollTop) {
+        setIsTailing(false);
+      }
+      setPrevScrollTop(chatContainerRef.current.scrollTop);
     }
   };
 
-  // Auto-scroll to bottom if in tailing mode
+  // Scroll to the bottom of the chat container when the scroll arrow is clicked
+  const onScrollArrowClick = () => {
+    console.log("onScrollArrowClick called");
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+    if (apiRequestService.isLoading) {
+      setIsTailing(true);
+    }
+  }
+
   useEffect(() => {
     if (isTailing && chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  }, [getCurrentChatHistory().chatItems, isTailing]);
+  }, [getCurrentChatHistory().chatItems]);
 
   // Load chat histories and persisted tools if present
   useEffect(() => {
@@ -605,7 +616,8 @@ const MainScreen = () => {
               handleBookReservation={handleBookReservation}
               containerRef={chatContainerRef}
               handleScroll={handleScroll}
-              isTailing={isTailing}
+              onScrollArrowClick={onScrollArrowClick}
+              scrollable={scrollable}
             />
             <div ref={chatMessageStreamEnd} style={{ height: "50px" }} />
             <Box

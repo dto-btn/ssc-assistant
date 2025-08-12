@@ -1,4 +1,5 @@
-import { Box, CircularProgress, Skeleton, Stack } from "@mui/material";
+import { Box, CircularProgress, IconButton, Skeleton, Stack } from "@mui/material";
+import ArrowCircleDownIcon from '@mui/icons-material/ArrowCircleDown';
 import { Fragment, RefObject, useEffect, useState, useRef } from "react";
 import { AlertBubble, AssistantBubble, UserBubble } from "../components";
 import { isACompletion, isAMessage, isAToastMessage } from "../utils";
@@ -12,7 +13,8 @@ interface ChatMessagesContainerProps {
   handleBookReservation: (bookingDetails: BookingConfirmation) => void;
   containerRef: React.RefObject<HTMLDivElement>;
   handleScroll: () => void;
-  isTailing: boolean;
+  onScrollArrowClick: () => void;
+  scrollable?: boolean;
 }
 
 const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
@@ -25,7 +27,8 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     handleBookReservation,
     containerRef,
     handleScroll,
-    isTailing,
+    onScrollArrowClick,
+    scrollable = false,
   } = props;
 
   const lastUserMessageRef = useRef<HTMLDivElement>(null);
@@ -35,6 +38,8 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
 
   // Effect to handle the height of the skeleton when a question is asked
   useEffect(() => {
+    handleScroll(); // Update scrollable state on new messages
+
     var lastCompletion = chatHistory.chatItems[chatHistory.chatItems.length - 1] as Completion;
 
     // If the last item is a completion and it has content, we calculate the skeleton height
@@ -52,14 +57,12 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         setShowSkeleton(true);
 
         // Scroll to the bottom if we are tailing (Pushes question to the top)
-        if (isTailing) {
-          setTimeout(() => {
-            containerRef.current?.scrollTo({
-              top: containerRef.current.scrollHeight,
-              behavior: "smooth",
-            });
-          }, 100);
-        }
+        setTimeout(() => {
+          containerRef.current?.scrollTo({
+            top: containerRef.current.scrollHeight,
+            behavior: "smooth",
+          });
+        }, 100);
       }
       else if (completionRef.current && lastUserMessageRef.current && containerRef.current) {
 
@@ -76,15 +79,6 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
 
           // If the completion is being rendered, hide skeleton
           setShowSkeleton(false);
-
-          if (isTailing) {
-            setTimeout(() => {
-              containerRef.current?.scrollTo({
-                top: containerRef.current.scrollHeight,
-                behavior: "smooth",
-              });
-            }, 100);
-          }
         }
         else { // If the completion is already rendered, set the skeleton height to 0%
           setSkeletonHeight("0%");
@@ -207,6 +201,25 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
           </>
         )}
       </div>
+      {scrollable && (
+        <IconButton
+          sx={{
+            "&:hover": {
+              backgroundColor: "rgba(0, 0, 0, 0.2)",
+            },
+            position: "fixed",
+            bottom: "15%",
+            right: "40%",
+            zIndex: 1200,
+          }}
+          aria-label={("scroll to bottom")}
+          size="large"
+        >
+          <ArrowCircleDownIcon
+            onClick={onScrollArrowClick}
+          />
+        </IconButton>
+      )}
       {/* 
         We need this to be at the bottom so that we scroll PAST the last message. 
         Otherwise, the last message will not be fully visible.
