@@ -78,6 +78,11 @@ const MainScreen = () => {
   >(null);
   const [showDeleteChatDialog, setShowDeleteChatDialog] = useState(false);
 
+  const chatContainerRef = useRef<HTMLDivElement | null>(null);
+  const [scrollable, setScrollable] = useState<boolean>(true);
+  const [isTailing, setIsTailing] = useState<boolean>(true);
+  const [prevScrollTop, setPrevScrollTop] = useState(0);
+
   const { instance, inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
 
@@ -108,6 +113,41 @@ const MainScreen = () => {
         getEffectiveEnabledTools()
       );
     }
+  };
+
+  // Function to stop the chat and append a message indicating the response was stopped
+  const stopChat = () => {
+    apiRequestService.abortRequest(); // Abort the ongoing request to stop the response
+
+
+    setCurrentChatHistory((prevChatHistory) => {
+      const chatItems = [...prevChatHistory.chatItems];
+      if (chatItems.length === 0) return prevChatHistory;
+
+      // Get the last assistant message
+      const lastIndex = chatItems.length - 1;
+      // Should use a guard, but asserting because last chatItem is always the completion
+      const lastItem = chatItems[lastIndex] as Completion;
+
+      // If it's an assistant message (Message type), append the stop text
+      if (lastItem && lastItem.message && typeof lastItem.message.content === "string") {
+        chatItems[lastIndex] = {
+          ...lastItem,
+          message: {
+            ...lastItem.message,
+            content: lastItem.message.content + "\n\nYou've stopped this response",
+          },
+        };
+      }
+
+      const updatedChatHistory = {
+        ...prevChatHistory,
+        chatItems,
+      };
+
+      chatService.saveChatHistories(updatedChatHistory);
+      return updatedChatHistory;
+    });
   };
 
   const loadChatHistoriesFromStorage = () => {
@@ -163,9 +203,42 @@ const MainScreen = () => {
     });
   };
 
-  // Scrolls the last updated message (if its streaming, or once done) into view
+  // Check if the chat container is scrollable after a scroll
+  const handleScroll = () => {
+
+    if (chatContainerRef.current) {
+      // Set true if not at the bottom and container is scrollable
+      setScrollable(
+        (chatContainerRef.current.scrollHeight > (chatContainerRef.current.scrollTop + 800)) &&
+        (chatContainerRef.current.scrollHeight > chatContainerRef.current.clientHeight)
+      );
+
+      // Set tailing to false if user scrolled up
+      if (chatContainerRef.current.scrollTop < prevScrollTop) {
+        setIsTailing(false);
+      }
+      setPrevScrollTop(chatContainerRef.current.scrollTop); // Update scroll position for future comparison
+    }
+  };
+
+  // Scroll to the bottom of the chat container when the scroll arrow is clicked
+  const onScrollArrowClick = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+    if (apiRequestService.isLoading) { // If clicked during completion render, switch to tailing mode
+      setIsTailing(true);
+    }
+  }
+
+  // Tailing behaviour during completion render
   useEffect(() => {
-    chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" });
+    if (isTailing && chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [getCurrentChatHistory().chatItems]);
 
   // Load chat histories and persisted tools if present
@@ -295,10 +368,10 @@ const MainScreen = () => {
   useEffect(() => {
     console.debug(
       "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-        isAuthenticated +
-        ", InProgress? " +
-        inProgress +
-        ")"
+      isAuthenticated +
+      ", InProgress? " +
+      inProgress +
+      ")"
     );
     if (
       isAuthenticated &&
@@ -512,6 +585,7 @@ const MainScreen = () => {
                     getEffectiveEnabledTools()
                   )
                 }
+                onStop={stopChat}
                 quotedText={quotedText}
                 selectedModel={getCurrentChatHistory().model}
                 onError={handleFileUploadError}
@@ -532,9 +606,7 @@ const MainScreen = () => {
               right: 0,
               bottom: 0,
               paddingTop: "3rem",
-              overflow: "auto",
             }}
-            // maxWidth="lg"
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <ChatMessagesContainer
@@ -544,6 +616,10 @@ const MainScreen = () => {
               replayChat={replayChat}
               handleRemoveToastMessage={handleRemoveToastMessage}
               handleBookReservation={handleBookReservation}
+              containerRef={chatContainerRef}
+              handleScroll={handleScroll}
+              onScrollArrowClick={onScrollArrowClick}
+              scrollable={scrollable}
             />
             <div ref={chatMessageStreamEnd} style={{ height: "50px" }} />
             <Box
@@ -569,6 +645,7 @@ const MainScreen = () => {
                     getEffectiveEnabledTools()
                   )
                 }
+                onStop={stopChat}
                 quotedText={quotedText}
                 selectedModel={getCurrentChatHistory().model}
                 onError={handleFileUploadError}

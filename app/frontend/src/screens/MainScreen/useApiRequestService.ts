@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react"
+import { useRef, useMemo, useState, useCallback } from "react";
 import { isTokenExpired } from "../../util/token";
 import { useMsal } from "@azure/msal-react";
 import { apiUse } from "../../authConfig";
@@ -11,7 +11,6 @@ import { isACompletion, isAToastMessage } from "../../utils";
 import { convertChatHistoryToMessages } from "./utils";
 import { MAX_MESSAGES_SENT } from "../../constants";
 
-
 export const useApiRequestService = () => {
     const { instance } = useMsal();
     const [apiAccessToken, setApiAccessToken] = useState<string>("");
@@ -19,6 +18,8 @@ export const useApiRequestService = () => {
     const { t, i18n } = useTranslation();
     const chatStore = useChatStore();
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const abortRef = useRef(false);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     const sendApiRequest = async (request: MessageRequest) => {
         try {
@@ -35,10 +36,13 @@ export const useApiRequestService = () => {
 
             if (!token) throw new Error(t("no.token"));
 
+            abortControllerRef.current = new AbortController();
+
             const completionResponse = await completion({
                 request: request,
                 updateLastMessage: chatService.updateLastMessage,
                 accessToken: token,
+                signal: abortControllerRef.current.signal,
             });
 
             chatStore.setCurrentChatHistory((prevChatHistory) => {
@@ -79,6 +83,11 @@ export const useApiRequestService = () => {
             let errorMessage: string;
 
             if (error instanceof Error) {
+                if (error.name === "AbortError") {
+                    abortRef.current = false; // Reset abort flag
+                    setIsLoading(false); // Ensure loading state is reset
+                    return; // Exit if the request was aborted
+                }
                 errorMessage = error.message;
             } else {
                 errorMessage = t("chat.unknownError");
@@ -98,6 +107,7 @@ export const useApiRequestService = () => {
             });
         } finally {
             setIsLoading(false);
+            abortControllerRef.current = null;
         }
     };
 
@@ -165,12 +175,19 @@ export const useApiRequestService = () => {
         chatStore.quotedText = undefined
     };
 
-    const memoized = useMemo(() => {
-        return {
-            makeApiRequest,
-            isLoading,
+    const abortRequest = () => {
+        abortRef.current = true;
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
         }
-    }, [isLoading, chatStore, chatService]);
+    };
+
+    const memoized = useMemo(() => ({
+        makeApiRequest,
+        isLoading,
+        abortRequest,
+    }), [isLoading, chatStore, chatService]);
 
     return memoized;
 }

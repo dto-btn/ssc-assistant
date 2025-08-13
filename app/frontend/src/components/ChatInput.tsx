@@ -1,11 +1,11 @@
 import InfoIcon from "@mui/icons-material/Info";
 import CloseIcon from "@mui/icons-material/Close";
+import StopCircleIcon from '@mui/icons-material/StopCircle';
 import Send from "@mui/icons-material/Send";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import PersonIcon from "@mui/icons-material/Person";
 import {
   Box,
-  CircularProgress,
   Container,
   IconButton,
   InputBase,
@@ -14,6 +14,7 @@ import {
   useTheme,
   Chip,
   Stack,
+  CircularProgress,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -27,6 +28,7 @@ import { useChatStore } from "../stores/ChatStore";
 
 interface ChatInputProps {
   onSend: (question: string, files: Attachment[]) => void;
+  onStop: () => void;
   disabled: boolean;
   placeholder?: string;
   clearOnSend?: boolean;
@@ -37,6 +39,7 @@ interface ChatInputProps {
 
 export const ChatInput = ({
   onSend,
+  onStop,
   disabled,
   clearOnSend,
   quotedText,
@@ -279,7 +282,7 @@ export const ChatInput = ({
           />
           <IconButton
             onClick={sendQuestion}
-            disabled={disabled || isUploading}
+            disabled={isUploading}
             sx={{
               "&:hover": {
                 backgroundColor: "rgba(0, 0, 0, 0.2)",
@@ -288,11 +291,15 @@ export const ChatInput = ({
             aria-label={t("send")}
             size="large"
           >
-            {disabled || isUploading ? (
-              <CircularProgress size={24} aria-label={t("generating")} />
-            ) : (
-              <Send sx={{ color: "primary.main" }} aria-label={t("send")} />
-            )}
+            {disabled ? (
+              <StopCircleIcon sx={{ color: '#4B3E99' }} aria-label={t("stop generating")} onClick={onStop} />
+            )
+              : isUploading ? (
+                <CircularProgress size={24} aria-label={t("generating")} />
+              )
+                : (
+                  <Send sx={{ color: "primary.main" }} aria-label={t("send")} />
+                )}
           </IconButton>
         </Paper>
         <Box
