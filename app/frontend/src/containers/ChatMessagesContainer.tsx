@@ -240,6 +240,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
               height: "40px",
               width: "40px"
             }}
+            aria-label={("scroll to bottom")}
           />
         </IconButton>
       )}
