@@ -33,7 +33,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
 
   const lastUserMessageRef = useRef<HTMLDivElement>(null);
   const completionRef = useRef<HTMLDivElement>(null);
-  const [skeletonHeight, setSkeletonHeight] = useState<string>("20%");
+  const [skeletonHeight, setSkeletonHeight] = useState<string>("0%");
   const [showSkeleton, setShowSkeleton] = useState<boolean>(false);
 
   // Effect to handle the height of the skeleton when a question is asked
