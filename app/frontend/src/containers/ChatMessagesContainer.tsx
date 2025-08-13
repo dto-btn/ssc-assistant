@@ -226,15 +226,20 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
               backgroundColor: "rgba(0, 0, 0, 0.2)",
             },
             position: "fixed",
-            bottom: "15%",
+            bottom: "11%",
             right: "40%",
             zIndex: 1200,
+            height: "64px",
+            width: "64px"
           }}
           aria-label={("scroll to bottom")}
-          size="large"
         >
           <ArrowCircleDownIcon
             onClick={onScrollArrowClick}
+            sx={{
+              height: "40px",
+              width: "40px"
+            }}
           />
         </IconButton>
       )}
