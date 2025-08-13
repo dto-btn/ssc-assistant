@@ -221,6 +221,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
       </div>
       {scrollable && (
         <IconButton
+          onClick={onScrollArrowClick}
           sx={{
             "&:hover": {
               backgroundColor: "rgba(0, 0, 0, 0.2)",
@@ -235,7 +236,6 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
           aria-label={("scroll to bottom")}
         >
           <ArrowCircleDownIcon
-            onClick={onScrollArrowClick}
             sx={{
               height: "40px",
               width: "40px"
