@@ -174,21 +174,6 @@ export const useChatService = () => {
                 ...chatHistoriesDescriptions,
                 newDescription
             ]);
-
-            Object.keys(appStore.tools.enabledTools).forEach((t) => {
-                updatedTools[t] = false;
-            });
-            if(tool){
-                if (tool === "archibus" || tool === "bits") {
-                    Object.keys(appStore.tools.enabledTools).forEach((t) => {
-                        updatedTools[t] = false;
-                    });
-                }
-                updatedTools[tool] = true;
-            } else {
-                updatedTools['corporate'] = true;
-                updatedTools['geds'] = true;
-            }
             appStore.tools.setEnabledTools(updatedTools);
             PersistenceUtils.setEnabledTools(updatedTools);
         }
@@ -197,7 +182,7 @@ export const useChatService = () => {
     const deleteAllChatHistory = () => {
         // create a new chat history with default values
         const newChat = buildDefaultChatHistory()
-        const newDescription = "Conversation 1";
+        const newDescription = "...";
         newChat.description = newDescription;
 
         // update the in-memory state

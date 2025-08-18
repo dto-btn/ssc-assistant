@@ -871,6 +871,22 @@
         "en": "MySSC+",
         "fr": "MonSPC+"
     },
+    "suggestions.categories.pmcoe": {
+        "en": "PMCoE",
+        "fr": "CEGP"
+    },
+    "suggestions.pmcoe.q1": {
+        "en": "What does the Financial and Investment Management Board ensure?",
+        "fr": "Que garantit le Conseil de gestion financière et des investissements ?"
+    },
+    "suggestions.pmcoe.q2": {
+        "en": "What happens if during the preliminary planning stage the project doesn't receive approval?",
+        "fr": "Que se passe-t-il si, au cours de la phase de planification préliminaire, le projet n'est pas approuvé ?"
+    },
+    "suggestions.pmcoe.q3": {
+        "en": "What is a project?",
+        "fr": "Qu'est-ce qu'un projet ?"
+    },
     "br.disclaimer2": {
         "en": "Please note that the data retrieved from the Enterprise Data Repository (EDR), sourced from the Business Intake and Tracking System (BITS), may be up to 48 hours old.",
         "fr": "Veuillez noter que les données récupérées du Référentiel de données d'entreprise (EDR), provenant du Système de réception et de suivi des demandes d'affaires (BITS), peuvent dater de jusqu'à 48 heures."

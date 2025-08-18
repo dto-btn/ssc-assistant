@@ -374,16 +374,27 @@ const MainScreen = () => {
     }
   }, [parsedSuggestionContext]);
 
-  const onSuggestionClicked = (question: string, tool: string) => {
+  const onSuggestionClicked = (
+    question: string,
+    tool: string,
+    isStatic: boolean
+  ) => {
     let updatedTools: Record<string, boolean> = {
       ...appStore.tools.enabledTools,
     };
-    if (tool === "archibus" || tool === "bits") {
-      Object.keys(appStore.tools.enabledTools).forEach((t) => {
-        updatedTools[t] = false;
-      });
-    }
     updatedTools[tool] = true;
+
+    // if we have a tool passed as static we update the current chat to stick to that tool
+    if (isStatic)
+      setCurrentChatHistory((prevChatHistory) => {
+        const updatedChatHistory: ChatHistory = {
+          ...prevChatHistory,
+          staticTools: [tool],
+        };
+        chatService.saveChatHistories(updatedChatHistory);
+        return updatedChatHistory;
+      });
+
     appStore.tools.setEnabledTools(updatedTools);
     PersistenceUtils.setEnabledTools(updatedTools);
     apiRequestService.makeApiRequest(

@@ -31,4 +31,4 @@ export const MAX_MESSAGES_SENT = 10;
 export const MAX_CHAT_HISTORIES_LENGTH = Infinity;
 
 // tools defined here are mutually exclusive.
-export const MUTUALLY_EXCLUSIVE_TOOLS = [ "bits", "pmcoe" ]
+export const MUTUALLY_EXCLUSIVE_TOOLS = [ "bits",]
