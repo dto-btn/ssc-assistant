@@ -149,9 +149,18 @@ export const useChatService = () => {
             const newChat = buildDefaultChatHistory()
             chatHistories.push(newChat);
             const newDescription = "...";
+
+            // Process tools (static tools are generally mutually exclusive tools and work on their own)
             // If tool(s) are enforced specifically here for this new chat, we set them in the convo staticTools
             if (tool) {
                 newChat.staticTools = [tool];
+                Object.keys(appStore.tools.enabledTools).forEach((t) => {
+                        updatedTools[t] = false;
+                    });
+            } else {// else we enable all other tools.
+                Object.keys(appStore.tools.enabledTools).forEach((t) => {
+                    updatedTools[t] = true;
+                });
             }
             newChat.description = newDescription;
             PersistenceUtils.setChatHistories(chatHistories);

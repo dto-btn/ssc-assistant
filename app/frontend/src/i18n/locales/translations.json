@@ -867,6 +867,10 @@
         "en": "GEDS",
         "fr": "SAGE"
     },
+    "suggestions.categories.corporate": {
+        "en": "MySSC+",
+        "fr": "MonSPC+"
+    },
     "br.disclaimer2": {
         "en": "Please note that the data retrieved from the Enterprise Data Repository (EDR), sourced from the Business Intake and Tracking System (BITS), may be up to 48 hours old.",
         "fr": "Veuillez noter que les données récupérées du Référentiel de données d'entreprise (EDR), provenant du Système de réception et de suivi des demandes d'affaires (BITS), peuvent dater de jusqu'à 48 heures."

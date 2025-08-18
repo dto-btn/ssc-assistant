@@ -24,7 +24,7 @@ interface SuggestionCard {
   title: string;
   tool: string;
   icon: JSX.Element;
-  category: "general" | "br" | "geds";
+  category: "general" | "br" | "geds" | "corporate";
   color: string;
 }
 
@@ -51,7 +51,7 @@ const Suggestions = ({ onSuggestionClicked, tools = [] }: SuggestionsProps) => {
       title: t("suggestions.general.hire"),
       tool: "corporate",
       icon: <HelpOutlineIcon sx={{ color: "#3f51b5" }} />,
-      category: "general",
+      category: "corporate",
       color: "#3f51b5",
     },
     {
