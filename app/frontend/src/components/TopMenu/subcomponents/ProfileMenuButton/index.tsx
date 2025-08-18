@@ -21,7 +21,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import MenuDivider from "./MenuDivider";
 import { tt } from "../../../../i18n/tt";
-import { MUTEX_TOOLS } from "../../../../constants";
+import { MUTUALLY_EXCLUSIVE_TOOLS } from "../../../../constants";
 import { SettingsModal } from "../../../SettingsModal";
 
 interface ProfilePictureOnClickMenuProps {
@@ -68,16 +68,11 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
   const appStore = useAppStore();
 
   const tools = Object.keys(enabledTools)
-    // First, filter out the tools that are not in the allowedToolsSet
-    .filter((tool) => MUTEX_TOOLS.indexOf(tool) === -1)
-    // Then, sort the remaining tools alphabetically
     .sort((a, b) => a.localeCompare(b))
-    // Add the mutex tools to the end of the list
-    .concat(MUTEX_TOOLS)
     // Only show the tools that are enabled and in the allowedToolsSet
     .filter((tool) => allowedToolsSet.has(tool))
-    //Don't show BR tool
-    .filter((tool) => tool != "bits");
+    //Don't mutually exclusive tools
+    .filter((tool) => !MUTUALLY_EXCLUSIVE_TOOLS.includes(tool));
 
   const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     handleSelectedModelChanged((event.target as HTMLInputElement).value);
@@ -152,13 +147,8 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
         </MenuItem>
         <MenuDivider title={tt("menu.chooseTools")} />
         {tools.map((tool) => {
-          const isFirstMutexTool = tool === MUTEX_TOOLS[0];
           return (
             <React.Fragment key={tool}>
-              {isFirstMutexTool && (
-                // Show the divider before the mutext tools section
-                <MenuDivider title={t("menu.mutexTools")} />
-              )}
               <MenuItem
                 key={tool}
                 onClick={() => {
