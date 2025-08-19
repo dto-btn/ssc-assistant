@@ -281,7 +281,7 @@ export const ChatInput = ({
             }}
           />
           <IconButton
-            onClick={sendQuestion}
+            onClick={disabled ? onStop : sendQuestion}
             disabled={isUploading}
             sx={{
               "&:hover": {
@@ -292,7 +292,7 @@ export const ChatInput = ({
             size="large"
           >
             {disabled ? (
-              <StopCircleIcon sx={{ color: "primary.main" }} aria-label={t("stop generating")} onClick={onStop} />
+              <StopCircleIcon sx={{ color: "primary.main" }} aria-label={t("stop generating")} />
             )
               : isUploading ? (
                 <CircularProgress size={24} aria-label={t("generating")} />
