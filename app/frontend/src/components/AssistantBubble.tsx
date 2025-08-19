@@ -217,16 +217,6 @@ export const AssistantBubble = ({
   >(undefined);
   const isSmall = useMediaQuery("(max-width:900px)");
 
-  // Helper: open drawer by citation object
-  const openCitation = (citation: Citation) => {
-    if (!processedContent.citedCitations?.length) return;
-    const url = citation.url;
-    if (url) {
-      setActiveCitationGroupUrl(safeDecode(url));
-      setCitationDrawerOpen(true);
-    }
-  };
-
   // Helper: open drawer by URL found in inline links
   const openCitationByUrl = (url?: string) => {
     if (!url || !processedContent.citedCitations?.length) return false;
