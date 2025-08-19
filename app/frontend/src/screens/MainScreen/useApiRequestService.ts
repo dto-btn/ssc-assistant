@@ -19,7 +19,6 @@ export const useApiRequestService = () => {
     const { t, i18n } = useTranslation();
     const chatStore = useChatStore();
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const abortRef = useRef(false);
     const abortControllerRef = useRef<AbortController | null>(null);
 
     const sendApiRequest = async (request: MessageRequest) => {
@@ -85,7 +84,6 @@ export const useApiRequestService = () => {
 
             if (error instanceof Error) {
                 if (error.name === "AbortError") {
-                    abortRef.current = false; // Reset abort flag
                     setIsLoading(false); // Ensure loading state is reset
                     return; // Exit if the request was aborted
                 }
@@ -177,7 +175,6 @@ export const useApiRequestService = () => {
     };
 
     const abortRequest = () => {
-        abortRef.current = true;
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
             abortControllerRef.current = null;
