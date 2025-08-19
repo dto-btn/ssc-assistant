@@ -126,7 +126,7 @@ const MainScreen = () => {
           ...lastItem,
           message: {
             ...lastItem.message,
-            content: lastItem.message.content + "\n\nYou've stopped this response",
+            content: lastItem.message.content + "\n\n" + t("responseStopped", "You've stopped this response"),
           },
         };
       }
