@@ -134,8 +134,6 @@ export const AssistantBubble = ({
     citations.forEach((_, index) => {
       const docNumber = index + 1; // Convert index to docNumber
       if (text.includes(`[doc${docNumber}]`)) {
-        // Check if the citation is in the text
-        // The new citation number is the current size of citationNumberMapping + 1
         citationNumberMapping[docNumber] =
           Object.keys(citationNumberMapping).length + 1;
       }
@@ -144,16 +142,18 @@ export const AssistantBubble = ({
     // Filter the citations array to only include the cited documents
     const citedCitations = citations.filter((_, index) => {
       const docNumber = index + 1; // Convert index to docNumber
-      return citationNumberMapping[docNumber]; // Check if the citation is in the citationNumberMapping
+      return citationNumberMapping[docNumber];
     });
 
     // Replace citation references with Markdown links using the new citation numbers
     const processedText = text.replace(citationRefRegex, (_, docNumber) => {
-      const citation = citations[parseInt(docNumber, 10) - 1]; // Access the citation by index
-      if (citation) {
+      const citation = citations[parseInt(docNumber, 10) - 1];
+      if (citation && citation.url) {
+        // Encode spaces and other unsafe chars; wrap with <> to be robust for parentheses
+        const encodedUrl = encodeURI(citation.url);
         const newCitationNumber =
-          citationNumberMapping[parseInt(docNumber, 10)]; // Get the new citation number
-        return ` [${newCitationNumber}](${citation.url})`; // Replace with Markdown link
+          citationNumberMapping[parseInt(docNumber, 10)];
+        return ` [${newCitationNumber}](<${encodedUrl}>)`;
       }
       return "";
     });
@@ -310,9 +310,8 @@ export const AssistantBubble = ({
                     [
                       rehypeMermaid,
                       {
-                        errorFallback: () => {
-                          <div>Invalid diagram format!</div>;
-                        },
+                        // Ensure the fallback actually renders
+                        errorFallback: () => <div>Invalid diagram format!</div>,
                       },
                     ],
                   ]}
@@ -343,9 +342,9 @@ export const AssistantBubble = ({
                       flexWrap="wrap"
                     >
                       {context?.citations.map((citation, index) => {
-                        const docNumber = index + 1; // Convert index to docNumber
+                        const docNumber = index + 1;
                         const newCitationNumber =
-                          citationNumberMapping[docNumber]; // Get the new citation number
+                          citationNumberMapping[docNumber];
                         return (
                           processedContent.citedCitations.includes(
                             citation
@@ -354,9 +353,9 @@ export const AssistantBubble = ({
                               <Chip
                                 label={
                                   newCitationNumber + " - " + citation.title
-                                } // Use new citation number
+                                }
                                 component="a"
-                                href={citation.url}
+                                href={citation.url ? encodeURI(citation.url) : "#"}
                                 target="_blank"
                                 variant="filled"
                                 clickable
