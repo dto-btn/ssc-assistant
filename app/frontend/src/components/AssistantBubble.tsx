@@ -463,7 +463,7 @@ export const AssistantBubble = ({
                       {groupedCitations.map((group, index) => (
                         <Fragment key={group.url + index}>
                           <Chip
-                            label={`${group.displayNumber} - ${group.title}`}
+                            label={`${group.title}`}
                             component="a"
                             href={encodeURI(group.url)}
                             target="_blank"
@@ -533,7 +533,9 @@ export const AssistantBubble = ({
                         }}
                       >
                         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                          <Typography variant="subtitle2">{`${group.displayNumber}. ${group.title}`}</Typography>
+                          <Typography variant="subtitle2">
+                            {group.title}
+                          </Typography>
                         </AccordionSummary>
                         <AccordionDetails>
                           <Typography
@@ -557,25 +559,55 @@ export const AssistantBubble = ({
                               pr: 1,
                             }}
                           >
-                            {group.citations.map((c, idx) => (
-                              <Box
-                                key={idx}
-                                sx={{
-                                  mb: 1.5,
-                                  p: 1.5,
-                                  borderRadius: 1,
-                                  bgcolor: "#f4f1ff",
-                                  border: "1px solid #e1dbff",
-                                }}
-                              >
-                                <Typography
-                                  variant="body2"
-                                  sx={{ whiteSpace: "pre-wrap" }}
-                                >
-                                  {c.content}
-                                </Typography>
-                              </Box>
-                            ))}
+                            {group.citations.map((c, idx) => {
+                              const fullIndex =
+                                context?.citations?.findIndex(
+                                  (all) => all === c
+                                ) ?? -1;
+                              const docNum =
+                                fullIndex >= 0 ? fullIndex + 1 : undefined;
+                              const mappedNum = docNum
+                                ? citationNumberMapping[docNum]
+                                : undefined;
+                              return (
+                                <>
+                                  {mappedNum !== undefined && (
+                                    <Typography
+                                      variant="h4"
+                                      sx={{
+                                        fontWeight: 600,
+                                        display: "block",
+                                        mb: 0.5,
+                                      }}
+                                    >
+                                      {mappedNum}.
+                                    </Typography>
+                                  )}
+                                  <Box
+                                    key={idx}
+                                    sx={{
+                                      mb: 1.5,
+                                      p: 1.5,
+                                      borderRadius: 1,
+                                      bgcolor: "#f4f1ff",
+                                      border: "1px solid #e1dbff",
+                                    }}
+                                    id={
+                                      mappedNum
+                                        ? `citation-${mappedNum}`
+                                        : undefined
+                                    }
+                                  >
+                                    <Typography
+                                      variant="body2"
+                                      sx={{ whiteSpace: "pre-wrap" }}
+                                    >
+                                      {c.content}
+                                    </Typography>
+                                  </Box>
+                                </>
+                              );
+                            })}
                           </Box>
                         </AccordionDetails>
                       </Accordion>
