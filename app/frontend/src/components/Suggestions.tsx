@@ -13,9 +13,14 @@ import PersonIcon from "@mui/icons-material/Person";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { useTranslation } from "react-i18next";
 import { allowedToolsSet } from "../allowedTools";
+import TopicIcon from "@mui/icons-material/Topic";
 
 type SuggestionsProps = {
-  onSuggestionClicked: (suggestion: string, tool: string) => void;
+  onSuggestionClicked: (
+    suggestion: string,
+    tool: string,
+    isStatic: boolean
+  ) => void;
   tools?: string[]; //if specified only display cards for those tools
 };
 
@@ -24,8 +29,9 @@ interface SuggestionCard {
   title: string;
   tool: string;
   icon: JSX.Element;
-  category: "general" | "br" | "geds";
+  category: "general" | "br" | "geds" | "corporate" | "pmcoe";
   color: string;
+  staticTool?: boolean;
 }
 
 const Suggestions = ({ onSuggestionClicked, tools = [] }: SuggestionsProps) => {
@@ -51,7 +57,7 @@ const Suggestions = ({ onSuggestionClicked, tools = [] }: SuggestionsProps) => {
       title: t("suggestions.general.hire"),
       tool: "corporate",
       icon: <HelpOutlineIcon sx={{ color: "#3f51b5" }} />,
-      category: "general",
+      category: "corporate",
       color: "#3f51b5",
     },
     {
@@ -74,6 +80,30 @@ const Suggestions = ({ onSuggestionClicked, tools = [] }: SuggestionsProps) => {
       icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
       category: "br",
       color: "#8e24aa",
+    },
+    {
+      title: t("suggestions.pmcoe.q1"),
+      tool: "pmcoe",
+      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+      category: "pmcoe",
+      color: "#da920dff",
+      staticTool: true,
+    },
+    {
+      title: t("suggestions.pmcoe.q2"),
+      tool: "pmcoe",
+      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+      category: "pmcoe",
+      color: "#da920dff",
+      staticTool: true,
+    },
+    {
+      title: t("suggestions.pmcoe.q3"),
+      tool: "pmcoe",
+      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+      category: "pmcoe",
+      color: "#da920dff",
+      staticTool: true,
     },
   ];
 
@@ -117,7 +147,13 @@ const Suggestions = ({ onSuggestionClicked, tools = [] }: SuggestionsProps) => {
             }}
           >
             <CardActionArea
-              onClick={() => onSuggestionClicked(card.title, card.tool)}
+              onClick={() =>
+                onSuggestionClicked(
+                  card.title,
+                  card.tool,
+                  card.staticTool ? true : false
+                )
+              }
               sx={{ height: "100%" }}
             >
               <CardContent

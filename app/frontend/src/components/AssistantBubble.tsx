@@ -12,14 +12,19 @@ import {
   DialogTitle,
   IconButton,
   PaperProps,
+  Drawer,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  useMediaQuery,
 } from "@mui/material";
 import { MarkdownHooks } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import rehypeMermaid from "rehype-mermaid";
-import rehypeMathjax from 'rehype-mathjax'
+import rehypeMathjax from "rehype-mathjax";
 import "highlight.js/styles/github.css";
-import { useEffect, useState, Fragment } from "react";
+import { useEffect, useState, Fragment, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { BubbleButtons } from "./BubbleButtons";
 import { styled } from "@mui/system";
@@ -29,6 +34,8 @@ import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { visuallyHidden } from "@mui/utils";
 import Draggable from "react-draggable";
 import FitScreenIcon from "@mui/icons-material/FitScreen";
+import CloseIcon from "@mui/icons-material/Close";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import BusinessRequestCard from "./BusinessRequests/BusinessRequestCard";
 import { transformToBusinessRequest } from "../util/bits_utils";
 import BusinessRequestTable from "./BusinessRequests/BusinessRequestTable";
@@ -113,15 +120,117 @@ export const AssistantBubble = ({
     BrSelectFields | undefined
   >(undefined);
 
-  const components = {
-    a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
-      <Link target="_blank" rel="noopener noreferrer" {...props} />
-    ),
-  };
+  // Intercept inline anchors that match a cited URL to show drawer instead
+  const components = useMemo(
+    () => ({
+      a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+        <Link
+          target="_blank"
+          rel="noopener noreferrer"
+          {...props}
+          onClick={(e) => {
+            // Allow ctrl/cmd/middle-click to open in a new tab normally
+            if (e.ctrlKey || (e as any).metaKey || (e as any).button === 1)
+              return;
+            const href = props.href;
+            if (href && openCitationByUrl(href)) {
+              e.preventDefault();
+            }
+            props.onClick?.(e);
+          }}
+        />
+      ),
+    }),
+    [processedContent.citedCitations]
+  );
   const [citationNumberMapping, setCitationNumberMapping] = useState<{
     [key: number]: number;
   }>({});
   const [brMetadata, setBrMetadata] = useState<BrMetadata | undefined>();
+
+  // Helper to safely decode URI, preserving original on failure
+  const safeDecode = (url: string) => {
+    try {
+      return decodeURI(url);
+    } catch {
+      return url;
+    }
+  };
+
+  // Group cited citations by normalized URL
+  const groupedCitations = useMemo(() => {
+    const groups = new Map<
+      string,
+      {
+        url: string;
+        title: string;
+        citations: Citation[];
+        displayNumber: number;
+      }
+    >();
+    if (!processedContent.citedCitations?.length)
+      return [] as Array<{
+        url: string;
+        title: string;
+        citations: Citation[];
+        displayNumber: number;
+      }>;
+    processedContent.citedCitations.forEach((c) => {
+      const key = safeDecode(c.url);
+      const existing = groups.get(key);
+      if (!existing) {
+        const fullIndex =
+          context?.citations?.findIndex((all) => all === c) ?? -1;
+        const docNum = fullIndex >= 0 ? fullIndex + 1 : undefined;
+        const disp = docNum
+          ? citationNumberMapping[docNum]
+          : Number.MAX_SAFE_INTEGER;
+        groups.set(key, {
+          url: key,
+          title: c.title || key,
+          citations: [c],
+          displayNumber: disp,
+        });
+      } else {
+        existing.citations.push(c);
+        const fullIndex =
+          context?.citations?.findIndex((all) => all === c) ?? -1;
+        const docNum = fullIndex >= 0 ? fullIndex + 1 : undefined;
+        const disp = docNum
+          ? citationNumberMapping[docNum]
+          : Number.MAX_SAFE_INTEGER;
+        if (disp < existing.displayNumber) existing.displayNumber = disp;
+      }
+    });
+    return Array.from(groups.values()).sort(
+      (a, b) => a.displayNumber - b.displayNumber
+    );
+  }, [
+    processedContent.citedCitations,
+    context?.citations,
+    citationNumberMapping,
+  ]);
+  // Citation drawer state
+  const [isCitationDrawerOpen, setCitationDrawerOpen] = useState(false);
+  const [activeCitationGroupUrl, setActiveCitationGroupUrl] = useState<
+    string | undefined
+  >(undefined);
+  const isSmall = useMediaQuery("(max-width:900px)");
+
+  // Helper: open drawer by URL found in inline links
+  const openCitationByUrl = (url?: string) => {
+    if (!url || !processedContent.citedCitations?.length) return false;
+    const decoded = safeDecode(url);
+    const has = processedContent.citedCitations.some(
+      (c) => safeDecode(c.url) === decoded || encodeURI(c.url) === url
+    );
+    if (has) {
+      setActiveCitationGroupUrl(decoded);
+      setCitationDrawerOpen(true);
+      return true;
+    }
+    return false;
+  };
 
   function processText(text: string, citations: Citation[]) {
     // Regular expression to find all citation references like [doc1], [doc3], etc.
@@ -134,8 +243,6 @@ export const AssistantBubble = ({
     citations.forEach((_, index) => {
       const docNumber = index + 1; // Convert index to docNumber
       if (text.includes(`[doc${docNumber}]`)) {
-        // Check if the citation is in the text
-        // The new citation number is the current size of citationNumberMapping + 1
         citationNumberMapping[docNumber] =
           Object.keys(citationNumberMapping).length + 1;
       }
@@ -144,16 +251,18 @@ export const AssistantBubble = ({
     // Filter the citations array to only include the cited documents
     const citedCitations = citations.filter((_, index) => {
       const docNumber = index + 1; // Convert index to docNumber
-      return citationNumberMapping[docNumber]; // Check if the citation is in the citationNumberMapping
+      return citationNumberMapping[docNumber];
     });
 
     // Replace citation references with Markdown links using the new citation numbers
     const processedText = text.replace(citationRefRegex, (_, docNumber) => {
-      const citation = citations[parseInt(docNumber, 10) - 1]; // Access the citation by index
-      if (citation) {
+      const citation = citations[parseInt(docNumber, 10) - 1];
+      if (citation && citation.url) {
+        // Encode spaces and other unsafe chars; wrap with <> to be robust for parentheses
+        const encodedUrl = encodeURI(citation.url);
         const newCitationNumber =
-          citationNumberMapping[parseInt(docNumber, 10)]; // Get the new citation number
-        return ` [${newCitationNumber}](${citation.url})`; // Replace with Markdown link
+          citationNumberMapping[parseInt(docNumber, 10)];
+        return ` [${newCitationNumber}](<${encodedUrl}>)`;
       }
       return "";
     });
@@ -310,9 +419,8 @@ export const AssistantBubble = ({
                     [
                       rehypeMermaid,
                       {
-                        errorFallback: () => {
-                          <div>Invalid diagram format!</div>;
-                        },
+                        // Ensure the fallback actually renders
+                        errorFallback: () => <div>Invalid diagram format!</div>,
                       },
                     ],
                   ]}
@@ -321,8 +429,8 @@ export const AssistantBubble = ({
                   {isLoading
                     ? `${text.replace(/\[doc(\d+)\]/g, "")}_`
                     : processedContent.processedText !== ""
-                      ? processedContent.processedText
-                      : text}
+                    ? processedContent.processedText
+                    : text}
                 </MarkdownHooks>
               </TextComponentsBox>
             </MainContentWrapper>
@@ -342,33 +450,160 @@ export const AssistantBubble = ({
                       useFlexGap
                       flexWrap="wrap"
                     >
-                      {context?.citations.map((citation, index) => {
-                        const docNumber = index + 1; // Convert index to docNumber
-                        const newCitationNumber =
-                          citationNumberMapping[docNumber]; // Get the new citation number
-                        return (
-                          processedContent.citedCitations.includes(
-                            citation
-                          ) && (
-                            <Fragment key={index}>
-                              <Chip
-                                label={
-                                  newCitationNumber + " - " + citation.title
-                                } // Use new citation number
-                                component="a"
-                                href={citation.url}
-                                target="_blank"
-                                variant="filled"
-                                clickable
-                                color="primary"
-                              />
-                            </Fragment>
-                          )
-                        );
-                      })}
+                      {groupedCitations.map((group, index) => (
+                        <Fragment key={group.url + index}>
+                          <Chip
+                            label={`${group.title}`}
+                            component="a"
+                            href={encodeURI(group.url)}
+                            target="_blank"
+                            variant="filled"
+                            clickable
+                            color="primary"
+                            onClick={(e) => {
+                              if (
+                                e.ctrlKey ||
+                                (e as any).metaKey ||
+                                (e as any).button === 1
+                              )
+                                return;
+                              e.preventDefault();
+                              setActiveCitationGroupUrl(group.url);
+                              setCitationDrawerOpen(true);
+                            }}
+                          />
+                        </Fragment>
+                      ))}
                     </Stack>
                   </Box>
                 </>
+              )}
+
+            {processedContent.citedCitations &&
+              processedContent.citedCitations.length > 0 && (
+                <Drawer
+                  anchor={isSmall ? "bottom" : "right"}
+                  open={isCitationDrawerOpen}
+                  onClose={() => setCitationDrawerOpen(false)}
+                  PaperProps={{
+                    sx: { width: isSmall ? "100%" : 420, maxWidth: "100%" },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      p: 1,
+                      pl: 2,
+                      borderBottom: 1,
+                      borderColor: "divider",
+                    }}
+                  >
+                    <Typography variant="subtitle1">Citations</Typography>
+                    <IconButton
+                      aria-label={t("aria.close") as string}
+                      onClick={() => setCitationDrawerOpen(false)}
+                    >
+                      <CloseIcon />
+                    </IconButton>
+                  </Box>
+                  <Box sx={{ p: 1 }}>
+                    {groupedCitations.map((group) => (
+                      <Accordion
+                        key={group.url}
+                        expanded={
+                          activeCitationGroupUrl
+                            ? activeCitationGroupUrl === group.url
+                            : undefined
+                        }
+                        onChange={(_, expanded) => {
+                          if (expanded) setActiveCitationGroupUrl(group.url);
+                          else setActiveCitationGroupUrl(undefined);
+                        }}
+                      >
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                          <Typography variant="subtitle2">
+                            {group.title}
+                          </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: "text.secondary" }}
+                          >
+                            Source:{" "}
+                            <Link
+                              href={encodeURI(group.url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {group.url}
+                            </Link>
+                          </Typography>
+                          <Box
+                            sx={{
+                              mt: 1,
+                              maxHeight: isSmall ? 240 : 520,
+                              overflow: "auto",
+                              pr: 1,
+                            }}
+                          >
+                            {group.citations.map((c, idx) => {
+                              const fullIndex =
+                                context?.citations?.findIndex(
+                                  (all) => all === c
+                                ) ?? -1;
+                              const docNum =
+                                fullIndex >= 0 ? fullIndex + 1 : undefined;
+                              const mappedNum = docNum
+                                ? citationNumberMapping[docNum]
+                                : undefined;
+                              return (
+                                <>
+                                  {mappedNum !== undefined && (
+                                    <Typography
+                                      variant="h4"
+                                      sx={{
+                                        fontWeight: 600,
+                                        display: "block",
+                                        mb: 0.5,
+                                      }}
+                                    >
+                                      {mappedNum}.
+                                    </Typography>
+                                  )}
+                                  <Box
+                                    key={idx}
+                                    sx={{
+                                      mb: 1.5,
+                                      p: 1.5,
+                                      borderRadius: 1,
+                                      bgcolor: "#f4f1ff",
+                                      border: "1px solid #e1dbff",
+                                    }}
+                                    id={
+                                      mappedNum
+                                        ? `citation-${mappedNum}`
+                                        : undefined
+                                    }
+                                  >
+                                    <Typography
+                                      variant="body2"
+                                      sx={{ whiteSpace: "pre-wrap" }}
+                                    >
+                                      {c.content}
+                                    </Typography>
+                                  </Box>
+                                </>
+                              );
+                            })}
+                          </Box>
+                        </AccordionDetails>
+                      </Accordion>
+                    ))}
+                  </Box>
+                </Drawer>
               )}
 
             {floorPlanFilename && (
@@ -594,9 +829,11 @@ export const AssistantBubble = ({
                           brQuery.query_filters.map((filter, index) => (
                             <Chip
                               key={index}
-                              label={`${i18n.language == "en" ? filter.en : filter.fr
-                                } (${filter.name}) ${filter.operator} ${filter.value
-                                }`}
+                              label={`${
+                                i18n.language == "en" ? filter.en : filter.fr
+                              } (${filter.name}) ${filter.operator} ${
+                                filter.value
+                              }`}
                               size="small"
                               variant="outlined"
                               color="primary"

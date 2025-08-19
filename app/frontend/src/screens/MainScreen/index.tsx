@@ -21,11 +21,7 @@ import { useLocation } from "react-router";
 import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
 import { useAppStore } from "../../stores/AppStore";
 import Typography from "@mui/material/Typography";
-import {
-  SNACKBAR_DEBOUNCE_KEYS,
-  LEFT_MENU_WIDTH,
-  MUTEX_TOOLS,
-} from "../../constants";
+import { SNACKBAR_DEBOUNCE_KEYS, LEFT_MENU_WIDTH } from "../../constants";
 import VerticalSplitIcon from "@mui/icons-material/VerticalSplit";
 import NewLayout from "../../components/layouts/NewLayout";
 import { useChatStore } from "../../stores/ChatStore";
@@ -193,30 +189,6 @@ const MainScreen = () => {
     };
     const toolIsTurningOn: boolean =
       forceOn == true ? true : !appStore.tools.enabledTools[name];
-
-    // Archibus is mutually exclusive with all other tools. If 'archibus' is turned on,
-    // all other tools should be disabled. On the other hand, if any other tool is turned on,
-    // 'archibus' should be disabled.
-    if (name === "archibus") {
-      if (toolIsTurningOn) {
-        // If 'archibus' is being turned on, make sure to set all other tools to off
-        Object.keys(appStore.tools.enabledTools).forEach((tool) => {
-          updatedTools[tool] = false;
-        });
-      }
-    } else {
-      // If any tool other than 'archibus' is enabled, set 'archibus' to off
-      updatedTools.archibus = false;
-    }
-
-    // We have a category of tools that are mutually exclusive. If one of them is turned
-    // on, all others should be turned off. This is a temporary hack until we refactor
-    // the tools to be more modular.
-    if (toolIsTurningOn && MUTEX_TOOLS.includes(name)) {
-      MUTEX_TOOLS.forEach((tool) => {
-        updatedTools[tool] = false;
-      });
-    }
 
     // Finally, update the specific tool's state
     updatedTools[name] = toolIsTurningOn;
@@ -402,16 +374,27 @@ const MainScreen = () => {
     }
   }, [parsedSuggestionContext]);
 
-  const onSuggestionClicked = (question: string, tool: string) => {
+  const onSuggestionClicked = (
+    question: string,
+    tool: string,
+    isStatic: boolean
+  ) => {
     let updatedTools: Record<string, boolean> = {
       ...appStore.tools.enabledTools,
     };
-    if (tool === "archibus" || tool === "bits") {
-      Object.keys(appStore.tools.enabledTools).forEach((t) => {
-        updatedTools[t] = false;
-      });
-    }
     updatedTools[tool] = true;
+
+    // if we have a tool passed as static we update the current chat to stick to that tool
+    if (isStatic)
+      setCurrentChatHistory((prevChatHistory) => {
+        const updatedChatHistory: ChatHistory = {
+          ...prevChatHistory,
+          staticTools: [tool],
+        };
+        chatService.saveChatHistories(updatedChatHistory);
+        return updatedChatHistory;
+      });
+
     appStore.tools.setEnabledTools(updatedTools);
     PersistenceUtils.setEnabledTools(updatedTools);
     apiRequestService.makeApiRequest(

@@ -3,7 +3,7 @@ import { PersistenceUtils } from "../util/persistence";
 import { useChatStore } from "../stores/ChatStore";
 import { useAppStore } from "../stores/AppStore";
 import { useTranslation } from "react-i18next";
-import { MAX_CHAT_HISTORIES_LENGTH, SNACKBAR_DEBOUNCE_KEYS } from "../constants";
+import { MAX_CHAT_HISTORIES_LENGTH, MUTUALLY_EXCLUSIVE_TOOLS, SNACKBAR_DEBOUNCE_KEYS } from "../constants";
 import { isACompletion } from "../utils";
 import { buildDefaultChatHistory } from "../stores/modelBuilders";
 import { useBasicApiRequestService } from "../screens/MainScreen/useApiRequestService";
@@ -149,9 +149,22 @@ export const useChatService = () => {
             const newChat = buildDefaultChatHistory()
             chatHistories.push(newChat);
             const newDescription = "...";
+
+            // Process tools (static tools are generally mutually exclusive tools and work on their own)
             // If tool(s) are enforced specifically here for this new chat, we set them in the convo staticTools
+            // Process tools for this new chat
+            let updatedTools: Record<string, boolean> = {
+                ...appStore.tools.enabledTools,
+            };
             if (tool) {
                 newChat.staticTools = [tool];
+                Object.keys(appStore.tools.enabledTools).forEach((t) => {
+                        updatedTools[t] = t == tool;
+                    });
+            } else {// else we enable all other tools.
+                Object.keys(appStore.tools.enabledTools).forEach((t) => {
+                    updatedTools[t] = !MUTUALLY_EXCLUSIVE_TOOLS.includes(t);
+                });
             }
             newChat.description = newDescription;
             PersistenceUtils.setChatHistories(chatHistories);
@@ -161,25 +174,6 @@ export const useChatService = () => {
                 ...chatHistoriesDescriptions,
                 newDescription
             ]);
-
-            // Process tools for this new chat
-            let updatedTools: Record<string, boolean> = {
-                ...appStore.tools.enabledTools,
-            };
-            Object.keys(appStore.tools.enabledTools).forEach((t) => {
-                updatedTools[t] = false;
-            });
-            if(tool){
-                if (tool === "archibus" || tool === "bits") {
-                    Object.keys(appStore.tools.enabledTools).forEach((t) => {
-                        updatedTools[t] = false;
-                    });
-                }
-                updatedTools[tool] = true;
-            } else {
-                updatedTools['corporate'] = true;
-                updatedTools['geds'] = true;
-            }
             appStore.tools.setEnabledTools(updatedTools);
             PersistenceUtils.setEnabledTools(updatedTools);
         }
@@ -188,7 +182,7 @@ export const useChatService = () => {
     const deleteAllChatHistory = () => {
         // create a new chat history with default values
         const newChat = buildDefaultChatHistory()
-        const newDescription = "Conversation 1";
+        const newDescription = "...";
         newChat.description = newDescription;
 
         // update the in-memory state
