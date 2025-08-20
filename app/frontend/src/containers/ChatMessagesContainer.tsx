@@ -1,5 +1,5 @@
-import { Box, CircularProgress } from "@mui/material";
-import { Fragment, RefObject } from "react";
+import { Box, CircularProgress, Skeleton, Stack } from "@mui/material";
+import { Fragment, RefObject, useEffect, useRef, useState } from "react";
 import { AlertBubble, AssistantBubble, UserBubble } from "../components";
 import { isACompletion, isAMessage, isAToastMessage } from "../utils";
 
@@ -21,6 +21,13 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     handleRemoveToastMessage,
     handleBookReservation,
   } = props;
+
+  const completionRef = useRef<HTMLDivElement>(null);
+  const [showSkeleton, setShowSkeleton] = useState(false);
+
+  useEffect(() => {
+    setShowSkeleton(isLoading && !completionRef.current);
+  }, [isLoading, completionRef.current]);
 
   return (
     <Box
@@ -57,18 +64,25 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         chatHistory.chatItems.map((chatItem, index) => (
           <Fragment key={index}>
             {isACompletion(chatItem) && chatItem.message.content && (
-              <AssistantBubble
-                text={chatItem.message.content}
-                isLoading={
-                  index === chatHistory.chatItems.length - 1 && isLoading
-                }
-                context={chatItem.message?.context}
-                toolsInfo={chatItem.message.tools_info}
-                replayChat={replayChat}
-                index={index}
-                total={chatHistory.chatItems.length}
-                handleBookReservation={handleBookReservation}
-              />
+              <div
+                ref={
+                  index === chatHistory.chatItems.length - 1
+                    ? completionRef
+                    : undefined
+                }>
+                <AssistantBubble
+                  text={chatItem.message.content}
+                  isLoading={
+                    index === chatHistory.chatItems.length - 1 && isLoading
+                  }
+                  context={chatItem.message?.context}
+                  toolsInfo={chatItem.message.tools_info}
+                  replayChat={replayChat}
+                  index={index}
+                  total={chatHistory.chatItems.length}
+                  handleBookReservation={handleBookReservation}
+                />
+              </div>
             )}
             {isAMessage(chatItem) && (
               <UserBubble
@@ -87,12 +101,27 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
           </Fragment>
         ))
       )}
+      {showSkeleton && (
+        <Stack direction="row" spacing={1} sx={{ my: 2, width: "100%", height: "200px" }}>
+          <Skeleton variant="circular" height={35} width={35} />
+          <Stack direction="column" alignItems="left" sx={{ width: "100%" }}>
+            <Skeleton variant="text" width="85%" height={30} />
+            <Skeleton variant="text" width="82%" height={30} />
+            <Skeleton variant="text" width="88%" height={30} />
+            <Skeleton variant="text" width="84%" height={30} />
+            <Skeleton variant="text" width="87%" height={30} />
+          </Stack>
+        </Stack>
+      )}
+      {/* {isLoading && !showSkeleton && (
+        <div style={{ height: "200px" }} />
+      )} */}
       {/* 
                 We need this to be at the bottom so that we scroll PAST the last message. Otherwise,
                 the last message will not be fully visible.
             */}
       <Box sx={{ mt: 5 }} ref={chatMessageStreamEnd} />
-    </Box>
+    </Box >
   );
 };
 
