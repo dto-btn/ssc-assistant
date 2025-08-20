@@ -106,6 +106,42 @@ const MainScreen = () => {
     }
   };
 
+  // Function to stop the chat and append a message indicating the response was stopped
+  const stopChat = () => {
+    apiRequestService.abortRequest(); // Abort the ongoing request to stop the response
+
+
+    setCurrentChatHistory((prevChatHistory) => {
+      const chatItems = [...prevChatHistory.chatItems];
+      if (chatItems.length === 0) return prevChatHistory;
+
+      // Get the last assistant message
+      const lastIndex = chatItems.length - 1;
+      // Should use a guard, but asserting because last chatItem is always the completion
+      const lastItem = chatItems[lastIndex] as Completion;
+
+      // If it's an assistant message (Message type), append the stop text
+      if (lastItem && lastItem.message && typeof lastItem.message.content === "string") {
+        chatItems[lastIndex] = {
+          ...lastItem,
+          message: {
+            ...lastItem.message,
+            content: lastItem.message.content + "\n\n" + t("responseStopped", "You've stopped this response"),
+          },
+        };
+      }
+
+      const updatedChatHistory = {
+        ...prevChatHistory,
+        chatItems,
+      };
+
+      chatService.saveChatHistories(updatedChatHistory);
+      return updatedChatHistory;
+    });
+  };
+
+
   const loadChatHistoriesFromStorage = () => {
     const parsedChatHistories = PersistenceUtils.getChatHistories();
     if (parsedChatHistories.length > 0) {
@@ -267,10 +303,10 @@ const MainScreen = () => {
   useEffect(() => {
     console.debug(
       "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-        isAuthenticated +
-        ", InProgress? " +
-        inProgress +
-        ")"
+      isAuthenticated +
+      ", InProgress? " +
+      inProgress +
+      ")"
     );
     if (
       isAuthenticated &&
@@ -495,6 +531,7 @@ const MainScreen = () => {
                     getEffectiveEnabledTools()
                   )
                 }
+                onStop={stopChat}
                 quotedText={quotedText}
                 selectedModel={getCurrentChatHistory().model}
                 onError={handleFileUploadError}
@@ -517,7 +554,7 @@ const MainScreen = () => {
               paddingTop: "3rem",
               overflow: "auto",
             }}
-            // maxWidth="lg"
+          // maxWidth="lg"
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <ChatMessagesContainer
@@ -552,6 +589,7 @@ const MainScreen = () => {
                     getEffectiveEnabledTools()
                   )
                 }
+                onStop={stopChat}
                 quotedText={quotedText}
                 selectedModel={getCurrentChatHistory().model}
                 onError={handleFileUploadError}

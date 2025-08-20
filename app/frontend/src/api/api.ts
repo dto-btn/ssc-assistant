@@ -2,6 +2,7 @@ interface CompletionProps {
   request: MessageRequest;
   updateLastMessage: (message_chunk: string) => void;
   accessToken: string;
+  signal: AbortSignal;
 }
 
 function convertMessagesForAPI(messages: Message[]): ApiMessageDto[] {
@@ -33,7 +34,7 @@ function convertRequestForAPI(request: MessageRequest): ApiMessageRequestDto {
   };
 }
 
-export async function completion({ request, updateLastMessage, accessToken }: CompletionProps): Promise<Completion> {
+export async function completion({ request, updateLastMessage, accessToken, signal }: CompletionProps): Promise<Completion> {
   let completion: Completion | undefined;
   const url = "/api/1.0/completion/chat/stream";
 
@@ -46,7 +47,8 @@ export async function completion({ request, updateLastMessage, accessToken }: Co
       "Content-Type": "application/json",
       "Authorization": "Bearer " + accessToken.trim()
     },
-    body: JSON.stringify(api_request)
+    body: JSON.stringify(api_request),
+    signal
   });
 
   if (response.status === 401) {

@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react"
+import { useMemo, useState, useCallback, useRef } from "react"
 import { isTokenExpired } from "../../util/token";
 import { useMsal } from "@azure/msal-react";
 import { apiUse } from "../../authConfig";
@@ -19,6 +19,7 @@ export const useApiRequestService = () => {
     const { t, i18n } = useTranslation();
     const chatStore = useChatStore();
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     const sendApiRequest = async (request: MessageRequest) => {
         try {
@@ -35,10 +36,13 @@ export const useApiRequestService = () => {
 
             if (!token) throw new Error(t("no.token"));
 
+            abortControllerRef.current = new AbortController();
+
             const completionResponse = await completion({
                 request: request,
                 updateLastMessage: chatService.updateLastMessage,
                 accessToken: token,
+                signal: abortControllerRef.current.signal,
             });
 
             chatStore.setCurrentChatHistory((prevChatHistory) => {
@@ -79,6 +83,10 @@ export const useApiRequestService = () => {
             let errorMessage: string;
 
             if (error instanceof Error) {
+                if (error.name === "AbortError") {
+                    setIsLoading(false); // Ensure loading state is reset
+                    return; // Exit if the request was aborted
+                }
                 errorMessage = error.message;
             } else {
                 errorMessage = t("chat.unknownError");
@@ -98,6 +106,7 @@ export const useApiRequestService = () => {
             });
         } finally {
             setIsLoading(false);
+            abortControllerRef.current = null;
         }
     };
 
@@ -165,10 +174,18 @@ export const useApiRequestService = () => {
         chatStore.quotedText = undefined
     };
 
+    const abortRequest = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+    };
+
     const memoized = useMemo(() => {
         return {
             makeApiRequest,
             isLoading,
+            abortRequest,
         }
     }, [isLoading, chatStore, chatService]);
 
