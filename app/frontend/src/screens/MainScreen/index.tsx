@@ -87,8 +87,11 @@ const MainScreen = () => {
   const isAtBottom = () => {
     const container = chatRef.current;
     if (container) {
-      return (container.scrollHeight > (container.scrollTop + container.offsetHeight)) &&
-        (container.scrollHeight > container.clientHeight);
+      // True if the content is taller than the visible area (scrollable)
+      const isScrollable = container.scrollHeight > container.clientHeight + 1;
+      // True if the user is NOT at the bottom (allowing for 1px rounding error)
+      const notAtBottom = container.scrollTop + container.clientHeight < container.scrollHeight - 1;
+      return isScrollable && notAtBottom;
     }
     return false;
   }
