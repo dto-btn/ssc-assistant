@@ -77,23 +77,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <>
-      <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <SettingsIcon />
-              {t("settings")}
-            </div>
-            <IconButton onClick={onClose} size="small">
-              <CloseIcon />
-            </IconButton>
-          </div>
+      <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth aria-description={t("settings")}>
+        <DialogTitle
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 1,
+            // Ensure minimal extra padding so vertical alignment is tight
+            py: 1,
+          }}
+        >
+          <SettingsIcon fontSize="small" />
+          {t("settings")}
+          <IconButton onClick={onClose} sx={(theme) => ({
+            marginLeft: "auto",
+            color: theme.palette.grey[500],
+          })} aria-label={t("close")}>
+            <CloseIcon />
+          </IconButton>
         </DialogTitle>
         <DialogContent>
           <List>
