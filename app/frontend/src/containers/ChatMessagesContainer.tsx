@@ -4,6 +4,8 @@ import { Fragment, RefObject, useEffect, useRef, useState } from "react";
 import { AlertBubble, AssistantBubble, UserBubble } from "../components";
 import { isACompletion, isAMessage, isAToastMessage } from "../utils";
 
+const SKELETON_HEIGHT = 200;
+
 interface ChatMessagesContainerProps {
   chatHistory: ChatHistory;
   isLoading: boolean;
@@ -35,11 +37,14 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
 
   const lastMsgRef = useRef<HTMLDivElement>(null);
   const [showSkeleton, setShowSkeleton] = useState(false);
+  const [whitespace, setWhitespace] = useState(0);
+  const [completionHeight, setCompletionHeight] = useState(0);
 
   // Show skeleton if generating but not yet streaming response
   useEffect(() => {
     setShowSkeleton(isLoading && !lastCompletionRef.current);
-  }, [isLoading, lastCompletionRef.current]);
+  }, [isLoading, chatHistory.chatItems]);
+
 
   return (
     <Box
@@ -124,7 +129,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
           ))
         )}
         {showSkeleton && (
-          <Stack direction="row" spacing={1} sx={{ my: 2, width: "100%", height: "200px" }}>
+          <Stack direction="row" spacing={1} sx={{ my: 2, width: "100%", height: `${SKELETON_HEIGHT}px` }}>
             <Skeleton variant="circular" height={35} width={35} />
             <Stack direction="column" alignItems="left" sx={{ width: "100%" }}>
               <Skeleton variant="text" width="85%" height={30} />
@@ -135,6 +140,14 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
             </Stack>
           </Stack>
         )}
+        {/* Dynamic whitespace */}
+        <div
+          style={{
+            height: whitespace,
+            transition: "height 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            width: "100%",
+          }}
+        />
         {scrollable && (
           <IconButton
             onClick={onScrollArrowClick}
@@ -160,13 +173,6 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
             />
           </IconButton>
         )}
-        {/* {isLoading && !showSkeleton && (
-        <div style={{ height: "200px" }} />
-      )} */}
-        {/* 
-                We need this to be at the bottom so that we scroll PAST the last message. Otherwise,
-                the last message will not be fully visible.
-            */}
         <Box sx={{ mt: 5 }} ref={chatMessageStreamEnd} />
       </Box>
     </Box >
