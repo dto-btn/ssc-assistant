@@ -33,8 +33,10 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     scrollable,
   } = props;
 
+  const lastMsgRef = useRef<HTMLDivElement>(null);
   const [showSkeleton, setShowSkeleton] = useState(false);
 
+  // Show skeleton if generating but not yet streaming response
   useEffect(() => {
     setShowSkeleton(isLoading && !lastCompletionRef.current);
   }, [isLoading, lastCompletionRef.current]);
@@ -49,7 +51,8 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         alignItems: "flex-end",
         overflowY: 'auto',
         margin: 'auto',
-        width: "100%"
+        width: "100%",
+        height: "100%",
       }}
       aria-live="polite"
       aria-relevant="additions"
@@ -97,11 +100,18 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                 </div>
               )}
               {isAMessage(chatItem) && (
-                <UserBubble
-                  text={chatItem.content}
-                  quote={chatItem.quotedText}
-                  attachments={chatItem.attachments}
-                />
+                <div
+                  ref={
+                    index === chatHistory.chatItems.length - 1
+                      ? lastMsgRef
+                      : undefined
+                  }>
+                  <UserBubble
+                    text={chatItem.content}
+                    quote={chatItem.quotedText}
+                    attachments={chatItem.attachments}
+                  />
+                </div>
               )}
               {isAToastMessage(chatItem) && (
                 <AlertBubble
