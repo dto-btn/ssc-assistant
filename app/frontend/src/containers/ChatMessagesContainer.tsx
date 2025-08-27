@@ -37,12 +37,36 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
 
   const lastMsgRef = useRef<HTMLDivElement>(null);
   const [showSkeleton, setShowSkeleton] = useState(false);
-  const [whitespace, setWhitespace] = useState(0);
-  const [completionHeight, setCompletionHeight] = useState(0);
+  const [whitespace, setWhitespace] = useState("0px");
 
   // Show skeleton if generating but not yet streaming response
   useEffect(() => {
-    setShowSkeleton(isLoading && !lastCompletionRef.current);
+    const chatRef = containerRef.current;
+    const messageRef = lastMsgRef.current;
+    const completionRef = lastCompletionRef.current;
+
+    if (isLoading && !completionRef && messageRef && chatRef) { // Completion hasn't started rendering yet
+      setShowSkeleton(true);
+
+      const whiteSpaceHeight = chatRef.clientHeight - messageRef.offsetHeight;
+      setWhitespace(`${whiteSpaceHeight}px`);
+
+      setTimeout(() => {
+        chatRef.scrollTo({
+          top: chatRef.scrollHeight,
+          behavior: "smooth"
+        });
+      }, 1000);
+    }
+    else if (isLoading && completionRef && messageRef && chatRef) { // Completion has started rendering
+      setShowSkeleton(false);
+      const whiteSpaceHeight = chatRef.clientHeight - messageRef.offsetHeight - completionRef.offsetHeight;
+      setWhitespace(`${whiteSpaceHeight > 0 ? whiteSpaceHeight : 0}px`);
+    }
+    else { // Completion Finished
+      setShowSkeleton(false);
+      setWhitespace("0px");
+    }
   }, [isLoading, chatHistory.chatItems]);
 
 
@@ -107,7 +131,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
               {isAMessage(chatItem) && (
                 <div
                   ref={
-                    index === chatHistory.chatItems.length - 1
+                    index === chatHistory.chatItems.length - 2
                       ? lastMsgRef
                       : undefined
                   }>
@@ -144,7 +168,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         <div
           style={{
             height: whitespace,
-            transition: "height 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            transition: "height 2s cubic-bezier(0.4, 0, 0.2, 1)",
             width: "100%",
           }}
         />
