@@ -36,6 +36,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
   const lastMsgRef = useRef<HTMLDivElement>(null);
   const [showSkeleton, setShowSkeleton] = useState(false);
   const [whitespace, setWhitespace] = useState("0px");
+  const [replaying, setReplaying] = useState(false);
 
   // Show skeleton if generating but not yet streaming response
   useEffect(() => {
@@ -47,15 +48,29 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
 
       setShowSkeleton(true);
 
-      const whiteSpaceHeight = chatRef.clientHeight - messageRef.clientHeight - SKELETON_HEIGHT;
-      setWhitespace(`${whiteSpaceHeight}px`);
+      // Replays need different whitespace & scroll calcs
+      if (replaying) {
+        const whiteSpaceHeight = chatRef.clientHeight - messageRef.clientHeight - SKELETON_HEIGHT;
+        setWhitespace(`${whiteSpaceHeight}px`);
 
-      setTimeout(() => {
-        chatRef.scrollTo({
-          top: chatRef.scrollHeight,
-          behavior: "smooth"
-        });
-      }, 1000);
+        setTimeout(() => {
+          chatRef.scrollTo({
+            top: chatRef.scrollHeight + 200,
+            behavior: "smooth"
+          });
+        }, 1000);
+      }
+      else {
+        const whiteSpaceHeight = chatRef.clientHeight - messageRef.clientHeight - SKELETON_HEIGHT;
+        setWhitespace(`${whiteSpaceHeight}px`);
+
+        setTimeout(() => {
+          chatRef.scrollTo({
+            top: chatRef.scrollHeight,
+            behavior: "smooth"
+          });
+        }, 1000);
+      }
     }
     else if (isLoading && completionRef && messageRef && chatRef) { // Completion has started rendering
 
@@ -67,9 +82,15 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
 
       setShowSkeleton(false);
       setWhitespace("0px");
+      setReplaying(false);
     }
   }, [isLoading, chatHistory.chatItems]);
 
+
+  const onReplay = () => {
+    replayChat();
+    setReplaying(true);
+  }
 
   return (
     <Box
@@ -122,7 +143,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                     }
                     context={chatItem.message?.context}
                     toolsInfo={chatItem.message.tools_info}
-                    replayChat={replayChat}
+                    replayChat={onReplay}
                     index={index}
                     total={chatHistory.chatItems.length}
                     handleBookReservation={handleBookReservation}
