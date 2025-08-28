@@ -9,7 +9,6 @@ const SKELETON_HEIGHT = 200;
 interface ChatMessagesContainerProps {
   chatHistory: ChatHistory;
   isLoading: boolean;
-  chatMessageStreamEnd: RefObject<HTMLDivElement>;
   replayChat: () => void;
   handleRemoveToastMessage: (index: number) => void;
   handleBookReservation: (bookingDetails: BookingConfirmation) => void;
@@ -24,7 +23,6 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
   const {
     chatHistory,
     isLoading,
-    chatMessageStreamEnd,
     replayChat,
     handleRemoveToastMessage,
     handleBookReservation,
@@ -49,7 +47,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
 
       setShowSkeleton(true);
 
-      const whiteSpaceHeight = chatRef.clientHeight - messageRef.offsetHeight - SKELETON_HEIGHT;
+      const whiteSpaceHeight = chatRef.clientHeight - messageRef.clientHeight - SKELETON_HEIGHT;
       setWhitespace(`${whiteSpaceHeight}px`);
 
       setTimeout(() => {
@@ -133,8 +131,9 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
               )}
               {isAMessage(chatItem) && (
                 <div
-                  ref={
+                  ref={ // Can be last or second last, accounting for chat replays
                     index === chatHistory.chatItems.length - 2
+                      || index == chatHistory.chatItems.length - 1
                       ? lastMsgRef
                       : undefined
                   }>
@@ -171,7 +170,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         <div
           style={{
             height: whitespace,
-            transition: "height 2s cubic-bezier(0.4, 0, 0.2, 1)",
+            transition: "height 1.5s cubic-bezier(0.4, 0, 0.2, 1)",
             width: "100%",
           }}
         />
@@ -200,7 +199,6 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
             />
           </IconButton>
         )}
-        <Box sx={{ mt: 5 }} ref={chatMessageStreamEnd} />
       </Box>
     </Box >
   );
