@@ -46,6 +46,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     const completionRef = lastCompletionRef.current;
 
     if (isLoading && !completionRef && messageRef && chatRef) { // Completion hasn't started rendering yet
+
       setShowSkeleton(true);
 
       const whiteSpaceHeight = chatRef.clientHeight - messageRef.offsetHeight - SKELETON_HEIGHT;
@@ -57,23 +58,18 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
           behavior: "smooth"
         });
       }, 1000);
-
-      console.log("Show skeleton and whitespace", whiteSpaceHeight);
     }
     else if (isLoading && completionRef && messageRef && chatRef) { // Completion has started rendering
+
       setShowSkeleton(false);
       const whiteSpaceHeight = chatRef.clientHeight - messageRef.offsetHeight - completionRef.offsetHeight;
       setWhitespace(`${whiteSpaceHeight > 0 ? whiteSpaceHeight : 0}px`);
-
-      console.log("Adjust whitespace", whiteSpaceHeight);
     }
     else { // Completion Finished
+
       setShowSkeleton(false);
       setWhitespace("0px");
-
-      console.log("Completion finished");
     }
-
   }, [isLoading, chatHistory.chatItems]);
 
 
