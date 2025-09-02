@@ -82,42 +82,16 @@ const MainScreen = () => {
   const [scrollable, setScrollable] = useState(true);
   const [tailing, setTailing] = useState(false);
   const [canTail, setCanTail] = useState(false);
-  const [prevScrollTop, setPrevScrollTop] = useState(0);
-
-
-  useEffect(() => { // Enable scroll mode switching if completion rendering
-    console.log("useEffect triggered");
-    if (!lastCompletionRef.current && apiRequestService.isLoading) { // If completion is loading
-    }
-    else if (lastCompletionRef.current && apiRequestService.isLoading) { // If completion is streaming
-      if (!canTail) { // Allow for tailing mode switch
-        setTimeout(() => {
-          setCanTail(true);
-        }, 500); // Give buffer time so that mode switch is only available sometime into stream
-      }
-      else if (canTail && tailing && chatRef.current) { // Tail completion if in tailing mode
-        chatRef.current.scrollTo({
-          top: chatRef.current.scrollHeight,
-          behavior: "smooth",
-        });
-      }
-    }
-    else { // If completion is done
-      setCanTail(false);
-      setTailing(false);
-    }
-  }, [getCurrentChatHistory().chatItems, tailing]);
-
 
   // Check if the chat container is scrolled to the bottom or not scrollable
-  const isScrollable = () => {
+  const isAtBottom = () => {
     const container = chatRef.current;
     if (container) {
       // True if the content is taller than the visible area (scrollable)
-      const pageScrollable = container.scrollHeight > container.clientHeight + 1;
+      const isScrollable = container.scrollHeight > container.clientHeight + 1;
       // True if the user is NOT at the bottom (allowing for 1px rounding error)
       const notAtBottom = container.scrollTop + container.clientHeight < container.scrollHeight - 1;
-      return pageScrollable && notAtBottom;
+      return isScrollable && notAtBottom;
     }
     return false;
   }
@@ -125,27 +99,7 @@ const MainScreen = () => {
   // Handle scroll events in chat container
   const handleScroll = () => {
     console.log("Handling scroll event in chat container");
-
-    const notAtBottom = isScrollable();
-    setScrollable(notAtBottom);
-
-    const container = chatRef.current;
-
-    // Check direction 
-    if (container) {
-
-      // Check if it was a scroll up to switch out of tailing mode to free scroll
-      const isScrollingUp = container.scrollTop < prevScrollTop;
-      setPrevScrollTop(container.scrollTop);
-
-      if (isScrollingUp) {
-        setTailing(false);
-      }
-      else if (canTail && !notAtBottom) {
-        // If not scroll up, check if scroll down to bottom to enable tailing mode
-        setTailing(true);
-      }
-    }
+    setScrollable(isAtBottom());
   }
 
   // Scroll to the bottom of the chat container
@@ -156,13 +110,10 @@ const MainScreen = () => {
         behavior: "smooth",
       });
     }
-
-    // If arrow button clicked during completion stream, switch to tailing mode
-    if (canTail && apiRequestService.isLoading) {
-      setTailing(true);
-    }
+    // if (apiRequestService.isLoading) {
+    //   setTailing(true);
+    // }
   };
-
 
   const sendMessage = (question: string, attachments: Attachment[]) => {
     apiRequestService.makeApiRequest(
@@ -172,6 +123,10 @@ const MainScreen = () => {
       undefined,
       getEffectiveEnabledTools()
     )
+
+    // setTimeout(() => {
+    //   setCanTail(true);
+    // }, 1000);
   };
 
   const replayChat = () => {
