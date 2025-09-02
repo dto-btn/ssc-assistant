@@ -39,8 +39,8 @@ variable "env" {
     description = "Deployment environment code (e.g., dev, test, prod)."
     type        = string
     validation {
-        condition     = can(regex("^[A-Z][a-z][A-Z][a-z]$", var.env))
-        error_message = "env must be exactly 4 characters matching pattern Upper-lower-Upper-lower (e.g., AbCd) and contain only alphabetic characters."
+        condition     = can(regex("^[A-Z][0-9,a-z][A-Z][0-9,a-z]$", var.env))
+        error_message = "env must be exactly 4 characters matching pattern Upper-lower-Upper-lower (e.g., AbCd) and contain only alphanumeric characters."
     }
 }
 
@@ -69,4 +69,10 @@ variable "userDefinedString" {
         condition   = can(regex("^[A-Za-z0-9]+$", var.userDefinedString))
         error_message = "userDefinedString may only contain alphanumeric characters (A-Z, a-z, 0-9) with no spaces or special characters."
     }
+}
+
+variable "tags" {
+  description = "Tags to be applied to the function app"
+  type = map(string)
+  default = {}
 }

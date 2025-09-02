@@ -3,7 +3,7 @@ locals {
 }
 
 resource "azurerm_cognitive_account" "cognitive-account" {
-    name                = local.ca.name
+    name                = local.name
     resource_group_name = var.resource_group.name
     location            = var.resource_group.location
     sku_name            = try(local.ca.sku_name, "S0")
@@ -14,10 +14,12 @@ resource "azurerm_cognitive_account" "cognitive-account" {
     outbound_network_access_restricted = try(local.ca.outbound_network_access_restricted, null)
     dynamic_throttling_enabled         = try(local.ca.dynamic_throttling_enabled, null)
     local_auth_enabled                 = try(local.ca.local_auth_enabled, null)
-    tags                               = try(local.ca.tags, null)
+
+    tags                               = merge(try(local.ca.tags, {}), var.tags)
 
     dynamic "identity" {
-        for_each = try([local.ca.identity], [])
+        # Wrap single object in list when present, else empty list
+        for_each = local.ca.identity == null ? [] : [local.ca.identity]
         content {
             type         = identity.value.type
             identity_ids = try(identity.value.identity_ids, null)
@@ -39,7 +41,7 @@ resource "azurerm_cognitive_account" "cognitive-account" {
             ip_rules       = try(network_acls.value.ip_rules, null)
 
             dynamic "virtual_network_rules" {
-                for_each = try(network_acls.value.virtual_network_rules, [])
+                for_each = network_acls.value.virtual_network_rules == null ? [] : network_acls.value.virtual_network_rules
                 content {
                     subnet_id = virtual_network_rules.value.subnet_id
                 }
@@ -48,7 +50,8 @@ resource "azurerm_cognitive_account" "cognitive-account" {
     }
 
     dynamic "storage" {
-        for_each = try(local.ca.storage_accounts, [])
+        # List of storage account association objects
+        for_each = local.ca.storage_accounts == null ? [] : local.ca.storage_accounts
         content {
             storage_account_id = storage.value.storage_account_id
             identity_client_id = try(storage.value.identity_client_id, null)
