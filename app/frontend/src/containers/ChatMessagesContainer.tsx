@@ -1,6 +1,6 @@
 import { Box, CircularProgress, IconButton, Skeleton, Stack } from "@mui/material";
 import ArrowCircleDownIcon from '@mui/icons-material/ArrowCircleDown';
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, RefObject, useEffect, useRef, useState } from "react";
 import { AlertBubble, AssistantBubble, UserBubble } from "../components";
 import { isACompletion, isAMessage, isAToastMessage } from "../utils";
 
