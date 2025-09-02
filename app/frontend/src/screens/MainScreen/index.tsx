@@ -68,6 +68,7 @@ const MainScreen = () => {
   });
 
   const location = useLocation();
+  const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
   const [chatIndexToLoadOrDelete, setChatIndexToLoadOrDelete] = useState<
     number | null
   >(null);
@@ -293,6 +294,11 @@ const MainScreen = () => {
       postLogoutRedirectUri: "/",
     });
   };
+
+  // Scrolls the last updated message (if its streaming, or once done) into view
+  useEffect(() => {
+    chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" });
+  }, [getCurrentChatHistory().chatItems]);
 
   // Load chat histories and persisted tools if present
   useEffect(() => {
@@ -644,6 +650,7 @@ const MainScreen = () => {
             <ChatMessagesContainer
               chatHistory={getCurrentChatHistory()}
               isLoading={apiRequestService.isLoading}
+              chatMessageStreamEnd={chatMessageStreamEnd}
               replayChat={replayChat}
               handleRemoveToastMessage={handleRemoveToastMessage}
               handleBookReservation={handleBookReservation}
@@ -653,7 +660,7 @@ const MainScreen = () => {
               onScrollArrowClick={onScrollArrowClick}
               scrollable={scrollable}
             />
-            <div style={{ height: "50px" }} />
+            <div ref={chatMessageStreamEnd} style={{ height: "50px" }} />
             <Box
               sx={{
                 position: "sticky",
