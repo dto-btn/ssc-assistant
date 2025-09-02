@@ -86,11 +86,8 @@ const MainScreen = () => {
 
 
   useEffect(() => { // Enable scroll mode switching if completion rendering
-    console.log("useEffect triggered, tailing: ", tailing);
+    console.log("useEffect triggered");
     if (!lastCompletionRef.current && apiRequestService.isLoading) { // If completion is loading
-      if (tailing) {
-        setTailing(false); // Make sure scroll mode is auto scroll by default
-      }
     }
     else if (lastCompletionRef.current && apiRequestService.isLoading) { // If completion is streaming
       if (!canTail) { // Allow for tailing mode switch
@@ -118,9 +115,8 @@ const MainScreen = () => {
     if (container) {
       // True if the content is taller than the visible area (scrollable)
       const pageScrollable = container.scrollHeight > container.clientHeight + 1;
-      // True if the user is NOT at the bottom (allowing 100px for padding)
-      const notAtBottom = container.scrollTop + container.clientHeight < container.scrollHeight - 100;
-      console.log(`isScrollable -> pageScrollable: ${pageScrollable}, notAtBottom: ${notAtBottom}`);
+      // True if the user is NOT at the bottom (allowing for 1px rounding error)
+      const notAtBottom = container.scrollTop + container.clientHeight < container.scrollHeight - 1;
       return pageScrollable && notAtBottom;
     }
     return false;
@@ -128,13 +124,14 @@ const MainScreen = () => {
 
   // Handle scroll events in chat container
   const handleScroll = () => {
+    console.log("Handling scroll event in chat container");
 
     const notAtBottom = isScrollable();
     setScrollable(notAtBottom);
 
     const container = chatRef.current;
 
-    // Check direction of scroll to switch scrolling mode
+    // Check direction 
     if (container) {
 
       // Check if it was a scroll up to switch out of tailing mode to free scroll
