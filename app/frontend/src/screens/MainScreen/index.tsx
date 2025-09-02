@@ -68,7 +68,6 @@ const MainScreen = () => {
   });
 
   const location = useLocation();
-  const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
   const [chatIndexToLoadOrDelete, setChatIndexToLoadOrDelete] = useState<
     number | null
   >(null);
@@ -583,7 +582,6 @@ const MainScreen = () => {
             <ChatMessagesContainer
               chatHistory={getCurrentChatHistory()}
               isLoading={apiRequestService.isLoading}
-              chatMessageStreamEnd={chatMessageStreamEnd}
               replayChat={replayChat}
               handleRemoveToastMessage={handleRemoveToastMessage}
               handleBookReservation={handleBookReservation}
@@ -593,7 +591,7 @@ const MainScreen = () => {
               onScrollArrowClick={onScrollArrowClick}
               scrollable={scrollable}
             />
-            <div ref={chatMessageStreamEnd} style={{ height: "50px" }} />
+            <div style={{ height: "50px" }} />
             <Box
               sx={{
                 position: "sticky",

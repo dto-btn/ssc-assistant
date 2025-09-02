@@ -9,7 +9,6 @@ const SKELETON_HEIGHT = 200;
 interface ChatMessagesContainerProps {
   chatHistory: ChatHistory;
   isLoading: boolean;
-  chatMessageStreamEnd: RefObject<HTMLDivElement>;
   replayChat: () => void;
   handleRemoveToastMessage: (index: number) => void;
   handleBookReservation: (bookingDetails: BookingConfirmation) => void;
@@ -24,7 +23,6 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
   const {
     chatHistory,
     isLoading,
-    chatMessageStreamEnd,
     replayChat,
     handleRemoveToastMessage,
     handleBookReservation,
@@ -204,7 +202,6 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
             />
           </IconButton>
         )}
-        <Box sx={{ mt: 5 }} ref={chatMessageStreamEnd} />
       </Box>
     </Box >
   );
