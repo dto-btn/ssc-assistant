@@ -80,26 +80,19 @@ const MainScreen = () => {
   const chatRef = useRef<HTMLDivElement>(null);
   const lastCompletionRef = useRef<HTMLDivElement>(null);
   const [scrollable, setScrollable] = useState(true);
-  const [tailing, setTailing] = useState(false);
-  const [canTail, setCanTail] = useState(false);
 
-  // Check if the chat container is scrolled to the bottom or not scrollable
-  const isAtBottom = () => {
+  // Handle scroll events in chat container
+  const handleScroll = () => {
     const container = chatRef.current;
+
+    // Check if the chat container is scrolled to the bottom or not scrollable
     if (container) {
       // True if the content is taller than the visible area (scrollable)
       const isScrollable = container.scrollHeight > container.clientHeight + 1;
       // True if the user is NOT at the bottom (allowing for 1px rounding error)
       const notAtBottom = container.scrollTop + container.clientHeight < container.scrollHeight - 1;
-      return isScrollable && notAtBottom;
+      setScrollable(isScrollable && notAtBottom);
     }
-    return false;
-  }
-
-  // Handle scroll events in chat container
-  const handleScroll = () => {
-    console.log("Handling scroll event in chat container");
-    setScrollable(isAtBottom());
   }
 
   // Scroll to the bottom of the chat container
@@ -110,9 +103,6 @@ const MainScreen = () => {
         behavior: "smooth",
       });
     }
-    // if (apiRequestService.isLoading) {
-    //   setTailing(true);
-    // }
   };
 
   const sendMessage = (question: string, attachments: Attachment[]) => {
@@ -123,10 +113,6 @@ const MainScreen = () => {
       undefined,
       getEffectiveEnabledTools()
     )
-
-    // setTimeout(() => {
-    //   setCanTail(true);
-    // }, 1000);
   };
 
   const replayChat = () => {
@@ -246,11 +232,6 @@ const MainScreen = () => {
       postLogoutRedirectUri: "/",
     });
   };
-
-  // Scrolls the last updated message (if its streaming, or once done) into view
-  useEffect(() => {
-    chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" });
-  }, [getCurrentChatHistory().chatItems]);
 
   // Load chat histories and persisted tools if present
   useEffect(() => {
