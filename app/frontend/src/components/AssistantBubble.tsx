@@ -429,8 +429,8 @@ export const AssistantBubble = ({
                   {isLoading
                     ? `${text.replace(/\[doc(\d+)\]/g, "")}_`
                     : processedContent.processedText !== ""
-                    ? processedContent.processedText
-                    : text}
+                      ? processedContent.processedText
+                      : text}
                 </MarkdownHooks>
               </TextComponentsBox>
             </MainContentWrapper>
@@ -829,11 +829,9 @@ export const AssistantBubble = ({
                           brQuery.query_filters.map((filter, index) => (
                             <Chip
                               key={index}
-                              label={`${
-                                i18n.language == "en" ? filter.en : filter.fr
-                              } (${filter.name}) ${filter.operator} ${
-                                filter.value
-                              }`}
+                              label={`${i18n.language == "en" ? filter.en : filter.fr
+                                } (${filter.name}) ${filter.operator} ${filter.value
+                                }`}
                               size="small"
                               variant="outlined"
                               color="primary"
