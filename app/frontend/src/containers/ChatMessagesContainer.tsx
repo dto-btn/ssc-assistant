@@ -3,7 +3,7 @@ import ArrowCircleDownIcon from '@mui/icons-material/ArrowCircleDown';
 import { Fragment, useEffect, useRef, useState } from "react";
 import { AlertBubble, AssistantBubble, UserBubble } from "../components";
 import { isACompletion, isAMessage, isAToastMessage } from "../utils";
-import { t } from 'i18next';
+import { useTranslation } from "react-i18next";
 
 const SKELETON_HEIGHT = 200;
 
@@ -33,6 +33,8 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     onScrollArrowClick,
     scrollable,
   } = props;
+
+  const { t } = useTranslation();
 
   const lastMsgRef = useRef<HTMLDivElement>(null);
   const [showSkeleton, setShowSkeleton] = useState(false);
