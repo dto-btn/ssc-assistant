@@ -212,7 +212,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                 backgroundColor: "rgba(0, 0, 0, 0.2)",
               },
               position: "fixed",
-              bottom: "11%",
+              bottom: { xs: "70px", sm: "80px", md: "90px" },
               right: "40%",
               zIndex: 1200,
               height: "64px",
