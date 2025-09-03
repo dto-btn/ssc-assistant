@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import { useEffect, useRef, useState } from "react";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { isAMessage } from "../../utils";
-import { InteractionStatus } from "@azure/msal-browser";
+import { InteractionStatus, Logger } from "@azure/msal-browser";
 import { v4 as uuidv4 } from "uuid";
 import { bookReservation } from "../../api/api";
 import { callMsGraph } from "../../graph";
@@ -48,6 +48,10 @@ const MainScreen = () => {
   } = useChatStore();
   const chatService = useChatService();
   const apiRequestService = useApiRequestService();
+
+  console.debug(
+    "*******************IN MainScreen.tsx *******************************"
+  );
 
   // Computes tools to send to API: if conversation has staticTools, they take precedence; otherwise use current enabledTools from app store
   const getEffectiveEnabledTools = (): Record<string, boolean> => {
@@ -110,7 +114,6 @@ const MainScreen = () => {
   const stopChat = () => {
     apiRequestService.abortRequest(); // Abort the ongoing request to stop the response
 
-
     setCurrentChatHistory((prevChatHistory) => {
       const chatItems = [...prevChatHistory.chatItems];
       if (chatItems.length === 0) return prevChatHistory;
@@ -121,12 +124,19 @@ const MainScreen = () => {
       const lastItem = chatItems[lastIndex] as Completion;
 
       // If it's an assistant message (Message type), append the stop text
-      if (lastItem && lastItem.message && typeof lastItem.message.content === "string") {
+      if (
+        lastItem &&
+        lastItem.message &&
+        typeof lastItem.message.content === "string"
+      ) {
         chatItems[lastIndex] = {
           ...lastItem,
           message: {
             ...lastItem.message,
-            content: lastItem.message.content + "\n\n" + t("responseStopped", "You've stopped this response"),
+            content:
+              lastItem.message.content +
+              "\n\n" +
+              t("responseStopped", "You've stopped this response"),
           },
         };
       }
@@ -140,7 +150,6 @@ const MainScreen = () => {
       return updatedChatHistory;
     });
   };
-
 
   const loadChatHistoriesFromStorage = () => {
     const parsedChatHistories = PersistenceUtils.getChatHistories();
@@ -303,10 +312,10 @@ const MainScreen = () => {
   useEffect(() => {
     console.debug(
       "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-      isAuthenticated +
-      ", InProgress? " +
-      inProgress +
-      ")"
+        isAuthenticated +
+        ", InProgress? " +
+        inProgress +
+        ")"
     );
     if (
       isAuthenticated &&
@@ -554,7 +563,7 @@ const MainScreen = () => {
               paddingTop: "3rem",
               overflow: "auto",
             }}
-          // maxWidth="lg"
+            // maxWidth="lg"
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <ChatMessagesContainer
