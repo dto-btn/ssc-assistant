@@ -1,8 +1,9 @@
 import { Box, CircularProgress, IconButton, Skeleton, Stack } from "@mui/material";
 import ArrowCircleDownIcon from '@mui/icons-material/ArrowCircleDown';
-import { Fragment, RefObject, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { AlertBubble, AssistantBubble, UserBubble } from "../components";
 import { isACompletion, isAMessage, isAToastMessage } from "../utils";
+import { t } from 'i18next';
 
 const SKELETON_HEIGHT = 200;
 
@@ -218,14 +219,14 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
               height: "64px",
               width: "64px"
             }}
-            aria-label={("scroll to bottom")}
+            aria-label={t("scroll.down")}
           >
             <ArrowCircleDownIcon
               sx={{
                 height: "40px",
                 width: "40px"
               }}
-              aria-label={"scroll to bottom"}
+              aria-label={t("scroll.down")}
             />
           </IconButton>
         )}

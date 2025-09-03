@@ -292,7 +292,7 @@ export const ChatInput = ({
             size="large"
           >
             {disabled ? (
-              <StopCircleIcon sx={{ color: "primary.main" }} aria-label={t("stop generating")} />
+              <StopCircleIcon sx={{ color: "primary.main" }} aria-label={t("stop.generating")} />
             )
               : isUploading ? (
                 <CircularProgress size={24} aria-label={t("generating")} />
