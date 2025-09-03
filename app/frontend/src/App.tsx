@@ -10,7 +10,6 @@ import { CssBaseline } from "@mui/material";
 import { AppRoutes } from "./routes/AppRoutes";
 import MSClarity from "./components/MSClarity";
 import { AppSnackbars } from "./components/AppSnackbar";
-import { ChatProvider } from "./contexts/ChatContext";
 
 interface AppProps {
   instance: PublicClientApplication;
@@ -27,9 +26,7 @@ export const App = ({ instance }: AppProps) => {
             <ConnectingScreen />
           </UnauthenticatedTemplate>
           <AuthenticatedTemplate>
-            <ChatProvider>
-              <AppRoutes />
-            </ChatProvider>
+            <AppRoutes />
           </AuthenticatedTemplate>
         </MsalProvider>
       </AppErrorBoundary>

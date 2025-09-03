@@ -1,4 +1,3 @@
-import React from "react";
 import ReactDOM from "react-dom/client";
 import { App } from "./App.tsx";
 import "./i18n";
@@ -18,6 +17,7 @@ import { msalConfig } from "./authConfig.ts";
 
 import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "./theme.ts";
+import { ChatProvider } from "./contexts/ChatContext";
 
 export const msalInstance = new PublicClientApplication(msalConfig);
 
@@ -62,7 +62,9 @@ msalInstance.initialize().then(() => {
   root.render(
     // <React.StrictMode>
     <ThemeProvider theme={theme}>
-      <App instance={msalInstance} />
+      <ChatProvider>
+        <App instance={msalInstance} />
+      </ChatProvider>
     </ThemeProvider>
     // </React.StrictMode>
   );

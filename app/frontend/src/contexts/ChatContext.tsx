@@ -3,6 +3,7 @@ import React, {
   useContext,
   useState,
   useCallback,
+  useMemo,
   ReactNode,
 } from "react";
 import {
@@ -36,6 +37,19 @@ interface ChatProviderProps {
   children: ReactNode;
 }
 
+// Ensures a loaded or incoming ChatHistory has all required keys
+const hydrateChatHistory = (raw: ChatHistory | undefined): ChatHistory => {
+  const base = buildDefaultChatHistory();
+  if (!raw) return base;
+  return {
+    ...base,
+    ...raw,
+    chatItems: raw.chatItems || [],
+    staticTools: raw.staticTools || [],
+    isTopicSet: raw.isTopicSet ?? false,
+  };
+};
+
 export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   const [currentChatIndex, setCurrentChatIndexState] = useState<number>(0);
   const [currentChatHistory, setCurrentChatHistoryState] = useState<
@@ -62,11 +76,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     (param: ChatHistory | ((prev: ChatHistory) => ChatHistory)) => {
       if (typeof param === "function") {
         setCurrentChatHistoryState((prevState) => {
-          const currentHistory = prevState || buildDefaultChatHistory();
-          return param(currentHistory);
+          const currentHistory = hydrateChatHistory(prevState);
+          return hydrateChatHistory(param(currentHistory));
         });
       } else {
-        setCurrentChatHistoryState(param);
+        setCurrentChatHistoryState(hydrateChatHistory(param));
       }
     },
     []
@@ -81,16 +95,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   }, []);
 
   const getCurrentChatHistory = useCallback((): ChatHistory => {
-    if (!currentChatHistory) {
-      return buildDefaultChatHistory();
-    } else {
-      // We are spreading the defaultChatHistory because a lot of the time, we are losing keys from localstorage.
-      // This is a hacky fix for now. We want to move to database persistence later anyway.
-      return {
-        ...buildDefaultChatHistory(),
-        ...currentChatHistory,
-      };
-    }
+    return hydrateChatHistory(currentChatHistory);
   }, [currentChatHistory]);
 
   const setCurrentChatIndex = useCallback((index: number) => {
@@ -101,21 +106,38 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
     setChatHistoriesDescriptionsState(descriptions);
   }, []);
 
-  const contextValue: ChatContextType = {
-    currentChatIndex,
-    currentChatHistory,
-    chatHistoriesDescriptions,
-    chatIndexToLoadOrDelete,
-    quotedText,
-    setChatIndexToLoadOrDelete,
-    getCurrentChatHistory,
-    setCurrentChatHistory,
-    setDefaultChatHistory,
-    getDefaultModel,
-    setCurrentChatIndex,
-    setChatHistoriesDescriptions,
-    setQuotedText,
-  };
+  const contextValue: ChatContextType = useMemo(
+    () => ({
+      currentChatIndex,
+      currentChatHistory: hydrateChatHistory(currentChatHistory), // stable enriched value
+      chatHistoriesDescriptions,
+      chatIndexToLoadOrDelete,
+      quotedText,
+      setChatIndexToLoadOrDelete,
+      getCurrentChatHistory,
+      setCurrentChatHistory,
+      setDefaultChatHistory,
+      getDefaultModel,
+      setCurrentChatIndex,
+      setChatHistoriesDescriptions,
+      setQuotedText,
+    }),
+    [
+      currentChatIndex,
+      currentChatHistory,
+      chatHistoriesDescriptions,
+      chatIndexToLoadOrDelete,
+      quotedText,
+      setChatIndexToLoadOrDelete,
+      getCurrentChatHistory,
+      setCurrentChatHistory,
+      setDefaultChatHistory,
+      getDefaultModel,
+      setCurrentChatIndex,
+      setChatHistoriesDescriptions,
+      setQuotedText,
+    ]
+  );
 
   return (
     <ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>

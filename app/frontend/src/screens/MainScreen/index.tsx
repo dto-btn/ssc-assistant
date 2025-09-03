@@ -8,10 +8,10 @@ import {
 } from "../../components";
 import ChatMessagesContainer from "../../containers/ChatMessagesContainer";
 import { useTranslation } from "react-i18next";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { isAMessage } from "../../utils";
-import { InteractionStatus, Logger } from "@azure/msal-browser";
+import { InteractionStatus } from "@azure/msal-browser";
 import { v4 as uuidv4 } from "uuid";
 import { bookReservation } from "../../api/api";
 import { callMsGraph } from "../../graph";
@@ -46,25 +46,42 @@ const MainScreen = () => {
     setChatHistoriesDescriptions,
     quotedText,
   } = useChatStore();
+  // Cache current chat history locally to avoid multiple getCurrentChatHistory() calls per render
+  const chatHistory = getCurrentChatHistory();
+  const chatItems = chatHistory.chatItems;
+  const selectedModel = chatHistory.model;
+  const staticTools = chatHistory.staticTools || [];
   const chatService = useChatService();
   const apiRequestService = useApiRequestService();
 
-  console.debug(
-    "*******************IN MainScreen.tsx *******************************"
-  );
+  // Dev-only render counter (won't spam unless explicitly enabled)
+  if (import.meta.env.DEV && (window as any).__SHOW_MAINSCREEN_RENDERS__) {
+    (window as any).__MAINSCREEN_RENDER_COUNT__ =
+      ((window as any).__MAINSCREEN_RENDER_COUNT__ || 0) + 1;
+    // eslint-disable-next-line no-console
+    console.debug(
+      "MainScreen render #",
+      (window as any).__MAINSCREEN_RENDER_COUNT__
+    );
+  }
+
+  // Log once on mount instead of every render
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.debug(
+      "*******************IN MainScreen.tsx (mount) *******************************"
+    );
+  }, []);
 
   // Computes tools to send to API: if conversation has staticTools, they take precedence; otherwise use current enabledTools from app store
-  const getEffectiveEnabledTools = (): Record<string, boolean> => {
-    const staticTools = getCurrentChatHistory().staticTools || [];
+  const getEffectiveEnabledTools = useCallback((): Record<string, boolean> => {
     if (staticTools.length > 0) {
       const record: Record<string, boolean> = {};
-      staticTools.forEach((tool) => {
-        record[tool] = true;
-      });
+      for (const tool of staticTools) record[tool] = true;
       return record;
     }
     return appStore.tools.enabledTools;
-  };
+  }, [staticTools, appStore.tools.enabledTools]);
 
   const [userData, setUserData] = useState({
     graphData: null,
@@ -81,10 +98,8 @@ const MainScreen = () => {
   const { instance, inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
 
-  const replayChat = () => {
-    const currentChatHistoryItems = getCurrentChatHistory().chatItems;
-    const lastQuestion =
-      currentChatHistoryItems[currentChatHistoryItems.length - 2];
+  const replayChat = useCallback(() => {
+    const lastQuestion = chatItems[chatItems.length - 2];
 
     setCurrentChatHistory((prevChatHistory) => {
       const updatedChatHistory = {
@@ -108,10 +123,17 @@ const MainScreen = () => {
         getEffectiveEnabledTools()
       );
     }
-  };
+  }, [
+    chatItems,
+    setCurrentChatHistory,
+    chatService,
+    apiRequestService,
+    userData,
+    getEffectiveEnabledTools,
+  ]);
 
   // Function to stop the chat and append a message indicating the response was stopped
-  const stopChat = () => {
+  const stopChat = useCallback(() => {
     apiRequestService.abortRequest(); // Abort the ongoing request to stop the response
 
     setCurrentChatHistory((prevChatHistory) => {
@@ -149,9 +171,9 @@ const MainScreen = () => {
       chatService.saveChatHistories(updatedChatHistory);
       return updatedChatHistory;
     });
-  };
+  }, [apiRequestService, setCurrentChatHistory, chatService, t]);
 
-  const loadChatHistoriesFromStorage = () => {
+  const loadChatHistoriesFromStorage = useCallback(() => {
     const parsedChatHistories = PersistenceUtils.getChatHistories();
     if (parsedChatHistories.length > 0) {
       let currentIndex = PersistenceUtils.getCurrentChatIndex();
@@ -173,9 +195,14 @@ const MainScreen = () => {
       // If there are no chat histories, set the current chat to the default
       setDefaultChatHistory();
     }
-  };
+  }, [
+    chatStoreSetCurrentChatIndex,
+    setCurrentChatHistory,
+    setChatHistoriesDescriptions,
+    setDefaultChatHistory,
+  ]);
 
-  const loadEnabledToolsFromStorage = () => {
+  const loadEnabledToolsFromStorage = useCallback(() => {
     try {
       const enabledTools = PersistenceUtils.getEnabledTools() || {};
 
@@ -196,7 +223,7 @@ const MainScreen = () => {
       console.error("Error loading chat histories from local storage", error);
       appStore.tools.setEnabledTools(defaultEnabledTools);
     }
-  };
+  }, [appStore.tools]);
 
   const handleLogout = () => {
     instance.logoutRedirect({
@@ -207,7 +234,7 @@ const MainScreen = () => {
   // Scrolls the last updated message (if its streaming, or once done) into view
   useEffect(() => {
     chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" });
-  }, [getCurrentChatHistory().chatItems]);
+  }, [chatItems]);
 
   // Load chat histories and persisted tools if present
   useEffect(() => {
@@ -215,108 +242,125 @@ const MainScreen = () => {
     loadEnabledToolsFromStorage();
   }, []);
 
-  const handleRemoveToastMessage = (indexToRemove: number) => {
-    setCurrentChatHistory((prevChatHistory) => {
-      const updatedChatHistory = {
-        ...prevChatHistory,
-        chatItems: prevChatHistory.chatItems.filter(
-          (_, itemIndex) => itemIndex !== indexToRemove
-        ),
+  const handleRemoveToastMessage = useCallback(
+    (indexToRemove: number) => {
+      setCurrentChatHistory((prevChatHistory) => {
+        const updatedChatHistory = {
+          ...prevChatHistory,
+          chatItems: prevChatHistory.chatItems.filter(
+            (_, itemIndex) => itemIndex !== indexToRemove
+          ),
+        };
+
+        return updatedChatHistory;
+      });
+    },
+    [setCurrentChatHistory]
+  );
+
+  const handleUpdateEnabledTools = useCallback(
+    (name: string, forceOn?: boolean) => {
+      let updatedTools: Record<string, boolean> = {
+        ...appStore.tools.enabledTools,
       };
+      const toolIsTurningOn: boolean =
+        forceOn == true ? true : !appStore.tools.enabledTools[name];
 
-      return updatedChatHistory;
-    });
-  };
+      // Finally, update the specific tool's state
+      updatedTools[name] = toolIsTurningOn;
 
-  const handleUpdateEnabledTools = (name: string, forceOn?: boolean) => {
-    let updatedTools: Record<string, boolean> = {
-      ...appStore.tools.enabledTools,
-    };
-    const toolIsTurningOn: boolean =
-      forceOn == true ? true : !appStore.tools.enabledTools[name];
+      // Update the app store with the new enabled tools
+      appStore.tools.setEnabledTools(updatedTools);
 
-    // Finally, update the specific tool's state
-    updatedTools[name] = toolIsTurningOn;
+      // Save the updated tools to local storage
+      PersistenceUtils.setEnabledTools(updatedTools);
+    },
+    [appStore.tools]
+  );
 
-    // Update the app store with the new enabled tools
-    appStore.tools.setEnabledTools(updatedTools);
+  const hanldeUpdateModelVersion = useCallback(
+    (modelName: string) => {
+      setCurrentChatHistory((prevChatHistory) => {
+        const updatedChatHistory = {
+          ...prevChatHistory,
+          model: modelName,
+        };
+        chatService.saveChatHistories(updatedChatHistory);
+        return updatedChatHistory;
+      });
+    },
+    [setCurrentChatHistory, chatService]
+  );
 
-    // Save the updated tools to local storage
-    PersistenceUtils.setEnabledTools(updatedTools);
-  };
-
-  const hanldeUpdateModelVersion = (modelName: string) => {
-    setCurrentChatHistory((prevChatHistory) => {
-      const updatedChatHistory = {
-        ...prevChatHistory,
-        model: modelName,
-      };
-      chatService.saveChatHistories(updatedChatHistory);
-      return updatedChatHistory;
-    });
-  };
-
-  const handleDeleteSavedChat = (index: number) => {
+  const handleDeleteSavedChat = useCallback((index: number) => {
     setChatIndexToLoadOrDelete(index);
     setShowDeleteChatDialog(true);
-  };
+  }, []);
 
-  const deleteSavedChat = () => {
+  const deleteSavedChat = useCallback(() => {
     setShowDeleteChatDialog(false);
     if (chatIndexToLoadOrDelete !== null) {
       chatService.deleteSavedChat(chatIndexToLoadOrDelete);
     }
-  };
+  }, [chatIndexToLoadOrDelete, chatService]);
 
-  const handleCancelDeleteSavedChat = () => {
+  const handleCancelDeleteSavedChat = useCallback(() => {
     setShowDeleteChatDialog(false);
     setChatIndexToLoadOrDelete(null);
-  };
+  }, []);
 
-  const handleFileUploadError = (toast: ToastMessage) => {
-    setCurrentChatHistory((prevChatHistory) => {
-      const updatedChatHistory = {
-        ...prevChatHistory,
-        chatItems: [...prevChatHistory.chatItems, toast],
-      };
-      chatService.saveChatHistories(updatedChatHistory);
-      return updatedChatHistory;
-    });
-  };
+  const handleFileUploadError = useCallback(
+    (toast: ToastMessage) => {
+      setCurrentChatHistory((prevChatHistory) => {
+        const updatedChatHistory = {
+          ...prevChatHistory,
+          chatItems: [...prevChatHistory.chatItems, toast],
+        };
+        chatService.saveChatHistories(updatedChatHistory);
+        return updatedChatHistory;
+      });
+    },
+    [setCurrentChatHistory, chatService]
+  );
 
-  const handleBookReservation = async (bookingDetails: BookingConfirmation) => {
-    let toast: ToastMessage;
-    try {
-      await bookReservation(bookingDetails);
-      toast = {
-        toastMessage: `${t("booking.success")} ${bookingDetails.startDate}`,
-        isError: false,
-      };
-    } catch (error) {
-      toast = {
-        toastMessage: `${t("booking.fail")} ${error}`,
-        isError: true,
-      };
-    }
+  const handleBookReservation = useCallback(
+    async (bookingDetails: BookingConfirmation) => {
+      let toast: ToastMessage;
+      try {
+        await bookReservation(bookingDetails);
+        toast = {
+          toastMessage: `${t("booking.success")} ${bookingDetails.startDate}`,
+          isError: false,
+        };
+      } catch (error) {
+        toast = {
+          toastMessage: `${t("booking.fail")} ${error}`,
+          isError: true,
+        };
+      }
 
-    setCurrentChatHistory((prevChatHistory) => {
-      const updatedChatHistory = {
-        ...prevChatHistory,
-        chatItems: [...prevChatHistory.chatItems, toast],
-      };
-      chatService.saveChatHistories(updatedChatHistory);
-      return updatedChatHistory;
-    });
-  };
+      setCurrentChatHistory((prevChatHistory) => {
+        const updatedChatHistory = {
+          ...prevChatHistory,
+          chatItems: [...prevChatHistory.chatItems, toast],
+        };
+        chatService.saveChatHistories(updatedChatHistory);
+        return updatedChatHistory;
+      });
+    },
+    [t, setCurrentChatHistory, chatService]
+  );
 
   useEffect(() => {
-    console.debug(
-      "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-        isAuthenticated +
-        ", InProgress? " +
-        inProgress +
-        ")"
-    );
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.debug(
+        "useEffect[inProgress,userData.graphData] auth?",
+        isAuthenticated,
+        "progress?",
+        inProgress
+      );
+    }
     if (
       isAuthenticated &&
       !userData.graphData &&
@@ -419,37 +463,44 @@ const MainScreen = () => {
     }
   }, [parsedSuggestionContext]);
 
-  const onSuggestionClicked = (
-    question: string,
-    tool: string,
-    isStatic: boolean
-  ) => {
-    let updatedTools: Record<string, boolean> = {
-      ...appStore.tools.enabledTools,
-    };
-    updatedTools[tool] = true;
+  const onSuggestionClicked = useCallback(
+    (question: string, tool: string, isStatic: boolean) => {
+      let updatedTools: Record<string, boolean> = {
+        ...appStore.tools.enabledTools,
+      };
+      updatedTools[tool] = true;
 
-    // if we have a tool passed as static we update the current chat to stick to that tool
-    if (isStatic)
-      setCurrentChatHistory((prevChatHistory) => {
-        const updatedChatHistory: ChatHistory = {
-          ...prevChatHistory,
-          staticTools: [tool],
-        };
-        chatService.saveChatHistories(updatedChatHistory);
-        return updatedChatHistory;
-      });
+      // if we have a tool passed as static we update the current chat to stick to that tool
+      if (isStatic)
+        setCurrentChatHistory((prevChatHistory) => {
+          const updatedChatHistory: ChatHistory = {
+            ...prevChatHistory,
+            staticTools: [tool],
+          };
+          chatService.saveChatHistories(updatedChatHistory);
+          return updatedChatHistory;
+        });
 
-    appStore.tools.setEnabledTools(updatedTools);
-    PersistenceUtils.setEnabledTools(updatedTools);
-    apiRequestService.makeApiRequest(
-      question,
+      appStore.tools.setEnabledTools(updatedTools);
+      PersistenceUtils.setEnabledTools(updatedTools);
+      apiRequestService.makeApiRequest(
+        question,
+        userData,
+        undefined,
+        undefined,
+        getEffectiveEnabledTools()
+      );
+    },
+    [
+      appStore.tools.enabledTools,
+      setCurrentChatHistory,
+      chatService,
+      PersistenceUtils,
+      apiRequestService,
       userData,
-      undefined,
-      undefined,
-      getEffectiveEnabledTools()
-    );
-  };
+      getEffectiveEnabledTools,
+    ]
+  );
 
   return (
     <UserContext.Provider value={userData}>
@@ -473,7 +524,7 @@ const MainScreen = () => {
             enabledTools={appStore.tools.enabledTools}
             handleUpdateEnabledTools={handleUpdateEnabledTools}
             handleSelectedModelChanged={hanldeUpdateModelVersion}
-            selectedModel={getCurrentChatHistory().model}
+            selectedModel={selectedModel}
             logout={handleLogout}
           />
         }
@@ -488,7 +539,7 @@ const MainScreen = () => {
           />
         }
       >
-        {getCurrentChatHistory().chatItems.length === 0 ? (
+        {chatItems.length === 0 ? (
           // if 0 chat history
           <Box
             sx={{
@@ -542,7 +593,7 @@ const MainScreen = () => {
                 }
                 onStop={stopChat}
                 quotedText={quotedText}
-                selectedModel={getCurrentChatHistory().model}
+                selectedModel={selectedModel}
                 onError={handleFileUploadError}
               />
             </Box>
@@ -567,7 +618,7 @@ const MainScreen = () => {
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <ChatMessagesContainer
-              chatHistory={getCurrentChatHistory()}
+              chatHistory={chatHistory}
               isLoading={apiRequestService.isLoading}
               chatMessageStreamEnd={chatMessageStreamEnd}
               replayChat={replayChat}
@@ -600,7 +651,7 @@ const MainScreen = () => {
                 }
                 onStop={stopChat}
                 quotedText={quotedText}
-                selectedModel={getCurrentChatHistory().model}
+                selectedModel={selectedModel}
                 onError={handleFileUploadError}
               />
             </Box>
