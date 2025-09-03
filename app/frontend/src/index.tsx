@@ -43,10 +43,10 @@ msalInstance.initialize().then(() => {
   );
 
   root.render(
-    <React.StrictMode>
+    //<React.StrictMode>
       <ThemeProvider theme={theme}>
         <App instance={msalInstance} />
       </ThemeProvider>
-    </React.StrictMode>
+    //</React.StrictMode>
   );
 });
