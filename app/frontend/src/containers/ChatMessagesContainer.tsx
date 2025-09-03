@@ -36,6 +36,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
   const lastMsgRef = useRef<HTMLDivElement>(null);
   const [showSkeleton, setShowSkeleton] = useState(false);
   const [whitespace, setWhitespace] = useState("0px");
+  const [replaying, setReplaying] = useState(false);
 
   // Show skeleton if generating but not yet streaming response
   useEffect(() => {
@@ -43,7 +44,8 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     const messageRef = lastMsgRef.current;
     const completionRef = lastCompletionRef.current;
 
-    if (isLoading && !completionRef && messageRef && chatRef) { // Completion hasn't started rendering yet
+    // Hide or show skeleton & change whitespace based on completion stage
+    if (isLoading && !completionRef && messageRef && chatRef) { // Completion hasn't started streaming yet
 
       setShowSkeleton(true);
 
@@ -56,31 +58,44 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
 
       // Ensure the fraction is not negative
       const whiteSpaceHeight = Math.max(whiteSpaceFraction * chatRef.clientHeight, 0);
-      setWhitespace(`${whiteSpaceHeight}px`);
 
+      if (replaying) {
+        setWhitespace(`${whiteSpaceHeight * 0.92}px`);
+      }
+      else {
+        setWhitespace(`${whiteSpaceHeight}px`);
+      }
+
+      // Scroll to push message to the top
       setTimeout(() => {
         chatRef.scrollTo({
           top: chatRef.scrollHeight,
           behavior: "smooth"
         });
       }, 1000);
-
     }
-    else if (isLoading && completionRef && messageRef && chatRef) { // Completion has started rendering
+    else if (isLoading && completionRef && messageRef && chatRef) { // Completion/Replay has started rendering
 
       setShowSkeleton(false);
       const whiteSpaceHeight = chatRef.clientHeight - messageRef.offsetHeight - completionRef.offsetHeight;
       setWhitespace(`${whiteSpaceHeight > 0 ? whiteSpaceHeight : 0}px`);
 
     }
-    else { // Completion Finished
+    else { // Completion/Replay Finished
 
       setShowSkeleton(false);
       setWhitespace("0px");
+      setReplaying(false);
 
     }
 
   }, [isLoading, chatHistory.chatItems]);
+
+
+  const onReplay = () => {
+    setReplaying(true);
+    replayChat();
+  }
 
 
   return (
@@ -134,7 +149,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                     }
                     context={chatItem.message?.context}
                     toolsInfo={chatItem.message.tools_info}
-                    replayChat={replayChat}
+                    replayChat={onReplay}
                     index={index}
                     total={chatHistory.chatItems.length}
                     handleBookReservation={handleBookReservation}
