@@ -77,8 +77,12 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     else if (isLoading && completionRef && messageRef && chatRef) { // Completion/Replay has started rendering
 
       setShowSkeleton(false);
+
       const whiteSpaceHeight = chatRef.clientHeight - messageRef.offsetHeight - completionRef.offsetHeight;
       setWhitespace(`${whiteSpaceHeight > 0 ? whiteSpaceHeight : 0}px`);
+
+      // Check if page is scrollable to show arrow button as completion streams
+      handleScroll();
 
     }
     else { // Completion/Replay Finished
