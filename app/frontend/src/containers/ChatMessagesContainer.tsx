@@ -47,6 +47,10 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     const messageRef = lastMsgRef.current;
     const completionRef = lastCompletionRef.current;
 
+    if (chatHistory.chatItems.length <= 2) {
+      return;
+    }
+
     // Hide or show skeleton & change whitespace based on completion stage
     if (isLoading && !completionRef && messageRef && chatRef) { // Completion hasn't started streaming yet
 

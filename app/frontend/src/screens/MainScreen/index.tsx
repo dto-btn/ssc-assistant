@@ -106,8 +106,14 @@ const MainScreen = () => {
 
   // Update scroll state when selected chat changes
   useEffect(() => {
+    // If new chat, set scrollable to false
+    if (getCurrentChatHistory().chatItems.length === 0) {
+      setScrollable(false);
+    }
+
     setTimeout(() => {
       handleScroll();
+
     }, 100); // Slight delay to allow DOM to update
   }, [currentChatIndex]);
 
