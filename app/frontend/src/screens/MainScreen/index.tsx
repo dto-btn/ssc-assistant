@@ -65,6 +65,10 @@ const MainScreen = () => {
     );
   }
 
+  console.debug(
+    "*******************IN MainScreen.tsx (render) *******************************"
+  );
+
   // Log once on mount instead of every render
   useEffect(() => {
     // eslint-disable-next-line no-console
