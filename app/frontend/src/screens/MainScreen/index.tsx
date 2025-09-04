@@ -104,6 +104,13 @@ const MainScreen = () => {
     }
   };
 
+  // Update scroll state when selected chat changes
+  useEffect(() => {
+    setTimeout(() => {
+      handleScroll();
+    }, 100); // Slight delay to allow DOM to update
+  }, [currentChatIndex]);
+
   const sendMessage = (question: string, attachments: Attachment[]) => {
     apiRequestService.makeApiRequest(
       question,
@@ -236,6 +243,9 @@ const MainScreen = () => {
   useEffect(() => {
     loadChatHistoriesFromStorage();
     loadEnabledToolsFromStorage();
+    setTimeout(() => {
+      handleScroll();
+    }, 100); // Slight delay to allow DOM to update
   }, []);
 
   const handleRemoveToastMessage = (indexToRemove: number) => {
