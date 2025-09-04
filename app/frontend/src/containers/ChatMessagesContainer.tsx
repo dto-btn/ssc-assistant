@@ -66,7 +66,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         setWhitespace(`${whiteSpaceHeight * 0.92}px`);
       }
       else {
-        setWhitespace(`${whiteSpaceHeight}px`);
+        setWhitespace(`${whiteSpaceHeight * 0.98}px`);
       }
 
       // Scroll to push message to the top
@@ -75,7 +75,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
           top: chatRef.scrollHeight,
           behavior: "smooth"
         });
-      }, 1000);
+      }, 1500);
     }
     else if (isLoading && completionRef && messageRef && chatRef) { // Completion/Replay has started rendering
 
