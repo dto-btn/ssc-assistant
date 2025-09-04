@@ -66,7 +66,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         setWhitespace(`${whiteSpaceHeight * 0.92}px`);
       }
       else {
-        setWhitespace(`${whiteSpaceHeight * 0.98}px`);
+        setWhitespace(`${whiteSpaceHeight * 0.95}px`);
       }
 
       // Scroll to push message to the top
@@ -75,14 +75,22 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
           top: chatRef.scrollHeight,
           behavior: "smooth"
         });
-      }, 1500);
+      }, 1000);
     }
     else if (isLoading && completionRef && messageRef && chatRef) { // Completion/Replay has started rendering
 
       setShowSkeleton(false);
 
-      const whiteSpaceHeight = chatRef.clientHeight - messageRef.offsetHeight - completionRef.offsetHeight;
-      setWhitespace(`${whiteSpaceHeight > 0 ? whiteSpaceHeight : 0}px`);
+      // Calculate the message and completion height as a fraction of the container height
+      const messageFraction = messageRef.offsetHeight / chatRef.clientHeight;
+      const completionFraction = completionRef.offsetHeight / chatRef.clientHeight;
+
+      // Subtract the fractions from 1 to get the remaining space as a fraction
+      const whiteSpaceFraction = 1 - messageFraction - completionFraction;
+
+      // Ensure the fraction is not negative
+      const whiteSpaceHeight = Math.max(whiteSpaceFraction * chatRef.clientHeight, 0);
+      setWhitespace(`${whiteSpaceHeight}px`);
 
       // Check if page is scrollable to show arrow button as completion streams
       handleScroll();
@@ -91,7 +99,6 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     else { // Completion/Replay Finished
 
       setShowSkeleton(false);
-      setWhitespace("0px");
       setReplaying(false);
 
     }
@@ -187,23 +194,32 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
             </Fragment>
           ))
         )}
-        {showSkeleton && (
-          <Stack direction="row" spacing={1} sx={{ my: 2, width: "100%", height: `${SKELETON_HEIGHT}px` }}>
-            <Skeleton variant="circular" height={35} width={35} />
-            <Stack direction="column" alignItems="left" sx={{ width: "100%" }}>
-              <Skeleton variant="text" width="85%" height={30} />
-              <Skeleton variant="text" width="82%" height={30} />
-              <Skeleton variant="text" width="88%" height={30} />
-              <Skeleton variant="text" width="84%" height={30} />
-              <Skeleton variant="text" width="87%" height={30} />
-            </Stack>
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{
+            my: 2,
+            width: "100%",
+            height: showSkeleton ? `${SKELETON_HEIGHT}px` : "0px",
+            opacity: showSkeleton ? 1 : 0,
+            overflow: "hidden",
+            transition: "height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4,0,0.2,1)",
+          }}
+        >
+          <Skeleton variant="circular" height={35} width={35} />
+          <Stack direction="column" alignItems="left" sx={{ width: "100%" }}>
+            <Skeleton variant="text" width="85%" height={30} />
+            <Skeleton variant="text" width="82%" height={30} />
+            <Skeleton variant="text" width="88%" height={30} />
+            <Skeleton variant="text" width="84%" height={30} />
+            <Skeleton variant="text" width="87%" height={30} />
           </Stack>
-        )}
+        </Stack>
         {/* Dynamic whitespace */}
         <div
           style={{
             height: whitespace,
-            transition: "height 2s cubic-bezier(0.4, 0, 0.2, 1)",
+            transition: "height 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
             width: "100%",
           }}
         />
