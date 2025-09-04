@@ -78,7 +78,7 @@ const MainScreen = () => {
 
   const chatRef = useRef<HTMLDivElement>(null);
   const lastCompletionRef = useRef<HTMLDivElement>(null);
-  const [scrollable, setScrollable] = useState(true);
+  const [scrollable, setScrollable] = useState(false);
 
   // Handle scroll events in chat container
   const handleScroll = () => {
