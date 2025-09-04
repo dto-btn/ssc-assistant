@@ -1,10 +1,11 @@
 # Azure Cognitive Deployment Terraform Module
 
-This Terraform module creates an Azure Cognitive Services deployment, typically used for deploying AI models like GPT-4, GPT-3.5-Turbo, or other OpenAI models to an Azure Cognitive Services account.
+This Terraform module creates multiple Azure Cognitive Services deployments using a `for_each` loop, typically used for deploying AI models like GPT-4, GPT-3.5-Turbo, or other OpenAI models to an Azure Cognitive Services account.
 
 ## Features
 
-- Creates Azure Cognitive Services deployments with configurable SKU and model settings
+- Creates multiple Azure Cognitive Services deployments with configurable SKU and model settings
+- Uses `for_each` to manage multiple deployments efficiently
 - Follows Canada.ca naming conventions
 - Supports optional Responsible AI (RAI) policies
 - Configurable version upgrade options
@@ -13,14 +14,14 @@ This Terraform module creates an Azure Cognitive Services deployment, typically 
 ## Usage
 
 ```hcl
-module "cognitive_deployment" {
+module "cognitive_deployments" {
   source = "./modules/terraform-azurerm-cognitive-deployment"
   
   # Naming variables
   env               = "G3Dc"
   group             = "ABC"
   project           = "Portal"
-  userDefinedString = "GPT4o"
+  userDefinedString = "AI"
   
   # Resource group
   resource_group = {
@@ -28,25 +29,37 @@ module "cognitive_deployment" {
     location = "canadacentral"
   }
   
-  # Deployment configuration
-  cognitive_deployment = {
-    cognitive_account_id = "/subscriptions/.../providers/Microsoft.CognitiveServices/accounts/my-openai-account"
-    
-    model = {
-      format  = "OpenAI"
-      name    = "gpt-4o"
-      version = "2024-05-13"
+  # Multiple deployment configurations
+  cognitive_deployments = {
+    "gpt4o" = {
+      cognitive_account_id = "/subscriptions/.../providers/Microsoft.CognitiveServices/accounts/my-openai-account"
+      
+      model = {
+        format  = "OpenAI"
+        name    = "gpt-4o"
+        version = "2024-05-13"
+      }
+      
+      sku = {
+        name     = "Standard"
+        capacity = 10
+      }
     }
     
-    sku = {
-      name     = "Standard"
-      capacity = 10
+    "gpt35turbo" = {
+      cognitive_account_id = "/subscriptions/.../providers/Microsoft.CognitiveServices/accounts/my-openai-account"
+      
+      model = {
+        format  = "OpenAI"
+        name    = "gpt-35-turbo"
+        version = "0613"
+      }
+      
+      sku = {
+        name     = "Standard"
+        capacity = 30
+      }
     }
-  }
-  
-  tags = {
-    Environment = "dev"
-    Project     = "Portal"
   }
 }
 ```
@@ -78,25 +91,79 @@ See the `ESLZ/cognitiveDeployment.tfvars` file for a complete example configurat
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| cognitive_deployment | Cognitive deployment configuration object | `object({...})` | n/a | yes |
+| cognitive_deployments | Map of cognitive deployment configurations. The key will be used as part of the deployment name | `map(object({...}))` | n/a | yes |
 | env | Deployment environment code (e.g., dev, test, prod) | `string` | n/a | yes |
 | group | Business or organizational group identifier | `string` | n/a | yes |
 | project | Short project identifier | `string` | n/a | yes |
 | resource_group | Resource group object containing name and location | `any` | n/a | yes |
-| tags | Tags to be applied to the cognitive deployment | `map(string)` | `{}` | no |
+| tags | Tags to be applied to resources that support them (Note: azurerm_cognitive_deployment does not support tags) | `map(string)` | `{}` | no |
 | userDefinedString | Free-form suffix/purpose string included in resource names | `string` | n/a | yes |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| cognitive_account_id | The Cognitive Account ID associated with this deployment |
-| id | The ID of the Cognitive Deployment |
-| model | The model configuration for this deployment |
-| name | The name of the Cognitive Deployment |
-| sku | The SKU configuration for this deployment |
+| deployments | Map of all cognitive deployments with their details |
+| deployment_ids | Map of deployment keys to their IDs |
+| deployment_names | Map of deployment keys to their names |
 
-## Common Model Configurations
+## Regional Deployment Options
+
+Azure Cognitive Deployments do **not** have a direct `location` parameter. Instead, region behavior is controlled through:
+
+### 1. **Deployment Types (via SKU name)**
+
+| SKU Name | Region Behavior | Use Case |
+|----------|----------------|----------|
+| `Standard` | Same region as Cognitive Account | Data residency, predictable latency |
+| `GlobalStandard` | Global routing across Azure regions | High availability, global distribution |
+| `ProvisionedManaged` | Same region as Cognitive Account | Guaranteed performance, reserved capacity |
+| `GlobalProvisionedManaged` | Global routing with reserved capacity | Enterprise-grade global deployments |
+
+### 2. **Multi-Region Strategy**
+
+To deploy models in different regions, use **multiple Cognitive Accounts**:
+
+```hcl
+# Account in Canada Central
+resource "azurerm_cognitive_account" "canada" {
+  location = "canadacentral"
+  # ... other config
+}
+
+# Account in East US 2
+resource "azurerm_cognitive_account" "eastus" {
+  location = "eastus2" 
+  # ... other config
+}
+
+# Deploy to different regions
+cognitive_deployments = {
+  "gpt4o-canada" = {
+    cognitive_account_id = azurerm_cognitive_account.canada.id
+    sku = { name = "Standard" }  # Regional in Canada Central
+    # ... model config
+  }
+  
+  "gpt4o-us" = {
+    cognitive_account_id = azurerm_cognitive_account.eastus.id  
+    sku = { name = "Standard" }  # Regional in East US 2
+    # ... model config
+  }
+  
+  "gpt4o-global" = {
+    cognitive_account_id = azurerm_cognitive_account.canada.id
+    sku = { name = "GlobalStandard" }  # Global routing
+    # ... model config  
+  }
+}
+```
+
+### 3. **Regional Availability Considerations**
+
+- **Model availability varies by region** - check [Azure OpenAI model availability](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/models) 
+- **Global Standard** models are available in more regions than Standard
+- **Data residency** requirements may mandate Standard (regional) deployments
 
 ### GPT-4o
 ```hcl
@@ -128,14 +195,31 @@ model = {
 ## Naming Convention
 
 The module follows the Canada.ca naming convention:
-`{env}-{group}-{project}-{userDefinedString}-cdep`
+`{env}-{group}-{project}-{userDefinedString}-{deployment_key}-cdep`
 
 Where:
 - `env`: 4-character environment code (Upper-lower-Upper-lower pattern)
 - `group`: Business/organizational group identifier (alphanumeric)
 - `project`: Short project identifier (alphanumeric)
 - `userDefinedString`: Purpose/suffix string (alphanumeric)
+- `deployment_key`: The key from the `cognitive_deployments` map
 - `cdep`: Resource type suffix for Cognitive Deployment
+
+Example: `G3Dc-ABC-Portal-AI-gpt4o-cdep`
+
+## Accessing Outputs
+
+```hcl
+# Get a specific deployment ID
+output "gpt4o_deployment_id" {
+  value = module.cognitive_deployments.deployment_ids["gpt4o"]
+}
+
+# Get all deployment details
+output "all_deployments" {
+  value = module.cognitive_deployments.deployments
+}
+```
 
 ## Notes
 

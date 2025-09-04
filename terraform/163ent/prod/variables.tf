@@ -1,6 +1,7 @@
 variable "default_location" {
     type    = string
-    default = "canadacentral"
+    #default = "canadacentral"
+    default = "canadaeast"
 }
 
 variable "project_name" {
