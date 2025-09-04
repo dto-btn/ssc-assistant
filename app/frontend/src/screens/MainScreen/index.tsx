@@ -114,6 +114,14 @@ const MainScreen = () => {
     setTimeout(() => {
       handleScroll();
 
+      // Always scroll to bottom when changing chats
+      if (chatRef.current) {
+        chatRef.current.scrollTo({
+          top: chatRef.current.scrollHeight,
+          behavior: "auto", // Use "smooth" if you want animation
+        });
+      }
+
     }, 100); // Slight delay to allow DOM to update
   }, [currentChatIndex]);
 
