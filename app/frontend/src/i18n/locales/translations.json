@@ -938,5 +938,14 @@
     "user.file.upload": {
         "en": "User file upload",
         "fr": "Téléversement de fichier utilisateur"
+    },
+    "stop.generating": {
+        "en": "Stop generating",
+        "fr": "Arrêter la génération"
+    },
+    "scroll.down": {
+        "en": "Scroll down",
+        "fr": "Faire défiler vers le bas"
     }
+   
 }
