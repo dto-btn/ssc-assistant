@@ -94,7 +94,7 @@ export const useChatService = () => {
                 const chatItems = lastChat?.chatItems || [];
                 const newChatIndex = chatHistories.length;
                 if (chatItems.length != 0) {
-                    handleNewChat();
+                    createNewChat();
                     setCurrentChatIndex(newChatIndex+1);
                 }
             }
