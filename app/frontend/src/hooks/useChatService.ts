@@ -172,7 +172,7 @@ export const useChatService = () => {
     const handleNewChat = (tool?: string) => {
         const chatHistories = PersistenceUtils.getChatHistories();
         const lastChat = chatHistories?.pop() || [];
-        const lastChatLength = lastChat?.chatItems?.length || 0;
+        const lastChatLength = (lastChat as { chatItems: any[] }).chatItems.length;
         if(lastChatLength != 0){
             createNewChat(tool);
         }else{
