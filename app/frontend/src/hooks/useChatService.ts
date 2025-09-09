@@ -9,14 +9,15 @@ import { buildDefaultChatHistory } from "../stores/modelBuilders";
 import { useBasicApiRequestService } from "../screens/MainScreen/useApiRequestService";
 import { t } from "i18next";
 
-
+let hasFetchedTitle = false
+let hasPageLoaded = false;
 
 export const useChatService = () => {
     const { t } = useTranslation()
     const chatStore = useChatStore();
     const snackbars = useAppStore((state) => state.snackbars);
     const appStore = useAppStore();
-    const messageThreshold = 4;
+    const messageThreshold = 1;
     const makeBasicApiRequest = useBasicApiRequestService();
     const { currentChatIndex, chatHistoriesDescriptions, setChatIndexToLoadOrDelete, setChatHistoriesDescriptions, setDefaultChatHistory, setCurrentChatHistory, setCurrentChatIndex: chatStoreSetCurrentChatIndex } = useChatStore();
     // This is a custom hook that provides chat-related services. We use useMemo to
@@ -146,36 +147,52 @@ export const useChatService = () => {
                 SNACKBAR_DEBOUNCE_KEYS.CHAT_HISTORY_FULL_ERROR
             );
         } else {
-            const newChat = buildDefaultChatHistory()
-            chatHistories.push(newChat);
-            const newDescription = "...";
+            try{
+                const newChat = buildDefaultChatHistory()
+                chatHistories.push(newChat);
+                const newDescription = "...";
 
-            // Process tools (static tools are generally mutually exclusive tools and work on their own)
-            // If tool(s) are enforced specifically here for this new chat, we set them in the convo staticTools
-            // Process tools for this new chat
-            let updatedTools: Record<string, boolean> = {
-                ...appStore.tools.enabledTools,
-            };
-            if (tool) {
-                newChat.staticTools = [tool];
-                Object.keys(appStore.tools.enabledTools).forEach((t) => {
-                        updatedTools[t] = t == tool;
+                // Process tools (static tools are generally mutually exclusive tools and work on their own)
+                // If tool(s) are enforced specifically here for this new chat, we set them in the convo staticTools
+                // Process tools for this new chat
+                let updatedTools: Record<string, boolean> = {
+                    ...appStore.tools.enabledTools,
+                };
+                if (tool) {
+                    newChat.staticTools = [tool];
+                    Object.keys(appStore.tools.enabledTools).forEach((t) => {
+                            updatedTools[t] = t == tool;
+                        });
+                } else {// else we enable all other tools.
+                    Object.keys(appStore.tools.enabledTools).forEach((t) => {
+                        updatedTools[t] = !MUTUALLY_EXCLUSIVE_TOOLS.includes(t);
                     });
-            } else {// else we enable all other tools.
-                Object.keys(appStore.tools.enabledTools).forEach((t) => {
-                    updatedTools[t] = !MUTUALLY_EXCLUSIVE_TOOLS.includes(t);
-                });
+                }
+                newChat.description = newDescription;
+                PersistenceUtils.setChatHistories(chatHistories);
+                setCurrentChatIndex(chatHistories.length - 1);
+                setCurrentChatHistory(newChat);
+                setChatHistoriesDescriptions([
+                    ...chatHistoriesDescriptions,
+                    newDescription
+                ]);
+                appStore.tools.setEnabledTools(updatedTools);
+                PersistenceUtils.setEnabledTools(updatedTools);
+            }catch(error){
+                if (
+                    error instanceof DOMException &&
+                    error.name === "QuotaExceededError"
+                ) {
+                    console.error("LocalStorage is full:", error);
+                    snackbars.show(
+                        t("storage.full"),
+                        SNACKBAR_DEBOUNCE_KEYS.STORAGE_FULL_ERROR
+                    );
+                }
+            }finally{
+                // Reset the fetched title flag for the new chat
+                hasFetchedTitle = false;
             }
-            newChat.description = newDescription;
-            PersistenceUtils.setChatHistories(chatHistories);
-            setCurrentChatIndex(chatHistories.length - 1);
-            setCurrentChatHistory(newChat);
-            setChatHistoriesDescriptions([
-                ...chatHistoriesDescriptions,
-                newDescription
-            ]);
-            appStore.tools.setEnabledTools(updatedTools);
-            PersistenceUtils.setEnabledTools(updatedTools);
         }
     };
 
@@ -265,10 +282,18 @@ export const useChatService = () => {
                         // Check if the message threshold is reached and the topic is not set
                         if (
                             updatedChatHistory.chatItems.length >= messageThreshold &&
-                            updatedChatHistory.isTopicSet === false
+                            updatedChatHistory.isTopicSet === false &&
+                            !hasFetchedTitle
                         ) {
+                            try{
                             //Fetch and set the chat title using the reusable function
+                            console.debug("Fetching chat title...");
                             fetchChatTitleAndRename(updatedChatHistory, currentChatIndex, renameChat);
+                            }catch(error){
+                                console.error("Error fetching chat title:", error);
+                            }finally{
+                                hasFetchedTitle = true; // Ensure we only fetch the title once per conversation
+                            }
                         }
                     });
                     return updatedChatHistory;
