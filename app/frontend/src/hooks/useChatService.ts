@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { PersistenceUtils } from "../util/persistence";
 import { useChatStore } from "../stores/ChatStore";
 import { useAppStore } from "../stores/AppStore";
@@ -86,6 +86,36 @@ export const useChatService = () => {
         }
     };
 
+    useEffect(() => {
+        try{
+            if(!hasPageLoaded){
+                const chatHistories = PersistenceUtils.getChatHistories();
+                const lastChat = chatHistories.pop();
+                const chatItems = lastChat?.chatItems || [];
+                const newChatIndex = chatHistories.length;
+                console.debug("new chat on load!")
+                if (chatItems.length != 0) {
+                    handleNewChat();
+                    setCurrentChatIndex(newChatIndex+1);
+                }
+            }
+        }catch(error){
+            if (
+                error instanceof DOMException &&
+                error.name === "QuotaExceededError"
+            ) {
+                console.error("LocalStorage is full:", error);
+                snackbars.show(
+                    t("storage.full"),
+                    SNACKBAR_DEBOUNCE_KEYS.STORAGE_FULL_ERROR
+                );
+            }
+            console.error("Failed to load from localStorage:", error);
+        }finally{
+            hasPageLoaded = true;
+        }
+    }, [])
+
     const saveChatHistories = (updatedChatHistory: ChatHistory) => {
         try {
             const chatHistories = PersistenceUtils.getChatHistories();
@@ -138,9 +168,25 @@ export const useChatService = () => {
         }
     };
 
+
     const handleNewChat = (tool?: string) => {
         const chatHistories = PersistenceUtils.getChatHistories();
+        const lastChat = chatHistories?.pop() || [];
+        const lastChatLength = lastChat?.chatItems?.length || 0;
+        if(lastChatLength != 0){
+            createNewChat(tool);
+        }else{
+            //set chat index to last chat
+            setCurrentChatIndex(chatHistories.length);
+            const currentChat = chatHistories[chatHistories.length];
+            setCurrentChatHistory(currentChat);
+        }                                                                                                                                                                                                                                                                                                                 
+    }
+
+    const createNewChat = (tool?: string) => {
+        const chatHistories = PersistenceUtils.getChatHistories();
         const newChatIndex = chatHistoriesDescriptions.length;
+
         if (chatHistories.length === MAX_CHAT_HISTORIES_LENGTH || newChatIndex >= MAX_CHAT_HISTORIES_LENGTH) {
             snackbars.show(
                 t("chat.history.full"),
