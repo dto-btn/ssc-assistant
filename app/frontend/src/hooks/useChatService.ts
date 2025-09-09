@@ -93,7 +93,6 @@ export const useChatService = () => {
                 const lastChat = chatHistories.pop();
                 const chatItems = lastChat?.chatItems || [];
                 const newChatIndex = chatHistories.length;
-                console.debug("new chat on load!")
                 if (chatItems.length != 0) {
                     handleNewChat();
                     setCurrentChatIndex(newChatIndex+1);
