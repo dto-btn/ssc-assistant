@@ -946,6 +946,9 @@
     "scroll.down": {
         "en": "Scroll down",
         "fr": "Faire défiler vers le bas"
+    },
+    "new.conversation.pmcoe": {
+        "en": "PMCoE Agent",
+        "fr": "Agent CEGP"
     }
-   
 }

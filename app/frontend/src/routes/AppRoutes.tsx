@@ -1,9 +1,8 @@
 import { FC } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import { RootRoute } from ".";
-import { AdminRoute } from "./admin";
 import { SuggestCallbackRoute } from "./SuggestCallbackRoute";
-import NewLayoutRoute from "./NewLayoutRoute";
+import PlaygroundRoute from "./PlaygroundRoute";
 
 const router = createBrowserRouter([
     {
@@ -11,16 +10,12 @@ const router = createBrowserRouter([
         element: <RootRoute />
     },
     {
-        path: "/admin",
-        element: <AdminRoute />
-    },
-    {
         path: "/suggest-callback",
         element: <SuggestCallbackRoute />
     },
     {
-        path: "/new-layout",
-        element: <NewLayoutRoute />
+        path: "/playground",
+        element: <PlaygroundRoute />
     }
 ]);
 
