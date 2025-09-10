@@ -17,7 +17,7 @@ export const useChatService = () => {
     const chatStore = useChatStore();
     const snackbars = useAppStore((state) => state.snackbars);
     const appStore = useAppStore();
-    const messageThreshold = parseInt(import.meta.env.TITLE_RENAME_THRESHOLD || 2);
+    const messageThreshold = parseInt(import.meta.env.TITLE_RENAME_THRESHOLD || 1);
     const makeBasicApiRequest = useBasicApiRequestService();
     const { currentChatIndex, chatHistoriesDescriptions, setChatIndexToLoadOrDelete, setChatHistoriesDescriptions, setDefaultChatHistory, setCurrentChatHistory, setCurrentChatIndex: chatStoreSetCurrentChatIndex } = useChatStore();
     // This is a custom hook that provides chat-related services. We use useMemo to
