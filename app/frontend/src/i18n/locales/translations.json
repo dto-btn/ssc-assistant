@@ -917,7 +917,7 @@
     },
     "summerize.conversation": {
         "en": "Given the following conversation, generate a concise, specific, and descriptive title (max 4 words) that best summarizes the main topic. Avoid generic words like 'conversation', 'chat', or 'discussion'. Only output the title, no quotes or punctuation. This title should always be in english and not another language.",
-        "fr": "À partir de la conversation suivante, générez un titre concis, spécifique et descriptif (maximum 4 mots) qui résume le mieux le sujet principal. Évitez les mots génériques comme 'conversation', 'discussion' ou 'échange'. Affichez uniquement le titre, sans guillemets ni ponctuation. Ce titre devrait toujours être en anglais et non dans une autre langue."
+        "fr": "À partir de la conversation suivante, générez un titre concis, spécifique et descriptif (maximum 4 mots) qui résume le mieux le sujet principal. Évitez les mots génériques comme 'conversation', 'discussion' ou 'échange'. Affichez uniquement le titre, sans guillemets ni ponctuation. Ce titre doit toujours être en français et non dans une autre langue."
     },
     "file.unsupported.type.generic": {
         "en": "Unsupported file type",
