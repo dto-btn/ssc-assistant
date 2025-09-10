@@ -40,6 +40,7 @@ const NewLayout: React.FC<NewLayoutProps> = ({ children, appBar, appDrawerConten
                             onClick={handleToggle}
                         >
                             <IconButton
+                                id="sidebar-toggle-button"
                                 color="inherit"
                                 aria-label={tt("drawer.icon.title")}
                                 edge="start"
@@ -51,8 +52,8 @@ const NewLayout: React.FC<NewLayoutProps> = ({ children, appBar, appDrawerConten
                                 Click to {isOpen ? 'close' : 'open'} drawer
                             </Typography>
                         </Box>
-                </Toolbar>
-                </AppBar> 
+                    </Toolbar>
+                </AppBar>
             )
             }
             <DrawerHeader />

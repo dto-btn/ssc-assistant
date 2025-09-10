@@ -95,6 +95,7 @@ export const Disclaimer = () => {
         </DialogContent>
         <DialogActions>
           <Button
+            id="accept-disclaimer-button"
             color='primary'
             variant='contained'
             onClick={() => handleAccept(currentDisclaimerConfig.key)}
@@ -102,6 +103,7 @@ export const Disclaimer = () => {
             {t("accept")}
           </Button>
           <Button
+            id="change-language-button"
             onClick={() => {
               appStore.languageService.changeLanguage();
             }}

@@ -143,7 +143,7 @@ export const DrawerMenu = ({
     >
       <List>
         <ListItem key="newChat" disablePadding>
-          <ListItemButton onClick={() => onNewChat()}>
+          <ListItemButton id="new-chat-button" onClick={() => onNewChat()}>
             <ListItemIcon sx={{ minWidth: "0px", marginRight: "10px" }}>
               <AddCommentIcon fontSize="small" color="primary" />
             </ListItemIcon>
@@ -155,7 +155,7 @@ export const DrawerMenu = ({
           </ListItemButton>
         </ListItem>
         <ListItem key="newChatp-bits" disablePadding>
-          <ListItemButton onClick={() => onNewChat("bits")}>
+          <ListItemButton id="new-bits-chat-button" onClick={() => onNewChat("bits")}>
             <ListItemIcon sx={{ minWidth: "0px", marginRight: "10px" }}>
               <ReceiptLongIcon fontSize="small" color="primary" />
             </ListItemIcon>
@@ -202,6 +202,7 @@ export const DrawerMenu = ({
                 >
                   {(editingIndex === null || editingIndex !== index) && (
                     <ListItemButton
+                      id={`chat-history-button-${index}`}
                       disableRipple
                       sx={{
                         padding: "5px 10px",
@@ -224,9 +225,9 @@ export const DrawerMenu = ({
                     </ListItemButton>
                   )}
                   <IconButton
+                    id={`chat-history-options-button-${index}`}
                     className="more-button"
                     onClick={(event) => handleMoreMenuClick(event, index)}
-                    id="chat-history-options-button"
                     aria-label="more"
                     aria-controls={
                       moreMenuOpen ? "chat-history-menu" : undefined

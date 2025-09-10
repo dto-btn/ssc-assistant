@@ -506,6 +506,7 @@ const MainScreen = () => {
             childrenLeftOfLogo={
               <>
                 <IconButton
+                  id="open-drawer-button"
                   sx={{
                     color: "white",
                   }}

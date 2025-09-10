@@ -429,8 +429,8 @@ export const AssistantBubble = ({
                   {isLoading
                     ? `${text.replace(/\[doc(\d+)\]/g, "")}_`
                     : processedContent.processedText !== ""
-                    ? processedContent.processedText
-                    : text}
+                      ? processedContent.processedText
+                      : text}
                 </MarkdownHooks>
               </TextComponentsBox>
             </MainContentWrapper>
@@ -502,6 +502,7 @@ export const AssistantBubble = ({
                   >
                     <Typography variant="subtitle1">Citations</Typography>
                     <IconButton
+                      id="close-citation-drawer-button"
                       aria-label={t("aria.close") as string}
                       onClick={() => setCitationDrawerOpen(false)}
                     >
@@ -622,6 +623,7 @@ export const AssistantBubble = ({
                   }}
                 >
                   <IconButton
+                    id="expand-floorplan-button"
                     sx={{
                       position: "absolute",
                       top: "0px",
@@ -675,6 +677,7 @@ export const AssistantBubble = ({
             {bookingDetails && (
               <ConfirmBookingBox>
                 <Button
+                  id="confirm-booking-button"
                   disabled={confirmButtonDisabled}
                   sx={{
                     fontSize: "20px",
@@ -829,11 +832,9 @@ export const AssistantBubble = ({
                           brQuery.query_filters.map((filter, index) => (
                             <Chip
                               key={index}
-                              label={`${
-                                i18n.language == "en" ? filter.en : filter.fr
-                              } (${filter.name}) ${filter.operator} ${
-                                filter.value
-                              }`}
+                              label={`${i18n.language == "en" ? filter.en : filter.fr
+                                } (${filter.name}) ${filter.operator} ${filter.value
+                                }`}
                               size="small"
                               variant="outlined"
                               color="primary"

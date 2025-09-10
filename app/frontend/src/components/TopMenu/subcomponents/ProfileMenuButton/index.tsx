@@ -81,6 +81,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
   return (
     <>
       <Box
+        id="profile-menu-button"
         sx={{
           cursor: "pointer",
         }}
@@ -98,7 +99,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
         aria-expanded={isOpen ? "true" : undefined}
       >
         <Box
-          id="profile-menu-button"
+          id="profile-menu-inner-button"
           aria-controls={isOpen ? "profile-menu-menu" : undefined}
           aria-haspopup="true"
           aria-expanded={isOpen ? "true" : undefined}
@@ -130,7 +131,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
         sx={{
           top: 5,
         }}
-        // autoFocus
+      // autoFocus
       >
         <MenuDivider title={tt("langlink.divider.description")} />
         <MenuItem

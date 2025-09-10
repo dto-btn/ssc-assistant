@@ -58,6 +58,7 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({
           }}
         >
           <TopMenuItem item={{
+            id: "topmenu-join-teams",
             icon: <img src={TopmenuMicrosofTeamsIcon} alt="Teams" style={{ width: "1.1rem" }} />,
             label: t("button.joinchat"),
             onClick: () => {
