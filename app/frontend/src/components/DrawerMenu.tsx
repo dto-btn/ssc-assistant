@@ -17,6 +17,7 @@ import {
   Typography,
 } from "@mui/material";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import SourceOutlinedIcon from '@mui/icons-material/SourceOutlined';
 import { useEffect, useRef, useState } from "react";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
@@ -154,7 +155,7 @@ export const DrawerMenu = ({
             />
           </ListItemButton>
         </ListItem>
-        <ListItem key="newChatp-bits" disablePadding>
+        <ListItem key="newchat-bits" disablePadding>
           <ListItemButton onClick={() => onNewChat("bits")}>
             <ListItemIcon sx={{ minWidth: "0px", marginRight: "10px" }}>
               <ReceiptLongIcon fontSize="small" color="primary" />
@@ -163,6 +164,18 @@ export const DrawerMenu = ({
               primary={t("new.conversation.br")}
               aria-description={t("new.conversation.br.aria.description")}
               aria-label={t("new.conversation.br")}
+            />
+          </ListItemButton>
+        </ListItem>
+        <ListItem key="newchat-pmcoe" disablePadding>
+          <ListItemButton onClick={() => onNewChat("pmcoe")}>
+            <ListItemIcon sx={{ minWidth: "0px", marginRight: "10px" }}>
+              <SourceOutlinedIcon fontSize="small" color="primary" />
+            </ListItemIcon>
+            <ListItemText
+              primary={t("new.conversation.pmcoe")}
+              aria-description={t("new.conversation.br.aria.description")}
+              aria-label={t("new.conversation.pmcoe")}
             />
           </ListItemButton>
         </ListItem>
