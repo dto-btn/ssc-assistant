@@ -332,7 +332,6 @@ export const useChatService = () => {
                         ) {
                             try{
                             //Fetch and set the chat title using the reusable function
-                            console.debug("Fetching chat title...");
                             fetchChatTitleAndRename(updatedChatHistory, currentChatIndex, renameChat);
                             }catch(error){
                                 console.error("Error fetching chat title:", error);
