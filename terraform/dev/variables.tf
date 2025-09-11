@@ -112,3 +112,13 @@ variable "password_postgress" {
     sensitive = true
     description = "password for the username of postgress server"
 }
+
+variable "title_rename_threshold" {
+    type = number
+    description = "The threshold value for renaming titles."
+}
+
+variable "title_rename_model" {
+    type = string
+    description = "the model used for generating the title"
+}

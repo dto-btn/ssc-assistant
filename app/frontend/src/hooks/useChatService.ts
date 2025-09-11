@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { PersistenceUtils } from "../util/persistence";
 import { useChatStore } from "../stores/ChatStore";
 import { useAppStore } from "../stores/AppStore";
@@ -9,14 +9,15 @@ import { buildDefaultChatHistory } from "../stores/modelBuilders";
 import { useBasicApiRequestService } from "../screens/MainScreen/useApiRequestService";
 import { t } from "i18next";
 
-
+let hasFetchedTitle = false
+let hasPageLoaded = false;
 
 export const useChatService = () => {
     const { t } = useTranslation()
     const chatStore = useChatStore();
     const snackbars = useAppStore((state) => state.snackbars);
     const appStore = useAppStore();
-    const messageThreshold = 4;
+    const messageThreshold = parseInt(import.meta.env.TITLE_RENAME_THRESHOLD || 1);
     const makeBasicApiRequest = useBasicApiRequestService();
     const { currentChatIndex, chatHistoriesDescriptions, setChatIndexToLoadOrDelete, setChatHistoriesDescriptions, setDefaultChatHistory, setCurrentChatHistory, setCurrentChatIndex: chatStoreSetCurrentChatIndex } = useChatStore();
     // This is a custom hook that provides chat-related services. We use useMemo to
@@ -85,6 +86,35 @@ export const useChatService = () => {
         }
     };
 
+    useEffect(() => {
+        try{
+            if(!hasPageLoaded){
+                const chatHistories = PersistenceUtils.getChatHistories();
+                const lastChat = chatHistories.pop();
+                const chatItems = lastChat?.chatItems || [];
+                const newChatIndex = chatHistories.length;
+                if (chatItems.length != 0) {
+                    createNewChat();
+                    setCurrentChatIndex(newChatIndex+1);
+                }
+            }
+        }catch(error){
+            if (
+                error instanceof DOMException &&
+                error.name === "QuotaExceededError"
+            ) {
+                console.error("LocalStorage is full:", error);
+                snackbars.show(
+                    t("storage.full"),
+                    SNACKBAR_DEBOUNCE_KEYS.STORAGE_FULL_ERROR
+                );
+            }
+            console.error("Failed to load from localStorage:", error);
+        }finally{
+            hasPageLoaded = true;
+        }
+    }, [])
+
     const saveChatHistories = (updatedChatHistory: ChatHistory) => {
         try {
             const chatHistories = PersistenceUtils.getChatHistories();
@@ -137,45 +167,77 @@ export const useChatService = () => {
         }
     };
 
+
     const handleNewChat = (tool?: string) => {
         const chatHistories = PersistenceUtils.getChatHistories();
+        const lastChat = chatHistories?.pop() || [];
+        const lastChatLength = (lastChat as { chatItems: any[] }).chatItems.length;
+        if(lastChatLength != 0){
+            createNewChat(tool);
+        }else{
+            //set chat index to last chat
+            setCurrentChatIndex(chatHistories.length);
+            const currentChat = chatHistories[chatHistories.length];
+            setCurrentChatHistory(currentChat);
+        }                                                                                                                                                                                                                                                                                                                 
+    }
+
+    const createNewChat = (tool?: string) => {
+        const chatHistories = PersistenceUtils.getChatHistories();
         const newChatIndex = chatHistoriesDescriptions.length;
+
         if (chatHistories.length === MAX_CHAT_HISTORIES_LENGTH || newChatIndex >= MAX_CHAT_HISTORIES_LENGTH) {
             snackbars.show(
                 t("chat.history.full"),
                 SNACKBAR_DEBOUNCE_KEYS.CHAT_HISTORY_FULL_ERROR
             );
         } else {
-            const newChat = buildDefaultChatHistory()
-            chatHistories.push(newChat);
-            const newDescription = "...";
+            try{
+                const newChat = buildDefaultChatHistory()
+                chatHistories.push(newChat);
+                const newDescription = "...";
 
-            // Process tools (static tools are generally mutually exclusive tools and work on their own)
-            // If tool(s) are enforced specifically here for this new chat, we set them in the convo staticTools
-            // Process tools for this new chat
-            let updatedTools: Record<string, boolean> = {
-                ...appStore.tools.enabledTools,
-            };
-            if (tool) {
-                newChat.staticTools = [tool];
-                Object.keys(appStore.tools.enabledTools).forEach((t) => {
-                        updatedTools[t] = t == tool;
+                // Process tools (static tools are generally mutually exclusive tools and work on their own)
+                // If tool(s) are enforced specifically here for this new chat, we set them in the convo staticTools
+                // Process tools for this new chat
+                let updatedTools: Record<string, boolean> = {
+                    ...appStore.tools.enabledTools,
+                };
+                if (tool) {
+                    newChat.staticTools = [tool];
+                    Object.keys(appStore.tools.enabledTools).forEach((t) => {
+                            updatedTools[t] = t == tool;
+                        });
+                } else {// else we enable all other tools.
+                    Object.keys(appStore.tools.enabledTools).forEach((t) => {
+                        updatedTools[t] = !MUTUALLY_EXCLUSIVE_TOOLS.includes(t);
                     });
-            } else {// else we enable all other tools.
-                Object.keys(appStore.tools.enabledTools).forEach((t) => {
-                    updatedTools[t] = !MUTUALLY_EXCLUSIVE_TOOLS.includes(t);
-                });
+                }
+                newChat.description = newDescription;
+                PersistenceUtils.setChatHistories(chatHistories);
+                setCurrentChatIndex(chatHistories.length - 1);
+                setCurrentChatHistory(newChat);
+                setChatHistoriesDescriptions([
+                    ...chatHistoriesDescriptions,
+                    newDescription
+                ]);
+                appStore.tools.setEnabledTools(updatedTools);
+                PersistenceUtils.setEnabledTools(updatedTools);
+            }catch(error){
+                if (
+                    error instanceof DOMException &&
+                    error.name === "QuotaExceededError"
+                ) {
+                    console.error("LocalStorage is full:", error);
+                    snackbars.show(
+                        t("storage.full"),
+                        SNACKBAR_DEBOUNCE_KEYS.STORAGE_FULL_ERROR
+                    );
+                }
+            }finally{
+                // Reset the fetched title flag for the new chat
+                hasFetchedTitle = false;
             }
-            newChat.description = newDescription;
-            PersistenceUtils.setChatHistories(chatHistories);
-            setCurrentChatIndex(chatHistories.length - 1);
-            setCurrentChatHistory(newChat);
-            setChatHistoriesDescriptions([
-                ...chatHistoriesDescriptions,
-                newDescription
-            ]);
-            appStore.tools.setEnabledTools(updatedTools);
-            PersistenceUtils.setEnabledTools(updatedTools);
         }
     };
 
@@ -265,10 +327,17 @@ export const useChatService = () => {
                         // Check if the message threshold is reached and the topic is not set
                         if (
                             updatedChatHistory.chatItems.length >= messageThreshold &&
-                            updatedChatHistory.isTopicSet === false
+                            updatedChatHistory.isTopicSet === false &&
+                            !hasFetchedTitle
                         ) {
+                            try{
                             //Fetch and set the chat title using the reusable function
                             fetchChatTitleAndRename(updatedChatHistory, currentChatIndex, renameChat);
+                            }catch(error){
+                                console.error("Error fetching chat title:", error);
+                            }finally{
+                                hasFetchedTitle = true; // Ensure we only fetch the title once per conversation
+                            }
                         }
                     });
                     return updatedChatHistory;
@@ -340,7 +409,7 @@ function summerizeChatWithChatGPT(chat: Message[]): MessageRequest {
         messages: messages,
         query: prompt,
         quotedText: "",
-        model: "gpt-4.1-nano",
+        model: import.meta.env.TITLE_RENAME_MODEL || "gpt-4.1-nano",
     };
 
     return messageRequest;
