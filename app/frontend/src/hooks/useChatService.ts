@@ -16,7 +16,6 @@ export const useChatService = () => {
     const { t } = useTranslation()
     const chatStore = useChatStore();
     const snackbars = useAppStore((state) => state.snackbars);
-    const appStore = useAppStore();
     const messageThreshold = parseInt(import.meta.env.TITLE_RENAME_THRESHOLD || 1);
     const makeBasicApiRequest = useBasicApiRequestService();
     const { currentChatIndex, chatHistoriesDescriptions, setChatIndexToLoadOrDelete, setChatHistoriesDescriptions, setDefaultChatHistory, setCurrentChatHistory, setCurrentChatIndex: chatStoreSetCurrentChatIndex } = useChatStore();
