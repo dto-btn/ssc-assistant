@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useReducer, useState } from "react"
 import { PersistenceUtils } from "../util/persistence";
 import { useChatStore } from "../stores/ChatStore";
 import { useAppStore } from "../stores/AppStore";
@@ -29,11 +29,14 @@ export const useChatService = () => {
         // Update the state
         chatStoreSetCurrentChatIndex(index);
     }
+    const [key, setKey] = useState(0)
+    const [, forceUpdate] = useReducer(x => x + 1, 0)
 
     const fetchChatTitleAndRename = async (
         updatedChatHistory: { chatItems: ChatItem[] }, // Structure of chat history passed to the function
         currentChatIndex: number,                 // Index of the conversation being updated
-        renameChat: (title: string, index: number) => void, // Callback to rename the conversation                     // Authorization token
+        renameChat: (title: string, index: number) => void,
+         // Callback to rename the conversation                     // Authorization token
         
     ): Promise<void> => {
         /**
@@ -170,11 +173,24 @@ export const useChatService = () => {
 
     const handleNewChat = (tool?: string) => {
         const chatHistories = PersistenceUtils.getChatHistories();
-        const lastChat = chatHistories?.pop() || [];
+          let chatIndex = chatHistories.length - 1;
+            if(chatIndex < 0){
+                chatIndex = 0;
+            }
+        const lastChat = chatHistories[chatIndex] || [];
         const lastChatLength = (lastChat as { chatItems: any[] }).chatItems.length;
-        if(lastChatLength != 0){
+        
+        if(lastChatLength === 0 && typeof(tool) !== "undefined"){
+            deleteSavedChat(chatIndex);
             createNewChat(tool);
-        }else{
+            window.location.reload(true);
+        }else if(lastChatLength === 0 && lastChat.staticTools?.length > 0){
+            deleteSavedChat(chatIndex);
+            createNewChat(tool);
+            window.location.reload(true);
+        }else if(lastChatLength != 0 || typeof(tool) !== "undefined"){
+            createNewChat(tool);
+        }else{ 
             //set chat index to last chat
             setCurrentChatIndex(chatHistories.length);
             const currentChat = chatHistories[chatHistories.length];
@@ -257,6 +273,40 @@ export const useChatService = () => {
         PersistenceUtils.setCurrentChatIndex(0);
     };
 
+    const deleteSavedChat = async (chatIndexToLoadOrDelete: number) => {
+        const chatHistories = PersistenceUtils.getChatHistories();
+        const updatedChatHistories = [
+            ...chatHistories.slice(0, chatIndexToLoadOrDelete),
+            ...chatHistories.slice(chatIndexToLoadOrDelete + 1),
+        ];
+
+        if (updatedChatHistories.length === 0) {
+            // current chat was only chat and at index 0, so just reset state
+            setDefaultChatHistory()
+        } else if (currentChatIndex === chatIndexToLoadOrDelete) {
+            // deleting current chat, so set to whatever is at index 0
+            setCurrentChatHistory(updatedChatHistories[0]);
+            setCurrentChatIndex(0);
+        } else if (chatIndexToLoadOrDelete < currentChatIndex) {
+            // deleted chat is at a lower index, so re-index current chat
+            setCurrentChatIndex(currentChatIndex - 1);
+        }
+
+        if (updatedChatHistories.length === 0) {
+            setChatHistoriesDescriptions(["Conversation 1"]);
+        } else {
+            setChatHistoriesDescriptions(
+                updatedChatHistories.map(
+                    (chatHistory, index) =>
+                        chatHistory.description || "Conversation " + (index + 1)
+                )
+            );
+        }
+
+        setChatIndexToLoadOrDelete(null);
+        PersistenceUtils.setChatHistories(updatedChatHistories);
+    }
+    
     const memoized = useMemo(() => {
         return {
             setCurrentChatIndex,
@@ -264,39 +314,7 @@ export const useChatService = () => {
             renameChat,
             handleLoadSavedChat,
             handleNewChat,
-            deleteSavedChat: async (chatIndexToLoadOrDelete: number) => {
-                const chatHistories = PersistenceUtils.getChatHistories();
-                const updatedChatHistories = [
-                    ...chatHistories.slice(0, chatIndexToLoadOrDelete),
-                    ...chatHistories.slice(chatIndexToLoadOrDelete + 1),
-                ];
-
-                if (updatedChatHistories.length === 0) {
-                    // current chat was only chat and at index 0, so just reset state
-                    setDefaultChatHistory()
-                } else if (currentChatIndex === chatIndexToLoadOrDelete) {
-                    // deleting current chat, so set to whatever is at index 0
-                    setCurrentChatHistory(updatedChatHistories[0]);
-                    setCurrentChatIndex(0);
-                } else if (chatIndexToLoadOrDelete < currentChatIndex) {
-                    // deleted chat is at a lower index, so re-index current chat
-                    setCurrentChatIndex(currentChatIndex - 1);
-                }
-
-                if (updatedChatHistories.length === 0) {
-                    setChatHistoriesDescriptions(["Conversation 1"]);
-                } else {
-                    setChatHistoriesDescriptions(
-                        updatedChatHistories.map(
-                            (chatHistory, index) =>
-                                chatHistory.description || "Conversation " + (index + 1)
-                        )
-                    );
-                }
-
-                setChatIndexToLoadOrDelete(null);
-                PersistenceUtils.setChatHistories(updatedChatHistories);
-            },
+            deleteSavedChat,
 
             updateLastMessage(message_chunk: string) {
                 setCurrentChatHistory((prevChatHistory) => {
