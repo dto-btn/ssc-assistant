@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useReducer, useState } from "react"
+import { useEffect, useMemo } from "react"
 import { PersistenceUtils } from "../util/persistence";
 import { useChatStore } from "../stores/ChatStore";
 import { useAppStore } from "../stores/AppStore";
 import { useTranslation } from "react-i18next";
-import { MAX_CHAT_HISTORIES_LENGTH, SNACKBAR_DEBOUNCE_KEYS } from "../constants";
+import { MAX_CHAT_HISTORIES_LENGTH, MUTUALLY_EXCLUSIVE_TOOLS, SNACKBAR_DEBOUNCE_KEYS } from "../constants";
 import { isACompletion } from "../utils";
 import { buildDefaultChatHistory } from "../stores/modelBuilders";
 import { useBasicApiRequestService } from "../screens/MainScreen/useApiRequestService";
@@ -28,8 +28,7 @@ export const useChatService = () => {
         // Update the state
         chatStoreSetCurrentChatIndex(index);
     }
-    const [key, setKey] = useState(0)
-    const [, forceUpdate] = useReducer(x => x + 1, 0)
+    const appStore = useAppStore();
 
     const fetchChatTitleAndRename = async (
         updatedChatHistory: { chatItems: ChatItem[] }, // Structure of chat history passed to the function
@@ -211,12 +210,24 @@ export const useChatService = () => {
                 const newChat = buildDefaultChatHistory()
                 chatHistories.push(newChat);
                 const newDescription = "...";
-
+                let updatedTools: Record<string, boolean> = {
+                    ...appStore.tools.enabledTools,
+                };
                 // enfore static tool if passed in
-                if (tool)   newChat.staticTools = [tool];
+                if (tool) {
+                    newChat.staticTools = [tool];
+                    Object.keys(appStore.tools.enabledTools).forEach((t) => {
+                            updatedTools[t] = t == tool;
+                        });
+                } else {// else we enable all other tools.
+                    Object.keys(appStore.tools.enabledTools).forEach((t) => {
+                        updatedTools[t] = !MUTUALLY_EXCLUSIVE_TOOLS.includes(t);
+                    });
+                }
 
                 newChat.description = newDescription;
                 PersistenceUtils.setChatHistories(chatHistories);
+                PersistenceUtils.setEnabledTools(updatedTools);
                 setCurrentChatIndex(chatHistories.length - 1);
                 setCurrentChatHistory(newChat);
                 setChatHistoriesDescriptions([
