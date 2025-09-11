@@ -65,6 +65,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
       width: 75,
       renderCell: (params) => (
         <Link
+          className='br-table-link'
           onClick={(event) => {
             event.stopPropagation(); // Prevent row selection
             handlePopupOpen(params.value);

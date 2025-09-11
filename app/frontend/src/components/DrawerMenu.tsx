@@ -317,11 +317,11 @@ export const DrawerMenu = ({
           open={moreMenuOpen}
           onClose={() => setMoreMenuAnchor(null)}
         >
-          <MenuItem onClick={handleDeleteChatClicked} tabIndex={0}>
+          <MenuItem id={`delete-chat-${selectedChatIndex}`} onClick={handleDeleteChatClicked} tabIndex={0}>
             <DeleteIcon sx={{ mr: "15px" }} />
             <Typography>{t("delete")}</Typography>
           </MenuItem>
-          <MenuItem onClick={handleRenameClicked} tabIndex={0}>
+          <MenuItem id={`rename-chat-${selectedChatIndex}`} onClick={handleRenameClicked} tabIndex={0}>
             <EditIcon sx={{ mr: "15px" }} />
             <Typography>{t("rename")}</Typography>
           </MenuItem>

@@ -125,6 +125,7 @@ export const AssistantBubble = ({
     () => ({
       a: (props: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
         <Link
+          className='inline-citation-link'
           target="_blank"
           rel="noopener noreferrer"
           {...props}
@@ -453,6 +454,7 @@ export const AssistantBubble = ({
                       {groupedCitations.map((group, index) => (
                         <Fragment key={group.url + index}>
                           <Chip
+                            id={`citation-chip-${index}`}
                             label={`${group.title}`}
                             component="a"
                             href={encodeURI(group.url)}
@@ -535,6 +537,7 @@ export const AssistantBubble = ({
                           >
                             Source:{" "}
                             <Link
+                              id={`citation-source-link-${group.displayNumber}`}
                               href={encodeURI(group.url)}
                               target="_blank"
                               rel="noopener noreferrer"

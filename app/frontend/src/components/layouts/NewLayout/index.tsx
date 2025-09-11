@@ -30,13 +30,14 @@ const NewLayout: React.FC<NewLayoutProps> = ({ children, appBar, appDrawerConten
             {appBar ? appBar : (
                 <AppBar position="fixed" isOpen={isOpen} drawerWidth={LEFT_MENU_WIDTH} >
                     <Toolbar>
-                        <Box sx={{
-                            cursor: "pointer",
-                            display: "flex",
-                            flexDirection: "row",
-                            gap: "0rem",
-                            alignItems: "center",
-                        }}
+                        <Box id="sidebar-toggle-box"
+                            sx={{
+                                cursor: "pointer",
+                                display: "flex",
+                                flexDirection: "row",
+                                gap: "0rem",
+                                alignItems: "center",
+                            }}
                             onClick={handleToggle}
                         >
                             <IconButton
