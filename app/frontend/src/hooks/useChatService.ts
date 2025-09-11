@@ -16,7 +16,6 @@ export const useChatService = () => {
     const { t } = useTranslation()
     const chatStore = useChatStore();
     const snackbars = useAppStore((state) => state.snackbars);
-    const appStore = useAppStore();
     const messageThreshold = parseInt(import.meta.env.TITLE_RENAME_THRESHOLD || 1);
     const makeBasicApiRequest = useBasicApiRequestService();
     const { currentChatIndex, chatHistoriesDescriptions, setChatIndexToLoadOrDelete, setChatHistoriesDescriptions, setDefaultChatHistory, setCurrentChatHistory, setCurrentChatIndex: chatStoreSetCurrentChatIndex } = useChatStore();
@@ -29,12 +28,14 @@ export const useChatService = () => {
         // Update the state
         chatStoreSetCurrentChatIndex(index);
     }
+    const appStore = useAppStore();
 
     const fetchChatTitleAndRename = async (
         updatedChatHistory: { chatItems: ChatItem[] }, // Structure of chat history passed to the function
         currentChatIndex: number,                 // Index of the conversation being updated
-        renameChat: (title: string, index: number) => void, // Callback to rename the conversation                     // Authorization token
-        
+        renameChat: (title: string, index: number) => void,
+         // Callback to rename the conversation                     // Authorization token
+
     ): Promise<void> => {
         /**
          * Fetches a title for the chat conversation using the completionBasic function
@@ -45,7 +46,7 @@ export const useChatService = () => {
          * @param renameChat - Callback function to rename the chat with the new title.
          */
         try {
-            
+
             const message :Message[] = updatedChatHistory.chatItems.map((item) => {
                 // Ensure each chat item is a Message type
                 if (isACompletion(item)) {
@@ -55,7 +56,7 @@ export const useChatService = () => {
             }).filter((item) => {
                 // Filter out any undefined or null items
                 return item !== null && item !== undefined;
-            }).map((item) => {  
+            }).map((item) => {
                 // Ensure each item has a role and content
                 return {
                     role: item.role || "system", // Default to "system" if role is undefined
@@ -64,9 +65,9 @@ export const useChatService = () => {
                     tools_info: item.tools_info, // Include tools_info if available
                     quotedText: item.quotedText, // Include quotedText if available
                     attachments: item.attachments // Include attachments if available
-                };      
+                };
             });
-            
+
             // Construct the MessageRequest object
             const request: MessageRequest = summerizeChatWithChatGPT(message);
 
@@ -170,16 +171,30 @@ export const useChatService = () => {
 
     const handleNewChat = (tool?: string) => {
         const chatHistories = PersistenceUtils.getChatHistories();
-        const lastChat = chatHistories?.pop() || [];
+          let chatIndex = chatHistories.length - 1;
+            if(chatIndex < 0){
+                chatIndex = 0;
+            }
+        const lastChat = chatHistories[chatIndex] || [];
         const lastChatLength = (lastChat as { chatItems: any[] }).chatItems.length;
-        if(lastChatLength != 0){
+
+        if(lastChatLength === 0 && typeof(tool) !== "undefined"){
+            deleteSavedChat(chatIndex);
+            createNewChat(tool);
+            window.location.reload();
+        }else if(lastChatLength === 0 && lastChat.staticTools?.length > 0){
+            deleteSavedChat(chatIndex);
+            createNewChat(tool);
+            window.location.reload();
+        }else if(lastChatLength != 0 || typeof(tool) !== "undefined"){
             createNewChat(tool);
         }else{
             //set chat index to last chat
             setCurrentChatIndex(chatHistories.length);
             const currentChat = chatHistories[chatHistories.length];
             setCurrentChatHistory(currentChat);
-        }                                                                                                                                                                                                                                                                                                                 
+            window.location.reload();
+        }
     }
 
     const createNewChat = (tool?: string) => {
@@ -196,13 +211,10 @@ export const useChatService = () => {
                 const newChat = buildDefaultChatHistory()
                 chatHistories.push(newChat);
                 const newDescription = "...";
-
-                // Process tools (static tools are generally mutually exclusive tools and work on their own)
-                // If tool(s) are enforced specifically here for this new chat, we set them in the convo staticTools
-                // Process tools for this new chat
                 let updatedTools: Record<string, boolean> = {
                     ...appStore.tools.enabledTools,
                 };
+                // enfore static tool if passed in
                 if (tool) {
                     newChat.staticTools = [tool];
                     Object.keys(appStore.tools.enabledTools).forEach((t) => {
@@ -213,16 +225,17 @@ export const useChatService = () => {
                         updatedTools[t] = !MUTUALLY_EXCLUSIVE_TOOLS.includes(t);
                     });
                 }
+
                 newChat.description = newDescription;
                 PersistenceUtils.setChatHistories(chatHistories);
+                appStore.tools.setEnabledTools(updatedTools);
+                PersistenceUtils.setEnabledTools(updatedTools);
                 setCurrentChatIndex(chatHistories.length - 1);
                 setCurrentChatHistory(newChat);
                 setChatHistoriesDescriptions([
                     ...chatHistoriesDescriptions,
                     newDescription
                 ]);
-                appStore.tools.setEnabledTools(updatedTools);
-                PersistenceUtils.setEnabledTools(updatedTools);
             }catch(error){
                 if (
                     error instanceof DOMException &&
@@ -251,11 +264,45 @@ export const useChatService = () => {
         setChatHistoriesDescriptions([newDescription]);
         setCurrentChatHistory(newChat);
         setCurrentChatIndex(0);
-        
+
         // update the persisted state
         PersistenceUtils.setChatHistories([newChat]);
         PersistenceUtils.setCurrentChatIndex(0);
     };
+
+    const deleteSavedChat = async (chatIndexToLoadOrDelete: number) => {
+        const chatHistories = PersistenceUtils.getChatHistories();
+        const updatedChatHistories = [
+            ...chatHistories.slice(0, chatIndexToLoadOrDelete),
+            ...chatHistories.slice(chatIndexToLoadOrDelete + 1),
+        ];
+
+        if (updatedChatHistories.length === 0) {
+            // current chat was only chat and at index 0, so just reset state
+            setDefaultChatHistory()
+        } else if (currentChatIndex === chatIndexToLoadOrDelete) {
+            // deleting current chat, so set to whatever is at index 0
+            setCurrentChatHistory(updatedChatHistories[0]);
+            setCurrentChatIndex(0);
+        } else if (chatIndexToLoadOrDelete < currentChatIndex) {
+            // deleted chat is at a lower index, so re-index current chat
+            setCurrentChatIndex(currentChatIndex - 1);
+        }
+
+        if (updatedChatHistories.length === 0) {
+            setChatHistoriesDescriptions(["Conversation 1"]);
+        } else {
+            setChatHistoriesDescriptions(
+                updatedChatHistories.map(
+                    (chatHistory, index) =>
+                        chatHistory.description || "Conversation " + (index + 1)
+                )
+            );
+        }
+
+        setChatIndexToLoadOrDelete(null);
+        PersistenceUtils.setChatHistories(updatedChatHistories);
+    }
 
     const memoized = useMemo(() => {
         return {
@@ -264,39 +311,7 @@ export const useChatService = () => {
             renameChat,
             handleLoadSavedChat,
             handleNewChat,
-            deleteSavedChat: async (chatIndexToLoadOrDelete: number) => {
-                const chatHistories = PersistenceUtils.getChatHistories();
-                const updatedChatHistories = [
-                    ...chatHistories.slice(0, chatIndexToLoadOrDelete),
-                    ...chatHistories.slice(chatIndexToLoadOrDelete + 1),
-                ];
-
-                if (updatedChatHistories.length === 0) {
-                    // current chat was only chat and at index 0, so just reset state
-                    setDefaultChatHistory()
-                } else if (currentChatIndex === chatIndexToLoadOrDelete) {
-                    // deleting current chat, so set to whatever is at index 0
-                    setCurrentChatHistory(updatedChatHistories[0]);
-                    setCurrentChatIndex(0);
-                } else if (chatIndexToLoadOrDelete < currentChatIndex) {
-                    // deleted chat is at a lower index, so re-index current chat
-                    setCurrentChatIndex(currentChatIndex - 1);
-                }
-
-                if (updatedChatHistories.length === 0) {
-                    setChatHistoriesDescriptions(["Conversation 1"]);
-                } else {
-                    setChatHistoriesDescriptions(
-                        updatedChatHistories.map(
-                            (chatHistory, index) =>
-                                chatHistory.description || "Conversation " + (index + 1)
-                        )
-                    );
-                }
-
-                setChatIndexToLoadOrDelete(null);
-                PersistenceUtils.setChatHistories(updatedChatHistories);
-            },
+            deleteSavedChat,
 
             updateLastMessage(message_chunk: string) {
                 setCurrentChatHistory((prevChatHistory) => {
