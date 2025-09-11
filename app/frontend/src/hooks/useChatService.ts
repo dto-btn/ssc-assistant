@@ -190,8 +190,8 @@ export const useChatService = () => {
             createNewChat(tool);
         }else{
             //set chat index to last chat
-            setCurrentChatIndex(chatHistories.length);
-            const currentChat = chatHistories[chatHistories.length];
+            setCurrentChatIndex(chatIndex);
+            const currentChat = chatHistories[chatIndex];
             setCurrentChatHistory(currentChat);
             window.location.reload();
         }
