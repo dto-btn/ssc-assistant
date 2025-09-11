@@ -35,7 +35,7 @@ export const useChatService = () => {
         currentChatIndex: number,                 // Index of the conversation being updated
         renameChat: (title: string, index: number) => void,
          // Callback to rename the conversation                     // Authorization token
-        
+
     ): Promise<void> => {
         /**
          * Fetches a title for the chat conversation using the completionBasic function
@@ -46,7 +46,7 @@ export const useChatService = () => {
          * @param renameChat - Callback function to rename the chat with the new title.
          */
         try {
-            
+
             const message :Message[] = updatedChatHistory.chatItems.map((item) => {
                 // Ensure each chat item is a Message type
                 if (isACompletion(item)) {
@@ -56,7 +56,7 @@ export const useChatService = () => {
             }).filter((item) => {
                 // Filter out any undefined or null items
                 return item !== null && item !== undefined;
-            }).map((item) => {  
+            }).map((item) => {
                 // Ensure each item has a role and content
                 return {
                     role: item.role || "system", // Default to "system" if role is undefined
@@ -65,9 +65,9 @@ export const useChatService = () => {
                     tools_info: item.tools_info, // Include tools_info if available
                     quotedText: item.quotedText, // Include quotedText if available
                     attachments: item.attachments // Include attachments if available
-                };      
+                };
             });
-            
+
             // Construct the MessageRequest object
             const request: MessageRequest = summerizeChatWithChatGPT(message);
 
@@ -177,7 +177,7 @@ export const useChatService = () => {
             }
         const lastChat = chatHistories[chatIndex] || [];
         const lastChatLength = (lastChat as { chatItems: any[] }).chatItems.length;
-        
+
         if(lastChatLength === 0 && typeof(tool) !== "undefined"){
             deleteSavedChat(chatIndex);
             createNewChat(tool);
@@ -188,12 +188,13 @@ export const useChatService = () => {
             window.location.reload();
         }else if(lastChatLength != 0 || typeof(tool) !== "undefined"){
             createNewChat(tool);
-        }else{ 
+        }else{
             //set chat index to last chat
             setCurrentChatIndex(chatHistories.length);
             const currentChat = chatHistories[chatHistories.length];
             setCurrentChatHistory(currentChat);
-        }                                                                                                                                                                                                                                                                                                                 
+            window.location.reload();
+        }
     }
 
     const createNewChat = (tool?: string) => {
@@ -227,6 +228,7 @@ export const useChatService = () => {
 
                 newChat.description = newDescription;
                 PersistenceUtils.setChatHistories(chatHistories);
+                appStore.tools.setEnabledTools(updatedTools);
                 PersistenceUtils.setEnabledTools(updatedTools);
                 setCurrentChatIndex(chatHistories.length - 1);
                 setCurrentChatHistory(newChat);
@@ -262,7 +264,7 @@ export const useChatService = () => {
         setChatHistoriesDescriptions([newDescription]);
         setCurrentChatHistory(newChat);
         setCurrentChatIndex(0);
-        
+
         // update the persisted state
         PersistenceUtils.setChatHistories([newChat]);
         PersistenceUtils.setCurrentChatIndex(0);
@@ -301,7 +303,7 @@ export const useChatService = () => {
         setChatIndexToLoadOrDelete(null);
         PersistenceUtils.setChatHistories(updatedChatHistories);
     }
-    
+
     const memoized = useMemo(() => {
         return {
             setCurrentChatIndex,
