@@ -183,11 +183,11 @@ export const useChatService = () => {
         if(lastChatLength === 0 && typeof(tool) !== "undefined"){
             deleteSavedChat(chatIndex);
             createNewChat(tool);
-            window.location.reload(true);
+            window.location.reload();
         }else if(lastChatLength === 0 && lastChat.staticTools?.length > 0){
             deleteSavedChat(chatIndex);
             createNewChat(tool);
-            window.location.reload(true);
+            window.location.reload();
         }else if(lastChatLength != 0 || typeof(tool) !== "undefined"){
             createNewChat(tool);
         }else{ 
