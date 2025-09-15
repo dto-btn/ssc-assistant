@@ -2,6 +2,7 @@ import json
 import logging
 import time
 from datetime import datetime
+from decimal import Decimal
 from typing import List, Optional
 
 import pymssql
@@ -79,7 +80,7 @@ class DatabaseConnection:
 
             # Convert the result to JSON
                                                     #needed for the date serialization
-            json_result = json.dumps(final_result, default=_datetime_serializer, indent=4)
+            json_result = json.dumps(final_result, default=_data_serializer, indent=4)
             return json.loads(json_result)
 
         finally:
@@ -293,8 +294,10 @@ class BRQueryBuilder:
         """
         return query
 
-def _datetime_serializer(obj):
-    """JSON serializer for datetime objects."""
+def _data_serializer(obj):
+    """JSON serializer for datetime and decimal objects."""
     if isinstance(obj, datetime):
         return obj.isoformat()
+    if isinstance(obj, Decimal):
+        return float(obj)
     raise TypeError(f"Type {type(obj)} not serializable")
