@@ -17,13 +17,15 @@ import {
   Typography,
 } from "@mui/material";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
-import SourceOutlinedIcon from '@mui/icons-material/SourceOutlined';
+import SourceOutlinedIcon from "@mui/icons-material/SourceOutlined";
 import { useEffect, useRef, useState } from "react";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import EditIcon from "@mui/icons-material/Edit";
 import { useTranslation } from "react-i18next";
 import React from "react";
+import { useAppStore } from "../stores/AppStore";
+import { allowedToolsSet } from "../allowedTools";
 
 interface DrawerMenuProps {
   chatDescriptions: string[];
@@ -113,14 +115,6 @@ export const DrawerMenu = ({
     }
   }, [editingIndex]);
 
-  // const tools = Object.keys(enabledTools).filter((tool) =>
-  //   allowedToolsSet.has(tool)
-  // );
-  // Separate the corporate key
-  // const corporateKeyIndex = tools.indexOf("corporate");
-  // const corporateKey =
-  //   corporateKeyIndex > -1 ? tools.splice(corporateKeyIndex, 1)[0] : null;
-
   const chatDescriptionsWithOriginalIndex: {
     chatDescription: string;
     originalIndex: number;
@@ -167,18 +161,20 @@ export const DrawerMenu = ({
             />
           </ListItemButton>
         </ListItem>
-        <ListItem key="newchat-pmcoe" disablePadding>
-          <ListItemButton onClick={() => onNewChat("pmcoe")}>
-            <ListItemIcon sx={{ minWidth: "0px", marginRight: "10px" }}>
-              <SourceOutlinedIcon fontSize="small" color="primary" />
-            </ListItemIcon>
-            <ListItemText
-              primary={t("new.conversation.pmcoe")}
-              aria-description={t("new.conversation.br.aria.description")}
-              aria-label={t("new.conversation.pmcoe")}
-            />
-          </ListItemButton>
-        </ListItem>
+        {allowedToolsSet.has("pmcoe") && (
+          <ListItem key="newchat-pmcoe" disablePadding>
+            <ListItemButton onClick={() => onNewChat("pmcoe")}>
+              <ListItemIcon sx={{ minWidth: "0px", marginRight: "10px" }}>
+                <SourceOutlinedIcon fontSize="small" color="primary" />
+              </ListItemIcon>
+              <ListItemText
+                primary={t("new.conversation.pmcoe")}
+                aria-description={t("new.conversation.br.aria.description")}
+                aria-label={t("new.conversation.pmcoe")}
+              />
+            </ListItemButton>
+          </ListItem>
+        )}
         <Divider sx={{ margin: "5px 0px" }}>
           <Chip
             label={t("drawer.header.conversations")}
