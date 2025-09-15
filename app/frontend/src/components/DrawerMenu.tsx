@@ -24,7 +24,6 @@ import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import EditIcon from "@mui/icons-material/Edit";
 import { useTranslation } from "react-i18next";
 import React from "react";
-import { useAppStore } from "../stores/AppStore";
 import { allowedToolsSet } from "../allowedTools";
 
 interface DrawerMenuProps {
