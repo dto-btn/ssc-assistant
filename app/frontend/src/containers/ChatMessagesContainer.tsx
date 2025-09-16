@@ -47,14 +47,15 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     const messageRef = lastMsgRef.current;
     const completionRef = lastCompletionRef.current;
 
-    if (chatHistory.chatItems.length <= 2) {
-      return;
-    }
-
     // Hide or show skeleton & change whitespace based on completion stage
     if (isLoading && !completionRef && messageRef && chatRef) { // Completion hasn't started streaming yet
 
       setShowSkeleton(true);
+
+      // Don't adjust whitespace for first question & answer
+      if (chatHistory.chatItems.length <= 2) {
+        return;
+      }
 
       // Calculate the message and skeleton height as a fraction of the container height
       const messageFraction = messageRef.offsetHeight / chatRef.clientHeight;
@@ -84,6 +85,11 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     else if (isLoading && completionRef && messageRef && chatRef) { // Completion/Replay has started rendering
 
       setShowSkeleton(false);
+
+      // Don't adjust whitespace for first question & answer
+      if (chatHistory.chatItems.length <= 2) {
+        return;
+      }
 
       // Calculate the message and completion height as a fraction of the container height
       const messageFraction = messageRef.offsetHeight / chatRef.clientHeight;
