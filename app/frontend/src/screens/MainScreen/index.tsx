@@ -111,8 +111,17 @@ const MainScreen = () => {
       setScrollable(false);
     }
 
-    setTimeout(() => { // Check if we need to show scroll arrow after chat change
+    setTimeout(() => {
+      // Check if we need to show scroll arrow after chat change
       handleScroll();
+
+      // Always scroll to top when changing chats or refreshing the page
+      if (chatRef.current) {
+        chatRef.current.scrollTo({
+          top: 0,
+          behavior: "auto", // Use "smooth" if you want animation
+        });
+      }
 
     }, 100); // Slight delay to allow DOM to update
   }, [currentChatIndex]);
