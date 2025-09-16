@@ -583,7 +583,6 @@ const MainScreen = () => {
                 placeholder={t("placeholder")}
                 disabled={apiRequestService.isLoading}
                 onSend={sendMessage}
-                onSend={sendMessage}
                 onStop={stopChat}
                 quotedText={quotedText}
                 selectedModel={getCurrentChatHistory().model}
@@ -619,11 +618,6 @@ const MainScreen = () => {
               handleScroll={handleScroll}
               onScrollArrowClick={onScrollArrowClick}
               scrollable={scrollable}
-              containerRef={chatRef}
-              lastCompletionRef={lastCompletionRef}
-              handleScroll={handleScroll}
-              onScrollArrowClick={onScrollArrowClick}
-              scrollable={scrollable}
             />
             <div style={{ height: "50px" }} />
             <div style={{ height: "50px" }} />
@@ -641,7 +635,6 @@ const MainScreen = () => {
                 clearOnSend
                 placeholder={t("placeholder")}
                 disabled={apiRequestService.isLoading}
-                onSend={sendMessage}
                 onSend={sendMessage}
                 onStop={stopChat}
                 quotedText={quotedText}
