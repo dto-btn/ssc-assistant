@@ -946,6 +946,10 @@
     "scroll.down": {
         "en": "Scroll down",
         "fr": "Faire défiler vers le bas"
+    },
+    "loading.skeleton": {
+        "en": "Generating Response...",
+        "fr": "Génération de la réponse..."
     }
    
 }
