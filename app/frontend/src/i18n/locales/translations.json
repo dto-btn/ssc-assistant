@@ -887,6 +887,18 @@
         "en": "What is a project?",
         "fr": "Qu'est-ce qu'un projet ?"
     },
+    "suggestions.pmcoe.q4": {
+        "en": "How can I learn more about Shared Services Canada tailored processes and guidelines?",
+        "fr": "Comment puis-je en savoir plus sur les processus et les lignes directrices adaptés de Services partagés Canada ?"
+    },
+    "suggestions.pmcoe.q5": {
+        "en": "Does Shared Services Canada have an Operating Framework?",
+        "fr": "Services partagés Canada a-t-il un cadre opérationnel ?"
+    },
+    "suggestions.pmcoe.q6": {
+        "en": "Where can I find information regarding Shared Services Canada Project Governance and Operating Framework?",
+        "fr": "Où puis-je trouver des informations concernant la gouvernance de projet et le cadre opérationnel de Services partagés Canada ?"
+    },
     "br.disclaimer2": {
         "en": "Please note that the data retrieved from the Enterprise Data Repository (EDR), sourced from the Business Intake and Tracking System (BITS), may be up to 48 hours old.",
         "fr": "Veuillez noter que les données récupérées du Référentiel de données d'entreprise (EDR), provenant du Système de réception et de suivi des demandes d'affaires (BITS), peuvent dater de jusqu'à 48 heures."
@@ -916,8 +928,8 @@
         "fr": "Joindre un document"
     },
     "summerize.conversation": {
-        "en": "Given the following conversation, generate a concise, specific, and descriptive title (max 4 words) that best summarizes the main topic. Avoid generic words like 'conversation', 'chat', or 'discussion'. Only output the title, no quotes or punctuation:",
-        "fr": "À partir de la conversation suivante, générez un titre concis, spécifique et descriptif (maximum 4 mots) qui résume le mieux le sujet principal. Évitez les mots génériques comme 'conversation', 'discussion' ou 'échange'. Affichez uniquement le titre, sans guillemets ni ponctuation."
+        "en": "Given the following conversation, generate a concise, specific, and descriptive title (max 4 words) that best summarizes the main topic. Avoid generic words like 'conversation', 'chat', or 'discussion'. Only output the title, no quotes or punctuation. This title should always be in english and not another language.",
+        "fr": "À partir de la conversation suivante, générez un titre concis, spécifique et descriptif (maximum 4 mots) qui résume le mieux le sujet principal. Évitez les mots génériques comme 'conversation', 'discussion' ou 'échange'. Affichez uniquement le titre, sans guillemets ni ponctuation. Ce titre doit toujours être en français et non dans une autre langue."
     },
     "file.unsupported.type.generic": {
         "en": "Unsupported file type",
@@ -947,9 +959,8 @@
         "en": "Scroll down",
         "fr": "Faire défiler vers le bas"
     },
-    "loading.skeleton": {
-        "en": "Generating Response...",
-        "fr": "Génération de la réponse..."
+    "new.conversation.pmcoe": {
+        "en": "PMCoE Agent",
+        "fr": "Agent CEGP"
     }
-   
 }

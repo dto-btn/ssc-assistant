@@ -252,6 +252,9 @@ const MainScreen = () => {
     setTimeout(() => {
       handleScroll();
     }, 100); // Slight delay to allow DOM to update
+    setTimeout(() => {
+      handleScroll();
+    }, 100); // Slight delay to allow DOM to update
   }, []);
 
   const handleRemoveToastMessage = (indexToRemove: number) => {
@@ -571,6 +574,7 @@ const MainScreen = () => {
                 placeholder={t("placeholder")}
                 disabled={apiRequestService.isLoading}
                 onSend={sendMessage}
+                onSend={sendMessage}
                 onStop={stopChat}
                 quotedText={quotedText}
                 selectedModel={getCurrentChatHistory().model}
@@ -606,7 +610,13 @@ const MainScreen = () => {
               handleScroll={handleScroll}
               onScrollArrowClick={onScrollArrowClick}
               scrollable={scrollable}
+              containerRef={chatRef}
+              lastCompletionRef={lastCompletionRef}
+              handleScroll={handleScroll}
+              onScrollArrowClick={onScrollArrowClick}
+              scrollable={scrollable}
             />
+            <div style={{ height: "50px" }} />
             <div style={{ height: "50px" }} />
             <Box
               sx={{
@@ -622,6 +632,7 @@ const MainScreen = () => {
                 clearOnSend
                 placeholder={t("placeholder")}
                 disabled={apiRequestService.isLoading}
+                onSend={sendMessage}
                 onSend={sendMessage}
                 onStop={stopChat}
                 quotedText={quotedText}

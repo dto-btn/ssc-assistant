@@ -1,8 +1,14 @@
 import { Box, CircularProgress, IconButton, Skeleton, Stack } from "@mui/material";
 import ArrowCircleDownIcon from '@mui/icons-material/ArrowCircleDown';
 import { Fragment, useEffect, useRef, useState } from "react";
+import { Box, CircularProgress, IconButton, Skeleton, Stack } from "@mui/material";
+import ArrowCircleDownIcon from '@mui/icons-material/ArrowCircleDown';
+import { Fragment, useEffect, useRef, useState } from "react";
 import { AlertBubble, AssistantBubble, UserBubble } from "../components";
 import { isACompletion, isAMessage, isAToastMessage } from "../utils";
+import { useTranslation } from "react-i18next";
+
+const SKELETON_HEIGHT = 200;
 import { useTranslation } from "react-i18next";
 
 const SKELETON_HEIGHT = 200;
@@ -18,6 +24,11 @@ interface ChatMessagesContainerProps {
   handleScroll: () => void;
   onScrollArrowClick: () => void;
   scrollable: boolean;
+  containerRef: React.RefObject<HTMLDivElement>;
+  lastCompletionRef: React.RefObject<HTMLDivElement>;
+  handleScroll: () => void;
+  onScrollArrowClick: () => void;
+  scrollable: boolean;
 }
 
 const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
@@ -27,6 +38,11 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     replayChat,
     handleRemoveToastMessage,
     handleBookReservation,
+    containerRef,
+    lastCompletionRef,
+    handleScroll,
+    onScrollArrowClick,
+    scrollable,
     containerRef,
     lastCompletionRef,
     handleScroll,
@@ -126,12 +142,17 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     <Box
       ref={containerRef}
       onScroll={handleScroll}
+      ref={containerRef}
+      onScroll={handleScroll}
       sx={{
         padding: "0.5rem",
         paddingBottom: 0,
         alignItems: "flex-end",
         overflowY: 'auto',
+        overflowY: 'auto',
         margin: 'auto',
+        width: "100%",
+        height: "100%",
         width: "100%",
         height: "100%",
       }}
