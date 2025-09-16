@@ -292,7 +292,23 @@ export const ChatInput = ({
             size="large"
           >
             {disabled ? (
-              <StopCircleIcon sx={{ color: "primary.main" }} aria-label={t("stop.generating")} />
+              <Box sx={{ position: "relative", display: "inline-flex" }}>
+                <CircularProgress size={40} aria-label={t("stop.generating")} />
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <StopCircleIcon sx={{ color: "primary.main" }} aria-label={t("stop.generating")} />
+                </Box>
+              </Box>
             )
               : isUploading ? (
                 <CircularProgress size={24} aria-label={t("generating")} />
@@ -325,7 +341,7 @@ export const ChatInput = ({
             }}
           ></Typography>
         </Box>
-      </Container>
+      </Container >
       {!disabledFeaturesSet.has("file_upload") &&
         hasDetectedDrag &&
         createPortal(
@@ -367,7 +383,8 @@ export const ChatInput = ({
             <Typography fontSize="24px">Drop file to upload</Typography>
           </Box>,
           document.body
-        )}
+        )
+      }
     </>
   );
 };
