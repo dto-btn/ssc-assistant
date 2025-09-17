@@ -217,13 +217,13 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
             transition: "height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4,0,0.2,1)",
           }}
         >
-          <Skeleton sx={{ bgcolor: "primary.main" }} variant="circular" height={35} width={35} aria-label={t("loading.skeleton")} />
+          <Skeleton sx={{ bgcolor: "primary.light" }} variant="circular" height={35} width={35} aria-label={t("loading.skeleton")} />
           <Stack direction="column" alignItems="left" sx={{ width: "100%" }}>
-            <Skeleton sx={{ bgcolor: "primary.main" }} variant="text" width="85%" height={30} aria-label={t("loading.skeleton")} />
-            <Skeleton sx={{ bgcolor: "primary.main" }} variant="text" width="82%" height={30} aria-label={t("loading.skeleton")} />
-            <Skeleton sx={{ bgcolor: "primary.main" }} variant="text" width="88%" height={30} aria-label={t("loading.skeleton")} />
-            <Skeleton sx={{ bgcolor: "primary.main" }} variant="text" width="84%" height={30} aria-label={t("loading.skeleton")} />
-            <Skeleton sx={{ bgcolor: "primary.main" }} variant="text" width="87%" height={30} aria-label={t("loading.skeleton")} />
+            <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="85%" height={30} aria-label={t("loading.skeleton")} />
+            <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="82%" height={30} aria-label={t("loading.skeleton")} />
+            <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="88%" height={30} aria-label={t("loading.skeleton")} />
+            <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="84%" height={30} aria-label={t("loading.skeleton")} />
+            <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="87%" height={30} aria-label={t("loading.skeleton")} />
           </Stack>
         </Stack>
         {/* Dynamic whitespace */}
