@@ -31,8 +31,9 @@ export function UploadFileButtonMenuItem({
   };
 
   return (
-    <MenuItem autoFocus onClick={() => fileInputRef.current?.click()}>
+    <MenuItem id={`upload-file-${label}`} className="upload-file-menu-item" autoFocus onClick={() => fileInputRef.current?.click()}>
       <StyledIconButton
+        id="upload-file-button"
         aria-label={label}
         tabIndex={-1}
         disabled={disabled}

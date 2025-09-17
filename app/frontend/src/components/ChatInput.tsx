@@ -132,6 +132,7 @@ export const ChatInput = ({
             }}
           >
             <IconButton
+              id="remove-uploaded-file-button"
               onClick={handleRemoveFile}
               size="large"
               color="primary"
@@ -281,6 +282,7 @@ export const ChatInput = ({
             }}
           />
           <IconButton
+            id="send-or-stop-question-button"
             onClick={disabled ? onStop : sendQuestion}
             disabled={isUploading}
             sx={{

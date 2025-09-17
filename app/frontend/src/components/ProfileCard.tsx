@@ -10,10 +10,10 @@ interface ProfileCardProps {
     profile: EmployeeProfile
 }
 
-const ProfileCard = ({profile}: ProfileCardProps) => {
+const ProfileCard = ({ profile }: ProfileCardProps) => {
     const language = document.documentElement.lang;
     const { t } = useTranslation();
-    const theme = useTheme(); 
+    const theme = useTheme();
 
     const borderStyle = profile.matchedProfile ? `3px solid ${theme.palette.primary.main}` : '';
 
@@ -22,7 +22,7 @@ const ProfileCard = ({profile}: ProfileCardProps) => {
             <CardHeader
                 avatar={
                     <Avatar sx={{ bgcolor: 'primary.main' }} aria-label="recipe">
-                    {profile.name.split(' ').map(part => part[0]).join('').toUpperCase()}
+                        {profile.name.split(' ').map(part => part[0]).join('').toUpperCase()}
                     </Avatar>
                 }
                 title={profile.name}
@@ -30,29 +30,30 @@ const ProfileCard = ({profile}: ProfileCardProps) => {
                     variant: 'h6',
                 }}
                 subheader={language === "en" ? profile.organization_en : profile.organization_fr}
-                sx={{padding: '10px 16px'}}
+                sx={{ padding: '10px 16px' }}
             />
-            <CardContent sx={{padding: '8px 16px'}}>
+            <CardContent sx={{ padding: '8px 16px' }}>
                 <EmailView>
-                    <EmailIcon sx={{ marginRight: 2}}/>
+                    <EmailIcon sx={{ marginRight: 2 }} />
                     <Typography sx={{ fontSize: 15 }} color="text.secondary" gutterBottom>
                         <a href={`mailto:${profile.email}`}>{profile.email}</a>
                     </Typography>
                 </EmailView>
 
                 {profile.phone &&
-                <PhoneView>
-                    <PhoneIcon sx={{ marginRight: 2}}/>
-                    {profile.phone &&
-                    <Typography sx={{ fontSize: 15 }} color="text.secondary" gutterBottom>
-                        {profile.phone}
-                    </Typography>
-                    }
-                </PhoneView>
+                    <PhoneView>
+                        <PhoneIcon sx={{ marginRight: 2 }} />
+                        {profile.phone &&
+                            <Typography sx={{ fontSize: 15 }} color="text.secondary" gutterBottom>
+                                {profile.phone}
+                            </Typography>
+                        }
+                    </PhoneView>
                 }
             </CardContent>
-            <CardActions sx={{marginLeft: 1}}>
+            <CardActions sx={{ marginLeft: 1 }}>
                 <Button
+                    id="geds-profile-link"
                     href={profile.url}
                     target="_blank"
                     rel="noopener noreferrer"

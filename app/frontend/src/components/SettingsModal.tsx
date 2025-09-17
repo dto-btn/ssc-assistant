@@ -44,8 +44,8 @@ const DeleteAllConversationsConfirmation: React.FC<
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>{t("cancel")}</Button>
-        <Button onClick={onConfirm} variant="contained" color="error">
+        <Button id="cancel-delete-all-chats-button" onClick={onClose}>{t("cancel")}</Button>
+        <Button id="confirm-delete-all-chats-button" onClick={onConfirm} variant="contained" color="error">
           {t("delete")}
         </Button>
       </DialogActions>
@@ -89,7 +89,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         >
           <SettingsIcon fontSize="small" />
           {t("settings")}
-          <IconButton onClick={onClose} sx={(theme) => ({
+          <IconButton id="close-settings-button" onClick={onClose} sx={(theme) => ({
             marginLeft: "auto",
             color: theme.palette.grey[500],
           })} aria-label={t("close")}>
@@ -100,6 +100,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <List>
             <ListItem disablePadding>
               <ListItemButton
+                id="delete-all-chats-button"
                 onClick={handleDeleteAllConversations}
                 sx={{
                   borderRadius: 1,

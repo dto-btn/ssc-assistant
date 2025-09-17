@@ -30,6 +30,7 @@ export const NewFileUploadButton: React.FC<NewFileUploadButtonProps> = ({ onFile
     return (
         <>
             <IconButton
+                id="new-file-upload-button"
                 aria-label={t("upload.options")}
                 onClick={handleMenuClick}
                 disabled={disabled}

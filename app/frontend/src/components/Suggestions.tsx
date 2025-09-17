@@ -171,6 +171,7 @@ const Suggestions = ({ onSuggestionClicked, tools = [] }: SuggestionsProps) => {
             }}
           >
             <CardActionArea
+              id={`suggestion-card-${index}`}
               onClick={() =>
                 onSuggestionClicked(
                   card.title,

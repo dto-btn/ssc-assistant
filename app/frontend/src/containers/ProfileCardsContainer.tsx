@@ -20,29 +20,30 @@ const ProfileCardsContainer = (props: ProfileCardContainerProps) => {
         <>
             <Divider />
             <Box sx={{ m: 2, maxWidth: '100%', margin: '10px 16px' }}>
-                <Button 
-                    sx={{borderRadius: '10px', marginBottom: isExpanded ? '10px' : '0px'}} 
-                    onClick={() => toggleShowProfileHandler()} 
+                <Button
+                    id="toggle-profile-cards-button"
+                    sx={{ borderRadius: '10px', marginBottom: isExpanded ? '10px' : '0px' }}
+                    onClick={() => toggleShowProfileHandler()}
                     endIcon={
-                        !isExpanded 
-                            ? <ExpandMoreIcon style={{ fontSize: 35, paddingBottom: "3px"  }} />
+                        !isExpanded
+                            ? <ExpandMoreIcon style={{ fontSize: 35, paddingBottom: "3px" }} />
                             : <ExpandLessIcon style={{ fontSize: 35, paddingBottom: "3px" }} />
-                    } 
-                > 
-                    {!isExpanded ? t("chat.show.profiles") : t("chat.hide.profiles")} 
+                    }
+                >
+                    {!isExpanded ? t("chat.show.profiles") : t("chat.hide.profiles")}
                 </Button>
                 {isExpanded &&
-                <Stack direction="column" spacing={2} useFlexGap flexWrap="wrap">
-                    {profiles.map((profile, index) => {
-                        return (
-                            <ProfileCard 
-                                profile={profile}
-                                key={index}
-                                aria-label={`${t("aria.geds.profile")}: ${profile.name}`}
-                            />
-                        )
-                    })}
-                </Stack>
+                    <Stack direction="column" spacing={2} useFlexGap flexWrap="wrap">
+                        {profiles.map((profile, index) => {
+                            return (
+                                <ProfileCard
+                                    profile={profile}
+                                    key={index}
+                                    aria-label={`${t("aria.geds.profile")}: ${profile.name}`}
+                                />
+                            )
+                        })}
+                    </Stack>
                 }
             </Box>
         </>

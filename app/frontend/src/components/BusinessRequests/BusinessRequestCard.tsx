@@ -43,6 +43,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
         title={data.BR_SHORT_TITLE}
         subheader={
           <Link
+            id="BITS-PROD-link"
             href={`https://bitsprod.ssc-spc.gc.ca/BR/${data.BR_NMBR}`}
             rel="noopener"
             target="_blank"
@@ -194,6 +195,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                       data.ASSOC_BRS.split(",").map((br, index) => (
                         <React.Fragment key={index}>
                           <Link
+                            className={`BITS-PROD-BR-${br.trim()}-link`}
                             href={`https://bitsprod.ssc-spc.gc.ca/BR/${br.trim()}`}
                             rel="noopener"
                             target="_blank"
@@ -205,6 +207,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                       ))
                     ) : (
                       <Link
+                        className={`BITS-PROD-BR-${data.ASSOC_BRS}-link`}
                         href={`https://bitsprod.ssc-spc.gc.ca/BR/${data.ASSOC_BRS}`}
                         rel="noopener"
                         target="_blank"
