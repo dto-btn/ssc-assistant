@@ -214,10 +214,10 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
             height: showSkeleton ? `${SKELETON_HEIGHT}px` : "0px",
             opacity: showSkeleton ? 1 : 0,
             overflow: "hidden",
-            transition: "height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4,0,0.2,1)",
+            transition: "height 0.1s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4,0,0.2,1)",
           }}
         >
-          <Skeleton sx={{ bgcolor: "primary.light" }} variant="circular" height={35} width={35} aria-label={t("loading.skeleton")} />
+          <Skeleton sx={{ bgcolor: "primary.light" }} variant="circular" height="35px" width="35px" aria-label={t("loading.skeleton")} />
           <Stack direction="column" alignItems="left" sx={{ width: "100%" }}>
             <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="85%" height={30} aria-label={t("loading.skeleton")} />
             <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="82%" height={30} aria-label={t("loading.skeleton")} />
