@@ -235,6 +235,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         />
         {scrollable && (
           <IconButton
+            id="scroll-down-button"
             onClick={onScrollArrowClick}
             sx={{
               "&:hover": {

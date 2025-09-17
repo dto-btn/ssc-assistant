@@ -81,6 +81,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
   return (
     <>
       <Box
+        id="profile-menu-button"
         sx={{
           cursor: "pointer",
         }}
@@ -98,7 +99,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
         aria-expanded={isOpen ? "true" : undefined}
       >
         <Box
-          id="profile-menu-button"
+          id="profile-menu-inner-button"
           aria-controls={isOpen ? "profile-menu-menu" : undefined}
           aria-haspopup="true"
           aria-expanded={isOpen ? "true" : undefined}
@@ -130,10 +131,11 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
         sx={{
           top: 5,
         }}
-        // autoFocus
+      // autoFocus
       >
         <MenuDivider title={tt("langlink.divider.description")} />
         <MenuItem
+          id={`switch-lang-menu-item`}
           key="language-link"
           title={tt("langlink.divider.description")}
           onClick={() => {
@@ -150,12 +152,14 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
           return (
             <React.Fragment key={tool}>
               <MenuItem
+                id={`tool-menu-item-${tool}`}
                 key={tool}
                 onClick={() => {
                   handleUpdateEnabledTools(tool);
                 }}
               >
                 <FormControlLabel
+                  id={`tool-menu-item-form-${tool}`}
                   label={t(tool)}
                   role="menuitem"
                   aria-label={t(tool)}
@@ -164,6 +168,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
                   name={tool}
                   control={
                     <Switch
+                      id={`tool-menu-item-switch-${tool}`}
                       onClick={(e) => {
                         // Without these onClick handlers, we get dead spaces on the MenuItem, where
                         // clicking in a specific spot does not toggle the switch.
@@ -214,6 +219,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
           <>
             <MenuDivider />
             <MenuItem
+              id="settings-menu-item"
               title={tt("settings")}
               onClick={handleSettingsOpen}
               key="settings"
@@ -223,7 +229,7 @@ export const ProfileMenuButton: React.FC<ProfilePictureOnClickMenuProps> = ({
               </ListItemIcon>
               <ListItemText primary={tt("settings")} />
             </MenuItem>
-            <MenuItem title={tt("logout")} onClick={logout} key="logout">
+            <MenuItem id="logout-menu-item" title={tt("logout")} onClick={logout} key="logout">
               <ListItemIcon>
                 <LogoutIcon color="disabled" fontSize="small"></LogoutIcon>
               </ListItemIcon>

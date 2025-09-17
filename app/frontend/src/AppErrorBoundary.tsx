@@ -18,7 +18,7 @@ export const AppErrorBoundary: React.FC<PropsWithChildren> = ({ children }) => {
                         <br />
                         Nous nous excusons pour le désagrément. Veuillez essayer de rafraîchir la page ou revenir plus tard.
                     </p>
-                    <Button variant="contained" onClick={handleRefresh}>
+                    <Button id="refresh-button" variant="contained" onClick={handleRefresh}>
                         Refresh / Rafraîchir
                     </Button>
 

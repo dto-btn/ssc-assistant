@@ -48,28 +48,29 @@ export const FeedbackForm = () => {
 
   return (
     <Dialog open={isOpen} onClose={() => close()} fullWidth maxWidth={"sm"}>
-        <DialogTitle>{t("provide.feedback")}</DialogTitle>
-        <Typography variant="subtitle2" align="left" style={{ paddingLeft: "24px" }}>{t("msg.opt")}</Typography>
+      <DialogTitle>{t("provide.feedback")}</DialogTitle>
+      <Typography variant="subtitle2" align="left" style={{ paddingLeft: "24px" }}>{t("msg.opt")}</Typography>
 
-        <DialogContent>
-          <TextField
-            multiline
-            rows={4}
-            fullWidth
-            value={feedback}
-            onChange={(e) => setFeedback(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-        <Button onClick={() => close()}>{t("cancel")}</Button>
-          <Button
-            style={{ backgroundColor: "#4b3e99", color: "white"}}
-            type="submit"
-            onClick={handleFeedbackSubmit}
-          >
-            {t("submit")}
-          </Button>
-        </DialogActions>
+      <DialogContent>
+        <TextField
+          multiline
+          rows={4}
+          fullWidth
+          value={feedback}
+          onChange={(e) => setFeedback(e.target.value)}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button id="feedback-cancel-button" onClick={() => close()}>{t("cancel")}</Button>
+        <Button
+          id="feedback-submit-button"
+          style={{ backgroundColor: "#4b3e99", color: "white" }}
+          type="submit"
+          onClick={handleFeedbackSubmit}
+        >
+          {t("submit")}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };
