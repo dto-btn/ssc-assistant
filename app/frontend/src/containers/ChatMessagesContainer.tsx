@@ -208,6 +208,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
           direction="row"
           spacing={1}
           sx={{
+            pl: 2,
             my: 2,
             width: "100%",
             height: showSkeleton ? `${SKELETON_HEIGHT}px` : "0px",
