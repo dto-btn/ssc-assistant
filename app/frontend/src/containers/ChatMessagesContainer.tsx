@@ -47,9 +47,16 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     const messageRef = lastMsgRef.current;
     const completionRef = lastCompletionRef.current;
     const chatLength = chatHistory.chatItems.length;
+    const chatItem = chatHistory.chatItems[chatLength - 1];
+    const completionItem = isACompletion(chatItem) ? chatItem : null;
+
+    console.log("Chat history:", chatHistory.chatItems);
+    console.log("Completion item:", completionItem);
 
     // Hide or show skeleton & change whitespace based on completion stage
-    if (isLoading && chatLength % 2 === 1 && messageRef && chatRef) { // Completion hasn't started streaming yet
+
+    // Completion hasn't started streaming yet
+    if (isLoading && completionItem?.message.content === '' && messageRef && chatRef) {
 
       setShowSkeleton(true);
 
@@ -83,7 +90,8 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         });
       }, 1000);
     }
-    else if (isLoading && chatLength % 2 === 0 && completionRef && messageRef && chatRef) { // Completion/Replay has started rendering
+    // Completion/Replay has started rendering
+    else if (isLoading && completionItem?.message.content !== '' && completionRef && messageRef && chatRef) {
 
       setShowSkeleton(false);
 
