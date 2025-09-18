@@ -40,7 +40,6 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
   const lastMsgRef = useRef<HTMLDivElement>(null);
   const [showSkeleton, setShowSkeleton] = useState(false);
   const [whitespace, setWhitespace] = useState("0px");
-  const [replaying, setReplaying] = useState(false);
 
   // Show skeleton if generating but not yet streaming response
   useEffect(() => {
@@ -75,12 +74,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
       // Ensure the fraction is not negative
       const whiteSpaceHeight = Math.max(whiteSpaceFraction * chatRef.clientHeight, 0);
 
-      if (replaying) {
-        setWhitespace(`${whiteSpaceHeight * 0.80}px`);
-      }
-      else {
-        setWhitespace(`${whiteSpaceHeight * 0.80}px`);
-      }
+      setWhitespace(`${whiteSpaceHeight * 0.80}px`);
 
       // Scroll to push message to the top
       setTimeout(() => {
@@ -118,17 +112,10 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     else { // Completion/Replay Finished
 
       setShowSkeleton(false);
-      setReplaying(false);
 
     }
 
   }, [isLoading, chatHistory.chatItems]);
-
-
-  const onReplay = () => {
-    setReplaying(true);
-    replayChat();
-  }
 
 
   return (
@@ -217,7 +204,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                           }
                           context={chatItem.message?.context}
                           toolsInfo={chatItem.message.tools_info}
-                          replayChat={onReplay}
+                          replayChat={replayChat}
                           index={index}
                           total={chatHistory.chatItems.length}
                           handleBookReservation={handleBookReservation}
@@ -242,7 +229,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                         }
                         context={chatItem.message?.context}
                         toolsInfo={chatItem.message.tools_info}
-                        replayChat={onReplay}
+                        replayChat={replayChat}
                         index={index}
                         total={chatHistory.chatItems.length}
                         handleBookReservation={handleBookReservation}
