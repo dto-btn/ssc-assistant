@@ -6,6 +6,7 @@ import { isACompletion, isAMessage, isAToastMessage } from "../utils";
 import { useTranslation } from "react-i18next";
 
 const SKELETON_HEIGHT = 200;
+const SKELETON_CIRCLE_SIZE = "35px"; // Same as UserBubble avatar size
 
 interface ChatMessagesContainerProps {
   chatHistory: ChatHistory;
@@ -75,10 +76,10 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
       const whiteSpaceHeight = Math.max(whiteSpaceFraction * chatRef.clientHeight, 0);
 
       if (replaying) {
-        setWhitespace(`${whiteSpaceHeight * 0.92}px`);
+        setWhitespace(`${whiteSpaceHeight * 0.80}px`);
       }
       else {
-        setWhitespace(`${whiteSpaceHeight * 0.95}px`);
+        setWhitespace(`${whiteSpaceHeight * 0.80}px`);
       }
 
       // Scroll to push message to the top
@@ -173,7 +174,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                   spacing={1}
                   sx={{
                     pl: 2,
-                    my: 2,
+                    my: 4,
                     width: "100%",
                     height: showSkeleton ? `${SKELETON_HEIGHT}px` : "0px",
                     opacity: showSkeleton ? 1 : 0,
@@ -181,7 +182,18 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                     transition: "height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
                   }}
                 >
-                  <Skeleton sx={{ bgcolor: "primary.light" }} variant="circular" height="35px" width="36px" aria-label={t("loading.skeleton")} />
+                  <Skeleton
+                    sx={{
+                      bgcolor: "primary.light",
+                      aspectRatio: "1 / 1", // ensures perfect circle
+                      minWidth: SKELETON_CIRCLE_SIZE,
+                      minHeight: SKELETON_CIRCLE_SIZE,
+                      maxWidth: SKELETON_CIRCLE_SIZE,
+                      maxHeight: SKELETON_CIRCLE_SIZE,
+                    }}
+                    variant="circular"
+                    aria-label={t("loading.skeleton")}
+                  />
                   <Stack direction="column" alignItems="left" sx={{ width: "100%" }}>
                     <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="85%" height={30} aria-label={t("loading.skeleton")} />
                     <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="82%" height={30} aria-label={t("loading.skeleton")} />
