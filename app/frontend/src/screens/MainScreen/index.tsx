@@ -618,7 +618,6 @@ const MainScreen = () => {
               scrollable={scrollable}
             />
             <div style={{ height: "50px" }} />
-            <div style={{ height: "50px" }} />
             <Box
               sx={{
                 position: "sticky",
