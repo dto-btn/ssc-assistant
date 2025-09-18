@@ -6,6 +6,7 @@ export const theme = createTheme({
     palette: {
       primary: {
         main: "#4b3e99" /* SSC's official colour code I found using our chatbot! XD */,
+        light: "#5848B1",
       },
       secondary: {
         main: "#f33aea",

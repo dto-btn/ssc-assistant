@@ -112,13 +112,14 @@ const MainScreen = () => {
     }
 
     setTimeout(() => {
+      // Check if we need to show scroll arrow after chat change
       handleScroll();
 
-      // Always scroll to bottom when changing chats
+      // Always scroll to top when changing chats or refreshing the page
       if (chatRef.current) {
         chatRef.current.scrollTo({
-          top: chatRef.current.scrollHeight,
-          behavior: "auto", // Use "smooth" if you want animation
+          top: 0,
+          behavior: "auto",
         });
       }
 

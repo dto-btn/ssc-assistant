@@ -6,6 +6,7 @@ import { isACompletion, isAMessage, isAToastMessage } from "../utils";
 import { useTranslation } from "react-i18next";
 
 const SKELETON_HEIGHT = 200;
+const SKELETON_CIRCLE_SIZE = "35px"; // Same as UserBubble avatar size
 
 interface ChatMessagesContainerProps {
   chatHistory: ChatHistory;
@@ -39,22 +40,29 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
   const lastMsgRef = useRef<HTMLDivElement>(null);
   const [showSkeleton, setShowSkeleton] = useState(false);
   const [whitespace, setWhitespace] = useState("0px");
-  const [replaying, setReplaying] = useState(false);
 
   // Show skeleton if generating but not yet streaming response
   useEffect(() => {
     const chatRef = containerRef.current;
     const messageRef = lastMsgRef.current;
     const completionRef = lastCompletionRef.current;
+    const chatLength = chatHistory.chatItems.length;
+    const chatItem = chatHistory.chatItems[chatLength - 1];
+    const completionItem = isACompletion(chatItem) ? chatItem : null;
 
-    if (chatHistory.chatItems.length <= 2) {
-      return;
-    }
+    handleScroll();
 
     // Hide or show skeleton & change whitespace based on completion stage
-    if (isLoading && !completionRef && messageRef && chatRef) { // Completion hasn't started streaming yet
+
+    // Completion hasn't started streaming yet
+    if (isLoading && completionItem?.message.content === '' && messageRef && chatRef) {
 
       setShowSkeleton(true);
+
+      // Don't adjust whitespace for first question & answer
+      if (chatLength <= 2) {
+        return;
+      }
 
       // Calculate the message and skeleton height as a fraction of the container height
       const messageFraction = messageRef.offsetHeight / chatRef.clientHeight;
@@ -66,12 +74,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
       // Ensure the fraction is not negative
       const whiteSpaceHeight = Math.max(whiteSpaceFraction * chatRef.clientHeight, 0);
 
-      if (replaying) {
-        setWhitespace(`${whiteSpaceHeight * 0.92}px`);
-      }
-      else {
-        setWhitespace(`${whiteSpaceHeight * 0.95}px`);
-      }
+      setWhitespace(`${whiteSpaceHeight * 0.80}px`);
 
       // Scroll to push message to the top
       setTimeout(() => {
@@ -79,11 +82,17 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
           top: chatRef.scrollHeight,
           behavior: "smooth"
         });
-      }, 1000);
+      }, 700);
     }
-    else if (isLoading && completionRef && messageRef && chatRef) { // Completion/Replay has started rendering
+    // Completion/Replay has started rendering
+    else if (isLoading && completionItem?.message.content !== '' && completionRef && messageRef && chatRef) {
 
       setShowSkeleton(false);
+
+      // Don't adjust whitespace for first question & answer
+      if (chatLength <= 2) {
+        return;
+      }
 
       // Calculate the message and completion height as a fraction of the container height
       const messageFraction = messageRef.offsetHeight / chatRef.clientHeight;
@@ -103,17 +112,10 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     else { // Completion/Replay Finished
 
       setShowSkeleton(false);
-      setReplaying(false);
 
     }
 
   }, [isLoading, chatHistory.chatItems]);
-
-
-  const onReplay = () => {
-    setReplaying(true);
-    replayChat();
-  }
 
 
   return (
@@ -152,77 +154,115 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
           </>
         ) : (
           chatHistory.chatItems.map((chatItem, index) => (
-            <Fragment key={index}>
-              {isACompletion(chatItem) && chatItem.message.content && (
-                <div
-                  ref={
-                    index === chatHistory.chatItems.length - 1
-                      ? lastCompletionRef
-                      : undefined
-                  }>
-                  <AssistantBubble
-                    text={chatItem.message.content}
-                    isLoading={
-                      index === chatHistory.chatItems.length - 1 && isLoading
-                    }
-                    context={chatItem.message?.context}
-                    toolsInfo={chatItem.message.tools_info}
-                    replayChat={onReplay}
-                    index={index}
-                    total={chatHistory.chatItems.length}
-                    handleBookReservation={handleBookReservation}
+            index === chatHistory.chatItems.length - 1
+              ? (showSkeleton ? (
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  sx={{
+                    pl: 2,
+                    my: 4,
+                    width: "100%",
+                    height: showSkeleton ? `${SKELETON_HEIGHT}px` : "0px",
+                    opacity: showSkeleton ? 1 : 0,
+                    overflow: "hidden",
+                    transition: "height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+                  }}
+                >
+                  <Skeleton
+                    sx={{
+                      bgcolor: "primary.light",
+                      aspectRatio: "1 / 1", // ensures perfect circle
+                      minWidth: SKELETON_CIRCLE_SIZE,
+                      minHeight: SKELETON_CIRCLE_SIZE,
+                      maxWidth: SKELETON_CIRCLE_SIZE,
+                      maxHeight: SKELETON_CIRCLE_SIZE,
+                    }}
+                    variant="circular"
+                    aria-label={t("loading.skeleton")}
                   />
-                </div>
-              )}
-              {isAMessage(chatItem) && (
-                <div
-                  ref={
-                    index === chatHistory.chatItems.length - 2
-                      ? lastMsgRef
-                      : undefined
-                  }>
-                  <UserBubble
-                    text={chatItem.content}
-                    quote={chatItem.quotedText}
-                    attachments={chatItem.attachments}
-                  />
-                </div>
-              )}
-              {isAToastMessage(chatItem) && (
-                <AlertBubble
-                  toast={chatItem}
-                  index={index}
-                  removeMessageHandler={handleRemoveToastMessage}
-                />
-              )}
-            </Fragment>
-          ))
+                  <Stack direction="column" alignItems="left" sx={{ width: "100%" }}>
+                    <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="85%" height={30} aria-label={t("loading.skeleton")} />
+                    <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="82%" height={30} aria-label={t("loading.skeleton")} />
+                    <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="88%" height={30} aria-label={t("loading.skeleton")} />
+                    <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="84%" height={30} aria-label={t("loading.skeleton")} />
+                    <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="87%" height={30} aria-label={t("loading.skeleton")} />
+                  </Stack>
+                </Stack>
+              )
+                : (
+                  <Fragment key={index}>
+                    {isACompletion(chatItem) && chatItem.message.content && (
+                      <div ref={lastCompletionRef} style={{
+                        marginBottom: whitespace,
+                        transition: "margin-bottom 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+                      }}>
+                        <AssistantBubble
+                          text={chatItem.message.content}
+                          isLoading={
+                            index === chatHistory.chatItems.length - 1 && isLoading
+                          }
+                          context={chatItem.message?.context}
+                          toolsInfo={chatItem.message.tools_info}
+                          replayChat={replayChat}
+                          index={index}
+                          total={chatHistory.chatItems.length}
+                          handleBookReservation={handleBookReservation}
+                        />
+                      </div>
+                    )}
+                  </Fragment>
+                )
+              ) : (
+                <Fragment key={index}>
+                  {isACompletion(chatItem) && chatItem.message.content && (
+                    <div
+                      ref={
+                        index === chatHistory.chatItems.length - 1
+                          ? lastCompletionRef
+                          : undefined
+                      }>
+                      <AssistantBubble
+                        text={chatItem.message.content}
+                        isLoading={
+                          index === chatHistory.chatItems.length - 1 && isLoading
+                        }
+                        context={chatItem.message?.context}
+                        toolsInfo={chatItem.message.tools_info}
+                        replayChat={replayChat}
+                        index={index}
+                        total={chatHistory.chatItems.length}
+                        handleBookReservation={handleBookReservation}
+                      />
+                    </div>
+                  )}
+                  {isAMessage(chatItem) && (
+                    <div
+                      ref={
+                        index === chatHistory.chatItems.length - 2
+                          ? lastMsgRef
+                          : undefined
+                      }>
+                      <UserBubble
+                        text={chatItem.content}
+                        quote={chatItem.quotedText}
+                        attachments={chatItem.attachments}
+                      />
+                    </div>
+                  )}
+                  {isAToastMessage(chatItem) && (
+                    <AlertBubble
+                      toast={chatItem}
+                      index={index}
+                      removeMessageHandler={handleRemoveToastMessage}
+                    />
+                  )}
+                </Fragment>
+              )))
         )}
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{
-            my: 2,
-            width: "100%",
-            height: showSkeleton ? `${SKELETON_HEIGHT}px` : "0px",
-            opacity: showSkeleton ? 1 : 0,
-            overflow: "hidden",
-            transition: "height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4,0,0.2,1)",
-          }}
-        >
-          <Skeleton variant="circular" height={35} width={35} />
-          <Stack direction="column" alignItems="left" sx={{ width: "100%" }}>
-            <Skeleton variant="text" width="85%" height={30} />
-            <Skeleton variant="text" width="82%" height={30} />
-            <Skeleton variant="text" width="88%" height={30} />
-            <Skeleton variant="text" width="84%" height={30} />
-            <Skeleton variant="text" width="87%" height={30} />
-          </Stack>
-        </Stack>
-        {/* Dynamic whitespace */}
         <div
           style={{
-            height: whitespace,
+            height: showSkeleton ? whitespace : 100,
             transition: "height 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
             width: "100%",
           }}
@@ -247,7 +287,8 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
             <ArrowCircleDownIcon
               sx={{
                 height: "40px",
-                width: "40px"
+                width: "40px",
+                color: "primary.main",
               }}
               aria-label={t("scroll.down")}
             />
