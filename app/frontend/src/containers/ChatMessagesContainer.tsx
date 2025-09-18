@@ -261,10 +261,9 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                 </Fragment>
               )))
         )}
-        {/* Dynamic whitespace */}
         <div
           style={{
-            height: whitespace,
+            height: showSkeleton ? whitespace : 100,
             transition: "height 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
             width: "100%",
           }}
