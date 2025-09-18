@@ -196,8 +196,8 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                   <Fragment key={index}>
                     {isACompletion(chatItem) && chatItem.message.content && (
                       <div ref={lastCompletionRef} style={{
-                        paddingBottom: whitespace,
-                        transition: "padding-bottom 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+                        marginBottom: whitespace,
+                        transition: "margin-bottom 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
                       }}>
                         <AssistantBubble
                           text={chatItem.message.content}
