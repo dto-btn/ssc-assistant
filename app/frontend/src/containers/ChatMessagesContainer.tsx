@@ -50,8 +50,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     const chatItem = chatHistory.chatItems[chatLength - 1];
     const completionItem = isACompletion(chatItem) ? chatItem : null;
 
-    console.log("Chat history:", chatHistory.chatItems);
-    console.log("Completion item:", completionItem);
+    handleScroll();
 
     // Hide or show skeleton & change whitespace based on completion stage
 

@@ -119,7 +119,7 @@ const MainScreen = () => {
       if (chatRef.current) {
         chatRef.current.scrollTo({
           top: 0,
-          behavior: "auto", // Use "smooth" if you want animation
+          behavior: "auto",
         });
       }
 
@@ -258,9 +258,6 @@ const MainScreen = () => {
   useEffect(() => {
     loadChatHistoriesFromStorage();
     loadEnabledToolsFromStorage();
-    setTimeout(() => {
-      handleScroll();
-    }, 100); // Slight delay to allow DOM to update
     setTimeout(() => {
       handleScroll();
     }, 100); // Slight delay to allow DOM to update
