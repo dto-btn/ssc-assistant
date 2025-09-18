@@ -46,14 +46,15 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     const chatRef = containerRef.current;
     const messageRef = lastMsgRef.current;
     const completionRef = lastCompletionRef.current;
+    const chatLength = chatHistory.chatItems.length;
 
     // Hide or show skeleton & change whitespace based on completion stage
-    if (isLoading && !completionRef && messageRef && chatRef) { // Completion hasn't started streaming yet
+    if (isLoading && chatLength % 2 === 1 && messageRef && chatRef) { // Completion hasn't started streaming yet
 
       setShowSkeleton(true);
 
       // Don't adjust whitespace for first question & answer
-      if (chatHistory.chatItems.length <= 2) {
+      if (chatLength <= 2) {
         return;
       }
 
@@ -82,12 +83,12 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
         });
       }, 1000);
     }
-    else if (isLoading && completionRef && messageRef && chatRef) { // Completion/Replay has started rendering
+    else if (isLoading && chatLength % 2 === 0 && completionRef && messageRef && chatRef) { // Completion/Replay has started rendering
 
       setShowSkeleton(false);
 
       // Don't adjust whitespace for first question & answer
-      if (chatHistory.chatItems.length <= 2) {
+      if (chatLength <= 2) {
         return;
       }
 
