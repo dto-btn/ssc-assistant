@@ -87,7 +87,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
           top: chatRef.scrollHeight,
           behavior: "smooth"
         });
-      }, 1000);
+      }, 700);
     }
     // Completion/Replay has started rendering
     else if (isLoading && completionItem?.message.content !== '' && completionRef && messageRef && chatRef) {

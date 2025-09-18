@@ -222,7 +222,7 @@ export const ChatInput = ({
               ? theme.palette.action.hover
               : undefined,
             transition: "background 0.2s, border-color 0.2s",
-            minHeight: hasDetectedDrag ? 90 : undefined,
+            minHeight: 60,    // Ensure fixed height
           }}
         >
           {!disabledFeaturesSet.has("file_upload") && !file && !isUploading && (
@@ -295,7 +295,7 @@ export const ChatInput = ({
           >
             {disabled ? (
               <Box sx={{ position: "relative", display: "inline-flex" }}>
-                <CircularProgress size={40} aria-label={t("stop.generating")} />
+                <CircularProgress size={30} aria-label={t("stop.generating")} />
                 <Box
                   sx={{
                     position: "absolute",
