@@ -1,0 +1,34 @@
+import React from "react";
+import { Button } from "@mui/material";
+
+interface FileUploadProps {
+  onFiles: (files: FileList) => void;
+}
+
+const FileUpload: React.FC<FileUploadProps> = ({ onFiles }) => {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  return (
+    <>
+      <input
+        type="file"
+        multiple
+        hidden
+        ref={inputRef}
+        onChange={e => {
+          if (e.target.files) onFiles(e.target.files);
+        }}
+      />
+      <Button
+        variant="outlined"
+        size="small"
+        onClick={() => inputRef.current?.click()}
+        sx={{ minWidth: 80 }}
+      >
+        Attach
+      </Button>
+    </>
+  );
+};
+
+export default FileUpload;

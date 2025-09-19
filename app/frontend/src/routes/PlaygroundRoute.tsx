@@ -1,6 +1,5 @@
 import React from 'react';
-import Playground from '../screens/Playground';
-
+import Playground from '../playground/Playground';
 interface PlaygroundProps {
     /* props */
 }
