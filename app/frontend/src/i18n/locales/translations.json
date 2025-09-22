@@ -904,8 +904,8 @@
         "fr": "Veuillez noter que les données récupérées du Référentiel de données d'entreprise (EDR), provenant du Système de réception et de suivi des demandes d'affaires (BITS), peuvent dater de jusqu'à 48 heures."
     },
     "br.disclaimer": {
-        "en": "This system is currently in a testing phase, and as such, data accuracy and system functionality are continuously being improved. AI-generated responses can only process up to 100 records at the time.",
-        "fr": "Ce système est actuellement en phase de test et, en tant que tel, l'exactitude des données et la fonctionnalité du système sont continuellement améliorées. Les réponses générées par l’IA peuvent traiter jusqu’à 100 enregistrements à la fois."
+        "en": "This system is currently in a testing phase, and as such, data accuracy and system functionality are continuously being improved.",
+        "fr": "Ce système est actuellement en phase de test et, en tant que tel, l'exactitude des données et la fonctionnalité du système sont continuellement améliorées."
     },
     "PRODUCTS": {
         "en": "Products",
