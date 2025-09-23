@@ -27,7 +27,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   return (
     <Box flex={1} overflow="auto" p={2}>
       <List ref={listRef}>
-        {messages.map((msg) => (
+        {(messages as Message[]).map((msg) => (
           <ListItem key={msg.id} alignItems="flex-start" secondaryAction={
             msg.role === "user" ? (
               <IconButton

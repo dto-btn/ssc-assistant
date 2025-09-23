@@ -19,6 +19,7 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import SessionRenameDialog from "./SessionRenameDialog";
+import type { Session } from "../store/slices/sessionSlice";
 
 const SessionSidebar: React.FC = () => {
   const sessions = useSelector((state: RootState) => state.sessions.sessions);
@@ -41,7 +42,7 @@ const SessionSidebar: React.FC = () => {
   };
 
   const sessionName = (id: string) =>
-    sessions.find((s) => s.id === id)?.name || "";
+  sessions.find((s: { id: string; name?: string }) => s.id === id)?.name ?? "";
 
   return (
     <Box
@@ -58,7 +59,7 @@ const SessionSidebar: React.FC = () => {
         </Button>
       </Box>
       <List>
-        {sessions.map((session) => (
+        {sessions.map((session: Session) => (
           <ListItem
             key={session.id}
             selected={session.id === currentSessionId}

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
+import { Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
 
 const FeedbackForm: React.FC = () => {
   const [open, setOpen] = useState(false);
