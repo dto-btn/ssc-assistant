@@ -157,6 +157,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
             index === chatHistory.chatItems.length - 1
               ? (showSkeleton ? (
                 <Stack
+                  key="skeleton-loader"
                   direction="row"
                   spacing={1}
                   sx={{
