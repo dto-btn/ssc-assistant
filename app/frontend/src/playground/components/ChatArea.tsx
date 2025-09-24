@@ -9,19 +9,17 @@ import Citations from "./Citations";
 import { Box, Typography } from "@mui/material";
 import { addMessage, setIsLoading } from "../store/slices/chatSlice";
 import Suggestions from "./Suggestions";
+import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 
 const ChatArea: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-
   const currentSessionId = useSelector(
     (state: RootState) => state.sessions.currentSessionId
   );
-
   const isLoading = useSelector((state: RootState) => state.chat.isLoading);
 
-const messages = useSelector((state: RootState) =>
-  state.chat.messages.filter((message) => message.sessionId === currentSessionId)
-);
+  // Use memoized selector for messages
+  const messages = useSelector(selectMessagesBySessionId);
 
   // Create a single reversed view to avoid repeated copying/reversal
   const reversedMessages = React.useMemo(
@@ -38,16 +36,13 @@ const messages = useSelector((state: RootState) =>
   // Replay sends the previous user message again
   const handleReplay = (): void => {
     if (messages.length < 2) return;
-
     // Index of the last user message in the reversed array
     const lastUserMessageIndexFromEnd = reversedMessages.findIndex(
       (message) => message.role === "user"
     );
     if (lastUserMessageIndexFromEnd === -1) return;
-
     const userMessage =
       messages[messages.length - 2 - lastUserMessageIndexFromEnd];
-
     if (userMessage) {
       dispatch(
         addMessage({

@@ -1,7 +1,7 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
-import { toggleTool, setEnabledTools } from "../store/slices/toolSlice";
+import { toggleTool } from "../store/slices/toolSlice";
 import { setSelectedModel } from "../store/slices/modelSlice";
 import { setSessionStaticTools } from "../store/slices/sessionSlice";
 import { Box, FormGroup, FormControlLabel, Switch, Select, MenuItem, Typography, Button } from "@mui/material";

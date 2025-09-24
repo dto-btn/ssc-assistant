@@ -16,10 +16,12 @@ import {
   Box,
   Typography,
   IconButton,
+  ListItemButton,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import SessionRenameDialog from "./SessionRenameDialog";
+import DeleteIcon from "@mui/icons-material/Delete";
 import type { Session } from "../store/slices/sessionSlice";
+import SessionRenameDialog from "./SessionRenameDialog";
 
 const SessionSidebar: React.FC = () => {
   const sessions = useSelector((state: RootState) => state.sessions.sessions);
@@ -42,7 +44,15 @@ const SessionSidebar: React.FC = () => {
   };
 
   const sessionName = (id: string) =>
-  sessions.find((s: { id: string; name?: string }) => s.id === id)?.name ?? "";
+    sessions.find((session) => session.id === id)?.name ?? "";
+
+  const handleRenameSession = (newName: string) => {
+    if (sessionToRename) {
+      dispatch(renameSession({ id: sessionToRename, name: newName }));
+    }
+    setRenameDialogOpen(false);
+    setSessionToRename(null);
+  };
 
   return (
     <Box
@@ -52,58 +62,69 @@ const SessionSidebar: React.FC = () => {
       borderRight="1px solid #ddd"
       height="100vh"
     >
+      {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Typography variant="h6">Chats</Typography>
         <Button size="small" onClick={handleNewSession} variant="outlined">
           New
         </Button>
       </Box>
+
+      {/* Sessions List */}
       <List>
         {sessions.map((session: Session) => (
           <ListItem
             key={session.id}
-            selected={session.id === currentSessionId}
-            button
-            onClick={() => dispatch(setCurrentSession(session.id))}
-            secondaryAction={
-              <>
-                <IconButton
-                  size="small"
-                  onClick={e => {
-                    e.stopPropagation();
-                    setSessionToRename(session.id);
-                    setRenameDialogOpen(true);
-                  }}
-                  title="Rename Conversation"
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-                <Button
-                  size="small"
-                  color="error"
-                  onClick={e => {
-                    e.stopPropagation();
-                    dispatch(removeSession(session.id));
-                  }}
-                >
-                  X
-                </Button>
-              </>
-            }
+            disablePadding
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
           >
-            <ListItemText primary={session.name} />
+            <ListItemButton
+              selected={session.id === currentSessionId}
+              onClick={() => dispatch(setCurrentSession(session.id))}
+            >
+              <ListItemText primary={session.name} />
+            </ListItemButton>
+
+            {/* Actions Container (Rename & Delete Buttons) */}
+            <Box display="flex" alignItems="center">
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSessionToRename(session.id);
+                  setRenameDialogOpen(true);
+                }}
+                title="Rename Conversation"
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+
+              <IconButton
+                size="small"
+                color="error"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  dispatch(removeSession(session.id));
+                }}
+                title="Delete Conversation"
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Box>
           </ListItem>
         ))}
       </List>
+
+      {/* Rename Session Dialog */}
       <SessionRenameDialog
         open={renameDialogOpen}
         initialValue={sessionToRename ? sessionName(sessionToRename) : ""}
         onClose={() => setRenameDialogOpen(false)}
-        onRename={(newName) => {
-          if (sessionToRename) {
-            dispatch(renameSession({ id: sessionToRename, name: newName }));
-          }
-        }}
+        onRename={handleRenameSession}
       />
     </Box>
   );

@@ -15,6 +15,19 @@ interface MessageList extends Message {
   id: string;
 }
 
+const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({ children, ...rest }) => {
+  return (
+    <Link
+      component="a"
+      {...rest}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {children}
+    </Link>
+  );
+};
+
 const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   const messages = useSelector((state: RootState) =>
     state.chat.messages.filter((m) => m.sessionId === sessionId)
@@ -32,25 +45,34 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
     <Box flex={1} overflow="auto" p={2}>
       <List ref={listRef}>
         {(messages as MessageList[]).map((message) => (
-          <ListItem key={message.id} alignItems="flex-start" secondaryAction={
-            message.role === "user" ? (
-              <IconButton
-                size="small"
-                onClick={() => dispatch(setQuotedText(message.content || ""))}
-                title="Quote this message"
-              >
-                <FormatQuoteIcon />
-              </IconButton>
-            ) : undefined
-          }>
+          <ListItem
+            key={message.id}
+            alignItems="flex-start"
+            secondaryAction={
+              message.role === "user" ? (
+                <IconButton
+                  size="small"
+                  onClick={() => dispatch(setQuotedText(message.content || ""))}
+                  title="Quote this message"
+                  aria-label="Quote this message"
+                >
+                  <FormatQuoteIcon />
+                </IconButton>
+              ) : undefined
+            }
+          >
             <ListItemText
               primary={message.role === "user" ? "You" : "Assistant"}
               secondary={
                 <>
                   <ReactMarkdown
                     components={{
-                      a: ({ ...props}) => <Link {...props} target="_blank" rel="noopener" />,
-                      p: ({ ...props}) => <span {...props} />
+                      a: ({ node, ref: _ref, ...props }) => (
+                        <MarkdownLink
+                          {...(props as React.ComponentPropsWithoutRef<"a">)}
+                        />
+                      ),
+                      p: ({ children, ...pProps }) => <span {...pProps}>{children}</span>,
                     }}
                   >
                     {message.content}
