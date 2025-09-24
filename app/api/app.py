@@ -5,6 +5,7 @@ from apiflask import APIFlask
 from dotenv import load_dotenv
 from v1.routes_v1 import api_v1
 from proxy.azure import proxy_azure
+from flask_cors import CORS
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("v1").setLevel(logging.DEBUG)
@@ -13,6 +14,7 @@ logging.getLogger("azure.core.pipeline.policies").setLevel(logging.ERROR)
 load_dotenv()
 
 app = APIFlask(__name__, title="SSC Assistant API", version="2.0")
+CORS(app, supports_credentials=True)
 
 app.servers = [
     {

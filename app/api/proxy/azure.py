@@ -27,27 +27,27 @@ CORS_MAX_AGE = os.getenv("CORS_MAX_AGE", "86400")
 
 proxy_azure = APIBlueprint("proxy_azure", __name__)
 
-@proxy_azure.after_request
-def add_cors_headers(response: Response):
-    """Attach CORS headers to all responses from this blueprint."""
-    # Use wildcard for dev unless a specific origin is configured
-    response.headers["Access-Control-Allow-Origin"] = CORS_ALLOW_ORIGIN
-    if CORS_ALLOW_ORIGIN != "*":
-        # Help caches differentiate responses by Origin
-        response.headers["Vary"] = "Origin"
-    response.headers["Access-Control-Allow-Methods"] = CORS_ALLOW_METHODS
-    response.headers["Access-Control-Allow-Headers"] = CORS_ALLOW_HEADERS
-    response.headers["Access-Control-Expose-Headers"] = CORS_EXPOSE_HEADERS
-    response.headers["Access-Control-Max-Age"] = CORS_MAX_AGE
-    return response
+# @proxy_azure.after_request
+# def add_cors_headers(response: Response):
+#     """Attach CORS headers to all responses from this blueprint."""
+#     # Use wildcard for dev unless a specific origin is configured
+#     response.headers["Access-Control-Allow-Origin"] = CORS_ALLOW_ORIGIN
+#     if CORS_ALLOW_ORIGIN != "*":
+#         # Help caches differentiate responses by Origin
+#         response.headers["Vary"] = "Origin"
+#     response.headers["Access-Control-Allow-Methods"] = CORS_ALLOW_METHODS
+#     response.headers["Access-Control-Allow-Headers"] = CORS_ALLOW_HEADERS
+#     response.headers["Access-Control-Expose-Headers"] = CORS_EXPOSE_HEADERS
+#     response.headers["Access-Control-Max-Age"] = CORS_MAX_AGE
+#     return response
 
 
-@proxy_azure.route("/<path:subpath>", methods=["OPTIONS"])
-def openai_chat_completions_options():
-    """Handle CORS preflight for the Azure azure_proxy endpoint."""
-    return Response(status=204)
+# @proxy_azure.route("<path:subpath>", methods=["OPTIONS"])
+# def openai_chat_completions_options(subpath: str):
+#     """Handle CORS preflight for the Azure azure_proxy endpoint."""
+#     return Response(status=204)
 
-@proxy_azure.post("/<path:subpath>")
+@proxy_azure.post("<path:subpath>")
 def openai_chat_completions(subpath: str):
     """
     OpenAI-compatible chat completions endpoint.
