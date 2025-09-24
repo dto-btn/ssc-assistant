@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import type { RootState, AppDispatch } from "../store"; // Ensure AppDispatch is exported
+import { RootState } from "../store";
 import { Box, List, ListItem, ListItemText, IconButton, Paper } from "@mui/material";
 import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
 import { setQuotedText } from "../store/slices/quotedSlice";
@@ -11,26 +11,16 @@ interface ChatMessagesProps {
   sessionId: string;
 }
 
-// Replace with your actual message shape from the store if available
-type ChatMessageRole = "user" | "assistant";
-export interface ChatMessage {
+interface MessageList extends Message {
   id: string;
-  sessionId: string;
-  role: ChatMessageRole;
-  content: string;
-  attachments?: ReadonlyArray<unknown>;
 }
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
-  const dispatch = useDispatch<AppDispatch>();
-
-  const messages = useSelector<RootState, ChatMessage[]>((state) =>
-    state.chat.messages.filter(
-      (message: ChatMessage) => message.sessionId === sessionId
-    )
+  const messages = useSelector((state: RootState) =>
+    state.chat.messages.filter((m) => m.sessionId === sessionId)
   );
-
   const listRef = useRef<HTMLUListElement>(null);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (listRef.current) {
@@ -41,35 +31,26 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   return (
     <Box flex={1} overflow="auto" p={2}>
       <List ref={listRef}>
-        {messages.map((message) => (
-          <ListItem
-            key={message.id}
-            alignItems="flex-start"
-            secondaryAction={
-              message.role === "user"
-                ? (
-                  <IconButton
-                    size="small"
-                    onClick={() => dispatch(setQuotedText(message.content))}
-                    title="Quote this message"
-                    aria-label="Quote this message"
-                  >
-                    <FormatQuoteIcon />
-                  </IconButton>
-                )
-                : undefined
-            }
-          >
+        {(messages as MessageList[]).map((message) => (
+          <ListItem key={message.id} alignItems="flex-start" secondaryAction={
+            message.role === "user" ? (
+              <IconButton
+                size="small"
+                onClick={() => dispatch(setQuotedText(message.content || ""))}
+                title="Quote this message"
+              >
+                <FormatQuoteIcon />
+              </IconButton>
+            ) : undefined
+          }>
             <ListItemText
               primary={message.role === "user" ? "You" : "Assistant"}
               secondary={
                 <>
                   <ReactMarkdown
                     components={{
-                      a: ({  ...props }) => (
-                        <Link {...props} target="_blank" rel="noopener" />
-                      ),
-                      p: ({ ...props }) => <span {...props} />,
+                      a: ({ ...props}) => <Link {...props} target="_blank" rel="noopener" />,
+                      p: ({ ...props}) => <span {...props} />
                     }}
                   >
                     {message.content}
