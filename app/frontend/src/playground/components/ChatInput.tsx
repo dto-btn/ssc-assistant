@@ -5,7 +5,7 @@ import { Box, TextField, Button, Paper, IconButton } from "@mui/material";
 import FileUpload from "./FileUpload";
 import { addToast } from "../store/slices/toastSlice";
 import { RootState } from "../store";
-import { clearQuotedText } from "../store/slices/qoutedSlice";
+import { clearQuotedText } from "../store/slices/quotedSlice";
 import CloseIcon from "@mui/icons-material/Close";
 
 interface ChatInputProps {

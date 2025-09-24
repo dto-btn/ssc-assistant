@@ -13,7 +13,7 @@ interface ChatMessagesProps {
 
 // Replace with your actual message shape from the store if available
 type ChatMessageRole = "user" | "assistant";
-interface ChatMessage {
+export interface ChatMessage {
   id: string;
   sessionId: string;
   role: ChatMessageRole;

@@ -10,16 +10,6 @@ import { Box, Typography } from "@mui/material";
 import { addMessage, setIsLoading } from "../store/slices/chatSlice";
 import Suggestions from "./Suggestions";
 
-// Replace this with your real message type if one already exists in your store/slices
-type ChatMessageRole = "user" | "assistant";
-interface ChatMessage {
-  sessionId: string;
-  role: ChatMessageRole;
-  content: string;
-  attachments?: ReadonlyArray<unknown>;
-  citations?: ReadonlyArray<unknown>;
-}
-
 const ChatArea: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -29,11 +19,9 @@ const ChatArea: React.FC = () => {
 
   const isLoading = useSelector((state: RootState) => state.chat.isLoading);
 
-  const messages = useSelector<RootState, ChatMessage[]>((state) =>
-    state.chat.messages.filter(
-      (message: ChatMessage) => message.sessionId === currentSessionId
-    )
-  );
+const messages = useSelector((state: RootState) =>
+  state.chat.messages.filter((message) => message.sessionId === currentSessionId)
+);
 
   // Create a single reversed view to avoid repeated copying/reversal
   const reversedMessages = React.useMemo(
