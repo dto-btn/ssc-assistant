@@ -56,7 +56,7 @@ export const ChatInput = ({
     onDrop: (event: React.DragEvent) => {
       event.preventDefault();
       event.stopPropagation();
-      if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+      if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
         const file = event.dataTransfer.files[0];
         doUpload(file);
       }
