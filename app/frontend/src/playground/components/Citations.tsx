@@ -26,11 +26,11 @@ const Citations: React.FC<Props> = ({ citations }) => {
       <Typography variant="subtitle2" gutterBottom>
         Citations
       </Typography>
-      {citations.map((c, i) => (
+      {citations.map((citation, i) => (
         <Box key={i} mb={1}>
           <Typography variant="body2">
-            {c.title}{" "}
-            <Link href={c.url} target="_blank" rel="noopener noreferrer">
+            {citation.title}{" "}
+            <Link href={citation.url} target="_blank" rel="noopener noreferrer">
               [link]
             </Link>
           </Typography>

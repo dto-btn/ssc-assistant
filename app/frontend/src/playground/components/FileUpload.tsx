@@ -23,8 +23,8 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFiles }) => {
         multiple
         hidden
         ref={inputRef}
-        onChange={e => {
-          if (e.target.files) onFiles(e.target.files);
+        onChange={event => {
+          if (event.target.files) onFiles(event.target.files);
         }}
       />
       <Button

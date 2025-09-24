@@ -25,9 +25,9 @@ interface Props {
 const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => (
   <Box display="flex" flexDirection="column" gap={2} mt={2} alignItems="center">
     <Typography variant="h5">Try asking:</Typography>
-    {suggestions.map((s, i) => (
-      <Button key={i} variant="outlined" onClick={() => onSuggestionClicked(s)} disabled={disabled}>
-        {s}
+    {suggestions.map((suggestion, index) => (
+      <Button key={index} variant="outlined" onClick={() => onSuggestionClicked(suggestion)} disabled={disabled}>
+        {suggestion}
       </Button>
     ))}
   </Box>

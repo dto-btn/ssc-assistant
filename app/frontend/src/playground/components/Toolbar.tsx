@@ -57,7 +57,7 @@ const Toolbar: React.FC = () => {
         <Select
           size="small"
           value={selectedModel}
-          onChange={e => dispatch(setSelectedModel(e.target.value))}
+          onChange={event => dispatch(setSelectedModel(event.target.value))}
         >
           {availableModels.map(model =>
             <MenuItem key={model} value={model}>{model}</MenuItem>
@@ -68,7 +68,7 @@ const Toolbar: React.FC = () => {
         <Button
           size="small"
           variant="outlined"
-          onClick={() => dispatch(setSessionStaticTools({ id: currentSessionId, tools: Object.keys(enabledTools).filter(t => enabledTools[t]) }))}
+          onClick={() => dispatch(setSessionStaticTools({ id: currentSessionId, tools: Object.keys(enabledTools).filter(tool => enabledTools[tool]) }))}
           disabled={!!staticTools.length}
         >
           Lock Tools This Session

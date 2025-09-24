@@ -41,11 +41,11 @@ const chatSlice = createSlice({
       });
     },
     deleteMessage: (state, action: PayloadAction<string>) => {
-      state.messages = state.messages.filter((m) => m.id !== action.payload);
+      state.messages = state.messages.filter((message) => message.id !== action.payload);
     },
     clearSessionMessages: (state, action: PayloadAction<string>) => {
       state.messages = state.messages.filter(
-        (m) => m.sessionId !== action.payload
+        (message) => message.sessionId !== action.payload
       );
     },
     setIsLoading: (state, action: PayloadAction<boolean>) => {

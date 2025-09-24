@@ -65,10 +65,10 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
           variant="outlined"
           placeholder="Type a message..."
           value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
+          onChange={(event) => setInput(event.target.value)}
+          onKeyPress={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
               handleSend();
             }
           }}

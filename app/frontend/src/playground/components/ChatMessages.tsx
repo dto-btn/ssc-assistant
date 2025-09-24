@@ -38,7 +38,7 @@ const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({ children,
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   const messages = useSelector((state: RootState) =>
-    state.chat.messages.filter((m) => m.sessionId === sessionId)
+    state.chat.messages.filter((message) => message.sessionId === sessionId)
   );
   const listRef = useRef<HTMLUListElement>(null);
   const dispatch = useDispatch();

@@ -28,7 +28,7 @@ const SessionRenameDialog: React.FC<Props> = ({ open, initialValue, onClose, onR
       <DialogContent>
         <TextField
           value={name}
-          onChange={e => setName(e.target.value)}
+          onChange={event => setName(event.target.value)}
           label="Conversation Name"
           fullWidth
           autoFocus

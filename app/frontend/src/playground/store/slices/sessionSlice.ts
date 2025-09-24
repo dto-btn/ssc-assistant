@@ -33,7 +33,7 @@ const sessionSlice = createSlice({
       state.currentSessionId = action.payload.id;
     },
     removeSession: (state, action: PayloadAction<string>) => {
-      state.sessions = state.sessions.filter((s) => s.id !== action.payload);
+      state.sessions = state.sessions.filter((session) => session.id !== action.payload);
       if (state.currentSessionId === action.payload) {
         state.currentSessionId = state.sessions.length
           ? state.sessions[0].id
@@ -47,14 +47,14 @@ const sessionSlice = createSlice({
       state,
       action: PayloadAction<{ id: string; name: string }>
     ) => {
-      const session = state.sessions.find((s) => s.id === action.payload.id);
+      const session = state.sessions.find((session) => session.id === action.payload.id);
       if (session) session.name = action.payload.name;
     },
     setSessionStaticTools: (
       state,
       action: PayloadAction<{ id: string; tools: string[] }>
     ) => {
-      const session = state.sessions.find((s) => s.id === action.payload.id);
+      const session = state.sessions.find((session) => session.id === action.payload.id);
       if (session) session.staticTools = action.payload.tools;
     }
   },
