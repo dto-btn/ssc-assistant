@@ -130,6 +130,22 @@ export const ChatInput = ({
     }
   }, [quotedText]);
 
+  // Use effect to handle file drop on the window
+  // This is done this way to allow dropping files anywhere on the window instead of just the input area
+  useEffect(() => {
+    const handleDrop = (event: DragEvent) => {
+      if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+        const file = event.dataTransfer.files[0];
+        doUpload(file);
+        event.preventDefault();
+      }
+    };
+    window.addEventListener("drop", handleDrop);
+    return () => {
+      window.removeEventListener("drop", handleDrop);
+    };
+  }, [doUpload]);
+
   return (
     <>
       <Container
