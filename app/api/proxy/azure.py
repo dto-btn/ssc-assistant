@@ -2,9 +2,8 @@ import json
 import logging
 import os
 
+from apiflask import APIBlueprint
 import requests
-
-from .root import api_v2
 
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from flask import Response, jsonify, request, stream_with_context
@@ -19,15 +18,16 @@ azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
 
-# Basic CORS configuration for dev. You can set CORS_ALLOW_ORIGIN to a specific origin.
+# Basic CORS configuration for dev. You can set CORS_ALLOW_ORIGIN to a specific origin. TODO
 CORS_ALLOW_ORIGIN = os.getenv("CORS_ALLOW_ORIGIN", "*")
 CORS_ALLOW_METHODS = "POST, OPTIONS"
 CORS_ALLOW_HEADERS = os.getenv("CORS_ALLOW_HEADERS", "Content-Type, Authorization")
 CORS_EXPOSE_HEADERS = os.getenv("CORS_EXPOSE_HEADERS", "Content-Type")
 CORS_MAX_AGE = os.getenv("CORS_MAX_AGE", "86400")
 
+proxy_azure = APIBlueprint("proxy_azure", __name__)
 
-@api_v2.after_request
+@proxy_azure.after_request
 def add_cors_headers(response: Response):
     """Attach CORS headers to all responses from this blueprint."""
     # Use wildcard for dev unless a specific origin is configured
@@ -42,12 +42,12 @@ def add_cors_headers(response: Response):
     return response
 
 
-@api_v2.route("/azure/<path:subpath>", methods=["OPTIONS"])
+@proxy_azure.route("/azure/<path:subpath>", methods=["OPTIONS"])
 def openai_chat_completions_options(_subpath: str):  # pragma: no cover - trivial CORS preflight
-    """Handle CORS preflight for the Azure proxy endpoint."""
+    """Handle CORS preflight for the Azure azure_proxy endpoint."""
     return Response(status=204)
 
-@api_v2.post("/azure/<path:subpath>")
+@proxy_azure.post("/azure/<path:subpath>")
 def openai_chat_completions(subpath: str):
     """
     OpenAI-compatible chat completions endpoint.
@@ -154,5 +154,5 @@ def openai_chat_completions(subpath: str):
         )
 
     except Exception as e:
-        logger.exception("Unexpected error in OpenAI proxy")
-        return jsonify({"error": {"message": f"Unexpected error: {str(e)}"}}), 500
+        logger.exception("Unexpected error in OpenAI azure_proxy :%s", e)
+        return jsonify({"error": {"message": "An internal error has occurred."}}), 500
