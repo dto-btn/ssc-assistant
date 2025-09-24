@@ -280,7 +280,7 @@ export const ChatInput = ({
           )}
 
           <InputBase
-            sx={{ ml: file ? 6 : 1, flex: 1 }}
+            sx={{ ml: file || isUploading ? 6 : 1, flex: 1 }}
             slotProps={{
               input: {
                 tabIndex: 0,
