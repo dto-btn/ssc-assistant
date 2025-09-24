@@ -12,7 +12,7 @@ logging.getLogger("azure.core.pipeline.policies").setLevel(logging.ERROR)
 
 load_dotenv()
 
-app = APIFlask(__name__, title="SSC Assistant API", version="1.0")
+app = APIFlask(__name__, title="SSC Assistant API", version="2.0")
 
 app.servers = [
     {
@@ -40,4 +40,4 @@ app.security_schemes = {  # equals to use config SECURITY_SCHEMES
 }
 
 app.register_blueprint(api_v1, url_prefix='/api/1.0')
-app.register_blueprint(proxy_azure, url_prefix='/proxy_azure')
+app.register_blueprint(proxy_azure, url_prefix='/proxy/azure')

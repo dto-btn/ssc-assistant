@@ -2,9 +2,9 @@ import { AzureOpenAI } from "openai";
 
 // Point to your proxy base URL - use frontend server proxy
 const client = new AzureOpenAI(
-    {
-        baseURL: "http://localhost:8080/api/proxy/azure",
-        apiKey: "no-thank-you",
+    {   //process.env.VITE_API_BACKEND
+        baseURL: "http://localhost:5001/proxy/azure",
+        apiKey: "#no-thank-you",
         apiVersion: "2024-05-01-preview",
         dangerouslyAllowBrowser: true,
     }

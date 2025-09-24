@@ -42,12 +42,12 @@ def add_cors_headers(response: Response):
     return response
 
 
-@proxy_azure.route("/azure/<path:subpath>", methods=["OPTIONS"])
-def openai_chat_completions_options(_subpath: str):  # pragma: no cover - trivial CORS preflight
+@proxy_azure.route("/<path:subpath>", methods=["OPTIONS"])
+def openai_chat_completions_options():
     """Handle CORS preflight for the Azure azure_proxy endpoint."""
     return Response(status=204)
 
-@proxy_azure.post("/azure/<path:subpath>")
+@proxy_azure.post("/<path:subpath>")
 def openai_chat_completions(subpath: str):
     """
     OpenAI-compatible chat completions endpoint.
