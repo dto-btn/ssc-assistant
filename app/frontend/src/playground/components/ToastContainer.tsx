@@ -1,3 +1,10 @@
+/**
+ * ToastContainer component
+ *
+ * Small wrapper around toasts used in the playground to display transient
+ * notifications such as send success, errors, or persisted state events.
+ */
+
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";

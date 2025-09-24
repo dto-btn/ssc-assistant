@@ -1,3 +1,10 @@
+/**
+ * SessionRenameDialog component
+ *
+ * Modal dialog used to rename a saved playground session. Validates the new
+ * name and dispatches session rename actions to the playground store.
+ */
+
 import React, { useState } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from "@mui/material";
 

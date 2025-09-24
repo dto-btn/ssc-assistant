@@ -1,3 +1,12 @@
+/**
+ * Suggestions component
+ *
+ * Shows suggested prompts or auto-complete options for the user while
+ * composing messages in the playground. Suggestions may be derived from
+ * session history or model hints and are dispatched back to the store when
+ * selected.
+ */
+
 import React from "react";
 import { Box, Button, Typography } from "@mui/material";
 

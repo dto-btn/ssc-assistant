@@ -1,3 +1,11 @@
+/**
+ * Chat slice
+ *
+ * Redux slice that stores chat messages and related metadata for the
+ * playground. Exposes actions for adding messages, updating status, and
+ * clearing chat history.
+ */
+
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
 

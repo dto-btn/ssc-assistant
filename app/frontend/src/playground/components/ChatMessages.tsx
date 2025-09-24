@@ -1,3 +1,11 @@
+/**
+ * ChatMessages component
+ *
+ * Responsible for rendering the list of chat message items in the playground.
+ * Handles message grouping, quoting highlights, and feeds message UI events
+ * back to the store.
+ */
+
 import React, { useRef, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";

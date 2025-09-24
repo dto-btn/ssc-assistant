@@ -1,3 +1,11 @@
+/**
+ * FileUpload component
+ *
+ * Handles file selection and upload UI inside the playground. Integrates with
+ * the app's upload endpoint and shows progress/status to the user. Intended
+ * for development/testing of file-based RAG flows.
+ */
+
 import React from "react";
 import { Button } from "@mui/material";
 

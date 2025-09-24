@@ -1,3 +1,10 @@
+/**
+ * Chat selectors
+ *
+ * Selector helpers for deriving values from the playground chat slice, such
+ * as visible messages, quoted message lookup, and aggregate counts.
+ */
+
 import { createSelector } from "reselect";
 import { RootState } from "../../store";
 

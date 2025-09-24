@@ -1,3 +1,10 @@
+/**
+ * Session slice
+ *
+ * Manages saved playground sessions (collections of messages and settings).
+ * Exposes actions to create, rename, delete, and switch sessions.
+ */
+
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface Session {

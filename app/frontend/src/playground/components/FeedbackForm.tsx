@@ -1,3 +1,11 @@
+/**
+ * FeedbackForm component
+ *
+ * Provides an inline feedback UI for rating or commenting on assistant
+ * responses in the playground. Connects to the telemetry/feedback service
+ * via the playground store to submit user feedback events.
+ */
+
 import React, { useState } from "react";
 import { Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
 

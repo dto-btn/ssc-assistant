@@ -1,3 +1,11 @@
+/**
+ * ChatInput component
+ *
+ * Contains the text input box and send/attach controls used to submit
+ * messages in the playground. Exports a controlled input component that
+ * integrates with the playground store and middleware for sending events.
+ */
+
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addMessage } from "../store/slices/chatSlice";

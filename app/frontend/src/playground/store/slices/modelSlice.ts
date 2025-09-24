@@ -1,3 +1,11 @@
+/**
+ * Model slice
+ *
+ * Holds configuration and state for the assistant model used in the
+ * playground (e.g., model id, temperature, streaming flags). Exposes actions
+ * to update model parameters.
+ */
+
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface ModelState {

@@ -1,3 +1,10 @@
+/**
+ * Tool slice
+ *
+ * Tracks which external tools (if any) are enabled for the playground and
+ * stores tool-related metadata used by the middleware and UI components.
+ */
+
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface ToolState {

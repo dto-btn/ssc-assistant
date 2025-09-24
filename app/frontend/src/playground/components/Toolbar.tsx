@@ -1,3 +1,11 @@
+/**
+ * Toolbar component
+ *
+ * Top toolbar providing global playground actions such as clear session,
+ * start/stop streaming, and toggles for developer features. Interacts with
+ * the playground store to dispatch global commands.
+ */
+
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";

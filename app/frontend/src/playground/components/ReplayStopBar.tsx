@@ -1,3 +1,10 @@
+/**
+ * ReplayStopBar component
+ *
+ * Small control bar used during replay sessions to pause/stop and show
+ * playback controls. Used by the session replay feature in the playground.
+ */
+
 import React from "react";
 import { Box, Button } from "@mui/material";
 

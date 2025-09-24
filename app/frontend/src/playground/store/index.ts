@@ -1,3 +1,11 @@
+/**
+ * Playground store index
+ *
+ * Entry point for the playground Redux store: sets up reducers, middleware,
+ * and persistence. Exported items are used by the `Playground` UI to provide
+ * state and dispatch throughout the playground components.
+ */
+
 import {
   configureStore,
   combineReducers,

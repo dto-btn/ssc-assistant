@@ -1,3 +1,11 @@
+/**
+ * SessionSidebar component
+ *
+ * Displays the list of saved playground sessions, allows switching between
+ * sessions and basic session management (rename, delete, export). Integrates
+ * with the playground `sessionSlice`.
+ */
+
 import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";

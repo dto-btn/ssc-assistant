@@ -1,3 +1,11 @@
+/**
+ * Citations component
+ *
+ * Displays a list of source citations referenced by a chat response. This
+ * component transforms citation metadata into clickable links and adds any
+ * necessary UI affordances for copying or opening sources.
+ */
+
 import React from "react";
 import { Box, Typography, Link } from "@mui/material";
 

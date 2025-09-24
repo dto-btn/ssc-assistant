@@ -1,3 +1,10 @@
+/**
+ * Toast slice
+ *
+ * Stores transient toast notifications for the playground UI and provides
+ * actions to show/hide toasts.
+ */
+
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface ToastMessage {

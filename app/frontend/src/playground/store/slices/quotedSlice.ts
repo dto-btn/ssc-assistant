@@ -1,3 +1,11 @@
+/**
+ * Quoted slice
+ *
+ * Tracks quoted messages (references to previous chat messages) used when the
+ * user quotes or cites prior assistant output. Provides actions to set and
+ * clear the quoted message.
+ */
+
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface QuotedState {
