@@ -1,6 +1,6 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "../store";
+import type { RootState, AppDispatch } from "../store"; // Ensure AppDispatch is exported from your store
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
 import Toolbar from "./Toolbar";
@@ -8,51 +8,77 @@ import ReplayStopBar from "./ReplayStopBar";
 import Citations from "./Citations";
 import { Box, Typography } from "@mui/material";
 import { addMessage, setIsLoading } from "../store/slices/chatSlice";
-import Suggestions from "./Sugesstions";
+import Suggestions from "./Suggestions";
+
+// Replace this with your real message type if one already exists in your store/slices
+type ChatMessageRole = "user" | "assistant";
+interface ChatMessage {
+  sessionId: string;
+  role: ChatMessageRole;
+  content: string;
+  attachments?: ReadonlyArray<unknown>;
+  citations?: ReadonlyArray<unknown>;
+}
 
 const ChatArea: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+
   const currentSessionId = useSelector(
     (state: RootState) => state.sessions.currentSessionId
   );
+
   const isLoading = useSelector((state: RootState) => state.chat.isLoading);
-  const messages = useSelector((state: RootState) =>
-    state.chat.messages.filter((m) => m.sessionId === currentSessionId)
+
+  const messages = useSelector<RootState, ChatMessage[]>((state) =>
+    state.chat.messages.filter(
+      (message: ChatMessage) => message.sessionId === currentSessionId
+    )
+  );
+
+  // Create a single reversed view to avoid repeated copying/reversal
+  const reversedMessages = React.useMemo(
+    () => [...messages].reverse(),
+    [messages]
   );
 
   // Find citations from the last assistant message
-  const lastAssistantMsg = [...messages].reverse().find((m) => m.role === "assistant");
-  const citations = lastAssistantMsg?.citations || [];
+  const lastAssistantMessage = reversedMessages.find(
+    (message) => message.role === "assistant"
+  );
+  const citations = lastAssistantMessage?.citations ?? [];
 
   // Replay sends the previous user message again
-  const handleReplay = () => {
+  const handleReplay = (): void => {
     if (messages.length < 2) return;
-    // Last user message before the last assistant response
-    const lastUserMsgIdx = [...messages]
-      .reverse()
-      .findIndex((m) => m.role === "user");
-    if (lastUserMsgIdx === -1) return;
-    const userMsg =
-      messages[messages.length - 2 - lastUserMsgIdx];
-    if (userMsg) {
+
+    // Index of the last user message in the reversed array
+    const lastUserMessageIndexFromEnd = reversedMessages.findIndex(
+      (message) => message.role === "user"
+    );
+    if (lastUserMessageIndexFromEnd === -1) return;
+
+    const userMessage =
+      messages[messages.length - 2 - lastUserMessageIndexFromEnd];
+
+    if (userMessage) {
       dispatch(
         addMessage({
-          sessionId: currentSessionId,
+          sessionId: currentSessionId!,
           role: "user",
-          content: userMsg.content,
-          attachments: userMsg.attachments,
+          content: userMessage.content,
+          attachments: userMessage.attachments,
         })
       );
     }
   };
 
   // Stop sets loading to false (simulate abort)
-  const handleStop = () => {
+  const handleStop = (): void => {
     dispatch(setIsLoading(false));
   };
 
   // Suggestions logic
-  const handleSuggestion = (suggestion: string) => {
+  const handleSuggestion = (suggestion: string): void => {
     dispatch(
       addMessage({
         sessionId: currentSessionId!,
@@ -69,11 +95,24 @@ const ChatArea: React.FC = () => {
       </Box>
     );
   }
+
   if (messages.length === 0) {
     return (
-      <Box flex={1} display="flex" flexDirection="column" alignItems="center" justifyContent="center" p={6}>
-        <Typography variant="h3" gutterBottom>How can I help?</Typography>
-        <Suggestions onSuggestionClicked={handleSuggestion} disabled={isLoading} />
+      <Box
+        flex={1}
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
+        p={6}
+      >
+        <Typography variant="h3" gutterBottom>
+          How can I help?
+        </Typography>
+        <Suggestions
+          onSuggestionClicked={handleSuggestion}
+          disabled={isLoading}
+        />
         <ChatInput sessionId={currentSessionId} />
       </Box>
     );
@@ -83,7 +122,7 @@ const ChatArea: React.FC = () => {
     <Box flex={1} display="flex" flexDirection="column" height="100vh">
       <Toolbar />
       <ChatMessages sessionId={currentSessionId} />
-      <Citations citations={citations} />
+      <Citations citations={citations as Citation[]} />
       <ReplayStopBar
         onReplay={handleReplay}
         onStop={handleStop}
