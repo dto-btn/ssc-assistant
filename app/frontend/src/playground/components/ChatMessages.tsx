@@ -5,8 +5,7 @@
  * Handles message grouping, quoting highlights, and feeds message UI events
  * back to the store.
  */
-
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
 import { Box, List, ListItem, ListItemText, IconButton, Paper } from "@mui/material";
@@ -25,21 +24,22 @@ interface MessageList extends Message {
 
 const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({ children, ...rest }) => {
   return (
-    <Link
-      component="a"
-      {...rest}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
+    <Link component="a" {...rest} target="_blank" rel="noopener noreferrer">
       {children}
     </Link>
   );
 };
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
-  const messages = useSelector((state: RootState) =>
-    state.chat.messages.filter((message) => message.sessionId === sessionId)
+  // Select a stable reference from the store
+  const allMessages = useSelector((state: RootState) => state.chat.messages);
+
+  // Derive the filtered list with useMemo to keep a stable reference
+  const messages = useMemo(
+    () => allMessages.filter((message) => message.sessionId === sessionId),
+    [allMessages, sessionId]
   );
+
   const listRef = useRef<HTMLUListElement>(null);
   const dispatch = useDispatch();
 
@@ -76,11 +76,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                   <ReactMarkdown
                     components={{
                       a: ({ node, ref: _ref, ...props }) => (
-                        <MarkdownLink
-                          {...(props as React.ComponentPropsWithoutRef<"a">)}
-                        />
+                        <MarkdownLink {...(props as React.ComponentPropsWithoutRef<"a">)} />
                       ),
-                      p: ({ children, ...pProps }) => <span {...pProps}>{children}</span>,
                     }}
                   >
                     {message.content}
@@ -92,6 +89,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                   )}
                 </>
               }
+              // Ensure no block-level markdown (e.g., blockquote) is nested inside a <p>
+              primaryTypographyProps={{ component: "span" }}
+              secondaryTypographyProps={{ component: "div" }}
             />
           </ListItem>
         ))}
