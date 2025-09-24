@@ -1,9 +1,10 @@
 import logging
 import os
 
-from apiflask import APIFlask
+from apiflask import APIBlueprint, APIFlask
 from dotenv import load_dotenv
 from v1.routes_v1 import api_v1
+from v2.root import api_v2
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("v1").setLevel(logging.DEBUG)
@@ -39,3 +40,4 @@ app.security_schemes = {  # equals to use config SECURITY_SCHEMES
 }
 
 app.register_blueprint(api_v1, url_prefix='/api/1.0')
+app.register_blueprint(api_v2, url_prefix='/api/2.0')

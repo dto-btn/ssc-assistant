@@ -3,14 +3,14 @@ import logging
 import os
 
 import requests
-from apiflask import APIBlueprint
+
+from .root import api_v2
+
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from flask import Response, jsonify, request, stream_with_context
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-
-api_v2 = APIBlueprint("api_v2", __name__)
 
 token_provider = get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default")
 
@@ -18,6 +18,34 @@ azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
 #api_version             = os.getenv("AZURE_OPENAI_VERSION", "2024-05-01-preview")
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
+
+# Basic CORS configuration for dev. You can set CORS_ALLOW_ORIGIN to a specific origin.
+CORS_ALLOW_ORIGIN = os.getenv("CORS_ALLOW_ORIGIN", "*")
+CORS_ALLOW_METHODS = "POST, OPTIONS"
+CORS_ALLOW_HEADERS = os.getenv("CORS_ALLOW_HEADERS", "Content-Type, Authorization")
+CORS_EXPOSE_HEADERS = os.getenv("CORS_EXPOSE_HEADERS", "Content-Type")
+CORS_MAX_AGE = os.getenv("CORS_MAX_AGE", "86400")
+
+
+@api_v2.after_request
+def add_cors_headers(response: Response):
+    """Attach CORS headers to all responses from this blueprint."""
+    # Use wildcard for dev unless a specific origin is configured
+    response.headers["Access-Control-Allow-Origin"] = CORS_ALLOW_ORIGIN
+    if CORS_ALLOW_ORIGIN != "*":
+        # Help caches differentiate responses by Origin
+        response.headers["Vary"] = "Origin"
+    response.headers["Access-Control-Allow-Methods"] = CORS_ALLOW_METHODS
+    response.headers["Access-Control-Allow-Headers"] = CORS_ALLOW_HEADERS
+    response.headers["Access-Control-Expose-Headers"] = CORS_EXPOSE_HEADERS
+    response.headers["Access-Control-Max-Age"] = CORS_MAX_AGE
+    return response
+
+
+@api_v2.route("/azure/<path:subpath>", methods=["OPTIONS"])
+def openai_chat_completions_options(_subpath: str):  # pragma: no cover - trivial CORS preflight
+    """Handle CORS preflight for the Azure proxy endpoint."""
+    return Response(status=204)
 
 @api_v2.post("/azure/<path:subpath>")
 def openai_chat_completions(subpath: str):
@@ -41,6 +69,9 @@ def openai_chat_completions(subpath: str):
 
         # Get Azure OpenAI API details
         api_url = f"{os.getenv('AZURE_OPENAI_ENDPOINT')}/{subpath}"
+
+        # Forward query parameters (e.g., api-version)
+        query_params = request.args.to_dict(flat=False)
 
         # Use Azure AD authentication if available
         headers = {
@@ -71,7 +102,7 @@ def openai_chat_completions(subpath: str):
             def generate():
                 # Make request to Azure OpenAI with streaming enabled
                 response = requests.post(
-                    api_url, headers=headers, json=payload, stream=True, timeout=60
+                    api_url, headers=headers, json=payload, params=query_params, stream=True, timeout=60
                 )
 
                 # Check for errors
@@ -108,7 +139,7 @@ def openai_chat_completions(subpath: str):
             )
 
         response = requests.post(
-            api_url, headers=headers, json=payload, timeout=30
+            api_url, headers=headers, json=payload, params=query_params, timeout=30
         )
 
         response_status = response.status_code

@@ -1,6 +1,7 @@
 import React from 'react';
 import NewLayout from '../components/layouts/NewLayout';
 import Typography from '@mui/material/Typography';
+import "../playground_examples/testClient";
 
 interface NewLayoutScreenProps {
     /* props */
