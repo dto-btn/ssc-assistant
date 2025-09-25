@@ -11,7 +11,6 @@ import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "../store"; // Ensure AppDispatch is exported from your store
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
-import Toolbar from "./Toolbar";
 import ReplayStopBar from "./ReplayStopBar";
 import Citations from "./Citations";
 import { Box, Typography } from "@mui/material";
@@ -111,7 +110,6 @@ const ChatArea: React.FC = () => {
 
   return (
     <Box flex={1} display="flex" flexDirection="column" height="100vh">
-      <Toolbar />
       <ChatMessages sessionId={currentSessionId} />
       <Citations citations={citations as Citation[]} />
       <ReplayStopBar

@@ -2,7 +2,7 @@
  * PlaygroundRoot component
  *
  * Root component for the playground UI. Wires together the sidebar, chat
- * area, toolbar and global context providers (e.g., store persistence).
+ * area and global context providers (e.g., store persistence).
  */
 
 import React from "react";
