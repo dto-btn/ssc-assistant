@@ -1,11 +1,7 @@
-import { AccountInfo } from "@azure/msal-browser";
 import { AzureOpenAI } from "openai";
-import { apiUse } from "../authConfig";
-import { useMsal } from "@azure/msal-react";
 import { useCallback } from "react";
 
 export function useCompletion() {
-  const { instance } = useMsal();
 
   const createAzure = useCallback(async (messages: Array<{ role: "system" | "user" | "assistant"; content: string }>, userToken: string) => {
 
@@ -41,7 +37,7 @@ export function useCompletion() {
       }
     }
     return fullText;
-  }, [instance]);
+  }, []);
 
   return { createAzure };
 }

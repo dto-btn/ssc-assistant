@@ -8,6 +8,8 @@
 
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
+import { useMsal } from '@azure/msal-react';
+import { AccountInfo } from '@azure/msal-browser';
 
 export interface Message {
   id: string;
