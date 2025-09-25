@@ -6,7 +6,7 @@ from apiflask import APIBlueprint
 import requests
 
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
-from flask import Response, abort, request, stream_with_context
+from flask import Response, abort, request, stream_with_context, g
 
 from utils.auth import user_ad
 from proxy.common import PROXY_TIMEOUT, upstream_headers, stream_response
@@ -19,9 +19,6 @@ ROOT_PATH_PROXY_AZURE = "/proxy/azure"
 token_provider = get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default")
 
 azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
-
-#service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
-#key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
 
 proxy_azure = APIBlueprint("proxy_azure", __name__)
 
@@ -41,7 +38,9 @@ def openai_chat_completions(subpath: str):
     upstream_url = f"{azure_openai_uri}/openai/{subpath}"
 
     # Basic logging (avoid logging full prompt content by default)
-    user = request.headers.get("x-user-id") or "anon"
+    # Get user ID from the authenticated Azure AD token (OID claim)
+    user_token = g.user.token if hasattr(g, 'user') and g.user and g.user.token else None
+    user = user_token.get('oid') if user_token else "anon"
     logger.info("AOAI proxy start req_id=%s user=%s method=%s path=%s qs=%s",
                 req_id, user, request.method, upstream_url, request.query_string.decode("utf-8"))
 
@@ -68,17 +67,15 @@ def openai_chat_completions(subpath: str):
                 logger.info("AOAI proxy upstream resp req_id=%s status=%s x-request-id=%s",
                             req_id, r.status_code, r.headers.get("x-request-id"))
 
-                # Pass upstream headers/content back to client
                 yield from stream_response(r)
 
-        # Pass upstream headers/content back to client
         return Response(
             stream_with_context(generate()),
             headers={
-                    "Cache-Control": "no-cache",
-                    "Connection": "keep-alive",
-                    "X-Accel-Buffering": "no",
-                },
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+            },
             direct_passthrough=True,
         )
 
