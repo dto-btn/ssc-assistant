@@ -34,24 +34,19 @@ function convertRequestForAPI(request: MessageRequest): ApiMessageRequestDto {
   };
 }
 
-
 export async function completion({ request, updateLastMessage, accessToken, signal }: CompletionProps): Promise<Completion> {
-  if (!accessToken || accessToken.trim().length === 0) {
-    throw new Error("Access token is required for this request.");
-  }
   let completion: Completion | undefined;
   const url = "/api/1.0/completion/chat/stream";
 
   const api_request = convertRequestForAPI(request);
-
-  const headersInit: Record<string, string> = {
-    "Content-Type": "application/json",
-    "Authorization": "Bearer " + accessToken.trim(),
-  };
+  
 
   const response = await fetch(url, {
     method: "POST",
-    headers: headersInit,
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + accessToken.trim()
+    },
     body: JSON.stringify(api_request),
     signal
   });
@@ -166,10 +161,6 @@ export async function uploadFile(encodedFile: string, name: string, accessToken:
 
   if (!encodedFile || !name) {
     throw new Error("Encoded file and name are required for upload.");
-  }
-
-  if (!accessToken || accessToken.trim() === "") {
-    throw new Error("Access token is required to upload files.");
   }
 
   const response = await fetch(url, {

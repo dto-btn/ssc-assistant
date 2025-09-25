@@ -25,4 +25,3 @@ python-docx
 openpyxl
 python-pptx
 requests
-flask-cors
