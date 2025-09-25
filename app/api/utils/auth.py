@@ -75,6 +75,10 @@ def verify_user_access_token(token):
         user.token = None
         return user
     try:
+        # Defensive: ensure token looks like a JWT (three dot-separated segments)
+        if not token or not isinstance(token, str) or token.count('.') != 2:
+            # In production we require a valid JWT. Do not allow anonymous access.
+            raise ValueError("Authorization token missing or malformed")
         #https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#payload-claims
         decoded_token = oauth_validator.validate_token_and_decode_it(token)
         if decoded_token and 'scp' in decoded_token and decoded_token['scp'] == _API_SCOPE:

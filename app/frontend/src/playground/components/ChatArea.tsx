@@ -14,7 +14,7 @@ import ChatInput from "./ChatInput";
 import ReplayStopBar from "./ReplayStopBar";
 import Citations from "./Citations";
 import { Box, Typography } from "@mui/material";
-import { addMessage, setIsLoading } from "../store/slices/chatSlice";
+import { addMessage, abortAllStreams, abortSessionStreams } from "../store/slices/chatSlice";
 import Suggestions from "./Suggestions";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 
@@ -23,7 +23,9 @@ const ChatArea: React.FC = () => {
   const currentSessionId = useSelector(
     (state: RootState) => state.sessions.currentSessionId
   );
-  const isLoading = useSelector((state: RootState) => state.chat.isLoading);
+  // per-session loading counts
+  const loadingBySession = useSelector((state: RootState) => state.chat.isLoadingBySession);
+  const isLoading = currentSessionId ? (loadingBySession[currentSessionId] || 0) > 0 : false;
 
   // Use memoized selector for messages
   const messages = useSelector(selectMessagesBySessionId);
@@ -64,7 +66,8 @@ const ChatArea: React.FC = () => {
 
   // Stop sets loading to false (simulate abort)
   const handleStop = (): void => {
-    dispatch(setIsLoading(false));
+    if (currentSessionId) dispatch(abortSessionStreams(currentSessionId));
+    else dispatch(abortAllStreams());
   };
 
   // Suggestions logic
