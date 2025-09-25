@@ -8,7 +8,7 @@ import requests
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from flask import Response, abort, request, stream_with_context
 
-from proxy.common import PROXY_TIMEOUT, upstream_headers, filtered_response_headers, stream_response
+from proxy.common import PROXY_TIMEOUT, upstream_headers, stream_response
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -69,13 +69,16 @@ def openai_chat_completions(subpath: str):
                 # Pass upstream headers/content back to client
                 yield from stream_response(r)
 
-            # Pass upstream headers/content back to client
-            return Response(
-                stream_with_context(generate()),
-                status=r.status_code,
-                headers=list(filtered_response_headers(r)),
-                direct_passthrough=True,
-            )
+        # Pass upstream headers/content back to client
+        return Response(
+            stream_with_context(generate()),
+            headers={
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                    "X-Accel-Buffering": "no",
+                },
+            direct_passthrough=True,
+        )
 
     except requests.Timeout:
         logger.exception("AOAI proxy timeout req_id=%s", req_id)

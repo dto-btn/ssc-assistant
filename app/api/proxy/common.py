@@ -1,14 +1,11 @@
 import logging
 import os
 from typing import Iterable
-import uuid
 
-from apiflask import APIBlueprint
-from psycopg import logger
 import requests
 
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
-from flask import Response, abort, request, stream_with_context
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 __all__ = ["upstream_headers", "filtered_response_headers", "stream_response"]
 
@@ -53,7 +50,7 @@ def stream_response(r: requests.Response) -> Iterable[bytes]:
     """ Stream the response content from requests.Response r """
     for chunk in r.iter_content(chunk_size=None):
         if chunk:
-            logger.debug("AOAI proxy chunk size=%d", len(chunk))
+            logger.debug("chunk size=%d", len(chunk))
             yield chunk
 
 def filtered_response_headers(r: requests.Response) -> Iterable[tuple[str, str]]:
