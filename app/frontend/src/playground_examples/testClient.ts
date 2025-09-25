@@ -15,9 +15,10 @@ export function useChatStream() {
     });
 
     const accessToken = response.accessToken;
-    // Point to your proxy base URL - use frontend server proxy
+    // Point to your proxy base URL - use frontend server proxy or environment variable
+    const baseURL = import.meta.env.VITE_API_BACKEND ? `${import.meta.env.VITE_API_BACKEND}/proxy/azure` : "http://localhost:5001/proxy/azure";
     const client = new AzureOpenAI({
-      baseURL: "http://localhost:5001/proxy/azure",
+      baseURL,
       apiKey: "#no-thank-you",
       apiVersion: "2024-05-01-preview",
       dangerouslyAllowBrowser: true,
@@ -46,25 +47,3 @@ export function useChatStream() {
 
   return { chatStream };
 }
-
-// Example of how to use this hook in a React component:
-// 
-// import { useChatStream } from './testClient';
-// import { useEffect } from 'react';
-// 
-// function MyComponent() {
-//   const { chatStream } = useChatStream();
-// 
-//   useEffect(() => {
-//     const exampleMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
-//       { role: "system", content: "You are a helpful AI assistant." },
-//       { role: "user", content: "Tell me about Shared Services Canada." }
-//     ];
-// 
-//     chatStream(exampleMessages).then((response) => {
-//       console.log("Final response:", response);
-//     });
-//   }, [chatStream]);
-// 
-//   return <div>Chat component</div>;
-// }

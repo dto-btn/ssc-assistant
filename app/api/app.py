@@ -14,7 +14,7 @@ logging.getLogger("azure.core.pipeline.policies").setLevel(logging.ERROR)
 load_dotenv()
 
 app = APIFlask(__name__, title="SSC Assistant API", version="2.0")
-CORS(app, supports_credentials=True)
+CORS(app)
 
 app.servers = [
     {
