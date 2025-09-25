@@ -1,15 +1,19 @@
-import json
 import logging
 import os
+import uuid
 
 from apiflask import APIBlueprint
 import requests
 
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
-from flask import Response, jsonify, request, stream_with_context
+from flask import Response, abort, request, stream_with_context
+
+from proxy.common import PROXY_TIMEOUT, upstream_headers, filtered_response_headers, stream_response
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+ROOT_PATH_PROXY_AZURE = "/proxy/azure"
 
 token_provider = get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default")
 
@@ -28,104 +32,54 @@ def openai_chat_completions(subpath: str):
     This endpoint accepts requests in the OpenAI API format and proxies them to Azure OpenAI.
     It allows the frontend to use the OpenAI SDK with a custom base URL pointing to this route.
     """
+    # Generate a request id to correlate logs across client/proxy/upstream
+    req_id = request.headers.get("x-request-id") or str(uuid.uuid4())
+
+    # Only forward to AOAI endpoint, never anywhere else
+    upstream_url = f"{azure_openai_uri}/openai/{subpath}"
+
+    # Basic logging (avoid logging full prompt content by default)
+    user = request.headers.get("x-user-id") or "anon"
+    logger.info("AOAI proxy start req_id=%s user=%s method=%s path=%s qs=%s",
+                req_id, user, request.method, upstream_url, request.query_string.decode("utf-8"))
+
     try:
-        data = request.json
-
-        # Basic validation
-        if not data or "messages" not in data:
-            return jsonify({"error": "Missing messages in request body"}), 400
-
-        # Extract request parameters
-        messages = data.get("messages", [])
-        max_tokens = data.get("max_tokens", 500)
-        stream = data.get("stream", False)
-
-        # Get Azure OpenAI API details
-        api_url = f"{os.getenv('AZURE_OPENAI_ENDPOINT')}/{subpath}"
-
-        # Forward query parameters (e.g., api-version)
-        query_params = request.args.to_dict(flat=False)
-
-        # Use Azure AD authentication if available
-        headers = {
-            "Content-Type": "application/json",
-        }
-
         token = token_provider()
-        headers["Authorization"] = f"Bearer {token}"
+        if not token:
+            abort(500, "Server missing token provider")
+        headers = upstream_headers(request.headers, f"Bearer {token}")
 
-        # Prepare the request payload
-        payload = {"messages": messages, "max_tokens": max_tokens, "stream": stream}
-        if data.get("tools"):
-            # If tools are provided, add them to the payload
-            payload["tools"] = data["tools"]
+        # Note: requests will stream the body to AOAI as-is
+        data = request.get_data() if request.method != "GET" else None
 
-        # Forward optional parameters if present in the original request
-        for param in [
-            "temperature",
-            "top_p",
-            "frequency_penalty",
-            "presence_penalty",
-            "stop",
-        ]:
-            if param in data:
-                payload[param] = data[param]
-        # Handle streaming responses
-        if stream:
-            def generate():
-                # Make request to Azure OpenAI with streaming enabled
-                response = requests.post(
-                    api_url, headers=headers, json=payload, params=query_params, stream=True, timeout=60
-                )
+        def generate():
+            with requests.request(
+                request.method,
+                upstream_url,
+                params=request.args.to_dict(flat=False),
+                headers=headers,
+                data=data,
+                stream=True,
+                timeout=PROXY_TIMEOUT,
+            ) as r:
+                # Log key metadata
+                logger.info("AOAI proxy upstream resp req_id=%s status=%s x-request-id=%s",
+                            req_id, r.status_code, r.headers.get("x-request-id"))
 
-                # Check for errors
-                if response.status_code != 200:
-                    error_content = response.content.decode("utf-8")
-                    logger.error("Azure OpenAI API error: %s", error_content)
-                    # Format error as SSE
-                    yield f"data: {json.dumps({'error': {'message': f'Azure OpenAI API error: {error_content}'}})}\n\n"
-                    yield "data: [DONE]\n\n"
-                    return
+                # Pass upstream headers/content back to client
+                yield from stream_response(r)
 
-                # Stream response chunks
-                for chunk in response.iter_lines(decode_unicode=True):
-                    if chunk:
-                        # Skip the "data: " prefix if it exists in Azure's response
-                        if chunk.startswith("data: "):
-                            chunk = chunk[6:]
-                        # Only yield non-empty lines
-                        if chunk.strip():
-                            # Format as SSE
-                            yield f"data: {chunk}\n\n"
-
-                yield "data: [DONE]\n\n"
-
-            # Return streaming response
+            # Pass upstream headers/content back to client
             return Response(
                 stream_with_context(generate()),
-                content_type="text/event-stream",
-                headers={
-                    "Cache-Control": "no-cache",
-                    "Connection": "keep-alive",
-                    "X-Accel-Buffering": "no",
-                },
+                status=r.status_code,
+                headers=list(filtered_response_headers(r)),
+                direct_passthrough=True,
             )
 
-        response = requests.post(
-            api_url, headers=headers, json=payload, params=query_params, timeout=30
-        )
-
-        response_status = response.status_code
-        response_content = response.content
-
-        return Response(
-            response_content,
-            status=response_status,
-            content_type = response.headers.get(
-                "Content-Type", "application/json"
-            )
-        )
-
-    except Exception as e:
-        logger.exception("Unexpected error in OpenAI azure_proxy :%s", e)
-        return jsonify({"error": {"message": "An internal error has occurred."}}), 500
+    except requests.Timeout:
+        logger.exception("AOAI proxy timeout req_id=%s", req_id)
+        return Response("Upstream timeout", status=504)
+    except Exception:
+        logger.exception("AOAI proxy error req_id=%s", req_id)
+        return Response("Proxy error", status=502)
