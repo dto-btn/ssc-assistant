@@ -4,17 +4,16 @@ import { apiUse } from "../authConfig";
 import { useMsal } from "@azure/msal-react";
 import { useCallback } from "react";
 
-export function useChatStream() {
+export function useCompletion() {
   const { instance } = useMsal();
 
-  const chatStream = useCallback(async (messages: Array<{ role: "system" | "user" | "assistant"; content: string }>) => {
-    const response = await instance.acquireTokenSilent({
-      ...apiUse,
-      account: instance.getActiveAccount() as AccountInfo,
-      forceRefresh: true,
-    });
+  const createAzure = useCallback(async (messages: Array<{ role: "system" | "user" | "assistant"; content: string }>, userToken: string) => {
 
-    const accessToken = response.accessToken;
+    // const response = await instance.acquireTokenSilent({
+    //   ...apiUse,
+    //   account: instance.getActiveAccount() as AccountInfo,
+    //   forceRefresh: true,
+    // });
     const baseURL = import.meta.env.VITE_API_BACKEND ? `${import.meta.env.VITE_API_BACKEND}/proxy/azure` : "http://localhost:5001/proxy/azure";
     const client = new AzureOpenAI({
       baseURL,
@@ -22,7 +21,7 @@ export function useChatStream() {
       apiVersion: "2024-05-01-preview",
       dangerouslyAllowBrowser: true,
       defaultHeaders: {
-        "Authorization": "Bearer " + accessToken.trim(),
+        "Authorization": "Bearer " + userToken.trim(),
       }
     });
 
@@ -44,5 +43,5 @@ export function useChatStream() {
     return fullText;
   }, [instance]);
 
-  return { chatStream };
+  return { createAzure };
 }

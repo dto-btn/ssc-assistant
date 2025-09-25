@@ -59,8 +59,8 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
 
       setShowSkeleton(true);
 
-      // Don't adjust whitespace for first question & answer
-      if (chatLength <= 2) {
+      // Don't adjust whitespace for first question & answer if skeleton fits
+      if (chatLength <= 2 && messageRef && messageRef.offsetHeight + SKELETON_HEIGHT < chatRef.clientHeight) {
         return;
       }
 
@@ -89,8 +89,8 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
 
       setShowSkeleton(false);
 
-      // Don't adjust whitespace for first question & answer
-      if (chatLength <= 2) {
+      // Don't adjust whitespace for first question & answer if skeleton fits
+      if (chatLength <= 2 && messageRef && messageRef.offsetHeight + SKELETON_HEIGHT < chatRef.clientHeight) {
         return;
       }
 
@@ -157,6 +157,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
             index === chatHistory.chatItems.length - 1
               ? (showSkeleton ? (
                 <Stack
+                  key="skeleton-loader"
                   direction="row"
                   spacing={1}
                   sx={{

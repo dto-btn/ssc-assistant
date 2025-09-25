@@ -22,7 +22,7 @@ export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
       {
         attachments && attachments.map((attachment, idx) => {
           return (
-            <Box sx={{ display: "flex", justifyContent: "flex-end", my: "1rem" }}>
+            <Box key={idx} sx={{ display: "flex", justifyContent: "flex-end", my: "1rem" }}>
               <AttachmentPreview attachment={attachment} key={`${idx}~~${attachment.file_name}`} />
             </Box>
           )
