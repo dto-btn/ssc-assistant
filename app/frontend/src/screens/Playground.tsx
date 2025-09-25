@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import NewLayout from '../components/layouts/NewLayout';
 import Typography from '@mui/material/Typography';
-import { useChatStream } from '../playground_examples/testClient';
+import { useChatStream } from '../playground_examples/demoClient';
 
 interface NewLayoutScreenProps {
     /* props */
