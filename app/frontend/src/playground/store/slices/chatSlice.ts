@@ -8,8 +8,6 @@
 
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
-import { useMsal } from '@azure/msal-react';
-import { AccountInfo } from '@azure/msal-browser';
 
 export interface Message {
   id: string;
@@ -50,12 +48,19 @@ const chatSlice = createSlice({
         (message) => message.sessionId !== action.payload
       );
     },
+    updateMessageContent: (state, action: PayloadAction<{ messageId: string; content: string }>) => {
+      const { messageId, content } = action.payload;
+      const message = state.messages.find(msg => msg.id === messageId);
+      if (message) {
+        message.content = content;
+      }
+    },
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     }
   },
 });
 
-export const { addMessage, deleteMessage, clearSessionMessages, setIsLoading } = chatSlice.actions;
+export const { addMessage, deleteMessage, clearSessionMessages, updateMessageContent, setIsLoading } = chatSlice.actions;
 
 export default chatSlice.reducer;
