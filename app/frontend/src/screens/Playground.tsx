@@ -1,13 +1,27 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import NewLayout from '../components/layouts/NewLayout';
 import Typography from '@mui/material/Typography';
-import "../playground_examples/testClient";
+import { useChatStream } from '../playground_examples/testClient';
 
 interface NewLayoutScreenProps {
     /* props */
 }
 
 const NewLayoutScreen: React.FC<NewLayoutScreenProps> = ({ /* props */ }) => {
+    const { chatStream } = useChatStream();
+
+    useEffect(() => {
+        const exampleMessages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
+            { role: "system", content: "You are a helpful AI assistant." },
+            { role: "user", content: "Tell me about Shared Services Canada." }
+        ];
+
+        chatStream(exampleMessages).then((response) => {
+            console.log("Final response:", response);
+        }).catch((error) => {
+            console.error("Chat stream error:", error);
+        });
+    }, [chatStream]);
     return (
         <NewLayout>
             <Typography sx={{ marginBottom: 2 }}>

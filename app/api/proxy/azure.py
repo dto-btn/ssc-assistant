@@ -8,6 +8,7 @@ import requests
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from flask import Response, abort, request, stream_with_context
 
+from utils.auth import user_ad
 from proxy.common import PROXY_TIMEOUT, upstream_headers, stream_response
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,7 @@ azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
 proxy_azure = APIBlueprint("proxy_azure", __name__)
 
 @proxy_azure.post("<path:subpath>")
+@user_ad.login_required
 def openai_chat_completions(subpath: str):
     """
     OpenAI-compatible chat completions endpoint.
