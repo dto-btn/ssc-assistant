@@ -1,0 +1,23 @@
+/* Skip link for keyboard users: visually hidden but visible on focus */
+.skip-link {
+	position: absolute;
+	left: -999px;
+	top: auto;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+
+.skip-link:focus,
+.skip-link:active {
+	left: 8px;
+	top: 8px;
+	width: auto;
+	height: auto;
+	padding: 8px 12px;
+	background: #ffffff;
+	color: #000000;
+	border: 2px solid #000000;
+	z-index: 10000;
+	text-decoration: none;
+}

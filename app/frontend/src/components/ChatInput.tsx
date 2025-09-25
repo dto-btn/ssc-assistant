@@ -300,7 +300,6 @@ export const ChatInput = ({
             slotProps={{
               input: {
                 tabIndex: 0,
-                autoFocus: true,
               },
             }}
             placeholder={`${t("ask.question")}. ${t(

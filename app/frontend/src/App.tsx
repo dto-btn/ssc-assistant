@@ -18,6 +18,8 @@ interface AppProps {
 export const App = ({ instance }: AppProps) => {
   return (
     <>
+      {/* Skip link for keyboard users to jump to the chat ask input */}
+      <a className="skip-link" href="#ask-question">Skip to chat input</a>
       <MSClarity />
       <CssBaseline />
       <AppErrorBoundary>
