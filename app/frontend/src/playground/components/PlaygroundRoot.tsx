@@ -10,8 +10,18 @@ import { Box } from "@mui/material";
 import SessionSidebar from "./SessionSidebar";
 import ChatArea from "./ChatArea";
 import FeedbackForm from "./FeedbackForm";
+import { useAuth } from "../store/hooks/useAuth";
+import { apiUse } from "../../authConfig";
 
 const PlaygroundRoot: React.FC = () => {
+  // Initialize authentication and get token on app load
+  const { isAuthenticated, isTokenRefreshing } = useAuth(apiUse);
+
+  console.log("Playground Auth Status:", {
+    isAuthenticated,
+    isTokenRefreshing,
+  });
+
   return (
     <>
       <Box display="flex" height="100vh">
