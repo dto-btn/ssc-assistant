@@ -14,38 +14,11 @@ logger.setLevel(logging.DEBUG)
 token_provider = get_bearer_token_provider(DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default")
 
 azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
-#api_version             = os.getenv("AZURE_OPENAI_VERSION", "2024-05-01-preview")
-service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
-key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
 
-# Basic CORS configuration for dev. You can set CORS_ALLOW_ORIGIN to a specific origin. TODO
-CORS_ALLOW_ORIGIN = os.getenv("CORS_ALLOW_ORIGIN", "*")
-CORS_ALLOW_METHODS = "POST, OPTIONS"
-CORS_ALLOW_HEADERS = os.getenv("CORS_ALLOW_HEADERS", "Content-Type, Authorization")
-CORS_EXPOSE_HEADERS = os.getenv("CORS_EXPOSE_HEADERS", "Content-Type")
-CORS_MAX_AGE = os.getenv("CORS_MAX_AGE", "86400")
+#service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
+#key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
 
 proxy_azure = APIBlueprint("proxy_azure", __name__)
-
-# @proxy_azure.after_request
-# def add_cors_headers(response: Response):
-#     """Attach CORS headers to all responses from this blueprint."""
-#     # Use wildcard for dev unless a specific origin is configured
-#     response.headers["Access-Control-Allow-Origin"] = CORS_ALLOW_ORIGIN
-#     if CORS_ALLOW_ORIGIN != "*":
-#         # Help caches differentiate responses by Origin
-#         response.headers["Vary"] = "Origin"
-#     response.headers["Access-Control-Allow-Methods"] = CORS_ALLOW_METHODS
-#     response.headers["Access-Control-Allow-Headers"] = CORS_ALLOW_HEADERS
-#     response.headers["Access-Control-Expose-Headers"] = CORS_EXPOSE_HEADERS
-#     response.headers["Access-Control-Max-Age"] = CORS_MAX_AGE
-#     return response
-
-
-# @proxy_azure.route("<path:subpath>", methods=["OPTIONS"])
-# def openai_chat_completions_options(subpath: str):
-#     """Handle CORS preflight for the Azure azure_proxy endpoint."""
-#     return Response(status=204)
 
 @proxy_azure.post("<path:subpath>")
 def openai_chat_completions(subpath: str):
