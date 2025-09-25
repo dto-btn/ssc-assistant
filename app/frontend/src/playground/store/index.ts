@@ -16,7 +16,7 @@ import toolReducer from "./slices/toolSlice";
 import modelReducer from "./slices/modelSlice";
 import toastReducer from "./slices/toastSlice";
 import quotedReducer from "./slices/quotedSlice";
-import { assistantMiddleware } from "./middleware/assistantMiddleware";
+import assistantMiddleware from "./middleware/assistantMiddleware";
 import { saveChatState, loadChatState } from "./persistence";
 
 const rootReducer = combineReducers({

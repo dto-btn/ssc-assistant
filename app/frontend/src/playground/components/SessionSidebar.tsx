@@ -36,6 +36,7 @@ const SessionSidebar: React.FC = () => {
   const currentSessionId = useSelector(
     (state: RootState) => state.sessions.currentSessionId
   );
+  const loadingBySession = useSelector((state: RootState) => state.chat.isLoadingBySession);
   const dispatch = useDispatch();
 
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -95,6 +96,11 @@ const SessionSidebar: React.FC = () => {
               onClick={() => dispatch(setCurrentSession(session.id))}
             >
               <ListItemText primary={session.name} />
+              {loadingBySession[session.id] ? (
+                <Box ml={1}>
+                  <Typography variant="caption" color="primary">●</Typography>
+                </Box>
+              ) : null}
             </ListItemButton>
 
             {/* Actions Container (Rename & Delete Buttons) */}
