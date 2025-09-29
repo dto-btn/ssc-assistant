@@ -3,6 +3,7 @@ resource "azurerm_search_service" "main" {
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   sku                 = "standard"
+  semantic_search_sku = "standard"
 
   tags = {
     ProjectType = "aoai-your-data-service"
@@ -11,6 +12,10 @@ resource "azurerm_search_service" "main" {
   public_network_access_enabled = true
   local_authentication_enabled = true
   authentication_failure_mode = "http401WithBearerChallenge"
+
+  identity {
+    type = "SystemAssigned"
+  }
 }
 
 resource "azurerm_monitor_diagnostic_setting" "search_service_diagnostics" {

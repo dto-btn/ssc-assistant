@@ -125,7 +125,7 @@ resource "azurerm_linux_web_app" "api" {
     ARCHIBUS_API_PASSWORD         = var.archibus_api_password
     WEBSITE_WEBDEPLOY_USE_SCM     = true
     WEBSITE_RUN_FROM_PACKAGE      = "1"
-    ALLOWED_TOOLS                 = "corporate, geds, bits"
+    ALLOWED_TOOLS                 = "corporate, geds, bits, pmcoe"
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
     #PORT = 5001
     SQL_CONNECTION_STRING         = module.postgress.postgres_connection_string
@@ -133,6 +133,8 @@ resource "azurerm_linux_web_app" "api" {
     BITS_DB_DATABASE              = var.bits_database_config.DB_NAME
     BITS_DB_USERNAME              = var.bits_database_config.USERNAME
     BITS_DB_PWD                   = var.bits_database_config.PASSWORD
+
+    PMCOE_SEARCH_INDEX_NAME       = "pmcoe-sept-2025"
   }
 
   sticky_settings { # settings that are the same regardless of deployment slot..
