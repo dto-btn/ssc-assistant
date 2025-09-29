@@ -10,6 +10,7 @@ import { Box } from "@mui/material";
 import SessionSidebar from "./SessionSidebar";
 import ChatArea from "./ChatArea";
 import FeedbackForm from "./FeedbackForm";
+import isFeatureEnabled from '../FeatureGate';
 
 const PlaygroundRoot: React.FC = () => {
   return (
@@ -18,7 +19,7 @@ const PlaygroundRoot: React.FC = () => {
         <SessionSidebar />
         <ChatArea />
       </Box>
-      <FeedbackForm />
+      {isFeatureEnabled('FeedbackForm') && <FeedbackForm />}
     </>
   );
 };
