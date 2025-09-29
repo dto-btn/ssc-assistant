@@ -8,6 +8,7 @@
 
 import React, { useState } from "react";
 import { Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
+import { tt } from "../i18n/tt";
 
 const FeedbackForm: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -15,12 +16,14 @@ const FeedbackForm: React.FC = () => {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)} sx={{ position: "fixed", right: 16, bottom: 16, zIndex: 2000 }}>Feedback</Button>
+      <Button onClick={() => setOpen(true)} sx={{ position: "fixed", right: 16, bottom: 16, zIndex: 2000 }}>
+        {tt("feedback")}
+      </Button>
       <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>Feedback</DialogTitle>
+        <DialogTitle>{tt("feedback")}</DialogTitle>
         <DialogContent>
           <TextField
-            label="Your feedback"
+            label={tt("your.feedback")}
             value={feedback}
             onChange={e => setFeedback(e.target.value)}
             multiline
@@ -29,7 +32,7 @@ const FeedbackForm: React.FC = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={() => setOpen(false)}>{tt("cancel")}</Button>
           <Button
             variant="contained"
             onClick={() => {
@@ -39,7 +42,7 @@ const FeedbackForm: React.FC = () => {
             }}
             disabled={!feedback.trim()}
           >
-            Send
+            {tt("submit")}
           </Button>
         </DialogActions>
       </Dialog>

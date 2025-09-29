@@ -8,6 +8,7 @@
 
 import React from "react";
 import { Button } from "@mui/material";
+import { tt } from '../i18n/tt';
 
 interface FileUploadProps {
   onFiles: (files: FileList) => void;
@@ -33,7 +34,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFiles }) => {
         onClick={() => inputRef.current?.click()}
         sx={{ minWidth: 80 }}
       >
-        Attach
+        {tt("attach")}
       </Button>
     </>
   );

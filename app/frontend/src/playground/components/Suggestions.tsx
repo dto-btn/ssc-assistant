@@ -9,12 +9,13 @@
 
 import React from "react";
 import { Box, Button, Typography } from "@mui/material";
+import { tt } from '../i18n/tt';
 
 const suggestions = [
-  "How can I use the API?",
-  "Show me recent GitHub issues",
-  "Generate a TypeScript interface",
-  "Summarize this document",
+  tt("suggestion.use.api"),
+  tt("suggestion.github.issues"),
+  tt("suggestion.ts.interface"),
+  tt("suggestion.summarize.doc"),
 ];
 
 interface Props {
@@ -24,7 +25,7 @@ interface Props {
 
 const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => (
   <Box display="flex" flexDirection="column" gap={2} mt={2} alignItems="center">
-    <Typography variant="h5">Try asking:</Typography>
+    <Typography variant="h5">{tt("try.asking")}:</Typography>
     {suggestions.map((suggestion, index) => (
       <Button key={index} variant="outlined" onClick={() => onSuggestionClicked(suggestion)} disabled={disabled}>
         {suggestion}

@@ -17,6 +17,7 @@ import { Box, Typography } from "@mui/material";
 import { addMessage, setIsLoading } from "../store/slices/chatSlice";
 import Suggestions from "./Suggestions";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
+import { tt } from "../i18n/tt";
 
 const ChatArea: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -81,7 +82,7 @@ const ChatArea: React.FC = () => {
   if (!currentSessionId) {
     return (
       <Box flex={1} display="flex" alignItems="center" justifyContent="center">
-        Select or create a chat session to begin.
+        {tt("select.or.create.session")}
       </Box>
     );
   }
@@ -97,7 +98,7 @@ const ChatArea: React.FC = () => {
         p={6}
       >
         <Typography variant="h3" gutterBottom>
-          How can I help?
+          {tt("how.can.i.help")}
         </Typography>
         <Suggestions
           onSuggestionClicked={handleSuggestion}

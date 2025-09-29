@@ -8,6 +8,7 @@
 
 import React from "react";
 import { Box, Typography, Link } from "@mui/material";
+import { tt } from "../i18n/tt";
 
 export interface Citation {
   title: string;
@@ -31,7 +32,7 @@ const Citations: React.FC<Props> = ({ citations }) => {
           <Typography variant="body2">
             {citation.title}{" "}
             <Link href={citation.url} target="_blank" rel="noopener noreferrer">
-              [link]
+              [{tt("link")}]
             </Link>
           </Typography>
         </Box>

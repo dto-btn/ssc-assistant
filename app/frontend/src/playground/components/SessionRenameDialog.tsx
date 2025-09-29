@@ -7,6 +7,7 @@
 
 import React, { useState } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from "@mui/material";
+import { tt } from "../i18n/tt";
 
 interface Props {
   open: boolean;
@@ -24,20 +25,20 @@ const SessionRenameDialog: React.FC<Props> = ({ open, initialValue, onClose, onR
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Rename Conversation</DialogTitle>
+      <DialogTitle>{tt("rename.conversation")}</DialogTitle>
       <DialogContent>
         <TextField
           value={name}
           onChange={event => setName(event.target.value)}
-          label="Conversation Name"
+          label={tt("conversation.name")}
           fullWidth
           autoFocus
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{tt("cancel")}</Button>
         <Button onClick={() => { onRename(name); onClose(); }} variant="contained" disabled={!name.trim()}>
-          Rename
+          {tt("rename")}
         </Button>
       </DialogActions>
     </Dialog>

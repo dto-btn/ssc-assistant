@@ -16,6 +16,7 @@ import { RootState } from "../store";
 import { clearQuotedText } from "../store/slices/quotedSlice";
 import CloseIcon from "@mui/icons-material/Close";
 import isFeatureEnabled from "../FeatureGate";
+import { tt } from '../i18n/tt';
 
 interface ChatInputProps {
   sessionId: string;
@@ -46,7 +47,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
   const handleFiles = (fileList: FileList) => {
     const files = Array.from(fileList);
     setAttachments((prev) => [...prev, ...files]);
-    dispatch(addToast({ message: `${files.length} file(s) attached`, isError: false }));
+    dispatch(addToast({ message: `${files.length} ${tt("files.attached")}`, isError: false }));
   };
 
   return (
@@ -64,7 +65,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Type a message..."
+          placeholder={tt("type.a.message")}
           value={input}
           onChange={(event) => setInput(event.target.value)}
           onKeyPress={(event) => {
@@ -83,7 +84,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
           onClick={handleSend}
           sx={{ ml: 2 }}
         >
-          Send
+          {tt("send")}
         </Button>
       </Box>
     </Box>

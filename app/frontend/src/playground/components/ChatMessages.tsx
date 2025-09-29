@@ -13,6 +13,7 @@ import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
 import { setQuotedText } from "../store/slices/quotedSlice";
 import ReactMarkdown from "react-markdown";
 import Link from "@mui/material/Link";
+import { tt } from "../i18n/tt";
 
 interface ChatMessagesProps {
   sessionId: string;
@@ -61,8 +62,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                 <IconButton
                   size="small"
                   onClick={() => dispatch(setQuotedText(message.content || ""))}
-                  title="Quote this message"
-                  aria-label="Quote this message"
+                  title={tt("quote.this.message")}
+                  aria-label={tt("quote.this.message")}
                 >
                   <FormatQuoteIcon />
                 </IconButton>
@@ -84,7 +85,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                   </ReactMarkdown>
                   {message.attachments && message.attachments.length > 0 && (
                     <Paper variant="outlined" sx={{ mt: 1, p: 1 }}>
-                      Attachments: {message.attachments.length}
+                      {tt("attachments")}: {message.attachments.length}
                     </Paper>
                   )}
                 </>

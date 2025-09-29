@@ -7,6 +7,7 @@
 
 import React from "react";
 import { Box, Button } from "@mui/material";
+import { tt } from '../i18n/tt';
 
 interface Props {
   onReplay: () => void;
@@ -18,10 +19,10 @@ interface Props {
 const ReplayStopBar: React.FC<Props> = ({ onReplay, onStop, isLoading, disabled }) => (
   <Box display="flex" justifyContent="flex-end" gap={2} p={1}>
     <Button variant="outlined" onClick={onReplay} disabled={disabled || isLoading}>
-      Replay
+      {tt("replay")}
     </Button>
     <Button variant="outlined" onClick={onStop} disabled={!isLoading} color="error">
-      Stop
+      {tt("stop")}
     </Button>
   </Box>
 );

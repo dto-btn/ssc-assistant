@@ -30,6 +30,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import type { Session } from "../store/slices/sessionSlice";
 import SessionRenameDialog from "./SessionRenameDialog";
+import { tt } from '../i18n/tt';
 
 const SessionSidebar: React.FC = () => {
   const sessions = useSelector((state: RootState) => state.sessions.sessions);
@@ -72,9 +73,9 @@ const SessionSidebar: React.FC = () => {
     >
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Typography variant="h6">Chats</Typography>
+        <Typography variant="h6">{tt("chats")}</Typography>
         <Button size="small" onClick={handleNewSession} variant="outlined">
-          New
+          {tt("new")}
         </Button>
       </Box>
 
@@ -106,7 +107,7 @@ const SessionSidebar: React.FC = () => {
                   setSessionToRename(session.id);
                   setRenameDialogOpen(true);
                 }}
-                title="Rename Conversation"
+                title={tt("rename.conversation")}
               >
                 <EditIcon fontSize="small" />
               </IconButton>
@@ -118,7 +119,7 @@ const SessionSidebar: React.FC = () => {
                   e.stopPropagation();
                   dispatch(removeSession(session.id));
                 }}
-                title="Delete Conversation"
+                title={tt("delete.conversation")}
               >
                 <DeleteIcon fontSize="small" />
               </IconButton>
