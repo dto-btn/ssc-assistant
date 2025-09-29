@@ -10,6 +10,8 @@ logger.setLevel(logging.DEBUG)
 
 index_name: str = os.getenv("PMCOE_SEARCH_INDEX_NAME", "pmcoe")
 
+PMCOE_CONTAINER = os.getenv("PMCOE_CONTAINER", "pmcoe-sept-2025")
+
 @tool_metadata(
     {
         "type": "function",
