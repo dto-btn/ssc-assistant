@@ -68,13 +68,72 @@ const MainScreen = () => {
   const userData = useContext(UserContext);
 
   const location = useLocation();
-  const chatMessageStreamEnd = useRef<HTMLDivElement | null>(null);
   const [chatIndexToLoadOrDelete, setChatIndexToLoadOrDelete] = useState<
     number | null
   >(null);
   const [showDeleteChatDialog, setShowDeleteChatDialog] = useState(false);
 
   const { instance } = useMsal();
+
+  const chatRef = useRef<HTMLDivElement>(null);
+  const lastCompletionRef = useRef<HTMLDivElement>(null);
+  const [scrollable, setScrollable] = useState(false);
+
+  // Handle scroll events in chat container
+  const handleScroll = () => {
+    const container = chatRef.current;
+
+    // Check if the chat container is scrolled to the bottom or not scrollable
+    if (container) {
+      // True if the content is taller than the visible area (scrollable)
+      const isScrollable = container.scrollHeight > container.clientHeight + 1;
+      // True if the user is NOT at the bottom (allowing for 1px rounding error)
+      const notAtBottom = container.scrollTop + container.clientHeight < container.scrollHeight - 1;
+      setScrollable(isScrollable && notAtBottom);
+    }
+  }
+
+  // Scroll to the bottom of the chat container
+  const onScrollArrowClick = () => {
+    if (chatRef.current) {
+      chatRef.current.scrollTo({
+        top: chatRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  // Update scroll state when selected chat changes
+  useEffect(() => {
+    // If new chat, set scrollable to false
+    if (getCurrentChatHistory().chatItems.length === 0) {
+      setScrollable(false);
+    }
+
+    setTimeout(() => {
+      // Check if we need to show scroll arrow after chat change
+      handleScroll();
+
+      // Always scroll to top when changing chats or refreshing the page
+      if (chatRef.current) {
+        chatRef.current.scrollTo({
+          top: 0,
+          behavior: "auto",
+        });
+      }
+
+    }, 100); // Slight delay to allow DOM to update
+  }, [currentChatIndex]);
+
+  const sendMessage = (question: string, attachments: Attachment[]) => {
+    apiRequestService.makeApiRequest(
+      question,
+      userData,
+      attachments,
+      undefined,
+      getEffectiveEnabledTools()
+    )
+  };
 
   const replayChat = () => {
     const currentChatHistoryItems = currentChatHistory.chatItems;
@@ -414,6 +473,7 @@ const MainScreen = () => {
             childrenLeftOfLogo={
               <>
                 <IconButton
+                  id="open-drawer-button"
                   sx={{
                     color: "white",
                   }}
@@ -486,15 +546,7 @@ const MainScreen = () => {
                 clearOnSend
                 placeholder={t("placeholder")}
                 disabled={apiRequestService.isLoading}
-                onSend={(question, attachments) =>
-                  apiRequestService.makeApiRequest(
-                    question,
-                    userData,
-                    attachments,
-                    undefined,
-                    getEffectiveEnabledTools()
-                  )
-                }
+                onSend={sendMessage}
                 onStop={stopChat}
                 quotedText={quotedText}
                 selectedModel={currentChatHistory.model}
@@ -516,20 +568,22 @@ const MainScreen = () => {
               right: 0,
               bottom: 0,
               paddingTop: "3rem",
-              overflow: "auto",
             }}
-          // maxWidth="lg"
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <ChatMessagesContainer
               chatHistory={currentChatHistory}
               isLoading={apiRequestService.isLoading}
-              chatMessageStreamEnd={chatMessageStreamEnd}
               replayChat={replayChat}
               handleRemoveToastMessage={handleRemoveToastMessage}
               handleBookReservation={handleBookReservation}
+              containerRef={chatRef}
+              lastCompletionRef={lastCompletionRef}
+              handleScroll={handleScroll}
+              onScrollArrowClick={onScrollArrowClick}
+              scrollable={scrollable}
             />
-            <div ref={chatMessageStreamEnd} style={{ height: "50px" }} />
+            <div style={{ height: "50px" }} />
             <Box
               sx={{
                 position: "sticky",
@@ -544,15 +598,7 @@ const MainScreen = () => {
                 clearOnSend
                 placeholder={t("placeholder")}
                 disabled={apiRequestService.isLoading}
-                onSend={(question, attachments) =>
-                  apiRequestService.makeApiRequest(
-                    question,
-                    userData,
-                    attachments,
-                    undefined,
-                    getEffectiveEnabledTools()
-                  )
-                }
+                onSend={sendMessage}
                 onStop={stopChat}
                 quotedText={quotedText}
                 selectedModel={currentChatHistory.model}

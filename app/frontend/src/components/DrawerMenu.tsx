@@ -17,12 +17,14 @@ import {
   Typography,
 } from "@mui/material";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import SourceOutlinedIcon from "@mui/icons-material/SourceOutlined";
 import { useEffect, useRef, useState } from "react";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import EditIcon from "@mui/icons-material/Edit";
 import { useTranslation } from "react-i18next";
 import React from "react";
+import { allowedToolsSet } from "../allowedTools";
 
 interface DrawerMenuProps {
   chatDescriptions: string[];
@@ -112,14 +114,6 @@ export const DrawerMenu = ({
     }
   }, [editingIndex]);
 
-  // const tools = Object.keys(enabledTools).filter((tool) =>
-  //   allowedToolsSet.has(tool)
-  // );
-  // Separate the corporate key
-  // const corporateKeyIndex = tools.indexOf("corporate");
-  // const corporateKey =
-  //   corporateKeyIndex > -1 ? tools.splice(corporateKeyIndex, 1)[0] : null;
-
   const chatDescriptionsWithOriginalIndex: {
     chatDescription: string;
     originalIndex: number;
@@ -143,7 +137,7 @@ export const DrawerMenu = ({
     >
       <List>
         <ListItem key="newChat" disablePadding>
-          <ListItemButton onClick={() => onNewChat()}>
+          <ListItemButton id="new-chat-button" onClick={() => onNewChat()}>
             <ListItemIcon sx={{ minWidth: "0px", marginRight: "10px" }}>
               <AddCommentIcon fontSize="small" color="primary" />
             </ListItemIcon>
@@ -154,8 +148,8 @@ export const DrawerMenu = ({
             />
           </ListItemButton>
         </ListItem>
-        <ListItem key="newChatp-bits" disablePadding>
-          <ListItemButton onClick={() => onNewChat("bits")}>
+        <ListItem key="newchat-bits" disablePadding>
+          <ListItemButton id="new-bits-chat-button" onClick={() => onNewChat("bits")}>
             <ListItemIcon sx={{ minWidth: "0px", marginRight: "10px" }}>
               <ReceiptLongIcon fontSize="small" color="primary" />
             </ListItemIcon>
@@ -166,6 +160,20 @@ export const DrawerMenu = ({
             />
           </ListItemButton>
         </ListItem>
+        {allowedToolsSet.has("pmcoe") && (
+          <ListItem key="newchat-pmcoe" disablePadding>
+            <ListItemButton onClick={() => onNewChat("pmcoe")}>
+              <ListItemIcon sx={{ minWidth: "0px", marginRight: "10px" }}>
+                <SourceOutlinedIcon fontSize="small" color="primary" />
+              </ListItemIcon>
+              <ListItemText
+                primary={t("new.conversation.pmcoe")}
+                aria-description={t("new.conversation.br.aria.description")}
+                aria-label={t("new.conversation.pmcoe")}
+              />
+            </ListItemButton>
+          </ListItem>
+        )}
         <Divider sx={{ margin: "5px 0px" }}>
           <Chip
             label={t("drawer.header.conversations")}
@@ -202,6 +210,7 @@ export const DrawerMenu = ({
                 >
                   {(editingIndex === null || editingIndex !== index) && (
                     <ListItemButton
+                      id={`chat-history-button-${index}`}
                       disableRipple
                       sx={{
                         padding: "5px 10px",
@@ -224,9 +233,9 @@ export const DrawerMenu = ({
                     </ListItemButton>
                   )}
                   <IconButton
+                    id={`chat-history-options-button-${index}`}
                     className="more-button"
                     onClick={(event) => handleMoreMenuClick(event, index)}
-                    id="chat-history-options-button"
                     aria-label="more"
                     aria-controls={
                       moreMenuOpen ? "chat-history-menu" : undefined
@@ -303,11 +312,11 @@ export const DrawerMenu = ({
           open={moreMenuOpen}
           onClose={() => setMoreMenuAnchor(null)}
         >
-          <MenuItem onClick={handleDeleteChatClicked} tabIndex={0}>
+          <MenuItem id={`delete-chat-${selectedChatIndex}`} onClick={handleDeleteChatClicked} tabIndex={0}>
             <DeleteIcon sx={{ mr: "15px" }} />
             <Typography>{t("delete")}</Typography>
           </MenuItem>
-          <MenuItem onClick={handleRenameClicked} tabIndex={0}>
+          <MenuItem id={`rename-chat-${selectedChatIndex}`} onClick={handleRenameClicked} tabIndex={0}>
             <EditIcon sx={{ mr: "15px" }} />
             <Typography>{t("rename")}</Typography>
           </MenuItem>

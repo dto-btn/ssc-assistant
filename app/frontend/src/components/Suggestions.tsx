@@ -105,6 +105,30 @@ const Suggestions = ({ onSuggestionClicked, tools = [] }: SuggestionsProps) => {
       color: "#da920dff",
       staticTool: true,
     },
+    {
+      title: t("suggestions.pmcoe.q4"),
+      tool: "pmcoe",
+      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+      category: "pmcoe",
+      color: "#da920dff",
+      staticTool: true,
+    },
+    {
+      title: t("suggestions.pmcoe.q5"),
+      tool: "pmcoe",
+      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+      category: "pmcoe",
+      color: "#da920dff",
+      staticTool: true,
+    },
+    {
+      title: t("suggestions.pmcoe.q6"),
+      tool: "pmcoe",
+      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+      category: "pmcoe",
+      color: "#da920dff",
+      staticTool: true,
+    },
   ];
 
   // Filter suggestion cards based on the allowedToolsSet
@@ -147,6 +171,7 @@ const Suggestions = ({ onSuggestionClicked, tools = [] }: SuggestionsProps) => {
             }}
           >
             <CardActionArea
+              id={`suggestion-card-${index}`}
               onClick={() =>
                 onSuggestionClicked(
                   card.title,

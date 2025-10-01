@@ -49,12 +49,16 @@ const LoginPage = ({ open, setOpen }: { open: boolean, setOpen: React.Dispatch<R
       >
         <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
           <img src={logo} style={logoStyle} alt="logo of SSC" />
-          <Button onClick={() => { appStore.languageService.changeLanguage() }}>{t("langlink")}</Button>
+          <Button id="language-toggle-button" onClick={() => { appStore.languageService.changeLanguage() }}>
+            {t("langlink")}
+          </Button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <h2 style={{ marginBottom: '1rem' }}>{t("welcome")}</h2>
           <h3 style={{ marginTop: '1rem' }}>{t("login.required")}</h3>
-          <Button size="large" style={{ backgroundColor: "#4b3e99", color: "white" }} onClick={handleLogin}>{t("login")}</Button>
+          <Button id="login-button" size="large" style={{ backgroundColor: "#4b3e99", color: "white" }} onClick={handleLogin}>
+            {t("login")}
+          </Button>
         </div>
       </Box>
 

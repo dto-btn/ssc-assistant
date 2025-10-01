@@ -12,10 +12,10 @@ import { useAppStore } from '../stores/AppStore';
 interface BubbleButtonsProps {
   // setIsFeedbackVisible: React.Dispatch<React.SetStateAction<boolean>>;
   // setIsGoodResponse: React.Dispatch<React.SetStateAction<boolean>>;
-    isHovering: boolean;
-    isMostRecent: boolean;
-    replayChat: () => void;
-    text: string;
+  isHovering: boolean;
+  isMostRecent: boolean;
+  replayChat: () => void;
+  text: string;
 }
 
 export const BubbleButtons: React.FC<BubbleButtonsProps> = (props: BubbleButtonsProps) => {
@@ -27,39 +27,42 @@ export const BubbleButtons: React.FC<BubbleButtonsProps> = (props: BubbleButtons
 
   useEffect(() => {
     if (isCopied) {
-        const timer = setTimeout(() => {
-            setIsCopied(false);
-        }, 3000);
-        return () => clearTimeout(timer);
+      const timer = setTimeout(() => {
+        setIsCopied(false);
+      }, 3000);
+      return () => clearTimeout(timer);
     }
-}, [isCopied]);
+  }, [isCopied]);
 
   return (
     <>
-        <CopyToClipboard text={text} onCopy={() => setIsCopied(true)}>
+      <CopyToClipboard text={text} onCopy={() => setIsCopied(true)}>
         <Tooltip title={isCopied ? t("copy.success") : t("copy")} arrow>
           <button
+            id="copy-button"
             style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none' }}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             tabIndex={0}>
-            {isCopied ? <CheckIcon style={{ fontSize: 20 }}/> : <ContentCopyIcon className="copy-icon" style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>}
+            {isCopied ? <CheckIcon style={{ fontSize: 20 }} /> : <ContentCopyIcon className="copy-icon" style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }} />}
           </button>
         </Tooltip>
       </CopyToClipboard>
       <Tooltip title={t("regenerate")} arrow>
         <button
-            onClick={replayChat}
-            style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none', display: isMostRecent ? 'inline' : 'none' }}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
+          id="replay-chat-button"
+          onClick={replayChat}
+          style={{ cursor: 'pointer', backgroundColor: 'transparent', border: 'none', display: isMostRecent ? 'inline' : 'none' }}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           tabIndex={0}
         >
-          <RefreshIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>
+          <RefreshIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }} />
         </button>
       </Tooltip>
       <Tooltip title={t("good.response")} arrow>
         <button
+          id="good-response-button"
           onClick={() => {
             open("positive")
           }}
@@ -68,11 +71,12 @@ export const BubbleButtons: React.FC<BubbleButtonsProps> = (props: BubbleButtons
           onBlur={() => setIsFocused(false)}
           tabIndex={0}
         >
-          <ThumbUpAltOutlinedIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>
+          <ThumbUpAltOutlinedIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }} />
         </button>
       </Tooltip>
       <Tooltip title={t("bad.response")} arrow>
         <button
+          id="bad-response-button"
           onClick={() => {
             open("negative")
           }}
@@ -81,7 +85,7 @@ export const BubbleButtons: React.FC<BubbleButtonsProps> = (props: BubbleButtons
           onBlur={() => setIsFocused(false)}
           tabIndex={0}
         >
-          <ThumbDownAltOutlinedIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }}/>
+          <ThumbDownAltOutlinedIcon style={{ fontSize: 20, color: (isHovering || isFocused || isMostRecent) ? '#4b3e99' : 'transparent' }} />
         </button>
       </Tooltip>
     </>

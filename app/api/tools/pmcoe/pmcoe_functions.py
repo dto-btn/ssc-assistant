@@ -1,4 +1,5 @@
 import logging
+import os
 
 from utils.decorators import tool_metadata
 
@@ -7,6 +8,9 @@ __all__ = ["pmcoe"]
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+index_name: str = os.getenv("PMCOE_SEARCH_INDEX_NAME", "pmcoe")
+
+PMCOE_CONTAINER = os.getenv("PMCOE_CONTAINER", "pmcoe-sept-2025")
 
 @tool_metadata(
     {
@@ -29,7 +33,7 @@ logger.setLevel(logging.DEBUG)
 def pmcoe(query: str):  # pylint: disable=unused-argument
     """returns the name of the telecom index name"""
     return {
-            "index_name": "pmcoe",
+            "index_name": index_name,
             "embedding_model": "text-embedding-3-large",
             "use_language_filter": True,
             'top_n_documents': 20,

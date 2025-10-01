@@ -56,7 +56,7 @@ export const ChatInput = ({
     onDrop: (event: React.DragEvent) => {
       event.preventDefault();
       event.stopPropagation();
-      if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+      if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
         const file = event.dataTransfer.files[0];
         doUpload(file);
       }
@@ -88,6 +88,29 @@ export const ChatInput = ({
     }
   };
 
+  const onPaste = (ev: React.ClipboardEvent) => {
+    // Get the items from the clipboard event
+    const items = ev.clipboardData.items;
+
+    // If disabled or no items, do nothing
+    if (disabled || !items) {
+      return;
+    }
+
+    // Loop through the items to find files & upload the first one found
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.kind === "file") {
+        const file = item.getAsFile();
+        if (file) {
+          doUpload(file);
+          ev.preventDefault();
+          break;
+        }
+      }
+    }
+  }
+
   const onFileUpload = (newFile: Attachment) => {
     setFile(newFile);
     inputFieldRef.current?.focus();
@@ -106,6 +129,22 @@ export const ChatInput = ({
       chatInput?.focus();
     }
   }, [quotedText]);
+
+  // Use effect to handle file drop on the window
+  // This is done this way to allow dropping files anywhere on the window instead of just the input area
+  useEffect(() => {
+    const handleDrop = (event: DragEvent) => {
+      if (event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+        const file = event.dataTransfer.files[0];
+        doUpload(file);
+        event.preventDefault();
+      }
+    };
+    window.addEventListener("drop", handleDrop);
+    return () => {
+      window.removeEventListener("drop", handleDrop);
+    };
+  }, [doUpload]);
 
   return (
     <>
@@ -132,6 +171,7 @@ export const ChatInput = ({
             }}
           >
             <IconButton
+              id="remove-uploaded-file-button"
               onClick={handleRemoveFile}
               size="large"
               color="primary"
@@ -221,7 +261,7 @@ export const ChatInput = ({
               ? theme.palette.action.hover
               : undefined,
             transition: "background 0.2s, border-color 0.2s",
-            minHeight: hasDetectedDrag ? 90 : undefined,
+            minHeight: 60,    // Ensure fixed height
           }}
         >
           {!disabledFeaturesSet.has("file_upload") && !file && !isUploading && (
@@ -256,11 +296,10 @@ export const ChatInput = ({
           )}
 
           <InputBase
-            sx={{ ml: 1, flex: 1 }}
+            sx={{ ml: file || isUploading ? 7 : 1, flex: 1 }}
             slotProps={{
               input: {
                 tabIndex: 0,
-                autoFocus: true,
               },
             }}
             placeholder={`${t("ask.question")}. ${t(
@@ -270,6 +309,7 @@ export const ChatInput = ({
             error={error}
             id="ask-question"
             onKeyDown={onEnterPress}
+            onPaste={onPaste}
             value={question}
             multiline
             maxRows={15}
@@ -281,6 +321,7 @@ export const ChatInput = ({
             }}
           />
           <IconButton
+            id="send-or-stop-question-button"
             onClick={disabled ? onStop : sendQuestion}
             disabled={isUploading}
             sx={{
@@ -292,7 +333,23 @@ export const ChatInput = ({
             size="large"
           >
             {disabled ? (
-              <StopCircleIcon sx={{ color: "primary.main" }} aria-label={t("stop generating")} />
+              <Box sx={{ position: "relative", display: "inline-flex" }}>
+                <CircularProgress size={30} aria-label={t("stop.generating")} />
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <StopCircleIcon sx={{ color: "primary.main" }} aria-label={t("stop.generating")} />
+                </Box>
+              </Box>
             )
               : isUploading ? (
                 <CircularProgress size={24} aria-label={t("generating")} />
@@ -325,7 +382,7 @@ export const ChatInput = ({
             }}
           ></Typography>
         </Box>
-      </Container>
+      </Container >
       {!disabledFeaturesSet.has("file_upload") &&
         hasDetectedDrag &&
         createPortal(
@@ -367,7 +424,8 @@ export const ChatInput = ({
             <Typography fontSize="24px">Drop file to upload</Typography>
           </Box>,
           document.body
-        )}
+        )
+      }
     </>
   );
 };

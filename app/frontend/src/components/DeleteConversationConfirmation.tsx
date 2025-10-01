@@ -29,8 +29,10 @@ export const DeleteConversationConfirmation: React.FC<Props> = ({
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>{t("cancel")}</Button>
-        <Button onClick={onDelete} variant="contained" size="small" color='error'>{t("delete")}</Button>
+        <Button id="cancel-delete-chat-button" onClick={onClose}>{t("cancel")}</Button>
+        <Button id="confirm-delete-chat-button" onClick={onDelete} variant="contained" size="small" color='error'>
+          {t("delete")}
+        </Button>
       </DialogActions>
     </Dialog>
   );

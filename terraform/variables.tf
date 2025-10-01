@@ -112,3 +112,15 @@ variable "bits_database_config" {
   default = null
   sensitive = true
 }
+
+variable "title_rename_threshold" {
+    type = number
+    description = "The threshold value for renaming titles."
+    default = 1
+}
+
+variable "title_rename_model" {
+    type = string
+    description = "the model used for generating the title"
+    default = "gpt-4.1-nano"
+}
