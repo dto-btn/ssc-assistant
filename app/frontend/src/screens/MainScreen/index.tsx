@@ -77,6 +77,7 @@ const MainScreen = () => {
 
   const chatRef = useRef<HTMLDivElement>(null);
   const lastCompletionRef = useRef<HTMLDivElement>(null);
+  const chatMessageStreamEnd = useRef<HTMLDivElement>(null);
   const [scrollable, setScrollable] = useState(false);
 
   // Handle scroll events in chat container
@@ -123,7 +124,7 @@ const MainScreen = () => {
       }
 
     }, 100); // Slight delay to allow DOM to update
-  }, [currentChatIndex]);
+  }, [currentChatIndex, getCurrentChatHistory]);
 
   const sendMessage = (question: string, attachments: Attachment[]) => {
     apiRequestService.makeApiRequest(

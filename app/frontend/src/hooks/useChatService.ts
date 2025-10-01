@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback useMemo } from "react"
+import { useCallback, useMemo } from "react"
 
 import { PersistenceUtils } from "../util/persistence";
 import { useChatStore } from "../stores/ChatStore";
@@ -9,10 +9,9 @@ import { MAX_CHAT_HISTORIES_LENGTH, MUTUALLY_EXCLUSIVE_TOOLS, SNACKBAR_DEBOUNCE_
 import { isACompletion } from "../utils";
 import { buildDefaultChatHistory } from "../stores/modelBuilders";
 import { useBasicApiRequestService } from "../screens/MainScreen/useApiRequestService";
-import { t } from "i18next";
+// removed duplicate t import; using useTranslation hook's t
 
 let hasFetchedTitle = false
-let hasPageLoaded = false;
 
 export const useChatService = () => {
     const { t } = useTranslation()
@@ -28,7 +27,7 @@ export const useChatService = () => {
     const showSnackbar = useAppStore((s) => s.snackbars.show);
     const enabledTools = useAppStore((s) => s.tools.enabledTools);
     const setAppEnabledTools = useAppStore((s) => s.tools.setEnabledTools);
-    const messageThreshold = parseInt(import.meta.env.TITLE_RENAME_THRESHOLD || 1);
+    const messageThreshold = parseInt(import.meta.env.TITLE_RENAME_THRESHOLD || "1", 10);
 
     const makeBasicApiRequest = useBasicApiRequestService();
     // This is a custom hook that provides chat-related services. We use useMemo to
@@ -81,7 +80,7 @@ export const useChatService = () => {
             });
 
             // Construct the MessageRequest object
-            const request: MessageRequest = summerizeChatWithChatGPT(message);
+            const request: MessageRequest = summerizeChatWithChatGPT(message, t);
 
             // Call the completionBasic function
             const data = await makeBasicApiRequest(request);
@@ -97,7 +96,7 @@ export const useChatService = () => {
             // Provide a fallback title in case of an error
             renameChat(`Conversation ${currentChatIndex + 1}`, currentChatIndex);
         }
-    }, [makeBasicApiRequest]);
+    }, [makeBasicApiRequest, t]);
     const saveChatHistories = useCallback((updatedChatHistory: ChatHistory) => {
 
         try {
@@ -151,35 +150,42 @@ export const useChatService = () => {
         }
     }, [setCurrentChatHistory, setCurrentChatIndex]);
 
-    const handleNewChat = useCallback((tool?: string) => {
+    // Memoized delete to keep stable reference in other hooks
+    const deleteSavedChat = useCallback(async (chatIndexToLoadOrDelete: number) => {
         const chatHistories = PersistenceUtils.getChatHistories();
-          let chatIndex = chatHistories.length - 1;
-            if(chatIndex < 0){
-                chatIndex = 0;
-            }
-        const lastChat = chatHistories[chatIndex] || [];
-        const lastChatLength = (lastChat as { chatItems: any[] }).chatItems.length;
+        const updatedChatHistories = [
+            ...chatHistories.slice(0, chatIndexToLoadOrDelete),
+            ...chatHistories.slice(chatIndexToLoadOrDelete + 1),
+        ];
 
-        if(lastChatLength === 0 && typeof(tool) !== "undefined"){
-            deleteSavedChat(chatIndex);
-            createNewChat(tool);
-            window.location.reload();
-        }else if(lastChatLength === 0 && lastChat.staticTools?.length > 0){
-            deleteSavedChat(chatIndex);
-            createNewChat(tool);
-            window.location.reload();
-        }else if(lastChatLength != 0 || typeof(tool) !== "undefined"){
-            createNewChat(tool);
-        }else{
-            //set chat index to first chat
-            setCurrentChatIndex(chatIndex);
-            const currentChat = chatHistories[chatIndex];
-            setCurrentChatHistory(currentChat);
-            window.location.reload();
+        if (updatedChatHistories.length === 0) {
+            // current chat was only chat and at index 0, so just reset state
+            setDefaultChatHistory()
+        } else if (currentChatIndex === chatIndexToLoadOrDelete) {
+            // deleting current chat, so set to whatever is at index 0
+            setCurrentChatHistory(updatedChatHistories[0]);
+            setCurrentChatIndex(0);
+        } else if (chatIndexToLoadOrDelete < currentChatIndex) {
+            // deleted chat is at a lower index, so re-index current chat
+            setCurrentChatIndex(currentChatIndex - 1);
         }
-    }
 
-    const createNewChat = (tool?: string) => {
+        if (updatedChatHistories.length === 0) {
+            setChatHistoriesDescriptions(["Conversation 1"]);
+        } else {
+            setChatHistoriesDescriptions(
+                updatedChatHistories.map(
+                    (chatHistory, index) =>
+                        chatHistory.description || "Conversation " + (index + 1)
+                )
+            );
+        }
+
+        setChatIndexToLoadOrDelete(null);
+        PersistenceUtils.setChatHistories(updatedChatHistories);
+    }, [currentChatIndex, setChatHistoriesDescriptions, setChatIndexToLoadOrDelete, setCurrentChatHistory, setCurrentChatIndex, setDefaultChatHistory]);
+
+    const createNewChat = useCallback((tool?: string) => {
         const chatHistories = PersistenceUtils.getChatHistories();
         const newChatIndex = chatHistoriesDescriptions.length;
 
@@ -223,6 +229,35 @@ export const useChatService = () => {
         }
     }, [chatHistoriesDescriptions, enabledTools, setAppEnabledTools, setChatHistoriesDescriptions, setCurrentChatHistory, setCurrentChatIndex, showSnackbar, t]);
 
+        const handleNewChat = useCallback((tool?: string) => {
+                const chatHistories = PersistenceUtils.getChatHistories();
+                    let chatIndex = chatHistories.length - 1;
+            if(chatIndex < 0){
+                chatIndex = 0;
+            }
+                const lastChat = (chatHistories[chatIndex] as ChatHistory) || buildDefaultChatHistory();
+                const lastChatLength = Array.isArray(lastChat.chatItems) ? lastChat.chatItems.length : 0;
+
+        if(lastChatLength === 0 && typeof(tool) !== "undefined"){
+            deleteSavedChat(chatIndex);
+            createNewChat(tool);
+            window.location.reload();
+        }else if(lastChatLength === 0 && lastChat.staticTools?.length > 0){
+            deleteSavedChat(chatIndex);
+            createNewChat(tool);
+            window.location.reload();
+        }else if(lastChatLength != 0 || typeof(tool) !== "undefined"){
+            createNewChat(tool);
+        }else{
+            //set chat index to first chat
+            setCurrentChatIndex(chatIndex);
+            const currentChat = chatHistories[chatIndex];
+            setCurrentChatHistory(currentChat);
+            window.location.reload();
+        }
+    }, [createNewChat, deleteSavedChat, setCurrentChatHistory, setCurrentChatIndex])
+
+
     const deleteAllChatHistory = useCallback(() => {
         // create a new chat history with default values
         const newChat = buildDefaultChatHistory()
@@ -239,39 +274,7 @@ export const useChatService = () => {
         PersistenceUtils.setCurrentChatIndex(0);
     }, [setChatHistoriesDescriptions, setCurrentChatHistory, setCurrentChatIndex]);
 
-    const deleteSavedChat = async (chatIndexToLoadOrDelete: number) => {
-        const chatHistories = PersistenceUtils.getChatHistories();
-        const updatedChatHistories = [
-            ...chatHistories.slice(0, chatIndexToLoadOrDelete),
-            ...chatHistories.slice(chatIndexToLoadOrDelete + 1),
-        ];
-
-        if (updatedChatHistories.length === 0) {
-            // current chat was only chat and at index 0, so just reset state
-            setDefaultChatHistory()
-        } else if (currentChatIndex === chatIndexToLoadOrDelete) {
-            // deleting current chat, so set to whatever is at index 0
-            setCurrentChatHistory(updatedChatHistories[0]);
-            setCurrentChatIndex(0);
-        } else if (chatIndexToLoadOrDelete < currentChatIndex) {
-            // deleted chat is at a lower index, so re-index current chat
-            setCurrentChatIndex(currentChatIndex - 1);
-        }
-
-        if (updatedChatHistories.length === 0) {
-            setChatHistoriesDescriptions(["Conversation 1"]);
-        } else {
-            setChatHistoriesDescriptions(
-                updatedChatHistories.map(
-                    (chatHistory, index) =>
-                        chatHistory.description || "Conversation " + (index + 1)
-                )
-            );
-        }
-
-        setChatIndexToLoadOrDelete(null);
-        PersistenceUtils.setChatHistories(updatedChatHistories);
-    }
+    // old deleteSavedChat removed (now memoized above)
 
     const memoized = useMemo(() => {
         return {
@@ -336,13 +339,11 @@ export const useChatService = () => {
         handleLoadSavedChat,
         handleNewChat,
         deleteAllChatHistory,
+        deleteSavedChat,
         fetchChatTitleAndRename,
         messageThreshold,
         currentChatIndex,
-        setChatIndexToLoadOrDelete,
-        setChatHistoriesDescriptions,
         setCurrentChatHistory,
-        setDefaultChatHistory,
     ])
 
     return memoized
@@ -390,7 +391,7 @@ function mergeChatItem(chatItem: { role?: string; content?: unknown }): string {
     return `${role}: ${content}`;
 }
 
-function summerizeChatWithChatGPT(chat: Message[]): MessageRequest {
+function summerizeChatWithChatGPT(chat: Message[], t: (key: string) => string): MessageRequest {
     // Merge all chat items (filter undefined or null items)
     const mergeChatItems = chat
         .filter(item => item !== null && item !== undefined)

@@ -1,5 +1,5 @@
 import { Box, CircularProgress, IconButton, Skeleton, Stack } from "@mui/material";
-import { Fragment, RefObject, memo, useEffect,useRef,useState } from "react";
+import { Fragment, memo, useEffect,useRef,useState } from "react";
 import ArrowCircleDownIcon from '@mui/icons-material/ArrowCircleDown';
 import { AlertBubble, AssistantBubble, UserBubble } from "../components";
 import { isACompletion, isAMessage, isAToastMessage } from "../utils";
@@ -115,7 +115,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
 
     }
 
-  }, [isLoading, chatHistory.chatItems]);
+  }, [isLoading, chatHistory.chatItems, containerRef, lastCompletionRef, handleScroll]);
 
 
   return (
