@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useCallback, useMemo } from "react"
 import { PersistenceUtils } from "../util/persistence";
 import { useChatStore } from "../stores/ChatStore";
 import { useAppStore } from "../stores/AppStore";
@@ -13,23 +13,31 @@ import { t } from "i18next";
 
 export const useChatService = () => {
     const { t } = useTranslation()
-    const chatStore = useChatStore();
-    const snackbars = useAppStore((state) => state.snackbars);
-    const appStore = useAppStore();
+    // Select only what's needed from stores to avoid re-renders on unrelated updates
+    const currentChatIndex = useChatStore((s) => s.currentChatIndex);
+    const chatHistoriesDescriptions = useChatStore((s) => s.chatHistoriesDescriptions);
+    const setChatIndexToLoadOrDelete = useChatStore((s) => s.setChatIndexToLoadOrDelete);
+    const setChatHistoriesDescriptions = useChatStore((s) => s.setChatHistoriesDescriptions);
+    const setDefaultChatHistory = useChatStore((s) => s.setDefaultChatHistory);
+    const setCurrentChatHistory = useChatStore((s) => s.setCurrentChatHistory);
+    const chatStoreSetCurrentChatIndex = useChatStore((s) => s.setCurrentChatIndex);
+
+    const showSnackbar = useAppStore((s) => s.snackbars.show);
+    const enabledTools = useAppStore((s) => s.tools.enabledTools);
+    const setAppEnabledTools = useAppStore((s) => s.tools.setEnabledTools);
     const messageThreshold = 4;
     const makeBasicApiRequest = useBasicApiRequestService();
-    const { currentChatIndex, chatHistoriesDescriptions, setChatIndexToLoadOrDelete, setChatHistoriesDescriptions, setDefaultChatHistory, setCurrentChatHistory, setCurrentChatIndex: chatStoreSetCurrentChatIndex } = useChatStore();
     // This is a custom hook that provides chat-related services. We use useMemo to
     // memoize the value of the service to avoid unnecessary re-renders.
 
-    const setCurrentChatIndex = (index: number) => {
+    const setCurrentChatIndex = useCallback((index: number) => {
         // Set the index in local storage
         PersistenceUtils.setCurrentChatIndex(index);
         // Update the state
         chatStoreSetCurrentChatIndex(index);
-    }
+    }, [chatStoreSetCurrentChatIndex]);
 
-    const fetchChatTitleAndRename = async (
+    const fetchChatTitleAndRename = useCallback(async (
         updatedChatHistory: { chatItems: ChatItem[] }, // Structure of chat history passed to the function
         currentChatIndex: number,                 // Index of the conversation being updated
         renameChat: (title: string, index: number) => void, // Callback to rename the conversation                     // Authorization token
@@ -83,9 +91,9 @@ export const useChatService = () => {
             // Provide a fallback title in case of an error
             renameChat(`Conversation ${currentChatIndex + 1}`, currentChatIndex);
         }
-    };
+    }, [makeBasicApiRequest]);
 
-    const saveChatHistories = (updatedChatHistory: ChatHistory) => {
+    const saveChatHistories = useCallback((updatedChatHistory: ChatHistory) => {
         try {
             const chatHistories = PersistenceUtils.getChatHistories();
             chatHistories[currentChatIndex] = updatedChatHistory;
@@ -96,7 +104,7 @@ export const useChatService = () => {
                 error.name === "QuotaExceededError"
             ) {
                 console.error("LocalStorage is full:", error);
-                snackbars.show(
+                showSnackbar(
                     t("storage.full"),
                     SNACKBAR_DEBOUNCE_KEYS.STORAGE_FULL_ERROR
                 );
@@ -105,9 +113,9 @@ export const useChatService = () => {
             return Promise.reject(error);
         }
         return Promise.resolve(updatedChatHistory);
-    }
+    }, [currentChatIndex, showSnackbar, t]);
 
-    const renameChat = (newDescription: string, indexToUpdate: number) => {
+    const renameChat = useCallback((newDescription: string, indexToUpdate: number) => {
         const chatHistories = PersistenceUtils.getChatHistories();
         const updatedChatHistories = [...chatHistories];
         const updatedChatHistory: ChatHistory = {
@@ -126,22 +134,22 @@ export const useChatService = () => {
                     chatHistory.description || "Conversation " + (index + 1)
             )
         );
-    };
+    }, [currentChatIndex, setChatHistoriesDescriptions, setCurrentChatHistory]);
 
-    const handleLoadSavedChat = (index: number) => {
+    const handleLoadSavedChat = useCallback((index: number) => {
         const chatHistories = PersistenceUtils.getChatHistories();
         if (chatHistories) {
             const newChat = chatHistories[index];
             setCurrentChatHistory(newChat);
             setCurrentChatIndex(index);
         }
-    };
+    }, [setCurrentChatHistory, setCurrentChatIndex]);
 
-    const handleNewChat = (tool?: string) => {
+    const handleNewChat = useCallback((tool?: string) => {
         const chatHistories = PersistenceUtils.getChatHistories();
         const newChatIndex = chatHistoriesDescriptions.length;
         if (chatHistories.length === MAX_CHAT_HISTORIES_LENGTH || newChatIndex >= MAX_CHAT_HISTORIES_LENGTH) {
-            snackbars.show(
+            showSnackbar(
                 t("chat.history.full"),
                 SNACKBAR_DEBOUNCE_KEYS.CHAT_HISTORY_FULL_ERROR
             );
@@ -153,16 +161,16 @@ export const useChatService = () => {
             // Process tools (static tools are generally mutually exclusive tools and work on their own)
             // If tool(s) are enforced specifically here for this new chat, we set them in the convo staticTools
             // Process tools for this new chat
-            let updatedTools: Record<string, boolean> = {
-                ...appStore.tools.enabledTools,
+            const updatedTools: Record<string, boolean> = {
+                ...enabledTools,
             };
             if (tool) {
                 newChat.staticTools = [tool];
-                Object.keys(appStore.tools.enabledTools).forEach((t) => {
+                Object.keys(enabledTools).forEach((t) => {
                         updatedTools[t] = t == tool;
                     });
             } else {// else we enable all other tools.
-                Object.keys(appStore.tools.enabledTools).forEach((t) => {
+                Object.keys(enabledTools).forEach((t) => {
                     updatedTools[t] = !MUTUALLY_EXCLUSIVE_TOOLS.includes(t);
                 });
             }
@@ -174,12 +182,12 @@ export const useChatService = () => {
                 ...chatHistoriesDescriptions,
                 newDescription
             ]);
-            appStore.tools.setEnabledTools(updatedTools);
+            setAppEnabledTools(updatedTools);
             PersistenceUtils.setEnabledTools(updatedTools);
         }
-    };
+    }, [chatHistoriesDescriptions, enabledTools, setAppEnabledTools, setChatHistoriesDescriptions, setCurrentChatHistory, setCurrentChatIndex, showSnackbar, t]);
 
-    const deleteAllChatHistory = () => {
+    const deleteAllChatHistory = useCallback(() => {
         // create a new chat history with default values
         const newChat = buildDefaultChatHistory()
         const newDescription = "...";
@@ -193,7 +201,7 @@ export const useChatService = () => {
         // update the persisted state
         PersistenceUtils.setChatHistories([newChat]);
         PersistenceUtils.setCurrentChatIndex(0);
-    };
+    }, [setChatHistoriesDescriptions, setCurrentChatHistory, setCurrentChatIndex]);
 
     const memoized = useMemo(() => {
         return {
@@ -276,12 +284,26 @@ export const useChatService = () => {
             },
             deleteAllChatHistory
         }
-    }, [chatStore, snackbars])
+    }, [
+        setCurrentChatIndex,
+        saveChatHistories,
+        renameChat,
+        handleLoadSavedChat,
+        handleNewChat,
+        deleteAllChatHistory,
+        fetchChatTitleAndRename,
+        messageThreshold,
+        currentChatIndex,
+        setChatIndexToLoadOrDelete,
+        setChatHistoriesDescriptions,
+        setCurrentChatHistory,
+        setDefaultChatHistory,
+    ])
 
     return memoized
 }
 
-function mergeChatItem(chatItem: { role?: string; content?: any }): string {
+function mergeChatItem(chatItem: { role?: string; content?: unknown }): string {
     /**
      * Merges a chat item into a string format for logging or display.
      */
@@ -290,15 +312,15 @@ function mergeChatItem(chatItem: { role?: string; content?: any }): string {
     }
 
     let role: string = chatItem.role ?? "unknown"; // Default 'role' to "unknown" if undefined
-    let content: any = chatItem.content ?? ""; // Default 'content' to an empty string if undefined
+    let content: unknown = chatItem.content ?? ""; // Default 'content' to an empty string if undefined
 
     // Handle content based on its type
-    if (typeof content === "object" && !Array.isArray(content)) {
+    if (typeof content === "object" && content !== null && !Array.isArray(content)) {
         // Convert content to JSON string if it's an object
-        content = JSON.stringify(content, null, 0); // No extra spaces
+        content = JSON.stringify(content as Record<string, unknown>, null, 0); // No extra spaces
     } else if (Array.isArray(content)) {
         // Join array items with newline characters
-        content = content.map(item => String(item)).join("\n");
+        content = (content as unknown[]).map(item => String(item)).join("\n");
     } else if (typeof content !== "string") {
         // Convert non-string, non-object, non-array content to a string
         content = String(content);
@@ -309,13 +331,15 @@ function mergeChatItem(chatItem: { role?: string; content?: any }): string {
         role = String(role);
     }
 
+    // Normalize to string for final checks
+    const contentStr = typeof content === "string" ? content : String(content);
     // Skip invalid chat items
-    if (role === "unknown" || !content || !content.trim()) {
+    if (role === "unknown" || !contentStr || !contentStr.trim()) {
         return "";
     }
 
     // Strip leading and trailing whitespace from the content
-    content = content.trim();
+    content = contentStr.trim();
 
     // Return the formatted string
     return `${role}: ${content}`;

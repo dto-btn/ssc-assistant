@@ -6,6 +6,7 @@ import "highlight.js/styles/github.css";
 import { visuallyHidden } from "@mui/utils";
 import { useTranslation } from "react-i18next";
 import { AttachmentPreview } from './file-upload/AttachmentPreview';
+import { memo } from 'react';
 
 interface UserChatProps {
   text: string | null | undefined;
@@ -13,7 +14,7 @@ interface UserChatProps {
   attachments?: Attachment[];
 }
 
-export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
+export const UserBubble = memo(({ text, quote, attachments }: UserChatProps) => {
   const { t } = useTranslation();
   // keeping this here for typesafety because we are ts-expect-error down in the return
 
@@ -74,7 +75,7 @@ export const UserBubble = ({ text, quote, attachments }: UserChatProps) => {
       </Box>
     </>
   );
-};
+});
 
 const UserBubbleContainer = styled(Box)`
   display: flex;

@@ -4,6 +4,7 @@ import { theme } from '../theme';
 import { LanguageService } from "../services/LanguageService";
 import { SNACKBAR_DEBOUNCE_KEYS, SNACKBAR_DEBOUNCE_MS, SNACKBAR_TTL_MS } from '../constants';
 import { defaultEnabledTools } from '../allowedTools';
+import { PersistenceUtils } from "../util/persistence";
 
 type SnackbarDatum = {
     id: number;
@@ -129,7 +130,17 @@ export const useAppStore = create<AppContext>((set, get) => ({
         }
     },
     tools: {
-        enabledTools: { ...defaultEnabledTools },
+        enabledTools: (() => {
+            // hydrate from localStorage at store init to avoid an extra render later
+            const stored: Record<string, boolean> = PersistenceUtils.getEnabledTools() || {};
+            const cleaned: Record<string, boolean> = { ...defaultEnabledTools };
+            (Object.keys(cleaned) as Array<keyof typeof cleaned>).forEach((key) => {
+                if (Object.prototype.hasOwnProperty.call(stored, key) && typeof stored[key as string] === "boolean") {
+                    cleaned[key] = stored[key as string];
+                }
+            });
+            return cleaned;
+        })(),
         setEnabledTools: (tools: Record<string, boolean>) => {
             set((state) => produce(state, (draft) => {
                 draft.tools.enabledTools = { ...tools };

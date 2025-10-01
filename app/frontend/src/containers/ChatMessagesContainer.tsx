@@ -1,5 +1,5 @@
 import { Box, CircularProgress } from "@mui/material";
-import { Fragment, RefObject } from "react";
+import { Fragment, RefObject, memo } from "react";
 import { AlertBubble, AssistantBubble, UserBubble } from "../components";
 import { isACompletion, isAMessage, isAToastMessage } from "../utils";
 
@@ -96,4 +96,4 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
   );
 };
 
-export default ChatMessagesContainer;
+export default memo(ChatMessagesContainer);

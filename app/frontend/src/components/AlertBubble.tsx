@@ -3,6 +3,7 @@ import { Box } from '@mui/material';
 import {styled} from '@mui/system';
 import { visuallyHidden } from '@mui/utils';
 import { useTranslation } from 'react-i18next';
+import { memo } from 'react';
 
 
 interface AlterBubbleProps {
@@ -11,7 +12,7 @@ interface AlterBubbleProps {
     removeMessageHandler: (index: number) => void;
 }
 
-export const AlertBubble = ({ toast, index, removeMessageHandler }: AlterBubbleProps) => {
+export const AlertBubble = memo(({ toast, index, removeMessageHandler }: AlterBubbleProps) => {
     const { t } = useTranslation();
     const alertSeverity = toast.isError ? "error" : "success";
 
@@ -33,7 +34,7 @@ export const AlertBubble = ({ toast, index, removeMessageHandler }: AlterBubbleP
         </AlertView>
     )
 
-}
+});
 
 const AlertView = styled(Box)`
     margin: 30px 0px;
