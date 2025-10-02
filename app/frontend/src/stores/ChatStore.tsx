@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { produce } from "immer";
 import { buildDefaultChatHistory, buildDefaultModel } from "./modelBuilders";
+import { PersistenceUtils } from "../util/persistence";
 
 type ChatStore = {
   currentChatIndex: number;
@@ -8,6 +9,7 @@ type ChatStore = {
   chatHistoriesDescriptions: string[];
   chatIndexToLoadOrDelete: number | null;
   quotedText: string | undefined;
+  setQuotedText: (text: string | undefined) => void;
   setChatIndexToLoadOrDelete: (index: number | null) => void;
   getCurrentChatHistory: () => ChatHistory;
   setCurrentChatHistory: (
@@ -17,14 +19,46 @@ type ChatStore = {
   getDefaultModel: () => string;
   setCurrentChatIndex: (index: number) => void;
   setChatHistoriesDescriptions: (descriptions: string[]) => void;
+  /**
+   * Batches initial state updates from persistence to avoid multiple renders on first load.
+   */
+  hydrateOnBoot: (params: {
+    currentIndex: number;
+    currentHistory: ChatHistory;
+    descriptions: string[];
+  }) => void;
 };
 
 export const useChatStore = create<ChatStore>((set, get) => ({
-  currentChatIndex: 0,
+  // Initialize from persistence to avoid extra renders on mount
+  ...(function initFromStorage() {
+    const parsed = PersistenceUtils.getChatHistories();
+    if (parsed.length > 0) {
+      let idx = PersistenceUtils.getCurrentChatIndex();
+      if (idx < 0 || idx >= parsed.length) idx = 0;
+      const history = parsed[idx] ?? buildDefaultChatHistory();
+      const descriptions = parsed.map((h, i) => h.description || `Conversation ${i + 1}`);
+      return {
+        currentChatIndex: idx,
+        currentChatHistory: history,
+        chatHistoriesDescriptions: descriptions,
+      };
+    }
+    return {
+      currentChatIndex: 0,
+      currentChatHistory: buildDefaultChatHistory(),
+      chatHistoriesDescriptions: ["Conversation 1"],
+    };
+  })(),
   chatIndexToLoadOrDelete: null,
-  currentChatHistory: buildDefaultChatHistory(),
-  chatHistoriesDescriptions: ["Conversation 1"],
   quotedText: undefined,
+  setQuotedText: (text: string | undefined) => {
+    set((state) =>
+      produce(state, (draft) => {
+        draft.quotedText = text;
+      })
+    );
+  },
   setChatIndexToLoadOrDelete: (index: number | null) => {
     set((state) =>
       produce(state, (draft) => {
@@ -37,10 +71,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   ) => {
     set((state) =>
       produce(state, (draft) => {
+        // Always ensure the chat history has all expected keys by merging with defaults ONCE here
         if (typeof param === "function") {
-          draft.currentChatHistory = param(draft.getCurrentChatHistory());
+          const next = param(draft.currentChatHistory ?? buildDefaultChatHistory());
+          draft.currentChatHistory = { ...buildDefaultChatHistory(), ...next };
         } else {
-          draft.currentChatHistory = param;
+          draft.currentChatHistory = { ...buildDefaultChatHistory(), ...param };
         }
       })
     );
@@ -56,18 +92,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     return buildDefaultModel();
   },
   getCurrentChatHistory: () => {
-    const state = get();
-    const currentChatHistory = state.currentChatHistory;
-    if (!currentChatHistory) {
-      return buildDefaultChatHistory();
-    } else {
-      // We are spreading the defaultChatHistory because a lot of the time, we are losing keys from localstorage.
-      // This is a hacky fix for now. We want to move to database persistence later anyway.
-      return {
-        ...buildDefaultChatHistory(),
-        ...currentChatHistory
-      }
-    }
+    // Return the stored reference directly; setters ensure shape and defaults
+    return get().currentChatHistory ?? buildDefaultChatHistory();
   },
   setCurrentChatIndex: (index: number) => {
     set((state) =>
@@ -79,6 +105,15 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   setChatHistoriesDescriptions: (descriptions: string[]) => {
     set((state) =>
       produce(state, (draft) => {
+        draft.chatHistoriesDescriptions = descriptions;
+      })
+    );
+  },
+  hydrateOnBoot: ({ currentIndex, currentHistory, descriptions }) => {
+    set((state) =>
+      produce(state, (draft) => {
+        draft.currentChatIndex = currentIndex;
+        draft.currentChatHistory = { ...buildDefaultChatHistory(), ...currentHistory };
         draft.chatHistoriesDescriptions = descriptions;
       })
     );

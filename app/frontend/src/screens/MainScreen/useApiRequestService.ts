@@ -7,6 +7,7 @@ import { AccountInfo } from "@azure/msal-browser";
 import { useChatService } from "../../hooks/useChatService";
 import { useTranslation } from "react-i18next";
 import { useChatStore } from "../../stores/ChatStore";
+import { GraphData } from "../../stores/UserContext";
 import { isACompletion, isAToastMessage } from "../../utils";
 import { convertChatHistoryToMessages } from "./utils";
 import { MAX_MESSAGES_SENT } from "../../constants";
@@ -15,13 +16,17 @@ import { MAX_MESSAGES_SENT } from "../../constants";
 export const useApiRequestService = () => {
     const { instance } = useMsal();
     const [apiAccessToken, setApiAccessToken] = useState<string>("");
-    const chatService = useChatService();
+    const { updateLastMessage, saveChatHistories } = useChatService();
     const { t, i18n } = useTranslation();
-    const chatStore = useChatStore();
+    // Narrow store subscriptions to avoid full-store reactivity
+    const setQuotedText = useChatStore((s) => s.setQuotedText);
+    const getCurrentChatHistory = useChatStore((s) => s.getCurrentChatHistory);
+    const setCurrentChatHistory = useChatStore((s) => s.setCurrentChatHistory);
+    const quotedText = useChatStore((s) => s.quotedText);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const abortControllerRef = useRef<AbortController | null>(null);
 
-    const sendApiRequest = async (request: MessageRequest) => {
+    const sendApiRequest = useCallback(async (request: MessageRequest) => {
         try {
             let token = apiAccessToken;
             if (!apiAccessToken || isTokenExpired(apiAccessToken)) {
@@ -40,12 +45,12 @@ export const useApiRequestService = () => {
 
             const completionResponse = await completion({
                 request: request,
-                updateLastMessage: chatService.updateLastMessage,
+                updateLastMessage: updateLastMessage,
                 accessToken: token,
                 signal: abortControllerRef.current.signal,
             });
 
-            chatStore.setCurrentChatHistory((prevChatHistory) => {
+            setCurrentChatHistory((prevChatHistory) => {
                 const updatedChatItems = prevChatHistory?.chatItems.map(
                     (item, itemIndex) => {
                         if (
@@ -76,7 +81,7 @@ export const useApiRequestService = () => {
                     chatItems: updatedChatItems.filter((item) => !isAToastMessage(item)),
                 };
 
-                chatService.saveChatHistories(filteredChatHistory);
+                saveChatHistories(filteredChatHistory);
                 return updatedChatHistory;
             });
         } catch (error) {
@@ -97,7 +102,7 @@ export const useApiRequestService = () => {
                 isError: true,
             };
 
-            chatStore.setCurrentChatHistory((prevChatHistory) => {
+            setCurrentChatHistory((prevChatHistory) => {
                 const updatedChatHistory = {
                     ...prevChatHistory,
                     chatItems: [...prevChatHistory.chatItems, toast],
@@ -108,11 +113,11 @@ export const useApiRequestService = () => {
             setIsLoading(false);
             abortControllerRef.current = null;
         }
-    };
+    }, [apiAccessToken, instance, setApiAccessToken, setCurrentChatHistory, t, updateLastMessage, saveChatHistories]);
 
-    const makeApiRequest = async (
+    const makeApiRequest = useCallback(async (
         question: string,
-        userData: { graphData: any },
+    userData: { graphData: GraphData },
         attachments?: Attachment[],
         quotedTextFromRegenerate?: string,
         enabledTools: Record<string, boolean> = {}
@@ -121,7 +126,7 @@ export const useApiRequestService = () => {
         setIsLoading(true);
         const messagedQuoted = quotedTextFromRegenerate
             ? quotedTextFromRegenerate
-            : chatStore.quotedText;
+            : quotedText;
 
         const userMessage: Message = {
             role: "user",
@@ -138,7 +143,7 @@ export const useApiRequestService = () => {
         };
 
         const messages = convertChatHistoryToMessages([
-            ...chatStore.getCurrentChatHistory().chatItems,
+            ...getCurrentChatHistory().chatItems,
             userMessage,
         ], MAX_MESSAGES_SENT);
 
@@ -148,16 +153,20 @@ export const useApiRequestService = () => {
             max: MAX_MESSAGES_SENT,
             top: 5, // actually unused in the API, fyi.. needs refactor
             tools: Object.keys(enabledTools).filter((key) => enabledTools[key]),
-            uuid: chatStore.getCurrentChatHistory().uuid,
+            uuid: getCurrentChatHistory().uuid,
             quotedText: messagedQuoted,
-            model: chatStore.getCurrentChatHistory().model,
+            model: getCurrentChatHistory().model,
             lang: i18n.language, // Pass current language preference
-            fullName:
-                userData.graphData["givenName"] + " " + userData.graphData["surname"],
+            fullName: (() => {
+                const g = userData.graphData ?? {} as Record<string, unknown>;
+                const gn = (g["givenName"] as string) || "";
+                const sn = (g["surname"] as string) || "";
+                return `${gn} ${sn}`.trim();
+            })(),
         };
 
         // update current chat window with the message sent..
-        chatStore.setCurrentChatHistory((prevChatHistory) => {
+        setCurrentChatHistory((prevChatHistory) => {
             const updatedChatHistory = {
                 ...prevChatHistory,
                 chatItems: [
@@ -166,28 +175,26 @@ export const useApiRequestService = () => {
                     responsePlaceholder,
                 ],
             };
-            chatService.saveChatHistories(updatedChatHistory);
+            saveChatHistories(updatedChatHistory);
             return updatedChatHistory;
         });
 
         sendApiRequest(request);
-        chatStore.quotedText = undefined
-    };
+        setQuotedText(undefined)
+    }, [getCurrentChatHistory, i18n.language, quotedText, saveChatHistories, sendApiRequest, setCurrentChatHistory, setQuotedText]);
 
-    const abortRequest = () => {
+    const abortRequest = useCallback(() => {
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
             abortControllerRef.current = null;
         }
-    };
+    }, []);
 
-    const memoized = useMemo(() => {
-        return {
-            makeApiRequest,
-            isLoading,
-            abortRequest,
-        }
-    }, [isLoading, chatStore, chatService]);
+    const memoized = useMemo(() => ({
+        makeApiRequest,
+        isLoading,
+        abortRequest,
+    }), [makeApiRequest, isLoading, abortRequest]);
 
     return memoized;
 }

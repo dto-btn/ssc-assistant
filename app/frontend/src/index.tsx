@@ -1,4 +1,3 @@
-import React from "react";
 import ReactDOM from "react-dom/client";
 import { App } from "./App.tsx";
 import "./i18n";
@@ -33,8 +32,13 @@ msalInstance.initialize().then(() => {
     console.debug("msalInstance -> In addEventCallback(), EvenType = " + event.eventType);
     if ((event.eventType === EventType.LOGIN_SUCCESS || event.eventType === EventType.SSO_SILENT_SUCCESS) && event.payload) {
       const account = event.payload as AccountInfo;
-      msalInstance.setActiveAccount(account);
-      console.debug("msalInstance -> In addEventCallback(), Login success detected, using payload account.");
+      const current = msalInstance.getActiveAccount();
+      if (!current || current.homeAccountId !== account.homeAccountId) {
+        msalInstance.setActiveAccount(account);
+        console.debug("msalInstance -> In addEventCallback(), setActiveAccount called with payload account.");
+      } else {
+        console.debug("msalInstance -> In addEventCallback(), payload account matches current; no-op setActiveAccount.");
+      }
     }
   });
 
@@ -43,10 +47,10 @@ msalInstance.initialize().then(() => {
   );
 
   root.render(
-    <React.StrictMode>
+    //<React.StrictMode>
       <ThemeProvider theme={theme}>
         <App instance={msalInstance} />
       </ThemeProvider>
-    </React.StrictMode>
+    //</React.StrictMode>
   );
 });

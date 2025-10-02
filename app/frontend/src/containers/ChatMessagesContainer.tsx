@@ -1,6 +1,6 @@
 import { Box, CircularProgress, IconButton, Skeleton, Stack } from "@mui/material";
+import { Fragment, memo, useEffect,useRef,useState } from "react";
 import ArrowCircleDownIcon from '@mui/icons-material/ArrowCircleDown';
-import { Fragment, useEffect, useRef, useState } from "react";
 import { AlertBubble, AssistantBubble, UserBubble } from "../components";
 import { isACompletion, isAMessage, isAToastMessage } from "../utils";
 import { useTranslation } from "react-i18next";
@@ -115,7 +115,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
 
     }
 
-  }, [isLoading, chatHistory.chatItems]);
+  }, [isLoading, chatHistory.chatItems, containerRef, lastCompletionRef, handleScroll]);
 
 
   return (
@@ -300,4 +300,4 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
   );
 };
 
-export default ChatMessagesContainer;
+export default memo(ChatMessagesContainer);
