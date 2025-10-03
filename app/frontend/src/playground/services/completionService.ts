@@ -86,7 +86,6 @@ export class CompletionService {
         if (delta) {
           // Call the streaming callback if provided
           if (onStreamChunk) {
-            console.log('Streaming chunk:', delta);
             onStreamChunk(delta);
           }
         }

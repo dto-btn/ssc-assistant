@@ -16,12 +16,7 @@ import isFeatureEnabled from "../FeatureGate";
 
 const PlaygroundRoot: React.FC = () => {
   // Initialize authentication and get token on app load
-  const { isAuthenticated, isTokenRefreshing } = useAuth(apiUse);
-
-  console.log("Playground Auth Status:", {
-    isAuthenticated,
-    isTokenRefreshing,
-  });
+  useAuth(apiUse);
 
   return (
     <>

@@ -25,14 +25,8 @@ async function getValidTokenFromState(store: any): Promise<string | null> {
   const state = store.getState();
   const { accessToken } = state.auth;
 
-  console.log('Middleware: Checking token state:', { 
-    hasToken: !!accessToken, 
-    tokenLength: accessToken?.length || 0 
-  });
-
   // If we have a valid token, return it
   if (accessToken && !isTokenExpired(accessToken)) {
-    console.log('Middleware: Token is valid, using existing token');
     return accessToken;
   }
 

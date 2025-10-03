@@ -27,7 +27,6 @@ export function useAuth(apiUse: ApiUseConfig) {
   useEffect(() => {
     const getInitialToken = async () => {
       try {
-        console.log('useAuth: Attempting to get initial token...');
         const account = instance.getActiveAccount();
         if (!account) {
           console.warn('useAuth: No active account found, user may need to login');
@@ -35,7 +34,6 @@ export function useAuth(apiUse: ApiUseConfig) {
           return;
         }
 
-        console.log('useAuth: Active account found:', account.username);
         dispatch(setTokenRefreshing(true));
         
         const response = await instance.acquireTokenSilent({
@@ -43,7 +41,6 @@ export function useAuth(apiUse: ApiUseConfig) {
           account: account,
         });
 
-        console.log('useAuth: Token acquired successfully');
         dispatch(setAccessToken({
           token: response.accessToken,
           expiresOn: response.expiresOn?.getTime(),
