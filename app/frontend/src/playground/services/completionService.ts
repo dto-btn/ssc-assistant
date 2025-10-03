@@ -82,14 +82,11 @@ export class CompletionService {
           throw new Error('Request aborted');
         }
 
-        console.log('Received chunk:', chunk);
-
         const delta = chunk.choices?.[0]?.delta?.content ?? "";
         if (delta) {
-          fullText += delta;
-          
           // Call the streaming callback if provided
           if (onStreamChunk) {
+            console.log('Streaming chunk:', delta);
             onStreamChunk(delta);
           }
         }

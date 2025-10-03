@@ -79,15 +79,23 @@ export const assistantMiddleware: Middleware<{}, RootState> = store => next => a
         sessionMessages.push({ role: "user", content });
 
         // Add empty assistant message that will be updated with streaming content
-        const assistantMessageAction = store.dispatch(addMessage({
+        store.dispatch(addMessage({
           sessionId,
           role: "assistant",
           content: "",
         }));
         
-        // Extract the message ID from the action
-        const assistantMessageId = (assistantMessageAction.payload as any).id;
+        // Get the ID of the just-created assistant message
+        const currentState = store.getState();
+        const assistantMessage = currentState.chat.messages
+          .filter(msg => msg.sessionId === sessionId && msg.role === "assistant")
+          .pop(); // Get the last assistant message for this session
         
+        if (!assistantMessage) {
+          throw new Error("Failed to create assistant message");
+        }
+        
+        const assistantMessageId = assistantMessage.id;
         let accumulatedContent = "";
 
         // Call completion service with streaming using the stored token

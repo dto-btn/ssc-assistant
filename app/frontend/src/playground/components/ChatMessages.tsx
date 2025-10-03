@@ -8,7 +8,14 @@
 import React, { useRef, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
-import { Box, List, ListItem, ListItemText, IconButton, Paper } from "@mui/material";
+import {
+  Box,
+  List,
+  ListItem,
+  ListItemText,
+  IconButton,
+  Paper,
+} from "@mui/material";
 import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
 import { setQuotedText } from "../store/slices/quotedSlice";
 import ReactMarkdown from "react-markdown";
@@ -22,7 +29,10 @@ interface MessageList extends Message {
   id: string;
 }
 
-const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({ children, ...rest }) => {
+const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({
+  children,
+  ...rest
+}) => {
   return (
     <Link component="a" {...rest} target="_blank" rel="noopener noreferrer">
       {children}
@@ -76,7 +86,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                   <ReactMarkdown
                     components={{
                       a: ({ node, ref: _ref, ...props }) => (
-                        <MarkdownLink {...(props as React.ComponentPropsWithoutRef<"a">)} />
+                        <MarkdownLink
+                          {...(props as React.ComponentPropsWithoutRef<"a">)}
+                        />
                       ),
                     }}
                   >
@@ -89,9 +101,10 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                   )}
                 </>
               }
-              // Ensure no block-level markdown (e.g., blockquote) is nested inside a <p>
-              primaryTypographyProps={{ component: "span" }}
-              secondaryTypographyProps={{ component: "div" }}
+              slotProps={{
+                primary: { component: "span" },
+                secondary: { component: "div" },
+              }}
             />
           </ListItem>
         ))}
