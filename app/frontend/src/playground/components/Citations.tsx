@@ -8,7 +8,7 @@
 
 import React from "react";
 import { Box, Typography, Link } from "@mui/material";
-import { tt } from "../i18n/tt";
+import { useTranslation } from 'react-i18next';
 
 export interface Citation {
   title: string;
@@ -20,6 +20,8 @@ interface Props {
 }
 
 const Citations: React.FC<Props> = ({ citations }) => {
+  const { t } = useTranslation('playground');
+
   if (!citations || citations.length === 0) return null;
 
   return (
@@ -32,7 +34,7 @@ const Citations: React.FC<Props> = ({ citations }) => {
           <Typography variant="body2">
             {citation.title}{" "}
             <Link href={citation.url} target="_blank" rel="noopener noreferrer">
-              [{tt("link")}]
+              [{t("link")}]
             </Link>
           </Typography>
         </Box>

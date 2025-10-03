@@ -7,7 +7,7 @@
 
 import React, { useState } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from "@mui/material";
-import { tt } from "../i18n/tt";
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   open: boolean;
@@ -17,6 +17,7 @@ interface Props {
 }
 
 const SessionRenameDialog: React.FC<Props> = ({ open, initialValue, onClose, onRename }) => {
+  const { t } = useTranslation('playground');
   const [name, setName] = useState(initialValue);
 
   React.useEffect(() => {
@@ -25,20 +26,20 @@ const SessionRenameDialog: React.FC<Props> = ({ open, initialValue, onClose, onR
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>{tt("rename.conversation")}</DialogTitle>
+      <DialogTitle>{t("rename.conversation")}</DialogTitle>
       <DialogContent>
         <TextField
           value={name}
           onChange={event => setName(event.target.value)}
-          label={tt("conversation.name")}
+          label={t("conversation.name")}
           fullWidth
           autoFocus
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>{tt("cancel")}</Button>
+        <Button onClick={onClose}>{t("cancel")}</Button>
         <Button onClick={() => { onRename(name); onClose(); }} variant="contained" disabled={!name.trim()}>
-          {tt("rename")}
+          {t("rename")}
         </Button>
       </DialogActions>
     </Dialog>

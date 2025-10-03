@@ -8,13 +8,14 @@
 
 import React from "react";
 import { Button } from "@mui/material";
-import { tt } from '../i18n/tt';
+import { useTranslation } from 'react-i18next';
 
 interface FileUploadProps {
   onFiles: (files: FileList) => void;
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({ onFiles }) => {
+  const { t } = useTranslation('playground');
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   return (
@@ -34,7 +35,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFiles }) => {
         onClick={() => inputRef.current?.click()}
         sx={{ minWidth: 80 }}
       >
-        {tt("attach")}
+        {t("attach")}
       </Button>
     </>
   );

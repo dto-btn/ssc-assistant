@@ -9,29 +9,33 @@
 
 import React from "react";
 import { Box, Button, Typography } from "@mui/material";
-import { tt } from '../i18n/tt';
-
-const suggestions = [
-  tt("suggestion.use.api"),
-  tt("suggestion.github.issues"),
-  tt("suggestion.ts.interface"),
-  tt("suggestion.summarize.doc"),
-];
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onSuggestionClicked: (text: string) => void;
   disabled?: boolean;
 }
 
-const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => (
-  <Box display="flex" flexDirection="column" gap={2} mt={2} alignItems="center">
-    <Typography variant="h5">{tt("try.asking")}:</Typography>
-    {suggestions.map((suggestion, index) => (
-      <Button key={index} variant="outlined" onClick={() => onSuggestionClicked(suggestion)} disabled={disabled}>
-        {suggestion}
-      </Button>
-    ))}
-  </Box>
-);
+const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
+  const { t } = useTranslation('playground');
+
+  const suggestions = [
+    t("suggestion.use.api"),
+    t("suggestion.github.issues"),
+    t("suggestion.ts.interface"),
+    t("suggestion.summarize.doc"),
+  ];
+
+  return (
+    <Box display="flex" flexDirection="column" gap={2} mt={2} alignItems="center">
+      <Typography variant="h5">{t("try.asking")}:</Typography>
+      {suggestions.map((suggestion, index) => (
+        <Button key={index} variant="outlined" onClick={() => onSuggestionClicked(suggestion)} disabled={disabled}>
+          {suggestion}
+        </Button>
+      ))}
+    </Box>
+  );
+};
 
 export default Suggestions;

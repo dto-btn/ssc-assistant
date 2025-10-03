@@ -17,9 +17,10 @@ import { Box, Typography } from "@mui/material";
 import { addMessage, setIsLoading } from "../store/slices/chatSlice";
 import Suggestions from "./Suggestions";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
-import { tt } from "../i18n/tt";
+import { useTranslation } from 'react-i18next';
 
 const ChatArea: React.FC = () => {
+  const { t } = useTranslation('playground');
   const dispatch = useDispatch<AppDispatch>();
   const currentSessionId = useSelector(
     (state: RootState) => state.sessions.currentSessionId
@@ -82,7 +83,7 @@ const ChatArea: React.FC = () => {
   if (!currentSessionId) {
     return (
       <Box flex={1} display="flex" alignItems="center" justifyContent="center">
-        {tt("select.or.create.session")}
+        {t("select.or.create.session")}
       </Box>
     );
   }
@@ -98,7 +99,7 @@ const ChatArea: React.FC = () => {
         p={6}
       >
         <Typography variant="h3" gutterBottom>
-          {tt("how.can.i.help")}
+          {t("how.can.i.help")}
         </Typography>
         <Suggestions
           onSuggestionClicked={handleSuggestion}
