@@ -7,6 +7,7 @@ from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from openai import AzureOpenAI, Stream
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
 from openai.types.completion_usage import CompletionUsage
+from tools.pmcoe.pmcoe_functions import PMCOE_CONTAINER
 from src.constants.tools import TOOL_CORPORATE, TOOL_PMCOE, TOOL_TELECOM
 from src.service.tool_service import ToolService
 from utils.manage_message import load_messages
@@ -182,9 +183,9 @@ def build_completion_response(content: str,
                     filename = citation.title
                     # Choose path based on user's language preference
                     if lang == 'en':
-                        folder_path = "/pmcoe-dev/en"
+                        folder_path = f"/{PMCOE_CONTAINER}/en"
                     else:
-                        folder_path = "/pmcoe-dev/fr"
+                        folder_path = f"/{PMCOE_CONTAINER}/fr"
                     citation.url = f"{folder_path}/{filename}"
 
         context = Context(role=role, citations=citations, intent=[json.loads(context_dict['intent'])])

@@ -35,7 +35,7 @@ const blobStorageProxyRoute = () => createProxyMiddleware({
 });
 
 app.use('/assistant-chat-files/*', blobStorageProxyRoute());
-app.use('/pmcoe-dev/*', blobStorageProxyRoute());
+app.use('/pmcoe-(dev|sept-2025|latest)/*', blobStorageProxyRoute());
 
 ViteExpress.listen(app, (Number(process.env.PORT) || 8080), () => {
     console.log("Server is listening on: http://localhost:" + (Number(process.env.PORT) || 8080));

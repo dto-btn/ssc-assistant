@@ -8,17 +8,15 @@ import {
 } from "../../components";
 import ChatMessagesContainer from "../../containers/ChatMessagesContainer";
 import { useTranslation } from "react-i18next";
-import { useEffect, useRef, useState } from "react";
-import { useIsAuthenticated, useMsal } from "@azure/msal-react";
+import { useCallback, useEffect, useRef, useState, memo, useContext } from "react";
+import { useMsal } from "@azure/msal-react";
 import { isAMessage } from "../../utils";
-import { InteractionStatus } from "@azure/msal-browser";
 import { v4 as uuidv4 } from "uuid";
 import { bookReservation } from "../../api/api";
-import { callMsGraph } from "../../graph";
 import { UserContext } from "../../stores/UserContext";
 import { DeleteConversationConfirmation } from "../../components/DeleteConversationConfirmation";
 import { useLocation } from "react-router";
-import { ParsedSuggestionContext } from "../../routes/SuggestCallbackRoute";
+import { ParsedSuggestionContext, SuggestionContext } from "../../routes/SuggestCallbackRoute";
 import { useAppStore } from "../../stores/AppStore";
 import Typography from "@mui/material/Typography";
 import { SNACKBAR_DEBOUNCE_KEYS, LEFT_MENU_WIDTH } from "../../constants";
@@ -28,30 +26,35 @@ import { useChatStore } from "../../stores/ChatStore";
 import { PersistenceUtils } from "../../util/persistence";
 import { useChatService } from "../../hooks/useChatService";
 import { useApiRequestService } from "./useApiRequestService";
-import { defaultEnabledTools } from "../../allowedTools";
 import { tt } from "../../i18n/tt";
 import Suggestions from "../../components/Suggestions";
 
 const MainScreen = () => {
   const { t } = useTranslation();
-  const appStore = useAppStore();
-  const {
-    currentChatIndex,
-    getCurrentChatHistory,
-    chatHistoriesDescriptions,
-    setCurrentChatHistory,
-    setDefaultChatHistory,
-    getDefaultModel,
-    setCurrentChatIndex: chatStoreSetCurrentChatIndex,
-    setChatHistoriesDescriptions,
-    quotedText,
-  } = useChatStore();
+  // Select only what this component needs from stores to minimize re-renders
+  const appDrawerIsOpen = useAppStore((s) => s.appDrawer.isOpen);
+  const toggleAppDrawer = useAppStore((s) => s.appDrawer.toggle);
+  const showSnackbar = useAppStore((s) => s.snackbars.show);
+  const enabledTools = useAppStore((s) => s.tools.enabledTools);
+  const setEnabledTools = useAppStore((s) => s.tools.setEnabledTools);
+
+  const currentChatIndex = useChatStore((s) => s.currentChatIndex);
+  const chatHistoriesDescriptions = useChatStore((s) => s.chatHistoriesDescriptions);
+  const getCurrentChatHistory = useChatStore((s) => s.getCurrentChatHistory);
+  const setCurrentChatHistory = useChatStore((s) => s.setCurrentChatHistory);
+  const setDefaultChatHistory = useChatStore((s) => s.setDefaultChatHistory);
+  const getDefaultModel = useChatStore((s) => s.getDefaultModel);
+  const setChatHistoriesDescriptions = useChatStore((s) => s.setChatHistoriesDescriptions);
+  const quotedText = useChatStore((s) => s.quotedText);
+  // Chat store now hydrates at creation
+  // Avoid calling getCurrentChatHistory() repeatedly in JSX/effects; keep a stable reference per render
+  const currentChatHistory = getCurrentChatHistory();
   const chatService = useChatService();
   const apiRequestService = useApiRequestService();
 
   // Computes tools to send to API: if conversation has staticTools, they take precedence; otherwise use current enabledTools from app store
-  const getEffectiveEnabledTools = (): Record<string, boolean> => {
-    const staticTools = getCurrentChatHistory().staticTools || [];
+  const getEffectiveEnabledTools = (override?: Record<string, boolean>): Record<string, boolean> => {
+    const staticTools = currentChatHistory.staticTools || [];
     if (staticTools.length > 0) {
       const record: Record<string, boolean> = {};
       staticTools.forEach((tool) => {
@@ -59,13 +62,10 @@ const MainScreen = () => {
       });
       return record;
     }
-    return appStore.tools.enabledTools;
+    return override ?? enabledTools;
   };
 
-  const [userData, setUserData] = useState({
-    graphData: null,
-    profilePictureURL: "",
-  });
+  const userData = useContext(UserContext);
 
   const location = useLocation();
   const [chatIndexToLoadOrDelete, setChatIndexToLoadOrDelete] = useState<
@@ -73,11 +73,11 @@ const MainScreen = () => {
   >(null);
   const [showDeleteChatDialog, setShowDeleteChatDialog] = useState(false);
 
-  const { instance, inProgress } = useMsal();
-  const isAuthenticated = useIsAuthenticated();
+  const { instance } = useMsal();
 
   const chatRef = useRef<HTMLDivElement>(null);
   const lastCompletionRef = useRef<HTMLDivElement>(null);
+  const chatMessageStreamEnd = useRef<HTMLDivElement>(null);
   const [scrollable, setScrollable] = useState(false);
 
   // Handle scroll events in chat container
@@ -124,7 +124,7 @@ const MainScreen = () => {
       }
 
     }, 100); // Slight delay to allow DOM to update
-  }, [currentChatIndex]);
+  }, [currentChatIndex, getCurrentChatHistory]);
 
   const sendMessage = (question: string, attachments: Attachment[]) => {
     apiRequestService.makeApiRequest(
@@ -137,7 +137,7 @@ const MainScreen = () => {
   };
 
   const replayChat = () => {
-    const currentChatHistoryItems = getCurrentChatHistory().chatItems;
+    const currentChatHistoryItems = currentChatHistory.chatItems;
     const lastQuestion =
       currentChatHistoryItems[currentChatHistoryItems.length - 2];
 
@@ -201,52 +201,13 @@ const MainScreen = () => {
   };
 
 
-  const loadChatHistoriesFromStorage = () => {
-    const parsedChatHistories = PersistenceUtils.getChatHistories();
-    if (parsedChatHistories.length > 0) {
-      let currentIndex = PersistenceUtils.getCurrentChatIndex();
-      const loadedChatHistory = parsedChatHistories[currentIndex];
-      if (!loadedChatHistory) {
-        // if the chat history is empty, just set the current chat history to the default
-        PersistenceUtils.setCurrentChatIndex(0);
-        currentIndex = 0;
-      }
-      chatStoreSetCurrentChatIndex(currentIndex); //just need to set the state here, no need to modify local storage.
-      setCurrentChatHistory(loadedChatHistory);
-      setChatHistoriesDescriptions(
-        parsedChatHistories.map(
-          (chatHistory, index) =>
-            chatHistory.description || "Conversation " + (index + 1)
-        )
-      );
-    } else {
-      // If there are no chat histories, set the current chat to the default
+  const loadChatHistoriesFromStorage = useCallback(() => {
+    // No-op: store hydrates itself at creation
+    if (!getCurrentChatHistory()) {
       setDefaultChatHistory();
     }
-  };
+  }, [getCurrentChatHistory, setDefaultChatHistory]);
 
-  const loadEnabledToolsFromStorage = () => {
-    try {
-      const enabledTools = PersistenceUtils.getEnabledTools() || {};
-
-      // clean the enabled tools. we should only set the tools that are included in defaultEnabledTools and no other.
-      const cleanedTools = { ...defaultEnabledTools };
-      for (const key in cleanedTools) {
-        if (
-          enabledTools.hasOwnProperty(key) &&
-          typeof enabledTools[key] === "boolean"
-        ) {
-          cleanedTools[key] = enabledTools[key];
-        }
-      }
-
-      appStore.tools.setEnabledTools(cleanedTools);
-    } catch (error) {
-      // Gracefully handle any errors.
-      console.error("Error loading chat histories from local storage", error);
-      appStore.tools.setEnabledTools(defaultEnabledTools);
-    }
-  };
 
   const handleLogout = () => {
     instance.logoutRedirect({
@@ -254,14 +215,17 @@ const MainScreen = () => {
     });
   };
 
+  console.log("RENDER MainScreen");
+
+  // Scrolls the last updated message (if its streaming, or once done) into view
+  useEffect(() => {
+    chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" });
+  }, [currentChatHistory.uuid, currentChatHistory.chatItems]);
+
   // Load chat histories and persisted tools if present
   useEffect(() => {
     loadChatHistoriesFromStorage();
-    loadEnabledToolsFromStorage();
-    setTimeout(() => {
-      handleScroll();
-    }, 100); // Slight delay to allow DOM to update
-  }, []);
+  }, [loadChatHistoriesFromStorage]);
 
   const handleRemoveToastMessage = (indexToRemove: number) => {
     setCurrentChatHistory((prevChatHistory) => {
@@ -277,17 +241,17 @@ const MainScreen = () => {
   };
 
   const handleUpdateEnabledTools = (name: string, forceOn?: boolean) => {
-    let updatedTools: Record<string, boolean> = {
-      ...appStore.tools.enabledTools,
+    const updatedTools: Record<string, boolean> = {
+      ...enabledTools,
     };
     const toolIsTurningOn: boolean =
-      forceOn == true ? true : !appStore.tools.enabledTools[name];
+      forceOn == true ? true : !enabledTools[name];
 
     // Finally, update the specific tool's state
     updatedTools[name] = toolIsTurningOn;
 
     // Update the app store with the new enabled tools
-    appStore.tools.setEnabledTools(updatedTools);
+    setEnabledTools(updatedTools);
 
     // Save the updated tools to local storage
     PersistenceUtils.setEnabledTools(updatedTools);
@@ -357,35 +321,30 @@ const MainScreen = () => {
     });
   };
 
-  useEffect(() => {
-    console.debug(
-      "useEffect[inProgress, userData.graphData] -> If graphData is empty, we will make a call to callMsGraph() to get User.Read data. \n(isAuth? " +
-      isAuthenticated +
-      ", InProgress? " +
-      inProgress +
-      ")"
-    );
-    if (
-      isAuthenticated &&
-      !userData.graphData &&
-      inProgress === InteractionStatus.None
-    ) {
-      //we do not have graphData, but since user is logged in we can now fetch it.
-      callMsGraph().then((response) => {
-        console.debug("callMsGraph() -> Done!");
-        setUserData({
-          graphData: response.graphData,
-          profilePictureURL: response.profilePictureURL,
-        });
-      });
-    }
-  }, [isAuthenticated, inProgress, userData]);
+  // userData is now provided by App via context; no local fetch here
 
   const parsedSuggestionContext: ParsedSuggestionContext | null =
     location.state;
+  const processedSuggestionRef = useRef<string | null>(null);
   useEffect(() => {
     // on initial load of page, if state is not null, log the state
     if (parsedSuggestionContext) {
+      let uniqueKey: string;
+      if (parsedSuggestionContext.success) {
+        const ctx = parsedSuggestionContext.context;
+        if (ctx && ctx.success) {
+          type SuggestionContextSuccess = Extract<SuggestionContext, { success: true }>;
+          uniqueKey = (ctx as SuggestionContextSuccess).original_query;
+        } else {
+          uniqueKey = "context-success-but-no-original-query";
+        }
+      } else {
+        uniqueKey = `error-${parsedSuggestionContext.errorReason}`;
+      }
+      if (processedSuggestionRef.current === uniqueKey) {
+        return; // already handled this context
+      }
+      processedSuggestionRef.current = uniqueKey;
       if (parsedSuggestionContext.success) {
         if (!parsedSuggestionContext.context.success) {
           // this should never happen
@@ -440,7 +399,7 @@ const MainScreen = () => {
         ]);
       } else {
         const showError = (msg: string) => {
-          appStore.snackbars.show(
+          showSnackbar(
             msg,
             SNACKBAR_DEBOUNCE_KEYS.SUGGEST_CONTEXT_ERROR
           );
@@ -465,15 +424,23 @@ const MainScreen = () => {
         }
       }
     }
-  }, [parsedSuggestionContext]);
+  }, [
+    parsedSuggestionContext,
+    showSnackbar,
+    chatHistoriesDescriptions,
+    chatService,
+    getDefaultModel,
+    setChatHistoriesDescriptions,
+    setCurrentChatHistory,
+  ]);
 
   const onSuggestionClicked = (
     question: string,
     tool: string,
     isStatic: boolean
   ) => {
-    let updatedTools: Record<string, boolean> = {
-      ...appStore.tools.enabledTools,
+    const updatedTools: Record<string, boolean> = {
+      ...enabledTools,
     };
     updatedTools[tool] = true;
 
@@ -488,14 +455,14 @@ const MainScreen = () => {
         return updatedChatHistory;
       });
 
-    appStore.tools.setEnabledTools(updatedTools);
+  setEnabledTools(updatedTools);
     PersistenceUtils.setEnabledTools(updatedTools);
     apiRequestService.makeApiRequest(
       question,
       userData,
       undefined,
       undefined,
-      getEffectiveEnabledTools()
+      getEffectiveEnabledTools(updatedTools)
     );
   };
 
@@ -511,7 +478,7 @@ const MainScreen = () => {
                   sx={{
                     color: "white",
                   }}
-                  onClick={() => appStore.appDrawer.toggle()}
+                  onClick={() => toggleAppDrawer()}
                   aria-label={tt("drawer.icon.title")}
                   title={tt("drawer.icon.title")}
                 >
@@ -519,10 +486,10 @@ const MainScreen = () => {
                 </IconButton>
               </>
             }
-            enabledTools={appStore.tools.enabledTools}
+            enabledTools={enabledTools}
             handleUpdateEnabledTools={handleUpdateEnabledTools}
             handleSelectedModelChanged={hanldeUpdateModelVersion}
-            selectedModel={getCurrentChatHistory().model}
+            selectedModel={currentChatHistory.model}
             logout={handleLogout}
           />
         }
@@ -537,7 +504,7 @@ const MainScreen = () => {
           />
         }
       >
-        {getCurrentChatHistory().chatItems.length === 0 ? (
+        {currentChatHistory.chatItems.length === 0 ? (
           // if 0 chat history
           <Box
             sx={{
@@ -572,8 +539,8 @@ const MainScreen = () => {
               </Typography>
               <Suggestions
                 onSuggestionClicked={onSuggestionClicked}
-                tools={Object.keys(appStore.tools.enabledTools).filter(
-                  (tool) => appStore.tools.enabledTools[tool]
+                tools={Object.keys(enabledTools).filter(
+                  (tool) => enabledTools[tool]
                 )}
               />
               <ChatInput
@@ -583,7 +550,7 @@ const MainScreen = () => {
                 onSend={sendMessage}
                 onStop={stopChat}
                 quotedText={quotedText}
-                selectedModel={getCurrentChatHistory().model}
+                selectedModel={currentChatHistory.model}
                 onError={handleFileUploadError}
               />
             </Box>
@@ -598,7 +565,7 @@ const MainScreen = () => {
               margin: "auto",
               position: "fixed",
               top: 0,
-              left: appStore.appDrawer.isOpen ? LEFT_MENU_WIDTH : 0,
+              left: appDrawerIsOpen ? LEFT_MENU_WIDTH : 0,
               right: 0,
               bottom: 0,
               paddingTop: "3rem",
@@ -606,7 +573,7 @@ const MainScreen = () => {
           >
             <Box sx={{ flexGrow: 1 }}></Box>
             <ChatMessagesContainer
-              chatHistory={getCurrentChatHistory()}
+              chatHistory={currentChatHistory}
               isLoading={apiRequestService.isLoading}
               replayChat={replayChat}
               handleRemoveToastMessage={handleRemoveToastMessage}
@@ -635,7 +602,7 @@ const MainScreen = () => {
                 onSend={sendMessage}
                 onStop={stopChat}
                 quotedText={quotedText}
-                selectedModel={getCurrentChatHistory().model}
+                selectedModel={currentChatHistory.model}
                 onError={handleFileUploadError}
               />
             </Box>
@@ -653,4 +620,4 @@ const MainScreen = () => {
   );
 };
 
-export default MainScreen;
+export default memo(MainScreen);

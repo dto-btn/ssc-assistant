@@ -2,6 +2,8 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
 import translations from './i18n/locales/translations.json';
+import enPGT from './playground/locales/en.json';
+import frPGT from './playground/locales/fr.json';
 
 import Cookies from "js-cookie";
 
@@ -24,18 +26,21 @@ const extractLanguageData = (mergedData: TranslationData, language: keyof Transl
 const enTranslations = extractLanguageData(translations, 'en');
 const frTranslations = extractLanguageData(translations, 'fr');
 
+
 i18n.use(initReactI18next).init({
   fallbackLng: 'en',
   lng: Cookies.get("lang_setting"),
   resources: {
     en: {
-      translations: enTranslations
+      translations: enTranslations,
+      playground: enPGT
     },
     fr: {
-      translations: frTranslations
+      translations: frTranslations,
+      playground: frPGT
     }
   },
-  ns: ['translations'],
+  ns: ['translations', 'playground'],
   defaultNS: 'translations',
   interpolation: {
     escapeValue: false // react already safes from xss

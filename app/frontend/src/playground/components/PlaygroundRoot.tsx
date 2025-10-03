@@ -12,6 +12,7 @@ import ChatArea from "./ChatArea";
 import FeedbackForm from "./FeedbackForm";
 import { useAuth } from "../store/hooks/useAuth";
 import { apiUse } from "../../authConfig";
+import isFeatureEnabled from "../FeatureGate";
 
 const PlaygroundRoot: React.FC = () => {
   // Initialize authentication and get token on app load
@@ -28,7 +29,7 @@ const PlaygroundRoot: React.FC = () => {
         <SessionSidebar />
         <ChatArea />
       </Box>
-      <FeedbackForm />
+      {isFeatureEnabled("FeedbackForm") && <FeedbackForm />}
     </>
   );
 };
