@@ -39,12 +39,14 @@ import { useTranslation } from 'react-i18next';
 import { LEFT_MENU_WIDTH } from "../../constants";
 import SessionRenameDialog from "./SessionRenameDialog";
 import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
+import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 
 const SessionSidebar: React.FC = () => {
   const { t } = useTranslation('playground');
   const sessions = useAppSelector((state) => state.sessions.sessions);
   const sessionsNewestFirst = useAppSelector(selectSessionsNewestFirst);
   const currentSessionId = useAppSelector((state) => state.sessions.currentSessionId);
+  const currentSessionMessages = useAppSelector(selectMessagesBySessionId);
   const dispatch = useAppDispatch();
 
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -53,6 +55,12 @@ const SessionSidebar: React.FC = () => {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   const handleNewSession = useCallback(() => {
+    // If current session exists and has no messages, just keep it selected
+    if (currentSessionId && currentSessionMessages.length === 0) {
+      dispatch(setCurrentSession(currentSessionId));
+      return;
+    }
+
     dispatch(
       addSession({
         id: uuidv4(),
@@ -60,7 +68,7 @@ const SessionSidebar: React.FC = () => {
         createdAt: Date.now(),
       })
     );
-  }, [dispatch, sessions.length]);
+  }, [dispatch, sessions.length, currentSessionId, currentSessionMessages.length]);
 
   const sessionName = (id: string) =>
     sessions.find((session) => session.id === id)?.name ?? "";
