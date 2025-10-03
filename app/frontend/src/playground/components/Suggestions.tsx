@@ -28,7 +28,7 @@ const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
 
   return (
     <Box display="flex" flexDirection="column" gap={2} mt={2} alignItems="center">
-      <Typography variant="h5">{t("try.asking")}:</Typography>
+      <Typography variant="h5">{t("try.asking")}</Typography>
       {suggestions.map((suggestion, index) => (
         <Button key={index} variant="outlined" onClick={() => onSuggestionClicked(suggestion)} disabled={disabled}>
           {suggestion}

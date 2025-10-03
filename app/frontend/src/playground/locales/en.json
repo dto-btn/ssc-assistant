@@ -24,5 +24,5 @@
     "suggestion.github.issues": "Show me recent GitHub issues",
     "suggestion.ts.interface": "Generate a TypeScript interface",
     "suggestion.summarize.doc": "Summarize this document",
-    "try.asking": "Try asking"
+    "try.asking": "Try asking:"
 }
