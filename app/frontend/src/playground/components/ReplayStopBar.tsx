@@ -7,6 +7,7 @@
 
 import React from "react";
 import { Box, Button } from "@mui/material";
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   onReplay: () => void;
@@ -15,15 +16,19 @@ interface Props {
   disabled: boolean;
 }
 
-const ReplayStopBar: React.FC<Props> = ({ onReplay, onStop, isLoading, disabled }) => (
-  <Box display="flex" justifyContent="flex-end" gap={2} p={1}>
-    <Button variant="outlined" onClick={onReplay} disabled={disabled || isLoading}>
-      Replay
-    </Button>
-    <Button variant="outlined" onClick={onStop} disabled={!isLoading} color="error">
-      Stop
-    </Button>
-  </Box>
-);
+const ReplayStopBar: React.FC<Props> = ({ onReplay, onStop, isLoading, disabled }) => {
+  const { t } = useTranslation('playground');
+
+  return (
+    <Box display="flex" justifyContent="flex-end" gap={2} p={1}>
+      <Button variant="outlined" onClick={onReplay} disabled={disabled || isLoading}>
+        {t("replay")}
+      </Button>
+      <Button variant="outlined" onClick={onStop} disabled={!isLoading} color="error">
+        {t("stop")}
+      </Button>
+    </Box>
+  );
+};
 
 export default ReplayStopBar;

@@ -8,19 +8,23 @@
 
 import React, { useState } from "react";
 import { Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
+import { useTranslation } from 'react-i18next';
 
 const FeedbackForm: React.FC = () => {
+  const { t } = useTranslation('playground');
   const [open, setOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
 
   return (
     <>
-      <Button onClick={() => setOpen(true)} sx={{ position: "fixed", right: 16, bottom: 16, zIndex: 2000 }}>Feedback</Button>
+      <Button onClick={() => setOpen(true)} sx={{ position: "fixed", right: 16, bottom: 16, zIndex: 2000 }}>
+        {t("feedback")}
+      </Button>
       <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>Feedback</DialogTitle>
+        <DialogTitle>{t("feedback")}</DialogTitle>
         <DialogContent>
           <TextField
-            label="Your feedback"
+            label={t("your.feedback")}
             value={feedback}
             onChange={e => setFeedback(e.target.value)}
             multiline
@@ -29,7 +33,7 @@ const FeedbackForm: React.FC = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={() => setOpen(false)}>{t("cancel")}</Button>
           <Button
             variant="contained"
             onClick={() => {
@@ -39,7 +43,7 @@ const FeedbackForm: React.FC = () => {
             }}
             disabled={!feedback.trim()}
           >
-            Send
+            {t("submit")}
           </Button>
         </DialogActions>
       </Dialog>
