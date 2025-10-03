@@ -6,9 +6,8 @@
  * with the playground `sessionSlice`.
  */
 
-import React, { useMemo, useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "../store";
+import React, { useCallback, useState } from "react";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   addSession,
   removeSession,
@@ -18,7 +17,6 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import {
   Chip,
-  Collapse,
   Divider,
   List,
   ListItem,
@@ -40,21 +38,21 @@ import type { Session } from "../store/slices/sessionSlice";
 import { useTranslation } from 'react-i18next';
 import { LEFT_MENU_WIDTH } from "../../constants";
 import SessionRenameDialog from "./SessionRenameDialog";
+import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
 
 const SessionSidebar: React.FC = () => {
   const { t } = useTranslation('playground');
-  const sessions = useSelector((state: RootState) => state.sessions.sessions);
-  const currentSessionId = useSelector(
-    (state: RootState) => state.sessions.currentSessionId
-  );
-  const dispatch = useDispatch();
+  const sessions = useAppSelector((state) => state.sessions.sessions);
+  const sessionsNewestFirst = useAppSelector(selectSessionsNewestFirst);
+  const currentSessionId = useAppSelector((state) => state.sessions.currentSessionId);
+  const dispatch = useAppDispatch();
 
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [sessionToRename, setSessionToRename] = useState<string | null>(null);
   const [moreMenuAnchor, setMoreMenuAnchor] = useState<null | HTMLElement>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
-  const handleNewSession = () => {
+  const handleNewSession = useCallback(() => {
     dispatch(
       addSession({
         id: uuidv4(),
@@ -62,15 +60,12 @@ const SessionSidebar: React.FC = () => {
         createdAt: Date.now(),
       })
     );
-  };
+  }, [dispatch, sessions.length]);
 
   const sessionName = (id: string) =>
     sessions.find((session) => session.id === id)?.name ?? "";
 
-  const sessionsNewestFirst = useMemo(() => {
-    // Create a shallow copy to avoid mutating state and show newest first
-    return [...sessions].sort((a, b) => b.createdAt - a.createdAt);
-  }, [sessions]);
+  // Derived sessions order handled by selector
 
   const handleRenameSession = (newName: string) => {
     if (sessionToRename) {
@@ -80,29 +75,32 @@ const SessionSidebar: React.FC = () => {
     setSessionToRename(null);
   };
 
-  const handleMoreMenuClick = (
-    event: React.MouseEvent<HTMLButtonElement>,
-    sessionId: string
-  ) => {
-    setMoreMenuAnchor(event.currentTarget);
-    setSelectedSessionId(sessionId);
-  };
+  const handleMoreMenuClick = useCallback(
+    (
+      event: React.MouseEvent<HTMLButtonElement>,
+      sessionId: string
+    ) => {
+      setMoreMenuAnchor(event.currentTarget);
+      setSelectedSessionId(sessionId);
+    },
+    []
+  );
 
-  const handleDeleteClicked = () => {
+  const handleDeleteClicked = useCallback(() => {
     if (selectedSessionId) {
       dispatch(removeSession(selectedSessionId));
       setMoreMenuAnchor(null);
       setSelectedSessionId(null);
     }
-  };
+  }, [dispatch, selectedSessionId]);
 
-  const handleRenameClicked = () => {
+  const handleRenameClicked = useCallback(() => {
     if (selectedSessionId) {
       setSessionToRename(selectedSessionId);
       setRenameDialogOpen(true);
     }
     setMoreMenuAnchor(null);
-  };
+  }, [selectedSessionId]);
 
   const moreMenuOpen = Boolean(moreMenuAnchor);
 
@@ -138,7 +136,6 @@ const SessionSidebar: React.FC = () => {
           <Chip label={t("chats")} size="small" sx={{ backgroundColor: "transparent" }} />
         </Divider>
 
-        <Collapse in={true} timeout="auto" unmountOnExit>
           {sessionsNewestFirst.map((session: Session) => (
             <ListItem
               key={session.id}
@@ -149,7 +146,7 @@ const SessionSidebar: React.FC = () => {
                 backgroundColor:
                   session.id === currentSessionId ? "lightgray" : "transparent",
                 "&:hover": {
-                  backgroundColor: "lightgrey",
+                  backgroundColor: "lightgray",
                 },
                 transition: "none",
                 // Hide the more button by default; show on hover or focus within
@@ -170,6 +167,7 @@ const SessionSidebar: React.FC = () => {
                   "&:hover": { backgroundColor: "transparent" },
                 }}
                 onClick={() => dispatch(setCurrentSession(session.id))}
+                aria-current={session.id === currentSessionId ? "true" : undefined}
               >
                 <Typography
                   noWrap
@@ -183,15 +181,14 @@ const SessionSidebar: React.FC = () => {
                 id={`session-options-button-${session.id}`}
                 className="more-button"
                 onClick={(event) => handleMoreMenuClick(event, session.id)}
-                aria-label="more"
+                aria-label={t('options')}
                 aria-controls={moreMenuOpen ? "session-menu" : undefined}
                 aria-expanded={moreMenuOpen ? "true" : undefined}
                 aria-haspopup="true"
                 sx={{ mr: "10px", "&:hover": { backgroundColor: "transparent", color: "black" } }}
               >
                 <Tooltip
-                  tabIndex={-1}
-                  title="Options"
+                  title={t('options')}
                   placement="top"
                   slotProps={{
                     popper: {
@@ -204,17 +201,18 @@ const SessionSidebar: React.FC = () => {
                     },
                   }}
                 >
-                  <MoreHorizIcon tabIndex={-1} />
+                  <MoreHorizIcon />
                 </Tooltip>
               </IconButton>
             </ListItem>
           ))}
-        </Collapse>
 
         {/* Shared Menu like main app */}
         <Menu
           id="session-menu"
-          MenuListProps={{ "aria-labelledby": "session-options-button" }}
+          MenuListProps={{
+            "aria-labelledby": selectedSessionId ? `session-options-button-${selectedSessionId}` : undefined,
+          }}
           anchorEl={moreMenuAnchor}
           open={moreMenuOpen}
           onClose={() => setMoreMenuAnchor(null)}
