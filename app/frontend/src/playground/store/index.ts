@@ -16,6 +16,7 @@ import toolReducer from "./slices/toolSlice";
 import modelReducer from "./slices/modelSlice";
 import toastReducer from "./slices/toastSlice";
 import quotedReducer from "./slices/quotedSlice";
+import authReducer from "./slices/authSlice";
 import { assistantMiddleware } from "./middleware/assistantMiddleware";
 import { saveChatState, loadChatState } from "./persistence";
 
@@ -26,6 +27,7 @@ const rootReducer = combineReducers({
   models: modelReducer,
   toast: toastReducer,
   quoted: quotedReducer,
+  auth: authReducer,
 });
 
 // Infer the RootState type *before* using it for preloadedState

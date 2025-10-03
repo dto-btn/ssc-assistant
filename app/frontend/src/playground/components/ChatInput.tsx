@@ -29,7 +29,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
   const dispatch = useDispatch();
   const quotedText = useSelector((state: RootState) => state.quoted.quotedText);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim() && attachments.length === 0) return;
     dispatch(
       addMessage({

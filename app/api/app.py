@@ -4,6 +4,8 @@ import os
 from apiflask import APIFlask
 from dotenv import load_dotenv
 from v1.routes_v1 import api_v1
+from proxy.azure import ROOT_PATH_PROXY_AZURE, proxy_azure
+from flask_cors import CORS
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("v1").setLevel(logging.DEBUG)
@@ -11,7 +13,8 @@ logging.getLogger("azure.core.pipeline.policies").setLevel(logging.ERROR)
 
 load_dotenv()
 
-app = APIFlask(__name__, title="SSC Assistant API", version="1.0")
+app = APIFlask(__name__, title="SSC Assistant API", version="2.0")
+CORS(app)
 
 app.servers = [
     {
@@ -39,3 +42,4 @@ app.security_schemes = {  # equals to use config SECURITY_SCHEMES
 }
 
 app.register_blueprint(api_v1, url_prefix='/api/1.0')
+app.register_blueprint(proxy_azure, url_prefix=ROOT_PATH_PROXY_AZURE)

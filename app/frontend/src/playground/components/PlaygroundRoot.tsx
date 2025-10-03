@@ -10,16 +10,21 @@ import { Box } from "@mui/material";
 import SessionSidebar from "./SessionSidebar";
 import ChatArea from "./ChatArea";
 import FeedbackForm from "./FeedbackForm";
-import isFeatureEnabled from '../FeatureGate';
+import { useAuth } from "../store/hooks/useAuth";
+import { apiUse } from "../../authConfig";
+import isFeatureEnabled from "../FeatureGate";
 
 const PlaygroundRoot: React.FC = () => {
+  // Initialize authentication and get token on app load
+  useAuth(apiUse);
+
   return (
     <>
       <Box display="flex" height="100vh">
         <SessionSidebar />
         <ChatArea />
       </Box>
-      {isFeatureEnabled('FeedbackForm') && <FeedbackForm />}
+      {isFeatureEnabled("FeedbackForm") && <FeedbackForm />}
     </>
   );
 };
