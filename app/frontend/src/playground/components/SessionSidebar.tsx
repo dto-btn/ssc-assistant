@@ -36,7 +36,7 @@ import AddCommentIcon from "@mui/icons-material/AddComment";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import type { Session } from "../store/slices/sessionSlice";
 import { useTranslation } from 'react-i18next';
-import { LEFT_MENU_WIDTH } from "../../constants";
+import { LEFT_MENU_WIDTH } from "../constants";
 import SessionRenameDialog from "./SessionRenameDialog";
 import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";

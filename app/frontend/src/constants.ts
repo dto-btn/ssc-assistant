@@ -1,7 +1,7 @@
 
 // For some reason, at 300, a horizontal scrollbar appears in the left menu
 // and at 301, it disappears.
-export const LEFT_MENU_WIDTH = 301;// This is the time-to-live for a snackbar in milliseconds. After this time, the snackbar will
+export const LEFT_MENU_WIDTH = 301;
 
 // This debounces the snackbar so that we don't show multiple snackbars in quick succession.
 // This is only used if a debounceKey is passed to the show function.
