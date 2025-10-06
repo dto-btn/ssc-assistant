@@ -41,6 +41,13 @@ import SessionRenameDialog from "./SessionRenameDialog";
 import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 
+/**
+ * Sidebar for listing and managing Playground chat sessions.
+ *
+ * Renders a “New chat” action, a list of sessions (newest first), and a per-session
+ * overflow menu with rename/delete actions. State is persisted via the playground
+ * Redux store (sessionSlice) and text is localized using the 'playground' namespace.
+ */
 const SessionSidebar: React.FC = () => {
   const { t } = useTranslation('playground');
   const sessions = useAppSelector((state) => state.sessions.sessions);
@@ -54,6 +61,10 @@ const SessionSidebar: React.FC = () => {
   const [moreMenuAnchor, setMoreMenuAnchor] = useState<null | HTMLElement>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
+  /**
+   * Create a new session unless the currently selected session is empty, in which
+   * case we keep the current session active to avoid creating duplicates.
+   */
   const handleNewSession = useCallback(() => {
     // If current session exists and has no messages, just keep it selected
     if (currentSessionId && currentSessionMessages.length === 0) {
@@ -70,11 +81,23 @@ const SessionSidebar: React.FC = () => {
     );
   }, [dispatch, sessions.length, currentSessionId, currentSessionMessages.length]);
 
+  /**
+   * Resolve a session name by id.
+   *
+   * @param id Session identifier
+   * @returns The session name or an empty string if not found
+   */
   const sessionName = (id: string) =>
     sessions.find((session) => session.id === id)?.name ?? "";
 
   // Derived sessions order handled by selector
 
+  /**
+   * Confirm handler for the rename dialog. Persists the new name to the store
+   * and closes the dialog.
+   *
+   * @param newName The updated name for the session being renamed
+   */
   const handleRenameSession = (newName: string) => {
     if (sessionToRename) {
       dispatch(renameSession({ id: sessionToRename, name: newName }));
@@ -83,6 +106,12 @@ const SessionSidebar: React.FC = () => {
     setSessionToRename(null);
   };
 
+  /**
+   * Open the per-session overflow (more) menu for the given session id.
+   *
+   * @param event Button click event used to anchor the menu
+   * @param sessionId The id of the session whose menu is being opened
+   */
   const handleMoreMenuClick = useCallback(
     (
       event: React.MouseEvent<HTMLButtonElement>,
@@ -94,6 +123,9 @@ const SessionSidebar: React.FC = () => {
     []
   );
 
+  /**
+   * Delete the currently selected session from the overflow menu.
+   */
   const handleDeleteClicked = useCallback(() => {
     if (selectedSessionId) {
       dispatch(removeSession(selectedSessionId));
@@ -102,6 +134,9 @@ const SessionSidebar: React.FC = () => {
     }
   }, [dispatch, selectedSessionId]);
 
+  /**
+   * Open the rename dialog for the currently selected session.
+   */
   const handleRenameClicked = useCallback(() => {
     if (selectedSessionId) {
       setSessionToRename(selectedSessionId);
