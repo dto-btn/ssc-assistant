@@ -1,0 +1,13 @@
+{
+    "editor.rulers": [
+        120
+    ],
+    "files.eol": "\n",
+    "[typescriptreact]": {
+        "editor.formatOnSave": true,
+        "editor.wordWrap": "off",
+        "editor.formatOnPaste": true,
+        "typescript.preferences.quoteStyle": "single",
+        "typescript.preferences.importModuleSpecifier": "relative"
+    }
+}
