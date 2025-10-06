@@ -13,11 +13,4 @@
     "pylint.args": [
         "--rcfile=.vscode/pylintrc"
     ],
-    "[typescriptreact]": {
-        "editor.formatOnSave": true,
-        "editor.wordWrap": "off",
-        "editor.formatOnPaste": true,
-        "typescript.preferences.quoteStyle": "single",
-        "typescript.preferences.importModuleSpecifier": "relative",
-    }
 }
