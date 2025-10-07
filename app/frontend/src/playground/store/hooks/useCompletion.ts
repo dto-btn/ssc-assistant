@@ -7,7 +7,7 @@
  */
 
 import { useCallback, useRef } from "react";
-import { CompletionService, CompletionMessage } from "../../services/completionService";
+import { OpenAIService, CompletionMessage } from "../../services/openaiService";
 
 /**W
  * Hook for using the completion service in React components
@@ -33,7 +33,7 @@ export function useCompletion() {
     abortControllerRef.current = new AbortController();
 
     try {
-      const result = await CompletionService.createCompletion(
+      const result = await OpenAIService.createCompletion(
         messages as CompletionMessage[],
         {
           userToken,
@@ -87,7 +87,7 @@ export function useStreamingCompletion() {
     abortControllerRef.current = new AbortController();
 
     try {
-      const result = await CompletionService.createCompletion(messages, {
+      const result = await OpenAIService.createCompletion(messages, {
         userToken,
         model: options.model,
         onStreamChunk: options.onStreamChunk,

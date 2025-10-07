@@ -8,12 +8,6 @@
 
 import { AzureOpenAI } from "openai";
 
-// Types for the service
-export interface CompletionMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
-
 export interface CompletionConfig {
   userToken: string;
   model?: string;
@@ -30,14 +24,14 @@ export interface CompletionResult {
  * Completion Service Class
  * Provides methods for interacting with Azure OpenAI completion API
  */
-export class CompletionService {
+export class OpenAIService {
   private static getBaseURL(): string {
     return import.meta.env.VITE_API_BACKEND 
       ? `${import.meta.env.VITE_API_BACKEND}/proxy/azure` 
       : "http://localhost:5001/proxy/azure";
   }
 
-  private static createClient(userToken: string): AzureOpenAI {
+  private static createAzureClient(userToken: string): AzureOpenAI {
     return new AzureOpenAI({
       baseURL: this.getBaseURL(),
       apiKey: "#no-thank-you",
@@ -55,20 +49,21 @@ export class CompletionService {
    * @param config Configuration including token and callbacks
    * @returns Promise<CompletionResult>
    */
-  static async createCompletion(
-    messages: CompletionMessage[], 
+  static async createAzureResponse(
+    messages: { role: "user" | "system" | "assistant"; content: string }[], 
     config: CompletionConfig
   ): Promise<CompletionResult> {
     const { userToken, model = "gpt-4o", onStreamChunk, signal } = config;
     
-    const client = this.createClient(userToken);
+    const client = this.createAzureClient(userToken);
 
     try {
-      // Create streaming completion
-      const stream = await client.chat.completions.create({
+      // Create streaming completion, using Responses, new and prefered from OpenAI SDK
+      // https://platform.openai.com/docs/api-reference/chat/create
+      const stream = await client.responses.create({
         model,
-        messages,
-        stream: true,
+        input: messages,
+        stream: true
       }, {
         signal, // Support for cancellation
       });
@@ -106,26 +101,6 @@ export class CompletionService {
       // Re-throw other errors
       throw error;
     }
-  }
-
-  /**
-   * Send a completion request without streaming (legacy support)
-   * @param messages Array of messages for the conversation
-   * @param userToken User authentication token
-   * @param model Model to use (defaults to gpt-4o)
-   * @returns Promise<string> The complete response text
-   */
-  static async createCompletionSync(
-    messages: CompletionMessage[], 
-    userToken: string, 
-    model: string = "gpt-4o"
-  ): Promise<string> {
-    const result = await this.createCompletion(messages, {
-      userToken,
-      model,
-    });
-    
-    return result.fullText;
   }
 
   /**
