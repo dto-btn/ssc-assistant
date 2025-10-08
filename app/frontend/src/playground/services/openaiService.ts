@@ -61,30 +61,70 @@ export class OpenAIService {
       // Create streaming completion, using Responses, new and prefered from OpenAI SDK
       // https://platform.openai.com/docs/api-reference/chat/create
       // https://platform.openai.com/docs/api-reference/responses/create
-      const stream = await client.responses.create({
+      // https://platform.openai.com/docs/guides/migrate-to-responses
+      // Currently not availalbe in Canada
+      // https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/responses?tabs=python-key
+      // const stream = await client.responses.stream({
+      //   model,
+      //   input: messages,
+      // }, {
+      //   signal: signal, // Support for cancellation
+      //   stream: true,
+      // });
+      const stream = await client.chat.completions.create({
         model,
-        input: messages,
-        stream: true
+        messages,
+        stream: true,
       }, {
         signal, // Support for cancellation
       });
 
+      console.debug("Started streaming completion (Responses API)...");
+
       let fullText = "";
       
-      // Process streaming responses
-      for await (const response of stream) {
+      // Process streaming chunks
+      for await (const chunk of stream) {
         // Check if request was aborted
         if (signal?.aborted) {
           throw new Error('Request aborted');
         }
 
-        if(response.type === 'response.output_text.delta') {
+        console.log('Received chunk:', chunk);
+
+        const delta = chunk.choices?.[0]?.delta?.content ?? "";
+        if (delta) {
+          fullText += delta;
+
           // Call the streaming callback if provided
           if (onStreamChunk) {
-            onStreamChunk(response.delta);
+            onStreamChunk(delta);
           }
         }
       }
+      // // Process streaming responses
+      // for await (const event of stream) {
+      //   // Check if request was aborted
+      //   if (signal?.aborted) {
+      //     throw new Error('Request aborted');
+      //   }
+
+      //   // Handle different event types from ResponseStreamEvent
+      //   if (event.type === 'response.output_text.delta') {
+      //     const deltaContent = event.delta;
+      //     if (deltaContent) {
+      //       fullText += deltaContent;
+      //       // Call the streaming callback if provided
+      //       if (onStreamChunk) {
+      //         onStreamChunk(deltaContent);
+      //       }
+      //     }
+      //   }
+      //   // Handle error events
+      //   else if (event.type === 'error') {
+      //     throw new Error(`Stream error: ${JSON.stringify(event)}`);
+      //   }
+      // }
 
       return {
         fullText,
@@ -97,7 +137,7 @@ export class OpenAIService {
           throw new Error('Completion request was cancelled');
         }
       }
-      
+      console.debug("Completion request failed:", error);
       // Re-throw other errors
       throw error;
     }

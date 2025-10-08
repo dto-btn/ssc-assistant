@@ -8,41 +8,45 @@
 
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { addMessage } from "../store/slices/chatSlice";
 import { Box, TextField, Button, Paper, IconButton } from "@mui/material";
 import FileUpload from "./FileUpload";
 import { addToast } from "../store/slices/toastSlice";
-import { RootState } from "../store";
+import { RootState, AppDispatch } from "../store";
 import { clearQuotedText } from "../store/slices/quotedSlice";
 import CloseIcon from "@mui/icons-material/Close";
 import isFeatureEnabled from "../FeatureGate";
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
+import { sendAssistantMessage } from "../store/thunks/assistantThunks";
 
 interface ChatInputProps {
   sessionId: string;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
-  const { t } = useTranslation('playground');
+  const { t } = useTranslation("playground");
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const quotedText = useSelector((state: RootState) => state.quoted.quotedText);
 
   const handleSend = async () => {
     if (!input.trim() && attachments.length === 0) return;
+
+    const messageContent = quotedText ? `> ${quotedText}\n\n${input}` : input;
+
     dispatch(
-      addMessage({
+      sendAssistantMessage({
         sessionId,
-        role: "user",
-        content: quotedText ? `> ${quotedText}\n\n${input}` : input,
+        content: messageContent,
         attachments: attachments.length ? attachments : undefined,
       })
     );
+
     setInput("");
     setAttachments([]);
-    if (quotedText) dispatch(clearQuotedText());
-    // Assistant response handled by middleware
+    if (quotedText) {
+      dispatch(clearQuotedText());
+    }
   };
 
   const handleFiles = (fileList: FileList) => {
@@ -62,7 +66,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
         </Paper>
       )}
       <Box width="100%" display="flex" gap={2} alignItems="flex-end">
-        {isFeatureEnabled('FileUpload') && <FileUpload onFiles={handleFiles} />}
+        {isFeatureEnabled("FileUpload") && <FileUpload onFiles={handleFiles} />}
         <TextField
           fullWidth
           variant="outlined"

@@ -17,7 +17,6 @@ import modelReducer from "./slices/modelSlice";
 import toastReducer from "./slices/toastSlice";
 import quotedReducer from "./slices/quotedSlice";
 import authReducer from "./slices/authSlice";
-import { assistantMiddleware } from "./middleware/assistantMiddleware";
 import { saveChatState, loadChatState } from "./persistence";
 
 const rootReducer = combineReducers({
@@ -39,8 +38,6 @@ const preloadedState = loadChatState() as Partial<RootState>;
 export const store = configureStore({
   reducer: rootReducer,
   preloadedState,
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(assistantMiddleware),
 });
 
 store.subscribe(() => {
