@@ -17,6 +17,7 @@
     "rename.conversation": "Renommer la conversation",
     "conversation.name": "Nom de la conversation",
     "rename": "Renommer",
+    "delete": "Supprimer",
     "chats": "Conversations",
     "new": "Nouveau",
     "delete.conversation": "Supprimer la conversation",
@@ -26,5 +27,6 @@
     "suggestion.summarize.doc": "Résumez ce document",
     "try.asking": "Essayez de demander :",
     "assistant.error.chat": "Désolé, une erreur est survenue lors du traitement de votre demande. Veuillez réessayer.",
-    "assistant.error.toast": "Une erreur est survenue pendant le traitement."
+    "assistant.error.toast": "Une erreur est survenue pendant le traitement.",
+    "ai.disclaimer": "L'IA peut faire des erreurs. Veuillez valider toutes les informations avant utilisation."
 }

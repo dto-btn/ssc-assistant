@@ -17,6 +17,7 @@
     "rename.conversation": "Rename Conversation",
     "conversation.name": "Conversation Name",
     "rename": "Rename",
+    "delete": "Delete",
     "chats": "Chats",
     "new": "New",
     "delete.conversation": "Delete Conversation",
@@ -26,5 +27,6 @@
     "suggestion.summarize.doc": "Summarize this document",
     "try.asking": "Try asking:",
     "assistant.error.chat": "Sorry, I encountered an error while processing your request. Please try again.",
-    "assistant.error.toast": "An error occurred during completion."
+    "assistant.error.toast": "An error occurred during completion.",
+    "ai.disclaimer": "AI may make mistakes. Please validate all information before use."
 }
