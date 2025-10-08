@@ -25,5 +25,6 @@
     "suggestion.github.issues": "Montrez-moi les problèmes GitHub récents",
     "suggestion.ts.interface": "Générez une interface TypeScript",
     "suggestion.summarize.doc": "Résumez ce document",
-    "try.asking": "Essayez de demander :"
+    "try.asking": "Essayez de demander :",
+    "ai.disclaimer": "L'IA peut faire des erreurs. Veuillez valider toutes les informations avant utilisation."
 }

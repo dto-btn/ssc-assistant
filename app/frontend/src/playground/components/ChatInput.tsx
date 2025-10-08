@@ -422,7 +422,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
       <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', gap: 1, alignItems: 'center', py: 1 }}>
         <InfoIcon fontSize="inherit" color="info" />
         <Typography variant="body2" color="text.secondary">
-          {t('how.can.i.help', { defaultValue: 'How can I help?' })}
+          {t('ai.disclaimer', { defaultValue: 'AI may make mistakes' })}
         </Typography>
       </Box>
 
