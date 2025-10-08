@@ -57,89 +57,73 @@ export class OpenAIService {
     
     const client = this.createAzureClient(userToken);
 
-    try {
-      // Create streaming completion, using Responses, new and prefered from OpenAI SDK
-      // https://platform.openai.com/docs/api-reference/chat/create
-      // https://platform.openai.com/docs/api-reference/responses/create
-      // https://platform.openai.com/docs/guides/migrate-to-responses
-      // Currently not availalbe in Canada
-      // https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/responses?tabs=python-key
-      // const stream = await client.responses.stream({
-      //   model,
-      //   input: messages,
-      // }, {
-      //   signal: signal, // Support for cancellation
-      //   stream: true,
-      // });
-      const stream = await client.chat.completions.create({
-        model,
-        messages,
-        stream: true,
-      }, {
-        signal, // Support for cancellation
-      });
+    // Create streaming completion, using Responses, new and prefered from OpenAI SDK
+    // https://platform.openai.com/docs/api-reference/chat/create
+    // https://platform.openai.com/docs/api-reference/responses/create
+    // https://platform.openai.com/docs/guides/migrate-to-responses
+    // Currently not availalbe in Canada
+    // https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/responses?tabs=python-key
+    // const stream = await client.responses.stream({
+    //   model,
+    //   input: messages,
+    // }, {
+    //   signal: signal, // Support for cancellation
+    //   stream: true,
+    // });
+    const stream = await client.chat.completions.create({
+      model,
+      messages,
+      stream: true,
+    }, {
+      signal, // Support for cancellation
+    });
 
-      console.debug("Started streaming completion (Responses API)...");
+    let fullText = "";
+    
+    // Process streaming chunks
+    for await (const chunk of stream) {
+      // Check if request was aborted
+      if (signal?.aborted) {
+        throw new Error('Request aborted');
+      }
 
-      let fullText = "";
-      
-      // Process streaming chunks
-      for await (const chunk of stream) {
-        // Check if request was aborted
-        if (signal?.aborted) {
-          throw new Error('Request aborted');
-        }
+      const delta = chunk.choices?.[0]?.delta?.content ?? "";
+      if (delta) {
+        fullText += delta;
 
-        console.log('Received chunk:', chunk);
-
-        const delta = chunk.choices?.[0]?.delta?.content ?? "";
-        if (delta) {
-          fullText += delta;
-
-          // Call the streaming callback if provided
-          if (onStreamChunk) {
-            onStreamChunk(delta);
-          }
+        // Call the streaming callback if provided
+        if (onStreamChunk) {
+          onStreamChunk(delta);
         }
       }
-      // // Process streaming responses
-      // for await (const event of stream) {
-      //   // Check if request was aborted
-      //   if (signal?.aborted) {
-      //     throw new Error('Request aborted');
-      //   }
-
-      //   // Handle different event types from ResponseStreamEvent
-      //   if (event.type === 'response.output_text.delta') {
-      //     const deltaContent = event.delta;
-      //     if (deltaContent) {
-      //       fullText += deltaContent;
-      //       // Call the streaming callback if provided
-      //       if (onStreamChunk) {
-      //         onStreamChunk(deltaContent);
-      //       }
-      //     }
-      //   }
-      //   // Handle error events
-      //   else if (event.type === 'error') {
-      //     throw new Error(`Stream error: ${JSON.stringify(event)}`);
-      //   }
-      // }
-
-      return {
-        fullText,
-        completed: true,
-      };
-    } catch (error) {
-      // Handle different types of errors
-      if (error instanceof Error) {
-        if (error.name === 'AbortError' || error.message === 'Request aborted') {
-          throw new Error('Completion request was cancelled');
-        }
-      }
-      console.debug("Completion request failed:", error);
-      // Re-throw other errors
-      throw error;
     }
+    // // Process streaming responses
+    // for await (const event of stream) {
+    //   // Check if request was aborted
+    //   if (signal?.aborted) {
+    //     throw new Error('Request aborted');
+    //   }
+
+    //   // Handle different event types from ResponseStreamEvent
+    //   if (event.type === 'response.output_text.delta') {
+    //     const deltaContent = event.delta;
+    //     if (deltaContent) {
+    //       fullText += deltaContent;
+    //       // Call the streaming callback if provided
+    //       if (onStreamChunk) {
+    //         onStreamChunk(deltaContent);
+    //       }
+    //     }
+    //   }
+    //   // Handle error events
+    //   else if (event.type === 'error') {
+    //     throw new Error(`Stream error: ${JSON.stringify(event)}`);
+    //   }
+    // }
+
+    return {
+      fullText,
+      completed: true,
+    };
   }
 }

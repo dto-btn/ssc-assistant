@@ -73,7 +73,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
           placeholder={t("type.a.message")}
           value={input}
           onChange={(event) => setInput(event.target.value)}
-          onKeyPress={(event) => {
+          onKeyUp={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();
               handleSend();
