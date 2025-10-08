@@ -20,7 +20,7 @@ interface Context {
 
 interface Message {
   role: "user" | "assistant" | "system";
-  content?: string | null;
+  content: string;
   context?: Context | null;
   tools_info?: ToolInfo[];
   quotedText?: string;

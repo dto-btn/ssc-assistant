@@ -60,6 +60,7 @@ export class OpenAIService {
     try {
       // Create streaming completion, using Responses, new and prefered from OpenAI SDK
       // https://platform.openai.com/docs/api-reference/chat/create
+      // https://platform.openai.com/docs/api-reference/responses/create
       const stream = await client.responses.create({
         model,
         input: messages,
@@ -70,18 +71,17 @@ export class OpenAIService {
 
       let fullText = "";
       
-      // Process streaming chunks
-      for await (const chunk of stream) {
+      // Process streaming responses
+      for await (const response of stream) {
         // Check if request was aborted
         if (signal?.aborted) {
           throw new Error('Request aborted');
         }
 
-        const delta = chunk.choices?.[0]?.delta?.content ?? "";
-        if (delta) {
+        if(response.type === 'response.output_text.delta') {
           // Call the streaming callback if provided
           if (onStreamChunk) {
-            onStreamChunk(delta);
+            onStreamChunk(response.delta);
           }
         }
       }
@@ -101,32 +101,5 @@ export class OpenAIService {
       // Re-throw other errors
       throw error;
     }
-  }
-
-  /**
-   * Utility method to create a user message
-   * @param content The message content
-   * @returns CompletionMessage
-   */
-  static createUserMessage(content: string): CompletionMessage {
-    return { role: "user", content };
-  }
-
-  /**
-   * Utility method to create a system message
-   * @param content The system prompt content
-   * @returns CompletionMessage
-   */
-  static createSystemMessage(content: string): CompletionMessage {
-    return { role: "system", content };
-  }
-
-  /**
-   * Utility method to create an assistant message
-   * @param content The assistant response content
-   * @returns CompletionMessage
-   */
-  static createAssistantMessage(content: string): CompletionMessage {
-    return { role: "assistant", content };
   }
 }
