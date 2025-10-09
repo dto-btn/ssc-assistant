@@ -19,8 +19,8 @@ interface Context {
 }
 
 interface Message {
-  role: string;
-  content?: string | null;
+  role: "user" | "assistant" | "system";
+  content: string;
   context?: Context | null;
   tools_info?: ToolInfo[];
   quotedText?: string;

@@ -16,7 +16,8 @@ const selectCurrentSessionId = (state: RootState) =>
 // Memoized selector for filtering messages by sessionId
 export const selectMessagesBySessionId = createSelector(
   [selectMessages, selectCurrentSessionId],
-  (messages, currentSessionId) => {
-    return messages.filter((message) => message.sessionId === currentSessionId);
-  }
+  (messages, currentSessionId) =>
+    currentSessionId
+      ? messages.filter((message) => message.sessionId === currentSessionId)
+      : []
 );
