@@ -1,15 +1,10 @@
 import { addMessage, updateMessageContent, setIsLoading, Message } from "../slices/chatSlice";
 import { addToast } from "../slices/toastSlice";
-import { OpenAIService } from "../../services/openaiService";
+import { completionService, CompletionMessage } from "../../services/completionService";
 import { isTokenExpired } from "../../../util/token";
 import { RootState, AppDispatch } from "..";
-import { selectMessagesForSession } from "../selectors/chatSelectors";
+import { selectMessagesBySessionId } from "../selectors/chatSelectors";
 import i18n from "../../../i18n";
-
-interface CompletionMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
 
 const mapMessagesForCompletion = (messages: Message[]): CompletionMessage[] =>
   messages.map(({ role, content }) => ({
@@ -21,12 +16,14 @@ export interface SendAssistantMessageArgs {
   sessionId: string;
   content: string;
   attachments?: unknown[];
+  provider?: 'azure-openai' | 'aws-bedrock'; // Future provider selection
 }
 
 export const sendAssistantMessage = ({
   sessionId,
   content,
   attachments,
+  provider = 'azure-openai', // Default provider
 }: SendAssistantMessageArgs) => async (
   dispatch: AppDispatch,
   getState: () => RootState
@@ -46,6 +43,7 @@ export const sendAssistantMessage = ({
       return;
     }
 
+    // Add user message to state
     dispatch(
       addMessage({
         sessionId,
@@ -55,8 +53,7 @@ export const sendAssistantMessage = ({
       })
     );
 
-    const sessionMessages = selectMessagesForSession(getState(), sessionId);
-
+    // Add empty assistant message to state
     dispatch(
       addMessage({
         sessionId,
@@ -65,7 +62,9 @@ export const sendAssistantMessage = ({
       })
     );
 
-    const assistantMessages = selectMessagesForSession(getState(), sessionId).filter(
+    // Re-fetch messages to include the newly added assistant message
+    const updatedSessionMessages = selectMessagesBySessionId(getState());
+    const assistantMessages = updatedSessionMessages.filter(
       (message) => message.role === "assistant"
     );
     const latestAssistantMessage = assistantMessages[assistantMessages.length - 1];
@@ -76,19 +75,36 @@ export const sendAssistantMessage = ({
 
     let accumulatedContent = "";
 
-    await OpenAIService.createAzureResponse(mapMessagesForCompletion(sessionMessages), {
-      userToken: accessToken,
-      model: "gpt-4o",
-      onStreamChunk: (chunk: string) => {
-        accumulatedContent += chunk;
-        dispatch(
-          updateMessageContent({
-            messageId: latestAssistantMessage.id,
-            content: accumulatedContent,
-          })
-        );
+    // Use the completion service with streaming callbacks for state management
+    await completionService.createCompletion(
+      {
+        messages: mapMessagesForCompletion(updatedSessionMessages),
+        model: "gpt-4o", // Let MCP client decide or the user or the agentic AI decide which model to use...
+        provider,
+        userToken: accessToken,
       },
-    });
+      {
+        onChunk: (chunk: string) => {
+          accumulatedContent += chunk;
+          // This is where the thunk manages state during streaming
+          dispatch(
+            updateMessageContent({
+              messageId: latestAssistantMessage.id,
+              content: accumulatedContent,
+            })
+          );
+        },
+        onError: (error: Error) => {
+          console.error("Streaming error:", error);
+          // Could dispatch error state here if needed
+        },
+        onComplete: (fullText: string) => {
+          console.log("Completion finished:", fullText.length, "characters");
+          // Final state update if needed
+        }
+      }
+    );
+
   } catch (error) {
     console.error("Completion failed:", error);
 
