@@ -11,10 +11,12 @@ import SessionSidebar from "./SessionSidebar";
 import ChatArea from "./ChatArea";
 import FeedbackForm from "./FeedbackForm";
 import isFeatureEnabled from '../FeatureGate';
+import TokenProvider from "./TokenProvider";
 
 const PlaygroundRoot: React.FC = () => {
   return (
     <>
+      <TokenProvider />
       <Box display="flex" height="100vh">
         <SessionSidebar />
         <ChatArea />

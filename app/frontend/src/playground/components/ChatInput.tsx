@@ -17,6 +17,9 @@ import { clearQuotedText } from "../store/slices/quotedSlice";
 import CloseIcon from "@mui/icons-material/Close";
 import isFeatureEnabled from "../FeatureGate";
 import { useTranslation } from 'react-i18next';
+import { useSelector as useTypedSelector } from "react-redux";
+import { createBlobViaApi, updateBlobMetadata, getOidFromAccessToken, moveBlob } from "../api/storage";
+import { addUserFileToOutbox } from "../store/slices/outboxSlice";
 
 interface ChatInputProps {
   sessionId: string;
@@ -28,9 +31,63 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
   const [attachments, setAttachments] = useState<File[]>([]);
   const dispatch = useDispatch();
   const quotedText = useSelector((state: RootState) => state.quoted.quotedText);
+  const accessToken = useTypedSelector((state: RootState) => state.auth.accessToken);
 
   const handleSend = () => {
     if (!input.trim() && attachments.length === 0) return;
+    // Fire and forget upload of any attached files via secure API; tag standardized metadata
+    if (attachments.length) {
+      // Always add to outbox first for local persistence
+      (async () => {
+        for (const file of attachments) {
+          try {
+            const b64 = await fileToDataUrl(file);
+            dispatch(addUserFileToOutbox({ originalName: file.name, dataUrl: b64 }));
+          } catch {
+            // ignore read errors
+          }
+        }
+      })();
+    }
+    if (attachments.length && accessToken) {
+      const token = accessToken;
+      (async () => {
+        for (const file of attachments) {
+          try {
+            const b64 = await fileToDataUrl(file);
+            const result = await createBlobViaApi({ encodedFile: b64, name: file.name, accessToken: token });
+            // Move into per-user folder for organization: users/<oid>/files/<filename>
+            try {
+              const oid = getOidFromAccessToken(token);
+              if (oid) {
+                const destName = `users/${oid}/files/${file.name}`;
+                await moveBlob({ sourceName: result.blobName, destName, accessToken: token });
+                // Update blobName to point to new location for tagging
+                result.blobName = destName as unknown as string; // local use only
+              }
+            } catch {
+              // ignore move errors (keeps file at root)
+            }
+            // tag for RAG discovery (best-effort)
+            try {
+              await updateBlobMetadata({
+                blobName: result.blobName,
+                metadata: {
+                  type: "user-file",
+                  originalname: file.name,
+                  uploadedat: new Date().toISOString(),
+                },
+                accessToken: token,
+              });
+            } catch (e) {
+              // ignore metadata tagging errors in playground
+            }
+          } catch (e) {
+            // ignore upload errors in playground
+          }
+        }
+      })();
+    }
     dispatch(
       addMessage({
         sessionId,
@@ -93,3 +150,12 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
 };
 
 export default ChatInput;
+
+async function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
