@@ -12,7 +12,8 @@ import { jwtDecode } from "jwt-decode";
 
 // Reuse the existing upload path and blob container proxy base
 const API_UPLOAD_URL = "/api/1.0/upload";
-const CONTAINER_BASE = "/assistant-chat-files"; // proxied by server.js with SAS
+// Use a new container base for new uploads so we can separate new files from the old
+const CONTAINER_BASE = "/assistant-chat-files-v2"; // proxied by server.js with SAS
 
 // Optional: use absolute SAS URLs if available (avoids proxy query collision for comp=list/metadata)
 type ImportMetaEnv = { VITE_BLOB_STORAGE_URL?: string; VITE_SAS_TOKEN?: string };
@@ -86,7 +87,8 @@ export async function createBlobViaApi(params: {
   const url = new URL(data.file_url);
   // Derive blobName (path inside the container) from the pathname
   const pathname = decodeURIComponent(url.pathname);
-  const containerPrefix = "/assistant-chat-files/";
+  // Update the containerPrefix to match the new container base used above
+  const containerPrefix = "/assistant-chat-files-v2/";
   const blobName = pathname.startsWith(containerPrefix)
     ? pathname.substring(containerPrefix.length)
     : pathname.split("/").pop() || pathname;
