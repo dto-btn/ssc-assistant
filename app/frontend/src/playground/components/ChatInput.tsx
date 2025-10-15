@@ -228,7 +228,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
    * attachments, then resets the composer state. Guarded against empty input
    * and current validation errors.
    */
-  const handleSend = async () => {
+  const handleSend = useCallback(async () => {
     if (!input.trim() && attachments.length === 0) return;
 
     const messageContent = quotedText ? `> ${quotedText}\n\n${input}` : input;
@@ -246,7 +246,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
     if (quotedText) {
       dispatch(clearQuotedText());
     }
-  };
+  }, [input, attachments, quotedText, dispatch, sessionId]);
 
   /**
    * Keyboard behavior: Enter sends the message, Shift+Enter inserts a newline.
