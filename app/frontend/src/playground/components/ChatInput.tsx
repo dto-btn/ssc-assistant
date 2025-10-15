@@ -11,7 +11,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { addMessage, setIsLoading } from "../store/slices/chatSlice";
+import { setIsLoading } from "../store/slices/chatSlice";
 import {
   Box,
   Paper,
@@ -25,7 +25,7 @@ import {
 } from "@mui/material";
 import FileUpload from "./FileUpload";
 import { addToast } from "../store/slices/toastSlice";
-import { RootState } from "../store";
+import { AppDispatch, RootState } from "../store";
 import { clearQuotedText } from "../store/slices/quotedSlice";
 import CloseIcon from "@mui/icons-material/Close";
 import SendIcon from "@mui/icons-material/Send";
@@ -33,8 +33,9 @@ import InfoIcon from "@mui/icons-material/Info";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import StopCircleIcon from "@mui/icons-material/StopCircle";
 import isFeatureEnabled from "../FeatureGate";
+import { useTranslation } from "react-i18next";
+import { sendAssistantMessage } from "../store/thunks/assistantThunks";
 import { createPortal } from "react-dom";
-import { useTranslation } from 'react-i18next';
 
 /**
  * Props for the Playground ChatInput component.
@@ -70,7 +71,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
   // i18n + theme
   const { t } = useTranslation('playground');
   const theme = useTheme();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const quotedText = useSelector((state: RootState) => state.quoted.quotedText);
   const isLoading = useSelector((state: RootState) => state.chat.isLoading);
 
@@ -227,25 +228,25 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
    * attachments, then resets the composer state. Guarded against empty input
    * and current validation errors.
    */
-  const handleSend = useCallback(() => {
-    // Block send if nothing to send or a validation error is present
+  const handleSend = useCallback(async () => {
     if (!input.trim() && attachments.length === 0) return;
-    if (error) return;
-    const content = ((quotedText ? `> ${quotedText}\n\n` : '') + input).trimEnd();
+
+    const messageContent = quotedText ? `> ${quotedText}\n\n${input}` : input;
+
     dispatch(
-      addMessage({
+      sendAssistantMessage({
         sessionId,
-        role: "user",
-        content,
+        content: messageContent,
         attachments: attachments.length ? attachments : undefined,
       })
     );
+
     setInput("");
     setAttachments([]);
-    if (quotedText) dispatch(clearQuotedText());
-    // middleware handles assistant response; set loading for UX parity
-    dispatch(setIsLoading(true));
-  }, [attachments, dispatch, error, input, quotedText, sessionId]);
+    if (quotedText) {
+      dispatch(clearQuotedText());
+    }
+  }, [input, attachments, quotedText, dispatch, sessionId]);
 
   /**
    * Keyboard behavior: Enter sends the message, Shift+Enter inserts a newline.
