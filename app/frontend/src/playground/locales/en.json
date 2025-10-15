@@ -28,5 +28,6 @@
     "try.asking": "Try asking:",
     "assistant.error.chat": "Sorry, I encountered an error while processing your request. Please try again.",
     "assistant.error.toast": "An error occurred during completion.",
-    "ai.disclaimer": "AI may make mistakes. Please validate all information before use."
+    "ai.disclaimer": "AI may make mistakes. Please validate all information before use.",
+    "playground:auth.tokenExpired": "Authentication required. Please refresh the page."
 }

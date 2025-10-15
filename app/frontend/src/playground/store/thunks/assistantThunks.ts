@@ -36,7 +36,7 @@ export const sendAssistantMessage = ({
     if (!accessToken || isTokenExpired(accessToken)) {
       dispatch(
         addToast({
-          message: "Authentication required. Please refresh the page.",
+          message: i18n.t("playground:auth.tokenExpired"),
           isError: true,
         })
       );
