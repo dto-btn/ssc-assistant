@@ -16,11 +16,10 @@ import toolReducer from "./slices/toolSlice";
 import modelReducer from "./slices/modelSlice";
 import toastReducer from "./slices/toastSlice";
 import quotedReducer from "./slices/quotedSlice";
-import { assistantMiddleware } from "./middleware/assistantMiddleware";
+import authReducer from "./slices/authSlice";
 import { archiverMiddleware } from "./middleware/archiverMiddleware";
 import { outboxMiddleware } from "./middleware/outboxMiddleware";
 import { saveChatState, loadChatState } from "./persistence";
-import authReducer from "./slices/authSlice";
 import outboxReducer from "./slices/outboxSlice";
 
 const rootReducer = combineReducers({
@@ -44,7 +43,7 @@ export const store = configureStore({
   reducer: rootReducer,
   preloadedState,
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(assistantMiddleware, archiverMiddleware, outboxMiddleware),
+    getDefaultMiddleware().concat(archiverMiddleware, outboxMiddleware),
 });
 
 store.subscribe(() => {

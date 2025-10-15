@@ -25,5 +25,9 @@
     "suggestion.github.issues": "Show me recent GitHub issues",
     "suggestion.ts.interface": "Generate a TypeScript interface",
     "suggestion.summarize.doc": "Summarize this document",
-    "try.asking": "Try asking:"
+    "try.asking": "Try asking:",
+    "assistant.error.chat": "Sorry, I encountered an error while processing your request. Please try again.",
+    "assistant.error.toast": "An error occurred during completion.",
+    "ai.disclaimer": "AI may make mistakes. Please validate all information before use.",
+    "playground:auth.tokenExpired": "Authentication required. Please refresh the page."
 }
