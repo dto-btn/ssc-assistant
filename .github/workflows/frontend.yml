@@ -15,6 +15,9 @@ on:
       app-name:
         type: string
         required: true
+      enable-playground:
+        type: boolean
+        default: false
     secrets: 
       FRONTEND_PUBLISH_PROFILE:
         required: false
@@ -64,6 +67,7 @@ jobs:
         VITE_ALLOWED_TOOLS: ${{ inputs.allowed-tools }}
         VITE_DISABLED_FEATURES: ${{ inputs.disabled-features }}
         VITE_CLARITY_TOKEN: ${{ secrets.VITE_CLARITY_TOKEN }}
+        VITE_PLAYGROUND_ON: ${{ inputs.enable-playground }}
 
     # This step will only run when the event is a push to the main branch
     - name: Zip artifact for deployment
