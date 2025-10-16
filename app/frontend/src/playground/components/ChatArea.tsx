@@ -84,6 +84,8 @@ const ChatArea: React.FC = () => {
     );
   };
 
+  // Load persisted attachments the first time a session becomes active so
+  // previews and cached metadata are ready before the user scrolls.
   React.useEffect(() => {
     if (!currentSessionId || !accessToken) return undefined;
     if (loadedSessionsRef.current.has(currentSessionId)) return undefined;

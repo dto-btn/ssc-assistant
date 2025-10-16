@@ -18,6 +18,12 @@ api_playground = APIBlueprint("api_playground", __name__)
 # GET /api/playground/files-for-session: Returns files for a given sessionId by searching blob metadata
 @api_playground.route("/files-for-session", methods=["GET"])
 def files_for_session():
+    """Return metadata for the caller's files bound to a session.
+
+    The bearer token identifies the caller via `oid`, which scopes the blob
+    search to their personal prefix. Results are filtered by the provided
+    `sessionId` query string parameter and returned as JSON.
+    """
     session_id = request.args.get("sessionId")
     auth_header = request.headers.get("Authorization", "")
     if not auth_header.startswith("Bearer "):
@@ -69,6 +75,13 @@ def files_for_session():
 # POST /api/1.0/upload: Accepts encoded_file, name, and access token, uploads to Azure Blob Storage with user_id metadata
 @api_playground.route("/upload", methods=["POST"])
 def upload_file():
+    """Persist a base64 encoded file in blob storage for the signed-in user.
+
+    The request body must include `encoded_file` and `name`, plus optional
+    `sessionId`, `category`, `fileType`, and arbitrary metadata. The function
+    derives a per-user blob path, uploads the decoded bytes, and returns a
+    summary payload describing the stored file.
+    """
     data: Dict[str, Any] = request.get_json() or {}
     encoded_file = data.get("encoded_file")
     original_name = data.get("name")
@@ -163,6 +176,12 @@ def upload_file():
 # POST /api/playground/extract-file-text: Accepts fileUrl and fileType, returns extracted text
 @api_playground.route("/extract-file-text", methods=["POST"])
 def extract_file_text():
+    """Fetch a remote file and extract plain text using the FileManager helper.
+
+    The JSON body must include `fileUrl`, with an optional `fileType` hint. The
+    endpoint streams the file into memory, invokes `FileManager.extract_text`,
+    and responds with the extracted text or an error message.
+    """
     data = request.get_json() or {}
     file_url = data.get("fileUrl")
     file_type = data.get("fileType")
@@ -181,6 +200,12 @@ def extract_file_text():
 
 @api_playground.route("/file-data-url", methods=["POST"])
 def file_data_url():
+    """Return a data URL for the file located at the supplied `fileUrl`.
+
+    Accepts an optional `fileType` to override the detected content type.
+    The response encodes the remote file as a base64 `data:` URL alongside the
+    content type so the client can embed or preview the asset directly.
+    """
     data = request.get_json() or {}
     file_url = data.get("fileUrl")
     file_type = data.get("fileType")

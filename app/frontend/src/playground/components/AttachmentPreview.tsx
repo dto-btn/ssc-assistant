@@ -42,6 +42,10 @@ function formatUploadedAt(uploadedAt?: string | null): string {
   return date.toLocaleString();
 }
 
+/**
+ * Render a visual summary for chat attachments so users can inspect uploaded
+ * files directly inside the transcript.
+ */
 const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ attachments }) => {
   if (!attachments || attachments.length === 0) {
     return null;

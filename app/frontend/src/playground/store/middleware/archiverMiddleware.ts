@@ -12,6 +12,8 @@ type SessionTimers = Record<string, number | undefined>;
 const timers: SessionTimers = {};
 const lastArchivedSignature: Record<string, string | undefined> = {};
 
+// Debounce archival so idle sessions eventually flush to storage even without
+// hitting the hard message threshold.
 function scheduleArchive(sessionId: string, store: MiddlewareAPI<Dispatch<UnknownAction>, RootState>) {
   if (timers[sessionId]) {
     clearTimeout(timers[sessionId]);
@@ -19,6 +21,10 @@ function scheduleArchive(sessionId: string, store: MiddlewareAPI<Dispatch<Unknow
   timers[sessionId] = setTimeout(() => doArchive(sessionId, store), IDLE_MS_BEFORE_ARCHIVE) as unknown as number;
 }
 
+/**
+ * Serialize a session transcript and ship it to blob storage, falling back to
+ * the local outbox when offline or unauthenticated.
+ */
 async function doArchive(sessionId: string, store: MiddlewareAPI<Dispatch<UnknownAction>, RootState>) {
   const state = store.getState();
   const accessToken = state.auth?.accessToken ?? null;

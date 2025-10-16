@@ -1,6 +1,9 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
 
+/**
+ * Simple info panel explaining that uploads moved to the chat experience.
+ */
 const StorageManager: React.FC = () => {
   return (
     <Box p={2} sx={{ width: "100%", maxWidth: 720, mx: "auto" }}>

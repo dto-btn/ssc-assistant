@@ -3,6 +3,10 @@ import { RootState } from "..";
 import { removeOutboxItem, OutboxItem } from "../slices/outboxSlice";
 import { uploadEncodedFile } from "../../api/storage";
 
+/**
+ * Attempt to send a queued upload using the current auth token; returns early
+ * when offline or unauthenticated so the item can be retried later.
+ */
 async function flushItem(item: OutboxItem, state: RootState) {
   const token = state.auth.accessToken;
   if (!token) return; // no token yet, keep in outbox

@@ -1,5 +1,8 @@
 export type FileCategory = "files" | "chat" | "archive" | string;
 
+/**
+ * Normalized attachment metadata shared between the UI and storage helpers.
+ */
 export interface FileAttachment {
   blobName: string;
   url: string;

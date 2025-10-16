@@ -45,6 +45,7 @@ export const store = configureStore({
   reducer: rootReducer,
   preloadedState,
   middleware: (getDefaultMiddleware) =>
+    // Persist chat archives and queued uploads by enriching the default stack.
     getDefaultMiddleware().concat(archiverMiddleware, outboxMiddleware),
 });
 

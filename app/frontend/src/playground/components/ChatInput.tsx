@@ -547,6 +547,10 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
 
 export default ChatInput;
 
+/**
+ * Read a File into a base64 data URL so uploads can be routed through the
+ * playground API without duplicating FileReader logic.
+ */
 async function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

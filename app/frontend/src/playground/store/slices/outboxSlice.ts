@@ -32,6 +32,10 @@ const initialState: OutboxState = {
   items: [],
 };
 
+/**
+ * Track uploads that need to be retried when connectivity or auth becomes
+ * available.
+ */
 const outboxSlice = createSlice({
   name: "outbox",
   initialState,

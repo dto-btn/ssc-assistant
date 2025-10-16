@@ -76,6 +76,10 @@ export interface UploadEncodedFileParams {
   metadata?: MetadataRecord;
 }
 
+/**
+ * Upload a base64 encoded payload to blob storage via the playground API and
+ * return normalized attachment metadata.
+ */
 export async function uploadEncodedFile({
   encodedFile,
   originalName,
@@ -126,6 +130,10 @@ export interface UploadFileParams {
   metadata?: MetadataRecord;
 }
 
+/**
+ * Convenience wrapper that reads a File as a data URL before delegating to
+ * `uploadEncodedFile`.
+ */
 export async function uploadFile({
   file,
   accessToken,
@@ -151,6 +159,9 @@ export async function uploadFile({
   });
 }
 
+/**
+ * Fetch the caller's attachments for a given session from the playground API.
+ */
 export async function listSessionFiles({
   sessionId,
   accessToken,
@@ -175,6 +186,10 @@ export async function listSessionFiles({
   return files.map(mapFilePayload);
 }
 
+/**
+ * Request server-side text extraction for an attachment so prompts can include
+ * the relevant content without exposing blob credentials to the client.
+ */
 export async function extractFileText({
   fileUrl,
   fileType,
@@ -192,6 +207,9 @@ export async function extractFileText({
   return data?.extractedText ?? "";
 }
 
+/**
+ * Retrieve an attachment as a data URL, enabling inline previews in the UI.
+ */
 export async function fetchFileDataUrl({
   fileUrl,
   fileType,

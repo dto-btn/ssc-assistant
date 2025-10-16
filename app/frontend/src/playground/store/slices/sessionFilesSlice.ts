@@ -9,6 +9,10 @@ const initialState: SessionFilesState = {
   bySessionId: {},
 };
 
+/**
+ * Cache attachment metadata per session so components can quickly look up
+ * file details without refetching from the API.
+ */
 const sessionFilesSlice = createSlice({
   name: "sessionFiles",
   initialState,

@@ -24,6 +24,10 @@ const truncateText = (text: string, maxLength: number): string => {
   return `${text.slice(0, maxLength)}\n\n[Attachment truncated after ${maxLength} characters of ${text.length}.]`;
 };
 
+/**
+ * Convert attachment metadata into multimodal content parts by pulling text or
+ * image data from the storage API and caching the results between requests.
+ */
 async function resolveAttachmentParts(attachments: FileAttachment[] = []): Promise<CompletionContentPart[]> {
   const parts: CompletionContentPart[] = [];
 
@@ -104,6 +108,8 @@ async function resolveAttachmentParts(attachments: FileAttachment[] = []): Promi
   return parts;
 }
 
+// Combine the base message text with any generated attachment parts so we can
+// send a single structured payload to the provider.
 const buildMessageContent = async (message: Message): Promise<string | CompletionContentPart[]> => {
   const baseText = message.content?.trim() ?? "";
   const attachmentParts = message.attachments?.length
@@ -125,6 +131,10 @@ const buildMessageContent = async (message: Message): Promise<string | Completio
   return contentParts;
 };
 
+/**
+ * Prepare the full conversation history for a completion call, resolving
+ * attachments in parallel to avoid serial network trips.
+ */
 const mapMessagesForCompletion = async (messages: Message[]): Promise<CompletionMessage[]> => {
   return Promise.all(
     messages.map(async (message) => ({

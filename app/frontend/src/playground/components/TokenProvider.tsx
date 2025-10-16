@@ -4,6 +4,10 @@ import { useMsal } from "@azure/msal-react";
 import { apiUse } from "../../authConfig";
 import { setAccessToken as setAccessTokenAction } from "../store/slices/authSlice";
 
+/**
+ * Acquire a bearer token on mount and seed the playground store so API calls
+ * have credentials without each component fetching independently.
+ */
 const TokenProvider = () => {
   const { instance, accounts } = useMsal();
   const dispatch = useDispatch();
@@ -13,7 +17,14 @@ const TokenProvider = () => {
     (async () => {
       try {
         const res = await instance.acquireTokenSilent({ scopes: apiUse.scopes as string[], account: accounts[0] });
-        if (mounted) dispatch(setAccessTokenAction(res.accessToken));
+        if (mounted) {
+          dispatch(
+            setAccessTokenAction({
+              token: res.accessToken,
+              expiresOn: res.expiresOn ? res.expiresOn.getTime() : undefined,
+            })
+          );
+        }
       } catch {
         // silent failure; components will retry as needed
       }

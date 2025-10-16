@@ -56,6 +56,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   const dispatch = useDispatch();
   const sessionFiles = useSelector(selectSessionFilesById(sessionId));
 
+  // Merge lightweight attachment stubs from the transcript with any richer
+  // metadata fetched from storage so previews stay up-to-date.
   const resolveAttachments = useCallback(
     (attachments?: FileAttachment[]): FileAttachment[] => {
       if (!attachments || attachments.length === 0) return [];
