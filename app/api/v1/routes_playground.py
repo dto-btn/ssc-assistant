@@ -3,7 +3,7 @@ import base64
 import uuid
 from datetime import datetime
 from typing import Dict, Any
-
+import logging
 from werkzeug.utils import secure_filename
 
 from utils.auth import verify_user_access_token
@@ -14,6 +14,7 @@ from apiflask import APIBlueprint
 from azure.storage.blob import ContentSettings
 
 api_playground = APIBlueprint("api_playground", __name__)
+logger = logging.getLogger(__name__)
 
 # GET /api/playground/files-for-session: Returns files for a given sessionId by searching blob metadata
 @api_playground.route("/files-for-session", methods=["GET"])
@@ -69,7 +70,9 @@ def files_for_session():
             )
         return jsonify({"files": files})
     except Exception as exc:
-        return jsonify({"message": f"Failed to list files: {exc}"}), 500
+        import logging
+        logging.getLogger(__name__).exception("Failed to list files")
+        return jsonify({"message": "Failed to list files", "details": str(exc)}), 500
 
 
 # POST /api/1.0/upload: Accepts encoded_file, name, and access token, uploads to Azure Blob Storage with user_id metadata
@@ -197,7 +200,7 @@ def extract_file_text():
     except Exception as exc:
         return jsonify({"error": f"Failed to extract text: {exc}"}), 500
 
-
+# POST /api/playground/file-data-url: Accepts fileUrl and optional fileType, returns base64 data URL
 @api_playground.route("/file-data-url", methods=["POST"])
 def file_data_url():
     """Return a data URL for the file located at the supplied `fileUrl`.
