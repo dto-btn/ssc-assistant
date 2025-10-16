@@ -9,6 +9,8 @@
 import {
   configureStore,
   combineReducers,
+  ThunkAction,
+  UnknownAction,
 } from "@reduxjs/toolkit";
 import chatReducer from "./slices/chatSlice";
 import sessionReducer from "./slices/sessionSlice";
@@ -54,3 +56,4 @@ store.subscribe(() => {
 });
 
 export type AppDispatch = typeof store.dispatch;
+export type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, UnknownAction>;

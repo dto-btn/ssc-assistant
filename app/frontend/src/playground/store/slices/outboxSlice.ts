@@ -13,6 +13,8 @@ export interface UserFileOutboxItem extends BaseOutboxItem {
   kind: "user-file";
   originalName: string;
   dataUrl: string; // data URL of file
+  sessionId?: string;
+  metadata?: Record<string, string>;
 }
 
 export interface ChatArchiveOutboxItem extends BaseOutboxItem {
@@ -40,13 +42,23 @@ const outboxSlice = createSlice({
   name: "outbox",
   initialState,
   reducers: {
-    addUserFileToOutbox: (state, action: PayloadAction<{ originalName: string; dataUrl: string }>) => {
+    addUserFileToOutbox: (
+      state,
+      action: PayloadAction<{
+        originalName: string;
+        dataUrl: string;
+        sessionId?: string;
+        metadata?: Record<string, string>;
+      }>
+    ) => {
       state.items.push({
         id: uuidv4(),
         kind: "user-file",
         createdAt: Date.now(),
         originalName: action.payload.originalName,
         dataUrl: action.payload.dataUrl,
+        sessionId: action.payload.sessionId,
+        metadata: action.payload.metadata,
       });
     },
     addChatArchiveToOutbox: (state, action: PayloadAction<{ sessionId: string; dataUrl: string; label?: string }>) => {

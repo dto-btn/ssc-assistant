@@ -8,7 +8,7 @@ import { uploadEncodedFile } from "../../api/storage";
 const MAX_MESSAGES_BEFORE_ARCHIVE = 25; // archive when many messages accumulate
 const IDLE_MS_BEFORE_ARCHIVE = 60_000; // 1 minute idle
 
-type SessionTimers = Record<string, number | undefined>;
+type SessionTimers = Record<string, ReturnType<typeof setTimeout> | undefined>;
 const timers: SessionTimers = {};
 const lastArchivedSignature: Record<string, string | undefined> = {};
 
@@ -18,7 +18,11 @@ function scheduleArchive(sessionId: string, store: MiddlewareAPI<Dispatch<Unknow
   if (timers[sessionId]) {
     clearTimeout(timers[sessionId]);
   }
-  timers[sessionId] = setTimeout(() => doArchive(sessionId, store), IDLE_MS_BEFORE_ARCHIVE) as unknown as number;
+  timers[sessionId] = setTimeout(() => {
+    void doArchive(sessionId, store).catch(() => {
+      // Intentionally swallow errors triggered by background archival so UI flow continues.
+    });
+  }, IDLE_MS_BEFORE_ARCHIVE);
 }
 
 /**

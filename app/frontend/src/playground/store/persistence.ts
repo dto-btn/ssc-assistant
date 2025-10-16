@@ -11,10 +11,10 @@ const CHAT_KEY = "playground_chat_state";
 export function saveChatState(state: unknown) {
   try {
     // Do not persist auth tokens
-  const s = (state as Record<string, unknown>) || {};
-  // Omit 'auth' key when persisting
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { auth, ...rest } = s;
+    const s = (state as Record<string, unknown>) || {};
+    // Omit 'auth' key when persisting
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { auth, ...rest } = s;
     localStorage.setItem(CHAT_KEY, JSON.stringify(rest));
   } catch {
     // ignore persistence errors (quota/unavailable)

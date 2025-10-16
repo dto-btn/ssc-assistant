@@ -241,12 +241,17 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
     let uploadedFiles: FileAttachment[] = [];
 
     if (attachments.length) {
-      let filesWithDataUrl: { file: File; dataUrl: string }[] = [];
+      type PreparedFile = { file: File; dataUrl: string; metadata: Record<string, string> };
+      let filesWithDataUrl: PreparedFile[] = [];
       try {
         filesWithDataUrl = await Promise.all(
           attachments.map(async (file) => ({
             file,
             dataUrl: await fileToDataUrl(file),
+            metadata: {
+              originalname: file.name,
+              uploadedat: new Date().toISOString(),
+            } as Record<string, string>,
           }))
         );
       } catch {
@@ -260,8 +265,15 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
       }
 
       if (!accessToken) {
-        filesWithDataUrl.forEach(({ file, dataUrl }) =>
-          dispatch(addUserFileToOutbox({ originalName: file.name, dataUrl }))
+        filesWithDataUrl.forEach(({ file, dataUrl, metadata }) =>
+          dispatch(
+            addUserFileToOutbox({
+              originalName: file.name,
+              dataUrl,
+              sessionId,
+              metadata,
+            })
+          )
         );
         dispatch(
           addToast({
@@ -274,9 +286,9 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
       }
 
       const successes: FileAttachment[] = [];
-      const failedUploads: { file: File; dataUrl: string; error: unknown }[] = [];
+      const failedUploads: { file: File; dataUrl: string; metadata: Record<string, string>; error: unknown }[] = [];
 
-      for (const { file, dataUrl } of filesWithDataUrl) {
+      for (const { file, dataUrl, metadata } of filesWithDataUrl) {
         try {
           const uploaded = await uploadEncodedFile({
             encodedFile: dataUrl,
@@ -284,21 +296,25 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
             accessToken,
             sessionId,
             category: "files",
-            metadata: {
-              originalname: file.name,
-              uploadedat: new Date().toISOString(),
-            },
+            metadata,
           });
           successes.push(uploaded);
           dispatch(upsertSessionFile({ sessionId, file: uploaded }));
         } catch (error) {
-          failedUploads.push({ file, dataUrl, error });
+          failedUploads.push({ file, dataUrl, metadata, error });
         }
       }
 
       if (failedUploads.length) {
-        failedUploads.forEach(({ file, dataUrl }) =>
-          dispatch(addUserFileToOutbox({ originalName: file.name, dataUrl }))
+        failedUploads.forEach(({ file, dataUrl, metadata }) =>
+          dispatch(
+            addUserFileToOutbox({
+              originalName: file.name,
+              dataUrl,
+              sessionId,
+              metadata,
+            })
+          )
         );
         const failureMessage =
           failedUploads.length === attachments.length
@@ -310,7 +326,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
       uploadedFiles = successes;
     }
 
-    await (dispatch as unknown as (thunk: unknown) => Promise<void>)(
+    await dispatch(
       sendAssistantMessage({
         sessionId,
         content: messageContent,

@@ -6,7 +6,7 @@ import {
   CompletionContentPart,
 } from "../../services/completionService";
 import { isTokenExpired } from "../../../util/token";
-import { RootState, AppDispatch } from "..";
+import { AppThunk } from "..";
 import { selectMessagesBySessionId } from "../selectors/chatSelectors";
 import i18n from "../../../i18n";
 import { FileAttachment } from "../../types";
@@ -156,10 +156,10 @@ export const sendAssistantMessage = ({
   content,
   attachments,
   provider = 'azure-openai', // Default provider
-}: SendAssistantMessageArgs) => async (
-  dispatch: AppDispatch,
-  getState: () => RootState
-): Promise<void> => {
+}: SendAssistantMessageArgs): AppThunk<Promise<void>> => async (
+  dispatch,
+  getState
+) => {
   dispatch(setIsLoading(true));
 
   try {

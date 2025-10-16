@@ -15,9 +15,11 @@ async function flushItem(item: OutboxItem, state: RootState) {
       encodedFile: item.dataUrl,
       originalName: item.originalName,
       accessToken: token,
+      sessionId: item.sessionId,
       category: "files",
       metadata: {
         type: "user-file",
+        ...(item.metadata ?? {}),
       },
     });
     return;
