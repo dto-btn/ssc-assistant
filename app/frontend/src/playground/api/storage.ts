@@ -4,6 +4,7 @@ const PLAYGROUND_API_BASE = "/api/playground";
 const UPLOAD_ENDPOINT = `${PLAYGROUND_API_BASE}/upload`;
 const FILES_FOR_SESSION_ENDPOINT = `${PLAYGROUND_API_BASE}/files-for-session`;
 const EXTRACT_FILE_TEXT_ENDPOINT = `${PLAYGROUND_API_BASE}/extract-file-text`;
+const FILE_DATA_URL_ENDPOINT = `${PLAYGROUND_API_BASE}/file-data-url`;
 
 type MetadataRecord = Record<string, string | number | boolean | null | undefined>;
 
@@ -23,16 +24,37 @@ function normalizeMetadata(metadata?: MetadataRecord): Record<string, string> | 
   return result;
 }
 
-function mapFilePayload(payload: any): FileAttachment {
+type RawFilePayload = Record<string, unknown> & {
+  blobName?: string;
+  name?: string;
+  originalName?: string;
+  url?: string;
+  size?: number;
+  contentType?: string;
+  type?: string;
+  uploadedAt?: string;
+  uploadedat?: string;
+  sessionId?: string;
+  sessionid?: string;
+  category?: string;
+};
+
+const asString = (value: unknown): string | undefined =>
+  typeof value === "string" ? value : undefined;
+
+const asNumber = (value: unknown): number | undefined =>
+  typeof value === "number" && Number.isFinite(value) ? value : undefined;
+
+function mapFilePayload(payload: RawFilePayload = {}): FileAttachment {
   return {
-    blobName: payload?.blobName ?? payload?.name ?? "",
-    url: payload?.url ?? "",
-    originalName: payload?.originalName ?? payload?.name ?? "",
-    size: payload?.size,
-    contentType: payload?.contentType ?? payload?.type ?? null,
-    uploadedAt: payload?.uploadedAt ?? payload?.uploadedat ?? null,
-    sessionId: payload?.sessionId ?? payload?.sessionid ?? null,
-    category: payload?.category ?? undefined,
+    blobName: asString(payload.blobName) ?? asString(payload.name) ?? "",
+    url: asString(payload.url) ?? "",
+    originalName: asString(payload.originalName) ?? asString(payload.name) ?? "",
+    size: asNumber(payload.size),
+    contentType: asString(payload.contentType) ?? asString(payload.type) ?? null,
+    uploadedAt: asString(payload.uploadedAt) ?? asString(payload.uploadedat) ?? null,
+    sessionId: asString(payload.sessionId) ?? asString(payload.sessionid) ?? null,
+    category: asString(payload.category) ?? undefined,
   };
 }
 
@@ -168,4 +190,24 @@ export async function extractFileText({
   });
   const data = await handleJsonResponse(response);
   return data?.extractedText ?? "";
+}
+
+export async function fetchFileDataUrl({
+  fileUrl,
+  fileType,
+}: {
+  fileUrl: string;
+  fileType?: string | null;
+}): Promise<{ dataUrl: string; contentType: string }> {
+  if (!fileUrl) throw new Error("fileUrl is required");
+  const response = await fetch(FILE_DATA_URL_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fileUrl, fileType }),
+  });
+  const data = await handleJsonResponse(response);
+  return {
+    dataUrl: data?.dataUrl ?? "",
+    contentType: data?.contentType ?? (fileType ?? "application/octet-stream"),
+  };
 }

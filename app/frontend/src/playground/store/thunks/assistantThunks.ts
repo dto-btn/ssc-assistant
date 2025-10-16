@@ -10,11 +10,12 @@ import { RootState, AppDispatch } from "..";
 import { selectMessagesBySessionId } from "../selectors/chatSelectors";
 import i18n from "../../../i18n";
 import { FileAttachment } from "../../types";
-import { extractFileText } from "../../api/storage";
+import { extractFileText, fetchFileDataUrl } from "../../api/storage";
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
 
 const attachmentTextCache = new Map<string, string>();
+const attachmentImageCache = new Map<string, string>();
 
 const truncateText = (text: string, maxLength: number): string => {
   if (text.length <= maxLength) {
@@ -28,17 +29,52 @@ async function resolveAttachmentParts(attachments: FileAttachment[] = []): Promi
 
   for (const attachment of attachments) {
     const cacheKey = attachment.blobName || attachment.url;
-    let resolvedText = cacheKey ? attachmentTextCache.get(cacheKey) : undefined;
+    const contentType = attachment.contentType ?? undefined;
+    const attachmentName = attachment.originalName || attachment.blobName || "attachment";
 
-    if (attachment.contentType?.startsWith("image/")) {
+    if (contentType?.startsWith("image/")) {
+      let dataUrl = cacheKey ? attachmentImageCache.get(cacheKey) : undefined;
+
+      if (!dataUrl && attachment.url) {
+        try {
+          const result = await fetchFileDataUrl({
+            fileUrl: attachment.url,
+            fileType: contentType,
+          });
+          dataUrl = result.dataUrl;
+          if (dataUrl && cacheKey) {
+            attachmentImageCache.set(cacheKey, dataUrl);
+          }
+        } catch (error) {
+          console.error("Failed to load attachment image", error);
+        }
+      }
+
+      if (!dataUrl) {
+        continue;
+      }
+
+      parts.push({
+        type: "text",
+        text: `Attachment "${attachmentName}" is an image. Please describe what you see in the image and use that context when answering the user's request.`,
+      });
+      parts.push({
+        type: "image_url",
+        image_url: {
+          url: dataUrl,
+          detail: "auto",
+        },
+      });
       continue;
     }
+
+    let resolvedText = cacheKey ? attachmentTextCache.get(cacheKey) : undefined;
 
     if (!resolvedText && attachment.url) {
       try {
         resolvedText = await extractFileText({
           fileUrl: attachment.url,
-          fileType: attachment.contentType ?? undefined,
+          fileType: contentType,
         });
         if (resolvedText && cacheKey) {
           attachmentTextCache.set(cacheKey, resolvedText);
@@ -58,7 +94,6 @@ async function resolveAttachmentParts(attachments: FileAttachment[] = []): Promi
     }
 
     const limited = truncateText(trimmed, ATTACHMENT_TEXT_LIMIT);
-    const attachmentName = attachment.originalName || attachment.blobName || "attachment";
 
     parts.push({
       type: "text",

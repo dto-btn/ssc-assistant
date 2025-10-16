@@ -177,3 +177,25 @@ def extract_file_text():
         return jsonify({"extractedText": text})
     except Exception as exc:
         return jsonify({"error": f"Failed to extract text: {exc}"}), 500
+
+
+@api_playground.route("/file-data-url", methods=["POST"])
+def file_data_url():
+    data = request.get_json() or {}
+    file_url = data.get("fileUrl")
+    file_type = data.get("fileType")
+    if not file_url:
+        return jsonify({"error": "fileUrl is required"}), 400
+    try:
+        resp = requests.get(file_url, timeout=10)
+        resp.raise_for_status()
+        file_bytes = resp.content
+        content_type = file_type or resp.headers.get("Content-Type") or "application/octet-stream"
+        encoded = base64.b64encode(file_bytes).decode("utf-8")
+        data_url = f"data:{content_type};base64,{encoded}"
+        return jsonify({
+            "dataUrl": data_url,
+            "contentType": content_type,
+        })
+    except Exception as exc:
+        return jsonify({"error": f"Failed to fetch file: {exc}"}), 500
