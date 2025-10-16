@@ -29,6 +29,7 @@ const ChatArea: React.FC = () => {
   );
   const isLoading = useSelector((state: RootState) => state.chat.isLoading);
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
+  const loadedSessionsRef = React.useRef<Set<string>>(new Set());
 
   // Use memoized selector for messages
   const messages = useSelector(selectMessagesBySessionId);
@@ -84,19 +85,24 @@ const ChatArea: React.FC = () => {
   };
 
   React.useEffect(() => {
-    if (!currentSessionId || !accessToken) return;
+    if (!currentSessionId || !accessToken) return undefined;
+    if (loadedSessionsRef.current.has(currentSessionId)) return undefined;
+
     let cancelled = false;
     (async () => {
       try {
         const files = await listSessionFiles({ sessionId: currentSessionId, accessToken });
-        if (!cancelled) {
-          dispatch(setSessionFiles({ sessionId: currentSessionId, files }));
-        }
+        if (cancelled) return;
+        dispatch(setSessionFiles({ sessionId: currentSessionId, files }));
+        loadedSessionsRef.current.add(currentSessionId);
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error("Failed to load session files", error);
+        if (!cancelled) {
+          // eslint-disable-next-line no-console
+          console.error("Failed to load session files", error);
+        }
       }
     })();
+
     return () => {
       cancelled = true;
     };
