@@ -1,17 +1,103 @@
 import { addMessage, updateMessageContent, setIsLoading, Message } from "../slices/chatSlice";
 import { addToast } from "../slices/toastSlice";
-import { completionService, CompletionMessage } from "../../services/completionService";
+import {
+  completionService,
+  CompletionMessage,
+  CompletionContentPart,
+} from "../../services/completionService";
 import { isTokenExpired } from "../../../util/token";
 import { RootState, AppDispatch } from "..";
 import { selectMessagesBySessionId } from "../selectors/chatSelectors";
 import i18n from "../../../i18n";
 import { FileAttachment } from "../../types";
+import { extractFileText } from "../../api/storage";
 
-const mapMessagesForCompletion = (messages: Message[]): CompletionMessage[] =>
-  messages.map(({ role, content }) => ({
-    role,
-    content,
-  }));
+const ATTACHMENT_TEXT_LIMIT = 12000;
+
+const attachmentTextCache = new Map<string, string>();
+
+const truncateText = (text: string, maxLength: number): string => {
+  if (text.length <= maxLength) {
+    return text;
+  }
+  return `${text.slice(0, maxLength)}\n\n[Attachment truncated after ${maxLength} characters of ${text.length}.]`;
+};
+
+async function resolveAttachmentParts(attachments: FileAttachment[] = []): Promise<CompletionContentPart[]> {
+  const parts: CompletionContentPart[] = [];
+
+  for (const attachment of attachments) {
+    const cacheKey = attachment.blobName || attachment.url;
+    let resolvedText = cacheKey ? attachmentTextCache.get(cacheKey) : undefined;
+
+    if (attachment.contentType?.startsWith("image/")) {
+      continue;
+    }
+
+    if (!resolvedText && attachment.url) {
+      try {
+        resolvedText = await extractFileText({
+          fileUrl: attachment.url,
+          fileType: attachment.contentType ?? undefined,
+        });
+        if (resolvedText && cacheKey) {
+          attachmentTextCache.set(cacheKey, resolvedText);
+        }
+      } catch (error) {
+        console.error("Failed to extract attachment text", error);
+      }
+    }
+
+    if (!resolvedText) {
+      continue;
+    }
+
+    const trimmed = resolvedText.trim();
+    if (!trimmed) {
+      continue;
+    }
+
+    const limited = truncateText(trimmed, ATTACHMENT_TEXT_LIMIT);
+    const attachmentName = attachment.originalName || attachment.blobName || "attachment";
+
+    parts.push({
+      type: "text",
+      text: `Attachment "${attachmentName}" contents:\n\n${limited}`,
+    });
+  }
+
+  return parts;
+}
+
+const buildMessageContent = async (message: Message): Promise<string | CompletionContentPart[]> => {
+  const baseText = message.content?.trim() ?? "";
+  const attachmentParts = message.attachments?.length
+    ? await resolveAttachmentParts(message.attachments)
+    : [];
+
+  if (!attachmentParts.length) {
+    return baseText;
+  }
+
+  const contentParts: CompletionContentPart[] = [];
+
+  if (baseText) {
+    contentParts.push({ type: "text", text: baseText });
+  }
+
+  contentParts.push(...attachmentParts);
+
+  return contentParts;
+};
+
+const mapMessagesForCompletion = async (messages: Message[]): Promise<CompletionMessage[]> => {
+  return Promise.all(
+    messages.map(async (message) => ({
+      role: message.role,
+      content: await buildMessageContent(message),
+    }))
+  );
+};
 
 export interface SendAssistantMessageArgs {
   sessionId: string;
@@ -77,9 +163,11 @@ export const sendAssistantMessage = ({
     let accumulatedContent = "";
 
     // Use the completion service with streaming callbacks for state management
+    const completionMessages = await mapMessagesForCompletion(updatedSessionMessages);
+
     await completionService.createCompletion(
       {
-        messages: mapMessagesForCompletion(updatedSessionMessages),
+        messages: completionMessages,
         model: "gpt-4o", // Let MCP client decide or the user or the agentic AI decide which model to use...
         provider,
         userToken: accessToken,

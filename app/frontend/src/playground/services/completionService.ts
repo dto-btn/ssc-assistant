@@ -9,8 +9,21 @@ import { AzureOpenAIProvider } from "./providers/azureOpenAIProvider";
 
 export interface CompletionMessage {
   role: "system" | "user" | "assistant";
-  content: string;
+  content: string | CompletionContentPart[];
 }
+
+export type CompletionContentPart =
+  | {
+      type: "text";
+      text: string;
+    }
+  | {
+      type: "image_url";
+      image_url: {
+        url: string;
+        detail?: "low" | "high" | "auto";
+      };
+    };
 
 export interface CompletionRequest {
   messages: CompletionMessage[];
