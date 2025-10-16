@@ -137,10 +137,45 @@ const buildMessageContent = async (message: Message): Promise<string | Completio
  */
 const mapMessagesForCompletion = async (messages: Message[]): Promise<CompletionMessage[]> => {
   return Promise.all(
-    messages.map(async (message) => ({
-      role: message.role,
-      content: await buildMessageContent(message),
-    }))
+    messages.map(async (message) => {
+      const content = await buildMessageContent(message);
+      if (message.role === "system") {
+        const systemContent = typeof content === "string"
+          ? content
+          : content
+              .map((part) => (part.type === "text" ? part.text : "[non-text attachment omitted]"))
+              .join("\n");
+
+        const systemMessage: CompletionMessage = {
+          role: "system",
+          content: systemContent,
+        };
+
+        return systemMessage;
+      }
+
+      if (message.role === "assistant") {
+        const assistantContent = typeof content === "string"
+          ? content
+          : content
+              .map((part) => (part.type === "text" ? part.text : "[non-text attachment omitted]"))
+              .join("\n");
+
+        const assistantMessage: CompletionMessage = {
+          role: "assistant",
+          content: assistantContent,
+        };
+
+        return assistantMessage;
+      }
+
+      const userMessage: CompletionMessage = {
+        role: "user",
+        content,
+      };
+
+      return userMessage;
+    })
   );
 };
 
