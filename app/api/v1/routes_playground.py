@@ -13,8 +13,6 @@ from utils.file_manager import FileManager
 from apiflask import APIBlueprint
 from azure.core.exceptions import AzureError, ResourceExistsError, ResourceNotFoundError
 from azure.storage.blob import ContentSettings, BlobClient, ContainerClient
-import requests
-from requests import RequestException
 
 api_playground = APIBlueprint("api_playground", __name__)
 logger = logging.getLogger(__name__)
@@ -28,6 +26,16 @@ class PlaygroundAPIError(Exception):
     def __init__(self, message: str, status_code: int):
         super().__init__(message)
         self.status_code = status_code
+
+
+def _public_error_message(exc: PlaygroundAPIError) -> str:
+    messages = {
+        400: "Bad request",
+        401: "Unauthorized",
+        404: "File not found",
+        500: "Server error",
+    }
+    return messages.get(exc.status_code, "Request failed")
 
 
 def _get_authenticated_oid() -> str:
@@ -141,18 +149,26 @@ def _fetch_file_bytes(
             raise auth_error
         raise PlaygroundAPIError("File not found", 404)
 
-    if not _blob_name_from_url(file_url, container_client):
+    relative_path = _blob_name_from_url(file_url, container_client)
+    if not relative_path:
         raise PlaygroundAPIError("File not found", 404)
 
+    blob_client = container_client.get_blob_client(relative_path)
     try:
-        resp = requests.get(file_url, timeout=10)
-        resp.raise_for_status()
-    except RequestException as exc:
-        logger.exception("Failed to download file via HTTP")
+        props = blob_client.get_blob_properties()
+        file_bytes = blob_client.download_blob(max_concurrency=1).readall()
+    except ResourceNotFoundError as exc:
+        raise PlaygroundAPIError("File not found", 404) from exc
+    except AzureError as exc:
+        logger.exception("Failed to fetch blob via URL lookup", extra={"blob_name": relative_path})
         raise PlaygroundAPIError("Failed to fetch file", 500) from exc
 
-    content_type = requested_type or resp.headers.get("Content-Type") or "application/octet-stream"
-    return resp.content, content_type
+    content_type = (
+        requested_type
+        or getattr(getattr(props, "content_settings", None), "content_type", None)
+        or "application/octet-stream"
+    )
+    return file_bytes, content_type
 
 # GET /api/playground/files-for-session: Returns files for a given sessionId by searching blob metadata
 @api_playground.route("/files-for-session", methods=["GET"])
@@ -170,7 +186,8 @@ def files_for_session():
     try:
         oid = _get_authenticated_oid()
     except PlaygroundAPIError as exc:
-        return jsonify({"message": str(exc)}), exc.status_code
+        logger.info("Files-for-session request blocked: %s", exc)
+        return jsonify({"message": _public_error_message(exc)}), exc.status_code
 
     try:
         container_client = _get_container_client()
@@ -229,7 +246,8 @@ def upload_file():
     try:
         oid = _get_authenticated_oid()
     except PlaygroundAPIError as exc:
-        return jsonify({"message": str(exc)}), exc.status_code
+        logger.info("Upload request blocked: %s", exc)
+        return jsonify({"message": _public_error_message(exc)}), exc.status_code
 
     normalized_name = secure_filename(original_name)
     if not normalized_name:
@@ -330,7 +348,8 @@ def extract_file_text():
             auth_error,
         )
     except PlaygroundAPIError as exc:
-        return jsonify({"error": str(exc)}), exc.status_code
+        logger.info("Extract-file-text request failed: %s", exc)
+        return jsonify({"error": _public_error_message(exc)}), exc.status_code
 
     try:
         fm = FileManager(file_bytes, resolved_type)
@@ -369,7 +388,8 @@ def file_data_url():
             auth_error,
         )
     except PlaygroundAPIError as exc:
-        return jsonify({"error": str(exc)}), exc.status_code
+        logger.info("File-data-url request failed: %s", exc)
+        return jsonify({"error": _public_error_message(exc)}), exc.status_code
 
     if not content_type:
         content_type = "application/octet-stream"
