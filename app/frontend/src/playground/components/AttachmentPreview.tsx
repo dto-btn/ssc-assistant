@@ -48,7 +48,7 @@ const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ attachments }) =>
   }
 
   return (
-    <Stack direction="row" spacing={1.5} flexWrap="wrap" sx={{ mt: 1 }}>
+    <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
       {attachments.map((attachment) => {
         const key = attachment.blobName || attachment.url || attachment.originalName;
         const isImage = isImageAttachment(attachment);
@@ -62,11 +62,11 @@ const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ attachments }) =>
             variant="outlined"
             sx={{
               display: "flex",
-              alignItems: "center",
               gap: 1.5,
-              p: 1.25,
-              minWidth: 220,
-              maxWidth: 340,
+              p: 1.5,
+              width: { xs: "100%", sm: "min(420px, 100%)" },
+              maxWidth: "100%",
+              alignItems: isImage ? "stretch" : "center",
             }}
           >
             {isImage ? (
@@ -75,38 +75,69 @@ const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ attachments }) =>
                 src={attachment.url}
                 alt={attachment.originalName}
                 sx={{
-                  width: 72,
-                  height: 72,
+                  width: 64,
+                  height: 64,
                   objectFit: "cover",
                   borderRadius: 1,
                   border: (theme) => `1px solid ${theme.palette.divider}`,
+                  flexShrink: 0,
                 }}
               />
             ) : (
               <Avatar
                 variant="rounded"
-                sx={{ bgcolor: (theme) => theme.palette.grey[100], color: "inherit" }}
+                sx={{
+                  width: 64,
+                  height: 64,
+                  flexShrink: 0,
+                  bgcolor: (theme) => theme.palette.grey[100],
+                  color: (theme) => theme.palette.text.secondary,
+                  border: (theme) => `1px solid ${theme.palette.divider}`,
+                }}
               >
                 {isPdf ? <PictureAsPdfIcon color="error" /> : <InsertDriveFileIcon fontSize="small" />}
               </Avatar>
             )}
-            <Box sx={{ minWidth: 0 }}>
+            <Stack spacing={0.75} sx={{ minWidth: 0, flex: 1 }}>
               <Link
                 href={attachment.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 underline="hover"
-                sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, fontWeight: 500 }}
+                sx={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 0.75,
+                  fontWeight: 600,
+                  color: "text.primary",
+                  maxWidth: "100%",
+                }}
               >
-                {isImage ? <ImageIcon fontSize="inherit" /> : null}
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {attachment.originalName}
-                </span>
+                {isImage ? <ImageIcon fontSize="small" /> : null}
+                <Typography
+                  variant="body2"
+                  component="span"
+                  sx={{
+                    fontWeight: "inherit",
+                    lineHeight: 1.4,
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-word",
+                    maxWidth: "100%",
+                  }}
+                >
+                  {attachment.originalName || "Attachment"}
+                </Typography>
               </Link>
-              <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
-                {[sizeLabel, timestampLabel].filter(Boolean).join(" • ")}
-              </Typography>
-            </Box>
+              <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ color: "text.secondary" }}>
+                {[sizeLabel, timestampLabel]
+                  .filter(Boolean)
+                  .map((label, index) => (
+                    <Typography key={`${key}-meta-${index}`} variant="caption" component="span">
+                      {label}
+                    </Typography>
+                  ))}
+              </Stack>
+            </Stack>
           </Paper>
         );
       })}
