@@ -10,7 +10,6 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { setIsLoading } from "../store/slices/chatSlice";
 import {
   Box,
@@ -25,7 +24,7 @@ import {
 } from "@mui/material";
 import FileUpload from "./FileUpload";
 import { addToast } from "../store/slices/toastSlice";
-import { AppDispatch, RootState } from "../store";
+import { RootState } from "../store";
 import { clearQuotedText } from "../store/slices/quotedSlice";
 import CloseIcon from "@mui/icons-material/Close";
 import SendIcon from "@mui/icons-material/Send";
@@ -43,9 +42,11 @@ import { createPortal } from "react-dom";
  * playground store and correlate user/assistant messages.
  */
 import { useTranslation } from 'react-i18next';
-import { useSelector as useTypedSelector } from "react-redux";
-import { createBlobViaApi, updateBlobMetadata, getOidFromAccessToken, moveBlob } from "../api/storage";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { uploadEncodedFile } from "../api/storage";
 import { addUserFileToOutbox } from "../store/slices/outboxSlice";
+import { upsertSessionFile } from "../store/slices/sessionFilesSlice";
+import { FileAttachment } from "../types";
 
 interface ChatInputProps {
   sessionId: string;
@@ -75,9 +76,9 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
   // i18n + theme
   const { t } = useTranslation('playground');
   const theme = useTheme();
-  const dispatch = useDispatch<AppDispatch>();
-  const quotedText = useSelector((state: RootState) => state.quoted.quotedText);
-  const isLoading = useSelector((state: RootState) => state.chat.isLoading);
+  const dispatch = useAppDispatch();
+  const quotedText = useAppSelector((state: RootState) => state.quoted.quotedText);
+  const isLoading = useAppSelector((state: RootState) => state.chat.isLoading);
 
   // Local UI state
   const [input, setInput] = useState("");
@@ -86,7 +87,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const dragDepthRef = useRef(0);
-  const accessToken = useTypedSelector((state: RootState) => state.auth.accessToken);
+  const accessToken = useAppSelector((state: RootState) => state.auth.accessToken);
 
   /**
    * Upper bound for message length enforced client-side. Keep this aligned with
@@ -237,65 +238,83 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
     if (!input.trim() && attachments.length === 0) return;
 
     const messageContent = quotedText ? `> ${quotedText}\n\n${input}` : input;
+    let uploadedFiles: FileAttachment[] = [];
 
-    // Fire and forget upload of any attached files via secure API; tag standardized metadata
     if (attachments.length) {
-      // Always add to outbox first for local persistence
-      (async () => {
-        for (const file of attachments) {
-          try {
-            const b64 = await fileToDataUrl(file);
-            dispatch(addUserFileToOutbox({ originalName: file.name, dataUrl: b64 }));
-          } catch {
-            // ignore read errors
-          }
+      let filesWithDataUrl: { file: File; dataUrl: string }[] = [];
+      try {
+        filesWithDataUrl = await Promise.all(
+          attachments.map(async (file) => ({
+            file,
+            dataUrl: await fileToDataUrl(file),
+          }))
+        );
+      } catch {
+        dispatch(
+          addToast({
+            message: t("errors.readFailed", { defaultValue: "Failed to read one of the files." }),
+            isError: true,
+          })
+        );
+        return;
+      }
+
+      if (!accessToken) {
+        filesWithDataUrl.forEach(({ file, dataUrl }) =>
+          dispatch(addUserFileToOutbox({ originalName: file.name, dataUrl }))
+        );
+        dispatch(
+          addToast({
+            message: t("auth.tokenRequired", { defaultValue: "Sign in to upload files. Files were queued for later." }),
+            isError: true,
+          })
+        );
+        setAttachments([]);
+        return;
+      }
+
+      const successes: FileAttachment[] = [];
+      const failedUploads: { file: File; dataUrl: string; error: unknown }[] = [];
+
+      for (const { file, dataUrl } of filesWithDataUrl) {
+        try {
+          const uploaded = await uploadEncodedFile({
+            encodedFile: dataUrl,
+            originalName: file.name,
+            accessToken,
+            sessionId,
+            category: "files",
+            metadata: {
+              originalname: file.name,
+              uploadedat: new Date().toISOString(),
+            },
+          });
+          successes.push(uploaded);
+          dispatch(upsertSessionFile({ sessionId, file: uploaded }));
+        } catch (error) {
+          failedUploads.push({ file, dataUrl, error });
         }
-      })();
+      }
+
+      if (failedUploads.length) {
+        failedUploads.forEach(({ file, dataUrl }) =>
+          dispatch(addUserFileToOutbox({ originalName: file.name, dataUrl }))
+        );
+        const failureMessage =
+          failedUploads.length === attachments.length
+            ? t("errors.uploadFailed", { defaultValue: "Failed to upload files. They were queued for retry." })
+            : t("errors.partialUpload", { defaultValue: "Some files failed to upload and were queued for retry." });
+        dispatch(addToast({ message: failureMessage, isError: true }));
+      }
+
+      uploadedFiles = successes;
     }
-    if (attachments.length && accessToken) {
-      const token = accessToken;
-      (async () => {
-        for (const file of attachments) {
-          try {
-            const b64 = await fileToDataUrl(file);
-            const result = await createBlobViaApi({ encodedFile: b64, name: file.name, accessToken: token });
-            // Move into per-user folder for organization: users/<oid>/files/<filename>
-            try {
-              const oid = getOidFromAccessToken(token);
-              if (oid) {
-                const destName = `users/${oid}/files/${file.name}`;
-                await moveBlob({ sourceName: result.blobName, destName, accessToken: token });
-                // Update blobName to point to new location for tagging
-                result.blobName = destName as unknown as string; // local use only
-              }
-            } catch {
-              // ignore move errors (keeps file at root)
-            }
-            // tag for RAG discovery (best-effort)
-            try {
-              await updateBlobMetadata({
-                blobName: result.blobName,
-                metadata: {
-                  type: "user-file",
-                  originalname: file.name,
-                  uploadedat: new Date().toISOString(),
-                },
-                accessToken: token,
-              });
-            } catch (e) {
-              // ignore metadata tagging errors in playground
-            }
-          } catch (e) {
-            // ignore upload errors in playground
-          }
-        }
-      })();
-    }
-    dispatch(
+
+    await (dispatch as unknown as (thunk: unknown) => Promise<void>)(
       sendAssistantMessage({
         sessionId,
         content: messageContent,
-        attachments: attachments.length ? attachments : undefined,
+        attachments: uploadedFiles.length ? uploadedFiles : undefined,
       })
     );
 
@@ -304,7 +323,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
     if (quotedText) {
       dispatch(clearQuotedText());
     }
-  }, [input, attachments, quotedText, dispatch, sessionId, accessToken]);
+  }, [input, attachments, quotedText, dispatch, sessionId, accessToken, t]);
 
   /**
    * Keyboard behavior: Enter sends the message, Shift+Enter inserts a newline.

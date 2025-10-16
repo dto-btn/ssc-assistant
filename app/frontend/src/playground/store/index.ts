@@ -21,6 +21,7 @@ import { archiverMiddleware } from "./middleware/archiverMiddleware";
 import { outboxMiddleware } from "./middleware/outboxMiddleware";
 import { saveChatState, loadChatState } from "./persistence";
 import outboxReducer from "./slices/outboxSlice";
+import sessionFilesReducer from "./slices/sessionFilesSlice";
 
 const rootReducer = combineReducers({
   chat: chatReducer,
@@ -31,6 +32,7 @@ const rootReducer = combineReducers({
   quoted: quotedReducer,
   auth: authReducer,
   outbox: outboxReducer,
+  sessionFiles: sessionFilesReducer,
 });
 
 // Infer the RootState type *before* using it for preloadedState

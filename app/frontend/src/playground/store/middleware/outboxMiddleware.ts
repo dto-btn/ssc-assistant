@@ -1,31 +1,37 @@
 import { Middleware, MiddlewareAPI, Dispatch, UnknownAction } from "@reduxjs/toolkit";
 import { RootState } from "..";
 import { removeOutboxItem, OutboxItem } from "../slices/outboxSlice";
-import { createBlobViaApi, updateBlobMetadata, getOidFromAccessToken, moveBlob } from "../../api/storage";
+import { uploadEncodedFile } from "../../api/storage";
 
 async function flushItem(item: OutboxItem, state: RootState) {
   const token = state.auth.accessToken;
   if (!token) return; // no token yet, keep in outbox
-  const oid = getOidFromAccessToken(token);
-
   if (item.kind === "user-file") {
-    const res = await createBlobViaApi({ encodedFile: item.dataUrl, name: item.originalName, accessToken: token });
-    if (oid) {
-      const destName = `users/${oid}/files/${item.originalName}`;
-  try { await moveBlob({ sourceName: res.blobName, destName, accessToken: token }); } catch (e) { /* keep at root if move fails */ }
-      try {
-        await updateBlobMetadata({ blobName: destName, metadata: { type: "user-file", originalname: item.originalName, uploadedat: new Date().toISOString() }, accessToken: token });
-      } catch (e) { /* ignore tagging errors */ }
-    }
+    await uploadEncodedFile({
+      encodedFile: item.dataUrl,
+      originalName: item.originalName,
+      accessToken: token,
+      category: "files",
+      metadata: {
+        type: "user-file",
+      },
+    });
     return;
   }
 
   if (item.kind === "chat-archive") {
     const filename = item.label || `${item.sessionId}-${Date.now()}.chat.json`;
-    const prefix = oid ? `users/${oid}/history/archives` : `archives`;
-    const name = `${prefix}/${filename}`;
-    await createBlobViaApi({ encodedFile: item.dataUrl, name, accessToken: token });
-  try { await updateBlobMetadata({ blobName: name, metadata: { type: "chat-archive", sessionId: item.sessionId }, accessToken: token }); } catch (e) { /* ignore tagging errors */ }
+    await uploadEncodedFile({
+      encodedFile: item.dataUrl,
+      originalName: filename,
+      accessToken: token,
+      sessionId: item.sessionId,
+      category: "chat",
+      metadata: {
+        type: "chat-archive",
+        sessionid: item.sessionId,
+      },
+    });
     return;
   }
 }

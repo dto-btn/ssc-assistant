@@ -5,6 +5,7 @@ import { isTokenExpired } from "../../../util/token";
 import { RootState, AppDispatch } from "..";
 import { selectMessagesBySessionId } from "../selectors/chatSelectors";
 import i18n from "../../../i18n";
+import { FileAttachment } from "../../types";
 
 const mapMessagesForCompletion = (messages: Message[]): CompletionMessage[] =>
   messages.map(({ role, content }) => ({
@@ -15,7 +16,7 @@ const mapMessagesForCompletion = (messages: Message[]): CompletionMessage[] =>
 export interface SendAssistantMessageArgs {
   sessionId: string;
   content: string;
-  attachments?: unknown[];
+  attachments?: FileAttachment[];
   provider?: 'azure-openai' | 'aws-bedrock'; // Future provider selection
 }
 

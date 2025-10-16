@@ -5,7 +5,7 @@
  * Handles message grouping, quoting highlights, and feeds message UI events
  * back to the store.
  */
-import React, { useRef, useEffect, useMemo } from "react";
+import React, { useRef, useEffect, useMemo, useCallback } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
 import {
@@ -14,20 +14,19 @@ import {
   ListItem,
   ListItemText,
   IconButton,
-  Paper,
 } from "@mui/material";
 import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
 import { setQuotedText } from "../store/slices/quotedSlice";
 import ReactMarkdown from "react-markdown";
 import Link from "@mui/material/Link";
 import { useTranslation } from 'react-i18next';
+import AttachmentPreview from "./AttachmentPreview";
+import { selectSessionFilesById } from "../store/selectors/sessionFilesSelectors";
+import { FileAttachment } from "../types";
+import { Message } from "../store/slices/chatSlice";
 
 interface ChatMessagesProps {
   sessionId: string;
-}
-
-interface MessageList extends Message {
-  id: string;
 }
 
 const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({
@@ -55,6 +54,20 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
 
   const listRef = useRef<HTMLUListElement>(null);
   const dispatch = useDispatch();
+  const sessionFiles = useSelector(selectSessionFilesById(sessionId));
+
+  const resolveAttachments = useCallback(
+    (attachments?: FileAttachment[]): FileAttachment[] => {
+      if (!attachments || attachments.length === 0) return [];
+      if (!sessionFiles.length) return attachments;
+      return attachments.map((attachment) => {
+        if (!attachment.blobName) return attachment;
+        const match = sessionFiles.find((file) => file.blobName === attachment.blobName);
+        return match ? { ...match, ...attachment } : attachment;
+      });
+    },
+    [sessionFiles]
+  );
 
   useEffect(() => {
     if (listRef.current) {
@@ -65,52 +78,55 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   return (
     <Box flex={1} overflow="auto" p={2}>
       <List ref={listRef}>
-        {(messages as MessageList[]).map((message) => (
-          <ListItem
-            key={message.id}
-            alignItems="flex-start"
-            secondaryAction={
-              message.role === "user" ? (
-                <IconButton
-                  size="small"
-                  onClick={() => dispatch(setQuotedText(message.content || ""))}
-                  title={t("quote.this.message")}
-                  aria-label={t("quote.this.message")}
-                >
-                  <FormatQuoteIcon />
-                </IconButton>
-              ) : undefined
-            }
-          >
-            <ListItemText
-              primary={message.role === "user" ? "You" : "Assistant"}
-              secondary={
-                <>
-                  <ReactMarkdown
-                    components={{
-                      a: ({ node, ref: _ref, ...props }) => (
-                        <MarkdownLink
-                          {...(props as React.ComponentPropsWithoutRef<"a">)}
-                        />
-                      ),
-                    }}
+        {messages.map((message: Message) => {
+          const resolvedAttachments = resolveAttachments(
+            message.attachments as FileAttachment[] | undefined,
+          );
+          return (
+            <ListItem
+              key={message.id}
+              alignItems="flex-start"
+              secondaryAction={
+                message.role === "user" ? (
+                  <IconButton
+                    size="small"
+                    onClick={() => dispatch(setQuotedText(message.content || ""))}
+                    title={t("quote.this.message")}
+                    aria-label={t("quote.this.message")}
                   >
-                    {message.content}
-                  </ReactMarkdown>
-                  {message.attachments && message.attachments.length > 0 && (
-                    <Paper variant="outlined" sx={{ mt: 1, p: 1 }}>
-                      {t("attachments")}: {message.attachments.length}
-                    </Paper>
-                  )}
-                </>
+                    <FormatQuoteIcon />
+                  </IconButton>
+                ) : undefined
               }
-              slotProps={{
-                primary: { component: "span" },
-                secondary: { component: "div" },
-              }}
-            />
-          </ListItem>
-        ))}
+            >
+              <ListItemText
+                primary={message.role === "user" ? "You" : "Assistant"}
+                secondary={
+                  <>
+                    <ReactMarkdown
+                      components={{
+                        a: ({ ...props }) => (
+                          <MarkdownLink
+                            {...(props as React.ComponentPropsWithoutRef<"a">)}
+                          />
+                        ),
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                    {resolvedAttachments.length > 0 && (
+                      <AttachmentPreview attachments={resolvedAttachments} />
+                    )}
+                  </>
+                }
+                slotProps={{
+                  primary: { component: "span" },
+                  secondary: { component: "div" },
+                }}
+              />
+            </ListItem>
+          );
+        })}
       </List>
     </Box>
   );

@@ -4,6 +4,7 @@ import os
 from apiflask import APIFlask
 from dotenv import load_dotenv
 from v1.routes_v1 import api_v1
+from v1.routes_playground import api_playground
 from proxy.azure import ROOT_PATH_PROXY_AZURE, proxy_azure
 from flask_cors import CORS
 
@@ -42,4 +43,5 @@ app.security_schemes = {  # equals to use config SECURITY_SCHEMES
 }
 
 app.register_blueprint(api_v1, url_prefix='/api/1.0')
+app.register_blueprint(api_playground, url_prefix='/api/playground')
 app.register_blueprint(proxy_azure, url_prefix=ROOT_PATH_PROXY_AZURE)
