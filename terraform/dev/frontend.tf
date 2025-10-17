@@ -52,6 +52,7 @@ resource "azurerm_linux_web_app" "frontend" {
     PORT = 8080
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
     VITE_SHOW_DEV_BANNER=true
+    VITE_PLAYGROUND_ON=true
   }
 
   sticky_settings {
