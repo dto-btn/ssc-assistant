@@ -13,6 +13,7 @@ import FeedbackForm from "./FeedbackForm";
 import { useAuth } from "../store/hooks/useAuth";
 import { apiUse } from "../../authConfig";
 import isFeatureEnabled from "../FeatureGate";
+import TokenProvider from "./TokenProvider";
 
 const PlaygroundRoot: React.FC = () => {
   // Initialize authentication and get token on app load
@@ -20,6 +21,7 @@ const PlaygroundRoot: React.FC = () => {
 
   return (
     <>
+      <TokenProvider />
       <Box display="flex" height="100vh">
         <SessionSidebar />
         <ChatArea />

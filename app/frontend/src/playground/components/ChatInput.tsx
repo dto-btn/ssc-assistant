@@ -10,7 +10,6 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { setIsLoading } from "../store/slices/chatSlice";
 import {
   Box,
@@ -25,7 +24,7 @@ import {
 } from "@mui/material";
 import FileUpload from "./FileUpload";
 import { addToast } from "../store/slices/toastSlice";
-import { AppDispatch, RootState } from "../store";
+import { RootState } from "../store";
 import { clearQuotedText } from "../store/slices/quotedSlice";
 import CloseIcon from "@mui/icons-material/Close";
 import SendIcon from "@mui/icons-material/Send";
@@ -33,7 +32,6 @@ import InfoIcon from "@mui/icons-material/Info";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import StopCircleIcon from "@mui/icons-material/StopCircle";
 import isFeatureEnabled from "../FeatureGate";
-import { useTranslation } from "react-i18next";
 import { sendAssistantMessage } from "../store/thunks/assistantThunks";
 import { createPortal } from "react-dom";
 
@@ -43,6 +41,15 @@ import { createPortal } from "react-dom";
  * @property sessionId - Unique identifier used to group the conversation in the
  * playground store and correlate user/assistant messages.
  */
+import { useTranslation } from 'react-i18next';
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { uploadEncodedFile } from "../api/storage";
+import { addUserFileToOutbox } from "../store/slices/outboxSlice";
+import { upsertSessionFile } from "../store/slices/sessionFilesSlice";
+import { FileAttachment } from "../types";
+// Keep attachment filtering consistent with picker hints and backend enforcement.
+import { isSupportedFile } from "../supportedFileTypes";
+
 interface ChatInputProps {
   sessionId: string;
 }
@@ -71,17 +78,24 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
   // i18n + theme
   const { t } = useTranslation('playground');
   const theme = useTheme();
-  const dispatch = useDispatch<AppDispatch>();
-  const quotedText = useSelector((state: RootState) => state.quoted.quotedText);
-  const isLoading = useSelector((state: RootState) => state.chat.isLoading);
+  const dispatch = useAppDispatch();
+  const quotedText = useAppSelector((state: RootState) => state.quoted.quotedText);
+  const isLoading = useAppSelector((state: RootState) => state.chat.isLoading);
 
   // Local UI state
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Track attachment uploads so users see progress before the AI response starts.
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ completed: number; total: number }>({
+    completed: 0,
+    total: 0,
+  });
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const dragDepthRef = useRef(0);
+  const accessToken = useAppSelector((state: RootState) => state.auth.accessToken);
 
   /**
    * Upper bound for message length enforced client-side. Keep this aligned with
@@ -122,21 +136,57 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
    * @param fileList - A FileList from input/drag events, or an array of Files from paste handlers.
    */
   const handleFiles = useCallback((incoming: FileList | File[]) => {
+    if (isUploading) return;
     // Normalize the input into a File[]
     const files = Array.isArray(incoming) ? incoming : Array.from(incoming);
     if (!files.length) return;
+
+    // Split incoming files so we can surface a single toast for unsupported types.
+    const partitioned = files.reduce(
+      (acc, file) => {
+        if (isSupportedFile(file)) {
+          acc.supported.push(file);
+        } else {
+          acc.unsupported.push(file);
+        }
+        return acc;
+      },
+      { supported: [] as File[], unsupported: [] as File[] },
+    );
+
+    if (partitioned.unsupported.length) {
+      dispatch(
+        addToast({
+          message: t("errors.unsupportedFileType", {
+            defaultValue:
+              "Some files are not supported. Please upload PDF, Word (.doc/.docx), Excel (.xls/.xlsx), PowerPoint (.ppt/.pptx), CSV/TSV, or plain text files.",
+          }),
+          isError: true,
+        }),
+      );
+    }
+
+    if (!partitioned.supported.length) {
+      return;
+    }
+
     setAttachments((prev) => {
       // Deduplicate by name/size/lastModified
       const key = (f: File) => `${f.name}|${f.size}|${f.lastModified}`;
       const existing = new Set(prev.map(key));
-      const toAdd = files.filter((f) => !existing.has(key(f)));
+      const toAdd = partitioned.supported.filter((f) => !existing.has(key(f)));
       const next = toAdd.length ? [...prev, ...toAdd] : prev;
       if (toAdd.length) {
-        dispatch(addToast({ message: `${toAdd.length} ${t('files.attached', { defaultValue: 'files attached' })}` , isError: false }));
+        dispatch(
+          addToast({
+            message: `${toAdd.length} ${t('files.attached', { defaultValue: 'files attached' })}`,
+            isError: false,
+          }),
+        );
       }
       return next;
     });
-  }, [dispatch, t]);
+  }, [dispatch, t, isUploading]);
 
   /**
    * Intercepts paste events to capture pasted file data (e.g., screenshots) as
@@ -229,15 +279,115 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
    * and current validation errors.
    */
   const handleSend = useCallback(async () => {
+    if (isUploading) return;
     if (!input.trim() && attachments.length === 0) return;
 
     const messageContent = quotedText ? `> ${quotedText}\n\n${input}` : input;
+    let uploadedFiles: FileAttachment[] = [];
 
-    dispatch(
+    if (attachments.length) {
+      setIsUploading(true);
+      setUploadProgress({ completed: 0, total: attachments.length });
+      try {
+        type PreparedFile = { file: File; dataUrl: string; metadata: Record<string, string> };
+        let filesWithDataUrl: PreparedFile[] = [];
+        try {
+          filesWithDataUrl = await Promise.all(
+            attachments.map(async (file) => ({
+              file,
+              dataUrl: await fileToDataUrl(file),
+              metadata: {
+                originalname: file.name,
+                uploadedat: new Date().toISOString(),
+              } as Record<string, string>,
+            }))
+          );
+        } catch {
+          dispatch(
+            addToast({
+              message: t("errors.readFailed", { defaultValue: "Failed to read one of the files." }),
+              isError: true,
+            })
+          );
+          return;
+        }
+
+        if (!accessToken) {
+          filesWithDataUrl.forEach(({ file, dataUrl, metadata }) =>
+            dispatch(
+              addUserFileToOutbox({
+                originalName: file.name,
+                dataUrl,
+                sessionId,
+                metadata,
+              })
+            )
+          );
+          dispatch(
+            addToast({
+              message: t("auth.tokenRequired", { defaultValue: "Sign in to upload files. Files were queued for later." }),
+              isError: true,
+            })
+          );
+          setAttachments([]);
+          return;
+        }
+
+        const successes: FileAttachment[] = [];
+        const failedUploads: { file: File; dataUrl: string; metadata: Record<string, string>; error: unknown }[] = [];
+
+        for (const { file, dataUrl, metadata } of filesWithDataUrl) {
+          try {
+            const uploaded = await uploadEncodedFile({
+              encodedFile: dataUrl,
+              originalName: file.name,
+              accessToken,
+              sessionId,
+              category: "files",
+              metadata,
+            });
+            successes.push(uploaded);
+            dispatch(upsertSessionFile({ sessionId, file: uploaded }));
+          } catch (error) {
+            failedUploads.push({ file, dataUrl, metadata, error });
+          } finally {
+            setUploadProgress((prev) => ({
+              completed: Math.min(prev.completed + 1, prev.total),
+              total: prev.total,
+            }));
+          }
+        }
+
+        if (failedUploads.length) {
+          failedUploads.forEach(({ file, dataUrl, metadata }) =>
+            dispatch(
+              addUserFileToOutbox({
+                originalName: file.name,
+                dataUrl,
+                sessionId,
+                metadata,
+              })
+            )
+          );
+          const failureMessage =
+            failedUploads.length === attachments.length
+              ? t("errors.uploadFailed", { defaultValue: "Failed to upload files. They were queued for retry." })
+              : t("errors.partialUpload", { defaultValue: "Some files failed to upload and were queued for retry." });
+          dispatch(addToast({ message: failureMessage, isError: true }));
+        }
+
+        uploadedFiles = successes;
+      } finally {
+        setIsUploading(false);
+        setUploadProgress({ completed: 0, total: 0 });
+      }
+    }
+
+    await dispatch(
       sendAssistantMessage({
         sessionId,
         content: messageContent,
-        attachments: attachments.length ? attachments : undefined,
+        attachments: uploadedFiles.length ? uploadedFiles : undefined,
       })
     );
 
@@ -246,7 +396,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
     if (quotedText) {
       dispatch(clearQuotedText());
     }
-  }, [input, attachments, quotedText, dispatch, sessionId]);
+  }, [input, attachments, quotedText, dispatch, sessionId, accessToken, t, isUploading]);
 
   /**
    * Keyboard behavior: Enter sends the message, Shift+Enter inserts a newline.
@@ -271,7 +421,8 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
   }, [dispatch]);
 
   /** Whether the input should act in a busy/disabled state (mirrors main app). */
-  const disabled = isLoading; // mirror main app behavior
+  const composerBusy = isLoading || isUploading; // also disable while uploads are pending
+  const canSend = input.trim().length > 0 || attachments.length > 0;
 
   return (
     <Container
@@ -373,7 +524,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
       >
         {isFeatureEnabled('FileUpload') && (
           <Box sx={{ ml: 0.5 }}>
-            <FileUpload onFiles={(files) => handleFiles(files)} disabled={disabled} />
+            <FileUpload onFiles={(files) => handleFiles(files)} disabled={composerBusy} />
           </Box>
         )}
 
@@ -397,16 +548,26 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
           id="playground-ask-question"
         />
 
-        {/** Disable when there's nothing to send; keep enabled while loading to allow Stop */}
+        {/** Disable when there's nothing to send; show stop or upload states when busy */}
         <IconButton
-          onClick={disabled ? onStop : handleSend}
-          disabled={!isLoading && !(input.trim().length > 0 || attachments.length > 0)}
+          onClick={isLoading ? onStop : handleSend}
+          disabled={isUploading || (!isLoading && !canSend)}
           sx={{ '&:hover': { backgroundColor: 'rgba(0,0,0,0.08)' } }}
-          aria-label={disabled ? t('stop', { defaultValue: 'Stop' }) : t('send', { defaultValue: 'Send' })}
+          aria-label={
+            isLoading
+              ? t('stop', { defaultValue: 'Stop' })
+              : isUploading
+                ? t('files.uploading', { defaultValue: 'Uploading files' })
+                : t('send', { defaultValue: 'Send' })
+          }
           size="large"
           id="send-or-stop-question-button"
         >
-          {disabled ? (
+          {isUploading ? (
+            <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+              <CircularProgress size={30} aria-label={t('files.uploading', { defaultValue: 'Uploading files' })} />
+            </Box>
+          ) : isLoading ? (
             <Box sx={{ position: 'relative', display: 'inline-flex' }}>
               <CircularProgress size={30} aria-label={t('stop', { defaultValue: 'Stop' })} />
               <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -418,6 +579,28 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
           )}
         </IconButton>
       </Paper>
+
+      {isUploading && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            justifyContent: 'center',
+            width: '100%',
+            py: 1,
+          }}
+        >
+          <CircularProgress size={18} thickness={5} />
+          <Typography variant="body2" color="text.secondary">
+            {t('files.uploadingProgress', {
+              defaultValue: 'Uploading files... {{completed}}/{{total}}',
+              completed: uploadProgress.completed,
+              total: uploadProgress.total,
+            })}
+          </Typography>
+        </Box>
+      )}
 
       {/* Footer helper text */}
       <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', gap: 1, alignItems: 'center', py: 1 }}>
@@ -469,3 +652,16 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
 };
 
 export default ChatInput;
+
+/**
+ * Read a File into a base64 data URL so uploads can be routed through the
+ * playground API without duplicating FileReader logic.
+ */
+async function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}

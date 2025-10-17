@@ -9,6 +9,8 @@
 import {
   configureStore,
   combineReducers,
+  ThunkAction,
+  UnknownAction,
 } from "@reduxjs/toolkit";
 import chatReducer from "./slices/chatSlice";
 import sessionReducer from "./slices/sessionSlice";
@@ -17,7 +19,11 @@ import modelReducer from "./slices/modelSlice";
 import toastReducer from "./slices/toastSlice";
 import quotedReducer from "./slices/quotedSlice";
 import authReducer from "./slices/authSlice";
+import { archiverMiddleware } from "./middleware/archiverMiddleware";
+import { outboxMiddleware } from "./middleware/outboxMiddleware";
 import { saveChatState, loadChatState } from "./persistence";
+import outboxReducer from "./slices/outboxSlice";
+import sessionFilesReducer from "./slices/sessionFilesSlice";
 
 const rootReducer = combineReducers({
   chat: chatReducer,
@@ -27,6 +33,8 @@ const rootReducer = combineReducers({
   toast: toastReducer,
   quoted: quotedReducer,
   auth: authReducer,
+  outbox: outboxReducer,
+  sessionFiles: sessionFilesReducer,
 });
 
 // Infer the RootState type *before* using it for preloadedState
@@ -38,6 +46,9 @@ const preloadedState = loadChatState() as Partial<RootState>;
 export const store = configureStore({
   reducer: rootReducer,
   preloadedState,
+  middleware: (getDefaultMiddleware) =>
+    // Persist chat archives and queued uploads by enriching the default stack.
+    getDefaultMiddleware().concat(archiverMiddleware, outboxMiddleware),
 });
 
 store.subscribe(() => {
@@ -45,3 +56,4 @@ store.subscribe(() => {
 });
 
 export type AppDispatch = typeof store.dispatch;
+export type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, UnknownAction>;
