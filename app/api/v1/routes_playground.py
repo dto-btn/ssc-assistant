@@ -6,6 +6,7 @@ from typing import Dict, Any, Optional, Tuple
 import logging
 from urllib.parse import urlparse
 from werkzeug.utils import secure_filename
+import mimetypes
 
 from utils.auth import verify_user_access_token
 from utils.azure_clients import get_blob_service_client
@@ -18,6 +19,75 @@ api_playground = APIBlueprint("api_playground", __name__)
 logger = logging.getLogger(__name__)
 
 CONTAINER_NAME = "assistant-chat-files-v2"
+
+# Align with main app's text extraction capabilities so behavior stays consistent.
+SUPPORTED_MIME_TYPES = {
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/msword",
+    "application/vnd.ms-word.document.macroenabled.12",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-excel",
+    "application/vnd.ms-excel.sheet.macroenabled.12",
+    "text/csv",
+    "application/csv",
+    "text/tab-separated-values",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.ms-powerpoint.presentation.macroenabled.12",
+    "text/plain",
+}
+
+# Extension fallback helps when browsers omit MIME metadata or users rename files.
+SUPPORTED_EXTENSIONS = {
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".xls",
+    ".xlsx",
+    ".csv",
+    ".tsv",
+    ".txt",
+    ".ppt",
+    ".pptx",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".bmp",
+    ".webp",
+    ".svg",
+}
+
+TEXT_MIME_PREFIX = "text/"
+IMAGE_MIME_PREFIX = "image/"
+
+
+def _normalize_extension(filename: str) -> Optional[str]:
+    last_dot = filename.rfind(".")
+    if last_dot == -1:
+        return None
+    return filename[last_dot:].lower()
+
+
+# Keep attachment policy identical to the main app's extractor for `files` uploads.
+def _is_supported_file(mime_type: Optional[str], filename: str, category: str) -> bool:
+    if category != "files":
+        return True
+    normalized_mime = (mime_type or "").lower()
+    if normalized_mime:
+        if (
+            normalized_mime in SUPPORTED_MIME_TYPES
+            or normalized_mime.startswith(TEXT_MIME_PREFIX)
+            or normalized_mime.startswith(IMAGE_MIME_PREFIX)
+        ):
+            return True
+
+    normalized_extension = _normalize_extension(filename)
+    if normalized_extension and normalized_extension in SUPPORTED_EXTENSIONS:
+        return True
+
+    return False
 
 
 class PlaygroundAPIError(Exception):
@@ -236,6 +306,7 @@ def upload_file():
     original_name = data.get("name")
     session_id = data.get("sessionId") or data.get("session_id")
     category = (data.get("category") or "files").lower()
+    safe_category = "chat" if category not in {"files", "chat"} else category
     mime_type = data.get("fileType") or data.get("mimeType") or data.get("type")
     metadata_input = data.get("metadata")
     extra_metadata: Dict[str, Any] = metadata_input if isinstance(metadata_input, dict) else {}
@@ -261,8 +332,13 @@ def upload_file():
     except Exception:
         return jsonify({"message": "Failed to decode file"}), 400
 
+    # Try using the provided type, otherwise infer from the name for copied files.
+    resolved_mime = mime_type or mimetypes.guess_type(normalized_name)[0]
+    if not _is_supported_file(resolved_mime, normalized_name, safe_category):
+        return jsonify({"message": "Unsupported file type"}), 400
+    mime_type = resolved_mime or mime_type
+
     # Build blob path
-    safe_category = "chat" if category not in {"files", "chat"} else category
     session_segment = f"{session_id}/" if session_id else ""
     blob_name = f"{oid}/{safe_category}/{session_segment}{uuid.uuid4().hex}_{normalized_name}"
 
