@@ -51,6 +51,7 @@ resource "azurerm_linux_web_app" "frontend" {
     MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
     PORT = 8080
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
+    VITE_SHOW_DEV_BANNER=true
   }
 
   sticky_settings {
