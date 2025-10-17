@@ -6,7 +6,7 @@ import {
   CompletionContentPart,
 } from "../../services/completionService";
 import { isTokenExpired } from "../../../util/token";
-import { AppThunk } from "..";
+import { AppThunk, AppDispatch } from "..";
 import { selectMessagesBySessionId } from "../selectors/chatSelectors";
 import i18n from "../../../i18n";
 import { FileAttachment } from "../../types";
@@ -28,8 +28,13 @@ const truncateText = (text: string, maxLength: number): string => {
  * Convert attachment metadata into multimodal content parts by pulling text or
  * image data from the storage API and caching the results between requests.
  */
-async function resolveAttachmentParts(attachments: FileAttachment[] = []): Promise<CompletionContentPart[]> {
+async function resolveAttachmentParts(
+  attachments: FileAttachment[] = [],
+  dispatch: AppDispatch,
+): Promise<CompletionContentPart[]> {
   const parts: CompletionContentPart[] = [];
+  const extractionFailures: string[] = [];
+  const emptyExtractions: string[] = [];
 
   for (const attachment of attachments) {
     const cacheKey = attachment.blobName || attachment.url;
@@ -85,15 +90,26 @@ async function resolveAttachmentParts(attachments: FileAttachment[] = []): Promi
         }
       } catch (error) {
         console.error("Failed to extract attachment text", error);
+        extractionFailures.push(attachmentName);
       }
     }
 
     if (!resolvedText) {
+      parts.push({
+        type: "text",
+        text: `Attachment "${attachmentName}" could not be read. Let the user know the file might need to be converted to a different format (for example, CSV or XLSX).`,
+      });
+      emptyExtractions.push(attachmentName);
       continue;
     }
 
     const trimmed = resolvedText.trim();
     if (!trimmed) {
+      parts.push({
+        type: "text",
+        text: `Attachment "${attachmentName}" did not contain readable text. Ask the user for a different format if the data seems important.`,
+      });
+      emptyExtractions.push(attachmentName);
       continue;
     }
 
@@ -105,15 +121,32 @@ async function resolveAttachmentParts(attachments: FileAttachment[] = []): Promi
     });
   }
 
+  if (extractionFailures.length || emptyExtractions.length) {
+    const problems = [...new Set([...extractionFailures, ...emptyExtractions])];
+    const message = i18n.t("playground:errors.attachmentExtractionFailed", {
+      defaultValue: "Could not read these files: {{files}}.",
+      files: problems.join(", "),
+    });
+    dispatch(
+      addToast({
+        message,
+        isError: true,
+      })
+    );
+  }
+
   return parts;
 }
 
 // Combine the base message text with any generated attachment parts so we can
 // send a single structured payload to the provider.
-const buildMessageContent = async (message: Message): Promise<string | CompletionContentPart[]> => {
+const buildMessageContent = async (
+  message: Message,
+  dispatch: AppDispatch,
+): Promise<string | CompletionContentPart[]> => {
   const baseText = message.content?.trim() ?? "";
   const attachmentParts = message.attachments?.length
-    ? await resolveAttachmentParts(message.attachments)
+    ? await resolveAttachmentParts(message.attachments, dispatch)
     : [];
 
   if (!attachmentParts.length) {
@@ -135,10 +168,13 @@ const buildMessageContent = async (message: Message): Promise<string | Completio
  * Prepare the full conversation history for a completion call, resolving
  * attachments in parallel to avoid serial network trips.
  */
-const mapMessagesForCompletion = async (messages: Message[]): Promise<CompletionMessage[]> => {
+const mapMessagesForCompletion = async (
+  messages: Message[],
+  dispatch: AppDispatch,
+): Promise<CompletionMessage[]> => {
   return Promise.all(
     messages.map(async (message) => {
-      const content = await buildMessageContent(message);
+      const content = await buildMessageContent(message, dispatch);
       if (message.role === "system") {
         const systemContent = typeof content === "string"
           ? content
@@ -199,6 +235,7 @@ export const sendAssistantMessage = ({
 
   try {
     const { accessToken } = getState().auth;
+    const dispatchForAttachments = dispatch as AppDispatch;
 
     if (!accessToken || isTokenExpired(accessToken)) {
       dispatch(
@@ -243,7 +280,7 @@ export const sendAssistantMessage = ({
     let accumulatedContent = "";
 
     // Use the completion service with streaming callbacks for state management
-    const completionMessages = await mapMessagesForCompletion(updatedSessionMessages);
+  const completionMessages = await mapMessagesForCompletion(updatedSessionMessages, dispatchForAttachments);
 
     await completionService.createCompletion(
       {
