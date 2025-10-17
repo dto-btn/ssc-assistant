@@ -68,6 +68,7 @@ jobs:
         VITE_DISABLED_FEATURES: ${{ inputs.disabled-features }}
         VITE_CLARITY_TOKEN: ${{ secrets.VITE_CLARITY_TOKEN }}
         VITE_PLAYGROUND_ON: ${{ inputs.enable-playground }}
+        VITE_SHOW_DEV_BANNER: ${{ inputs.environment != 'pilot-prod' }}
 
     # This step will only run when the event is a push to the main branch
     - name: Zip artifact for deployment
