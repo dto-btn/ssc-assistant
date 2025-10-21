@@ -2,7 +2,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 
-const url = 'http://localhost:3001/mcp';
+const url = 'http://localhost:8000/mcp';
 
 export default class MCPClient {
     private client: Client | undefined = undefined;
