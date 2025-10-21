@@ -25,6 +25,7 @@ jobs:
       disabled-features: ''
       environment: 'dev'
       app-name: 'ssc-assistant-dev'
+      enable-playground: true
     secrets: inherit
 
   alembic-dev:
