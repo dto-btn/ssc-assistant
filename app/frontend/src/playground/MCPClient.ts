@@ -2,17 +2,18 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 
-const url = 'http://localhost:8000/mcp';
 
 export default class MCPClient {
+    private readonly url: string;
     private client: Client | undefined = undefined;
 
-    constructor() {
+    constructor(url: string = 'http://localhost:8000/mcp') {
+        this.url = url;
         this.connect();
     }
 
     private async connect() {
-        const baseUrl = new URL(url);
+        const baseUrl = new URL(this.url);
         try {
             this.client = new Client({
                 name: 'streamable-http-client',
