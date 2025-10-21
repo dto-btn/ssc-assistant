@@ -18,6 +18,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
 import { useTranslation } from "react-i18next";
 import { useChatService } from "../hooks/useChatService";
+import DownloadIcon from "@mui/icons-material/Download";
 
 interface SettingsModalProps {
   open: boolean;
@@ -98,6 +99,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </DialogTitle>
         <DialogContent>
           <List>
+            <ListItem disablePadding>
+              <ListItemButton
+                id="export-all-chats-button"
+                onClick={chatService.exportChatHistories}
+                sx={{
+                  borderRadius: 1,
+                  "&:hover": {
+                    backgroundColor: "action.hover",
+                  },
+                }}
+              >
+                <ListItemIcon>
+                  <DownloadIcon color="primary" />
+                </ListItemIcon>
+                <ListItemText
+                  primary={t("settings.export.all.conversations")}
+                />
+              </ListItemButton>
+            </ListItem>
             <ListItem disablePadding>
               <ListItemButton
                 id="delete-all-chats-button"

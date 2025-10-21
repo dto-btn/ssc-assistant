@@ -274,6 +274,16 @@ export const useChatService = () => {
         PersistenceUtils.setCurrentChatIndex(0);
     }, [setChatHistoriesDescriptions, setCurrentChatHistory, setCurrentChatIndex]);
 
+    const exportChatHistories = useCallback(() => {
+        try {
+            PersistenceUtils.exportChatHistories();
+            showSnackbar(t("settings.export.success"));
+        } catch (error) {
+            console.error("Failed to export chat histories:", error);
+            showSnackbar(t("settings.export.error"), SNACKBAR_DEBOUNCE_KEYS.EXPORT_CHAT_ERROR);
+        }
+    }, [showSnackbar, t]);
+
     // old deleteSavedChat removed (now memoized above)
 
     const memoized = useMemo(() => {
@@ -284,6 +294,7 @@ export const useChatService = () => {
             handleLoadSavedChat,
             handleNewChat,
             deleteSavedChat,
+            exportChatHistories,
 
             updateLastMessage(message_chunk: string) {
                 setCurrentChatHistory((prevChatHistory) => {
@@ -344,6 +355,7 @@ export const useChatService = () => {
         messageThreshold,
         currentChatIndex,
         setCurrentChatHistory,
+        exportChatHistories,
     ])
 
     return memoized

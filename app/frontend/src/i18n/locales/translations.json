@@ -491,6 +491,18 @@
         "en": "Settings",
         "fr": "Paramètres"
     },
+    "settings.export.all.conversations": {
+        "en": "Export all conversations",
+        "fr": "Exporter toutes les conversations"
+    },
+    "settings.export.success": {
+        "en": "Chat history exported",
+        "fr": "Historique de discussion exporté"
+    },
+    "settings.export.error": {
+        "en": "Unable to export chat history",
+        "fr": "Impossible d'exporter l'historique de discussion"
+    },
     "settings.delete.all.conversations": {
         "en": "Delete all conversations",
         "fr": "Supprimer toutes les conversations"

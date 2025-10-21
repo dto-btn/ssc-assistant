@@ -16,7 +16,7 @@ type AppContext = {
     snackbars: {
         data: SnackbarDatum[];
         debounceKeys: SNACKBAR_DEBOUNCE_KEYS[];
-        show: (message: string, debounceKey: SNACKBAR_DEBOUNCE_KEYS) => void;
+        show: (message: string, debounceKey?: SNACKBAR_DEBOUNCE_KEYS) => void;
         _hide: (id: number) => void;
     };
     appDrawer: {
