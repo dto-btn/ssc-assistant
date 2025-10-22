@@ -23,6 +23,7 @@ export const useChatService = () => {
     const setDefaultChatHistory = useChatStore((s) => s.setDefaultChatHistory);
     const setCurrentChatHistory = useChatStore((s) => s.setCurrentChatHistory);
     const chatStoreSetCurrentChatIndex = useChatStore((s) => s.setCurrentChatIndex);
+    const hydrateChatStore = useChatStore((s) => s.hydrateOnBoot);
 
     const showSnackbar = useAppStore((s) => s.snackbars.show);
     const enabledTools = useAppStore((s) => s.tools.enabledTools);
@@ -296,17 +297,18 @@ export const useChatService = () => {
                     : `Conversation ${index + 1}`,
             }));
 
-            setChatHistoriesDescriptions(
-                hydratedHistories.map((chatHistory, index) =>
-                    chatHistory.description || `Conversation ${index + 1}`
-                )
+            const descriptions = hydratedHistories.map((chatHistory, index) =>
+                chatHistory.description || `Conversation ${index + 1}`
             );
 
             const nextCurrentChatIndex = Math.min(Math.max(currentChatIndex, 0), hydratedHistories.length - 1);
             const nextCurrentChatHistory = hydratedHistories[nextCurrentChatIndex];
 
-            setCurrentChatHistory(nextCurrentChatHistory);
-            setCurrentChatIndex(nextCurrentChatIndex);
+            hydrateChatStore({
+                currentIndex: nextCurrentChatIndex,
+                currentHistory: nextCurrentChatHistory,
+                descriptions,
+            });
 
             showSnackbar(t("settings.import.success"));
         } catch (error) {
@@ -314,7 +316,7 @@ export const useChatService = () => {
             showSnackbar(t("settings.import.error"), SNACKBAR_DEBOUNCE_KEYS.IMPORT_CHAT_ERROR);
             throw error;
         }
-    }, [setChatHistoriesDescriptions, setCurrentChatHistory, setCurrentChatIndex, showSnackbar, t]);
+    }, [hydrateChatStore, showSnackbar, t]);
 
     // old deleteSavedChat removed (now memoized above)
 
