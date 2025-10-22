@@ -284,6 +284,38 @@ export const useChatService = () => {
         }
     }, [showSnackbar, t]);
 
+    const importChatHistories = useCallback(async (file: File) => {
+        try {
+            const { chatHistories, currentChatIndex } = await PersistenceUtils.importChatHistories(file);
+
+            const hydratedHistories = chatHistories.map((history, index) => ({
+                ...buildDefaultChatHistory(),
+                ...history,
+                description: history.description && history.description.trim().length > 0
+                    ? history.description
+                    : `Conversation ${index + 1}`,
+            }));
+
+            setChatHistoriesDescriptions(
+                hydratedHistories.map((chatHistory, index) =>
+                    chatHistory.description || `Conversation ${index + 1}`
+                )
+            );
+
+            const nextCurrentChatIndex = Math.min(Math.max(currentChatIndex, 0), hydratedHistories.length - 1);
+            const nextCurrentChatHistory = hydratedHistories[nextCurrentChatIndex];
+
+            setCurrentChatHistory(nextCurrentChatHistory);
+            setCurrentChatIndex(nextCurrentChatIndex);
+
+            showSnackbar(t("settings.import.success"));
+        } catch (error) {
+            console.error("Failed to import chat histories:", error);
+            showSnackbar(t("settings.import.error"), SNACKBAR_DEBOUNCE_KEYS.IMPORT_CHAT_ERROR);
+            throw error;
+        }
+    }, [setChatHistoriesDescriptions, setCurrentChatHistory, setCurrentChatIndex, showSnackbar, t]);
+
     // old deleteSavedChat removed (now memoized above)
 
     const memoized = useMemo(() => {
@@ -295,6 +327,7 @@ export const useChatService = () => {
             handleNewChat,
             deleteSavedChat,
             exportChatHistories,
+            importChatHistories,
 
             updateLastMessage(message_chunk: string) {
                 setCurrentChatHistory((prevChatHistory) => {
@@ -356,6 +389,7 @@ export const useChatService = () => {
         currentChatIndex,
         setCurrentChatHistory,
         exportChatHistories,
+        importChatHistories,
     ])
 
     return memoized

@@ -308,8 +308,18 @@ export const AssistantBubble = ({
   }, [isLoading, context, text, scrollRef]);
 
   useEffect(() => {
-    if (toolsInfo && toolsInfo.length > 0) {
-      toolsInfo.map((tool) => {
+    if (!toolsInfo || toolsInfo.length === 0) {
+      setBrData(undefined);
+      setBrMetadata(undefined);
+      setBrQuery(undefined);
+      setBrSelectFields(undefined);
+      setProfiles([]);
+      setFloorPlanFilename("");
+      setBookingDetails(undefined);
+      return;
+    }
+
+    toolsInfo.map((tool) => {
         const payload = tool.payload;
         // BRs
         if (payload?.br) {
@@ -358,7 +368,6 @@ export const AssistantBubble = ({
           setBookingDetails(payload.bookingDetails);
         }
       });
-    }
   }, [toolsInfo, text]);
 
   // useEffect(

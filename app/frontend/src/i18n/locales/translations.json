@@ -127,9 +127,33 @@
         "en": "Retry",
         "fr": "Réessayer"
     },
+    "replace": {
+        "en": "Replace",
+        "fr": "Remplacer"
+    },
     "gpt-ex1-q": {
         "en": "When Mr. Bilbo Baggins of Bag End announced that he would shortly be celebrating his eleventy-first birthday with a party of special magnificence, there was much talk and excitement in Hobbiton. Bilbo was very rich and very peculiar, and had been the wonder of the Shire for sixty years, ever since his remarkable disappearance and unexpected return. The riches he had brought back from his travels had now become a local legend, and it was popularly believed, whatever the old folk might say, that the Hill at Bag End was full of tunnels stuffed with treasure. And if that was not enough for fame, there was also his prolonged vigour to marvel at.",
         "fr": "Lorsque M. Bilbo Baggins de Cul-de-Sac a annoncé qu'il allait bientôt fêter son cent-onzième anniversaire avec une fête d'une magnificence particulière, il y a eu beaucoup de discussions et d'excitation à Hobbiton. Bilbo était très riche et très particulier, et avait été l'émerveillement de la Comté pendant soixante ans, depuis sa disparition remarquable et son retour inattendu. Les richesses qu'il avait rapportées de ses voyages étaient devenues une légende locale, et on croyait communément, quoique puissent dire les vieux, que la Colline à Cul-de-Sac était pleine de tunnels remplis de trésors. Et si cela ne suffisait pas pour la renommée, il y avait aussi sa vigueur prolongée à admirer."
+    },
+    "settings.import.all.conversations": {
+        "en": "Import conversations from file",
+        "fr": "Importer des conversations depuis un fichier"
+    },
+    "settings.import.success": {
+        "en": "Chat history imported",
+        "fr": "Historique de discussion importé"
+    },
+    "settings.import.error": {
+        "en": "Unable to import chat history",
+        "fr": "Impossible d'importer l'historique de discussion"
+    },
+    "settings.import.confirmation.title": {
+        "en": "Replace Existing Chats",
+        "fr": "Remplacer les conversations existantes"
+    },
+    "settings.import.confirmation.message": {
+        "en": "Importing will replace all conversations currently saved on this device. Do you want to continue?",
+        "fr": "L'importation remplacera toutes les conversations actuellement enregistrées sur cet appareil. Voulez-vous continuer?"
     },
     "clear.conversation": {
         "en": "Clear Current Chat",

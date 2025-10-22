@@ -20,7 +20,8 @@ export enum SNACKBAR_DEBOUNCE_KEYS {
     STORAGE_FULL_ERROR,
     CHAT_HISTORY_FULL_ERROR,
     SUGGEST_CONTEXT_ERROR,
-    EXPORT_CHAT_ERROR
+    EXPORT_CHAT_ERROR,
+    IMPORT_CHAT_ERROR
 }
 
 // This is the maximum number of messages that can be sent in a single request.
