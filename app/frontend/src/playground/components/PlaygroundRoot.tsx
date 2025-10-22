@@ -27,31 +27,31 @@ const PlaygroundRoot: React.FC = () => {
     }).catch(err => {
       console.error('Error listing tools:', err);
     });
-    client.listPrompts().then(prompts => {
-      console.log('Available prompts:', prompts);
-    }).catch(err => {
-      console.error('Error listing prompts:', err);
-    });
-    client.listResources().then(resources => {
-      console.log('Available resources:', resources);
-    }).catch(err => {
-      console.error('Error listing resources:', err);
-    });
-    client.readResource('greeting://jay').then(resource => {
-      console.log('Read resource:', resource);
-    }).catch(err => {
-      console.error('Error reading resource:', err);
-    });
-    client.getPrompt("greet_user", { name: "Jay" }).then(prompt => {
-      console.log('Get prompt:', prompt);
-    }).catch(err => {
-      console.error('Error getting prompt:', err);
-    });
-    client.callTool("list_all_mps", {}).then(response => {
-      console.log('List all MPs response:', response);
-    }).catch(err => {
-      console.error('Error calling list_all_mps tool:', err);
-    });
+    // client.listPrompts().then(prompts => {
+    //   console.log('Available prompts:', prompts);
+    // }).catch(err => {
+    //   console.error('Error listing prompts:', err);
+    // });
+    // client.listResources().then(resources => {
+    //   console.log('Available resources:', resources);
+    // }).catch(err => {
+    //   console.error('Error listing resources:', err);
+    // });
+    // client.readResource('greeting://jay').then(resource => {
+    //   console.log('Read resource:', resource);
+    // }).catch(err => {
+    //   console.error('Error reading resource:', err);
+    // });
+    // client.getPrompt("greet_user", { name: "Jay" }).then(prompt => {
+    //   console.log('Get prompt:', prompt);
+    // }).catch(err => {
+    //   console.error('Error getting prompt:', err);
+    // });
+    // client.callTool("list_all_mps", {}).then(response => {
+    //   console.log('List all MPs response:', response);
+    // }).catch(err => {
+    //   console.error('Error calling list_all_mps tool:', err);
+    // });
 
   }, []);
 
