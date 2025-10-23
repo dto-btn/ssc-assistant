@@ -5,17 +5,13 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 
 export default class MCPClient {
     private readonly url: string;
-    private sessionId: string;
     private client: Client | undefined = undefined;
 
-    // accept optional sessionId (or will auto-generate)
-    constructor(url: string = 'http://localhost:8000/mcp', sessionId?: string) {
+    
+    constructor(url: string = 'http://localhost:8000/mcp') {
         this.url = url;
-        // run-time generation using Web Crypto API (works in browser + modern envs)
-        this.sessionId = sessionId ?? (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2));
-        console.log('MCPClient initialized with session id:', this.sessionId);
         this.connect();
-        console.log('MCPClient connection initiated');
+        console.log('MCPClient connection completed');
     }
 
     private async connect() {
@@ -26,15 +22,13 @@ export default class MCPClient {
                 version: '1.0.0'
             });
 
-            const transport = new StreamableHTTPClientTransport(baseUrl, {
-                sessionId: this.sessionId ? this.sessionId : undefined,
-            });
+            const transport = new StreamableHTTPClientTransport(baseUrl);
 
             await this.client.connect(transport);
-            console.log('Connected using Streamable HTTP transport (session id:', this.sessionId, ')');
+            console.log('Connected using Streamable HTTP transport');
         } catch (error) {
             // If that fails with a 4xx error, try the older SSE transport
-            console.log('Streamable HTTP connection failed, falling back to SSE transport');
+            console.log('Streamable HTTP connection failed');
             // this.client = new Client({
             //     name: 'sse-client',
             //     version: '1.0.0'
