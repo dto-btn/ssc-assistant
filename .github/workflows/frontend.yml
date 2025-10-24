@@ -98,7 +98,7 @@ jobs:
     - name: Log in with Azure (163ent)
       if: inputs.environment == 'prod'
       uses: azure/login@v2
-      whit:
+      with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
