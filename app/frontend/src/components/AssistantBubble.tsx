@@ -319,6 +319,7 @@ export const AssistantBubble = ({
       return;
     }
 
+    // Walk each tool payload once to hydrate the different UI fragments (BRs, GEDS, Archibus, bookings).
     toolsInfo.map((tool) => {
         const payload = tool.payload;
         // BRs

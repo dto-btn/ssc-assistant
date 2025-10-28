@@ -289,6 +289,7 @@ export const useChatService = () => {
         try {
             const { chatHistories, currentChatIndex } = await PersistenceUtils.importChatHistories(file);
 
+            // Rehydrate each history with the latest defaults so legacy exports pick up new fields safely.
             const hydratedHistories = chatHistories.map((history, index) => ({
                 ...buildDefaultChatHistory(),
                 ...history,

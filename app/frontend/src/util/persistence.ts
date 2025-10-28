@@ -1,6 +1,7 @@
 import { DisclaimerKey, DisclaimerState} from "../../types";
 import { DEFAULT_CHAT_MODEL } from "../constants/models";
 
+// Normalizes persisted histories so we can trust optional fields throughout the app.
 const cleanChatHistories = (histories: (Partial<ChatHistory> | null | undefined)[]) => {
     return histories.map((history, i) => {
         const fallbackDescription = "Conversation " + (i + 1);

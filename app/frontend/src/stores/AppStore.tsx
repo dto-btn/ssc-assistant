@@ -142,6 +142,7 @@ export const useAppStore = create<AppContext>((set, get) => ({
             return cleaned;
         })(),
         setEnabledTools: (tools: Record<string, boolean>) => {
+            // Persist tool availability so the UI and localStorage stay in sync.
             set((state) => produce(state, (draft) => {
                 draft.tools.enabledTools = { ...tools };
             }));

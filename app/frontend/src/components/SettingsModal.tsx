@@ -21,6 +21,7 @@ import { useChatService } from "../hooks/useChatService";
 import DownloadIcon from "@mui/icons-material/Download";
 import UploadIcon from "@mui/icons-material/Upload";
 import { PersistenceUtils } from "../util/persistence";
+import { disabledFeaturesSet } from "../allowedTools";
 
 interface SettingsModalProps {
   open: boolean;
@@ -95,6 +96,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
 }) => {
   const { t } = useTranslation();
+  const isImportExportDisabled = disabledFeaturesSet.has("chat_history_import_export");
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showImportConfirmation, setShowImportConfirmation] = useState(false);
   const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
@@ -149,12 +151,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const handleImportClick = () => {
-    if (isImporting) {
+    if (isImporting || isImportExportDisabled) {
       return;
     }
     fileInputRef.current?.click();
   };
 
+  // Puts all import side effects behind a single function so we can reuse it
+  // from the confirmation dialog without duplicating cleanup/reset logic.
   const performImport = async (file: File) => {
     setIsImporting(true);
     try {
@@ -235,45 +239,49 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             aria-hidden="true"
           />
           <List>
-            <ListItem disablePadding>
-              <ListItemButton
-                id="import-all-chats-button"
-                onClick={handleImportClick}
-                disabled={isImporting}
-                sx={{
-                  borderRadius: 1,
-                  "&:hover": {
-                    backgroundColor: "action.hover",
-                  },
-                }}
-              >
-                <ListItemIcon>
-                  <UploadIcon color="primary" />
-                </ListItemIcon>
-                <ListItemText
-                  primary={t("settings.import.all.conversations")}
-                />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton
-                id="export-all-chats-button"
-                onClick={chatService.exportChatHistories}
-                sx={{
-                  borderRadius: 1,
-                  "&:hover": {
-                    backgroundColor: "action.hover",
-                  },
-                }}
-              >
-                <ListItemIcon>
-                  <DownloadIcon color="primary" />
-                </ListItemIcon>
-                <ListItemText
-                  primary={t("settings.export.all.conversations")}
-                />
-              </ListItemButton>
-            </ListItem>
+            {!isImportExportDisabled && (
+              <>
+                <ListItem disablePadding>
+                  <ListItemButton
+                    id="import-all-chats-button"
+                    onClick={handleImportClick}
+                    disabled={isImporting}
+                    sx={{
+                      borderRadius: 1,
+                      "&:hover": {
+                        backgroundColor: "action.hover",
+                      },
+                    }}
+                  >
+                    <ListItemIcon>
+                      <UploadIcon color="primary" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={t("settings.import.all.conversations")}
+                    />
+                  </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                  <ListItemButton
+                    id="export-all-chats-button"
+                    onClick={chatService.exportChatHistories}
+                    sx={{
+                      borderRadius: 1,
+                      "&:hover": {
+                        backgroundColor: "action.hover",
+                      },
+                    }}
+                  >
+                    <ListItemIcon>
+                      <DownloadIcon color="primary" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={t("settings.export.all.conversations")}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              </>
+            )}
             <ListItem disablePadding>
               <ListItemButton
                 id="delete-all-chats-button"
