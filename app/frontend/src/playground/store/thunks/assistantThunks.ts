@@ -7,6 +7,7 @@ import {
 } from "../../services/completionService";
 import { isTokenExpired } from "../../../util/token";
 import { AppThunk, AppDispatch } from "..";
+import type { RootState } from "..";
 import { selectMessagesBySessionId } from "../selectors/chatSelectors";
 import i18n from "../../../i18n";
 import { FileAttachment } from "../../types";
@@ -31,10 +32,13 @@ const truncateText = (text: string, maxLength: number): string => {
 async function resolveAttachmentParts(
   attachments: FileAttachment[] = [],
   dispatch: AppDispatch,
+  getState: () => RootState,
 ): Promise<CompletionContentPart[]> {
   const parts: CompletionContentPart[] = [];
   const extractionFailures: string[] = [];
   const emptyExtractions: string[] = [];
+  const state = getState();
+  const accessToken = state.auth?.accessToken ?? null;
 
   for (const attachment of attachments) {
     const cacheKey = attachment.blobName || attachment.url;
@@ -49,6 +53,7 @@ async function resolveAttachmentParts(
           const result = await fetchFileDataUrl({
             fileUrl: attachment.url,
             fileType: contentType,
+            accessToken,
           });
           dataUrl = result.dataUrl;
           if (dataUrl && cacheKey) {
@@ -143,10 +148,11 @@ async function resolveAttachmentParts(
 const buildMessageContent = async (
   message: Message,
   dispatch: AppDispatch,
+  getState: () => RootState,
 ): Promise<string | CompletionContentPart[]> => {
   const baseText = message.content?.trim() ?? "";
   const attachmentParts = message.attachments?.length
-    ? await resolveAttachmentParts(message.attachments, dispatch)
+    ? await resolveAttachmentParts(message.attachments, dispatch, getState)
     : [];
 
   if (!attachmentParts.length) {
@@ -171,10 +177,11 @@ const buildMessageContent = async (
 const mapMessagesForCompletion = async (
   messages: Message[],
   dispatch: AppDispatch,
+  getState: () => RootState,
 ): Promise<CompletionMessage[]> => {
   return Promise.all(
     messages.map(async (message) => {
-      const content = await buildMessageContent(message, dispatch);
+      const content = await buildMessageContent(message, dispatch, getState);
       if (message.role === "system") {
         const systemContent = typeof content === "string"
           ? content
@@ -280,7 +287,7 @@ export const sendAssistantMessage = ({
     let accumulatedContent = "";
 
     // Use the completion service with streaming callbacks for state management
-  const completionMessages = await mapMessagesForCompletion(updatedSessionMessages, dispatchForAttachments);
+  const completionMessages = await mapMessagesForCompletion(updatedSessionMessages, dispatchForAttachments, getState);
 
     await completionService.createCompletion(
       {

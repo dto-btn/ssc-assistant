@@ -4,7 +4,6 @@ const PLAYGROUND_API_BASE = "/api/playground";
 const UPLOAD_ENDPOINT = `${PLAYGROUND_API_BASE}/upload`;
 const FILES_FOR_SESSION_ENDPOINT = `${PLAYGROUND_API_BASE}/files-for-session`;
 const EXTRACT_FILE_TEXT_ENDPOINT = `${PLAYGROUND_API_BASE}/extract-file-text`;
-const FILE_DATA_URL_ENDPOINT = `${PLAYGROUND_API_BASE}/file-data-url`;
 
 type MetadataRecord = Record<string, string | number | boolean | null | undefined>;
 
@@ -213,19 +212,34 @@ export async function extractFileText({
 export async function fetchFileDataUrl({
   fileUrl,
   fileType,
+  accessToken,
 }: {
   fileUrl: string;
   fileType?: string | null;
+  accessToken?: string | null;
 }): Promise<{ dataUrl: string; contentType: string }> {
   if (!fileUrl) throw new Error("fileUrl is required");
-  const response = await fetch(FILE_DATA_URL_ENDPOINT, {
+
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (accessToken?.trim()) {
+    headers.Authorization = `Bearer ${accessToken.trim()}`;
+  }
+
+  const response = await fetch(EXTRACT_FILE_TEXT_ENDPOINT, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fileUrl, fileType }),
+    headers,
+    body: JSON.stringify({
+      fileUrl,
+      fileType,
+      responseFormat: "data_url",
+    }),
   });
+
   const data = await handleJsonResponse(response);
   return {
-    dataUrl: data?.dataUrl ?? "",
-    contentType: data?.contentType ?? (fileType ?? "application/octet-stream"),
+    dataUrl: typeof data?.dataUrl === "string" ? data.dataUrl : "",
+    contentType: typeof data?.contentType === "string"
+      ? data.contentType
+      : fileType ?? "application/octet-stream",
   };
 }

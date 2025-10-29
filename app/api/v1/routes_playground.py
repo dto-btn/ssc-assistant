@@ -411,6 +411,7 @@ def extract_file_text():
     file_url = data.get("fileUrl")
     blob_name = data.get("blobName")
     requested_type = data.get("fileType")
+    response_format = (data.get("responseFormat") or "text").strip().lower()
     if not file_url and not blob_name:
         return jsonify({"error": "fileUrl or blobName is required"}), 400
 
@@ -427,6 +428,12 @@ def extract_file_text():
         logger.info("Extract-file-text request failed: %s", exc)
         return jsonify({"error": _public_error_message(exc)}), exc.status_code
 
+    if response_format == "data_url":
+        content_type = resolved_type or requested_type or "application/octet-stream"
+        encoded = base64.b64encode(file_bytes).decode("utf-8")
+        data_url = f"data:{content_type};base64,{encoded}"
+        return jsonify({"dataUrl": data_url, "contentType": content_type})
+
     try:
         fm = FileManager(file_bytes, resolved_type)
         text = fm.extract_text()
@@ -437,38 +444,3 @@ def extract_file_text():
         return jsonify({"error": "Failed to extract text"}), 500
 
     return jsonify({"extractedText": text})
-
-# POST /api/playground/file-data-url: Accepts fileUrl and optional fileType, returns base64 data URL
-@api_playground.route("/file-data-url", methods=["POST"])
-def file_data_url():
-    """Return a data URL for the file located at the supplied `fileUrl`.
-
-    Accepts an optional `fileType` to override the detected content type.
-    The response encodes the remote file as a base64 `data:` URL alongside the
-    content type so the client can embed or preview the asset directly.
-    """
-    data = request.get_json() or {}
-    file_url = data.get("fileUrl")
-    blob_name = data.get("blobName")
-    requested_type = data.get("fileType")
-    if not file_url and not blob_name:
-        return jsonify({"error": "fileUrl or blobName is required"}), 400
-
-    oid, auth_error = _resolve_optional_oid()
-    try:
-        file_bytes, content_type = _fetch_file_bytes(
-            file_url,
-            blob_name,
-            requested_type,
-            oid,
-            auth_error,
-        )
-    except PlaygroundAPIError as exc:
-        logger.info("File-data-url request failed: %s", exc)
-        return jsonify({"error": _public_error_message(exc)}), exc.status_code
-
-    if not content_type:
-        content_type = "application/octet-stream"
-    encoded = base64.b64encode(file_bytes).decode("utf-8")
-    data_url = f"data:{content_type};base64,{encoded}"
-    return jsonify({"dataUrl": data_url, "contentType": content_type})
