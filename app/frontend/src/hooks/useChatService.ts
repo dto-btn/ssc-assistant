@@ -278,7 +278,7 @@ export const useChatService = () => {
     const exportChatHistories = useCallback(() => {
         try {
             PersistenceUtils.exportChatHistories();
-            showSnackbar(t("settings.export.success"));
+            showSnackbar(t("settings.export.success"), undefined, "success");
         } catch (error) {
             console.error("Failed to export chat histories:", error);
             showSnackbar(t("settings.export.error"), SNACKBAR_DEBOUNCE_KEYS.EXPORT_CHAT_ERROR);
@@ -311,7 +311,7 @@ export const useChatService = () => {
                 descriptions,
             });
 
-            showSnackbar(t("settings.import.success"));
+            showSnackbar(t("settings.import.success"), undefined, "success");
         } catch (error) {
             console.error("Failed to import chat histories:", error);
             showSnackbar(t("settings.import.error"), SNACKBAR_DEBOUNCE_KEYS.IMPORT_CHAT_ERROR);
