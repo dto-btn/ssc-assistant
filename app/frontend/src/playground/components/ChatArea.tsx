@@ -18,6 +18,8 @@ import { addMessage, setIsLoading } from "../store/slices/chatSlice";
 import Suggestions from "./Suggestions";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 import { useTranslation } from 'react-i18next';
+import { listSessionFiles } from "../api/storage";
+import { setSessionFiles } from "../store/slices/sessionFilesSlice";
 
 const ChatArea: React.FC = () => {
   const { t } = useTranslation('playground');
@@ -26,6 +28,8 @@ const ChatArea: React.FC = () => {
     (state: RootState) => state.sessions.currentSessionId
   );
   const isLoading = useSelector((state: RootState) => state.chat.isLoading);
+  const accessToken = useSelector((state: RootState) => state.auth.accessToken);
+  const loadedSessionsRef = React.useRef<Set<string>>(new Set());
 
   // Use memoized selector for messages
   const messages = useSelector(selectMessagesBySessionId);
@@ -79,6 +83,32 @@ const ChatArea: React.FC = () => {
       })
     );
   };
+
+  // Load persisted attachments the first time a session becomes active so
+  // previews and cached metadata are ready before the user scrolls.
+  React.useEffect(() => {
+    if (!currentSessionId || !accessToken) return undefined;
+    if (loadedSessionsRef.current.has(currentSessionId)) return undefined;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const files = await listSessionFiles({ sessionId: currentSessionId, accessToken });
+        if (cancelled) return;
+        dispatch(setSessionFiles({ sessionId: currentSessionId, files }));
+        loadedSessionsRef.current.add(currentSessionId);
+      } catch (error) {
+        if (!cancelled) {
+          // eslint-disable-next-line no-console
+          console.error("Failed to load session files", error);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentSessionId, accessToken, dispatch]);
 
   if (!currentSessionId) {
     return (

@@ -8,6 +8,7 @@
 
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
+import { FileAttachment } from "../../types";
 
 export interface Message {
   id: string;
@@ -15,7 +16,7 @@ export interface Message {
   role: "user" | "assistant" | "system";
   content: string;
   timestamp: number;
-  attachments?: unknown[];
+  attachments?: FileAttachment[];
   citations?: { title: string; url: string }[];
 }
 
