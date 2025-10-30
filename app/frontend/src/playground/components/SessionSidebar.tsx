@@ -40,6 +40,7 @@ import { LEFT_MENU_WIDTH } from "../constants";
 import SessionRenameDialog from "./SessionRenameDialog";
 import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
+import { DevBanner } from "./DevBanner"
 
 /**
  * Sidebar for listing and managing Playground chat sessions.
@@ -278,6 +279,7 @@ const SessionSidebar: React.FC = () => {
         onClose={() => setRenameDialogOpen(false)}
         onRename={handleRenameSession}
       />
+      <DevBanner />
     </Box>
   );
 };
