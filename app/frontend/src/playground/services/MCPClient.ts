@@ -39,6 +39,10 @@ export default class MCPClient {
         }
     }
 
+    public get baseUrl() {
+        return this.url;
+    }
+
     // List prompts
     public async listPrompts() {
         return await this.client?.listPrompts();
@@ -66,6 +70,10 @@ export default class MCPClient {
 
     // Call a tool
     public async callTool(name: string, args: Record<string, any>) {
-        return await this.client?.callTool({ name, arguments: args });
+        if (Object.keys(args).length === 0) {
+            return await this.client?.callTool({ name });
+        } else {
+            return await this.client?.callTool({ name, arguments: args });
+        }
     }
 }

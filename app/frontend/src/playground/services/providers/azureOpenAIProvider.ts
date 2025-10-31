@@ -4,6 +4,35 @@
 
 import { AzureOpenAI } from "openai";
 import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult } from "../completionService";
+import { callToolOnMCP } from "../toolService";
+import { ChatCompletionFunctionTool } from "openai/resources/index.mjs";
+
+const TOOLS: ChatCompletionFunctionTool[] = [
+          {
+            type: "function",
+            function: {
+              name: "list_all_mps",
+              description: "List all Canadian Members of Parliament",
+              parameters: {
+                type: "object",
+                properties: {},
+                required: []
+              }
+            },
+          },
+          {
+            type: "function",
+            function: {
+              name: "get_total_mps",
+              description: "Get the total number of Canadian Members of Parliament",
+              parameters: {
+                type: "object",
+                properties: {},
+                required: []
+              }
+            }
+          }
+        ];
 
 export class AzureOpenAIProvider implements CompletionProvider {
   readonly name = 'azure-openai';
@@ -32,32 +61,60 @@ export class AzureOpenAIProvider implements CompletionProvider {
   ): Promise<CompletionResult> {
     const { messages, userToken, model, signal } = request;
     const { onChunk, onError, onComplete } = callbacks;
+
+    let fullText = "";
+    let updatedMessages = messages;
     
     try {
       const client = this.createClient(userToken);
 
-      const stream = await client.chat.completions.create({
+      // TODO Integrate tool definitions dynamically
+      const resp = await client.chat.completions.create({
         model,
-        messages,
-        stream: true,
-      }, {
-        signal,
+        messages: updatedMessages,
+        tools: TOOLS,
+        tool_choice: "auto",
       });
 
-      let fullText = "";
-      
-      for await (const chunk of stream) {
-        if (signal?.aborted) {
-          throw new Error('Request aborted');
+
+      // TODO Handle multiple choices if necessary
+      const choice = JSON.parse(resp).choices[0];
+
+      const toolCalls = choice.message.tool_calls || [];
+
+      // Handle tool calls if any
+      while (toolCalls.length > 0) {
+        console.log("Tool calls requested:", toolCalls);        
+
+        // For each tool call, get result and aggregate to feed back into chat completion
+        for (const toolCall of toolCalls) {
+          const toolArgs = JSON.parse(toolCall.function.arguments);
+          const toolResult = await callToolOnMCP(toolCall.function.name, toolArgs);
+          console.log("Tool result:", toolResult);
+          updatedMessages = updatedMessages.concat({
+            role: "system",
+            content: `Tool ${toolCall.function.name} called with ID ${toolCall.id} returned: ${JSON.stringify(toolResult)}`
+          });
         }
 
-        const delta = chunk.choices?.[0]?.delta?.content ?? "";
-        if (delta) {
-          fullText += delta;
-          onChunk?.(delta);
-        }
+        console.log("Updated messages after tool calls:", updatedMessages);
+
+        // Create a new completion request with the updated messages
+        const newRequest: CompletionRequest = {
+          messages: updatedMessages,
+          userToken,
+          model,
+          signal
+        };
+
+        // Call the createCompletion method again with the new request
+        return this.createCompletion(newRequest, callbacks);
       }
 
+      //TODO Handle streaming chunks
+      fullText += choice.message.content || "";
+      console.log("Completion response received:", fullText);
+      onChunk?.(fullText);
       onComplete?.(fullText);
 
       return {
