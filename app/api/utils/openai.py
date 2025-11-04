@@ -7,6 +7,7 @@ from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from openai import AzureOpenAI, Stream
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
 from openai.types.completion_usage import CompletionUsage
+from utils.azure_openai_deployment_mapper import map_model_to_deployment
 from tools.pmcoe.pmcoe_functions import PMCOE_CONTAINER
 from src.constants.tools import TOOL_CORPORATE, TOOL_PMCOE, TOOL_TELECOM
 from src.service.tool_service import ToolService
@@ -83,7 +84,7 @@ def chat_with_data(message_request: MessageRequest, stream=False) -> Tuple[Optio
         while additional_tools_required and tool_service.tools:
             completion_tools = client.chat.completions.create(
                     messages=messages,
-                    model=model,
+                    model=map_model_to_deployment(model),
                     tools=tool_service.tools, # type: ignore
                     #https://platform.openai.com/docs/guides/function-calling#additional-configurations
                     tool_choice='auto',
