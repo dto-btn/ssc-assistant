@@ -55,14 +55,18 @@ export class AzureOpenAIProvider implements CompletionProvider {
       let currentId;
       let currentArguments = "";
 
+      // Process the streaming response
       for await (const chunk of stream) {
 
         if (chunk.choices.length > 0) { 
-          const choice = chunk.choices[0];
+          const choice = chunk.choices[0]; // Assuming single choice for simplicity
 
-          if (choice.delta.tool_calls) { // Handle tool calls
+          if (choice.delta.tool_calls) { // Handle tool calls if present
+
             for (const toolCall of choice.delta.tool_calls) { // Add tool to final calls
-              if (toolCall.id) { // If tool call has an ID, then it is the initial request
+
+              if (toolCall.id) { // If tool call has an ID, then it is the initial chunk
+                // Add new tool call to final calls, initialize arguments
                 finalToolCalls[toolCall.id] = toolCall;
                 currentId = toolCall.id;
                 currentArguments = toolCall.function?.arguments || "";
@@ -71,6 +75,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
                 // Append arguments to existing tool call
                 if (currentId && finalToolCalls[currentId]) {
                   currentArguments += toolCall.function?.arguments || "";
+                  // If arguments end with a closing brace, try to parse JSON as it might be the final chunk
                   if (currentArguments.endsWith("}")) {
                     try {
                       finalToolCalls[currentId].function.arguments = JSON.parse(currentArguments);
@@ -91,7 +96,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
         }
       }
 
-      // Execute tool calls, append results to messages & send to LLM
+      // Execute tool calls if requested, append results to messages & send to LLM
       if (Object.keys(finalToolCalls).length > 0) {
         for (const callId in finalToolCalls) {
           const toolCall = finalToolCalls[callId];
