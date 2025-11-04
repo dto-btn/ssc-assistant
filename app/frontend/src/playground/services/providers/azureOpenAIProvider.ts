@@ -4,35 +4,7 @@
 
 import { AzureOpenAI } from "openai";
 import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult } from "../completionService";
-import { callToolOnMCP } from "../toolService";
-import { ChatCompletionFunctionTool } from "openai/resources/index.mjs";
-
-const TOOLS: ChatCompletionFunctionTool[] = [
-          {
-            type: "function",
-            function: {
-              name: "list_all_mps",
-              description: "List all Canadian Members of Parliament",
-              parameters: {
-                type: "object",
-                properties: {},
-                required: []
-              }
-            },
-          },
-          {
-            type: "function",
-            function: {
-              name: "get_total_mps",
-              description: "Get the total number of Canadian Members of Parliament",
-              parameters: {
-                type: "object",
-                properties: {},
-                required: []
-              }
-            }
-          }
-        ];
+import { callToolOnMCP, getMCPTools } from "../toolService";
 
 export class AzureOpenAIProvider implements CompletionProvider {
   readonly name = 'azure-openai';
@@ -68,17 +40,20 @@ export class AzureOpenAIProvider implements CompletionProvider {
     try {
       const client = this.createClient(userToken);
 
+      const tools = await getMCPTools();
+
       // TODO Integrate tool definitions dynamically
       const resp = await client.chat.completions.create({
         model,
         messages: updatedMessages,
-        tools: TOOLS,
+        tools: tools,
         tool_choice: "auto",
       });
 
+      let parsedResp = typeof resp === 'string' ? resp : JSON.stringify(resp);
 
       // TODO Handle multiple choices if necessary
-      const choice = JSON.parse(resp).choices[0];
+      const choice = JSON.parse(parsedResp).choices[0];
 
       const toolCalls = choice.message.tool_calls || [];
 
