@@ -74,8 +74,13 @@ export interface ToolCallDef {
 }
 
 export const callToolOnMCP = async (toolName: string, args: Record<string, any>): Promise<any> => {
-    // TODO Implement lookup to fetch MCP Client based on tool name
-    const client = MCP_CLIENTS[0]; // Temporary: always use first MCP client
+    // Find the MCP client for the given tool
+    const clientIndex = function_lookup[toolName];
+    if (clientIndex === undefined) {
+        throw new Error(`No MCP client found for tool: ${toolName}`);
+    }
+
+    const client = MCP_CLIENTS[clientIndex]; // Use the mapped MCP client
 
     // Call the tool on the MCP client
     try {
