@@ -42,7 +42,6 @@ export class AzureOpenAIProvider implements CompletionProvider {
 
       const tools = await getMCPTools();
 
-      // TODO Integrate tool definitions dynamically
       const resp = await client.chat.completions.create({
         model,
         messages: updatedMessages,
