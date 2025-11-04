@@ -62,15 +62,6 @@ export async function getMCPTools(): Promise<ChatCompletionFunctionTool[]> {
     return MCPtools;
 }
 
-export interface ToolCallDef {
-    function: {
-        name: string;
-        arguments: string;
-    };
-    id: string;
-    type: string;
-}
-
 export const callToolOnMCP = async (toolName: string, args: Record<string, any>): Promise<any> => {
     //TODO Need to consider situation where 2 MCP servers have the same function name
     //Should be a way to pass server info in tool call response?
