@@ -9,8 +9,10 @@ import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useMsal } from '@azure/msal-react';
 import { setAccessToken, clearAccessToken, setTokenRefreshing } from '../slices/authSlice';
+import { setGraphData, setProfilePictureUrl } from '../slices/userSlice';
 import { isTokenExpired } from '../../../util/token';
 import type { RootState } from '../index';
+import { fetchProfilePicture } from '../../services/graphService';
 
 // You'll need to import this from your app's auth configuration
 interface ApiUseConfig {
@@ -50,6 +52,13 @@ export function useAuth(apiUse: ApiUseConfig) {
         dispatch(clearAccessToken());
       } finally {
         dispatch(setTokenRefreshing(false));
+
+        //i'm assumign this whole useAuth function will move at some point.  At which point, this can move to a more appropriate spot as well.
+        //currently this is doing an extra call to acquire a token with a different scope.  Will account eventually have both scopes?
+        fetchProfilePicture(instance).then((response) => {
+          dispatch(setProfilePictureUrl(response.profilePictureURL));
+          dispatch(setGraphData(response.graphData));
+        })
       }
     };
 
