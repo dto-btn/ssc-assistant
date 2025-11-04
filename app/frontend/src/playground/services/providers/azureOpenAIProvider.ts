@@ -42,36 +42,66 @@ export class AzureOpenAIProvider implements CompletionProvider {
 
       const tools = await getMCPTools();
 
-      const resp = await client.chat.completions.create({
+      let finalToolCalls: Record<string, any> = {};
+
+      const stream = await client.chat.completions.create({
         model,
         messages: updatedMessages,
         tools: tools,
         tool_choice: "auto",
+        stream: true,
       });
 
-      let parsedResp = typeof resp === 'string' ? resp : JSON.stringify(resp);
+      let currentId;
+      let currentArguments = "";
 
-      // TODO Handle multiple choices if necessary
-      const choice = JSON.parse(parsedResp).choices[0];
+      for await (const chunk of stream) {
 
-      const toolCalls = choice.message.tool_calls || [];
+        if (chunk.choices.length > 0) { 
+          const choice = chunk.choices[0];
 
-      // Handle tool calls if any
-      while (toolCalls.length > 0) {
-        console.log("Tool calls requested:", toolCalls);        
+          if (choice.delta.tool_calls) { // Handle tool calls
+            for (const toolCall of choice.delta.tool_calls) { // Add tool to final calls
+              if (toolCall.id) { // If tool call has an ID, then it is the initial request
+                finalToolCalls[toolCall.id] = toolCall;
+                currentId = toolCall.id;
+                currentArguments = toolCall.function?.arguments || "";
+              }
+              else { // No id means that this is a continuation of a tool call's arguments
+                // Append arguments to existing tool call
+                if (currentId && finalToolCalls[currentId]) {
+                  currentArguments += toolCall.function?.arguments || "";
+                  if (currentArguments.endsWith("}")) {
+                    try {
+                      finalToolCalls[currentId].function.arguments = JSON.parse(currentArguments);
+                    } catch (e) {
+                      console.error("Error parsing tool call arguments for tool call ID", currentId, ":", e);
+                    }
+                  }
+                }
+              }
+            }
+          }
+          else { // Regular content chunk
+            if (choice.delta.content) {
+              fullText += choice.delta.content;
+              onChunk?.(choice.delta.content);
+            }
+          }
+        }
+      }
 
-        // For each tool call, get result and aggregate to feed back into chat completion
-        for (const toolCall of toolCalls) {
-          const toolArgs = JSON.parse(toolCall.function.arguments);
+      // Execute tool calls, append results to messages & send to LLM
+      if (Object.keys(finalToolCalls).length > 0) {
+        for (const callId in finalToolCalls) {
+          const toolCall = finalToolCalls[callId];
+          const toolArgs = toolCall.function.arguments;
           const toolResult = await callToolOnMCP(toolCall.function.name, toolArgs);
-          console.log("Tool result:", toolResult);
           updatedMessages = updatedMessages.concat({
             role: "system",
             content: `Tool ${toolCall.function.name} called with ID ${toolCall.id} returned: ${JSON.stringify(toolResult)}`
           });
         }
-
-        console.log("Updated messages after tool calls:", updatedMessages);
 
         // Create a new completion request with the updated messages
         const newRequest: CompletionRequest = {
@@ -85,10 +115,6 @@ export class AzureOpenAIProvider implements CompletionProvider {
         return this.createCompletion(newRequest, callbacks);
       }
 
-      //TODO Handle streaming chunks
-      fullText += choice.message.content || "";
-      console.log("Completion response received:", fullText);
-      onChunk?.(fullText);
       onComplete?.(fullText);
 
       return {

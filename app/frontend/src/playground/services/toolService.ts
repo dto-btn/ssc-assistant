@@ -21,7 +21,6 @@ export async function getMCPTools(): Promise<ChatCompletionFunctionTool[]> {
 
             // Add server tools to lookup
             clientTools?.tools.forEach(tool => {
-                console.log('Mapping tool from MCP:', tool);
 
                 // Add server tools to lookup
                 function_lookup[tool.name] = index;
@@ -59,9 +58,6 @@ export async function getMCPTools(): Promise<ChatCompletionFunctionTool[]> {
             console.error('Error listing tools from MCPClient:', err);
         }
     }));
-    
-    console.log("Combined MCP tools:", MCPtools);
-    console.log("Function lookup:", function_lookup);
 
     return MCPtools;
 }
@@ -90,7 +86,6 @@ export const callToolOnMCP = async (toolName: string, args: Record<string, any>)
     // Call the tool on the MCP client
     try {
         const result = await client.callTool(toolName, args);
-        console.log('Tool call result:', result);
         return result;
     } catch (error) {
         console.error('Error calling tool on MCP:', error);
