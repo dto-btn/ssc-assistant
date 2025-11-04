@@ -47,8 +47,10 @@ export async function getMCPTools(): Promise<ChatCompletionFunctionTool[]> {
                         parameters: {
                             type: "object",
                             properties: params,
-                            required: required_fields
+                            required: required_fields,
+                            additionalProperties: false,
                         },
+                        strict: false,
                     },
                 });
             });
