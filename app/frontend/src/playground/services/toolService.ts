@@ -6,8 +6,6 @@ const MCP_CLIENTS: MCPClient[] = [
   new MCPClient('http://localhost:8000/mcp'),
 ];
 
-// Mapping of functions to their MCPClient
-let function_lookup: Record<string, number> = {};
 
 // Function to fetch & combine all tools from all MCP servers
 export async function getMCPTools(): Promise<ChatCompletionFunctionTool[]> {
@@ -21,9 +19,6 @@ export async function getMCPTools(): Promise<ChatCompletionFunctionTool[]> {
 
             // Add server tools to lookup
             clientTools?.tools.forEach(tool => {
-
-                // Add server tools to lookup
-                function_lookup[tool.name] = index;
 
                 // Map tool parameters
                 const required_fields = Array.from(tool.inputSchema?.required?.values() || []);
@@ -41,7 +36,7 @@ export async function getMCPTools(): Promise<ChatCompletionFunctionTool[]> {
                 MCPtools.push({
                     type: "function",
                     function: {
-                        name: tool.name,
+                        name: tool.name + "-" + index, // Append index to retrieve correct MCP client later
                         description: tool.description ?? '',
                         parameters: {
                             type: "object",
@@ -63,20 +58,23 @@ export async function getMCPTools(): Promise<ChatCompletionFunctionTool[]> {
 }
 
 export const callToolOnMCP = async (toolName: string, args: Record<string, any>): Promise<any> => {
-    //TODO Need to consider situation where 2 MCP servers have the same function name
-    //Should be a way to pass server info in tool call response?
 
     // Find the MCP client for the given tool
-    const clientIndex = function_lookup[toolName];
-    if (clientIndex === undefined) {
-        throw new Error(`No MCP client found for tool: ${toolName}`);
+    let clientIndex: number = 0;
+
+    try {
+        clientIndex = parseInt(toolName.charAt(toolName.length - 1), 10);
+    } catch (error) {
+        console.error('Error parsing client index from tool name:', error);
     }
 
     const client = MCP_CLIENTS[clientIndex]; // Use the mapped MCP client
 
+    const function_name = toolName.slice(0, -2); // Remove the "-X" suffix to get the original function name
+
     // Call the tool on the MCP client
     try {
-        const result = await client.callTool(toolName, args);
+        const result = await client.callTool(function_name, args);
         return result;
     } catch (error) {
         console.error('Error calling tool on MCP:', error);
