@@ -14,6 +14,7 @@ export default class MCPClient {
         console.log('MCPClient connection completed');
     }
 
+    // Establish connection to MCP server
     private async connect() {
         const baseUrl = new URL(this.url);
         try {
@@ -31,6 +32,7 @@ export default class MCPClient {
         }
     }
 
+    // Getter for base URL
     public get baseUrl() {
         return this.url;
     }
