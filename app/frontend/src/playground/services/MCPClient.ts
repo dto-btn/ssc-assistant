@@ -27,15 +27,7 @@ export default class MCPClient {
             await this.client.connect(transport);
             console.log('Connected using Streamable HTTP transport');
         } catch (error) {
-            // If that fails with a 4xx error, try the older SSE transport
-            console.log('Streamable HTTP connection failed');
-            // this.client = new Client({
-            //     name: 'sse-client',
-            //     version: '1.0.0'
-            // });
-            // const sseTransport = new SSEClientTransport(baseUrl);
-            // await this.client.connect(sseTransport);
-            // console.log('Connected using SSE transport');
+            console.error('Error connecting to MCP server:', error);
         }
     }
 
