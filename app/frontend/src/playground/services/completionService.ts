@@ -5,6 +5,7 @@
  * and provides a unified interface for completions with streaming support.
  */
 
+import { ChatCompletionFunctionTool } from "openai/resources/index.mjs";
 import { AzureOpenAIProvider } from "./providers/azureOpenAIProvider";
 
 export interface CompletionMessage {
@@ -18,6 +19,7 @@ export interface CompletionRequest {
   provider?: 'azure-openai' | 'aws-bedrock' | "goc-ai-platform";
   userToken: string;
   signal?: AbortSignal;
+  tools: ChatCompletionFunctionTool[];
 }
 
 export interface StreamingCallbacks {

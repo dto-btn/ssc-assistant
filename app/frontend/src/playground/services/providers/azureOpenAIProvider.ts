@@ -4,7 +4,7 @@
 
 import { AzureOpenAI } from "openai";
 import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult } from "../completionService";
-import { callToolOnMCP, getMCPTools } from "../toolService";
+import { toolService } from "../toolService";
 
 export class AzureOpenAIProvider implements CompletionProvider {
   readonly name = 'azure-openai';
@@ -31,7 +31,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
     request: CompletionRequest,
     callbacks: StreamingCallbacks
   ): Promise<CompletionResult> {
-    const { messages, userToken, model, signal } = request;
+    const { messages, userToken, model, signal, tools } = request;
     const { onChunk, onError, onComplete } = callbacks;
 
     let fullText = "";
@@ -39,8 +39,6 @@ export class AzureOpenAIProvider implements CompletionProvider {
     
     try {
       const client = this.createClient(userToken);
-
-      const tools = await getMCPTools();
 
       let finalToolCalls: Record<string, any> = {};
 
@@ -101,7 +99,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
         for (const callId in finalToolCalls) {
           const toolCall = finalToolCalls[callId];
           const toolArgs = toolCall.function.arguments;
-          const toolResult = await callToolOnMCP(toolCall.function.name, toolArgs);
+          const toolResult = await toolService.callTool(toolCall.function.name, toolArgs);
           updatedMessages = updatedMessages.concat({
             role: "system",
             content: `Tool ${toolCall.function.name} called with ID ${toolCall.id} returned: ${JSON.stringify(toolResult)}`
@@ -113,7 +111,8 @@ export class AzureOpenAIProvider implements CompletionProvider {
           messages: updatedMessages,
           userToken,
           model,
-          signal
+          signal,
+          tools
         };
 
         // Call the createCompletion method again with the new request

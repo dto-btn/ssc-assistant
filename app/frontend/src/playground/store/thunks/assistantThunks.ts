@@ -5,6 +5,9 @@ import { isTokenExpired } from "../../../util/token";
 import { RootState, AppDispatch } from "..";
 import { selectMessagesBySessionId } from "../selectors/chatSelectors";
 import i18n from "../../../i18n";
+import { toolService } from "../../services/toolService";
+
+const mcpTools = await toolService.listTools();
 
 const mapMessagesForCompletion = (messages: Message[]): CompletionMessage[] =>
   messages.map(({ role, content }) => ({
@@ -82,6 +85,7 @@ export const sendAssistantMessage = ({
         model: "gpt-4o", // Let MCP client decide or the user or the agentic AI decide which model to use...
         provider,
         userToken: accessToken,
+        tools: mcpTools,
       },
       {
         onChunk: (chunk: string) => {
