@@ -48,10 +48,11 @@ async function resolveAttachmentParts(
     if (contentType?.startsWith("image/")) {
       let dataUrl = cacheKey ? attachmentImageCache.get(cacheKey) : undefined;
 
-      if (!dataUrl && attachment.url) {
+      if (!dataUrl && (attachment.url || attachment.blobName)) {
         try {
           const result = await fetchFileDataUrl({
             fileUrl: attachment.url,
+            blobName: attachment.blobName,
             fileType: contentType,
             accessToken,
           });

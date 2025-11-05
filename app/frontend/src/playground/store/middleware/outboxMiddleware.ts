@@ -2,6 +2,11 @@ import { Middleware, MiddlewareAPI, Dispatch, UnknownAction } from "@reduxjs/too
 import { RootState } from "..";
 import { removeOutboxItem, OutboxItem } from "../slices/outboxSlice";
 import { uploadEncodedFile } from "../../api/storage";
+import {
+  markSessionError,
+  markSessionSynced,
+  markSessionSyncing,
+} from "../slices/syncSlice";
 
 let isFlushing = false; // Serialize retries so multiple actions don't re-upload the same item concurrently.
 
@@ -9,9 +14,17 @@ let isFlushing = false; // Serialize retries so multiple actions don't re-upload
  * Attempt to send a queued upload using the current auth token; returns early
  * when offline or unauthenticated so the item can be retried later.
  */
-async function flushItem(item: OutboxItem, state: RootState) {
-  const token = state.auth.accessToken;
-  if (!token) return; // no token yet, keep in outbox
+type FlushResult = "success" | "skip" | "failed";
+
+async function flushItem(
+  item: OutboxItem,
+  store: MiddlewareAPI<Dispatch<UnknownAction>, RootState>,
+): Promise<FlushResult> {
+  const token = store.getState().auth.accessToken;
+  if (!token) {
+    return "skip";
+  }
+
   if (item.kind === "user-file") {
     await uploadEncodedFile({
       encodedFile: item.dataUrl,
@@ -24,24 +37,40 @@ async function flushItem(item: OutboxItem, state: RootState) {
         ...(item.metadata ?? {}),
       },
     });
-    return;
+    return "success";
   }
 
   if (item.kind === "chat-archive") {
+    store.dispatch(markSessionSyncing({ sessionId: item.sessionId }));
     const filename = item.label || `${item.sessionId}-${Date.now()}.chat.json`;
-    await uploadEncodedFile({
-      encodedFile: item.dataUrl,
-      originalName: filename,
-      accessToken: token,
-      sessionId: item.sessionId,
-      category: "chat",
-      metadata: {
-        type: "chat-archive",
-        sessionid: item.sessionId,
-      },
-    });
-    return;
+    const sessionRecord = store.getState().sessions.sessions.find((session) => session.id === item.sessionId);
+    try {
+      await uploadEncodedFile({
+        encodedFile: item.dataUrl,
+        originalName: filename,
+        accessToken: token,
+        sessionId: item.sessionId,
+        category: "chat",
+        metadata: {
+          type: "chat-archive",
+          sessionid: item.sessionId,
+          sessionname: sessionRecord?.name,
+        },
+      });
+      store.dispatch(markSessionSynced({ sessionId: item.sessionId }));
+      return "success";
+    } catch (error) {
+      store.dispatch(
+        markSessionError({
+          sessionId: item.sessionId,
+          error: error instanceof Error ? error.message : undefined,
+        })
+      );
+      return "failed";
+    }
   }
+
+  return "success";
 }
 
 export const outboxMiddleware: Middleware<UnknownAction, RootState> = (store: MiddlewareAPI<Dispatch<UnknownAction>, RootState>) => next => (action) => {
@@ -61,10 +90,19 @@ export const outboxMiddleware: Middleware<UnknownAction, RootState> = (store: Mi
         let progressed = false;
         for (const item of batch) {
           try {
-            await flushItem(item, store.getState());
-            store.dispatch(removeOutboxItem(item.id));
-            progressed = true;
+            const outcome = await flushItem(item, store);
+            if (outcome === "success") {
+              store.dispatch(removeOutboxItem(item.id));
+              progressed = true;
+            }
+            if (outcome === "skip") {
+              keepFlushing = false;
+              break;
+            }
           } catch {
+            if (item.kind === "chat-archive") {
+              store.dispatch(markSessionError({ sessionId: item.sessionId }));
+            }
             // keep in outbox for next attempt
           }
         }

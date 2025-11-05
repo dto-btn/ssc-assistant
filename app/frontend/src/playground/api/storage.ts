@@ -36,6 +36,9 @@ type RawFilePayload = Record<string, unknown> & {
   sessionId?: string;
   sessionid?: string;
   category?: string;
+  metadataType?: string;
+  sessionName?: string;
+  sessionname?: string;
 };
 
 const asString = (value: unknown): string | undefined =>
@@ -45,15 +48,22 @@ const asNumber = (value: unknown): number | undefined =>
   typeof value === "number" && Number.isFinite(value) ? value : undefined;
 
 function mapFilePayload(payload: RawFilePayload = {}): FileAttachment {
+  const candidateType = asString(payload.type);
+  const resolvedContentType =
+    asString(payload.contentType) ??
+    (candidateType && candidateType.includes("/") ? candidateType : null);
+
   return {
     blobName: asString(payload.blobName) ?? asString(payload.name) ?? "",
     url: asString(payload.url) ?? "",
     originalName: asString(payload.originalName) ?? asString(payload.name) ?? "",
     size: asNumber(payload.size),
-    contentType: asString(payload.contentType) ?? asString(payload.type) ?? null,
+    contentType: resolvedContentType,
     uploadedAt: asString(payload.uploadedAt) ?? asString(payload.uploadedat) ?? null,
     sessionId: asString(payload.sessionId) ?? asString(payload.sessionid) ?? null,
     category: asString(payload.category) ?? undefined,
+    metadataType: asString(payload.metadataType) ?? undefined,
+    sessionName: asString(payload.sessionName) ?? asString(payload.sessionname) ?? null,
   };
 }
 
@@ -162,23 +172,23 @@ export async function uploadFile({
  * Fetch the caller's attachments for a given session from the playground API.
  */
 export async function listSessionFiles({
-  sessionId,
   accessToken,
+  sessionId,
 }: {
-  sessionId: string;
   accessToken: string;
+  sessionId?: string;
 }): Promise<FileAttachment[]> {
-  if (!sessionId) throw new Error("sessionId is required");
   if (!accessToken?.trim()) throw new Error("accessToken is required");
 
-  const response = await fetch(
-    `${FILES_FOR_SESSION_ENDPOINT}?sessionId=${encodeURIComponent(sessionId)}`,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken.trim()}`,
-      },
+  const url = sessionId
+    ? `${FILES_FOR_SESSION_ENDPOINT}?sessionId=${encodeURIComponent(sessionId)}`
+    : FILES_FOR_SESSION_ENDPOINT;
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${accessToken.trim()}`,
     },
-  );
+  });
 
   const data = await handleJsonResponse(response);
   const files = Array.isArray(data?.files) ? data.files : [];
@@ -211,14 +221,16 @@ export async function extractFileText({
  */
 export async function fetchFileDataUrl({
   fileUrl,
+  blobName,
   fileType,
   accessToken,
 }: {
-  fileUrl: string;
+  fileUrl?: string | null;
+  blobName?: string | null;
   fileType?: string | null;
   accessToken?: string | null;
 }): Promise<{ dataUrl: string; contentType: string }> {
-  if (!fileUrl) throw new Error("fileUrl is required");
+  if (!fileUrl && !blobName) throw new Error("fileUrl or blobName is required");
 
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (accessToken?.trim()) {
@@ -230,6 +242,7 @@ export async function fetchFileDataUrl({
     headers,
     body: JSON.stringify({
       fileUrl,
+      blobName,
       fileType,
       responseFormat: "data_url",
     }),

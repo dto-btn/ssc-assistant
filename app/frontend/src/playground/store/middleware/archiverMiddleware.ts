@@ -2,6 +2,12 @@ import { Middleware, MiddlewareAPI, UnknownAction, Dispatch } from "@reduxjs/too
 import { RootState } from "..";
 import { addMessage, Message } from "../slices/chatSlice";
 import { addChatArchiveToOutbox } from "../slices/outboxSlice";
+import {
+  markSessionDirty,
+  markSessionSyncing,
+  markSessionSynced,
+  markSessionError,
+} from "../slices/syncSlice";
 import { uploadEncodedFile } from "../../api/storage";
 
 // Archiver policy
@@ -32,13 +38,26 @@ function scheduleArchive(sessionId: string, store: MiddlewareAPI<Dispatch<Unknow
 async function doArchive(sessionId: string, store: MiddlewareAPI<Dispatch<UnknownAction>, RootState>) {
   const state = store.getState();
   const accessToken = state.auth?.accessToken ?? null;
+  const sessionRecord = state.sessions.sessions.find((session) => session.id === sessionId);
 
   const messages = state.chat.messages.filter(m => m.sessionId === sessionId);
-  if (messages.length === 0) return;
+  const hasQueuedArchive = store
+    .getState()
+    .outbox.items.some((item) => item.kind === "chat-archive" && item.sessionId === sessionId);
+
+  if (messages.length === 0) {
+    if (!hasQueuedArchive) {
+      store.dispatch(markSessionSynced({ sessionId }));
+    }
+    return;
+  }
 
   const lastMessage = messages[messages.length - 1];
   const signature = `${messages.length}:${lastMessage?.id ?? ""}:${lastMessage?.timestamp ?? ""}`;
   if (lastArchivedSignature[sessionId] === signature) {
+    if (!hasQueuedArchive) {
+      store.dispatch(markSessionSynced({ sessionId }));
+    }
     return;
   }
 
@@ -69,6 +88,7 @@ async function doArchive(sessionId: string, store: MiddlewareAPI<Dispatch<Unknow
     return;
   }
 
+  store.dispatch(markSessionSyncing({ sessionId }));
   try {
     await uploadEncodedFile({
       encodedFile: payload,
@@ -79,14 +99,22 @@ async function doArchive(sessionId: string, store: MiddlewareAPI<Dispatch<Unknow
       metadata: {
         type: "chat-archive",
         sessionid: sessionId,
+        sessionname: sessionRecord?.name,
       },
     });
   } catch (error) {
     queueArchive();
+    store.dispatch(
+      markSessionError({
+        sessionId,
+        error: error instanceof Error ? error.message : undefined,
+      })
+    );
     lastArchivedSignature[sessionId] = signature;
     throw error;
   }
   lastArchivedSignature[sessionId] = signature;
+  store.dispatch(markSessionSynced({ sessionId }));
 }
 
 export const archiverMiddleware: Middleware<UnknownAction, RootState> = (store) => (next) => (action) => {
@@ -96,6 +124,8 @@ export const archiverMiddleware: Middleware<UnknownAction, RootState> = (store) 
     const { sessionId } = action.payload;
     const state: RootState = store.getState();
     const messages = state.chat.messages.filter(m => m.sessionId === sessionId);
+
+    store.dispatch(markSessionDirty({ sessionId }));
 
     // Schedule idle archive after each message
     scheduleArchive(sessionId, store);

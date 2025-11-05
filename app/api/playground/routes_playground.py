@@ -1,21 +1,28 @@
-from flask import request, jsonify
 import base64
 import uuid
 from datetime import datetime
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple, List, Type, TypeVar
 import logging
 from urllib.parse import urlparse
 from werkzeug.utils import secure_filename
 import mimetypes
 
-from utils.auth import verify_user_access_token
+from utils.auth import auth, user_ad
 from utils.azure_clients import get_blob_service_client
 from utils.file_manager import FileManager
 from apiflask import APIBlueprint
 from azure.core.exceptions import AzureError, ResourceExistsError, ResourceNotFoundError
 from azure.storage.blob import ContentSettings, BlobClient, ContainerClient
+from utils.models import (
+    PlaygroundSessionFilesQuery,
+    PlaygroundFilesResponse,
+    PlaygroundUploadRequest,
+    PlaygroundUploadResponse,
+    PlaygroundExtractTextRequest,
+    PlaygroundExtractTextResponse,
+)
 
-api_playground = APIBlueprint("api_playground", __name__)
+api_playground = APIBlueprint("api_playground", __name__, tag="Playground")
 logger = logging.getLogger(__name__)
 
 CONTAINER_NAME = "assistant-chat-files-v2"
@@ -108,22 +115,30 @@ def _public_error_message(exc: PlaygroundAPIError) -> str:
     return messages.get(exc.status_code, "Request failed")
 
 
-def _get_authenticated_oid() -> str:
-    auth_header = request.headers.get("Authorization", "")
-    if not auth_header.startswith("Bearer "):
-        raise PlaygroundAPIError("Missing or invalid Authorization header", 401)
-    access_token = auth_header.split(" ", 1)[1].strip()
-    if not access_token:
-        raise PlaygroundAPIError("Missing or invalid Authorization header", 401)
+T = TypeVar("T")
 
-    user = verify_user_access_token(access_token)
-    if not user or not getattr(user, "token", None):
+
+def _coerce_to_dataclass(data: Any, cls: Type[T]) -> T:
+    if isinstance(data, cls):
+        return data
+    if isinstance(data, dict):
+        return cls(**data)
+    raise PlaygroundAPIError("Invalid request payload", 400)
+
+
+def _get_authenticated_oid() -> str:
+    user = user_ad.current_user()  # type: ignore[attr-defined]
+    if not user:
         raise PlaygroundAPIError("Invalid access token", 401)
 
-    payload = user.token
-    oid = payload.get("oid") if isinstance(payload, dict) else None
+    token_payload = getattr(user, "token", None)
+    if not isinstance(token_payload, dict):
+        raise PlaygroundAPIError("OID not found in token", 401)
+
+    oid = token_payload.get("oid")
     if not oid:
         raise PlaygroundAPIError("OID not found in token", 401)
+
     return oid
 
 
@@ -195,6 +210,7 @@ def _fetch_file_bytes(
     container_client = _get_container_client()
 
     if oid:
+        # Signed-in callers are restricted to blobs under their personal prefix to prevent cross-user access.
         blob_client = _get_blob_client_for_request(file_url, blob_name, oid, container_client)
         if not blob_client:
             raise PlaygroundAPIError("File not found", 404)
@@ -241,31 +257,38 @@ def _fetch_file_bytes(
     return file_bytes, content_type
 
 # GET /api/playground/files-for-session: Returns files for a given sessionId by searching blob metadata
-@api_playground.route("/files-for-session", methods=["GET"])
-def files_for_session():
-    """Return metadata for the caller's files bound to a session.
+@api_playground.get("/files-for-session")
+@api_playground.doc(
+    summary="List files for a session",
+    description="Return metadata for the caller's files associated with the provided sessionId.",
+    security="ApiKeyAuth",
+)
+@api_playground.input(PlaygroundSessionFilesQuery.Schema, location="query", arg_name="query")  # type: ignore[attr-defined]
+@api_playground.output(PlaygroundFilesResponse.Schema)  # type: ignore[attr-defined]
+@auth.login_required(role="chat")
+@user_ad.login_required
+def files_for_session(query: PlaygroundSessionFilesQuery):
+    """Return metadata for the caller's files bound to a session."""
+    try:
+        query = _coerce_to_dataclass(query, PlaygroundSessionFilesQuery)
+    except PlaygroundAPIError as exc:
+        return {"message": _public_error_message(exc)}, exc.status_code
 
-    The bearer token identifies the caller via `oid`, which scopes the blob
-    search to their personal prefix. Results are filtered by the provided
-    `sessionId` query string parameter and returned as JSON.
-    """
-    session_id = request.args.get("sessionId")
-    if not session_id:
-        return jsonify({"message": "sessionId is required"}), 400
+    session_id = query.sessionId
 
     try:
         oid = _get_authenticated_oid()
     except PlaygroundAPIError as exc:
         logger.info("Files-for-session request blocked: %s", exc)
-        return jsonify({"message": _public_error_message(exc)}), exc.status_code
+        return {"message": _public_error_message(exc)}, exc.status_code
 
     try:
         container_client = _get_container_client()
         blob_list = container_client.list_blobs(name_starts_with=f"{oid}/", include=["metadata"])
-        files = []
+        files: List[Dict[str, Any]] = []
         for blob in blob_list:
             meta = getattr(blob, "metadata", {}) or {}
-            if meta.get("sessionid") != session_id:
+            if session_id and meta.get("sessionid") != session_id:
                 continue
             content_type = None
             content_settings = getattr(blob, "content_settings", None)
@@ -275,54 +298,63 @@ def files_for_session():
                 {
                     "name": blob.name,
                     "url": f"{container_client.url}/{blob.name}",
+                    "blobName": blob.name,
                     "size": getattr(blob, "size", None),
                     "contentType": content_type,
                     "originalName": meta.get("originalname"),
                     "uploadedAt": meta.get("uploadedat"),
                     "sessionId": meta.get("sessionid"),
                     "category": meta.get("category"),
+                    "metadataType": meta.get("type"),
+                    "sessionName": meta.get("sessionname"),
                 }
             )
-        return jsonify({"files": files})
+        return {"files": files}
     except ResourceNotFoundError:
-        return jsonify({"files": []})
+        return {"files": []}
     except AzureError:
         logger.exception("Failed to list files for session %s", session_id)
-        return jsonify({"message": "Failed to list files"}), 500
+        return {"message": "Failed to list files"}, 500
 
 
 # POST /api/1.0/upload: Accepts encoded_file, name, and access token, uploads to Azure Blob Storage with user_id metadata
-@api_playground.route("/upload", methods=["POST"])
-def upload_file():
-    """Persist a base64 encoded file in blob storage for the signed-in user.
-
-    The request body must include `encoded_file` and `name`, plus optional
-    `sessionId`, `category`, `fileType`, and arbitrary metadata. The function
-    derives a per-user blob path, uploads the decoded bytes, and returns a
-    summary payload describing the stored file.
-    """
-    data: Dict[str, Any] = request.get_json() or {}
-    encoded_file = data.get("encoded_file")
-    original_name = data.get("name")
-    session_id = data.get("sessionId") or data.get("session_id")
-    category = (data.get("category") or "files").lower()
+@api_playground.post("/upload")
+@api_playground.doc(
+    summary="Upload a file for the playground session",
+    description="Persist a base64 encoded file in blob storage for the signed-in user.",
+    security="ApiKeyAuth",
+)
+@api_playground.input(PlaygroundUploadRequest.Schema, arg_name="upload_request")  # type: ignore[attr-defined]
+@api_playground.output(PlaygroundUploadResponse.Schema)  # type: ignore[attr-defined]
+@auth.login_required(role="chat")
+@user_ad.login_required
+def upload_file(upload_request: PlaygroundUploadRequest):
+    """Persist a base64 encoded file in blob storage for the signed-in user."""
+    try:
+        upload_request = _coerce_to_dataclass(upload_request, PlaygroundUploadRequest)
+    except PlaygroundAPIError as exc:
+        return {"message": _public_error_message(exc)}, exc.status_code
+    encoded_file = upload_request.encoded_file
+    original_name = upload_request.name
+    session_id = upload_request.sessionId or upload_request.session_id
+    category = (upload_request.category or "files").lower()
     safe_category = "chat" if category not in {"files", "chat"} else category
-    mime_type = data.get("fileType") or data.get("mimeType") or data.get("type")
-    metadata_input = data.get("metadata")
+    mime_type = upload_request.fileType or upload_request.mimeType or upload_request.type
+    metadata_input = upload_request.metadata
     extra_metadata: Dict[str, Any] = metadata_input if isinstance(metadata_input, dict) else {}
 
     if not encoded_file or not original_name:
-        return jsonify({"message": "encoded_file and name are required"}), 400
+        return {"message": "encoded_file and name are required"}, 400
 
     try:
         oid = _get_authenticated_oid()
     except PlaygroundAPIError as exc:
         logger.info("Upload request blocked: %s", exc)
-        return jsonify({"message": _public_error_message(exc)}), exc.status_code
+        return {"message": _public_error_message(exc)}, exc.status_code
 
     normalized_name = secure_filename(original_name)
     if not normalized_name:
-        return jsonify({"message": "Invalid file name"}), 400
+        return {"message": "Invalid file name"}, 400
 
     encoded_payload = encoded_file
     if encoded_payload.startswith("data:"):
@@ -330,15 +362,13 @@ def upload_file():
     try:
         file_bytes = base64.b64decode(encoded_payload)
     except Exception:
-        return jsonify({"message": "Failed to decode file"}), 400
+        return {"message": "Failed to decode file"}, 400
 
-    # Try using the provided type, otherwise infer from the name for copied files.
     resolved_mime = mime_type or mimetypes.guess_type(normalized_name)[0]
     if not _is_supported_file(resolved_mime, normalized_name, safe_category):
-        return jsonify({"message": "Unsupported file type"}), 400
+        return {"message": "Unsupported file type"}, 400
     mime_type = resolved_mime or mime_type
 
-    # Build blob path
     session_segment = f"{session_id}/" if session_id else ""
     blob_name = f"{oid}/{safe_category}/{session_segment}{uuid.uuid4().hex}_{normalized_name}"
 
@@ -362,7 +392,7 @@ def upload_file():
         container_client = _get_container_client()
     except AzureError:
         logger.exception("Failed to access blob service for oid %s", oid)
-        return jsonify({"message": "Upload failed"}), 500
+        return {"message": "Upload failed"}, 500
 
     try:
         container_client.create_container()
@@ -370,7 +400,7 @@ def upload_file():
         pass
     except AzureError:
         logger.exception("Failed to ensure container exists for oid %s", oid)
-        return jsonify({"message": "Upload failed"}), 500
+        return {"message": "Upload failed"}, 500
 
     try:
         blob_client = container_client.get_blob_client(blob_name)
@@ -384,36 +414,43 @@ def upload_file():
         blob_url = blob_client.url
     except AzureError:
         logger.exception("Failed to upload blob for oid %s", oid)
-        return jsonify({"message": "Upload failed"}), 500
+        return {"message": "Upload failed"}, 500
 
     file_payload = {
-        "blobName": blob_name,
+        "name": blob_name,
         "url": blob_url,
-        "originalName": original_name,
-        "uploadedAt": uploaded_at,
-        "sessionId": session_id,
-        "category": safe_category,
+        "blobName": blob_name,
         "size": len(file_bytes),
         "contentType": mime_type,
+        "originalName": original_name,
+        "uploadedAt": uploaded_at,
+        "sessionId": str(session_id) if session_id else None,
+        "category": safe_category,
+        "metadataType": metadata.get("type"),
+        "sessionName": metadata.get("sessionname"),
     }
-    return jsonify({"file": file_payload, "message": "Uploaded"})
+    return {"file": file_payload, "message": "Uploaded"}
 
 # POST /api/playground/extract-file-text: Accepts fileUrl and fileType, returns extracted text
-@api_playground.route("/extract-file-text", methods=["POST"])
-def extract_file_text():
-    """Fetch a remote file and extract plain text using the FileManager helper.
-
-    The JSON body must include `fileUrl`, with an optional `fileType` hint. The
-    endpoint streams the file into memory, invokes `FileManager.extract_text`,
-    and responds with the extracted text or an error message.
-    """
-    data = request.get_json() or {}
-    file_url = data.get("fileUrl")
-    blob_name = data.get("blobName")
-    requested_type = data.get("fileType")
-    response_format = (data.get("responseFormat") or "text").strip().lower()
+@api_playground.post("/extract-file-text")
+@api_playground.doc(
+    summary="Extract text from a file",
+    description="Fetch a remote file and extract plain text using the FileManager helper.",
+)
+@api_playground.input(PlaygroundExtractTextRequest.Schema, arg_name="payload")  # type: ignore[attr-defined]
+@api_playground.output(PlaygroundExtractTextResponse.Schema)  # type: ignore[attr-defined]
+def extract_file_text(payload: PlaygroundExtractTextRequest):
+    """Fetch a remote file and extract plain text using the FileManager helper."""
+    try:
+        payload = _coerce_to_dataclass(payload, PlaygroundExtractTextRequest)
+    except PlaygroundAPIError as exc:
+        return {"error": _public_error_message(exc)}, exc.status_code
+    file_url = payload.fileUrl
+    blob_name = payload.blobName
+    requested_type = payload.fileType
+    response_format = (payload.responseFormat or "text").strip().lower()
     if not file_url and not blob_name:
-        return jsonify({"error": "fileUrl or blobName is required"}), 400
+        return {"error": "fileUrl or blobName is required"}, 400
 
     oid, auth_error = _resolve_optional_oid()
     try:
@@ -426,13 +463,13 @@ def extract_file_text():
         )
     except PlaygroundAPIError as exc:
         logger.info("Extract-file-text request failed: %s", exc)
-        return jsonify({"error": _public_error_message(exc)}), exc.status_code
+        return {"error": _public_error_message(exc)}, exc.status_code
 
     if response_format == "data_url":
         content_type = resolved_type or requested_type or "application/octet-stream"
         encoded = base64.b64encode(file_bytes).decode("utf-8")
         data_url = f"data:{content_type};base64,{encoded}"
-        return jsonify({"dataUrl": data_url, "contentType": content_type})
+        return {"dataUrl": data_url, "contentType": content_type}
 
     try:
         fm = FileManager(file_bytes, resolved_type)
@@ -441,6 +478,6 @@ def extract_file_text():
         logger.exception(
             "Failed to extract text for resource", extra={"blob_name": blob_name, "file_url": file_url}
         )
-        return jsonify({"error": "Failed to extract text"}), 500
+        return {"error": "Failed to extract text"}, 500
 
-    return jsonify({"extractedText": text})
+    return {"extractedText": text}

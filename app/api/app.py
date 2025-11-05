@@ -4,7 +4,7 @@ import os
 from apiflask import APIFlask
 from dotenv import load_dotenv
 from v1.routes_v1 import api_v1
-from v1.routes_playground import api_playground
+from playground.routes_playground import api_playground
 from proxy.azure import ROOT_PATH_PROXY_AZURE, proxy_azure
 from flask_cors import CORS
 
