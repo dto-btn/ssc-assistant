@@ -23,7 +23,7 @@ export const DevBanner = () => {
         height: 26,
         position: "absolute",
         bottom: 10,
-        left: 220
+        left: 180
       }}
     >
       DEV

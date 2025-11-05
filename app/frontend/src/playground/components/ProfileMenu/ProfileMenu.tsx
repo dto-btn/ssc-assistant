@@ -16,6 +16,7 @@ import MenuDivider from "./MenuDivider";
 import LogoutIcon from "@mui/icons-material/Logout";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { PROFILE_MENU_WIDTH } from "../../constants";
+import { DevBanner } from "../DevBanner";
 
 
 /**
@@ -88,6 +89,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
         aria-expanded={isOpen ? "true" : undefined}
       >
           <UserProfilePicture size={size} fontSize={fontSize} />
+          <DevBanner />
           <Box //floats the avatar and name to left
             sx={{
               marginLeft: "auto",
