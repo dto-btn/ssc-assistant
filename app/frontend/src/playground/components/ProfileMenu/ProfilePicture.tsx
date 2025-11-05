@@ -1,6 +1,7 @@
 import Avatar from '@mui/material/Avatar';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
+import { Typography } from '@mui/material';
 
 interface UserProfileProps {
   size?: string;
@@ -71,10 +72,15 @@ export const UserProfilePicture = ({ size, fontSize }: UserProfileProps) => {
 
 
   if (profilePictureURL) {
-    return <Avatar aria-hidden alt={fullName} src={profilePictureURL} sx={size ? { width: size, height: size } : {}}
-    />
+       return <> 
+       <Avatar aria-hidden alt={fullName} src={profilePictureURL} sx={size ? { width: size, height: size } : {}} />
+       <Typography sx={{ marginLeft: 3, textTransform: 'none'}}>{fullName}</Typography>
+       </>
   } else {
     const letterAvatar = getLetterAvatar(fullName, size, fontSize);
-    return <Avatar aria-hidden alt={fullName} sx={letterAvatar?.sx} children={letterAvatar?.children} />;
+    return <>
+      <Avatar aria-hidden alt={fullName} sx={letterAvatar?.sx} children={letterAvatar?.children}/>
+      <Typography sx={{ marginLeft: 1, textTransform: 'none'}}>{fullName}</Typography>
+    </> 
   }
 };
