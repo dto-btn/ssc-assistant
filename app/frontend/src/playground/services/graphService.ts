@@ -9,6 +9,10 @@ const graphConfig = {
 }
 
 /**
+ * Microsoft Graph Service
+ * 
+ * Handle requests aimed at Microsoft Graph.  
+ * 
  * Examples:
  * https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/samples/msal-react-samples/typescript-sample/src/utils/MsGraphApiCall.ts
  * https://github.com/Azure-Samples/ms-identity-docs-code-javascript/blob/main/react-spa/src/graph.js
