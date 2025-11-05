@@ -72,6 +72,7 @@ jobs:
     with:
       environment: 'prod'
       app-name: 'G3Pc-SSC-CIOAssistant-Linux-API-asv'
+      runner: 'self-hosted'
     secrets: inherit
 
   frontend-prod-163ent:
@@ -82,6 +83,7 @@ jobs:
       disabled-features: ''
       environment: 'prod'
       app-name: 'G3Pc-SSC-CIOAssistant-Linux-Frontend-asv'
+      runner: 'self-hosted'
     secrets: inherit
 
   # alembic-prod:
