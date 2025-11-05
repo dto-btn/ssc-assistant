@@ -41,6 +41,7 @@ import SessionRenameDialog from "./SessionRenameDialog";
 import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 import ProfileMenu from "./ProfileMenu/ProfileMenu";
+import { DevBanner } from "./DevBanner"
 
 /**
  * Sidebar for listing and managing Playground chat sessions.
@@ -292,6 +293,7 @@ const SessionSidebar: React.FC = () => {
           logout={() => console.log("logout")}
         />
       </Box>
+      <DevBanner />
     </Box>
   );
 };
