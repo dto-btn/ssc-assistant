@@ -8,6 +8,7 @@ import { type FC } from "react";
 import { AppBar } from "../../layouts/NewLayout/components/AppBar";
 import { useAppStore } from "../../../stores/AppStore";
 import { LEFT_MENU_WIDTH } from "../../../constants";
+import { DevBanner } from "../../DevBanner";
 
 type TopMenuProps = PropsWithChildren<{
   childrenLeftOfLogo?: React.ReactNode;
@@ -77,6 +78,7 @@ export const TopMenuFrame: FC<TopMenuProps> = ({
             >
               {t("title")}
             </Typography>
+            <DevBanner />
           </Box>
           <Box
             sx={{

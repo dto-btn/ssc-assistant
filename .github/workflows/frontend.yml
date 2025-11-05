@@ -15,6 +15,9 @@ on:
       app-name:
         type: string
         required: true
+      enable-playground:
+        type: boolean
+        default: false
     secrets: 
       FRONTEND_PUBLISH_PROFILE:
         required: false
@@ -64,6 +67,8 @@ jobs:
         VITE_ALLOWED_TOOLS: ${{ inputs.allowed-tools }}
         VITE_DISABLED_FEATURES: ${{ inputs.disabled-features }}
         VITE_CLARITY_TOKEN: ${{ secrets.VITE_CLARITY_TOKEN }}
+        VITE_PLAYGROUND_ON: ${{ inputs.enable-playground }}
+        VITE_SHOW_DEV_BANNER: ${{ inputs.environment != 'pilot-prod' }}
 
     # This step will only run when the event is a push to the main branch
     - name: Zip artifact for deployment
@@ -84,10 +89,19 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-    - name: Log in with Azure
+    - name: Log in with Azure (163gc)
+      if: inputs.environment != 'prod'
       uses: azure/login@v1
       with:
         creds: '${{ secrets.AZURE_CREDENTIALS }}'
+
+    - name: Log in with Azure (163ent)
+      if: inputs.environment == 'prod'
+      uses: azure/login@v2
+      with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     - name: Download artifact from build job
       uses: actions/download-artifact@v4.1.8
