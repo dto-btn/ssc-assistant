@@ -17,17 +17,13 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { PROFILE_MENU_WIDTH } from "../../constants";
 
-/**
- * ProfileMenu component
- * 
- * Profile 
- */
-
 
 /**
- * Prop for {@link }
+ * Prop for {@link ProfileMenu}
  * 
- * Add prop desc
+ * @property size - size of profile picture avatar
+ * @property fontsize - Font size for the letters used to generate avatar in the event profile picture not found.
+ * @property logout - logout action
  */
 interface ProfileMenuProps {
   size?: string;
@@ -36,7 +32,11 @@ interface ProfileMenuProps {
 }
 
 /**
- * Dev blurb on component?  what's the diff with this and the one up top?
+ * ProfileMenu Component
+ * 
+ * Component holding menu items related to user profile menu. 
+ * Currently resides at the bottom of sidebar
+ * Settings, Logout, etc.
  */
 const ProfileMenu: React.FC<ProfileMenuProps> = ({
   size,
