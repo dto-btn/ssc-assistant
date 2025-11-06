@@ -66,27 +66,29 @@ jobs:
   ###################
   #      PROD       #
   ###################
-  api-prod:
+  api-prod-163ent:
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/api.yml
     with:
       environment: 'prod'
-      app-name: 'ssc-assistant-prod-api'
+      app-name: 'G3Pc-SSC-CIOAssistant-Linux-API-asv'
+      runner: 'self-hosted'
     secrets: inherit
 
-  frontend-prod:
+  frontend-prod-163ent:
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/frontend.yml
     with:
-      allowed-tools: 'geds,corporate,bits'
+      allowed-tools: 'geds,corporate,bits,pmcoe'
       disabled-features: ''
       environment: 'prod'
-      app-name: 'ssc-assistant-prod'
+      app-name: 'G3Pc-SSC-CIOAssistant-Linux-Frontend-asv'
+      runner: 'self-hosted'
     secrets: inherit
 
-  alembic-prod:
-    if: github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/db.yml
-    with:
-      environment: 'prod'
-    secrets: inherit
+  # alembic-prod:
+  #   if: github.ref == 'refs/heads/main'
+  #   uses: ./.github/workflows/db.yml
+  #   with:
+  #     environment: 'prod'
+  #   secrets: inherit

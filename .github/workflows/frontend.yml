@@ -18,6 +18,10 @@ on:
       enable-playground:
         type: boolean
         default: false
+      runner:
+        type: string
+        required: false
+        default: 'ubuntu-latest'
     secrets: 
       FRONTEND_PUBLISH_PROFILE:
         required: false
@@ -37,7 +41,7 @@ permissions:
 jobs:
   build:
     environment: ${{ inputs.environment }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -86,10 +90,10 @@ jobs:
   deploy:  # TEMPORARY DEPLOY ONLY ON ARCHIBUS BRANCH OR MAIN
     if: github.event_name != 'pull_request'
     environment: ${{ inputs.environment }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
     needs: build
     steps:
-    - name: Log in with Azure
+    - name: Log in with Azure (163gc)
       uses: azure/login@v1
       with:
         creds: '${{ secrets.AZURE_CREDENTIALS }}'

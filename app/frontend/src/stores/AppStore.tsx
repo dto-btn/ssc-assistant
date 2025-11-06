@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { produce } from 'immer'
+import type { AlertColor } from '@mui/material';
 import { theme } from '../theme';
 import { LanguageService } from "../services/LanguageService";
 import { SNACKBAR_DEBOUNCE_KEYS, SNACKBAR_DEBOUNCE_MS, SNACKBAR_TTL_MS } from '../constants';
@@ -10,13 +11,14 @@ type SnackbarDatum = {
     id: number;
     message: string;
     isOpen: boolean;
+    severity: AlertColor;
 };
 
 type AppContext = {
     snackbars: {
         data: SnackbarDatum[];
         debounceKeys: SNACKBAR_DEBOUNCE_KEYS[];
-        show: (message: string, debounceKey: SNACKBAR_DEBOUNCE_KEYS) => void;
+    show: (message: string, debounceKey?: SNACKBAR_DEBOUNCE_KEYS, severity?: AlertColor) => void;
         _hide: (id: number) => void;
     };
     appDrawer: {
@@ -44,7 +46,7 @@ export const useAppStore = create<AppContext>((set, get) => ({
          * The debounceKey is used to prevent multiple snackbars from showing in quick succession. It
          * is optional, and if it is not provided, the snackbar will not be debounced.
          */
-        show: (message: string, debounceKey?: SNACKBAR_DEBOUNCE_KEYS) => {
+        show: (message: string, debounceKey?: SNACKBAR_DEBOUNCE_KEYS, severity?: AlertColor) => {
             // If the debounce key is provided and is in the list of debounce keys, we don't show the snackbar.
             if (debounceKey && get().snackbars.debounceKeys.includes(debounceKey)) {
                 return;
@@ -52,6 +54,7 @@ export const useAppStore = create<AppContext>((set, get) => ({
 
             // generate unique id
             const id = Math.random();
+            const alertSeverity: AlertColor = severity ?? 'error';
 
             // hide after 6 seconds
             setTimeout(() => {
@@ -63,7 +66,8 @@ export const useAppStore = create<AppContext>((set, get) => ({
                 draft.snackbars.data.push({
                     id,
                     message,
-                    isOpen: true
+                    isOpen: true,
+                    severity: alertSeverity
                 });
             }));
 
@@ -142,6 +146,7 @@ export const useAppStore = create<AppContext>((set, get) => ({
             return cleaned;
         })(),
         setEnabledTools: (tools: Record<string, boolean>) => {
+            // Persist tool availability so the UI and localStorage stay in sync.
             set((state) => produce(state, (draft) => {
                 draft.tools.enabledTools = { ...tools };
             }));

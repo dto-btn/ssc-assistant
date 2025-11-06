@@ -308,8 +308,19 @@ export const AssistantBubble = ({
   }, [isLoading, context, text, scrollRef]);
 
   useEffect(() => {
-    if (toolsInfo && toolsInfo.length > 0) {
-      toolsInfo.map((tool) => {
+    if (!toolsInfo || toolsInfo.length === 0) {
+      setBrData(undefined);
+      setBrMetadata(undefined);
+      setBrQuery(undefined);
+      setBrSelectFields(undefined);
+      setProfiles([]);
+      setFloorPlanFilename("");
+      setBookingDetails(undefined);
+      return;
+    }
+
+    // Walk each tool payload once to hydrate the different UI fragments (BRs, GEDS, Archibus, bookings).
+    toolsInfo.map((tool) => {
         const payload = tool.payload;
         // BRs
         if (payload?.br) {
@@ -358,7 +369,6 @@ export const AssistantBubble = ({
           setBookingDetails(payload.bookingDetails);
         }
       });
-    }
   }, [toolsInfo, text]);
 
   // useEffect(
