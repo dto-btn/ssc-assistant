@@ -98,6 +98,15 @@ export const sendAssistantMessage = ({
             })
           );
         },
+        onToolCall: (toolName: string) => {
+          // Display tool call in chat
+          dispatch(
+            updateMessageContent({
+              messageId: latestAssistantMessage.id,
+              content: `${toolName.slice(0, -2)} is being called...\n`,
+            })
+          );
+        },
         onError: (error: Error) => {
           console.error("Streaming error:", error);
           // Could dispatch error state here if needed

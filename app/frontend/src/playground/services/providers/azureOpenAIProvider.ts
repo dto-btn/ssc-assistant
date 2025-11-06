@@ -32,7 +32,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
     callbacks: StreamingCallbacks
   ): Promise<CompletionResult> {
     const { messages, userToken, model, signal, tools } = request;
-    const { onChunk, onError, onComplete } = callbacks;
+    const { onChunk, onToolCall, onError, onComplete } = callbacks;
 
     let fullText = "";
     let updatedMessages = messages;
@@ -98,6 +98,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
       if (Object.keys(finalToolCalls).length > 0) {
         for (const callId in finalToolCalls) {
           const toolCall = finalToolCalls[callId];
+          onToolCall?.(toolCall.function.name);
           const toolArgs = toolCall.function.arguments;
           const toolResult = await toolService.callTool(toolCall.function.name, toolArgs);
           updatedMessages = updatedMessages.concat({
