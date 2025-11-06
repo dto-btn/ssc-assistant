@@ -7,7 +7,7 @@ interface MenuDividerProps {
 
 const MenuDivider: React.FC<MenuDividerProps> = ({ title }) => {
   return (
-    <Divider textAlign='left' role="presentation" tabIndex={0}>
+    <Divider textAlign='left' role="presentation">
       {title && (
         <Chip
           label={title}
