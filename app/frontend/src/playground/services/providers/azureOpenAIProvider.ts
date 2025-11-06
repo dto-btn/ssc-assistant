@@ -105,8 +105,6 @@ export class AzureOpenAIProvider implements CompletionProvider {
           console.error("Error parsing tool call arguments for tool call ID", currentId, ":", e);
         }
       }
-
-      console.log("arguments:", currentArguments);
       
       // Execute tool calls if requested, append results to messages & send to LLM
       if (Object.keys(finalToolCalls).length > 0) {
