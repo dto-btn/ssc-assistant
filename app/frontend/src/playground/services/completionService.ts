@@ -19,7 +19,7 @@ export interface CompletionRequest {
   provider?: 'azure-openai' | 'aws-bedrock' | "goc-ai-platform";
   userToken: string;
   signal?: AbortSignal;
-  tools: ChatCompletionFunctionTool[];
+  tools?: ChatCompletionFunctionTool[];
 }
 
 export interface StreamingCallbacks {
