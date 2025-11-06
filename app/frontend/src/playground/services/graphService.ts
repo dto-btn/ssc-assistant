@@ -45,7 +45,7 @@ export async function fetchProfilePicture(msalInstance: IPublicClientApplication
   const graphResponse = await fetch(graphConfig.graphMeEndpoint, options);
   const graphData = await graphResponse.json();
 
-  let profilePictureURL = "";
+  let profilePictureURL = ""
   try {
     const profilePictureResponse = await fetch(`https://graph.microsoft.com/v1.0/me/photos/48x48/$value`, {
       method: 'GET',
@@ -54,15 +54,40 @@ export async function fetchProfilePicture(msalInstance: IPublicClientApplication
       },
     });
 
-    if (profilePictureResponse.ok) {
-      const imageBlob = await profilePictureResponse.blob();
-      profilePictureURL = URL.createObjectURL(imageBlob);
-    } else {
+    if (!profilePictureResponse.ok) {
       console.warn("Could not fetch profile picture. It's possible the user has none set to their profile.");
     }
+
+    const imageBlob = await profilePictureResponse.blob();
+    profilePictureURL = await streamToBlobAndRead(imageBlob);
+
   } catch (error) {
     console.error('Error fetching profile picture:', error);
   }
-
   return { graphData, profilePictureURL };
 }
+
+/**
+ * Takes blob to read and save into a dataUrl
+ * 
+ * @param imageBlob image blob
+ * @returns Base64 encoded string of image blob.  Looks like "data:image/jpeg;base64,/9j/4AAQSkZJRgA...."
+ */
+async function streamToBlobAndRead(imageBlob: Blob): Promise<string> {
+ 
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error("FileReader did not return a string result"))
+      }
+    }
+    reader.onerror = (error) => {
+      reject(error);
+    }
+    reader.readAsDataURL(imageBlob);
+  })
+}
+

@@ -43,6 +43,12 @@ export function useAuth(apiUse: ApiUseConfig) {
           account: account,
         });
 
+        //think about decoupling this call from useAuth
+        fetchProfilePicture(instance).then((response) => {
+          dispatch(setProfilePictureUrl(response.profilePictureURL));
+          dispatch(setGraphData(response.graphData));
+        })
+
         dispatch(setAccessToken({
           token: response.accessToken,
           expiresOn: response.expiresOn?.getTime(),
@@ -52,13 +58,6 @@ export function useAuth(apiUse: ApiUseConfig) {
         dispatch(clearAccessToken());
       } finally {
         dispatch(setTokenRefreshing(false));
-
-        //i'm assumign this whole useAuth function will move at some point.  At which point, this can move to a more appropriate spot as well.
-        //currently this is doing an extra call to acquire a token with a different scope.  Will account eventually have both scopes?
-        fetchProfilePicture(instance).then((response) => {
-          dispatch(setProfilePictureUrl(response.profilePictureURL));
-          dispatch(setGraphData(response.graphData));
-        })
       }
     };
 
