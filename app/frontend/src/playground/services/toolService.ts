@@ -67,10 +67,9 @@ class ToolService {
         // Find the MCP client for the given tool
         let clientIndex: number = 0;
 
-        try {
-            clientIndex = parseInt(toolName.charAt(toolName.length - 1), 10);
-        } catch (error) {
-            console.error('Error parsing client index from tool name:', error);
+        clientIndex = parseInt(toolName.charAt(toolName.length - 1), 10);  
+        if (isNaN(clientIndex)) {  
+            throw new Error(`Malformed tool name "${toolName}": does not end with a valid client index`);  
         }
 
         const client = this.mcpClients[clientIndex]; // Use the mapped MCP client
