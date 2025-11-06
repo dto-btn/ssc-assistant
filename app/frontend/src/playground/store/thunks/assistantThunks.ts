@@ -100,10 +100,12 @@ export const sendAssistantMessage = ({
         },
         onToolCall: (toolName: string) => {
           // Display tool call in chat
+          const realToolName = toolService.extractToolName(toolName);
+
           dispatch(
             updateMessageContent({
               messageId: latestAssistantMessage.id,
-              content: `${toolName.slice(0, -2)} is being called...\n`,
+              content: `${realToolName} is being called...\n`,
             })
           );
         },

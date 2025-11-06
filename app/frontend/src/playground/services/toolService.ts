@@ -41,7 +41,7 @@ class ToolService {
                     MCPtools.push({
                         type: "function",
                         function: {
-                            name: tool.name + "-" + index, // Append index to retrieve correct MCP client later
+                            name: tool.name + "--mcp--" + index, // Append index to retrieve correct MCP client later
                             description: tool.description ?? '',
                             parameters: {
                                 type: "object",
@@ -65,16 +65,10 @@ class ToolService {
     // Function to call a tool on the appropriate MCP server
     async callTool(toolName: string, args: Record<string, any>): Promise<any> {
         // Find the MCP client for the given tool
-        let clientIndex: number = 0;
-
-        clientIndex = parseInt(toolName.charAt(toolName.length - 1), 10);  
-        if (isNaN(clientIndex)) {  
-            throw new Error(`Malformed tool name "${toolName}": does not end with a valid client index`);  
-        }
+        let clientIndex: number = this.extractClientIndex(toolName);
+        let function_name: string = this.extractToolName(toolName);
 
         const client = this.mcpClients[clientIndex]; // Use the mapped MCP client
-
-        const function_name = toolName.slice(0, -2); // Remove the "-X" suffix to get the original function name
 
         // Call the tool on the MCP client
         try {
@@ -84,6 +78,22 @@ class ToolService {
             console.error('Error calling tool on MCP:', error);
             throw error;
         }
+    }
+
+    extractToolName(toolName: string): string {
+        const parts = toolName.split("--mcp--");
+        return parts[0]; // Return the original function name without the index
+    }
+
+    extractClientIndex(toolName: string): number {
+        const parts = toolName.split("--mcp--");
+        if (parts.length === 2) {
+            const index = parseInt(parts[1], 10);
+            if (!isNaN(index)) {
+                return index;
+            }
+        }
+        throw new Error(`Malformed tool name "${toolName}": missing or invalid MCP client index`);
     }
 }
 
