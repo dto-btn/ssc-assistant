@@ -39,35 +39,41 @@ export default class MCPClient {
 
     // List prompts
     public async listPrompts() {
-        return await this.client?.listPrompts();
+        if (!this.client) throw new Error('MCP client not connected');
+        return await this.client.listPrompts();
     }
 
     // Get a prompt
     public async getPrompt(name: string, args: Record<string, any>) {
-        return await this.client?.getPrompt({ name, arguments: args });
+        if (!this.client) throw new Error('MCP client not connected');
+        return await this.client.getPrompt({ name, arguments: args });
     }
 
     // List resources
     public async listResources() {
-        return await this.client?.listResources();
+        if (!this.client) throw new Error('MCP client not connected');
+        return await this.client.listResources();
     }
 
     // Read a resource
     public async readResource(uri: string) {
-        return await this.client?.readResource({ uri });
+        if (!this.client) throw new Error('MCP client not connected');
+        return await this.client.readResource({ uri });
     }
 
     // List tools
     public async listTools() {
-        return await this.client?.listTools();
+        if (!this.client) throw new Error('MCP client not connected');
+        return await this.client.listTools();
     }
 
     // Call a tool
     public async callTool(name: string, args: Record<string, any>) {
+        if (!this.client) throw new Error('MCP client not connected');
         if (Object.keys(args).length === 0) {
-            return await this.client?.callTool({ name });
+            return await this.client.callTool({ name });
         } else {
-            return await this.client?.callTool({ name, arguments: args });
+            return await this.client.callTool({ name, arguments: args });
         }
     }
 }
