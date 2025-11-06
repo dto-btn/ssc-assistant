@@ -50,8 +50,8 @@ export class AzureOpenAIProvider implements CompletionProvider {
         stream: true,
       });
 
-      let currentId;
-      let currentArguments = "";
+      let currentId: string = "";
+      let currentArguments: string = "";
 
       // Process the streaming response
       for await (const chunk of stream) {
@@ -64,6 +64,17 @@ export class AzureOpenAIProvider implements CompletionProvider {
             for (const toolCall of choice.delta.tool_calls) { // Add tool to final calls
 
               if (toolCall.id) { // If tool call has an ID, then it is the initial chunk
+
+                // If there was a previous tool call being built, finalize its arguments
+                if (currentId !== "" && finalToolCalls[currentId] && currentArguments !== "") {
+                  console.log("Finalizing tool call arguments for tool call ID", currentId);
+                  try {
+                    finalToolCalls[currentId].function.arguments = JSON.parse(currentArguments);
+                  } catch (e) {
+                    console.error("Error parsing tool call arguments for tool call ID", currentId, ":", e);
+                  }
+                }
+
                 // Add new tool call to final calls, initialize arguments
                 finalToolCalls[toolCall.id] = toolCall;
                 currentId = toolCall.id;
@@ -73,14 +84,6 @@ export class AzureOpenAIProvider implements CompletionProvider {
                 // Append arguments to existing tool call
                 if (currentId && finalToolCalls[currentId]) {
                   currentArguments += toolCall.function?.arguments || "";
-                  // If arguments end with a closing brace, try to parse JSON as it might be the final chunk
-                  if (currentArguments.endsWith("}")) {
-                    try {
-                      finalToolCalls[currentId].function.arguments = JSON.parse(currentArguments);
-                    } catch (e) {
-                      console.error("Error parsing tool call arguments for tool call ID", currentId, ":", e);
-                    }
-                  }
                 }
               }
             }
@@ -94,6 +97,17 @@ export class AzureOpenAIProvider implements CompletionProvider {
         }
       }
 
+      // Finalize the last tool call if any
+      if (currentId !== "" && finalToolCalls[currentId] && currentArguments !== "") {
+        try {
+          finalToolCalls[currentId].function.arguments = JSON.parse(currentArguments);
+        } catch (e) {
+          console.error("Error parsing tool call arguments for tool call ID", currentId, ":", e);
+        }
+      }
+
+      console.log("arguments:", currentArguments);
+      
       // Execute tool calls if requested, append results to messages & send to LLM
       if (Object.keys(finalToolCalls).length > 0) {
         for (const callId in finalToolCalls) {
