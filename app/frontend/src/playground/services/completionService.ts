@@ -20,6 +20,7 @@ export interface CompletionRequest {
   userToken: string;
   signal?: AbortSignal;
   tools?: ChatCompletionFunctionTool[];
+  currentOutput?: string;
 }
 
 export interface StreamingCallbacks {

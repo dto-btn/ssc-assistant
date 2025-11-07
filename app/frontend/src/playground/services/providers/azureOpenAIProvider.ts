@@ -31,10 +31,10 @@ export class AzureOpenAIProvider implements CompletionProvider {
     request: CompletionRequest,
     callbacks: StreamingCallbacks
   ): Promise<CompletionResult> {
-    const { messages, userToken, model, signal, tools } = request;
+    const { messages, userToken, model, signal, tools, currentOutput } = request;
     const { onChunk, onToolCall, onError, onComplete } = callbacks;
 
-    let fullText = "";
+    let fullText = currentOutput || "";
     let updatedMessages = messages;
     
     try {
@@ -127,7 +127,8 @@ export class AzureOpenAIProvider implements CompletionProvider {
           userToken,
           model,
           signal,
-          tools
+          tools,
+          currentOutput: fullText,
         };
 
         // Call the createCompletion method again with the new request
