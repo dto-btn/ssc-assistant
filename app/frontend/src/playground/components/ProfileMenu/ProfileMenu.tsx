@@ -49,7 +49,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
   const { t } = useTranslation('playground');
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [isOpen, setIsOpen] = React.useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+  // const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
   const handleOpen = (
     event: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>
   ) => {
@@ -61,12 +61,12 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
     setIsOpen(false);
   };
   const handleSettingsOpen = () => {
-    setIsSettingsOpen(true);
-    handleClose(); // Close the profile menu when opening settings
+    // setIsSettingsOpen(true);
+    // handleClose(); // Close the profile menu when opening settings
   };
-  const handleSettingsClose = () => {
-    setIsSettingsOpen(false);
-  };
+  // const handleSettingsClose = () => {
+  //   setIsSettingsOpen(false);
+  // };
   
   return (
     <><Button
