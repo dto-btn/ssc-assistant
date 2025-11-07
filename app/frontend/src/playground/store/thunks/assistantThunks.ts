@@ -90,6 +90,7 @@ export const sendAssistantMessage = ({
     }
 
     let accumulatedContent = "";
+    let toolMessage: string[] = [];
 
     // Use the completion service with streaming callbacks for state management
     await completionService.createCompletion(
@@ -114,11 +115,12 @@ export const sendAssistantMessage = ({
         onToolCall: (toolName: string) => {
           // Display tool call in chat
           const realToolName = extractToolName(toolName);
+          const toolCallMessage = `\n${realToolName} is being called...\n`;
 
           dispatch(
             updateMessageContent({
               messageId: latestAssistantMessage.id,
-              content: `${realToolName} is being called...\n`,
+              content: accumulatedContent + toolCallMessage,
             })
           );
         },
