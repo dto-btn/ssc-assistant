@@ -115,7 +115,6 @@ export class AzureOpenAIProvider implements CompletionProvider {
           onToolCall?.(toolCall.function.name);
           const toolArgs = toolCall.function.arguments;
           const toolResult = await toolService.callTool(toolCall.function.name, toolArgs);
-          // Might need to be updated in the future so that role is tool and id is passed as a seperate param
           updatedMessages = updatedMessages.concat({
             role: "system",
             content: `Tool ${toolCall.function.name} called with ID ${toolCall.id} returned: ${JSON.stringify(toolResult)}`
