@@ -90,7 +90,6 @@ export const sendAssistantMessage = ({
     }
 
     let accumulatedContent = "";
-    let toolMessage: string[] = [];
 
     // Use the completion service with streaming callbacks for state management
     await completionService.createCompletion(
