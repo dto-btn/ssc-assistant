@@ -2,6 +2,7 @@ import Avatar from '@mui/material/Avatar';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { Typography } from '@mui/material';
+import { blue } from '@mui/material/colors';
 
 interface UserProfileProps {
   size?: string;
@@ -41,14 +42,41 @@ function stringToColor(string: string) {
   return color;
 }
 
+/**
+ * Gets initials for avatar in the event of no picture.
+ * 
+ * Empty name will return "" for initials, result in just a man for avatar
+ * One word (first or last doens't matter), will result in a single initial
+ * Two is the typical
+ * Anything above two takes first char of first word and last word
+ * 
+ * @param name full name of user
+ * @param size size of avatar
+ * @param fontSize size of letters to create avatar.
+ * @returns {@link AvatarData} 
+ */
 function getLetterAvatar(name: string, size: string | undefined, fontSize: string | undefined): AvatarData {
+  
+  let nameParts = name.trim().split(" ")
+  let initials;
+
+  //Split will almost never return array of 0 here.
+  if (nameParts.length < 2 ) {
+    if (nameParts[0].length === 0) {
+      initials = ""
+    } else {
+      initials = nameParts[0][0]
+    }
+  } else {
+    initials = nameParts[0][0] + nameParts[nameParts.length-1][0];
+  }
+
   const avatarData: AvatarData = {
     sx: {
       bgcolor: stringToColor(name),
     },
-    children: `${name.split(' ')[0][0]}${name.split(' ')[1][0]}`,
+    children: initials
   };
-
   if (fontSize) {
     avatarData.sx.fontSize = fontSize;
   }
@@ -58,14 +86,15 @@ function getLetterAvatar(name: string, size: string | undefined, fontSize: strin
     avatarData.sx.height = size;
   }
 
-  return avatarData;
+  return avatarData
 }
 
 export const UserProfilePicture = ({ size, fontSize }: UserProfileProps) => {
   const profilePictureURL = useSelector((state:RootState) => state.user.profilePictureURL);
+
   const graphData = useSelector((state:RootState) => state.user.graphData);
 
-  let fullName: string = ". .";
+  let fullName: string = "";
   if (graphData) {
     fullName = graphData["givenName"] + " " + graphData["surname"];
   }
