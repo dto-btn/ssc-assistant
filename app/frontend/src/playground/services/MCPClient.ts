@@ -7,11 +7,15 @@ export default class MCPClient {
     private readonly url: string;
     private client: Client | undefined = undefined;
 
-    
-    constructor(url: string = 'http://localhost:8000/mcp') {
+    private constructor(url: string) {
         this.url = url;
-        this.connect();
-        console.log('MCPClient connection completed');
+    }
+
+    // Use this static method to create and connect the client  
+    public static async create(url: string): Promise<MCPClient> {  
+        const client = new MCPClient(url);  
+        await client.connect();  
+        return client;  
     }
 
     // Establish connection to MCP server
@@ -26,7 +30,6 @@ export default class MCPClient {
             const transport = new StreamableHTTPClientTransport(baseUrl);
 
             await this.client.connect(transport);
-            console.log('Connected using Streamable HTTP transport');
         } catch (error) {
             console.error('Error connecting to MCP server:', error);
         }

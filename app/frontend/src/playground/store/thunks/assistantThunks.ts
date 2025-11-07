@@ -5,9 +5,9 @@ import { isTokenExpired } from "../../../util/token";
 import { RootState, AppDispatch } from "..";
 import { selectMessagesBySessionId } from "../selectors/chatSelectors";
 import i18n from "../../../i18n";
-import { toolService } from "../../services/toolService";
+import { extractToolName } from "../../services/toolService";
+import { loadTools } from "../slices/toolSlice";
 
-const mcpTools = await toolService.listTools();
 
 const mapMessagesForCompletion = (messages: Message[]): CompletionMessage[] =>
   messages.map(({ role, content }) => ({
@@ -35,6 +35,19 @@ export const sendAssistantMessage = ({
 
   try {
     const { accessToken } = getState().auth;
+    let { availableTools } = getState().tools;
+
+    // If tools are not loaded yet, dispatch the action to load them.
+    if (!availableTools) {
+      const resultAction = await dispatch(loadTools());
+      if (loadTools.fulfilled.match(resultAction)) {
+        availableTools = resultAction.payload; // Use the newly loaded tools
+      } else {
+        // Handle the case where tool loading failed
+        const errorMessage = (resultAction.payload as string) || "Failed to load assistant tools.";
+        throw new Error(errorMessage);
+      }
+    }
 
     if (!accessToken || isTokenExpired(accessToken)) {
       dispatch(
@@ -85,7 +98,7 @@ export const sendAssistantMessage = ({
         model: "gpt-4o", // Let MCP client decide or the user or the agentic AI decide which model to use...
         provider,
         userToken: accessToken,
-        tools: mcpTools,
+        tools: availableTools,
       },
       {
         onChunk: (chunk: string) => {
@@ -100,7 +113,7 @@ export const sendAssistantMessage = ({
         },
         onToolCall: (toolName: string) => {
           // Display tool call in chat
-          const realToolName = toolService.extractToolName(toolName);
+          const realToolName = extractToolName(toolName);
 
           dispatch(
             updateMessageContent({

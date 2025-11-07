@@ -1,20 +1,58 @@
 import { ChatCompletionFunctionTool } from "openai/resources/index.mjs";
 import MCPClient from "./MCPClient";
 
-// Initialize MCP Clients
-const MCP_CLIENTS: MCPClient[] = [
-  new MCPClient('http://localhost:8000/mcp'),
-];
+// Environment-based MCP URLs (comma-separated in VITE_MCP_URLS)
+const MCP_URLS = import.meta.env.VITE_MCP_URLS?.split(',') || ['http://localhost:8000/mcp'];
+
+
+export const extractToolName = (toolName: string): string => {
+    const parts = toolName.split("--mcp--");
+    return parts[0]; // Return the original function name without the index
+}
+
+export const extractClientIndex = (toolName: string): number => {
+    const parts = toolName.split("--mcp--");
+    if (parts.length === 2) {
+        const index = parseInt(parts[1], 10);
+        if (!isNaN(index)) {
+            return index;
+        }
+    }
+    throw new Error(`Malformed tool name "${toolName}": missing or invalid MCP client index`);
+};
+
 
 class ToolService {
+    private static instance: ToolService | null = null;
     private mcpClients: MCPClient[];
+    private cachedTools: ChatCompletionFunctionTool[] | null = null;
 
-    constructor(mcpClients: MCPClient[]) {
+    private constructor(mcpClients: MCPClient[]) {
         this.mcpClients = mcpClients;
     }
 
-    // Function to fetch & combine all tools from all MCP servers
-    async listTools(): Promise<ChatCompletionFunctionTool[]> {
+    public static async getInstance(): Promise<ToolService> {
+        if (!ToolService.instance) {
+            // Await creation of all MCP clients
+            const mcpClients = await Promise.all(
+                MCP_URLS.map(async (url: string) => await MCPClient.create(url.trim()))
+            );
+            ToolService.instance = new ToolService(mcpClients);
+        }
+        return ToolService.instance;
+    }
+
+    // Get the list of MCP clients (read-only)
+    public getMcpClients(): MCPClient[] {
+        return [...this.mcpClients]; // Return a copy to prevent mutation
+    }
+
+    // Function to fetch & combine all tools from all MCP servers (cached)
+    public async listTools(): Promise<ChatCompletionFunctionTool[]> {
+        if (this.cachedTools) {
+            return this.cachedTools;
+        }
+
         let MCPtools: ChatCompletionFunctionTool[] = [];
 
         // Fetch tools from all clients in parallel
@@ -24,7 +62,6 @@ class ToolService {
 
                 // Add server tools to lookup
                 clientTools?.tools.forEach(tool => {
-
                     // Map tool parameters
                     const required_fields = Array.from(tool.inputSchema?.required?.values() || []);
                     const props = Object.entries(tool.inputSchema?.properties || {});
@@ -59,14 +96,15 @@ class ToolService {
             }
         }));
 
+        this.cachedTools = MCPtools;
         return MCPtools;
     }
 
     // Function to call a tool on the appropriate MCP server
-    async callTool(toolName: string, args: Record<string, any>): Promise<any> {
+    public async callTool(toolName: string, args: Record<string, any>): Promise<any> {
         // Find the MCP client for the given tool
-        let clientIndex: number = this.extractClientIndex(toolName);
-        let function_name: string = this.extractToolName(toolName);
+        let clientIndex: number = extractClientIndex(toolName);
+        let function_name: string = extractToolName(toolName);
 
         const client = this.mcpClients[clientIndex]; // Use the mapped MCP client
 
@@ -79,22 +117,7 @@ class ToolService {
             throw error;
         }
     }
-
-    extractToolName(toolName: string): string {
-        const parts = toolName.split("--mcp--");
-        return parts[0]; // Return the original function name without the index
-    }
-
-    extractClientIndex(toolName: string): number {
-        const parts = toolName.split("--mcp--");
-        if (parts.length === 2) {
-            const index = parseInt(parts[1], 10);
-            if (!isNaN(index)) {
-                return index;
-            }
-        }
-        throw new Error(`Malformed tool name "${toolName}": missing or invalid MCP client index`);
-    }
 }
 
-export const toolService = new ToolService(MCP_CLIENTS);
+// Export an async function to get the singleton instance
+export const getToolService = async () => ToolService.getInstance();

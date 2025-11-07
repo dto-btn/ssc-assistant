@@ -4,7 +4,7 @@
 
 import { AzureOpenAI } from "openai";
 import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult } from "../completionService";
-import { toolService } from "../toolService";
+import { getToolService } from "../toolService";
 
 export class AzureOpenAIProvider implements CompletionProvider {
   readonly name = 'azure-openai';
@@ -39,6 +39,8 @@ export class AzureOpenAIProvider implements CompletionProvider {
     
     try {
       const client = this.createClient(userToken);
+
+      const toolService = await getToolService();
 
       let finalToolCalls: Record<string, any> = {};
 
