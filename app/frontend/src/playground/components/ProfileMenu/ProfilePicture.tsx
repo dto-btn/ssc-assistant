@@ -89,9 +89,13 @@ function getLetterAvatar(name: string, size: string | undefined, fontSize: strin
 }
 
 export const UserProfilePicture = ({ size, fontSize }: UserProfileProps) => {
-  const profilePictureURL = useSelector((state:RootState) => state.user.profilePictureURL);
+  
+  const userData = useSelector((state: RootState) => ({
+    profilePictureURL: state.user.profilePictureURL,
+    graphData: state.user.graphData
+  }));
 
-  const graphData = useSelector((state:RootState) => state.user.graphData);
+  const { profilePictureURL, graphData } = userData;
 
   let fullName: string = "";
   if (graphData) {
