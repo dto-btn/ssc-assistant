@@ -2,7 +2,6 @@ import Avatar from '@mui/material/Avatar';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { Typography } from '@mui/material';
-import { blue } from '@mui/material/colors';
 
 interface UserProfileProps {
   size?: string;
