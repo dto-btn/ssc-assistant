@@ -150,5 +150,13 @@
     "sync.status.error": {
         "en": "Upload failed",
         "fr": "Échec de la synchronisation"
+    },
+    "profile.logout": {
+        "en": "Logout",
+        "fr": "Déconnexion"
+    },
+    "profile.settings": {
+        "en": "Settings",
+        "fr": "Paramètres"
     }
 }

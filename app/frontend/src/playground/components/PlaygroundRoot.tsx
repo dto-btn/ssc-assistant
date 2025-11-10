@@ -13,6 +13,7 @@ import FeedbackForm from "./FeedbackForm";
 import { useAuth } from "../store/hooks/useAuth";
 import { apiUse } from "../../authConfig";
 import isFeatureEnabled from "../FeatureGate";
+import { DevBanner } from "./DevBanner";
 import TokenProvider from "./TokenProvider";
 import SessionBootstrapper from "./SessionBootstrapper";
 
@@ -29,6 +30,7 @@ const PlaygroundRoot: React.FC = () => {
         <ChatArea />
       </Box>
       {isFeatureEnabled("FeedbackForm") && <FeedbackForm />}
+      <DevBanner />
     </>
   );
 };
