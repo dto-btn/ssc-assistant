@@ -21,9 +21,9 @@ export const DevBanner = () => {
         boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
         width: 46,
         height: 26,
-        position: "absolute",
-        bottom: 10,
-        left: 180
+        position: "relative",
+        bottom: 35,
+        left: 250
       }}
     >
       DEV

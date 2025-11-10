@@ -89,7 +89,6 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
         aria-expanded={isOpen ? "true" : undefined}
       >
           <UserProfilePicture size={size} fontSize={fontSize} />
-          <DevBanner />
           <Box //floats the avatar and name to left
             sx={{
               marginLeft: "auto",
