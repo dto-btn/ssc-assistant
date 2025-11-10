@@ -10,6 +10,8 @@ import React from "react";
 import { IconButton, Tooltip } from "@mui/material";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import { useTranslation } from 'react-i18next';
+// Shared whitelist keeps picker aligned with backend validation and other clients.
+import { FILE_INPUT_ACCEPT_ATTRIBUTE } from "../supportedFileTypes";
 
 /**
  * Props for {@link FileUpload}.
@@ -49,6 +51,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFiles, disabled }) => {
         hidden
         id={inputId}
         ref={inputRef}
+        accept={FILE_INPUT_ACCEPT_ATTRIBUTE}
         onChange={event => {
           // Forward files to parent, then clear the input so selecting the same
           // file again still triggers onChange (common UX pitfall)
