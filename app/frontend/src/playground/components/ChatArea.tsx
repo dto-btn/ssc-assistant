@@ -21,7 +21,6 @@ import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 import { useTranslation } from 'react-i18next';
 import { listSessionFiles, fetchFileDataUrl } from "../api/storage";
 import { setSessionFiles } from "../store/slices/sessionFilesSlice";
-import SyncStatusIndicator from "./SyncStatusIndicator";
 import { selectCurrentSessionFiles } from "../store/selectors/sessionFilesSelectors";
 import type { FileAttachment } from "../types";
 
@@ -215,9 +214,6 @@ const ChatArea: React.FC = () => {
         justifyContent="center"
         p={6}
       >
-        <Box width="100%" display="flex" justifyContent="flex-end" mb={2}>
-          <SyncStatusIndicator sessionId={currentSessionId} />
-        </Box>
         <Typography variant="h3" gutterBottom>
           {t("how.can.i.help")}
         </Typography>
@@ -232,9 +228,6 @@ const ChatArea: React.FC = () => {
 
   return (
     <Box flex={1} display="flex" flexDirection="column" height="100vh">
-      <Box display="flex" justifyContent="flex-end" px={3} pt={2} pb={1}>
-        <SyncStatusIndicator sessionId={currentSessionId} />
-      </Box>
       <ChatMessages sessionId={currentSessionId} />
       <Citations citations={citations as Citation[]} />
       <ReplayStopBar

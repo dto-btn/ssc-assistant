@@ -3,8 +3,11 @@ import { Box, Chip, CircularProgress, Tooltip } from "@mui/material";
 import CloudDoneIcon from "@mui/icons-material/CloudDone";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import CloudSyncIcon from "@mui/icons-material/CloudSync";
+import CloudQueueIcon from "@mui/icons-material/CloudQueue";
+import BoltIcon from "@mui/icons-material/Bolt";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import type { SxProps, Theme } from "@mui/material/styles";
+import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { useAppSelector } from "../store/hooks";
 import type { SessionSyncStatus } from "../store/slices/syncSlice";
@@ -64,6 +67,7 @@ function buildStatusConfig(status: SessionSyncStatus, label: string, tooltip?: s
 
 export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({ sessionId, variant = "chip", sx }) => {
   const { t } = useTranslation("playground");
+  const theme = useTheme();
   const syncEntry = useAppSelector((state) => selectSyncEntryBySession(state, sessionId));
   const status: SessionSyncStatus = syncEntry?.status ?? "synced";
   const baseLabelKey = `sync.status.${status}`;
@@ -72,13 +76,38 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({ sessio
   const config = buildStatusConfig(status, label, tooltip);
 
   if (variant === "icon") {
-    const inlineIcon: React.ReactElement = status === "syncing"
-      ? <CircularProgress size={14} thickness={5} color="inherit" />
-      : config.icon;
+    const boltColorMap: Record<SessionSyncStatus, string> = {
+      pending: theme.palette.warning.main,
+      syncing: theme.palette.info.main,
+      error: theme.palette.error.main,
+      synced: theme.palette.success.main,
+    };
+
+    const inlineIcon = (
+      <Box
+        component="span"
+        sx={{
+          position: "relative",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          lineHeight: 0,
+        }}
+      >
+        <CloudQueueIcon sx={{ fontSize: 20, color: theme.palette.grey[500] }} />
+        <BoltIcon
+          sx={{
+            fontSize: 14,
+            position: "absolute",
+            color: boltColorMap[status],
+          }}
+        />
+      </Box>
+    );
 
     return (
       <Tooltip title={config.tooltip || label} placement="top">
-        <Box component="span" sx={{ color: `${config.color}.main`, display: "inline-flex", alignItems: "center", ...sx }}>
+        <Box component="span" sx={{ display: "inline-flex", alignItems: "center", ...sx }}>
           {inlineIcon}
         </Box>
       </Tooltip>
