@@ -253,6 +253,10 @@ export async function uploadFile({
   });
 }
 
+
+/**
+ * Soft delete every blob tied to a session by calling the playground API on behalf of the user.
+ */
 export async function deleteRemoteSession({
   sessionId,
   accessToken,
@@ -284,41 +288,6 @@ export async function deleteRemoteSession({
 
   const deleted = typeof data?.deletedCount === "number" ? data.deletedCount : 0;
   return deleted;
-}
-
-/**
- * Soft delete every blob tied to a session by calling the playground API on behalf of the user.
- */
-export async function deleteRemoteSession({
-  sessionId,
-  accessToken,
-}: {
-  sessionId: string;
-  accessToken: string;
-}): Promise<void> {
-  if (!sessionId) throw new Error("sessionId is required");
-  if (!accessToken?.trim()) throw new Error("accessToken is required");
-
-  const response = await fetch(sessionDeleteEndpoint(sessionId), {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${accessToken.trim()}`,
-    },
-  });
-
-  if (response.status === 204) {
-    return;
-  }
-
-  const data = await handleJsonResponse(response);
-  if (Array.isArray(data?.failed) && data.failed.length > 0) {
-    const message = typeof data?.message === "string" && data.message.trim().length > 0
-      ? data.message
-      : "Delete completed with errors.";
-    throw new Error(message);
-  }
-
-  return;
 }
 
 /**

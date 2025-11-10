@@ -14,9 +14,6 @@ import { removeSession } from "../slices/sessionSlice";
 import { removeSessionFiles } from "../slices/sessionFilesSlice";
 import { removeSessionOutboxItems } from "../slices/outboxSlice";
 
-/**
- * Helper that removes every local artifact tied to a session id.
- */
 const cleanupSessionLocally = (sessionId: string): AppThunk<void> => (dispatch) => {
   dispatch(clearSessionMessages(sessionId));
   dispatch(removeSessionFiles(sessionId));
@@ -24,9 +21,6 @@ const cleanupSessionLocally = (sessionId: string): AppThunk<void> => (dispatch) 
   dispatch(removeSession(sessionId));
 };
 
-/**
- * Apply a remote delete notification by removing the local copy and showing a toast.
- */
 export const applyRemoteSessionDeletion = (
   sessionId: string,
   options?: { silent?: boolean },
@@ -49,9 +43,6 @@ export const applyRemoteSessionDeletion = (
   }
 };
 
-/**
- * Call the backend delete endpoint and eagerly clean up the client cache on success.
- */
 export const deleteSession = (sessionId: string): AppThunk<Promise<void>> => async (dispatch, getState) => {
   if (!sessionId) {
     return;

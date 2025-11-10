@@ -40,8 +40,8 @@ import SessionRenameDialog from "./SessionRenameDialog";
 import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 import SyncStatusIndicator from "./SyncStatusIndicator";
-import { deleteSession as deleteSessionThunk } from "../store/thunks/sessionManagementThunks";
 import ProfileMenu from "./ProfileMenu/ProfileMenu";
+import { deleteSession as deleteSessionThunk } from "../store/thunks/sessionManagementThunks";
 
 
 /**
@@ -70,7 +70,7 @@ const SessionSidebar: React.FC = () => {
    */
   const handleNewSession = useCallback(() => {
 
-    let newSession = sessions.find(chatSession => chatSession.isNewChat == true)
+    const newSession = sessions.find(chatSession => chatSession.isNewChat == true)
     if (newSession) {
       dispatch(setCurrentSession(newSession.id));
       return
