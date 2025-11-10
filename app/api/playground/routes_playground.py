@@ -307,6 +307,7 @@ def files_for_session(query: PlaygroundSessionFilesQuery):
                     "category": meta.get("category"),
                     "metadataType": meta.get("type"),
                     "sessionName": meta.get("sessionname"),
+                    "lastUpdated": meta.get("lastupdated"),
                 }
             )
         return {"files": files}
@@ -370,7 +371,16 @@ def upload_file(upload_request: PlaygroundUploadRequest):
     mime_type = resolved_mime or mime_type
 
     session_segment = f"{session_id}/" if session_id else ""
-    blob_name = f"{oid}/{safe_category}/{session_segment}{uuid.uuid4().hex}_{normalized_name}"
+
+    if safe_category == "chat":
+        if not session_id:
+            return {"message": "sessionId is required for chat archives"}, 400
+
+        sanitized_session = secure_filename(str(session_id)) or str(session_id)
+        base_filename = f"{sanitized_session}.chat.json"
+        blob_name = f"{oid}/{base_filename}"
+    else:
+        blob_name = f"{oid}/{safe_category}/{session_segment}{uuid.uuid4().hex}_{normalized_name}"
 
     uploaded_at = datetime.utcnow().isoformat() + "Z"
     metadata = {
@@ -387,6 +397,8 @@ def upload_file(upload_request: PlaygroundUploadRequest):
         if value is None:
             continue
         metadata[str(key).lower()] = str(value)
+
+    metadata["lastupdated"] = uploaded_at
 
     try:
         container_client = _get_container_client()
@@ -424,6 +436,7 @@ def upload_file(upload_request: PlaygroundUploadRequest):
         "contentType": mime_type,
         "originalName": original_name,
         "uploadedAt": uploaded_at,
+        "lastUpdated": metadata.get("lastupdated"),
         "sessionId": str(session_id) if session_id else None,
         "category": safe_category,
         "metadataType": metadata.get("type"),

@@ -50,9 +50,10 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
     if (!sessionId) {
       continue;
     }
-    const record = grouped.get(sessionId) ?? { files: [], latestTimestamp: 0, sessionName: file.sessionName };
+  const record = grouped.get(sessionId) ?? { files: [], latestTimestamp: 0, sessionName: file.sessionName };
     record.files.push(file);
-    const uploadedAtMs = file.uploadedAt ? Date.parse(file.uploadedAt) : Number.NaN;
+  const timestampSource = file.lastUpdated || file.uploadedAt;
+  const uploadedAtMs = timestampSource ? Date.parse(timestampSource) : Number.NaN;
     if (Number.isFinite(uploadedAtMs) && uploadedAtMs > record.latestTimestamp) {
       record.latestTimestamp = uploadedAtMs;
       if (file.sessionName) {

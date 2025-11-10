@@ -62,14 +62,24 @@ const outboxSlice = createSlice({
       });
     },
     addChatArchiveToOutbox: (state, action: PayloadAction<{ sessionId: string; dataUrl: string; label?: string }>) => {
-      state.items.push({
-        id: uuidv4(),
+      const existingIndex = state.items.findIndex(
+        (item) => item.kind === "chat-archive" && item.sessionId === action.payload.sessionId,
+      );
+
+      const updatedItem: ChatArchiveOutboxItem = {
+        id: existingIndex >= 0 ? state.items[existingIndex].id : uuidv4(),
         kind: "chat-archive",
         createdAt: Date.now(),
         sessionId: action.payload.sessionId,
         dataUrl: action.payload.dataUrl,
         label: action.payload.label,
-      });
+      };
+
+      if (existingIndex >= 0) {
+        state.items[existingIndex] = updatedItem;
+      } else {
+        state.items.push(updatedItem);
+      }
     },
     removeOutboxItem: (state, action: PayloadAction<string>) => {
       state.items = state.items.filter(i => i.id !== action.payload);

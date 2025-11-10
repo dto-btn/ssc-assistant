@@ -78,8 +78,8 @@ async function doArchive(sessionId: string, store: MiddlewareAPI<Dispatch<Unknow
   };
 
   const payload = "data:application/json;base64," + btoa(unescape(encodeURIComponent(JSON.stringify(archiveDoc))));
-  const timestamp = Date.now();
-  const archiveFileName = `${sessionId}-${timestamp}.chat.json`;
+  const archiveFileName = `${sessionId}.chat.json`;
+  const lastUpdatedIso = new Date().toISOString();
 
   const queueArchive = () =>
     store.dispatch(addChatArchiveToOutbox({ sessionId, dataUrl: payload, label: archiveFileName }));
@@ -102,6 +102,7 @@ async function doArchive(sessionId: string, store: MiddlewareAPI<Dispatch<Unknow
         type: "chat-archive",
         sessionid: sessionId,
         sessionname: sessionRecord?.name,
+        lastupdated: lastUpdatedIso,
       },
     });
   } catch (error) {

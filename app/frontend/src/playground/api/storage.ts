@@ -39,6 +39,8 @@ type RawFilePayload = Record<string, unknown> & {
   metadataType?: string;
   sessionName?: string;
   sessionname?: string;
+  lastUpdated?: string;
+  lastupdated?: string;
 };
 
 const asString = (value: unknown): string | undefined =>
@@ -60,6 +62,7 @@ function mapFilePayload(payload: RawFilePayload = {}): FileAttachment {
     size: asNumber(payload.size),
     contentType: resolvedContentType,
     uploadedAt: asString(payload.uploadedAt) ?? asString(payload.uploadedat) ?? null,
+  lastUpdated: asString(payload.lastUpdated) ?? asString(payload.lastupdated) ?? null,
     sessionId: asString(payload.sessionId) ?? asString(payload.sessionid) ?? null,
     category: asString(payload.category) ?? undefined,
     metadataType: asString(payload.metadataType) ?? undefined,

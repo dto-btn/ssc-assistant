@@ -42,7 +42,7 @@ async function flushItem(
 
   if (item.kind === "chat-archive") {
     store.dispatch(markSessionSyncing({ sessionId: item.sessionId }));
-    const filename = item.label || `${item.sessionId}-${Date.now()}.chat.json`;
+    const filename = item.label || `${item.sessionId}.chat.json`;
     const sessionRecord = store.getState().sessions.sessions.find((session) => session.id === item.sessionId);
     try {
       await uploadEncodedFile({
@@ -55,6 +55,7 @@ async function flushItem(
           type: "chat-archive",
           sessionid: item.sessionId,
           sessionname: sessionRecord?.name,
+          lastupdated: new Date().toISOString(),
         },
       });
       store.dispatch(markSessionSynced({ sessionId: item.sessionId }));

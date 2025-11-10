@@ -14,4 +14,5 @@ export interface FileAttachment {
   category?: FileCategory;
   metadataType?: string;
   sessionName?: string | null;
+  lastUpdated?: string | null;
 }

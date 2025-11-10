@@ -263,8 +263,10 @@ function isChatArchiveAttachment(file: FileAttachment): boolean {
 
 function pickLatestArchive(files: FileAttachment[]): FileAttachment | undefined {
   return [...files].sort((a, b) => {
-    const aTime = a.uploadedAt ? Date.parse(a.uploadedAt) : 0;
-    const bTime = b.uploadedAt ? Date.parse(b.uploadedAt) : 0;
+    const aSource = a.lastUpdated || a.uploadedAt;
+    const bSource = b.lastUpdated || b.uploadedAt;
+    const aTime = aSource ? Date.parse(aSource) : 0;
+    const bTime = bSource ? Date.parse(bSource) : 0;
     return bTime - aTime;
   })[0];
 }
