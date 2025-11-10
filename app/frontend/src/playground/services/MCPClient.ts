@@ -2,7 +2,10 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 // import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 
-
+/**
+ * MCP Client - Wrapper around Model Context Protocol client
+ * Connects to MCP server and provides methods to interact with it
+ */
 export default class MCPClient {
     private readonly url: string;
     private client: Client | undefined = undefined;

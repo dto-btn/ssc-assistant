@@ -5,6 +5,7 @@ import MCPClient from "./MCPClient";
 const MCP_URLS = import.meta.env.VITE_MCP_URLS?.split(',') || ['http://localhost:8000/mcp'];
 
 
+// Helper functions to extract tool name and client index
 export const extractToolName = (toolName: string): string => {
     const parts = toolName.split("--mcp--");
     return parts[0]; // Return the original function name without the index
@@ -21,7 +22,9 @@ export const extractClientIndex = (toolName: string): number => {
     throw new Error(`Malformed tool name "${toolName}": missing or invalid MCP client index`);
 };
 
-
+/**
+ * Tool Service - Manages MCP clients and tool listings
+ */
 class ToolService {
     private static instance: ToolService | null = null;
     private mcpClients: MCPClient[];
