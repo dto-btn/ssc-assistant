@@ -1,0 +1,261 @@
+import { FileAttachment, FileCategory } from "../types";
+
+const PLAYGROUND_API_BASE = "/api/playground";
+const UPLOAD_ENDPOINT = `${PLAYGROUND_API_BASE}/upload`;
+const FILES_FOR_SESSION_ENDPOINT = `${PLAYGROUND_API_BASE}/files-for-session`;
+const EXTRACT_FILE_TEXT_ENDPOINT = `${PLAYGROUND_API_BASE}/extract-file-text`;
+
+type MetadataRecord = Record<string, string | number | boolean | null | undefined>;
+
+function extractMimeType(encoded: string | undefined): string | undefined {
+  if (!encoded) return undefined;
+  const match = /^data:([^;,]+)[;,]/i.exec(encoded);
+  return match ? match[1] : undefined;
+}
+
+function normalizeMetadata(metadata?: MetadataRecord): Record<string, string> | undefined {
+  if (!metadata) return undefined;
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(metadata)) {
+    if (value === undefined || value === null) continue;
+    result[key] = String(value);
+  }
+  return result;
+}
+
+type RawFilePayload = Record<string, unknown> & {
+  blobName?: string;
+  name?: string;
+  originalName?: string;
+  url?: string;
+  size?: number;
+  contentType?: string;
+  type?: string;
+  uploadedAt?: string;
+  uploadedat?: string;
+  sessionId?: string;
+  sessionid?: string;
+  category?: string;
+  metadataType?: string;
+  sessionName?: string;
+  sessionname?: string;
+  lastUpdated?: string;
+  lastupdated?: string;
+};
+
+const asString = (value: unknown): string | undefined =>
+  typeof value === "string" ? value : undefined;
+
+const asNumber = (value: unknown): number | undefined =>
+  typeof value === "number" && Number.isFinite(value) ? value : undefined;
+
+function mapFilePayload(payload: RawFilePayload = {}): FileAttachment {
+  const candidateType = asString(payload.type);
+  const resolvedContentType =
+    asString(payload.contentType) ??
+    (candidateType && candidateType.includes("/") ? candidateType : null);
+
+  return {
+    blobName: asString(payload.blobName) ?? asString(payload.name) ?? "",
+    url: asString(payload.url) ?? "",
+    originalName: asString(payload.originalName) ?? asString(payload.name) ?? "",
+    size: asNumber(payload.size),
+    contentType: resolvedContentType,
+    uploadedAt: asString(payload.uploadedAt) ?? asString(payload.uploadedat) ?? null,
+  lastUpdated: asString(payload.lastUpdated) ?? asString(payload.lastupdated) ?? null,
+    sessionId: asString(payload.sessionId) ?? asString(payload.sessionid) ?? null,
+    category: asString(payload.category) ?? undefined,
+    metadataType: asString(payload.metadataType) ?? undefined,
+    sessionName: asString(payload.sessionName) ?? asString(payload.sessionname) ?? null,
+  };
+}
+
+async function handleJsonResponse(response: Response) {
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Request failed (${response.status})`);
+  }
+  return response.json();
+}
+
+export interface UploadEncodedFileParams {
+  encodedFile: string;
+  originalName: string;
+  accessToken: string;
+  sessionId?: string;
+  category?: FileCategory;
+  mimeType?: string;
+  metadata?: MetadataRecord;
+}
+
+/**
+ * Upload a base64 encoded payload to blob storage via the playground API and
+ * return normalized attachment metadata.
+ */
+export async function uploadEncodedFile({
+  encodedFile,
+  originalName,
+  accessToken,
+  sessionId,
+  category,
+  mimeType,
+  metadata,
+}: UploadEncodedFileParams): Promise<FileAttachment> {
+  if (!encodedFile || !originalName) {
+    throw new Error("encodedFile and originalName are required");
+  }
+  if (!accessToken?.trim()) {
+    throw new Error("accessToken is required");
+  }
+
+  const payload: Record<string, unknown> = {
+    encoded_file: encodedFile,
+    name: originalName,
+  };
+  if (sessionId) payload.sessionId = sessionId;
+  if (category) payload.category = category;
+  const resolvedMime = mimeType || extractMimeType(encodedFile);
+  if (resolvedMime) payload.fileType = resolvedMime;
+  const normalizedMetadata = normalizeMetadata(metadata);
+  if (normalizedMetadata && Object.keys(normalizedMetadata).length > 0) {
+    payload.metadata = normalizedMetadata;
+  }
+
+  const response = await fetch(UPLOAD_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken.trim()}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await handleJsonResponse(response);
+  return mapFilePayload(data?.file);
+}
+
+export interface UploadFileParams {
+  file: File;
+  accessToken: string;
+  sessionId?: string;
+  category?: FileCategory;
+  metadata?: MetadataRecord;
+}
+
+/**
+ * Convenience wrapper that reads a File as a data URL before delegating to
+ * `uploadEncodedFile`.
+ */
+export async function uploadFile({
+  file,
+  accessToken,
+  sessionId,
+  category,
+  metadata,
+}: UploadFileParams): Promise<FileAttachment> {
+  const reader = new FileReader();
+  const dataUrl: string = await new Promise((resolve, reject) => {
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+
+  return uploadEncodedFile({
+    encodedFile: dataUrl,
+    originalName: file.name,
+    accessToken,
+    sessionId,
+    category,
+    mimeType: file.type,
+    metadata,
+  });
+}
+
+/**
+ * Fetch the caller's attachments for a given session from the playground API.
+ */
+export async function listSessionFiles({
+  accessToken,
+  sessionId,
+}: {
+  accessToken: string;
+  sessionId?: string;
+}): Promise<FileAttachment[]> {
+  if (!accessToken?.trim()) throw new Error("accessToken is required");
+
+  const url = sessionId
+    ? `${FILES_FOR_SESSION_ENDPOINT}?sessionId=${encodeURIComponent(sessionId)}`
+    : FILES_FOR_SESSION_ENDPOINT;
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${accessToken.trim()}`,
+    },
+  });
+
+  const data = await handleJsonResponse(response);
+  const files = Array.isArray(data?.files) ? data.files : [];
+  return files.map(mapFilePayload);
+}
+
+/**
+ * Request server-side text extraction for an attachment so prompts can include
+ * the relevant content without exposing blob credentials to the client.
+ */
+export async function extractFileText({
+  fileUrl,
+  fileType,
+}: {
+  fileUrl: string;
+  fileType?: string;
+}): Promise<string> {
+  if (!fileUrl) throw new Error("fileUrl is required");
+  const response = await fetch(EXTRACT_FILE_TEXT_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fileUrl, fileType }),
+  });
+  const data = await handleJsonResponse(response);
+  return data?.extractedText ?? "";
+}
+
+/**
+ * Retrieve an attachment as a data URL, enabling inline previews in the UI.
+ */
+export async function fetchFileDataUrl({
+  fileUrl,
+  blobName,
+  fileType,
+  accessToken,
+}: {
+  fileUrl?: string | null;
+  blobName?: string | null;
+  fileType?: string | null;
+  accessToken?: string | null;
+}): Promise<{ dataUrl: string; contentType: string }> {
+  if (!fileUrl && !blobName) throw new Error("fileUrl or blobName is required");
+
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (accessToken?.trim()) {
+    headers.Authorization = `Bearer ${accessToken.trim()}`;
+  }
+
+  const response = await fetch(EXTRACT_FILE_TEXT_ENDPOINT, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      fileUrl,
+      blobName,
+      fileType,
+      responseFormat: "data_url",
+    }),
+  });
+
+  const data = await handleJsonResponse(response);
+  return {
+    dataUrl: typeof data?.dataUrl === "string" ? data.dataUrl : "",
+    contentType: typeof data?.contentType === "string"
+      ? data.contentType
+      : fileType ?? "application/octet-stream",
+  };
+}

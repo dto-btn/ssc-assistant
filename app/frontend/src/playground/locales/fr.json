@@ -29,5 +29,9 @@
     "assistant.error.chat": "Désolé, une erreur est survenue lors du traitement de votre demande. Veuillez réessayer.",
     "assistant.error.toast": "Une erreur est survenue pendant le traitement.",
     "ai.disclaimer": "L'IA peut faire des erreurs. Veuillez valider toutes les informations avant utilisation.",
-    "playground:auth.tokenExpired": "Authentification requise. Veuillez actualiser la page."
+    "playground:auth.tokenExpired": "Authentification requise. Veuillez actualiser la page.",
+    "sync.status.synced": "Synchronisé",
+    "sync.status.pending": "En attente",
+    "sync.status.syncing": "Synchronisation",
+    "sync.status.error": "Échec de la synchronisation"
 }

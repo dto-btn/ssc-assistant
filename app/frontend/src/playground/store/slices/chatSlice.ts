@@ -8,6 +8,7 @@
 
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
+import { FileAttachment } from "../../types";
 
 export interface Message {
   id: string;
@@ -15,7 +16,7 @@ export interface Message {
   role: "user" | "assistant" | "system";
   content: string;
   timestamp: number;
-  attachments?: unknown[];
+  attachments?: FileAttachment[];
   citations?: { title: string; url: string }[];
 }
 
@@ -57,10 +58,26 @@ const chatSlice = createSlice({
     },
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
-    }
+    },
+    hydrateSessionMessages: (
+      state,
+      action: PayloadAction<{ sessionId: string; messages: Message[] }>,
+    ) => {
+      const { sessionId, messages } = action.payload;
+      const remaining = state.messages.filter((message) => message.sessionId !== sessionId);
+      const sorted = [...messages].sort((a, b) => a.timestamp - b.timestamp);
+      state.messages = [...remaining, ...sorted];
+    },
   },
 });
 
-export const { addMessage, deleteMessage, clearSessionMessages, updateMessageContent, setIsLoading } = chatSlice.actions;
+export const {
+  addMessage,
+  deleteMessage,
+  clearSessionMessages,
+  updateMessageContent,
+  setIsLoading,
+  hydrateSessionMessages,
+} = chatSlice.actions;
 
 export default chatSlice.reducer;
