@@ -1,5 +1,5 @@
-import { Middleware, MiddlewareAPI, UnknownAction, Dispatch } from "@reduxjs/toolkit";
-import { RootState } from "..";
+import { createAction, Middleware, MiddlewareAPI, UnknownAction, Dispatch } from "@reduxjs/toolkit";
+import type { RootState } from "..";
 import { addMessage, Message } from "../slices/chatSlice";
 import { addChatArchiveToOutbox } from "../slices/outboxSlice";
 import {
@@ -9,6 +9,8 @@ import {
   markSessionError,
 } from "../slices/syncSlice";
 import { uploadEncodedFile } from "../../api/storage";
+
+export const requestArchive = createAction<{ sessionId: string }>("archiver/requestArchive");
 
 // Archiver policy
 const MAX_MESSAGES_BEFORE_ARCHIVE = 25; // archive when many messages accumulate
@@ -134,6 +136,12 @@ export const archiverMiddleware: Middleware<UnknownAction, RootState> = (store) 
     if (messages.length >= MAX_MESSAGES_BEFORE_ARCHIVE) {
       doArchive(sessionId, store).catch(() => {/* swallow errors to avoid disrupting UI */});
     }
+  }
+
+  if (requestArchive.match(action)) {
+    const { sessionId } = action.payload;
+    store.dispatch(markSessionDirty({ sessionId }));
+    doArchive(sessionId, store).catch(() => {/* swallow errors to avoid disrupting UI */});
   }
 
   return result;

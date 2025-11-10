@@ -19,7 +19,7 @@ import modelReducer from "./slices/modelSlice";
 import toastReducer from "./slices/toastSlice";
 import quotedReducer from "./slices/quotedSlice";
 import authReducer from "./slices/authSlice";
-import { archiverMiddleware } from "./middleware/archiverMiddleware";
+import { archiverMiddleware, requestArchive } from "./middleware/archiverMiddleware";
 import { outboxMiddleware } from "./middleware/outboxMiddleware";
 import { saveChatState, loadChatState } from "./persistence";
 import outboxReducer from "./slices/outboxSlice";
@@ -56,6 +56,24 @@ export const store = configureStore({
 store.subscribe(() => {
   saveChatState(store.getState());
 });
+
+const initialStateSnapshot = store.getState();
+const sessionsNeedingArchive = Object.entries(initialStateSnapshot.sync?.byId ?? {})
+  .filter(([, entry]) => entry?.status === "pending" || entry?.status === "syncing" || entry?.status === "error")
+  .map(([sessionId]) => sessionId)
+  .filter((sessionId) => !initialStateSnapshot.outbox.items.some((item) => item.kind === "chat-archive" && item.sessionId === sessionId));
+
+if (sessionsNeedingArchive.length > 0) {
+  const defer = typeof queueMicrotask === "function"
+    ? queueMicrotask
+    : (cb: () => void) => { setTimeout(cb, 0); };
+
+  defer(() => {
+    sessionsNeedingArchive.forEach((sessionId) => {
+      store.dispatch(requestArchive({ sessionId }));
+    });
+  });
+}
 
 export type AppDispatch = typeof store.dispatch;
 export type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, UnknownAction>;
