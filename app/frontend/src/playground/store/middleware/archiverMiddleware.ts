@@ -9,6 +9,7 @@ import {
   markSessionError,
 } from "../slices/syncSlice";
 import { uploadEncodedFile } from "../../api/storage";
+import { removeSession } from "../slices/sessionSlice";
 
 export const requestArchive = createAction<{ sessionId: string }>("archiver/requestArchive");
 
@@ -143,6 +144,16 @@ export const archiverMiddleware: Middleware<UnknownAction, RootState> = (store) 
     const { sessionId } = action.payload;
     store.dispatch(markSessionDirty({ sessionId }));
     doArchive(sessionId, store).catch(() => {/* swallow errors to avoid disrupting UI */});
+  }
+
+  if (removeSession.match(action)) {
+    const sessionId = action.payload;
+    const timer = timers[sessionId];
+    if (timer) {
+      clearTimeout(timer);
+      delete timers[sessionId];
+    }
+    delete lastArchivedSignature[sessionId];
   }
 
   return result;

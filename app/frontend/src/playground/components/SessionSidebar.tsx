@@ -10,7 +10,6 @@ import React, { useCallback, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   addSession,
-  removeSession,
   setCurrentSession,
   renameSession,
 } from "../store/slices/sessionSlice";
@@ -41,7 +40,8 @@ import SessionRenameDialog from "./SessionRenameDialog";
 import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 import SyncStatusIndicator from "./SyncStatusIndicator";
-import { DevBanner } from "./DevBanner"
+import { DevBanner } from "./DevBanner";
+import { deleteSession as deleteSessionThunk } from "../store/thunks/sessionManagementThunks";
 
 /**
  * Sidebar for listing and managing Playground chat sessions.
@@ -130,7 +130,7 @@ const SessionSidebar: React.FC = () => {
    */
   const handleDeleteClicked = useCallback(() => {
     if (selectedSessionId) {
-      dispatch(removeSession(selectedSessionId));
+      void dispatch(deleteSessionThunk(selectedSessionId));
       setMoreMenuAnchor(null);
       setSelectedSessionId(null);
     }

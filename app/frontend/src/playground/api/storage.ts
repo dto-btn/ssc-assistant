@@ -4,6 +4,7 @@ const PLAYGROUND_API_BASE = "/api/playground";
 const UPLOAD_ENDPOINT = `${PLAYGROUND_API_BASE}/upload`;
 const FILES_FOR_SESSION_ENDPOINT = `${PLAYGROUND_API_BASE}/files-for-session`;
 const EXTRACT_FILE_TEXT_ENDPOINT = `${PLAYGROUND_API_BASE}/extract-file-text`;
+const sessionDeleteEndpoint = (sessionId: string) => `${PLAYGROUND_API_BASE}/sessions/${encodeURIComponent(sessionId)}`;
 
 type MetadataRecord = Record<string, string | number | boolean | null | undefined>;
 
@@ -62,12 +63,18 @@ function mapFilePayload(payload: RawFilePayload = {}): FileAttachment {
     size: asNumber(payload.size),
     contentType: resolvedContentType,
     uploadedAt: asString(payload.uploadedAt) ?? asString(payload.uploadedat) ?? null,
-  lastUpdated: asString(payload.lastUpdated) ?? asString(payload.lastupdated) ?? null,
+    lastUpdated: asString(payload.lastUpdated) ?? asString(payload.lastupdated) ?? null,
     sessionId: asString(payload.sessionId) ?? asString(payload.sessionid) ?? null,
     category: asString(payload.category) ?? undefined,
     metadataType: asString(payload.metadataType) ?? undefined,
     sessionName: asString(payload.sessionName) ?? asString(payload.sessionname) ?? null,
   };
+}
+
+export interface ListSessionFilesResult {
+  files: FileAttachment[];
+  deletedSessionIds: string[];
+  sessionDeleted: boolean;
 }
 
 async function handleJsonResponse(response: Response) {
@@ -171,6 +178,39 @@ export async function uploadFile({
   });
 }
 
+export async function deleteRemoteSession({
+  sessionId,
+  accessToken,
+}: {
+  sessionId: string;
+  accessToken: string;
+}): Promise<number> {
+  if (!sessionId) throw new Error("sessionId is required");
+  if (!accessToken?.trim()) throw new Error("accessToken is required");
+
+  const response = await fetch(sessionDeleteEndpoint(sessionId), {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken.trim()}`,
+    },
+  });
+
+  if (response.status === 204) {
+    return 0;
+  }
+
+  const data = await handleJsonResponse(response);
+  if (Array.isArray(data?.failed) && data.failed.length > 0) {
+    const message = typeof data?.message === "string" && data.message.trim().length > 0
+      ? data.message
+      : "Delete completed with errors.";
+    throw new Error(message);
+  }
+
+  const deleted = typeof data?.deletedCount === "number" ? data.deletedCount : 0;
+  return deleted;
+}
+
 /**
  * Fetch the caller's attachments for a given session from the playground API.
  */
@@ -180,7 +220,7 @@ export async function listSessionFiles({
 }: {
   accessToken: string;
   sessionId?: string;
-}): Promise<FileAttachment[]> {
+}): Promise<ListSessionFilesResult> {
   if (!accessToken?.trim()) throw new Error("accessToken is required");
 
   const url = sessionId
@@ -195,7 +235,20 @@ export async function listSessionFiles({
 
   const data = await handleJsonResponse(response);
   const files = Array.isArray(data?.files) ? data.files : [];
-  return files.map(mapFilePayload);
+  const normalizedFiles = files.map(mapFilePayload);
+  const deletedRaw = Array.isArray(data?.deletedSessionIds) ? data.deletedSessionIds : [];
+  const deletedSessionIdsSet = new Set<string>();
+  for (const value of deletedRaw) {
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed.length > 0) {
+        deletedSessionIdsSet.add(trimmed);
+      }
+    }
+  }
+  const deletedSessionIds = Array.from(deletedSessionIdsSet);
+  const sessionDeleted = data?.sessionDeleted === true;
+  return { files: normalizedFiles, deletedSessionIds, sessionDeleted };
 }
 
 /**
