@@ -16,7 +16,6 @@ import MenuDivider from "./MenuDivider";
 import LogoutIcon from "@mui/icons-material/Logout";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { PROFILE_MENU_WIDTH } from "../../constants";
-import { DevBanner } from "../DevBanner";
 
 
 /**
