@@ -72,7 +72,10 @@ DELETED_FLAG_VALUE = "true"
 
 
 def _is_marked_deleted(metadata: Optional[Dict[str, Any]]) -> bool:
+<<<<<<< HEAD
     """Return True when the blob metadata marks the file as soft-deleted."""
+=======
+>>>>>>> 7e322aa (Add remote session deletion handling and cover soft delete metadata)
     if not metadata:
         return False
     flag = metadata.get("deleted")
@@ -520,11 +523,15 @@ def upload_file(upload_request: PlaygroundUploadRequest):
 @auth.login_required(role="chat")
 @user_ad.login_required
 def delete_session(session_id: str):
+<<<<<<< HEAD
     """Mark every blob tied to the caller's session as deleted so the UI stops rehydrating it.
 
     Instead of hard-deleting blobs we toggle metadata, allowing the recovery scripts to
     rehydrate data if needed for auditing or debugging.
     """
+=======
+    """Mark all files for the caller's session as deleted in blob metadata."""
+>>>>>>> 7e322aa (Add remote session deletion handling and cover soft delete metadata)
     if not session_id:
         return {"message": "session_id is required"}, 400
 
@@ -541,6 +548,7 @@ def delete_session(session_id: str):
         return {"message": "Delete failed"}, 500
 
     timestamp = datetime.utcnow().isoformat() + "Z"
+<<<<<<< HEAD
     sanitized_session = secure_filename(str(session_id)) or str(session_id)
 
     try:
@@ -551,10 +559,20 @@ def delete_session(session_id: str):
             "success": False,
             "message": f"Session {session_id} not found",
         }, 404
+=======
+    deleted_count = 0
+    failed: List[str] = []
+
+    try:
+        blobs_iterator = container_client.list_blobs(name_starts_with=f"{oid}/", include=["metadata"])
+    except ResourceNotFoundError:
+        return {"deletedCount": 0}
+>>>>>>> 7e322aa (Add remote session deletion handling and cover soft delete metadata)
     except AzureError:
         logger.exception("Failed to enumerate blobs for delete", extra={"oid": oid})
         return {"message": "Delete failed"}, 500
 
+<<<<<<< HEAD
     deleted_count = 0
     failed: List[str] = []
     matched_session = False
@@ -578,6 +596,22 @@ def delete_session(session_id: str):
         blob_client = container_client.get_blob_client(blob.name)
         try:
             blob_client.set_blob_metadata(normalized_metadata)
+=======
+    for blob in blobs_iterator:
+        metadata = getattr(blob, "metadata", {}) or {}
+        if metadata.get("sessionid") != str(session_id):
+            continue
+        if _is_marked_deleted(metadata):
+            continue
+        metadata = {str(k).lower(): str(v) for k, v in metadata.items() if v is not None}
+        metadata["deleted"] = DELETED_FLAG_VALUE
+        metadata["deletedat"] = timestamp
+        metadata["lastupdated"] = timestamp
+
+        blob_client = container_client.get_blob_client(blob.name)
+        try:
+            blob_client.set_blob_metadata(metadata)
+>>>>>>> 7e322aa (Add remote session deletion handling and cover soft delete metadata)
             deleted_count += 1
         except AzureError:
             failed.append(blob.name)
@@ -586,6 +620,7 @@ def delete_session(session_id: str):
                 extra={"oid": oid, "blob_name": blob.name},
             )
 
+<<<<<<< HEAD
     if not matched_session:
         return {
             "success": False,
@@ -613,6 +648,16 @@ def delete_session(session_id: str):
         "deletedCount": deleted_count,
         "message": f"Session {session_id} successfully deleted",
     }
+=======
+    if failed:
+        return {
+            "message": "Delete completed with errors",
+            "deletedCount": deleted_count,
+            "failed": failed,
+        }, 207
+
+    return {"deletedCount": deleted_count}
+>>>>>>> 7e322aa (Add remote session deletion handling and cover soft delete metadata)
 
 # POST /api/playground/extract-file-text: Accepts fileUrl and fileType, returns extracted text
 @api_playground.post("/extract-file-text")
