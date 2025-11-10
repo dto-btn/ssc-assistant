@@ -5,12 +5,21 @@
  * and provides a unified interface for completions with streaming support.
  */
 
+import type {
+  ChatCompletionContentPart,
+  ChatCompletionMessageParam,
+} from "openai/resources/chat/completions";
 import { AzureOpenAIProvider } from "./providers/azureOpenAIProvider";
 
-export interface CompletionMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
+export type CompletionContentPart = Extract<
+  ChatCompletionContentPart,
+  { type: "text" | "image_url" }
+>;
+
+export type CompletionMessage = Extract<
+  ChatCompletionMessageParam,
+  { role: "system" | "user" | "assistant" }
+>;
 
 export interface CompletionRequest {
   messages: CompletionMessage[];

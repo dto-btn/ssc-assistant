@@ -122,5 +122,21 @@
     "playground:auth.tokenExpired": {
         "en": "Authentication required. Please refresh the page.",
         "fr": "Authentification requise. Veuillez actualiser la page."
+    },
+    "sync.status.synced": {
+        "en": "Synced",
+        "fr": "Synchronisé"
+    },
+    "sync.status.pending": {
+        "en": "Pending upload",
+        "fr": "En attente"
+    },
+    "sync.status.syncing": {
+        "en": "Uploading",
+        "fr": "Synchronisation"
+    },
+    "sync.status.error": {
+        "en": "Upload failed",
+        "fr": "Échec de la synchronisation"
     }
 }

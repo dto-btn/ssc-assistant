@@ -40,6 +40,7 @@ import { LEFT_MENU_WIDTH } from "../constants";
 import SessionRenameDialog from "./SessionRenameDialog";
 import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
+import SyncStatusIndicator from "./SyncStatusIndicator";
 import { DevBanner } from "./DevBanner"
 
 /**
@@ -213,12 +214,15 @@ const SessionSidebar: React.FC = () => {
                 onClick={() => dispatch(setCurrentSession(session.id))}
                 aria-current={session.id === currentSessionId ? "true" : undefined}
               >
-                <Typography
-                  noWrap
-                  sx={{ width: "100%", overflow: "hidden", textOverflow: "ellipsis" }}
-                >
-                  {session.name}
-                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%", minWidth: 0 }}>
+                  <Typography
+                    noWrap
+                    sx={{ flexGrow: 1, overflow: "hidden", textOverflow: "ellipsis" }}
+                  >
+                    {session.name}
+                  </Typography>
+                  <SyncStatusIndicator sessionId={session.id} variant="icon" />
+                </Box>
               </ListItemButton>
 
               <IconButton
