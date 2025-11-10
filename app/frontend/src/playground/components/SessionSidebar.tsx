@@ -43,6 +43,8 @@ import SyncStatusIndicator from "./SyncStatusIndicator";
 import { DevBanner } from "./DevBanner";
 import { deleteSession as deleteSessionThunk } from "../store/thunks/sessionManagementThunks";
 import ProfileMenu from "./ProfileMenu/ProfileMenu";
+import { DevBanner } from "./DevBanner";
+import { deleteSession as deleteSessionThunk } from "../store/thunks/sessionManagementThunks";
 
 /**
  * Sidebar for listing and managing Playground chat sessions.
