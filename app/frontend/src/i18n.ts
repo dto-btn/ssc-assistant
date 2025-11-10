@@ -2,8 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
 import translations from './i18n/locales/translations.json';
-import enPGT from './playground/locales/en.json';
-import frPGT from './playground/locales/fr.json';
+import pgTrans from "./playground/locales/translations.json";
 
 import Cookies from "js-cookie";
 
@@ -25,6 +24,9 @@ const extractLanguageData = (mergedData: TranslationData, language: keyof Transl
 // Extract English and French translations
 const enTranslations = extractLanguageData(translations, 'en');
 const frTranslations = extractLanguageData(translations, 'fr');
+
+const enPGT = extractLanguageData(pgTrans, 'en');
+const frPGT = extractLanguageData(pgTrans, 'fr');
 
 
 i18n.use(initReactI18next).init({
