@@ -21,6 +21,7 @@ import quotedReducer from "./slices/quotedSlice";
 import authReducer from "./slices/authSlice";
 import { archiverMiddleware, requestArchive } from "./middleware/archiverMiddleware";
 import { outboxMiddleware } from "./middleware/outboxMiddleware";
+import userReducer from "./slices/userSlice";
 import { saveChatState, loadChatState } from "./persistence";
 import outboxReducer from "./slices/outboxSlice";
 import sessionFilesReducer from "./slices/sessionFilesSlice";
@@ -34,6 +35,7 @@ const rootReducer = combineReducers({
   toast: toastReducer,
   quoted: quotedReducer,
   auth: authReducer,
+  user: userReducer,
   outbox: outboxReducer,
   sessionFiles: sessionFilesReducer,
   sync: syncReducer,
