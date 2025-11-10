@@ -116,11 +116,14 @@ class PlaygroundFileMetadata:
     category: Optional[str] = None
     metadataType: Optional[str] = None
     sessionName: Optional[str] = None
+    lastUpdated: Optional[str] = None
 
 
 @dataclass
 class PlaygroundFilesResponse:
     files: List[PlaygroundFileMetadata]
+    deletedSessionIds: List[str] = field(default_factory=list)
+    sessionDeleted: bool = False
 
 
 @dataclass
