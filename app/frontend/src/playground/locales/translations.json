@@ -1,0 +1,126 @@
+{
+    "select.or.create.session": {
+        "en": "Select or create a chat session to begin.",
+        "fr": "Sélectionnez ou créez une session de chat pour commencer."
+    },
+    "how.can.i.help": {
+        "en": "How can I help?",
+        "fr": "Comment puis-je vous aider?"
+    },
+    "type.a.message": {
+        "en": "Type a message...",
+        "fr": "Tapez un message..."
+    },
+    "send": {
+        "en": "Send",
+        "fr": "Envoyer"
+    },
+    "files.attached": {
+        "en": "file(s) attached",
+        "fr": "fichier(s) joint(s)"
+    },
+    "quote.this.message": {
+        "en": "Quote this message",
+        "fr": "Citer ce message"
+    },
+    "attachments": {
+        "en": "Attachments",
+        "fr": "Fichiers joints"
+    },
+    "link": {
+        "en": "link",
+        "fr": "lien"
+    },
+    "feedback": {
+        "en": "Feedback",
+        "fr": "Retour"
+    },
+    "your.feedback": {
+        "en": "Your feedback",
+        "fr": "Votre retour"
+    },
+    "submit": {
+        "en": "Submit",
+        "fr": "Soumettre"
+    },
+    "cancel": {
+        "en": "Cancel",
+        "fr": "Annuler"
+    },
+    "attach": {
+        "en": "Attach",
+        "fr": "Joindre"
+    },
+    "replay": {
+        "en": "Replay",
+        "fr": "Rejouer"
+    },
+    "stop": {
+        "en": "Stop",
+        "fr": "Arrêter"
+    },
+    "rename.conversation": {
+        "en": "Rename Conversation",
+        "fr": "Renommer la conversation"
+    },
+    "conversation.name": {
+        "en": "Conversation Name",
+        "fr": "Nom de la conversation"
+    },
+    "rename": {
+        "en": "Rename",
+        "fr": "Renommer"
+    },
+    "delete": {
+        "en": "Delete",
+        "fr": "Supprimer"
+    },
+    "chats": {
+        "en": "Chats",
+        "fr": "Conversations"
+    },
+    "new": {
+        "en": "New",
+        "fr": "Nouveau"
+    },
+    "delete.conversation": {
+        "en": "Delete Conversation",
+        "fr": "Supprimer la conversation"
+    },
+    "suggestion.use.api": {
+        "en": "How can I use the API?",
+        "fr": "Comment puis-je utiliser l'API ?"
+    },
+    "suggestion.github.issues": {
+        "en": "Show me recent GitHub issues",
+        "fr": "Montrez-moi les problèmes GitHub récents"
+    },
+    "suggestion.ts.interface": {
+        "en": "Generate a TypeScript interface",
+        "fr": "Générez une interface TypeScript"
+    },
+    "suggestion.summarize.doc": {
+        "en": "Summarize this document",
+        "fr": "Résumez ce document"
+    },
+    "try.asking": {
+        "en": "Try asking:",
+        "fr": "Essayez de demander :"
+    },
+    "assistant.error.chat": {
+        "en": "Sorry, I encountered an error while processing your request. Please try again.",
+        "fr": "Désolé, une erreur est survenue lors du traitement de votre demande. Veuillez réessayer."
+    },
+    "assistant.error.toast": {
+        "en": "An error occurred during completion.",
+        "fr": "Une erreur est survenue pendant le traitement."
+    },
+    "ai.disclaimer": {
+        "en": "AI may make mistakes. Please validate all information before use.",
+        "fr": "L'IA peut faire des erreurs. Veuillez valider toutes les informations avant utilisation."
+    },
+    "playground:auth.tokenExpired": {
+        "en": "Authentication required. Please refresh the page.",
+        "fr": "Authentification requise. Veuillez actualiser la page."
+    }
+}
