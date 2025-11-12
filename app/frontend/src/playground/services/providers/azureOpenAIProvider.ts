@@ -47,8 +47,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
       const stream = await client.chat.completions.create({
         model,
         messages: updatedMessages,
-        tools: tools,
-        tool_choice: "auto",
+        ...(tools && tools.length > 0 ? { tools: tools, tool_choice: "auto" } : {}),
         stream: true,
       });
 

@@ -304,7 +304,7 @@ export const sendAssistantMessage = ({
     let accumulatedContent = "";
 
     // Use the completion service with streaming callbacks for state management
-  const completionMessages = await mapMessagesForCompletion(updatedSessionMessages, dispatchForAttachments, getState);
+    const completionMessages = await mapMessagesForCompletion(updatedSessionMessages, dispatchForAttachments, getState);
 
     await completionService.createCompletion(
       {
@@ -312,7 +312,7 @@ export const sendAssistantMessage = ({
         model: "gpt-4o", // Let MCP client decide or the user or the agentic AI decide which model to use...
         provider,
         userToken: accessToken,
-        tools: availableTools,
+        ...(availableTools && availableTools.length > 0 ? { tools: availableTools } : {}),
       },
       {
         onChunk: (chunk: string) => {
