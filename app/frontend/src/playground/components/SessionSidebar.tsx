@@ -40,11 +40,9 @@ import SessionRenameDialog from "./SessionRenameDialog";
 import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 import SyncStatusIndicator from "./SyncStatusIndicator";
-import { DevBanner } from "./DevBanner";
 import { deleteSession as deleteSessionThunk } from "../store/thunks/sessionManagementThunks";
 import ProfileMenu from "./ProfileMenu/ProfileMenu";
 import { DevBanner } from "./DevBanner";
-import { deleteSession as deleteSessionThunk } from "../store/thunks/sessionManagementThunks";
 
 /**
  * Sidebar for listing and managing Playground chat sessions.
