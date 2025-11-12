@@ -5,10 +5,27 @@
  * stores tool-related metadata used by the middleware and UI components.
  */
 
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { getToolService } from "../../services/toolService";
+import { ChatCompletionFunctionTool } from 'openai/resources/index.mjs';
+
+// Async thunk to load tools using the toolService
+export const loadTools = createAsyncThunk('tools/loadTools', async (_, { rejectWithValue }) => {
+  try {
+    const toolService = await getToolService();
+    const tools = await toolService.listTools();
+    return tools;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to load tools';
+    return rejectWithValue(message);
+  }
+});
 
 export interface ToolState {
   enabledTools: Record<string, boolean>;
+  availableTools: ChatCompletionFunctionTool[];
+  isLoading: boolean;
+  error: string | null;
 }
 
 const defaultEnabledTools: Record<string, boolean> = {
@@ -19,6 +36,9 @@ const defaultEnabledTools: Record<string, boolean> = {
 
 const initialState: ToolState = {
   enabledTools: defaultEnabledTools,
+  availableTools: [],
+  isLoading: false,
+  error: null,
 };
 
 const toolSlice = createSlice({
@@ -32,6 +52,21 @@ const toolSlice = createSlice({
       const tool = action.payload;
       state.enabledTools[tool] = !state.enabledTools[tool];
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(loadTools.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(loadTools.fulfilled, (state, action: PayloadAction<ChatCompletionFunctionTool[]>) => {
+        state.isLoading = false;
+        state.availableTools = action.payload;
+      })
+      .addCase(loadTools.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      });
   },
 });
 
