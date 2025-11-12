@@ -42,7 +42,7 @@ import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 import SyncStatusIndicator from "./SyncStatusIndicator";
 import { deleteSession as deleteSessionThunk } from "../store/thunks/sessionManagementThunks";
 import ProfileMenu from "./ProfileMenu/ProfileMenu";
-import { DevBanner } from "./DevBanner";
+
 
 /**
  * Sidebar for listing and managing Playground chat sessions.
