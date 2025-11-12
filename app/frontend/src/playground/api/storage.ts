@@ -50,15 +50,72 @@ const asString = (value: unknown): string | undefined =>
 const asNumber = (value: unknown): number | undefined =>
   typeof value === "number" && Number.isFinite(value) ? value : undefined;
 
+const HTTP_URL_PATTERN = /^https?:\/\//i;
+
+function decodePathPreservingSlashes(candidate: string): string {
+  try {
+    return decodeURIComponent(candidate);
+  } catch (error) {
+    console.warn("Failed to decode blob preview path", { candidate, error });
+    return candidate;
+  }
+}
+
+function normalizePreviewUrl(rawUrl?: string, blobName?: string): string | undefined {
+  if (!rawUrl && !blobName) {
+    return undefined;
+  }
+
+  const trimmed = rawUrl?.trim();
+  if (trimmed) {
+    if (trimmed.startsWith("/")) {
+      return decodePathPreservingSlashes(trimmed);
+    }
+
+    if (HTTP_URL_PATTERN.test(trimmed)) {
+      try {
+        const parsed = new URL(trimmed);
+        const path = parsed.pathname || "";
+        if (path) {
+          return decodePathPreservingSlashes(path.startsWith("/") ? path : `/${path}`);
+        }
+      } catch (error) {
+        const slashIndex = trimmed.indexOf("/", trimmed.indexOf("//") + 2);
+        if (slashIndex >= 0) {
+          const fallbackPath = trimmed.slice(slashIndex);
+          return decodePathPreservingSlashes(
+            fallbackPath.startsWith("/") ? fallbackPath : `/${fallbackPath}`,
+          );
+        }
+        console.warn("Unable to parse blob URL for preview", { rawUrl: trimmed, error });
+      }
+    }
+
+    const withLeadingSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    return decodePathPreservingSlashes(withLeadingSlash);
+  }
+
+  if (blobName) {
+    const normalizedBlobName = blobName.startsWith("/") ? blobName : `/${blobName}`;
+    return decodePathPreservingSlashes(normalizedBlobName);
+  }
+
+  return undefined;
+}
+
 function mapFilePayload(payload: RawFilePayload = {}): FileAttachment {
   const candidateType = asString(payload.type);
   const resolvedContentType =
     asString(payload.contentType) ??
     (candidateType && candidateType.includes("/") ? candidateType : null);
+  const blobName = asString(payload.blobName) ?? asString(payload.name) ?? "";
+  const rawUrl = asString(payload.url) ?? "";
+  const previewUrl = normalizePreviewUrl(rawUrl, blobName);
 
   return {
-    blobName: asString(payload.blobName) ?? asString(payload.name) ?? "",
-    url: asString(payload.url) ?? "",
+    blobName,
+    url: rawUrl,
+    previewUrl,
     originalName: asString(payload.originalName) ?? asString(payload.name) ?? "",
     size: asNumber(payload.size),
     contentType: resolvedContentType,
