@@ -2,7 +2,7 @@ import { ChatCompletionFunctionTool } from "openai/resources/index.mjs";
 import MCPClient from "./MCPClient";
 
 // Environment-based MCP URLs (comma-separated in VITE_MCP_URLS)
-const MCP_URLS = import.meta.env.VITE_MCP_URLS?.split(',') || ['http://localhost:8000/mcp'];
+const MCP_URLS = import.meta.env.VITE_MCP_URLS?.split(',') || [];
 
 
 // Helper functions to extract tool name and client index
