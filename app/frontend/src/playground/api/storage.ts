@@ -58,9 +58,12 @@ const asNumber = (value: unknown): number | undefined =>
 
 const HTTP_URL_PATTERN = /^https?:\/\//i;
 
+<<<<<<< HEAD
 /**
  * Decode a URL path but keep path separators intact so blob keys remain hierarchical.
  */
+=======
+>>>>>>> 467c7b3 (fixed file preview because of private blob, also trimed unnessary information from the file name.)
 function decodePathPreservingSlashes(candidate: string): string {
   try {
     return decodeURIComponent(candidate);
@@ -70,10 +73,14 @@ function decodePathPreservingSlashes(candidate: string): string {
   }
 }
 
+<<<<<<< HEAD
 /**
  * Normalize any blob reference (full URL, relative path, or blob name) into a predictable preview path.
  */
 export function normalizePreviewUrl(rawUrl?: string, blobName?: string): string | undefined {
+=======
+function normalizePreviewUrl(rawUrl?: string, blobName?: string): string | undefined {
+>>>>>>> 467c7b3 (fixed file preview because of private blob, also trimed unnessary information from the file name.)
   if (!rawUrl && !blobName) {
     return undefined;
   }
@@ -103,7 +110,11 @@ export function normalizePreviewUrl(rawUrl?: string, blobName?: string): string 
       }
     }
 
+<<<<<<< HEAD
     const withLeadingSlash = `/${trimmed}`;
+=======
+    const withLeadingSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+>>>>>>> 467c7b3 (fixed file preview because of private blob, also trimed unnessary information from the file name.)
     return decodePathPreservingSlashes(withLeadingSlash);
   }
 
@@ -115,9 +126,12 @@ export function normalizePreviewUrl(rawUrl?: string, blobName?: string): string 
   return undefined;
 }
 
+<<<<<<< HEAD
 /**
  * Translate backend file payloads into strongly typed attachments consumed by the UI.
  */
+=======
+>>>>>>> 467c7b3 (fixed file preview because of private blob, also trimed unnessary information from the file name.)
 function mapFilePayload(payload: RawFilePayload = {}): FileAttachment {
   const candidateType = asString(payload.type);
   const resolvedContentType =
