@@ -37,50 +37,9 @@ interface SuggestionCard {
 const Suggestions = ({ onSuggestionClicked, tools = [] }: SuggestionsProps) => {
   const { t } = useTranslation();
 
-  // Define all suggestion cards with their properties
-  const suggestionCards: SuggestionCard[] = [
-    {
-      title: t("suggestions.general.contact"),
-      tool: "geds",
-      icon: <PersonIcon sx={{ color: "#3f51b5" }} />,
-      category: "geds",
-      color: "#3f51b5",
-    },
-    {
-      title: t("suggestions.general.email"),
-      tool: "corporate",
-      icon: <EmailIcon sx={{ color: "#3f51b5" }} />,
-      category: "general",
-      color: "#3f51b5",
-    },
-    {
-      title: t("suggestions.general.hire"),
-      tool: "corporate",
-      icon: <HelpOutlineIcon sx={{ color: "#3f51b5" }} />,
-      category: "corporate",
-      color: "#3f51b5",
-    },
-    {
-      title: t("suggestions.business.find"),
-      tool: "bits",
-      icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
-      category: "br",
-      color: "#8e24aa",
-    },
-    {
-      title: t("suggestions.business.pspc"),
-      tool: "bits",
-      icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
-      category: "br",
-      color: "#8e24aa",
-    },
-    {
-      title: t("suggestions.business.piechart"),
-      tool: "bits",
-      icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
-      category: "br",
-      color: "#8e24aa",
-    },
+  const maxCardsToShow = 6;
+
+  const suggestionCardsPMCOE: SuggestionCard[] = [
     {
       title: t("suggestions.pmcoe.q1"),
       tool: "pmcoe",
@@ -129,6 +88,133 @@ const Suggestions = ({ onSuggestionClicked, tools = [] }: SuggestionsProps) => {
       color: "#da920dff",
       staticTool: true,
     },
+    {
+      title: t("suggestions.pmcoe.q7"),
+      tool: "pmcoe",
+      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+      category: "pmcoe",
+      color: "#da920dff",
+      staticTool: true,
+    },
+    {
+      title: t("suggestions.pmcoe.q8"),
+      tool: "pmcoe",
+      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+      category: "pmcoe",
+      color: "#da920dff",
+      staticTool: true,
+    },
+    {
+      title: t("suggestions.pmcoe.q9"),
+      tool: "pmcoe",
+      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+      category: "pmcoe",
+      color: "#da920dff",
+      staticTool: true,
+    },
+    {
+      title: t("suggestions.pmcoe.q10"),
+      tool: "pmcoe",
+      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+      category: "pmcoe",
+      color: "#da920dff",
+      staticTool: true,
+    },
+    {
+      title: t("suggestions.pmcoe.q11"),
+      tool: "pmcoe",
+      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+      category: "pmcoe",
+      color: "#da920dff",
+      staticTool: true,
+    },
+    {
+      title: t("suggestions.pmcoe.q12"),
+      tool: "pmcoe",
+      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+      category: "pmcoe",
+      color: "#da920dff",
+      staticTool: true,
+    },
+    {
+      title: t("suggestions.pmcoe.q13"),
+      tool: "pmcoe",
+      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+      category: "pmcoe",
+      color: "#da920dff",
+      staticTool: true,
+    },
+    {
+      title: t("suggestions.pmcoe.q14"),
+      tool: "pmcoe",
+      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+      category: "pmcoe",
+      color: "#da920dff",
+      staticTool: true,
+    },
+    {
+      title: t("suggestions.pmcoe.q15"),
+      tool: "pmcoe",
+      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+      category: "pmcoe",
+      color: "#da920dff",
+      staticTool: true,
+    },
+    {
+      title: t("suggestions.pmcoe.q16"),
+      tool: "pmcoe",
+      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+      category: "pmcoe",
+      color: "#da920dff",
+      staticTool: true,
+    },
+  ]
+
+  // Define all suggestion cards with their properties
+  const suggestionCards: SuggestionCard[] = [
+    {
+      title: t("suggestions.general.contact"),
+      tool: "geds",
+      icon: <PersonIcon sx={{ color: "#3f51b5" }} />,
+      category: "geds",
+      color: "#3f51b5",
+    },
+    {
+      title: t("suggestions.general.email"),
+      tool: "corporate",
+      icon: <EmailIcon sx={{ color: "#3f51b5" }} />,
+      category: "general",
+      color: "#3f51b5",
+    },
+    {
+      title: t("suggestions.general.hire"),
+      tool: "corporate",
+      icon: <HelpOutlineIcon sx={{ color: "#3f51b5" }} />,
+      category: "corporate",
+      color: "#3f51b5",
+    },
+    {
+      title: t("suggestions.business.find"),
+      tool: "bits",
+      icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
+      category: "br",
+      color: "#8e24aa",
+    },
+    {
+      title: t("suggestions.business.pspc"),
+      tool: "bits",
+      icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
+      category: "br",
+      color: "#8e24aa",
+    },
+    {
+      title: t("suggestions.business.piechart"),
+      tool: "bits",
+      icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
+      category: "br",
+      color: "#8e24aa",
+    },
+    ...suggestionCardsPMCOE
   ];
 
   // Filter suggestion cards based on the allowedToolsSet
@@ -137,6 +223,14 @@ const Suggestions = ({ onSuggestionClicked, tools = [] }: SuggestionsProps) => {
       allowedToolsSet.has(card.tool) &&
       (!tools || tools.length === 0 || tools.includes(card.tool))
   );
+
+  let reducedSuggestionCards: SuggestionCard[] = [];
+
+  while(reducedSuggestionCards.length < maxCardsToShow) {
+    // pick a random card from the filteredSuggestionCards
+    const randomIndex = Math.floor(Math.random() * filteredSuggestionCards.length);
+    reducedSuggestionCards.push(filteredSuggestionCards[randomIndex]);
+  }
 
   return (
     <Box sx={{ width: "100%", mb: 3 }}>
@@ -155,7 +249,7 @@ const Suggestions = ({ onSuggestionClicked, tools = [] }: SuggestionsProps) => {
           gap: 2,
         }}
       >
-        {filteredSuggestionCards.map((card, index) => (
+        {reducedSuggestionCards.map((card, index) => (
           <Card
             key={index}
             elevation={1}
