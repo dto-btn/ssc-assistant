@@ -224,7 +224,7 @@ const Suggestions = ({ onSuggestionClicked, tools = [] }: SuggestionsProps) => {
       (!tools || tools.length === 0 || tools.includes(card.tool))
   );
 
-  let reducedSuggestionCards: SuggestionCard[] = [];
+  const reducedSuggestionCards: SuggestionCard[] = [];
 
   while(reducedSuggestionCards.length < maxCardsToShow) {
     // pick a random card from the filteredSuggestionCards
