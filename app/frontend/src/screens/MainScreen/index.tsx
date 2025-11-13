@@ -542,6 +542,7 @@ const MainScreen = () => {
                 tools={Object.keys(enabledTools).filter(
                   (tool) => enabledTools[tool]
                 )}
+                regenerateKey={currentChatHistory.uuid}
               />
               <ChatInput
                 clearOnSend

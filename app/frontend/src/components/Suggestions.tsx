@@ -14,6 +14,7 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { useTranslation } from "react-i18next";
 import { allowedToolsSet } from "../allowedTools";
 import TopicIcon from "@mui/icons-material/Topic";
+import { useMemo } from "react";
 
 type SuggestionsProps = {
   onSuggestionClicked: (
@@ -22,6 +23,7 @@ type SuggestionsProps = {
     isStatic: boolean
   ) => void;
   tools?: string[]; //if specified only display cards for those tools
+  regenerateKey?: string | number; // Add a key for memo and prevent cards from changing on page refresh
 };
 
 // Card type definitions with color and category info
@@ -34,109 +36,217 @@ interface SuggestionCard {
   staticTool?: boolean;
 }
 
-const Suggestions = ({ onSuggestionClicked, tools = [] }: SuggestionsProps) => {
+const Suggestions = ({
+  onSuggestionClicked,
+  tools = [],
+  regenerateKey,
+}: SuggestionsProps) => {
   const { t } = useTranslation();
 
-  // Define all suggestion cards with their properties
-  const suggestionCards: SuggestionCard[] = [
-    {
-      title: t("suggestions.general.contact"),
-      tool: "geds",
-      icon: <PersonIcon sx={{ color: "#3f51b5" }} />,
-      category: "geds",
-      color: "#3f51b5",
-    },
-    {
-      title: t("suggestions.general.email"),
-      tool: "corporate",
-      icon: <EmailIcon sx={{ color: "#3f51b5" }} />,
-      category: "general",
-      color: "#3f51b5",
-    },
-    {
-      title: t("suggestions.general.hire"),
-      tool: "corporate",
-      icon: <HelpOutlineIcon sx={{ color: "#3f51b5" }} />,
-      category: "corporate",
-      color: "#3f51b5",
-    },
-    {
-      title: t("suggestions.business.find"),
-      tool: "bits",
-      icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
-      category: "br",
-      color: "#8e24aa",
-    },
-    {
-      title: t("suggestions.business.pspc"),
-      tool: "bits",
-      icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
-      category: "br",
-      color: "#8e24aa",
-    },
-    {
-      title: t("suggestions.business.piechart"),
-      tool: "bits",
-      icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
-      category: "br",
-      color: "#8e24aa",
-    },
-    {
-      title: t("suggestions.pmcoe.q1"),
-      tool: "pmcoe",
-      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
-      category: "pmcoe",
-      color: "#da920dff",
-      staticTool: true,
-    },
-    {
-      title: t("suggestions.pmcoe.q2"),
-      tool: "pmcoe",
-      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
-      category: "pmcoe",
-      color: "#da920dff",
-      staticTool: true,
-    },
-    {
-      title: t("suggestions.pmcoe.q3"),
-      tool: "pmcoe",
-      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
-      category: "pmcoe",
-      color: "#da920dff",
-      staticTool: true,
-    },
-    {
-      title: t("suggestions.pmcoe.q4"),
-      tool: "pmcoe",
-      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
-      category: "pmcoe",
-      color: "#da920dff",
-      staticTool: true,
-    },
-    {
-      title: t("suggestions.pmcoe.q5"),
-      tool: "pmcoe",
-      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
-      category: "pmcoe",
-      color: "#da920dff",
-      staticTool: true,
-    },
-    {
-      title: t("suggestions.pmcoe.q6"),
-      tool: "pmcoe",
-      icon: <TopicIcon sx={{ color: "#da920dff" }} />,
-      category: "pmcoe",
-      color: "#da920dff",
-      staticTool: true,
-    },
-  ];
+  const maxCardsToShow = 6;
 
-  // Filter suggestion cards based on the allowedToolsSet
-  const filteredSuggestionCards = suggestionCards.filter(
-    (card) =>
-      allowedToolsSet.has(card.tool) &&
-      (!tools || tools.length === 0 || tools.includes(card.tool))
-  );
+  // Memoize cards based on translation function, tools prop, and regenerateKey
+  const reducedSuggestionCards = useMemo(() => {
+    const suggestionCardsPMCOE: SuggestionCard[] = [
+      {
+        title: t("suggestions.pmcoe.q1"),
+        tool: "pmcoe",
+        icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+        category: "pmcoe",
+        color: "#da920dff",
+        staticTool: true,
+      },
+      {
+        title: t("suggestions.pmcoe.q2"),
+        tool: "pmcoe",
+        icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+        category: "pmcoe",
+        color: "#da920dff",
+        staticTool: true,
+      },
+      {
+        title: t("suggestions.pmcoe.q3"),
+        tool: "pmcoe",
+        icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+        category: "pmcoe",
+        color: "#da920dff",
+        staticTool: true,
+      },
+      {
+        title: t("suggestions.pmcoe.q4"),
+        tool: "pmcoe",
+        icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+        category: "pmcoe",
+        color: "#da920dff",
+        staticTool: true,
+      },
+      {
+        title: t("suggestions.pmcoe.q5"),
+        tool: "pmcoe",
+        icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+        category: "pmcoe",
+        color: "#da920dff",
+        staticTool: true,
+      },
+      {
+        title: t("suggestions.pmcoe.q6"),
+        tool: "pmcoe",
+        icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+        category: "pmcoe",
+        color: "#da920dff",
+        staticTool: true,
+      },
+      {
+        title: t("suggestions.pmcoe.q7"),
+        tool: "pmcoe",
+        icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+        category: "pmcoe",
+        color: "#da920dff",
+        staticTool: true,
+      },
+      {
+        title: t("suggestions.pmcoe.q8"),
+        tool: "pmcoe",
+        icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+        category: "pmcoe",
+        color: "#da920dff",
+        staticTool: true,
+      },
+      {
+        title: t("suggestions.pmcoe.q9"),
+        tool: "pmcoe",
+        icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+        category: "pmcoe",
+        color: "#da920dff",
+        staticTool: true,
+      },
+      {
+        title: t("suggestions.pmcoe.q10"),
+        tool: "pmcoe",
+        icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+        category: "pmcoe",
+        color: "#da920dff",
+        staticTool: true,
+      },
+      {
+        title: t("suggestions.pmcoe.q11"),
+        tool: "pmcoe",
+        icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+        category: "pmcoe",
+        color: "#da920dff",
+        staticTool: true,
+      },
+      {
+        title: t("suggestions.pmcoe.q12"),
+        tool: "pmcoe",
+        icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+        category: "pmcoe",
+        color: "#da920dff",
+        staticTool: true,
+      },
+      {
+        title: t("suggestions.pmcoe.q13"),
+        tool: "pmcoe",
+        icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+        category: "pmcoe",
+        color: "#da920dff",
+        staticTool: true,
+      },
+      {
+        title: t("suggestions.pmcoe.q14"),
+        tool: "pmcoe",
+        icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+        category: "pmcoe",
+        color: "#da920dff",
+        staticTool: true,
+      },
+      {
+        title: t("suggestions.pmcoe.q15"),
+        tool: "pmcoe",
+        icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+        category: "pmcoe",
+        color: "#da920dff",
+        staticTool: true,
+      },
+      {
+        title: t("suggestions.pmcoe.q16"),
+        tool: "pmcoe",
+        icon: <TopicIcon sx={{ color: "#da920dff" }} />,
+        category: "pmcoe",
+        color: "#da920dff",
+        staticTool: true,
+      },
+    ];
+
+    // Define all suggestion cards with their properties
+    const suggestionCards: SuggestionCard[] = [
+      {
+        title: t("suggestions.general.contact"),
+        tool: "geds",
+        icon: <PersonIcon sx={{ color: "#3f51b5" }} />,
+        category: "geds",
+        color: "#3f51b5",
+      },
+      {
+        title: t("suggestions.general.email"),
+        tool: "corporate",
+        icon: <EmailIcon sx={{ color: "#3f51b5" }} />,
+        category: "general",
+        color: "#3f51b5",
+      },
+      {
+        title: t("suggestions.general.hire"),
+        tool: "corporate",
+        icon: <HelpOutlineIcon sx={{ color: "#3f51b5" }} />,
+        category: "corporate",
+        color: "#3f51b5",
+      },
+      {
+        title: t("suggestions.business.find"),
+        tool: "bits",
+        icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
+        category: "br",
+        color: "#8e24aa",
+      },
+      {
+        title: t("suggestions.business.pspc"),
+        tool: "bits",
+        icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
+        category: "br",
+        color: "#8e24aa",
+      },
+      {
+        title: t("suggestions.business.piechart"),
+        tool: "bits",
+        icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
+        category: "br",
+        color: "#8e24aa",
+      },
+      ...suggestionCardsPMCOE,
+    ];
+
+    // Filter suggestion cards based on the allowedToolsSet
+    const filteredSuggestionCards = suggestionCards.filter(
+      (card) =>
+        allowedToolsSet.has(card.tool) &&
+        (!tools || tools.length === 0 || tools.includes(card.tool))
+    );
+
+    const reducedCards: SuggestionCard[] = [];
+
+    while (
+      reducedCards.length < maxCardsToShow &&
+      filteredSuggestionCards.length > 0
+    ) {
+      // pick a random card from the filteredSuggestionCards
+      const randomIndex = Math.floor(
+        Math.random() * filteredSuggestionCards.length
+      );
+      reducedCards.push(filteredSuggestionCards[randomIndex]);
+    }
+
+    return reducedCards;
+  }, [t, regenerateKey]); // Only depend on t and regenerateKey
 
   return (
     <Box sx={{ width: "100%", mb: 3 }}>
@@ -155,7 +265,7 @@ const Suggestions = ({ onSuggestionClicked, tools = [] }: SuggestionsProps) => {
           gap: 2,
         }}
       >
-        {filteredSuggestionCards.map((card, index) => (
+        {reducedSuggestionCards.map((card, index) => (
           <Card
             key={index}
             elevation={1}

@@ -12,6 +12,7 @@ import { msalConfig } from './authConfig.ts';
 
 import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "./theme.ts";
+import React from "react";
 
 export const msalInstance = new PublicClientApplication(msalConfig);
 
@@ -47,10 +48,10 @@ msalInstance.initialize().then(() => {
   );
 
   root.render(
-    //<React.StrictMode>
+    <React.StrictMode>
       <ThemeProvider theme={theme}>
         <App instance={msalInstance} />
       </ThemeProvider>
-    //</React.StrictMode>
+    </React.StrictMode>
   );
 });
