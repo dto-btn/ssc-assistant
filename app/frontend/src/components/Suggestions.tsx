@@ -225,9 +225,6 @@ const Suggestions = ({
       ...suggestionCardsPMCOE,
     ];
 
-    // Normalize tools to a sorted string for stable comparison
-    const toolsKey = tools.slice().sort().join(",");
-
     // Filter suggestion cards based on the allowedToolsSet
     const filteredSuggestionCards = suggestionCards.filter(
       (card) =>
