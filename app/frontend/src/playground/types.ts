@@ -6,6 +6,7 @@ export type FileCategory = "files" | "chat" | "archive" | string;
 export interface FileAttachment {
   blobName: string;
   url: string;
+  previewUrl?: string;
   originalName: string;
   size?: number;
   contentType?: string | null;

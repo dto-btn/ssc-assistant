@@ -84,8 +84,19 @@ const outboxSlice = createSlice({
     removeOutboxItem: (state, action: PayloadAction<string>) => {
       state.items = state.items.filter(i => i.id !== action.payload);
     },
+    removeSessionOutboxItems: (state, action: PayloadAction<string>) => {
+      state.items = state.items.filter((item) => {
+        if (item.kind === "chat-archive") {
+          return item.sessionId !== action.payload;
+        }
+        if (item.kind === "user-file") {
+          return item.sessionId !== action.payload;
+        }
+        return true;
+      });
+    },
   },
 });
 
-export const { addUserFileToOutbox, addChatArchiveToOutbox, removeOutboxItem } = outboxSlice.actions;
+export const { addUserFileToOutbox, addChatArchiveToOutbox, removeOutboxItem, removeSessionOutboxItems } = outboxSlice.actions;
 export default outboxSlice.reducer;
