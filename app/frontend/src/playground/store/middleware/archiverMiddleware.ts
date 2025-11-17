@@ -9,7 +9,8 @@ import {
   markSessionError,
 } from "../slices/syncSlice";
 import { uploadEncodedFile } from "../../api/storage";
-import { removeSession } from "../slices/sessionSlice";
+import { removeSession, renameSession } from "../slices/sessionSlice";
+import { rehydrateSessionFromArchive, SessionRehydrationResult } from "../thunks/sessionBootstrapThunks";
 
 export const requestArchive = createAction<{ sessionId: string }>("archiver/requestArchive");
 
@@ -56,7 +57,8 @@ async function doArchive(sessionId: string, store: MiddlewareAPI<Dispatch<Unknow
   }
 
   const lastMessage = messages[messages.length - 1];
-  const signature = `${messages.length}:${lastMessage?.id ?? ""}:${lastMessage?.timestamp ?? ""}`;
+  const sessionNameFragment = sessionRecord?.name?.trim() ?? "";
+  const signature = `${messages.length}:${lastMessage?.id ?? ""}:${lastMessage?.timestamp ?? ""}:${sessionNameFragment}`;
   if (lastArchivedSignature[sessionId] === signature) {
     if (!hasQueuedArchive) {
       store.dispatch(markSessionSynced({ sessionId }));
@@ -144,6 +146,29 @@ export const archiverMiddleware: Middleware<UnknownAction, RootState> = (store) 
     const { sessionId } = action.payload;
     store.dispatch(markSessionDirty({ sessionId }));
     doArchive(sessionId, store).catch(() => {/* swallow errors to avoid disrupting UI */});
+  }
+
+  if (renameSession.match(action)) {
+    const { id: sessionId } = action.payload;
+    if (sessionId) {
+      const state: RootState = store.getState();
+      const hasMessages = state.chat.messages.some((message) => message.sessionId === sessionId);
+      if (hasMessages) {
+        store.dispatch(requestArchive({ sessionId }));
+      } else {
+        Promise.resolve(
+          store.dispatch(rehydrateSessionFromArchive(sessionId, { force: true })),
+        )
+          .then((rehydrationResult: SessionRehydrationResult | undefined) => {
+            if (rehydrationResult?.restored || rehydrationResult?.hasArchive) {
+              store.dispatch(requestArchive({ sessionId }));
+            }
+          })
+          .catch(() => {
+            // Ignore hydration failures; rename persistence will retry after history loads.
+          });
+      }
+    }
   }
 
   if (removeSession.match(action)) {
