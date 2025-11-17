@@ -9,7 +9,8 @@ import {
   markSessionError,
 } from "../slices/syncSlice";
 import { uploadEncodedFile } from "../../api/storage";
-import { removeSession } from "../slices/sessionSlice";
+import { removeSession, renameSession } from "../slices/sessionSlice";
+import { rehydrateSessionFromArchive, SessionRehydrationResult } from "../thunks/sessionBootstrapThunks";
 
 /**
  * External trigger used by UI/actions that want to force an immediate archive run.
@@ -152,6 +153,29 @@ export const archiverMiddleware: Middleware<UnknownAction, RootState> = (store) 
     const { sessionId } = action.payload;
     store.dispatch(markSessionDirty({ sessionId }));
     doArchive(sessionId, store).catch(() => {/* swallow errors to avoid disrupting UI */});
+  }
+
+  if (renameSession.match(action)) {
+    const { id: sessionId } = action.payload;
+    if (sessionId) {
+      const state: RootState = store.getState();
+      const hasMessages = state.chat.messages.some((message) => message.sessionId === sessionId);
+      if (hasMessages) {
+        store.dispatch(requestArchive({ sessionId }));
+      } else {
+        Promise.resolve(
+          store.dispatch(rehydrateSessionFromArchive(sessionId, { force: true })),
+        )
+          .then((rehydrationResult: SessionRehydrationResult | undefined) => {
+            if (rehydrationResult?.restored || rehydrationResult?.hasArchive) {
+              store.dispatch(requestArchive({ sessionId }));
+            }
+          })
+          .catch(() => {
+            // Ignore hydration failures; rename persistence will retry after history loads.
+          });
+      }
+    }
   }
 
   if (removeSession.match(action)) {
