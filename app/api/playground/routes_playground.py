@@ -72,6 +72,7 @@ DELETED_FLAG_VALUE = "true"
 
 
 def _is_marked_deleted(metadata: Optional[Dict[str, Any]]) -> bool:
+    """Return True when the blob metadata marks the file as soft-deleted."""
     if not metadata:
         return False
     flag = metadata.get("deleted")
@@ -83,6 +84,7 @@ def _is_marked_deleted(metadata: Optional[Dict[str, Any]]) -> bool:
 
 
 def _normalize_extension(filename: str) -> Optional[str]:
+    """Extract and normalize the file extension so type checks remain consistent."""
     last_dot = filename.rfind(".")
     if last_dot == -1:
         return None
@@ -91,6 +93,7 @@ def _normalize_extension(filename: str) -> Optional[str]:
 
 # Keep attachment policy identical to the main app's extractor for `files` uploads.
 def _is_supported_file(mime_type: Optional[str], filename: str, category: str) -> bool:
+    """Validate whether a file is eligible for upload given its MIME or extension."""
     if category != "files":
         return True
     normalized_mime = (mime_type or "").lower()
@@ -131,6 +134,7 @@ T = TypeVar("T")
 
 
 def _coerce_to_dataclass(data: Any, cls: Type[T]) -> T:
+    """Allow route decorators to pass either dicts or dataclass instances uniformly."""
     if isinstance(data, cls):
         return data
     if isinstance(data, dict):
@@ -139,6 +143,7 @@ def _coerce_to_dataclass(data: Any, cls: Type[T]) -> T:
 
 
 def _get_authenticated_oid() -> str:
+    """Extract the caller's AAD object id to isolate blobs per user."""
     user = user_ad.current_user()  # type: ignore[attr-defined]
     if not user:
         raise PlaygroundAPIError("Invalid access token", 401)
@@ -155,11 +160,13 @@ def _get_authenticated_oid() -> str:
 
 
 def _get_container_client() -> ContainerClient:
+    """Return the shared container client for chat attachments."""
     client = get_blob_service_client()
     return client.get_container_client(CONTAINER_NAME)
 
 
 def _sanitize_blob_name(blob_name: str) -> Optional[str]:
+    """Strip dangerous path characters to avoid traversal or invalid lookups."""
     if not blob_name:
         return None
     cleaned = blob_name.strip().lstrip("/").rstrip("/")
@@ -169,6 +176,7 @@ def _sanitize_blob_name(blob_name: str) -> Optional[str]:
 
 
 def _blob_name_from_url(file_url: str, container_client: ContainerClient) -> Optional[str]:
+    """Translate a signed blob URL into a relative path within the container."""
     try:
         parsed = urlparse(file_url)
     except ValueError:
@@ -193,6 +201,7 @@ def _get_blob_client_for_request(
     oid: str,
     container_client: ContainerClient,
 ) -> Optional[BlobClient]:
+    """Resolve the blob client for a request while enforcing the user's prefix boundary."""
     candidate = blob_name
     if candidate:
         candidate = _sanitize_blob_name(candidate)
@@ -206,6 +215,7 @@ def _get_blob_client_for_request(
 
 
 def _resolve_optional_oid() -> Tuple[Optional[str], Optional[PlaygroundAPIError]]:
+    """Attempt to authenticate but allow anonymous callers for read-only APIs."""
     try:
         return _get_authenticated_oid(), None
     except PlaygroundAPIError as exc:
@@ -219,6 +229,7 @@ def _fetch_file_bytes(
     oid: Optional[str],
     auth_error: Optional[PlaygroundAPIError],
 ) -> Tuple[bytes, str]:
+    """Centralized blob download helper that respects both signed-in and anonymous flows."""
     container_client = _get_container_client()
 
     if oid:
@@ -286,7 +297,7 @@ def _fetch_file_bytes(
 @auth.login_required(role="chat")
 @user_ad.login_required
 def files_for_session(query: PlaygroundSessionFilesQuery):
-    """Return metadata for the caller's files bound to a session."""
+    """Return metadata for every file the caller uploaded for the requested session id."""
     try:
         query = _coerce_to_dataclass(query, PlaygroundSessionFilesQuery)
     except PlaygroundAPIError as exc:
@@ -484,7 +495,7 @@ def upload_file(upload_request: PlaygroundUploadRequest):
 @auth.login_required(role="chat")
 @user_ad.login_required
 def delete_session(session_id: str):
-    """Mark all files for the caller's session as deleted in blob metadata."""
+    """Mark every blob tied to the caller's session as deleted so the UI stops rehydrating it."""
     if not session_id:
         return {"message": "session_id is required"}, 400
 
@@ -504,6 +515,7 @@ def delete_session(session_id: str):
     sanitized_session = secure_filename(str(session_id)) or str(session_id)
 
     try:
+        # Only enumerate blobs that live under the authenticated user's prefix so we never touch someone else's files.
         blobs_iterator = container_client.list_blobs(name_starts_with=f"{oid}/", include=["metadata"])
     except ResourceNotFoundError:
         return {
@@ -519,6 +531,7 @@ def delete_session(session_id: str):
     matched_session = False
 
     for blob in blobs_iterator:
+        # Each session can have multiple blobs (archive + attachments); ensure we only touch the targeted session.
         metadata = getattr(blob, "metadata", {}) or {}
         if metadata.get("sessionid") != str(session_id):
             continue
@@ -527,6 +540,7 @@ def delete_session(session_id: str):
         if _is_marked_deleted(metadata):
             continue
 
+        # Normalize keys because Azure lowercases metadata keys, but tests/users may provide other casings.
         normalized_metadata = {str(k).lower(): str(v) for k, v in metadata.items() if v is not None}
         normalized_metadata["deleted"] = DELETED_FLAG_VALUE
         normalized_metadata["deletedat"] = timestamp
