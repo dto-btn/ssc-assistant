@@ -241,7 +241,7 @@ export async function deleteRemoteSession({
 }: {
   sessionId: string;
   accessToken: string;
-}): Promise<number> {
+}): Promise<void> {
   if (!sessionId) throw new Error("sessionId is required");
   if (!accessToken?.trim()) throw new Error("accessToken is required");
 
@@ -253,7 +253,7 @@ export async function deleteRemoteSession({
   });
 
   if (response.status === 204) {
-    return 0;
+    return;
   }
 
   const data = await handleJsonResponse(response);
@@ -264,8 +264,7 @@ export async function deleteRemoteSession({
     throw new Error(message);
   }
 
-  const deleted = typeof data?.deletedCount === "number" ? data.deletedCount : 0;
-  return deleted;
+  return;
 }
 
 /**
