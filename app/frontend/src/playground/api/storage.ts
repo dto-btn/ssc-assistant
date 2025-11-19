@@ -91,7 +91,7 @@ function normalizePreviewUrl(rawUrl?: string, blobName?: string): string | undef
       }
     }
 
-    const withLeadingSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    const withLeadingSlash = `/${trimmed}`;
     return decodePathPreservingSlashes(withLeadingSlash);
   }
 
