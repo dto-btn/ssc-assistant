@@ -501,31 +501,40 @@ def delete_session(session_id: str):
         return {"message": "Delete failed"}, 500
 
     timestamp = datetime.utcnow().isoformat() + "Z"
-    deleted_count = 0
-    failed: List[str] = []
+    sanitized_session = secure_filename(str(session_id)) or str(session_id)
 
     try:
         blobs_iterator = container_client.list_blobs(name_starts_with=f"{oid}/", include=["metadata"])
     except ResourceNotFoundError:
-        return {"deletedCount": 0}
+        return {
+            "success": False,
+            "message": f"Session {session_id} not found",
+        }, 404
     except AzureError:
         logger.exception("Failed to enumerate blobs for delete", extra={"oid": oid})
         return {"message": "Delete failed"}, 500
+
+    deleted_count = 0
+    failed: List[str] = []
+    matched_session = False
 
     for blob in blobs_iterator:
         metadata = getattr(blob, "metadata", {}) or {}
         if metadata.get("sessionid") != str(session_id):
             continue
+
+        matched_session = True
         if _is_marked_deleted(metadata):
             continue
-        metadata = {str(k).lower(): str(v) for k, v in metadata.items() if v is not None}
-        metadata["deleted"] = DELETED_FLAG_VALUE
-        metadata["deletedat"] = timestamp
-        metadata["lastupdated"] = timestamp
+
+        normalized_metadata = {str(k).lower(): str(v) for k, v in metadata.items() if v is not None}
+        normalized_metadata["deleted"] = DELETED_FLAG_VALUE
+        normalized_metadata["deletedat"] = timestamp
+        normalized_metadata["lastupdated"] = timestamp
 
         blob_client = container_client.get_blob_client(blob.name)
         try:
-            blob_client.set_blob_metadata(metadata)
+            blob_client.set_blob_metadata(normalized_metadata)
             deleted_count += 1
         except AzureError:
             failed.append(blob.name)
@@ -534,14 +543,33 @@ def delete_session(session_id: str):
                 extra={"oid": oid, "blob_name": blob.name},
             )
 
+    if not matched_session:
+        return {
+            "success": False,
+            "message": f"Session {session_id} not found",
+        }, 404
+
     if failed:
         return {
-            "message": "Delete completed with errors",
+            "success": False,
             "deletedCount": deleted_count,
+            "message": f"Session {session_id} partially deleted. Retry to clean up remaining files.",
             "failed": failed,
         }, 207
 
-    return {"deletedCount": deleted_count}
+    if deleted_count == 0:
+        # All blobs already marked deleted.
+        return {
+            "success": True,
+            "deletedCount": 0,
+            "message": f"Session {session_id} already deleted",
+        }
+
+    return {
+        "success": True,
+        "deletedCount": deleted_count,
+        "message": f"Session {session_id} successfully deleted",
+    }
 
 # POST /api/playground/extract-file-text: Accepts fileUrl and fileType, returns extracted text
 @api_playground.post("/extract-file-text")

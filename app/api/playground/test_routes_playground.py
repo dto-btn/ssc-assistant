@@ -94,7 +94,7 @@ def api_headers(monkeypatch):
 def test_delete_session_marks_metadata(monkeypatch, api_headers):
     container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
     target_blob = FakeBlob(
-        "user-123/files/session-1/archive.chat.json",
+        "user-123/session-1.chat.json",
         {
             "sessionid": "session-1",
             "originalname": "archive.chat.json",
@@ -105,19 +105,18 @@ def test_delete_session_marks_metadata(monkeypatch, api_headers):
         "application/json",
     )
     container.add_blob(target_blob)
-    extra_blob = FakeBlob(
-        "user-123/files/session-2/other.txt",
+    attachment_blob = FakeBlob(
+        "user-123/files/session-1/attachment.txt",
         {
-            "sessionid": "session-2",
-            "originalname": "other.txt",
-            "uploadedat": "2023-01-02T00:00:00Z",
+            "sessionid": "session-1",
+            "originalname": "attachment.txt",
+            "uploadedat": "2023-01-01T00:00:00Z",
             "deleted": "false",
         },
         b"note",
         "text/plain",
     )
-    container.add_blob(extra_blob)
-
+    container.add_blob(attachment_blob)
     monkeypatch.setattr(routes_playground, "_get_container_client", lambda: container)
     monkeypatch.setattr(routes_playground, "_get_authenticated_oid", lambda: "user-123")
 
@@ -126,12 +125,61 @@ def test_delete_session_marks_metadata(monkeypatch, api_headers):
 
     assert response.status_code == 200
     payload = response.get_json()
-    assert payload == {"deletedCount": 1}
+    assert payload == {
+        "success": True,
+        "deletedCount": 2,
+        "message": "Session session-1 successfully deleted",
+    }
 
     updated_blob = container.get_blob(target_blob.name)
     assert updated_blob.metadata["deleted"] == routes_playground.DELETED_FLAG_VALUE
     assert "deletedat" in updated_blob.metadata
     assert updated_blob.metadata["lastupdated"] == updated_blob.metadata["deletedat"]
+    assert container.get_blob(attachment_blob.name).metadata["deleted"] == routes_playground.DELETED_FLAG_VALUE
+
+
+def test_delete_session_returns_not_found(monkeypatch, api_headers):
+    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
+    monkeypatch.setattr(routes_playground, "_get_container_client", lambda: container)
+    monkeypatch.setattr(routes_playground, "_get_authenticated_oid", lambda: "user-123")
+
+    with flask_app.test_client() as client:
+        response = client.delete("/api/playground/sessions/missing", headers=api_headers)
+
+    assert response.status_code == 404
+    assert response.get_json() == {
+        "success": False,
+        "message": "Session missing not found",
+    }
+
+
+def test_delete_session_already_deleted(monkeypatch, api_headers):
+    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
+    deleted_blob = FakeBlob(
+        "user-123/session-9.chat.json",
+        {
+            "sessionid": "session-9",
+            "deleted": "true",
+            "deletedat": "2023-01-01T00:00:00Z",
+            "lastupdated": "2023-01-01T00:00:00Z",
+        },
+        b"{}",
+        "application/json",
+    )
+    container.add_blob(deleted_blob)
+
+    monkeypatch.setattr(routes_playground, "_get_container_client", lambda: container)
+    monkeypatch.setattr(routes_playground, "_get_authenticated_oid", lambda: "user-123")
+
+    with flask_app.test_client() as client:
+        response = client.delete("/api/playground/sessions/session-9", headers=api_headers)
+
+    assert response.status_code == 200
+    assert response.get_json() == {
+        "success": True,
+        "deletedCount": 0,
+        "message": "Session session-9 already deleted",
+    }
 
 
 def test_files_for_session_excludes_deleted(monkeypatch, api_headers):
