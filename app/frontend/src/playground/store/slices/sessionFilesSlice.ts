@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { FileAttachment } from "../../types";
+import { removeSession } from "./sessionSlice";
 
 interface SessionFilesState {
   bySessionId: Record<string, FileAttachment[]>;
@@ -37,8 +38,16 @@ const sessionFilesSlice = createSlice({
       }
       state.bySessionId[sessionId] = current;
     },
+    removeSessionFiles: (state, action: PayloadAction<string>) => {
+      delete state.bySessionId[action.payload];
+    },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(removeSession, (state, action) => {
+      delete state.bySessionId[action.payload];
+    });
   },
 });
 
-export const { setSessionFiles, upsertSessionFile } = sessionFilesSlice.actions;
+export const { setSessionFiles, upsertSessionFile, removeSessionFiles } = sessionFilesSlice.actions;
 export default sessionFilesSlice.reducer;
