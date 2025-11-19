@@ -61,7 +61,7 @@ function decodePathPreservingSlashes(candidate: string): string {
   }
 }
 
-function normalizePreviewUrl(rawUrl?: string, blobName?: string): string | undefined {
+export function normalizePreviewUrl(rawUrl?: string, blobName?: string): string | undefined {
   if (!rawUrl && !blobName) {
     return undefined;
   }
