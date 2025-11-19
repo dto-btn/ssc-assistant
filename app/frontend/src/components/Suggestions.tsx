@@ -232,22 +232,9 @@ const Suggestions = ({
         (!tools || tools.length === 0 || tools.includes(card.tool))
     );
 
-    // reduce the card to the maximum and avoid duplicates
-    const reducedCards: Map<string, SuggestionCard> = new Map();
+    const shuffledCards = filteredSuggestionCards.sort(() => 0.5 - Math.random()).slice(0,maxCardsToShow);
 
-    while (
-      reducedCards.size < maxCardsToShow &&
-      filteredSuggestionCards.length > 0
-    ) {
-      // pick a random card from the filteredSuggestionCards
-      const randomIndex = Math.floor(
-        Math.random() * filteredSuggestionCards.length
-      );
-      if (!reducedCards.has(filteredSuggestionCards[randomIndex].title))
-        reducedCards.set(filteredSuggestionCards[randomIndex].title, filteredSuggestionCards[randomIndex]);
-    }
-
-    return Array.from(reducedCards.values());
+    return shuffledCards;
   }, [t, regenerateKey]); // Only depend on t and regenerateKey
 
   return (
