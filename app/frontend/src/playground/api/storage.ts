@@ -8,12 +8,18 @@ const sessionDeleteEndpoint = (sessionId: string) => `${PLAYGROUND_API_BASE}/ses
 
 type MetadataRecord = Record<string, string | number | boolean | null | undefined>;
 
+/**
+ * Read the MIME type from a ``data:`` URL so uploads inherit the browser-provided hint.
+ */
 function extractMimeType(encoded: string | undefined): string | undefined {
   if (!encoded) return undefined;
   const match = /^data:([^;,]+)[;,]/i.exec(encoded);
   return match ? match[1] : undefined;
 }
 
+/**
+ * Convert an arbitrary metadata dictionary into the lowercase string map expected by the API.
+ */
 function normalizeMetadata(metadata?: MetadataRecord): Record<string, string> | undefined {
   if (!metadata) return undefined;
   const result: Record<string, string> = {};
@@ -52,6 +58,9 @@ const asNumber = (value: unknown): number | undefined =>
 
 const HTTP_URL_PATTERN = /^https?:\/\//i;
 
+/**
+ * Decode a URL path but keep path separators intact so blob keys remain hierarchical.
+ */
 function decodePathPreservingSlashes(candidate: string): string {
   try {
     return decodeURIComponent(candidate);
@@ -61,6 +70,9 @@ function decodePathPreservingSlashes(candidate: string): string {
   }
 }
 
+/**
+ * Normalize any blob reference (full URL, relative path, or blob name) into a predictable preview path.
+ */
 export function normalizePreviewUrl(rawUrl?: string, blobName?: string): string | undefined {
   if (!rawUrl && !blobName) {
     return undefined;
@@ -103,6 +115,9 @@ export function normalizePreviewUrl(rawUrl?: string, blobName?: string): string 
   return undefined;
 }
 
+/**
+ * Translate backend file payloads into strongly typed attachments consumed by the UI.
+ */
 function mapFilePayload(payload: RawFilePayload = {}): FileAttachment {
   const candidateType = asString(payload.type);
   const resolvedContentType =
@@ -134,6 +149,9 @@ export interface ListSessionFilesResult {
   sessionDeleted: boolean;
 }
 
+/**
+ * Raise a helpful error when the API returns non-success codes so callers can surface context.
+ */
 async function handleJsonResponse(response: Response) {
   if (!response.ok) {
     const text = await response.text();
@@ -235,6 +253,9 @@ export async function uploadFile({
   });
 }
 
+/**
+ * Soft delete every blob tied to a session by calling the playground API on behalf of the user.
+ */
 export async function deleteRemoteSession({
   sessionId,
   accessToken,

@@ -121,6 +121,7 @@ class PlaygroundAPIError(Exception):
 
 
 def _public_error_message(exc: PlaygroundAPIError) -> str:
+    """Translate internal errors into user-facing language without leaking details."""
     messages = {
         400: "Bad request",
         401: "Unauthorized",
@@ -229,7 +230,21 @@ def _fetch_file_bytes(
     oid: Optional[str],
     auth_error: Optional[PlaygroundAPIError],
 ) -> Tuple[bytes, str]:
-    """Centralized blob download helper that respects both signed-in and anonymous flows."""
+    """Download bytes for either authenticated users (restricted prefix) or SAS links.
+
+    Args:
+        file_url: Absolute blob URL supplied by the client when downloading anonymously.
+        blob_name: Relative path inside the container when the UI already knows the blob name.
+        requested_type: MIME hint provided by the caller so we can short-circuit lookups.
+        oid: Authenticated caller's object id; when provided we enforce the per-user prefix.
+        auth_error: Cached auth error returned by ``_resolve_optional_oid`` to bubble up later.
+
+    Returns:
+        Tuple of the file bytes and best-effort content type guess.
+
+    Raises:
+        PlaygroundAPIError: If the blob cannot be located, is marked deleted, or storage fails.
+    """
     container_client = _get_container_client()
 
     if oid:
@@ -297,7 +312,11 @@ def _fetch_file_bytes(
 @auth.login_required(role="chat")
 @user_ad.login_required
 def files_for_session(query: PlaygroundSessionFilesQuery):
-    """Return metadata for every file the caller uploaded for the requested session id."""
+    """Return metadata for every file the caller uploaded for the requested session id.
+
+    The handler walks the authenticated user's prefix, skips any soft-deleted blobs, and
+    emits the normalized metadata structure consumed by the React playground.
+    """
     try:
         query = _coerce_to_dataclass(query, PlaygroundSessionFilesQuery)
     except PlaygroundAPIError as exc:
@@ -329,6 +348,7 @@ def files_for_session(query: PlaygroundSessionFilesQuery):
             content_settings = getattr(blob, "content_settings", None)
             if content_settings:
                 content_type = getattr(content_settings, "content_type", None)
+            # Mirror the frontend's ``FileAttachment`` shape so responses hydrate Redux as-is.
             files.append(
                 {
                     "name": blob.name,
@@ -370,7 +390,12 @@ def files_for_session(query: PlaygroundSessionFilesQuery):
 @auth.login_required(role="chat")
 @user_ad.login_required
 def upload_file(upload_request: PlaygroundUploadRequest):
-    """Persist a base64 encoded file in blob storage for the signed-in user."""
+    """Persist a base64 encoded file in blob storage for the signed-in user.
+
+    The payload comes from the playground UI and always includes a ``data:`` URL. We sanitize
+    file names, enforce the same attachment policy used by the production app, and stamp
+    metadata that allows the session bootstrapper to recover archives later on.
+    """
     try:
         upload_request = _coerce_to_dataclass(upload_request, PlaygroundUploadRequest)
     except PlaygroundAPIError as exc:
@@ -495,7 +520,11 @@ def upload_file(upload_request: PlaygroundUploadRequest):
 @auth.login_required(role="chat")
 @user_ad.login_required
 def delete_session(session_id: str):
-    """Mark every blob tied to the caller's session as deleted so the UI stops rehydrating it."""
+    """Mark every blob tied to the caller's session as deleted so the UI stops rehydrating it.
+
+    Instead of hard-deleting blobs we toggle metadata, allowing the recovery scripts to
+    rehydrate data if needed for auditing or debugging.
+    """
     if not session_id:
         return {"message": "session_id is required"}, 400
 
@@ -594,7 +623,11 @@ def delete_session(session_id: str):
 @api_playground.input(PlaygroundExtractTextRequest.Schema, arg_name="payload")  # type: ignore[attr-defined]
 @api_playground.output(PlaygroundExtractTextResponse.Schema)  # type: ignore[attr-defined]
 def extract_file_text(payload: PlaygroundExtractTextRequest):
-    """Fetch a remote file and extract plain text using the FileManager helper."""
+    """Fetch a remote file and extract plain text using the FileManager helper.
+
+    The same endpoint also powers inline previews by returning a base64 ``dataUrl`` when
+    ``responseFormat`` is set to ``data_url``.
+    """
     try:
         payload = _coerce_to_dataclass(payload, PlaygroundExtractTextRequest)
     except PlaygroundAPIError as exc:

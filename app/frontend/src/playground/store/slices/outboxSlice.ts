@@ -1,6 +1,9 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
 
+/**
+ * Enumerates the types of work the offline outbox can replay.
+ */
 export type OutboxKind = "user-file" | "chat-archive";
 
 export interface BaseOutboxItem {
@@ -51,6 +54,7 @@ const outboxSlice = createSlice({
         metadata?: Record<string, string>;
       }>
     ) => {
+      // Queue the upload so the retry worker can attempt it when auth/connectivity returns.
       state.items.push({
         id: uuidv4(),
         kind: "user-file",
@@ -76,15 +80,18 @@ const outboxSlice = createSlice({
       };
 
       if (existingIndex >= 0) {
+        // Coalesce duplicates so we only retry the latest archive per session.
         state.items[existingIndex] = updatedItem;
       } else {
         state.items.push(updatedItem);
       }
     },
     removeOutboxItem: (state, action: PayloadAction<string>) => {
+      // Remove a single entry after it successfully uploads.
       state.items = state.items.filter(i => i.id !== action.payload);
     },
     removeSessionOutboxItems: (state, action: PayloadAction<string>) => {
+      // Drop every pending upload tied to the session to keep memory in check.
       state.items = state.items.filter((item) => {
         if (item.kind === "chat-archive") {
           return item.sessionId !== action.payload;

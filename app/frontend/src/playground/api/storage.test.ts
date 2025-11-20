@@ -2,6 +2,9 @@ import { describe, it, expect } from "vitest";
 
 import { normalizePreviewUrl } from "./storage";
 
+/**
+ * Unit tests keep the URL normalizer honest so blob previews behave across browsers.
+ */
 describe("normalizePreviewUrl", () => {
   it("decodes already normalized paths", () => {
     const result = normalizePreviewUrl("/files/%20encoded%20name.pdf");

@@ -19,6 +19,9 @@ interface AvatarData {
   children: string;
 }
 
+/**
+ * Convert a deterministic hash of the name into a high-contrast background color.
+ */
 function stringToColor(string: string) {
   let hash = 0;
   let i;
@@ -82,9 +85,12 @@ function getLetterAvatar(name: string, size: string | undefined, fontSize: strin
     avatarData.sx.height = size;
   }
 
-  return avatarData
+  return avatarData;
 }
 
+/**
+ * Render either the graph profile picture or a deterministic set of initials.
+ */
 export const UserProfilePicture = ({ size, fontSize }: UserProfileProps) => {
   const profilePictureURL = useSelector((state: RootState) => state.user.profilePictureURL);
   const graphData = useSelector((state: RootState) => state.user.graphData);

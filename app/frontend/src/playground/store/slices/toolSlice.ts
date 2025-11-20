@@ -9,7 +9,9 @@ import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { getToolService } from "../../services/toolService";
 import { ChatCompletionFunctionTool } from 'openai/resources/index.mjs';
 
-// Async thunk to load tools using the toolService
+/**
+ * Fetch the union of tools exposed by every configured MCP server.
+ */
 export const loadTools = createAsyncThunk('tools/loadTools', async (_, { rejectWithValue }) => {
   try {
     const toolService = await getToolService();
@@ -46,10 +48,12 @@ const toolSlice = createSlice({
   initialState,
   reducers: {
     setEnabledTools: (state, action: PayloadAction<Record<string, boolean>>) => {
+      // Overwrite the entire toggle set when the user saves new preferences.
       state.enabledTools = action.payload;
     },
     toggleTool: (state, action: PayloadAction<string>) => {
       const tool = action.payload;
+      // Flip a single tool flag in-place to keep the UI responsive.
       state.enabledTools[tool] = !state.enabledTools[tool];
     },
   },

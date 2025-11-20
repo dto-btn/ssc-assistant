@@ -6,11 +6,17 @@ const MCP_URLS = import.meta.env.VITE_MCP_URLS?.split(',') || [];
 
 
 // Helper functions to extract tool name and client index
+/**
+ * Remove the synthetic suffix the tool service appends so the LLM can call the raw function name.
+ */
 export const extractToolName = (toolName: string): string => {
     const parts = toolName.split("--mcp--");
     return parts[0]; // Return the original function name without the index
 }
 
+/**
+ * Parse the MCP client index out of the synthetic tool name to route the call.
+ */
 export const extractClientIndex = (toolName: string): number => {
     const parts = toolName.split("--mcp--");
     if (parts.length === 2) {
@@ -34,6 +40,9 @@ class ToolService {
         this.mcpClients = mcpClients;
     }
 
+    /**
+     * Lazily create the singleton so the UI only connects to MCP servers once per session.
+     */
     public static async getInstance(): Promise<ToolService> {
         if (!ToolService.instance) {
             // Await creation of all MCP clients
@@ -45,12 +54,16 @@ class ToolService {
         return ToolService.instance;
     }
 
-    // Get the list of MCP clients (read-only)
+    /**
+     * Provide a read-only view of the underlying MCP clients for debugging.
+     */
     public getMcpClients(): MCPClient[] {
         return [...this.mcpClients]; // Return a copy to prevent mutation
     }
 
-    // Function to fetch & combine all tools from all MCP servers (cached)
+    /**
+     * Fetch & cache every tool exposed by the configured MCP servers.
+     */
     public async listTools(): Promise<ChatCompletionFunctionTool[]> {
         if (this.cachedTools) {
             return this.cachedTools;
@@ -103,7 +116,9 @@ class ToolService {
         return MCPtools;
     }
 
-    // Function to call a tool on the appropriate MCP server
+    /**
+     * Invoke a named tool on the MCP server that originally declared it.
+     */
     public async callTool(toolName: string, args: Record<string, any>): Promise<any> {
         // Find the MCP client for the given tool
         let clientIndex: number = extractClientIndex(toolName);
@@ -122,5 +137,7 @@ class ToolService {
     }
 }
 
-// Export an async function to get the singleton instance
+/**
+ * Convenience wrapper so callers can await the tool service singleton without importing the class.
+ */
 export const getToolService = async () => ToolService.getInstance();
