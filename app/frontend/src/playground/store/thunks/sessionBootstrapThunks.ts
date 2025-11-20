@@ -70,6 +70,8 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
     return;
   }
 
+  //new session = fetched sessions from blob storage
+  //existing sessions = cached from local store
   const existingSessions = new Map(state.sessions.sessions.map((session) => [session.id, session]));
   const newSessions: Session[] = [];
 
@@ -86,6 +88,7 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
         id: sessionId,
         name: buildRecoveredName(sessionId, createdAt, value.sessionName),
         createdAt,
+        isNewChat: false
       });
     }
   });
