@@ -40,7 +40,6 @@ interface FileUploadProps {
  */
 const FileUpload: React.FC<FileUploadProps> = ({ onFiles, disabled }) => {
   const { t } = useTranslation('playground');
-  const inputId = React.useId();
   const inputRef = React.useRef<HTMLInputElement | null>(null);
 
   return (
@@ -49,7 +48,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFiles, disabled }) => {
         type="file"
         multiple
         hidden
-        id={inputId}
         ref={inputRef}
         accept={FILE_INPUT_ACCEPT_ATTRIBUTE}
         onChange={event => {
@@ -61,28 +59,31 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFiles, disabled }) => {
         aria-hidden
         tabIndex={-1}
       />
-      <label htmlFor={inputId} style={{ display: 'inline-flex' }}>
-        {/* Tooltip wraps a span to keep it enabled when the button is disabled */}
-        <Tooltip title={t('attach')} enterDelay={300}>
-          <span>
-            <IconButton
-              component="span"
-              aria-label={t('attach')}
-              size="medium"
-              disabled={disabled}
-              sx={{
-                border: (theme) => `1px solid ${theme.palette.divider}`,
-                bgcolor: (theme) => theme.palette.background.paper,
-                '&:hover': {
-                  bgcolor: (theme) => theme.palette.action.hover,
-                },
-              }}
-            >
-              <AttachFileIcon />
-            </IconButton>
-          </span>
-        </Tooltip>
-      </label>
+      {/* Tooltip wraps a span to keep it enabled when the button is disabled */}
+      <Tooltip title={t('attach')} enterDelay={300}>
+        <span>
+          <IconButton
+            type="button"
+            aria-label={t('attach')}
+            size="medium"
+            disabled={disabled}
+            onClick={() => {
+              if (!disabled) {
+                inputRef.current?.click();
+              }
+            }}
+            sx={{
+              border: (theme) => `1px solid ${theme.palette.divider}`,
+              bgcolor: (theme) => theme.palette.background.paper,
+              '&:hover': {
+                bgcolor: (theme) => theme.palette.action.hover,
+              },
+            }}
+          >
+            <AttachFileIcon />
+          </IconButton>
+        </span>
+      </Tooltip>
     </>
   );
 };
