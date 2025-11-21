@@ -146,5 +146,17 @@
     "profile.settings": {
         "en": "Settings",
         "fr": "Paramètres"
+    },
+    "theme.toggle.label": {
+        "en": "Toggle color theme",
+        "fr": "Basculer le thème"
+    },
+    "theme.toggle.light": {
+        "en": "Light mode",
+        "fr": "Mode clair"
+    },
+    "theme.toggle.dark": {
+        "en": "Dark mode",
+        "fr": "Mode sombre"
     }
 }
