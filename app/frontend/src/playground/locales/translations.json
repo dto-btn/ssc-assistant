@@ -59,6 +59,86 @@
         "en": "Stop",
         "fr": "Arrêter"
     },
+    "download.pdf": {
+        "en": "Download PDF",
+        "fr": "Télécharger le PDF"
+    },
+    "pdf.toast.empty": {
+        "en": "Add a message before exporting a PDF.",
+        "fr": "Ajoutez un message avant d'exporter un PDF."
+    },
+    "pdf.toast.success": {
+        "en": "Accessible PDF download started.",
+        "fr": "Le téléchargement du PDF accessible a commencé."
+    },
+    "pdf.toast.error": {
+        "en": "Unable to generate the PDF. Please try again.",
+        "fr": "Impossible de générer le PDF. Veuillez réessayer."
+    },
+    "pdf.title": {
+        "en": "Chat transcript – {{session}}",
+        "fr": "Transcription de clavardage – {{session}}"
+    },
+    "pdf.section.messages": {
+        "en": "Conversation details",
+        "fr": "Détails de la conversation"
+    },
+    "pdf.meta.subject": {
+        "en": "Chat transcript",
+        "fr": "Transcription de clavardage"
+    },
+    "pdf.meta.sessionName": {
+        "en": "Session name",
+        "fr": "Nom de la session"
+    },
+    "pdf.meta.created": {
+        "en": "Session created",
+        "fr": "Session créée"
+    },
+    "pdf.meta.firstMessage": {
+        "en": "First message",
+        "fr": "Premier message"
+    },
+    "pdf.meta.lastMessage": {
+        "en": "Most recent message",
+        "fr": "Dernier message"
+    },
+    "pdf.meta.messageCount": {
+        "en": "Total messages",
+        "fr": "Nombre total de messages"
+    },
+    "pdf.message.empty": {
+        "en": "No text content available.",
+        "fr": "Aucun contenu textuel disponible."
+    },
+    "pdf.message.attachments": {
+        "en": "Attachments",
+        "fr": "Fichiers joints"
+    },
+    "pdf.message.citations": {
+        "en": "Citations",
+        "fr": "Citations"
+    },
+    "pdf.footer.generated": {
+        "en": "Generated on {{date}}",
+        "fr": "Généré le {{date}}"
+    },
+    "pdf.footer.page": {
+        "en": "Page {{current}} of {{total}}",
+        "fr": "Page {{current}} sur {{total}}"
+    },
+    "pdf.role.user": {
+        "en": "User",
+        "fr": "Utilisateur"
+    },
+    "pdf.role.assistant": {
+        "en": "Assistant",
+        "fr": "Assistant"
+    },
+    "pdf.role.system": {
+        "en": "System",
+        "fr": "Système"
+    },
     "rename.conversation": {
         "en": "Rename Conversation",
         "fr": "Renommer la conversation"

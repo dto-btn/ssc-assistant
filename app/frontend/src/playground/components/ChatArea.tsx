@@ -23,6 +23,8 @@ import { listSessionFiles, fetchFileDataUrl } from "../api/storage";
 import { setSessionFiles } from "../store/slices/sessionFilesSlice";
 import { selectCurrentSessionFiles } from "../store/selectors/sessionFilesSelectors";
 import type { FileAttachment } from "../types";
+import { downloadTranscriptPdf } from "../services/pdfExportService";
+import { addToast } from "../store/slices/toastSlice";
 
 const ChatArea: React.FC = () => {
   const { t } = useTranslation('playground');
@@ -30,11 +32,13 @@ const ChatArea: React.FC = () => {
   const currentSessionId = useSelector(
     (state: RootState) => state.sessions.currentSessionId
   );
+  const sessions = useSelector((state: RootState) => state.sessions.sessions);
   const isLoading = useSelector((state: RootState) => state.chat.isLoading);
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
   const loadedSessionsRef = React.useRef<Set<string>>(new Set());
   const rehydratedSessionsRef = React.useRef<Set<string>>(new Set());
   const rehydratingSessionsRef = React.useRef<Set<string>>(new Set());
+  const [isExporting, setIsExporting] = React.useState(false);
 
   // Use memoized selector for messages
   const messages = useSelector(selectMessagesBySessionId);
@@ -78,6 +82,34 @@ const ChatArea: React.FC = () => {
   const handleStop = (): void => {
     dispatch(setIsLoading(false));
   };
+
+  const handleDownloadTranscript = React.useCallback(async (): Promise<void> => {
+    if (!currentSessionId) return;
+    if (messages.length === 0) {
+      dispatch(addToast({ message: t("pdf.toast.empty"), isError: true }));
+      return;
+    }
+
+    const session = sessions.find((entry) => entry.id === currentSessionId);
+    if (!session) return;
+
+    setIsExporting(true);
+    try {
+      await downloadTranscriptPdf({
+        session,
+        messages,
+        locale: navigator.language,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        translator: t,
+      });
+      dispatch(addToast({ message: t("pdf.toast.success") }));
+    } catch (error) {
+      console.error("Failed to download transcript", error);
+      dispatch(addToast({ message: t("pdf.toast.error"), isError: true }));
+    } finally {
+      setIsExporting(false);
+    }
+  }, [currentSessionId, dispatch, messages, sessions, t]);
 
   // Suggestions logic
   const handleSuggestion = (suggestion: string): void => {
@@ -235,6 +267,9 @@ const ChatArea: React.FC = () => {
         onStop={handleStop}
         isLoading={isLoading}
         disabled={messages.length < 2}
+        onDownload={handleDownloadTranscript}
+        downloadDisabled={messages.length === 0 || isExporting}
+        isExporting={isExporting}
       />
       <ChatInput sessionId={currentSessionId} />
     </Box>
