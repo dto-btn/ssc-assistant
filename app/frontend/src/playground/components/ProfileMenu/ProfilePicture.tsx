@@ -106,6 +106,7 @@ export const UserProfilePicture = ({ size, fontSize }: UserProfileProps) => {
   if (profilePictureURL) {
        return <> 
        <Avatar aria-hidden alt={fullName} src={profilePictureURL} sx={size ? { width: size, height: size } : {}} />
+       {/* Tie label color to the active theme so it stays legible in dark mode. */}
        <Typography sx={{ marginLeft: 3, textTransform: 'none', color: 'var(--pg-text)'}}>{fullName}</Typography>
        </>
   } else {

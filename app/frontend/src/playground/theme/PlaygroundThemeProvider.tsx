@@ -1,4 +1,9 @@
 import React from "react";
+/**
+ * PlaygroundThemeProvider wires the playground into a shared light/dark theme.
+ * It exposes CSS variables plus a MUI palette so custom components and
+ * Material UI stay visually aligned, all while honoring WCAG contrast goals.
+ */
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import type { PaletteMode } from "@mui/material";
@@ -8,6 +13,7 @@ import { PlaygroundThemeContext } from "./themeContext";
 
 const STORAGE_KEY = "playground-theme";
 
+// Pull a persisted preference; treat anything else as "unset" so we can fall back.
 function getStoredTheme(): PlaygroundTheme | null {
   if (typeof window === "undefined") {
     return null;
@@ -16,6 +22,7 @@ function getStoredTheme(): PlaygroundTheme | null {
   return stored === "light" || stored === "dark" ? stored : null;
 }
 
+// Default to stored preference, otherwise mirror the system color scheme when possible.
 function getPreferredTheme(): PlaygroundTheme {
   if (typeof window === "undefined") {
     return "light";
@@ -32,6 +39,7 @@ function getPreferredTheme(): PlaygroundTheme {
     : "light";
 }
 
+// Central point for palette tweaks so components do not hard-code colors.
 function buildMuiTheme(mode: PaletteMode) {
   const isDark = mode === "dark";
   return createTheme({
@@ -77,6 +85,7 @@ export const PlaygroundThemeProvider: React.FC<React.PropsWithChildren> = ({
     () => Boolean(getStoredTheme())
   );
 
+  // Keep html[data-playground-theme] synced so CSS variables can react instantly.
   const applyThemeAttribute = React.useCallback((mode: PlaygroundTheme) => {
     if (typeof document === "undefined") {
       return;
@@ -89,6 +98,7 @@ export const PlaygroundThemeProvider: React.FC<React.PropsWithChildren> = ({
     applyThemeAttribute(theme);
   }, [applyThemeAttribute, theme]);
 
+  // When no explicit preference is stored, stay in sync with the OS setting.
   React.useEffect(() => {
     if (typeof window === "undefined" || hasStoredPreference) {
       return undefined;

@@ -1,4 +1,8 @@
 import React from "react";
+/**
+ * ThemeToggle renders the WCAG-compliant switch used to flip the playground
+ * between light and dark palettes while keeping accessible labels in sync.
+ */
 import { Box, ButtonBase, Typography, Tooltip } from "@mui/material";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
@@ -45,6 +49,7 @@ const ThemeToggle: React.FC = () => {
             }}
             aria-hidden="true"
           />
+          {/* Text mirrors the icon state so users relying on color-only cues are supported. */}
           <Typography variant="body2" fontWeight={600} sx={{ color: "var(--pg-toggle-text)" }}>
             {isDarkMode ? t("theme.toggle.dark") : t("theme.toggle.light")}
           </Typography>
