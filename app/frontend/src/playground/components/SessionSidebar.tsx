@@ -69,17 +69,19 @@ const SessionSidebar: React.FC = () => {
    * case we keep the current session active to avoid creating duplicates.
    */
   const handleNewSession = useCallback(() => {
-    // If current session exists and has no messages, just keep it selected
-    if (currentSessionId && currentSessionMessages.length === 0) {
-      dispatch(setCurrentSession(currentSessionId));
-      return;
-    }
+
+    let newSession = sessions.find(chatSession => chatSession.isNewChat == true)
+    if (newSession) {
+      dispatch(setCurrentSession(newSession.id));
+      return
+    } 
 
     dispatch(
       addSession({
         id: uuidv4(),
         name: `Conversation ${sessions.length + 1}`,
         createdAt: Date.now(),
+        isNewChat: true
       })
     );
   }, [dispatch, sessions.length, currentSessionId, currentSessionMessages.length]);

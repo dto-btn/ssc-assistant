@@ -1,4 +1,5 @@
 import { addMessage, updateMessageContent, setIsLoading, Message } from "../slices/chatSlice";
+import { setIsSessionNew } from "../slices/sessionSlice"
 import { addToast } from "../slices/toastSlice";
 import {
   completionService,
@@ -250,8 +251,9 @@ export const sendAssistantMessage = ({
   getState
 ) => {
   dispatch(setIsLoading(true));
-
   try {
+    dispatch(setIsSessionNew({id: sessionId, isNew: false}))
+
     const { accessToken } = getState().auth;
     const dispatchForAttachments = dispatch as AppDispatch;
     let { availableTools } = getState().tools;
