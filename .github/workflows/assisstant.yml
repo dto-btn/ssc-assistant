@@ -26,6 +26,7 @@ jobs:
       environment: 'dev'
       app-name: 'ssc-assistant-dev'
       enable-playground: true
+      enable-mcp: true
     secrets: inherit
 
   alembic-dev:
@@ -84,6 +85,7 @@ jobs:
       environment: 'prod'
       app-name: 'G3Pc-SSC-CIOAssistant-Linux-Frontend-asv'
       runner: 'self-hosted'
+      redirect-uri-domain: 'https://assistant.ssc-spc.gc.ca'
     secrets: inherit
 
   # alembic-prod:

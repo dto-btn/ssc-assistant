@@ -9,9 +9,7 @@ import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { getToolService } from "../../services/toolService";
 import { ChatCompletionFunctionTool } from 'openai/resources/index.mjs';
 
-/**
- * Fetch the union of tools exposed by every configured MCP server.
- */
+// Async thunk to load tools using the toolService
 export const loadTools = createAsyncThunk('tools/loadTools', async (_, { rejectWithValue }) => {
   try {
     const toolService = await getToolService();
