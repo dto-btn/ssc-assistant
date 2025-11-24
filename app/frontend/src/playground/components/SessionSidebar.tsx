@@ -70,7 +70,7 @@ const SessionSidebar: React.FC = () => {
    */
   const handleNewSession = useCallback(() => {
 
-    let newSession = sessions.find(s => s.isNewChat == true)
+    let newSession = sessions.find(chatSession => chatSession.isNewChat == true)
     if (newSession) {
       dispatch(setCurrentSession(newSession.id));
       return
