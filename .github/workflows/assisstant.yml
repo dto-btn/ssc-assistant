@@ -26,6 +26,7 @@ jobs:
       environment: 'dev'
       app-name: 'ssc-assistant-dev'
       enable-playground: true
+      enable-mcp: true
     secrets: inherit
 
   alembic-dev:

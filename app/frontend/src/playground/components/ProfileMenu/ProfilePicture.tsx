@@ -1,7 +1,8 @@
 import Avatar from '@mui/material/Avatar';
+import { Typography } from '@mui/material';
+import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { Typography } from '@mui/material';
 
 interface UserProfileProps {
   size?: string;
@@ -18,6 +19,9 @@ interface AvatarData {
   children: string;
 }
 
+/**
+ * Convert a deterministic hash of the name into a high-contrast background color.
+ */
 function stringToColor(string: string) {
   let hash = 0;
   let i;
@@ -55,19 +59,15 @@ function stringToColor(string: string) {
  * @returns {@link AvatarData} 
  */
 function getLetterAvatar(name: string, size: string | undefined, fontSize: string | undefined): AvatarData {
-  
-  let nameParts = name.trim().split(" ")
-  let initials;
+  const nameParts = name.trim().split(/\s+/).filter(Boolean);
+  let initials = "";
 
-  //Split will almost never return array of 0 here.
-  if (nameParts.length < 2 ) {
-    if (nameParts[0].length === 0) {
-      initials = ""
-    } else {
-      initials = nameParts[0][0]
-    }
-  } else {
-    initials = nameParts[0][0] + nameParts[nameParts.length-1][0];
+  if (nameParts.length === 1) {
+    initials = nameParts[0][0]?.toUpperCase() ?? "";
+  } else if (nameParts.length >= 2) {
+    const first = nameParts[0][0]?.toUpperCase() ?? "";
+    const last = nameParts[nameParts.length - 1][0]?.toUpperCase() ?? "";
+    initials = `${first}${last}`;
   }
 
   const avatarData: AvatarData = {
@@ -85,23 +85,21 @@ function getLetterAvatar(name: string, size: string | undefined, fontSize: strin
     avatarData.sx.height = size;
   }
 
-  return avatarData
+  return avatarData;
 }
 
+/**
+ * Render either the graph profile picture or a deterministic set of initials.
+ */
 export const UserProfilePicture = ({ size, fontSize }: UserProfileProps) => {
-  
-  const userData = useSelector((state: RootState) => ({
-    profilePictureURL: state.user.profilePictureURL,
-    graphData: state.user.graphData
-  }));
+  const profilePictureURL = useSelector((state: RootState) => state.user.profilePictureURL);
+  const graphData = useSelector((state: RootState) => state.user.graphData);
 
-  const { profilePictureURL, graphData } = userData;
-
-  let fullName: string = "";
-  if (graphData) {
-    fullName = graphData["givenName"] + " " + graphData["surname"];
-  }
-
+  const fullName = React.useMemo(() => {
+    const givenName = graphData?.givenName ?? "";
+    const surname = graphData?.surname ?? "";
+    return `${givenName} ${surname}`.trim();
+  }, [graphData]);
 
   if (profilePictureURL) {
        return <> 
@@ -116,4 +114,12 @@ export const UserProfilePicture = ({ size, fontSize }: UserProfileProps) => {
       <Typography sx={{ marginLeft: 1, textTransform: 'none', color: 'var(--pg-text)'}}>{fullName}</Typography>
     </> 
   }
+
+  const letterAvatar = getLetterAvatar(fullName, size, fontSize);
+  return (
+    <>
+      <Avatar aria-hidden alt={fullName} sx={letterAvatar?.sx} children={letterAvatar?.children} />
+      <Typography sx={{ marginLeft: 1, textTransform: 'none', color: 'black' }}>{fullName}</Typography>
+    </>
+  );
 };

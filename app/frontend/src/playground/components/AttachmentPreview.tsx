@@ -12,16 +12,42 @@ interface AttachmentPreviewProps {
 const imageExtensions = /(\.(png|jpe?g|gif|bmp|webp|svg))$/i;
 const pdfExtensions = /(\.pdf)$/i;
 
+/**
+ * Determine if the attachment should be rendered inline as an image preview.
+ */
 function isImageAttachment(attachment: FileAttachment): boolean {
   if (attachment.contentType?.toLowerCase().startsWith("image/")) return true;
   return imageExtensions.test(attachment.originalName);
 }
 
+/**
+ * Helper that determines whether the attachment should show the PDF-specific iconography.
+ */
 function isPdfAttachment(attachment: FileAttachment): boolean {
   if (attachment.contentType?.toLowerCase() === "application/pdf") return true;
   return pdfExtensions.test(attachment.originalName);
 }
 
+/**
+ * Pick a readable download file name even when the blob metadata lacks the original label.
+ */
+function deriveDownloadName(attachment: FileAttachment): string | undefined {
+  if (attachment.originalName) {
+    return attachment.originalName;
+  }
+
+  const blobSegment = attachment.blobName?.split("/").pop() ?? "";
+  if (!blobSegment) {
+    return undefined;
+  }
+
+  const trimmed = blobSegment.replace(/^[0-9a-f]{32}_/i, "");
+  return trimmed || blobSegment;
+}
+
+/**
+ * Format raw byte lengths into a compact label suitable for secondary metadata.
+ */
 function formatBytes(size?: number): string {
   if (typeof size !== "number" || Number.isNaN(size)) return "";
   if (size < 1024) return `${size} B`;
@@ -35,6 +61,9 @@ function formatBytes(size?: number): string {
   return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[unitIndex]}`;
 }
 
+/**
+ * Render the upload timestamp in the user's locale, falling back gracefully on invalid dates.
+ */
 function formatUploadedAt(uploadedAt?: string | null): string {
   if (!uploadedAt) return "";
   const date = new Date(uploadedAt);
@@ -54,11 +83,14 @@ const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ attachments }) =>
   return (
     <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
       {attachments.map((attachment) => {
-        const key = attachment.blobName || attachment.url || attachment.originalName;
+        const previewUrl = attachment.previewUrl || attachment.url;
+        const key = attachment.blobName || previewUrl || attachment.originalName;
         const isImage = isImageAttachment(attachment);
         const isPdf = !isImage && isPdfAttachment(attachment);
         const sizeLabel = formatBytes(attachment.size);
         const timestampLabel = formatUploadedAt(attachment.uploadedAt);
+        const canRenderImagePreview = isImage && Boolean(previewUrl);
+        const downloadName = deriveDownloadName(attachment);
 
         return (
           <Paper
@@ -70,13 +102,13 @@ const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ attachments }) =>
               p: 1.5,
               width: { xs: "100%", sm: "min(420px, 100%)" },
               maxWidth: "100%",
-              alignItems: isImage ? "stretch" : "center",
+              alignItems: canRenderImagePreview ? "stretch" : "center",
             }}
           >
-            {isImage ? (
+            {canRenderImagePreview ? (
               <Box
                 component="img"
-                src={attachment.url}
+                src={previewUrl}
                 alt={attachment.originalName}
                 sx={{
                   width: 64,
@@ -104,9 +136,8 @@ const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ attachments }) =>
             )}
             <Stack spacing={0.75} sx={{ minWidth: 0, flex: 1 }}>
               <Link
-                href={attachment.url}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={previewUrl || attachment.url}
+                download={downloadName}
                 underline="hover"
                 sx={{
                   display: "flex",
@@ -117,7 +148,7 @@ const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ attachments }) =>
                   maxWidth: "100%",
                 }}
               >
-                {isImage ? <ImageIcon fontSize="small" /> : null}
+                {canRenderImagePreview ? <ImageIcon fontSize="small" /> : null}
                 <Typography
                   variant="body2"
                   component="span"

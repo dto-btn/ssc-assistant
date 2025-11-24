@@ -25,6 +25,9 @@ on:
       redirect-uri-domain:
         type: string
         required: false
+      enable-mcp:
+        type: boolean
+        default: false
     secrets:
       FRONTEND_PUBLISH_PROFILE:
       AZURE_CLIENT_ID:
@@ -80,6 +83,7 @@ jobs:
         VITE_PLAYGROUND_ON: ${{ inputs.enable-playground }}
         VITE_SHOW_DEV_BANNER: ${{ inputs.environment != 'pilot-prod' }}
         VITE_REDIRECT_URI_DOMAIN: ${{ inputs.redirect-uri-domain }}
+        VITE_MCP_URLS: ${{ inputs.enable-mcp && secrets.VITE_MCP_URLS || '' }}
 
     # This step will only run when the event is a push to the main branch
     - name: Zip artifact for deployment
