@@ -26,12 +26,17 @@ export interface TranscriptExportOptions {
   translator: Translator;
 }
 
+/**
+ * Generates an accessible PDF transcript for the provided session/messages and
+ * triggers a browser download with WCAG-friendly metadata baked in.
+ */
 export async function downloadTranscriptPdf(options: TranscriptExportOptions): Promise<void> {
   if (typeof window === "undefined") {
     throw new Error("PDF export is only available in the browser context.");
   }
 
   const runtime = resolveRuntimePreferences(options);
+  // Lazy-load heavy libraries only when a user requests an export.
   const pdfMake = await loadPdfMake();
   const docDefinition = buildDocumentDefinition(options, runtime);
   const fileName = buildFileName(options.session.name);
@@ -40,6 +45,7 @@ export async function downloadTranscriptPdf(options: TranscriptExportOptions): P
   const pdfDocGenerator = pdfMake.createPdf(docDefinition as TDocumentDefinitions);
   const blob = await new Promise<Blob>((resolve, reject) => {
     try {
+      // pdfmake uses callbacks; wrap into a Promise for async/await ergonomics.
       pdfDocGenerator.getBlob((generatedBlob: Blob) => resolve(generatedBlob));
     } catch (error) {
       reject(error);
@@ -58,6 +64,10 @@ export async function downloadTranscriptPdf(options: TranscriptExportOptions): P
   setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
 }
 
+/**
+ * Loads pdfmake once (with font VFS) and reuses the instance for subsequent
+ * exports to avoid multiple large dynamic imports.
+ */
 async function loadPdfMake(): Promise<PdfMakeStatic> {
   if (pdfMakeInstance) {
     return pdfMakeInstance;
@@ -106,6 +116,10 @@ interface ResolvedRuntimePreferences {
   timeZone?: string;
 }
 
+/**
+ * Normalises locale/time-zone preferences from the caller or browser so PDF
+ * headers and timestamps render consistently.
+ */
 function resolveRuntimePreferences(options: TranscriptExportOptions): ResolvedRuntimePreferences {
   const locale = options.locale ?? (typeof navigator !== "undefined" ? navigator.language : "en-CA");
   const timeZone = options.timeZone ?? (typeof Intl !== "undefined"
@@ -114,12 +128,17 @@ function resolveRuntimePreferences(options: TranscriptExportOptions): ResolvedRu
   return { locale, timeZone };
 }
 
+/**
+ * Converts chat data into a pdfmake document definition with styles, footer,
+ * and PDF/UA-friendly metadata scaffolding.
+ */
 function buildDocumentDefinition(
   options: TranscriptExportOptions,
   runtime: ResolvedRuntimePreferences,
 ): AccessibleDocumentDefinition {
   const { session, messages, translator: t } = options;
   const { locale: resolvedLocale, timeZone: resolvedTimeZone } = runtime;
+  // Ensure deterministic ordering even if the store still contains optimistic entries.
   const sorted = [...messages].sort((a, b) => a.timestamp - b.timestamp);
   const firstTimestamp = sorted[0]?.timestamp ?? Date.now();
   const lastTimestamp = sorted[sorted.length - 1]?.timestamp ?? Date.now();
@@ -172,6 +191,9 @@ function buildDocumentDefinition(
   } satisfies AccessibleDocumentDefinition;
 }
 
+/**
+ * Builds the top-of-document metadata summary (session name, counts, etc.).
+ */
 function buildMetaTable(params: {
   session: Session;
   totalMessages: number;
@@ -213,6 +235,10 @@ function buildMetaTable(params: {
   };
 }
 
+/**
+ * Creates the two-column transcript table where the first column shows the
+ * speaker metadata and the second contains the message body.
+ */
 function buildTranscriptTable(messages: Message[], locale: string, timeZone: string | undefined, t: Translator): Content {
   const body: TableCell[][] = messages.map((message) => buildMessageRow(message, locale, timeZone, t));
 
@@ -225,6 +251,9 @@ function buildTranscriptTable(messages: Message[], locale: string, timeZone: str
   };
 }
 
+/**
+ * Formats a single message row with role/timestamp and rich message content.
+ */
 function buildMessageRow(message: Message, locale: string, timeZone: string | undefined, t: Translator): TableCell[] {
   const roleKey = roleKeyFor(message.role);
   const roleLabel = t(roleKey);
@@ -242,6 +271,9 @@ function buildMessageRow(message: Message, locale: string, timeZone: string | un
   ];
 }
 
+/**
+ * Produces the stacked message body including attachments/citations blocks.
+ */
 function buildMessageContent(message: Message, t: Translator): Content[] {
   const textContent = stripMarkdown(message.content ?? "");
   const fragments: Content[] = [];
@@ -257,6 +289,9 @@ function buildMessageContent(message: Message, t: Translator): Content[] {
   return fragments;
 }
 
+/**
+ * Renders an attachment bullet list when a chat turn contains uploads.
+ */
 function buildAttachmentsBlock(attachments: FileAttachment[] | undefined, t: Translator): Content | null {
   if (!attachments || attachments.length === 0) {
     return null;
@@ -274,6 +309,9 @@ function buildAttachmentsBlock(attachments: FileAttachment[] | undefined, t: Tra
   };
 }
 
+/**
+ * Renders an ordered citations list that mirrors what the UI displays inline.
+ */
 function buildCitationsBlock(citations: { title: string; url: string }[] | undefined, t: Translator): Content | null {
   if (!citations || citations.length === 0) {
     return null;
@@ -291,6 +329,9 @@ function buildCitationsBlock(citations: { title: string; url: string }[] | undef
   };
 }
 
+/**
+ * Formats attachment metadata (name, size, optional URL) into plain text.
+ */
 function formatAttachment(attachment: FileAttachment): string {
   const name = attachment.originalName || attachment.blobName || "Attachment";
   const size = attachment.size ? ` · ${formatFileSize(attachment.size)}` : "";
@@ -298,6 +339,9 @@ function formatAttachment(attachment: FileAttachment): string {
   return `${name}${size}${url}`;
 }
 
+/**
+ * Converts raw byte counts to a short human-readable size label.
+ */
 function formatFileSize(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes <= 0) return "";
   const units = ["B", "KB", "MB", "GB"];
@@ -310,18 +354,27 @@ function formatFileSize(bytes: number): string {
   return `${size.toFixed(size >= 10 ? 0 : 1)} ${units[unitIndex]}`;
 }
 
+/**
+ * Maps chat roles to i18n keys understood by the translations bundle.
+ */
 function roleKeyFor(role: Message["role"]): string {
   if (role === "assistant") return "pdf.role.assistant";
   if (role === "system") return "pdf.role.system";
   return "pdf.role.user";
 }
 
+/**
+ * Returns the pdfmake style name associated with each chat role.
+ */
 function labelStyleFor(role: Message["role"]): string {
   if (role === "assistant") return "assistantLabel";
   if (role === "system") return "systemLabel";
   return "userLabel";
 }
 
+/**
+ * Performs a best-effort markdown-to-plain-text conversion for PDF output.
+ */
 function stripMarkdown(markdown: string): string {
   return markdown
     .replace(/```[\s\S]*?```/g, (block) => block.replace(/```/g, ""))
@@ -338,6 +391,9 @@ function stripMarkdown(markdown: string): string {
     .trim();
 }
 
+/**
+ * Formats timestamps with the locale/time zone used elsewhere in the export.
+ */
 function formatDateTime(timestamp: number, locale: string, timeZone?: string): string {
   const formatter = new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
@@ -347,6 +403,9 @@ function formatDateTime(timestamp: number, locale: string, timeZone?: string): s
   return formatter.format(new Date(timestamp));
 }
 
+/**
+ * Generates a safe filename derived from the session name.
+ */
 function buildFileName(sessionName: string): string {
   const safeName = sessionName
     .toLowerCase()
@@ -370,6 +429,10 @@ interface AccessibilityMetadataOptions {
   tabOrder?: "S" | "R" | "C" | "A";
 }
 
+/**
+ * Prepares accessibility metadata that pdf-lib will later embed into the
+ * binary PDF (language, tab order, timestamps, etc.).
+ */
 function buildMetadataHints(
   options: TranscriptExportOptions,
   runtime: ResolvedRuntimePreferences,
@@ -402,12 +465,18 @@ function buildMetadataHints(
   };
 }
 
+/**
+ * Returns true when the locale likely represents a right-to-left language.
+ */
 function isRtl(locale: string): boolean {
   const rtlPrefixes = ["ar", "fa", "he", "ur", "ps"].map((code) => code.toLowerCase());
   const normalized = locale.toLowerCase();
   return rtlPrefixes.some((prefix) => normalized.startsWith(prefix));
 }
 
+/**
+ * Lazily imports pdf-lib so we can set metadata without inflating initial bundles.
+ */
 async function loadPdfLib(): Promise<PdfLibModule> {
   if (!pdfLibLoader) {
     pdfLibLoader = import("pdf-lib");
@@ -415,6 +484,10 @@ async function loadPdfLib(): Promise<PdfLibModule> {
   return pdfLibLoader;
 }
 
+/**
+ * Opens the generated PDF and stamps accessibility metadata, silently falling
+ * back to the original blob on failure.
+ */
 async function applyAccessibilityMetadata(blob: Blob, metadata: AccessibilityMetadataOptions): Promise<Blob> {
   try {
     const pdfLib = await loadPdfLib();
@@ -439,6 +512,7 @@ async function applyAccessibilityMetadata(blob: Blob, metadata: AccessibilityMet
       catalog.set(PDFName.of("Lang"), PDFString.of(metadata.lang));
     }
 
+    // Force sensible defaults so assistive tech opens the transcript predictably.
     const viewerPrefsName = PDFName.of("ViewerPreferences");
     const existingViewerPrefs = catalog.get(viewerPrefsName);
     const viewerPrefsDict: PdfDictInstance = existingViewerPrefs instanceof PDFDict

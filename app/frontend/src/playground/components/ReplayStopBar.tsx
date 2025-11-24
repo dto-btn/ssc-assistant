@@ -19,11 +19,20 @@ interface Props {
   isExporting: boolean;
 }
 
+/**
+ * Renders replay, stop, and transcript export controls for the playground
+ * timeline footer.
+ */
 const ReplayStopBar: React.FC<Props> = ({ onReplay, onStop, onDownload, isLoading, disabled, downloadDisabled, isExporting }) => {
   const { t } = useTranslation('playground');
 
+  /**
+   * Prevents redundant exports while one is already in-flight before invoking
+   * the provided download callback.
+   */
   const handleDownloadClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (downloadDisabled || isExporting) {
+      // Mirror the disabled state for accessibility even though Link renders as a button.
       event.preventDefault();
       return;
     }

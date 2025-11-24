@@ -28,6 +28,10 @@ import { rehydrateSessionFromArchive } from "../store/thunks/sessionBootstrapThu
 import { pickLatestArchive } from "../utils/archives";
 import { applyRemoteSessionDeletion } from "../store/thunks/sessionManagementThunks";
 
+/**
+ * Main chat workspace that wires messages, attachments, and session level
+ * controls together for the playground experience.
+ */
 const ChatArea: React.FC = () => {
   const { t } = useTranslation('playground');
   const dispatch = useDispatch<AppDispatch>();
@@ -67,6 +71,10 @@ const ChatArea: React.FC = () => {
   /**
    * Replay sends the most recent user utterance so the assistant can retry with new context.
    */
+  /**
+   * Replays the latest user utterance so the assistant can respond again with
+   * refreshed context (e.g., after attachments sync).
+   */
   const handleReplay = (): void => {
     if (messages.length < 2) return;
     // Index of the last user message in the reversed array
@@ -95,9 +103,14 @@ const ChatArea: React.FC = () => {
     dispatch(setIsLoading(false));
   };
 
+  /**
+   * Generates an accessible PDF transcript for the active session and surfaces
+   * toast notifications for each user-visible outcome.
+   */
   const handleDownloadTranscript = React.useCallback(async (): Promise<void> => {
     if (!currentSessionId) return;
     if (messages.length === 0) {
+      // Guard against empty chats where pdfmake would create a meaningless file.
       dispatch(addToast({ message: t("pdf.toast.empty"), isError: true }));
       return;
     }
