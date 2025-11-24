@@ -68,10 +68,16 @@ export class CompletionService {
     // Future: this.registerProvider(new GoCLLMProvider());
   }
 
+  /**
+   * Register or replace a provider so consumers can route completions dynamically.
+   */
   registerProvider(provider: CompletionProvider): void {
     this.providers.set(provider.name, provider);
   }
 
+  /**
+   * Delegate completion creation to the requested provider, defaulting to Azure OpenAI.
+   */
   async createCompletion(
     request: CompletionRequest,
     callbacks: StreamingCallbacks = {}
@@ -86,6 +92,9 @@ export class CompletionService {
     return provider.createCompletion(request, callbacks);
   }
 
+  /**
+   * Return the provider registry so the UI can populate dropdowns/toggles.
+   */
   getAvailableProviders(): string[] {
     return Array.from(this.providers.keys());
   }

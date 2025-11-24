@@ -9,12 +9,18 @@ import { getToolService } from "../toolService";
 export class AzureOpenAIProvider implements CompletionProvider {
   readonly name = 'azure-openai';
 
+  /**
+   * Resolve the backend proxy URL so browser calls stay within the same origin.
+   */
   private getBaseURL(): string {
     return import.meta.env.VITE_API_BACKEND 
       ? `${import.meta.env.VITE_API_BACKEND}/proxy/azure` 
       : "http://localhost:5001/proxy/azure";
   }
 
+  /**
+   * Build an Azure OpenAI SDK client that forwards the user's token via Authorization.
+   */
   private createClient(userToken: string): AzureOpenAI {
     return new AzureOpenAI({
       baseURL: this.getBaseURL(),
@@ -27,6 +33,9 @@ export class AzureOpenAIProvider implements CompletionProvider {
     });
   }
 
+  /**
+   * Stream chat completions, optionally executing tool calls before recursively resuming the run.
+   */
   async createCompletion(
     request: CompletionRequest,
     callbacks: StreamingCallbacks

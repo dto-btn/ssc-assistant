@@ -22,6 +22,9 @@ const ATTACHMENT_TEXT_LIMIT = 12000;
 const attachmentTextCache = new Map<string, string>();
 const attachmentImageCache = new Map<string, string>();
 
+/**
+ * Clamp long attachment transcripts so prompts stay within token limits.
+ */
 const truncateText = (text: string, maxLength: number): string => {
   if (text.length <= maxLength) {
     return text;
@@ -148,8 +151,9 @@ async function resolveAttachmentParts(
   return parts;
 }
 
-// Combine the base message text with any generated attachment parts so we can
-// send a single structured payload to the provider.
+/**
+ * Combine the base message text with any generated attachment parts before sending to the provider.
+ */
 const buildMessageContent = async (
   message: Message,
   dispatch: AppDispatch,
@@ -234,6 +238,9 @@ export interface SendAssistantMessageArgs {
   provider?: 'azure-openai' | 'aws-bedrock'; // Future provider selection
 }
 
+/**
+ * Primary thunk that streams assistant completions, handling tools and attachment hydration.
+ */
 export const sendAssistantMessage = ({
   sessionId,
   content,
@@ -252,7 +259,7 @@ export const sendAssistantMessage = ({
     let { availableTools } = getState().tools;
 
     // If tools are not loaded yet, dispatch the action to load them.
-    if (!availableTools) {
+    if (availableTools.length == 0) {
       const resultAction = await dispatch(loadTools());
       if (loadTools.fulfilled.match(resultAction)) {
         availableTools = resultAction.payload; // Use the newly loaded tools
