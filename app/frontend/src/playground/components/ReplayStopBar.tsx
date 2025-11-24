@@ -22,7 +22,7 @@ interface Props {
 const ReplayStopBar: React.FC<Props> = ({ onReplay, onStop, onDownload, isLoading, disabled, downloadDisabled, isExporting }) => {
   const { t } = useTranslation('playground');
 
-  const handleDownloadClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleDownloadClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (downloadDisabled || isExporting) {
       event.preventDefault();
       return;
