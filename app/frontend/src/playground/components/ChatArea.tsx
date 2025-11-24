@@ -22,8 +22,6 @@ import { selectCurrentSessionFiles } from "../store/selectors/sessionFilesSelect
 import { useTranslation } from 'react-i18next';
 import { listSessionFiles } from "../api/storage";
 import { setSessionFiles } from "../store/slices/sessionFilesSlice";
-import { selectCurrentSessionFiles } from "../store/selectors/sessionFilesSelectors";
-import type { FileAttachment } from "../types";
 import { downloadTranscriptPdf } from "../services/pdfExportService";
 import { addToast } from "../store/slices/toastSlice";
 import { rehydrateSessionFromArchive } from "../store/thunks/sessionBootstrapThunks";
