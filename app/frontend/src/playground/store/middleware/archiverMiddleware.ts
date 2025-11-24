@@ -9,7 +9,11 @@ import {
   markSessionError,
 } from "../slices/syncSlice";
 import { uploadEncodedFile } from "../../api/storage";
+import { removeSession } from "../slices/sessionSlice";
 
+/**
+ * External trigger used by UI/actions that want to force an immediate archive run.
+ */
 export const requestArchive = createAction<{ sessionId: string }>("archiver/requestArchive");
 
 // Archiver policy
@@ -20,8 +24,9 @@ type SessionTimers = Record<string, ReturnType<typeof setTimeout> | undefined>;
 const timers: SessionTimers = {};
 const lastArchivedSignature: Record<string, string | undefined> = {};
 
-// Debounce archival so idle sessions eventually flush to storage even without
-// hitting the hard message threshold.
+/**
+ * Debounce archival so idle sessions eventually flush to storage even without hitting the threshold.
+ */
 function scheduleArchive(sessionId: string, store: MiddlewareAPI<Dispatch<UnknownAction>, RootState>) {
   if (timers[sessionId]) {
     clearTimeout(timers[sessionId]);
@@ -120,6 +125,9 @@ async function doArchive(sessionId: string, store: MiddlewareAPI<Dispatch<Unknow
   store.dispatch(markSessionSynced({ sessionId }));
 }
 
+/**
+ * Redux middleware that watches chat activity and persists transcripts opportunistically.
+ */
 export const archiverMiddleware: Middleware<UnknownAction, RootState> = (store) => (next) => (action) => {
   const result = next(action);
 
@@ -143,6 +151,16 @@ export const archiverMiddleware: Middleware<UnknownAction, RootState> = (store) 
     const { sessionId } = action.payload;
     store.dispatch(markSessionDirty({ sessionId }));
     doArchive(sessionId, store).catch(() => {/* swallow errors to avoid disrupting UI */});
+  }
+
+  if (removeSession.match(action)) {
+    const sessionId = action.payload;
+    const timer = timers[sessionId];
+    if (timer) {
+      clearTimeout(timer);
+      delete timers[sessionId];
+    }
+    delete lastArchivedSignature[sessionId];
   }
 
   return result;

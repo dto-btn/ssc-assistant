@@ -4,15 +4,22 @@ const PLAYGROUND_API_BASE = "/api/playground";
 const UPLOAD_ENDPOINT = `${PLAYGROUND_API_BASE}/upload`;
 const FILES_FOR_SESSION_ENDPOINT = `${PLAYGROUND_API_BASE}/files-for-session`;
 const EXTRACT_FILE_TEXT_ENDPOINT = `${PLAYGROUND_API_BASE}/extract-file-text`;
+const sessionDeleteEndpoint = (sessionId: string) => `${PLAYGROUND_API_BASE}/sessions/${encodeURIComponent(sessionId)}`;
 
 type MetadataRecord = Record<string, string | number | boolean | null | undefined>;
 
+/**
+ * Read the MIME type from a ``data:`` URL so uploads inherit the browser-provided hint.
+ */
 function extractMimeType(encoded: string | undefined): string | undefined {
   if (!encoded) return undefined;
   const match = /^data:([^;,]+)[;,]/i.exec(encoded);
   return match ? match[1] : undefined;
 }
 
+/**
+ * Convert an arbitrary metadata dictionary into the lowercase string map expected by the API.
+ */
 function normalizeMetadata(metadata?: MetadataRecord): Record<string, string> | undefined {
   if (!metadata) return undefined;
   const result: Record<string, string> = {};
@@ -49,20 +56,86 @@ const asString = (value: unknown): string | undefined =>
 const asNumber = (value: unknown): number | undefined =>
   typeof value === "number" && Number.isFinite(value) ? value : undefined;
 
+const HTTP_URL_PATTERN = /^https?:\/\//i;
+
+/**
+ * Decode a URL path but keep path separators intact so blob keys remain hierarchical.
+ */
+function decodePathPreservingSlashes(candidate: string): string {
+  try {
+    return decodeURIComponent(candidate);
+  } catch (error) {
+    console.warn("Failed to decode blob preview path", { candidate, error });
+    return candidate;
+  }
+}
+
+/**
+ * Normalize any blob reference (full URL, relative path, or blob name) into a predictable preview path.
+ */
+export function normalizePreviewUrl(rawUrl?: string, blobName?: string): string | undefined {
+  if (!rawUrl && !blobName) {
+    return undefined;
+  }
+
+  const trimmed = rawUrl?.trim();
+  if (trimmed) {
+    if (trimmed.startsWith("/")) {
+      return decodePathPreservingSlashes(trimmed);
+    }
+
+    if (HTTP_URL_PATTERN.test(trimmed)) {
+      try {
+        const parsed = new URL(trimmed);
+        const path = parsed.pathname || "";
+        if (path) {
+          return decodePathPreservingSlashes(path.startsWith("/") ? path : `/${path}`);
+        }
+      } catch (error) {
+        const slashIndex = trimmed.indexOf("/", trimmed.indexOf("//") + 2);
+        if (slashIndex >= 0) {
+          const fallbackPath = trimmed.slice(slashIndex);
+          return decodePathPreservingSlashes(
+            fallbackPath.startsWith("/") ? fallbackPath : `/${fallbackPath}`,
+          );
+        }
+        console.warn("Unable to parse blob URL for preview", { rawUrl: trimmed, error });
+      }
+    }
+
+    const withLeadingSlash = `/${trimmed}`;
+    return decodePathPreservingSlashes(withLeadingSlash);
+  }
+
+  if (blobName) {
+    const normalizedBlobName = blobName.startsWith("/") ? blobName : `/${blobName}`;
+    return decodePathPreservingSlashes(normalizedBlobName);
+  }
+
+  return undefined;
+}
+
+/**
+ * Translate backend file payloads into strongly typed attachments consumed by the UI.
+ */
 function mapFilePayload(payload: RawFilePayload = {}): FileAttachment {
   const candidateType = asString(payload.type);
   const resolvedContentType =
     asString(payload.contentType) ??
     (candidateType && candidateType.includes("/") ? candidateType : null);
+  const blobName = asString(payload.blobName) ?? asString(payload.name) ?? "";
+  const rawUrl = asString(payload.url) ?? "";
+  const previewUrl = normalizePreviewUrl(rawUrl, blobName);
 
   return {
-    blobName: asString(payload.blobName) ?? asString(payload.name) ?? "",
-    url: asString(payload.url) ?? "",
+    blobName,
+    url: rawUrl,
+    previewUrl,
     originalName: asString(payload.originalName) ?? asString(payload.name) ?? "",
     size: asNumber(payload.size),
     contentType: resolvedContentType,
     uploadedAt: asString(payload.uploadedAt) ?? asString(payload.uploadedat) ?? null,
-  lastUpdated: asString(payload.lastUpdated) ?? asString(payload.lastupdated) ?? null,
+    lastUpdated: asString(payload.lastUpdated) ?? asString(payload.lastupdated) ?? null,
     sessionId: asString(payload.sessionId) ?? asString(payload.sessionid) ?? null,
     category: asString(payload.category) ?? undefined,
     metadataType: asString(payload.metadataType) ?? undefined,
@@ -70,6 +143,15 @@ function mapFilePayload(payload: RawFilePayload = {}): FileAttachment {
   };
 }
 
+export interface ListSessionFilesResult {
+  files: FileAttachment[];
+  deletedSessionIds: string[];
+  sessionDeleted: boolean;
+}
+
+/**
+ * Raise a helpful error when the API returns non-success codes so callers can surface context.
+ */
 async function handleJsonResponse(response: Response) {
   if (!response.ok) {
     const text = await response.text();
@@ -172,6 +254,41 @@ export async function uploadFile({
 }
 
 /**
+ * Soft delete every blob tied to a session by calling the playground API on behalf of the user.
+ */
+export async function deleteRemoteSession({
+  sessionId,
+  accessToken,
+}: {
+  sessionId: string;
+  accessToken: string;
+}): Promise<void> {
+  if (!sessionId) throw new Error("sessionId is required");
+  if (!accessToken?.trim()) throw new Error("accessToken is required");
+
+  const response = await fetch(sessionDeleteEndpoint(sessionId), {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken.trim()}`,
+    },
+  });
+
+  if (response.status === 204) {
+    return;
+  }
+
+  const data = await handleJsonResponse(response);
+  if (Array.isArray(data?.failed) && data.failed.length > 0) {
+    const message = typeof data?.message === "string" && data.message.trim().length > 0
+      ? data.message
+      : "Delete completed with errors.";
+    throw new Error(message);
+  }
+
+  return;
+}
+
+/**
  * Fetch the caller's attachments for a given session from the playground API.
  */
 export async function listSessionFiles({
@@ -180,7 +297,7 @@ export async function listSessionFiles({
 }: {
   accessToken: string;
   sessionId?: string;
-}): Promise<FileAttachment[]> {
+}): Promise<ListSessionFilesResult> {
   if (!accessToken?.trim()) throw new Error("accessToken is required");
 
   const url = sessionId
@@ -195,7 +312,20 @@ export async function listSessionFiles({
 
   const data = await handleJsonResponse(response);
   const files = Array.isArray(data?.files) ? data.files : [];
-  return files.map(mapFilePayload);
+  const normalizedFiles = files.map(mapFilePayload);
+  const deletedRaw = Array.isArray(data?.deletedSessionIds) ? data.deletedSessionIds : [];
+  const deletedSessionIdsSet = new Set<string>();
+  for (const value of deletedRaw) {
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed.length > 0) {
+        deletedSessionIdsSet.add(trimmed);
+      }
+    }
+  }
+  const deletedSessionIds = Array.from(deletedSessionIdsSet);
+  const sessionDeleted = data?.sessionDeleted === true;
+  return { files: normalizedFiles, deletedSessionIds, sessionDeleted };
 }
 
 /**
