@@ -22,21 +22,29 @@ import { selectCurrentSessionFiles } from "../store/selectors/sessionFilesSelect
 import { useTranslation } from 'react-i18next';
 import { listSessionFiles } from "../api/storage";
 import { setSessionFiles } from "../store/slices/sessionFilesSlice";
+import { downloadTranscriptPdf } from "../services/pdfExportService";
+import { addToast } from "../store/slices/toastSlice";
 import { rehydrateSessionFromArchive } from "../store/thunks/sessionBootstrapThunks";
 import { pickLatestArchive } from "../utils/archives";
 import { applyRemoteSessionDeletion } from "../store/thunks/sessionManagementThunks";
 
+/**
+ * Main chat workspace that wires messages, attachments, and session level
+ * controls together for the playground experience.
+ */
 const ChatArea: React.FC = () => {
   const { t } = useTranslation('playground');
   const dispatch = useDispatch<AppDispatch>();
   const currentSessionId = useSelector(
     (state: RootState) => state.sessions.currentSessionId
   );
+  const sessions = useSelector((state: RootState) => state.sessions.sessions);
   const isLoading = useSelector((state: RootState) => state.chat.isLoading);
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
   const syncEntries = useSelector((state: RootState) => state.sync.byId);
   const rehydratedSessionsRef = React.useRef<Set<string>>(new Set());
   const rehydratingSessionsRef = React.useRef<Set<string>>(new Set());
+  const [isExporting, setIsExporting] = React.useState(false);
   const hydratedArchiveVersionRef = React.useRef<Map<string, string | null>>(new Map());
   const fetchedSessionsRef = React.useRef<Set<string>>(new Set());
 
@@ -62,6 +70,10 @@ const ChatArea: React.FC = () => {
 
   /**
    * Replay sends the most recent user utterance so the assistant can retry with new context.
+   */
+  /**
+   * Replays the latest user utterance so the assistant can respond again with
+   * refreshed context (e.g., after attachments sync).
    */
   const handleReplay = (): void => {
     if (messages.length < 2) return;
@@ -91,6 +103,40 @@ const ChatArea: React.FC = () => {
     dispatch(setIsLoading(false));
   };
 
+  /**
+   * Generates an accessible PDF transcript for the active session and surfaces
+   * toast notifications for each user-visible outcome.
+   */
+  const handleDownloadTranscript = React.useCallback(async (): Promise<void> => {
+    if (!currentSessionId) return;
+    if (messages.length === 0) {
+      // Guard against empty chats where pdfmake would create a meaningless file.
+      dispatch(addToast({ message: t("pdf.toast.empty"), isError: true }));
+      return;
+    }
+
+    const session = sessions.find((entry) => entry.id === currentSessionId);
+    if (!session) return;
+
+    setIsExporting(true);
+    try {
+      await downloadTranscriptPdf({
+        session,
+        messages,
+        locale: navigator.language,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        translator: t,
+      });
+      dispatch(addToast({ message: t("pdf.toast.success") }));
+    } catch (error) {
+      console.error("Failed to download transcript", error);
+      dispatch(addToast({ message: t("pdf.toast.error"), isError: true }));
+    } finally {
+      setIsExporting(false);
+    }
+  }, [currentSessionId, dispatch, messages, sessions, t]);
+
+  // Suggestions logic
   /**
    * Convert a canned suggestion into a user turn for quick-start prompts.
    */
@@ -263,6 +309,9 @@ const ChatArea: React.FC = () => {
         onStop={handleStop}
         isLoading={isLoading}
         disabled={messages.length < 2}
+        onDownload={handleDownloadTranscript}
+        downloadDisabled={messages.length === 0 || isExporting}
+        isExporting={isExporting}
       />
       <ChatInput sessionId={currentSessionId} />
     </Box>
