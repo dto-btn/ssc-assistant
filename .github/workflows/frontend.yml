@@ -81,7 +81,7 @@ jobs:
         VITE_DISABLED_FEATURES: ${{ inputs.disabled-features }}
         VITE_CLARITY_TOKEN: ${{ secrets.VITE_CLARITY_TOKEN }}
         VITE_PLAYGROUND_ON: ${{ inputs.enable-playground }}
-        VITE_SHOW_DEV_BANNER: ${{ inputs.environment != 'pilot-prod' }}
+        VITE_SHOW_DEV_BANNER: ${{ inputs.environment == 'dev' }}
         VITE_REDIRECT_URI_DOMAIN: ${{ inputs.redirect-uri-domain }}
         VITE_MCP_URLS: ${{ inputs.enable-mcp && secrets.VITE_MCP_URLS || '' }}
 
