@@ -2,10 +2,15 @@
 
 ## Developpment
 
+Requirements, install `uv`.
+
 ```bash
 cd ssc-assitant/az-functions/create-index
-source .venv_func/bin/activate #create .venv first if missing ..
-pip install -r requirements.txt 
+#create .venv first if missing via 
+uv venv --python 3.12
+# then
+source .venv/bin/activate
+uv pip install -r requirements.txt
 ```
 
 Create a `.env` file and populate it with the necessary keys: 
@@ -32,6 +37,8 @@ Create a `local.settings.json` and put the following content inside:
   }
 }
 ```
+
+Then you can start the app with `func host start --debug`
 
 ## Documentation
 
