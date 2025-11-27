@@ -414,7 +414,7 @@ Here is a list of common acronyms and their meanings that you can use to assist 
 
 """
 
-# REMARQUE : même directive que la version anglaise — forcer les citations à
+# REMARQUE : même directive que la version anglaise — forcer les citations à
 # utiliser les titres précis afin qu'elles restent exploitables en interface.
 PMCOE_SYSTEM_PROMPT_FR = """Vous êtes un assistant IA qui aide les employés de Services partagés Canada (SPC) avec le contenu du Centre d’excellence en gestion de projet (CEGP).
 

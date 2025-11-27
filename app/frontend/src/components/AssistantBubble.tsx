@@ -137,6 +137,8 @@ export const AssistantBubble = ({
               const [baseUrl, hash] = href.split("#");
               const docMatch = hash?.match(/citation-(\d+)/i);
               const docNumber = docMatch ? parseInt(docMatch[1], 10) : undefined;
+              // If the href targets one of our generated inline citations, open
+              // the drawer locally rather than navigating away to SharePoint.
               if (openCitationByUrl(baseUrl, docNumber)) {
                 e.preventDefault();
               }
@@ -225,6 +227,11 @@ export const AssistantBubble = ({
   // Helper: open drawer by URL found in inline links
   const [pendingCitationNumber, setPendingCitationNumber] = useState<number | null>(null);
 
+  /**
+   * Opens the citation drawer for the provided URL and optionally records the
+   * inline citation number we should scroll to once the drawer finishes
+   * animating into view.
+   */
   const openCitationByUrl = (url?: string, citationNumber?: number) => {
     if (!url || !processedContent.citedCitations?.length) return false;
     const decoded = safeDecode(url);
