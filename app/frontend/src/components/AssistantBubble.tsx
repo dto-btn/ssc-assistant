@@ -130,12 +130,16 @@ export const AssistantBubble = ({
           rel="noopener noreferrer"
           {...props}
           onClick={(e) => {
-            // Allow ctrl/cmd/middle-click to open in a new tab normally
             if (e.ctrlKey || (e as any).metaKey || (e as any).button === 1)
               return;
             const href = props.href;
-            if (href && openCitationByUrl(href)) {
-              e.preventDefault();
+            if (href) {
+              const [baseUrl, hash] = href.split("#");
+              const docMatch = hash?.match(/citation-(\d+)/i);
+              const docNumber = docMatch ? parseInt(docMatch[1], 10) : undefined;
+              if (openCitationByUrl(baseUrl, docNumber)) {
+                e.preventDefault();
+              }
             }
             props.onClick?.(e);
           }}
@@ -219,7 +223,9 @@ export const AssistantBubble = ({
   const isSmall = useMediaQuery("(max-width:900px)");
 
   // Helper: open drawer by URL found in inline links
-  const openCitationByUrl = (url?: string) => {
+  const [pendingCitationNumber, setPendingCitationNumber] = useState<number | null>(null);
+
+  const openCitationByUrl = (url?: string, citationNumber?: number) => {
     if (!url || !processedContent.citedCitations?.length) return false;
     const decoded = safeDecode(url);
     const has = processedContent.citedCitations.some(
@@ -228,6 +234,7 @@ export const AssistantBubble = ({
     if (has) {
       setActiveCitationGroupUrl(decoded);
       setCitationDrawerOpen(true);
+      if (citationNumber) setPendingCitationNumber(citationNumber);
       return true;
     }
     return false;
@@ -313,7 +320,8 @@ export const AssistantBubble = ({
         const encodedUrl = encodeURI(citation.url);
         const newCitationNumber =
           citationNumberMapping[parseInt(docNumber, 10)];
-        return ` [${newCitationNumber}](<${encodedUrl}>)`;
+        const anchoredUrl = `${encodedUrl}#citation-${newCitationNumber}`;
+        return ` [${newCitationNumber}](<${anchoredUrl}>)`;
       }
       return "";
     });
@@ -455,6 +463,19 @@ export const AssistantBubble = ({
     document.documentElement.lang = i18n.language;
   }, [i18n.language]);
 
+  useEffect(() => {
+    if (!isCitationDrawerOpen || pendingCitationNumber === null) return;
+    const scrollIntoView = () => {
+      const el = document.getElementById(`citation-${pendingCitationNumber}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      setPendingCitationNumber(null);
+    };
+    // Wait a frame so the drawer content is fully rendered before scrolling
+    requestAnimationFrame(scrollIntoView);
+  }, [isCitationDrawerOpen, pendingCitationNumber, groupedCitations]);
+
   const handleToggleShowProfiles = () => {
     setExpandProfiles(!profilesExpanded);
   };
@@ -565,7 +586,7 @@ export const AssistantBubble = ({
             {processedContent.citedCitations &&
               processedContent.citedCitations.length > 0 && (
                 <Drawer
-                  anchor={isSmall ? "bottom" : "right"}
+                  anchor={isSmall ? "bottom" : "left"}
                   open={isCitationDrawerOpen}
                   onClose={() => setCitationDrawerOpen(false)}
                   PaperProps={{
