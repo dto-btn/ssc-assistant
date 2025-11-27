@@ -1,12 +1,12 @@
-azure-identity
-azure-keyvault-secrets
-azure-storage-blob
+azure-identity==1.25.1
+azure-keyvault-secrets==4.10.0
+azure-storage-blob==12.27.1
 azure-search-documents==11.6.0b2
-azure-data-tables 
+azure-data-tables==12.7.0 
 apiflask
 Flask
 gunicorn
-openai
+openai==2.8.1
 python-dotenv
 bs4
 marshmallow_dataclass

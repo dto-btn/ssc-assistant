@@ -233,6 +233,62 @@ export const AssistantBubble = ({
     return false;
   };
 
+  /**
+   * Normalizes arbitrary text (titles, filenames, snippets) so we can perform
+   * reliable substring checks when the backend strips [docX] tokens.
+   */
+  const normalizeText = (value?: string | null) =>
+    value
+      ? value
+          .toLowerCase()
+          .replace(/\s+/g, " ")
+          .trim()
+      : "";
+
+  /**
+   * Extracts the basename from a URL or filepath so we can match patterns like
+   * "(Source: Project Charter EN-CLP.docx)" in plain text answers.
+   */
+  const extractFilename = (input?: string | null) => {
+    if (!input) return "";
+    const sanitized = input.split("?")[0];
+    const parts = sanitized.split("/");
+    return parts[parts.length - 1] || "";
+  };
+
+  /**
+   * Builds a list of lightweight aliases (title, filepath, filename) that we
+   * can search for inside the rendered response to infer referenced sources.
+   */
+  const buildCitationAliases = (citation: Citation) => {
+    const aliases = new Set<string>();
+    if (citation.title) aliases.add(normalizeText(citation.title));
+    if (typeof citation.filepath === "string")
+      aliases.add(normalizeText(citation.filepath));
+    if (citation.url) aliases.add(normalizeText(extractFilename(citation.url)));
+    return Array.from(aliases).filter((alias) => alias.length > 3);
+  };
+
+  /**
+   * Detects which citations appear to be referenced by matching aliases inside
+   * the response text when no structured [docX] markers exist.
+   */
+  const detectCitationsByAlias = (text: string, citations: Citation[]) => {
+    const normalizedBody = normalizeText(text);
+    if (!normalizedBody) return [] as number[];
+    const referenced = new Set<number>();
+    citations.forEach((citation, idx) => {
+      const aliases = buildCitationAliases(citation);
+      if (
+        aliases.length > 0 &&
+        aliases.some((alias) => normalizedBody.includes(alias))
+      ) {
+        referenced.add(idx);
+      }
+    });
+    return Array.from(referenced.values());
+  };
+
   function processText(text: string, citations: Citation[]) {
     // Regular expression to find all citation references like [doc1], [doc3], etc.
     const citationRefRegex = /\[doc(\d+)\]/g;
@@ -249,12 +305,6 @@ export const AssistantBubble = ({
       }
     });
 
-    // Filter the citations array to only include the cited documents
-    const citedCitations = citations.filter((_, index) => {
-      const docNumber = index + 1; // Convert index to docNumber
-      return citationNumberMapping[docNumber];
-    });
-
     // Replace citation references with Markdown links using the new citation numbers
     const processedText = text.replace(citationRefRegex, (_, docNumber) => {
       const citation = citations[parseInt(docNumber, 10) - 1];
@@ -267,6 +317,27 @@ export const AssistantBubble = ({
       }
       return "";
     });
+
+    // Track whether the backend left structured [docX] markers in place.
+    const hasInlineCitations = Object.keys(citationNumberMapping).length > 0;
+
+    let citedCitations: Citation[];
+    if (hasInlineCitations) {
+      // Filter the citations array to only include the cited documents
+      citedCitations = citations.filter((_, index) => {
+        const docNumber = index + 1; // Convert index to docNumber
+        return citationNumberMapping[docNumber];
+      });
+    } else {
+      // Fall back to fuzzy alias detection so we still show only referenced docs
+      // when the response removed inline [docX] markers for readability.
+      const referencedIndices = detectCitationsByAlias(text, citations);
+      referencedIndices.forEach((citationIndex, orderIdx) => {
+        const docNumber = citationIndex + 1;
+        citationNumberMapping[docNumber] = orderIdx + 1;
+      });
+      citedCitations = referencedIndices.map((idx) => citations[idx]);
+    }
 
     return { processedText, citedCitations, citationNumberMapping };
   }
