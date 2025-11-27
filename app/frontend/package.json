@@ -11,8 +11,8 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@azure/msal-browser": "^3.10.0",
-    "@azure/msal-react": "^2.0.12",
+    "@azure/msal-browser": "^4.26.2",
+    "@azure/msal-react": "^3.0.22",
     "@azure/openai": "^2.0.0",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",

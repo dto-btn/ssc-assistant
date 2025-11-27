@@ -130,12 +130,18 @@ export const AssistantBubble = ({
           rel="noopener noreferrer"
           {...props}
           onClick={(e) => {
-            // Allow ctrl/cmd/middle-click to open in a new tab normally
             if (e.ctrlKey || (e as any).metaKey || (e as any).button === 1)
               return;
             const href = props.href;
-            if (href && openCitationByUrl(href)) {
-              e.preventDefault();
+            if (href) {
+              const [baseUrl, hash] = href.split("#");
+              const docMatch = hash?.match(/citation-(\d+)/i);
+              const docNumber = docMatch ? parseInt(docMatch[1], 10) : undefined;
+              // If the href targets one of our generated inline citations, open
+              // the drawer locally rather than navigating away to SharePoint.
+              if (openCitationByUrl(baseUrl, docNumber)) {
+                e.preventDefault();
+              }
             }
             props.onClick?.(e);
           }}
@@ -219,7 +225,14 @@ export const AssistantBubble = ({
   const isSmall = useMediaQuery("(max-width:900px)");
 
   // Helper: open drawer by URL found in inline links
-  const openCitationByUrl = (url?: string) => {
+  const [pendingCitationNumber, setPendingCitationNumber] = useState<number | null>(null);
+
+  /**
+   * Opens the citation drawer for the provided URL and optionally records the
+   * inline citation number we should scroll to once the drawer finishes
+   * animating into view.
+   */
+  const openCitationByUrl = (url?: string, citationNumber?: number) => {
     if (!url || !processedContent.citedCitations?.length) return false;
     const decoded = safeDecode(url);
     const has = processedContent.citedCitations.some(
@@ -228,9 +241,66 @@ export const AssistantBubble = ({
     if (has) {
       setActiveCitationGroupUrl(decoded);
       setCitationDrawerOpen(true);
+      if (citationNumber) setPendingCitationNumber(citationNumber);
       return true;
     }
     return false;
+  };
+
+  /**
+   * Normalizes arbitrary text (titles, filenames, snippets) so we can perform
+   * reliable substring checks when the backend strips [docX] tokens.
+   */
+  const normalizeText = (value?: string | null) =>
+    value
+      ? value
+          .toLowerCase()
+          .replace(/\s+/g, " ")
+          .trim()
+      : "";
+
+  /**
+   * Extracts the basename from a URL or filepath so we can match patterns like
+   * "(Source: Project Charter EN-CLP.docx)" in plain text answers.
+   */
+  const extractFilename = (input?: string | null) => {
+    if (!input) return "";
+    const sanitized = input.split("?")[0];
+    const parts = sanitized.split("/");
+    return parts[parts.length - 1] || "";
+  };
+
+  /**
+   * Builds a list of lightweight aliases (title, filepath, filename) that we
+   * can search for inside the rendered response to infer referenced sources.
+   */
+  const buildCitationAliases = (citation: Citation) => {
+    const aliases = new Set<string>();
+    if (citation.title) aliases.add(normalizeText(citation.title));
+    if (typeof citation.filepath === "string")
+      aliases.add(normalizeText(citation.filepath));
+    if (citation.url) aliases.add(normalizeText(extractFilename(citation.url)));
+    return Array.from(aliases).filter((alias) => alias.length > 3);
+  };
+
+  /**
+   * Detects which citations appear to be referenced by matching aliases inside
+   * the response text when no structured [docX] markers exist.
+   */
+  const detectCitationsByAlias = (text: string, citations: Citation[]) => {
+    const normalizedBody = normalizeText(text);
+    if (!normalizedBody) return [] as number[];
+    const referenced = new Set<number>();
+    citations.forEach((citation, idx) => {
+      const aliases = buildCitationAliases(citation);
+      if (
+        aliases.length > 0 &&
+        aliases.some((alias) => normalizedBody.includes(alias))
+      ) {
+        referenced.add(idx);
+      }
+    });
+    return Array.from(referenced.values());
   };
 
   function processText(text: string, citations: Citation[]) {
@@ -249,12 +319,6 @@ export const AssistantBubble = ({
       }
     });
 
-    // Filter the citations array to only include the cited documents
-    const citedCitations = citations.filter((_, index) => {
-      const docNumber = index + 1; // Convert index to docNumber
-      return citationNumberMapping[docNumber];
-    });
-
     // Replace citation references with Markdown links using the new citation numbers
     const processedText = text.replace(citationRefRegex, (_, docNumber) => {
       const citation = citations[parseInt(docNumber, 10) - 1];
@@ -263,10 +327,32 @@ export const AssistantBubble = ({
         const encodedUrl = encodeURI(citation.url);
         const newCitationNumber =
           citationNumberMapping[parseInt(docNumber, 10)];
-        return ` [${newCitationNumber}](<${encodedUrl}>)`;
+        const anchoredUrl = `${encodedUrl}#citation-${newCitationNumber}`;
+        return ` [${newCitationNumber}](<${anchoredUrl}>)`;
       }
       return "";
     });
+
+    // Track whether the backend left structured [docX] markers in place.
+    const hasInlineCitations = Object.keys(citationNumberMapping).length > 0;
+
+    let citedCitations: Citation[];
+    if (hasInlineCitations) {
+      // Filter the citations array to only include the cited documents
+      citedCitations = citations.filter((_, index) => {
+        const docNumber = index + 1; // Convert index to docNumber
+        return citationNumberMapping[docNumber];
+      });
+    } else {
+      // Fall back to fuzzy alias detection so we still show only referenced docs
+      // when the response removed inline [docX] markers for readability.
+      const referencedIndices = detectCitationsByAlias(text, citations);
+      referencedIndices.forEach((citationIndex, orderIdx) => {
+        const docNumber = citationIndex + 1;
+        citationNumberMapping[docNumber] = orderIdx + 1;
+      });
+      citedCitations = referencedIndices.map((idx) => citations[idx]);
+    }
 
     return { processedText, citedCitations, citationNumberMapping };
   }
@@ -384,6 +470,19 @@ export const AssistantBubble = ({
     document.documentElement.lang = i18n.language;
   }, [i18n.language]);
 
+  useEffect(() => {
+    if (!isCitationDrawerOpen || pendingCitationNumber === null) return;
+    const scrollIntoView = () => {
+      const el = document.getElementById(`citation-${pendingCitationNumber}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      setPendingCitationNumber(null);
+    };
+    // Wait a frame so the drawer content is fully rendered before scrolling
+    requestAnimationFrame(scrollIntoView);
+  }, [isCitationDrawerOpen, pendingCitationNumber, groupedCitations]);
+
   const handleToggleShowProfiles = () => {
     setExpandProfiles(!profilesExpanded);
   };
@@ -494,7 +593,7 @@ export const AssistantBubble = ({
             {processedContent.citedCitations &&
               processedContent.citedCitations.length > 0 && (
                 <Drawer
-                  anchor={isSmall ? "bottom" : "right"}
+                  anchor={isSmall ? "bottom" : "left"}
                   open={isCitationDrawerOpen}
                   onClose={() => setCitationDrawerOpen(false)}
                   PaperProps={{
