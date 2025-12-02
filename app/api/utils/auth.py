@@ -21,7 +21,7 @@ secret = os.getenv('JWT_SECRET', 'secret')
 _API_SCOPE = os.getenv('API_SCOPE', 'api.access')
 _API_APP_SCOPE = os.getenv('API_APP_SCOPE', 'api.access.app')
 _skip_user_validation = os.getenv("SKIP_USER_VALIDATION", "False").lower() == "true"
-# Local dev and pytest flows disable the network-heavy validator so the routes can bootstrap quickly.
+# To disable the network-heavy validator for local development and pytest flows, set SKIP_USER_VALIDATION=true in your .env file.
 oauth_validator = None if _skip_user_validation else OAuth2TokenValidation(tenant_id, client_id)
 
 class User:
