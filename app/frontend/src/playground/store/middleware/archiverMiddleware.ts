@@ -1,5 +1,6 @@
-import { createAction, Middleware, MiddlewareAPI, UnknownAction, Dispatch } from "@reduxjs/toolkit";
+import { createAction, Middleware, MiddlewareAPI } from "@reduxjs/toolkit";
 import type { RootState } from "..";
+import type { ThunkDispatch, UnknownAction } from "@reduxjs/toolkit";
 import { addMessage, Message } from "../slices/chatSlice";
 import { addChatArchiveToOutbox } from "../slices/outboxSlice";
 import {
@@ -28,7 +29,10 @@ const lastArchivedSignature: Record<string, string | undefined> = {};
 /**
  * Debounce archival so idle sessions eventually flush to storage even without hitting the threshold.
  */
-function scheduleArchive(sessionId: string, store: MiddlewareAPI<Dispatch<UnknownAction>, RootState>) {
+type PlaygroundDispatch = ThunkDispatch<RootState, unknown, UnknownAction>;
+type PlaygroundStoreApi = MiddlewareAPI<PlaygroundDispatch, RootState>;
+
+function scheduleArchive(sessionId: string, store: PlaygroundStoreApi) {
   if (timers[sessionId]) {
     clearTimeout(timers[sessionId]);
   }
@@ -43,7 +47,7 @@ function scheduleArchive(sessionId: string, store: MiddlewareAPI<Dispatch<Unknow
  * Serialize a session transcript and ship it to blob storage, falling back to
  * the local outbox when offline or unauthenticated.
  */
-async function doArchive(sessionId: string, store: MiddlewareAPI<Dispatch<UnknownAction>, RootState>) {
+async function doArchive(sessionId: string, store: PlaygroundStoreApi) {
   const state = store.getState();
   const accessToken = state.auth?.accessToken ?? null;
   const sessionRecord = state.sessions.sessions.find((session) => session.id === sessionId);
@@ -130,7 +134,7 @@ async function doArchive(sessionId: string, store: MiddlewareAPI<Dispatch<Unknow
 /**
  * Redux middleware that watches chat activity and persists transcripts opportunistically.
  */
-export const archiverMiddleware: Middleware<UnknownAction, RootState> = (store) => (next) => (action) => {
+export const archiverMiddleware: Middleware<unknown, RootState, PlaygroundDispatch> = (store) => (next) => (action) => {
   const result = next(action);
 
   if (addMessage.match(action)) {
@@ -163,9 +167,8 @@ export const archiverMiddleware: Middleware<UnknownAction, RootState> = (store) 
       if (hasMessages) {
         store.dispatch(requestArchive({ sessionId }));
       } else {
-        Promise.resolve(
-          store.dispatch(rehydrateSessionFromArchive(sessionId, { force: true })),
-        )
+        store
+          .dispatch(rehydrateSessionFromArchive(sessionId, { force: true }))
           .then((rehydrationResult: SessionRehydrationResult | undefined) => {
             if (rehydrationResult?.restored || rehydrationResult?.hasArchive) {
               store.dispatch(requestArchive({ sessionId }));

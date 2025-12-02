@@ -5,6 +5,7 @@ const UPLOAD_ENDPOINT = `${PLAYGROUND_API_BASE}/upload`;
 const FILES_FOR_SESSION_ENDPOINT = `${PLAYGROUND_API_BASE}/files-for-session`;
 const EXTRACT_FILE_TEXT_ENDPOINT = `${PLAYGROUND_API_BASE}/extract-file-text`;
 const sessionDeleteEndpoint = (sessionId: string) => `${PLAYGROUND_API_BASE}/sessions/${encodeURIComponent(sessionId)}`;
+const sessionRenameEndpoint = (sessionId: string) => `${sessionDeleteEndpoint(sessionId)}/rename`;
 
 type MetadataRecord = Record<string, string | number | boolean | null | undefined>;
 
@@ -58,12 +59,6 @@ const asNumber = (value: unknown): number | undefined =>
 
 const HTTP_URL_PATTERN = /^https?:\/\//i;
 
-<<<<<<< HEAD
-/**
- * Decode a URL path but keep path separators intact so blob keys remain hierarchical.
- */
-=======
->>>>>>> 467c7b3 (fixed file preview because of private blob, also trimed unnessary information from the file name.)
 function decodePathPreservingSlashes(candidate: string): string {
   try {
     return decodeURIComponent(candidate);
@@ -73,14 +68,7 @@ function decodePathPreservingSlashes(candidate: string): string {
   }
 }
 
-<<<<<<< HEAD
-/**
- * Normalize any blob reference (full URL, relative path, or blob name) into a predictable preview path.
- */
 export function normalizePreviewUrl(rawUrl?: string, blobName?: string): string | undefined {
-=======
-function normalizePreviewUrl(rawUrl?: string, blobName?: string): string | undefined {
->>>>>>> 467c7b3 (fixed file preview because of private blob, also trimed unnessary information from the file name.)
   if (!rawUrl && !blobName) {
     return undefined;
   }
@@ -110,11 +98,7 @@ function normalizePreviewUrl(rawUrl?: string, blobName?: string): string | undef
       }
     }
 
-<<<<<<< HEAD
-    const withLeadingSlash = `/${trimmed}`;
-=======
     const withLeadingSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
->>>>>>> 467c7b3 (fixed file preview because of private blob, also trimed unnessary information from the file name.)
     return decodePathPreservingSlashes(withLeadingSlash);
   }
 
@@ -126,12 +110,6 @@ function normalizePreviewUrl(rawUrl?: string, blobName?: string): string | undef
   return undefined;
 }
 
-<<<<<<< HEAD
-/**
- * Translate backend file payloads into strongly typed attachments consumed by the UI.
- */
-=======
->>>>>>> 467c7b3 (fixed file preview because of private blob, also trimed unnessary information from the file name.)
 function mapFilePayload(payload: RawFilePayload = {}): FileAttachment {
   const candidateType = asString(payload.type);
   const resolvedContentType =
@@ -301,7 +279,37 @@ export async function deleteRemoteSession({
   }
 
   const deleted = typeof data?.deletedCount === "number" ? data.deletedCount : 0;
+  if (deleted < 0) {
+    console.warn("Unexpected negative delete count received", { deleted });
+  }
   return deleted;
+}
+
+export async function renameRemoteSession({
+  sessionId,
+  name,
+  accessToken,
+}: {
+  sessionId: string;
+  name: string;
+  accessToken: string;
+}): Promise<number> {
+  if (!sessionId) throw new Error("sessionId is required");
+  const trimmedName = name?.trim();
+  if (!trimmedName) throw new Error("name is required");
+  if (!accessToken?.trim()) throw new Error("accessToken is required");
+
+  const response = await fetch(sessionRenameEndpoint(sessionId), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken.trim()}`,
+    },
+    body: JSON.stringify({ name: trimmedName }),
+  });
+
+  const data = await handleJsonResponse(response);
+  return typeof data?.updatedCount === "number" ? data.updatedCount : 0;
 }
 
 /**

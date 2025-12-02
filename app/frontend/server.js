@@ -12,15 +12,8 @@ const blobStorageUrl = process.env.VITE_BLOB_STORAGE_URL; // Base URL for the bl
 const rawSasToken = process.env.VITE_SAS_TOKEN; // The SAS token with all query parameters
 const sasToken = rawSasToken ? rawSasToken.replace(/^\?/, '') : '';
 
-<<<<<<< HEAD
-/**
- * Inject the API key header used by the Flask backend before forwarding the request.
- */
-const onApiProxyReq = (proxyReq) => {
-=======
 const onApiProxyReq = (proxyReq) => {
     // Add the X-API-Key header to the outgoing proxy request
->>>>>>> 467c7b3 (fixed file preview because of private blob, also trimed unnessary information from the file name.)
     proxyReq.setHeader('X-API-Key', process.env.VITE_API_KEY);
 };
 
@@ -38,12 +31,9 @@ if (!blobStorageUrl) {
     console.warn("VITE_BLOB_STORAGE_URL is not defined. Blob previews will be unavailable.");
 }
 
-<<<<<<< HEAD
 /**
  * Build a proxy middleware that appends the SAS token so previews do not expose secrets.
  */
-=======
->>>>>>> 467c7b3 (fixed file preview because of private blob, also trimed unnessary information from the file name.)
 const blobStorageProxyRoute = () => createProxyMiddleware({
     target: blobStorageUrl,
     changeOrigin: true,
@@ -58,10 +48,6 @@ const blobStorageProxyRoute = () => createProxyMiddleware({
 
 const blobStorageProxy = blobStorageUrl ? blobStorageProxyRoute() : null;
 
-<<<<<<< HEAD
-// Reuse the same proxy for every historical container path we might hit in the UI.
-=======
->>>>>>> 467c7b3 (fixed file preview because of private blob, also trimed unnessary information from the file name.)
 if (blobStorageProxy) {
     app.use('/assistant-chat-files/*', blobStorageProxy);
     app.use('/assistant-chat-files-v2/*', blobStorageProxy);

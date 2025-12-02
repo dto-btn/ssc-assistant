@@ -151,6 +151,19 @@ class PlaygroundUploadResponse:
 
 
 @dataclass
+class PlaygroundRenameSessionRequest:
+    """Payload describing the new session name to persist to blob metadata."""
+    name: str
+
+
+@dataclass
+class PlaygroundRenameSessionResponse:
+    """Result of the rename-session endpoint."""
+    updatedCount: int
+    failed: List[str] = field(default_factory=list)
+
+
+@dataclass
 class PlaygroundExtractTextRequest:
     """Payload requesting either a text extraction or raw data-url response."""
     fileUrl: Optional[str] = None

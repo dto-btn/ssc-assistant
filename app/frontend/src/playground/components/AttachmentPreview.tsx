@@ -28,12 +28,6 @@ function isPdfAttachment(attachment: FileAttachment): boolean {
   return pdfExtensions.test(attachment.originalName);
 }
 
-<<<<<<< HEAD
-/**
- * Pick a readable download file name even when the blob metadata lacks the original label.
- */
-=======
->>>>>>> 467c7b3 (fixed file preview because of private blob, also trimed unnessary information from the file name.)
 function deriveDownloadName(attachment: FileAttachment): string | undefined {
   if (attachment.originalName) {
     return attachment.originalName;
@@ -48,12 +42,6 @@ function deriveDownloadName(attachment: FileAttachment): string | undefined {
   return trimmed || blobSegment;
 }
 
-<<<<<<< HEAD
-/**
- * Format raw byte lengths into a compact label suitable for secondary metadata.
- */
-=======
->>>>>>> 467c7b3 (fixed file preview because of private blob, also trimed unnessary information from the file name.)
 function formatBytes(size?: number): string {
   if (typeof size !== "number" || Number.isNaN(size)) return "";
   if (size < 1024) return `${size} B`;
@@ -95,13 +83,8 @@ const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ attachments }) =>
         const isPdf = !isImage && isPdfAttachment(attachment);
         const sizeLabel = formatBytes(attachment.size);
         const timestampLabel = formatUploadedAt(attachment.uploadedAt);
-<<<<<<< HEAD
         const canRenderImagePreview = isImage && Boolean(previewUrl);
         const downloadName = deriveDownloadName(attachment);
-=======
-  const canRenderImagePreview = isImage && Boolean(previewUrl);
-  const downloadName = deriveDownloadName(attachment);
->>>>>>> 467c7b3 (fixed file preview because of private blob, also trimed unnessary information from the file name.)
 
         return (
           <Paper

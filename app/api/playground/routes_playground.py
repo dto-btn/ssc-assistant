@@ -18,6 +18,8 @@ from utils.models import (
     PlaygroundFilesResponse,
     PlaygroundUploadRequest,
     PlaygroundUploadResponse,
+    PlaygroundRenameSessionRequest,
+    PlaygroundRenameSessionResponse,
     PlaygroundExtractTextRequest,
     PlaygroundExtractTextResponse,
 )
@@ -26,6 +28,7 @@ api_playground = APIBlueprint("api_playground", __name__, tag="Playground")
 logger = logging.getLogger(__name__)
 
 CONTAINER_NAME = "assistant-chat-files-v2"
+MAX_SESSION_NAME_LENGTH = 200
 
 # Align with main app's text extraction capabilities so behavior stays consistent.
 SUPPORTED_MIME_TYPES = {
@@ -72,10 +75,6 @@ DELETED_FLAG_VALUE = "true"
 
 
 def _is_marked_deleted(metadata: Optional[Dict[str, Any]]) -> bool:
-<<<<<<< HEAD
-    """Return True when the blob metadata marks the file as soft-deleted."""
-=======
->>>>>>> 7e322aa (Add remote session deletion handling and cover soft delete metadata)
     if not metadata:
         return False
     flag = metadata.get("deleted")
@@ -337,14 +336,28 @@ def files_for_session(query: PlaygroundSessionFilesQuery):
         container_client = _get_container_client()
         blob_list = container_client.list_blobs(name_starts_with=f"{oid}/", include=["metadata"])
         files: List[Dict[str, Any]] = []
-        deleted_sessions: set[str] = set()
+        session_activity: Dict[str, Dict[str, int]] = {}
+
+        def _stats_for(session_id: Optional[str]) -> Optional[Dict[str, int]]:
+            if not session_id:
+                return None
+            entry = session_activity.get(session_id)
+            if entry is None:
+                entry = {"active": 0, "deleted": 0}
+                session_activity[session_id] = entry
+            return entry
+
         for blob in blob_list:
             meta = getattr(blob, "metadata", {}) or {}
             session_from_meta = meta.get("sessionid")
             if _is_marked_deleted(meta):
-                if session_from_meta:
-                    deleted_sessions.add(session_from_meta)
+                stats = _stats_for(session_from_meta)
+                if stats is not None:
+                    stats["deleted"] += 1
                 continue
+            stats = _stats_for(session_from_meta)
+            if stats is not None:
+                stats["active"] += 1
             if session_id and session_from_meta != session_id:
                 continue
             content_type = None
@@ -369,8 +382,13 @@ def files_for_session(query: PlaygroundSessionFilesQuery):
                 }
             )
         response: Dict[str, Any] = {"files": files}
+        deleted_sessions = sorted(
+            session
+            for session, stats in session_activity.items()
+            if stats.get("active", 0) == 0 and stats.get("deleted", 0) > 0
+        )
         if deleted_sessions:
-            response["deletedSessionIds"] = sorted(deleted_sessions)
+            response["deletedSessionIds"] = deleted_sessions
         if session_id:
             response["sessionDeleted"] = session_id in deleted_sessions and not files
         return response
@@ -514,6 +532,89 @@ def upload_file(upload_request: PlaygroundUploadRequest):
     return {"file": file_payload, "message": "Uploaded"}
 
 
+@api_playground.post("/sessions/<string:session_id>/rename")
+@api_playground.doc(
+    summary="Rename a playground session",
+    description="Updates blob metadata so other clients see the new session name.",
+    security="ApiKeyAuth",
+)
+@api_playground.input(PlaygroundRenameSessionRequest.Schema, arg_name="payload")  # type: ignore[attr-defined]
+@api_playground.output(PlaygroundRenameSessionResponse.Schema)  # type: ignore[attr-defined]
+@auth.login_required(role="chat")
+@user_ad.login_required
+def rename_session(session_id: str, payload: PlaygroundRenameSessionRequest):
+    """Persist a new session name to blob metadata for every matching file."""
+    if not session_id:
+        return {"message": "session_id is required"}, 400
+
+    try:
+        payload = _coerce_to_dataclass(payload, PlaygroundRenameSessionRequest)
+    except PlaygroundAPIError as exc:
+        return {"message": _public_error_message(exc)}, exc.status_code
+
+    new_name = (payload.name or "").strip()
+    if not new_name:
+        return {"message": "name is required"}, 400
+    if len(new_name) > MAX_SESSION_NAME_LENGTH:
+        new_name = new_name[:MAX_SESSION_NAME_LENGTH]
+
+    try:
+        oid = _get_authenticated_oid()
+    except PlaygroundAPIError as exc:
+        logger.info("Rename-session request blocked: %s", exc)
+        return {"message": _public_error_message(exc)}, exc.status_code
+
+    try:
+        container_client = _get_container_client()
+    except AzureError:
+        logger.exception("Failed to access blob service for oid %s", oid)
+        return {"message": "Rename failed"}, 500
+
+    timestamp = datetime.utcnow().isoformat() + "Z"
+    updated_count = 0
+    matched_session = False
+    failed: List[str] = []
+
+    try:
+        blobs_iterator = container_client.list_blobs(name_starts_with=f"{oid}/", include=["metadata"])
+    except ResourceNotFoundError:
+        return {"message": f"Session {session_id} not found"}, 404
+    except AzureError:
+        logger.exception("Failed to enumerate blobs for rename", extra={"oid": oid})
+        return {"message": "Rename failed"}, 500
+
+    for blob in blobs_iterator:
+        metadata = getattr(blob, "metadata", {}) or {}
+        if metadata.get("sessionid") != str(session_id):
+            continue
+        matched_session = True
+        if _is_marked_deleted(metadata):
+            continue
+
+        normalized_metadata = {str(k).lower(): str(v) for k, v in metadata.items() if v is not None}
+        normalized_metadata["sessionname"] = new_name
+        normalized_metadata["lastupdated"] = timestamp
+
+        blob_client = container_client.get_blob_client(blob.name)
+        try:
+            blob_client.set_blob_metadata(normalized_metadata)
+            updated_count += 1
+        except AzureError:
+            failed.append(blob.name)
+            logger.exception("Failed to persist session rename", extra={"oid": oid, "blob_name": blob.name})
+
+    if not matched_session:
+        return {"message": f"Session {session_id} not found"}, 404
+
+    if failed:
+        return {
+            "updatedCount": updated_count,
+            "failed": failed,
+        }, 207
+
+    return {"updatedCount": updated_count}
+
+
 @api_playground.delete("/sessions/<string:session_id>")
 @api_playground.doc(
     summary="Soft delete a playground session",
@@ -523,15 +624,7 @@ def upload_file(upload_request: PlaygroundUploadRequest):
 @auth.login_required(role="chat")
 @user_ad.login_required
 def delete_session(session_id: str):
-<<<<<<< HEAD
-    """Mark every blob tied to the caller's session as deleted so the UI stops rehydrating it.
-
-    Instead of hard-deleting blobs we toggle metadata, allowing the recovery scripts to
-    rehydrate data if needed for auditing or debugging.
-    """
-=======
     """Mark all files for the caller's session as deleted in blob metadata."""
->>>>>>> 7e322aa (Add remote session deletion handling and cover soft delete metadata)
     if not session_id:
         return {"message": "session_id is required"}, 400
 
@@ -548,18 +641,6 @@ def delete_session(session_id: str):
         return {"message": "Delete failed"}, 500
 
     timestamp = datetime.utcnow().isoformat() + "Z"
-<<<<<<< HEAD
-    sanitized_session = secure_filename(str(session_id)) or str(session_id)
-
-    try:
-        # Only enumerate blobs that live under the authenticated user's prefix so we never touch someone else's files.
-        blobs_iterator = container_client.list_blobs(name_starts_with=f"{oid}/", include=["metadata"])
-    except ResourceNotFoundError:
-        return {
-            "success": False,
-            "message": f"Session {session_id} not found",
-        }, 404
-=======
     deleted_count = 0
     failed: List[str] = []
 
@@ -567,36 +648,10 @@ def delete_session(session_id: str):
         blobs_iterator = container_client.list_blobs(name_starts_with=f"{oid}/", include=["metadata"])
     except ResourceNotFoundError:
         return {"deletedCount": 0}
->>>>>>> 7e322aa (Add remote session deletion handling and cover soft delete metadata)
     except AzureError:
         logger.exception("Failed to enumerate blobs for delete", extra={"oid": oid})
         return {"message": "Delete failed"}, 500
 
-<<<<<<< HEAD
-    deleted_count = 0
-    failed: List[str] = []
-    matched_session = False
-
-    for blob in blobs_iterator:
-        # Each session can have multiple blobs (archive + attachments); ensure we only touch the targeted session.
-        metadata = getattr(blob, "metadata", {}) or {}
-        if metadata.get("sessionid") != str(session_id):
-            continue
-
-        matched_session = True
-        if _is_marked_deleted(metadata):
-            continue
-
-        # Normalize keys because Azure lowercases metadata keys, but tests/users may provide other casings.
-        normalized_metadata = {str(k).lower(): str(v) for k, v in metadata.items() if v is not None}
-        normalized_metadata["deleted"] = DELETED_FLAG_VALUE
-        normalized_metadata["deletedat"] = timestamp
-        normalized_metadata["lastupdated"] = timestamp
-
-        blob_client = container_client.get_blob_client(blob.name)
-        try:
-            blob_client.set_blob_metadata(normalized_metadata)
-=======
     for blob in blobs_iterator:
         metadata = getattr(blob, "metadata", {}) or {}
         if metadata.get("sessionid") != str(session_id):
@@ -611,7 +666,6 @@ def delete_session(session_id: str):
         blob_client = container_client.get_blob_client(blob.name)
         try:
             blob_client.set_blob_metadata(metadata)
->>>>>>> 7e322aa (Add remote session deletion handling and cover soft delete metadata)
             deleted_count += 1
         except AzureError:
             failed.append(blob.name)
@@ -620,35 +674,6 @@ def delete_session(session_id: str):
                 extra={"oid": oid, "blob_name": blob.name},
             )
 
-<<<<<<< HEAD
-    if not matched_session:
-        return {
-            "success": False,
-            "message": f"Session {session_id} not found",
-        }, 404
-
-    if failed:
-        return {
-            "success": False,
-            "deletedCount": deleted_count,
-            "message": f"Session {session_id} partially deleted. Retry to clean up remaining files.",
-            "failed": failed,
-        }, 207
-
-    if deleted_count == 0:
-        # All blobs already marked deleted.
-        return {
-            "success": True,
-            "deletedCount": 0,
-            "message": f"Session {session_id} already deleted",
-        }
-
-    return {
-        "success": True,
-        "deletedCount": deleted_count,
-        "message": f"Session {session_id} successfully deleted",
-    }
-=======
     if failed:
         return {
             "message": "Delete completed with errors",
@@ -657,7 +682,6 @@ def delete_session(session_id: str):
         }, 207
 
     return {"deletedCount": deleted_count}
->>>>>>> 7e322aa (Add remote session deletion handling and cover soft delete metadata)
 
 # POST /api/playground/extract-file-text: Accepts fileUrl and fileType, returns extracted text
 @api_playground.post("/extract-file-text")

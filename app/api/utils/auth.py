@@ -20,8 +20,8 @@ secret = os.getenv('JWT_SECRET', 'secret')
 
 _API_SCOPE = os.getenv('API_SCOPE', 'api.access')
 _API_APP_SCOPE = os.getenv('API_APP_SCOPE', 'api.access.app')
-
-oauth_validator = OAuth2TokenValidation(tenant_id, client_id)
+_skip_user_validation = os.getenv("SKIP_USER_VALIDATION", "False").lower() == "true"
+oauth_validator = None if _skip_user_validation else OAuth2TokenValidation(tenant_id, client_id)
 
 class User:
     """User object used to pass around accesstoken and apitoken"""
@@ -75,6 +75,9 @@ def verify_user_access_token(token):
         user.token = None
         return user
     try:
+        global oauth_validator  # pylint: disable=global-statement
+        if oauth_validator is None:
+            oauth_validator = OAuth2TokenValidation(tenant_id, client_id)
         #https://learn.microsoft.com/en-us/entra/identity-platform/id-token-claims-reference#payload-claims
         decoded_token = oauth_validator.validate_token_and_decode_it(token)
         if decoded_token and 'scp' in decoded_token and decoded_token['scp'] == _API_SCOPE:
