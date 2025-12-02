@@ -335,8 +335,19 @@ function buildCitationsBlock(citations: { title: string; url: string }[] | undef
 function formatAttachment(attachment: FileAttachment): string {
   const name = attachment.originalName || attachment.blobName || "Attachment";
   const size = attachment.size ? ` · ${formatFileSize(attachment.size)}` : "";
-  const url = attachment.url ? ` (${attachment.url})` : "";
-  return `${name}${size}${url}`;
+  const urlLabel = formatAttachmentUrl(attachment.url);
+  return `${name}${size}${urlLabel}`;
+}
+
+function formatAttachmentUrl(rawUrl?: string): string {
+  if (!rawUrl) return "";
+  try {
+    const parsed = new URL(rawUrl);
+    const hostname = parsed.hostname.replace(/^www\./, "");
+    return hostname ? ` (${hostname})` : "";
+  } catch {
+    return "";
+  }
 }
 
 /**
