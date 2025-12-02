@@ -32,13 +32,15 @@ class ToolService {
 
     private constructor(mcpClients: MCPClient[]) {
         this.mcpClients = mcpClients;
+
+        
     }
 
-    public static async getInstance(): Promise<ToolService> {
+    public static async getInstance(token: string): Promise<ToolService> {
         if (!ToolService.instance) {
             // Await creation of all MCP clients
             const mcpClients = await Promise.all(
-                MCP_URLS.map(async (url: string) => await MCPClient.create(url.trim()))
+                MCP_URLS.map(async (url: string) => await MCPClient.create(url.trim(), token))
             );
             ToolService.instance = new ToolService(mcpClients);
         }
@@ -123,4 +125,4 @@ class ToolService {
 }
 
 // Export an async function to get the singleton instance
-export const getToolService = async () => ToolService.getInstance();
+export const getToolService = async (token: string) => ToolService.getInstance(token);

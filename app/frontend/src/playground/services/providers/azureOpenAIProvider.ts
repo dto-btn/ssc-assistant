@@ -49,7 +49,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
     try {
       const client = this.createClient(userToken);
 
-      const toolService = await getToolService();
+      const toolService = await getToolService(userToken);
 
       let finalToolCalls: Record<string, any> = {};
 

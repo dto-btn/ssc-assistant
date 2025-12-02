@@ -10,9 +10,9 @@ import { getToolService } from "../../services/toolService";
 import { ChatCompletionFunctionTool } from 'openai/resources/index.mjs';
 
 // Async thunk to load tools using the toolService
-export const loadTools = createAsyncThunk('tools/loadTools', async (_, { rejectWithValue }) => {
+export const loadTools = createAsyncThunk('tools/loadTools', async (token: string, { rejectWithValue }) => {
   try {
-    const toolService = await getToolService();
+    const toolService = await getToolService(token);
     const tools = await toolService.listTools();
     return tools;
   } catch (error) {

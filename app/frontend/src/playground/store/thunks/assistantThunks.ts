@@ -259,8 +259,8 @@ export const sendAssistantMessage = ({
     let { availableTools } = getState().tools;
 
     // If tools are not loaded yet, dispatch the action to load them.
-    if (availableTools.length == 0) {
-      const resultAction = await dispatch(loadTools());
+    if (availableTools.length == 0 && accessToken) {
+      const resultAction = await dispatch(loadTools(accessToken));
       if (loadTools.fulfilled.match(resultAction)) {
         availableTools = resultAction.payload; // Use the newly loaded tools
       } else {
