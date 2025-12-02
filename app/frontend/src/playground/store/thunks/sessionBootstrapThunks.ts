@@ -240,6 +240,7 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
     const trimmedRemoteName = value.sessionName?.trim();
     if (existing) {
       if (trimmedRemoteName && trimmedRemoteName.length && existing.name !== trimmedRemoteName) {
+        // Align any locally cached session titles with the latest metadata recovered from blob storage.
         dispatch(
           renameSession({
             id: sessionId,

@@ -165,6 +165,8 @@ export const archiverMiddleware: Middleware<unknown, RootState, PlaygroundDispat
       const state: RootState = store.getState();
       const hasMessages = state.chat.messages.some((message) => message.sessionId === sessionId);
       if (hasMessages) {
+        // A name change should be reflected in the persisted archive immediately so
+        // other browsers learn about it on refresh.
         store.dispatch(requestArchive({ sessionId }));
       } else {
         store

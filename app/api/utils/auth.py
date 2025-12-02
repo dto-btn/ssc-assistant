@@ -21,6 +21,7 @@ secret = os.getenv('JWT_SECRET', 'secret')
 _API_SCOPE = os.getenv('API_SCOPE', 'api.access')
 _API_APP_SCOPE = os.getenv('API_APP_SCOPE', 'api.access.app')
 _skip_user_validation = os.getenv("SKIP_USER_VALIDATION", "False").lower() == "true"
+# Local dev and pytest flows disable the network-heavy validator so the routes can bootstrap quickly.
 oauth_validator = None if _skip_user_validation else OAuth2TokenValidation(tenant_id, client_id)
 
 class User:
@@ -71,6 +72,7 @@ def verify_user_access_token(token):
     """verify the access token provided in the Authorization header"""
     user = get_or_create_user()
     if os.getenv("SKIP_USER_VALIDATION", "False").lower() == "true":
+        # Tests inject fake identities, so short-circuit instead of hitting Entra ID.
         logger.info("Skipping User Validation")
         user.token = None
         return user

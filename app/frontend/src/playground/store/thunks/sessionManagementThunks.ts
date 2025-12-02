@@ -122,6 +122,9 @@ export const deleteSession = (sessionId: string): AppThunk<Promise<void>> => asy
   );
 };
 
+/**
+ * Persist a local rename to blob metadata so other tabs/devices pick up the new title.
+ */
 export const persistSessionRename = (sessionId: string, newName: string): AppThunk<Promise<void>> => async (
   dispatch,
   getState,

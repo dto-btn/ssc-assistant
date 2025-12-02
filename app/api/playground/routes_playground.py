@@ -338,6 +338,7 @@ def files_for_session(query: PlaygroundSessionFilesQuery):
         files: List[Dict[str, Any]] = []
         session_activity: Dict[str, Dict[str, int]] = {}
 
+        # Track per-session activity so the frontend can learn which sessions disappeared remotely.
         def _stats_for(session_id: Optional[str]) -> Optional[Dict[str, int]]:
             if not session_id:
                 return None
@@ -591,6 +592,7 @@ def rename_session(session_id: str, payload: PlaygroundRenameSessionRequest):
         if _is_marked_deleted(metadata):
             continue
 
+        # Store a normalized name + timestamp so other browser tabs notice the rename on refresh.
         normalized_metadata = {str(k).lower(): str(v) for k, v in metadata.items() if v is not None}
         normalized_metadata["sessionname"] = new_name
         normalized_metadata["lastupdated"] = timestamp
