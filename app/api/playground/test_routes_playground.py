@@ -10,6 +10,8 @@ from app.api.playground import routes_playground
 
 
 class FakeBlob:
+    """In-memory stand in that mimics the Azure Blob API surface the routes expect."""
+
     def __init__(
         self,
         name: str,
@@ -25,6 +27,8 @@ class FakeBlob:
 
 
 class FakeDownload:
+    """Tiny helper that exposes the ``readall`` call that BlobClient#download_blob returns."""
+
     def __init__(self, data: bytes) -> None:
         self._data = data
 
@@ -33,6 +37,8 @@ class FakeDownload:
 
 
 class FakeBlobClient:
+    """Wrap a FakeBlob with the subset of BlobClient behavior used inside the routes."""
+
     def __init__(self, container: "FakeContainerClient", blob: FakeBlob) -> None:
         self._container = container
         self._blob = blob
@@ -55,6 +61,8 @@ class FakeBlobClient:
 
 
 class FakeContainerClient:
+    """Container-level façade that tracks blobs per-name just like Azure would."""
+
     def __init__(self, url: str) -> None:
         self.url = url
         self._blobs: Dict[str, FakeBlob] = {}
@@ -81,6 +89,8 @@ class FakeContainerClient:
 
 @pytest.fixture
 def api_headers(monkeypatch):
+    """Return auth headers that satisfy the route decorators without hitting AAD."""
+
     token = jwt.encode({"roles": ["chat"]}, "secret", algorithm="HS256")
     if isinstance(token, bytes):
         token = token.decode("utf-8")
@@ -92,9 +102,11 @@ def api_headers(monkeypatch):
 
 
 def test_delete_session_marks_metadata(monkeypatch, api_headers):
+    """Soft-delete should toggle every blob under the requested session and set timestamps."""
+
     container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
     target_blob = FakeBlob(
-        "user-123/files/session-1/archive.chat.json",
+        "user-123/session-1.chat.json",
         {
             "sessionid": "session-1",
             "originalname": "archive.chat.json",
@@ -105,19 +117,18 @@ def test_delete_session_marks_metadata(monkeypatch, api_headers):
         "application/json",
     )
     container.add_blob(target_blob)
-    extra_blob = FakeBlob(
-        "user-123/files/session-2/other.txt",
+    attachment_blob = FakeBlob(
+        "user-123/files/session-1/attachment.txt",
         {
-            "sessionid": "session-2",
-            "originalname": "other.txt",
-            "uploadedat": "2023-01-02T00:00:00Z",
+            "sessionid": "session-1",
+            "originalname": "attachment.txt",
+            "uploadedat": "2023-01-01T00:00:00Z",
             "deleted": "false",
         },
         b"note",
         "text/plain",
     )
-    container.add_blob(extra_blob)
-
+    container.add_blob(attachment_blob)
     monkeypatch.setattr(routes_playground, "_get_container_client", lambda: container)
     monkeypatch.setattr(routes_playground, "_get_authenticated_oid", lambda: "user-123")
 
@@ -126,15 +137,70 @@ def test_delete_session_marks_metadata(monkeypatch, api_headers):
 
     assert response.status_code == 200
     payload = response.get_json()
-    assert payload == {"deletedCount": 1}
+    assert payload == {
+        "success": True,
+        "deletedCount": 2,
+        "message": "Session session-1 successfully deleted",
+    }
 
     updated_blob = container.get_blob(target_blob.name)
     assert updated_blob.metadata["deleted"] == routes_playground.DELETED_FLAG_VALUE
     assert "deletedat" in updated_blob.metadata
     assert updated_blob.metadata["lastupdated"] == updated_blob.metadata["deletedat"]
+    assert container.get_blob(attachment_blob.name).metadata["deleted"] == routes_playground.DELETED_FLAG_VALUE
+
+
+def test_delete_session_returns_not_found(monkeypatch, api_headers):
+    """Deleting a missing session returns a 404 so the UI can alert the user."""
+
+    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
+    monkeypatch.setattr(routes_playground, "_get_container_client", lambda: container)
+    monkeypatch.setattr(routes_playground, "_get_authenticated_oid", lambda: "user-123")
+
+    with flask_app.test_client() as client:
+        response = client.delete("/api/playground/sessions/missing", headers=api_headers)
+
+    assert response.status_code == 404
+    assert response.get_json() == {
+        "success": False,
+        "message": "Session missing not found",
+    }
+
+
+def test_delete_session_already_deleted(monkeypatch, api_headers):
+    """Repeat delete requests short-circuit when everything is already marked deleted."""
+
+    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
+    deleted_blob = FakeBlob(
+        "user-123/session-9.chat.json",
+        {
+            "sessionid": "session-9",
+            "deleted": "true",
+            "deletedat": "2023-01-01T00:00:00Z",
+            "lastupdated": "2023-01-01T00:00:00Z",
+        },
+        b"{}",
+        "application/json",
+    )
+    container.add_blob(deleted_blob)
+
+    monkeypatch.setattr(routes_playground, "_get_container_client", lambda: container)
+    monkeypatch.setattr(routes_playground, "_get_authenticated_oid", lambda: "user-123")
+
+    with flask_app.test_client() as client:
+        response = client.delete("/api/playground/sessions/session-9", headers=api_headers)
+
+    assert response.status_code == 200
+    assert response.get_json() == {
+        "success": True,
+        "deletedCount": 0,
+        "message": "Session session-9 already deleted",
+    }
 
 
 def test_files_for_session_excludes_deleted(monkeypatch, api_headers):
+    """Listing files filters out soft-deleted blobs but still reports the deleted session ids."""
+
     container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
     active_blob = FakeBlob(
         "user-123/files/session-1/a.txt",
@@ -194,6 +260,8 @@ def test_files_for_session_excludes_deleted(monkeypatch, api_headers):
 
 
 def test_extract_file_text_rejects_deleted_blob(monkeypatch):
+    """Text extraction refuses to download blobs that were previously soft-deleted."""
+
     container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
     deleted_blob = FakeBlob(
         "user-123/files/session-3/deleted.txt",

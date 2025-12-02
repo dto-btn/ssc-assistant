@@ -12,6 +12,7 @@ export interface Session {
   name: string;
   createdAt: number;
   staticTools?: string[];
+  isNewChat: boolean
 }
 
 interface SessionsState {
@@ -56,6 +57,13 @@ const sessionSlice = createSlice({
     ) => {
       const session = state.sessions.find((session) => session.id === action.payload.id);
       if (session) session.staticTools = action.payload.tools;
+    },
+    setIsSessionNew: (
+      state,
+      action: PayloadAction<{ id: string, isNew: boolean}>
+    ) => {
+      const session = state.sessions.find((session) => session.id === action.payload.id);
+      if (session) session.isNewChat = action.payload.isNew;
     }
   },
 });
@@ -66,6 +74,7 @@ export const {
   setCurrentSession,
   renameSession,
   setSessionStaticTools,
+  setIsSessionNew
 } = sessionSlice.actions;
 
 export default sessionSlice.reducer;

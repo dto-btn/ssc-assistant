@@ -1,4 +1,3 @@
-
 import { useCallback, useMemo } from "react"
 
 import { PersistenceUtils } from "../util/persistence";
@@ -242,11 +241,9 @@ export const useChatService = () => {
         if(lastChatLength === 0 && typeof(tool) !== "undefined"){
             deleteSavedChat(chatIndex);
             createNewChat(tool);
-            window.location.reload();
         }else if(lastChatLength === 0 && lastChat.staticTools?.length > 0){
             deleteSavedChat(chatIndex);
             createNewChat(tool);
-            window.location.reload();
         }else if(lastChatLength != 0 || typeof(tool) !== "undefined"){
             createNewChat(tool);
         }else{
@@ -254,7 +251,6 @@ export const useChatService = () => {
             setCurrentChatIndex(chatIndex);
             const currentChat = chatHistories[chatIndex];
             setCurrentChatHistory(currentChat);
-            window.location.reload();
         }
     }, [createNewChat, deleteSavedChat, setCurrentChatHistory, setCurrentChatIndex])
 

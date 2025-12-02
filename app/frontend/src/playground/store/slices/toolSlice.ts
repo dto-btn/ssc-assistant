@@ -46,10 +46,12 @@ const toolSlice = createSlice({
   initialState,
   reducers: {
     setEnabledTools: (state, action: PayloadAction<Record<string, boolean>>) => {
+      // Overwrite the entire toggle set when the user saves new preferences.
       state.enabledTools = action.payload;
     },
     toggleTool: (state, action: PayloadAction<string>) => {
       const tool = action.payload;
+      // Flip a single tool flag in-place to keep the UI responsive.
       state.enabledTools[tool] = !state.enabledTools[tool];
     },
   },

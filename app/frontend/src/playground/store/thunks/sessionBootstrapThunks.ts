@@ -31,6 +31,9 @@ export interface RehydrateSessionOptions {
   force?: boolean;
 }
 
+/**
+ * Load the newest chat archive for a session and hydrate Redux if it is newer than local state.
+ */
 export const rehydrateSessionFromArchive = (
   sessionId: string,
   options?: RehydrateSessionOptions,
@@ -131,6 +134,9 @@ export const rehydrateSessionFromArchive = (
     }
   };
 
+/**
+ * Generate a human-readable session title when the archive lacks an explicit name.
+ */
 const buildRecoveredName = (sessionId: string, uploadedAtMs: number, providedName?: string | null) => {
   if (providedName && providedName.trim().length > 0) {
     return providedName.trim();
@@ -142,6 +148,9 @@ const buildRecoveredName = (sessionId: string, uploadedAtMs: number, providedNam
   return `Recovered chat ${sessionId.slice(0, 8)}`;
 };
 
+/**
+ * Discover remote sessions during startup and queue rehydration jobs for each one.
+ */
 export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async (dispatch, getState) => {
   const state = getState();
   const accessToken = state.auth.accessToken;
@@ -195,6 +204,8 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
     return;
   }
 
+  //new session = fetched sessions from blob storage
+  //existing sessions = cached from local store
   const existingSessions = new Map(state.sessions.sessions.map((session) => [session.id, session]));
   const newSessions: Session[] = [];
 
@@ -214,6 +225,7 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
         id: sessionId,
         name: buildRecoveredName(sessionId, createdAt, value.sessionName),
         createdAt,
+        isNewChat: false
       });
     }
   });

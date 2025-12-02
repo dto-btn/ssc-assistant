@@ -60,7 +60,9 @@ const ChatArea: React.FC = () => {
   );
   const citations = lastAssistantMessage?.citations ?? [];
 
-  // Replay sends the previous user message again
+  /**
+   * Replay sends the most recent user utterance so the assistant can retry with new context.
+   */
   const handleReplay = (): void => {
     if (messages.length < 2) return;
     // Index of the last user message in the reversed array
@@ -82,12 +84,16 @@ const ChatArea: React.FC = () => {
     }
   };
 
-  // Stop sets loading to false (simulate abort)
+  /**
+   * Stop flips the loading flag which signals the UI to hide the typing indicator.
+   */
   const handleStop = (): void => {
     dispatch(setIsLoading(false));
   };
 
-  // Suggestions logic
+  /**
+   * Convert a canned suggestion into a user turn for quick-start prompts.
+   */
   const handleSuggestion = (suggestion: string): void => {
     dispatch(
       addMessage({
