@@ -9,10 +9,18 @@ on:
       app-name:
         type: string
         required: true
+      runner:
+        type: string
+        required: false
+        default: 'ubuntu-latest'
     secrets:
       API_PUBLISH_PROFILE:
         required: false
-      AZURE_CREDENTIALS:
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
         required: false
 
 permissions:
@@ -21,7 +29,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -71,7 +79,7 @@ jobs:
     if: github.event_name != 'pull_request'
     needs: build
     environment: ${{ inputs.environment }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
 
     steps:
     - name: Download artifact from build job
@@ -80,9 +88,11 @@ jobs:
         name: api ${{ inputs.environment }}
 
     - name: Log in with Azure
-      uses: azure/login@v1
+      uses: azure/login@v2
       with:
-        creds: '${{ secrets.AZURE_CREDENTIALS }}'
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     - name: 'Deploy to Azure Web App'
       uses: azure/webapps-deploy@v3.0.1

@@ -13,6 +13,8 @@ import FeedbackForm from "./FeedbackForm";
 import { useAuth } from "../store/hooks/useAuth";
 import { apiUse } from "../../authConfig";
 import isFeatureEnabled from "../FeatureGate";
+import { DevBanner } from "./DevBanner";
+import SessionBootstrapper from "./SessionBootstrapper";
 
 const PlaygroundRoot: React.FC = () => {
   // Initialize authentication and get token on app load
@@ -20,11 +22,13 @@ const PlaygroundRoot: React.FC = () => {
 
   return (
     <>
+      <SessionBootstrapper />
       <Box display="flex" height="100vh">
         <SessionSidebar />
         <ChatArea />
       </Box>
       {isFeatureEnabled("FeedbackForm") && <FeedbackForm />}
+      <DevBanner />
     </>
   );
 };

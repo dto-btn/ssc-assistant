@@ -1,4 +1,3 @@
-
 import { useCallback, useMemo } from "react"
 
 import { PersistenceUtils } from "../util/persistence";
@@ -23,6 +22,7 @@ export const useChatService = () => {
     const setDefaultChatHistory = useChatStore((s) => s.setDefaultChatHistory);
     const setCurrentChatHistory = useChatStore((s) => s.setCurrentChatHistory);
     const chatStoreSetCurrentChatIndex = useChatStore((s) => s.setCurrentChatIndex);
+    const hydrateChatStore = useChatStore((s) => s.hydrateOnBoot);
 
     const showSnackbar = useAppStore((s) => s.snackbars.show);
     const enabledTools = useAppStore((s) => s.tools.enabledTools);
@@ -241,11 +241,9 @@ export const useChatService = () => {
         if(lastChatLength === 0 && typeof(tool) !== "undefined"){
             deleteSavedChat(chatIndex);
             createNewChat(tool);
-            window.location.reload();
         }else if(lastChatLength === 0 && lastChat.staticTools?.length > 0){
             deleteSavedChat(chatIndex);
             createNewChat(tool);
-            window.location.reload();
         }else if(lastChatLength != 0 || typeof(tool) !== "undefined"){
             createNewChat(tool);
         }else{
@@ -253,7 +251,6 @@ export const useChatService = () => {
             setCurrentChatIndex(chatIndex);
             const currentChat = chatHistories[chatIndex];
             setCurrentChatHistory(currentChat);
-            window.location.reload();
         }
     }, [createNewChat, deleteSavedChat, setCurrentChatHistory, setCurrentChatIndex])
 
@@ -274,6 +271,50 @@ export const useChatService = () => {
         PersistenceUtils.setCurrentChatIndex(0);
     }, [setChatHistoriesDescriptions, setCurrentChatHistory, setCurrentChatIndex]);
 
+    const exportChatHistories = useCallback(() => {
+        try {
+            PersistenceUtils.exportChatHistories();
+            showSnackbar(t("settings.export.success"), undefined, "success");
+        } catch (error) {
+            console.error("Failed to export chat histories:", error);
+            showSnackbar(t("settings.export.error"), SNACKBAR_DEBOUNCE_KEYS.EXPORT_CHAT_ERROR);
+        }
+    }, [showSnackbar, t]);
+
+    const importChatHistories = useCallback(async (file: File) => {
+        try {
+            const { chatHistories, currentChatIndex } = await PersistenceUtils.importChatHistories(file);
+
+            // Rehydrate each history with the latest defaults so legacy exports pick up new fields safely.
+            const hydratedHistories = chatHistories.map((history, index) => ({
+                ...buildDefaultChatHistory(),
+                ...history,
+                description: history.description && history.description.trim().length > 0
+                    ? history.description
+                    : `Conversation ${index + 1}`,
+            }));
+
+            const descriptions = hydratedHistories.map((chatHistory, index) =>
+                chatHistory.description || `Conversation ${index + 1}`
+            );
+
+            const nextCurrentChatIndex = Math.min(Math.max(currentChatIndex, 0), hydratedHistories.length - 1);
+            const nextCurrentChatHistory = hydratedHistories[nextCurrentChatIndex];
+
+            hydrateChatStore({
+                currentIndex: nextCurrentChatIndex,
+                currentHistory: nextCurrentChatHistory,
+                descriptions,
+            });
+
+            showSnackbar(t("settings.import.success"), undefined, "success");
+        } catch (error) {
+            console.error("Failed to import chat histories:", error);
+            showSnackbar(t("settings.import.error"), SNACKBAR_DEBOUNCE_KEYS.IMPORT_CHAT_ERROR);
+            throw error;
+        }
+    }, [hydrateChatStore, showSnackbar, t]);
+
     // old deleteSavedChat removed (now memoized above)
 
     const memoized = useMemo(() => {
@@ -284,6 +325,8 @@ export const useChatService = () => {
             handleLoadSavedChat,
             handleNewChat,
             deleteSavedChat,
+            exportChatHistories,
+            importChatHistories,
 
             updateLastMessage(message_chunk: string) {
                 setCurrentChatHistory((prevChatHistory) => {
@@ -344,6 +387,8 @@ export const useChatService = () => {
         messageThreshold,
         currentChatIndex,
         setCurrentChatHistory,
+        exportChatHistories,
+        importChatHistories,
     ])
 
     return memoized

@@ -35,7 +35,7 @@ export const AppSnackbars = () => {
                                 // on the Alert component.
                                 appStore.snackbars._hide(datum.id)
                             }}
-                            severity="error"
+                            severity={datum.severity}
                             variant="filled"
                             sx={{ width: '100%' }}
                         >

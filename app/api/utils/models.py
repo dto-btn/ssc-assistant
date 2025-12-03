@@ -97,6 +97,77 @@ class FilePayload:
     encoded_file: str
     name: str
 
+
+@dataclass
+class PlaygroundSessionFilesQuery:
+    """Query payload for listing attachments tied to a specific session."""
+    sessionId: Optional[str] = field(default=None)
+
+
+@dataclass
+class PlaygroundFileMetadata:
+    """Normalized attachment metadata shared between the API and frontend."""
+    name: str
+    url: str
+    blobName: Optional[str] = None
+    size: Optional[int] = None
+    contentType: Optional[str] = None
+    originalName: Optional[str] = None
+    uploadedAt: Optional[str] = None
+    sessionId: Optional[str] = None
+    category: Optional[str] = None
+    metadataType: Optional[str] = None
+    sessionName: Optional[str] = None
+    lastUpdated: Optional[str] = None
+
+
+@dataclass
+class PlaygroundFilesResponse:
+    """Response envelope for the files-for-session endpoint."""
+    files: List[PlaygroundFileMetadata]
+    deletedSessionIds: List[str] = field(default_factory=list)
+    sessionDeleted: bool = False
+
+
+@dataclass
+class PlaygroundUploadRequest:
+    """Incoming payload describing the base64 file and any optional metadata."""
+    encoded_file: str
+    name: str
+    sessionId: Optional[str] = None
+    session_id: Optional[str] = None
+    category: Optional[str] = None
+    fileType: Optional[str] = None
+    mimeType: Optional[str] = None
+    type: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+@dataclass
+class PlaygroundUploadResponse:
+    """Response bundle returned after a successful upload."""
+    file: PlaygroundFileMetadata
+    message: str
+
+
+@dataclass
+class PlaygroundExtractTextRequest:
+    """Payload requesting either a text extraction or raw data-url response."""
+    fileUrl: Optional[str] = None
+    blobName: Optional[str] = None
+    fileType: Optional[str] = None
+    responseFormat: Optional[str] = None
+
+
+@dataclass
+class PlaygroundExtractTextResponse:
+    """Result of the extract-file-text endpoint in both text and data-url modes."""
+    extractedText: Optional[str] = None
+    dataUrl: Optional[str] = None
+    contentType: Optional[str] = None
+    error: Optional[str] = None
+
+
 @dataclass
 class SuggestionCitationApiResponse:
     url: str

@@ -10,7 +10,6 @@ import React, { useCallback, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   addSession,
-  removeSession,
   setCurrentSession,
   renameSession,
 } from "../store/slices/sessionSlice";
@@ -40,6 +39,10 @@ import { LEFT_MENU_WIDTH } from "../constants";
 import SessionRenameDialog from "./SessionRenameDialog";
 import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
+import SyncStatusIndicator from "./SyncStatusIndicator";
+import { deleteSession as deleteSessionThunk } from "../store/thunks/sessionManagementThunks";
+import ProfileMenu from "./ProfileMenu/ProfileMenu";
+
 
 /**
  * Sidebar for listing and managing Playground chat sessions.
@@ -66,17 +69,19 @@ const SessionSidebar: React.FC = () => {
    * case we keep the current session active to avoid creating duplicates.
    */
   const handleNewSession = useCallback(() => {
-    // If current session exists and has no messages, just keep it selected
-    if (currentSessionId && currentSessionMessages.length === 0) {
-      dispatch(setCurrentSession(currentSessionId));
-      return;
-    }
+
+    let newSession = sessions.find(chatSession => chatSession.isNewChat == true)
+    if (newSession) {
+      dispatch(setCurrentSession(newSession.id));
+      return
+    } 
 
     dispatch(
       addSession({
         id: uuidv4(),
         name: `Conversation ${sessions.length + 1}`,
         createdAt: Date.now(),
+        isNewChat: true
       })
     );
   }, [dispatch, sessions.length, currentSessionId, currentSessionMessages.length]);
@@ -128,7 +133,7 @@ const SessionSidebar: React.FC = () => {
    */
   const handleDeleteClicked = useCallback(() => {
     if (selectedSessionId) {
-      dispatch(removeSession(selectedSessionId));
+      void dispatch(deleteSessionThunk(selectedSessionId));
       setMoreMenuAnchor(null);
       setSelectedSessionId(null);
     }
@@ -212,12 +217,15 @@ const SessionSidebar: React.FC = () => {
                 onClick={() => dispatch(setCurrentSession(session.id))}
                 aria-current={session.id === currentSessionId ? "true" : undefined}
               >
-                <Typography
-                  noWrap
-                  sx={{ width: "100%", overflow: "hidden", textOverflow: "ellipsis" }}
-                >
-                  {session.name}
-                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%", minWidth: 0 }}>
+                  <Typography
+                    noWrap
+                    sx={{ flexGrow: 1, overflow: "hidden", textOverflow: "ellipsis" }}
+                  >
+                    {session.name}
+                  </Typography>
+                  <SyncStatusIndicator sessionId={session.id} variant="icon" />
+                </Box>
               </ListItemButton>
 
               <IconButton
@@ -278,6 +286,19 @@ const SessionSidebar: React.FC = () => {
         onClose={() => setRenameDialogOpen(false)}
         onRename={handleRenameSession}
       />
+      <Box  //floats to bottom of sidebar
+        sx={{
+          marginTop: "auto",
+          display: "flex",
+          gap: "1rem",
+        }}
+      >
+        <ProfileMenu
+          size="30px"
+          fontSize="12px"
+          logout={() => console.log("logout")}
+        />
+      </Box>
     </Box>
   );
 };

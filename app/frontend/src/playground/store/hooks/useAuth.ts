@@ -9,8 +9,10 @@ import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useMsal } from '@azure/msal-react';
 import { setAccessToken, clearAccessToken, setTokenRefreshing } from '../slices/authSlice';
+import { setGraphData, setProfilePictureUrl } from '../slices/userSlice';
 import { isTokenExpired } from '../../../util/token';
 import type { RootState } from '../index';
+import { fetchProfilePicture } from '../../services/graphService';
 
 // You'll need to import this from your app's auth configuration
 interface ApiUseConfig {
@@ -40,6 +42,12 @@ export function useAuth(apiUse: ApiUseConfig) {
           ...apiUse,
           account: account,
         });
+
+        //think about decoupling this call from useAuth
+        fetchProfilePicture(instance).then((response) => {
+          dispatch(setProfilePictureUrl(response.profilePictureURL));
+          dispatch(setGraphData(response.graphData));
+        })
 
         dispatch(setAccessToken({
           token: response.accessToken,

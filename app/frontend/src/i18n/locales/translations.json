@@ -127,9 +127,33 @@
         "en": "Retry",
         "fr": "Réessayer"
     },
+    "replace": {
+        "en": "Replace",
+        "fr": "Remplacer"
+    },
     "gpt-ex1-q": {
         "en": "When Mr. Bilbo Baggins of Bag End announced that he would shortly be celebrating his eleventy-first birthday with a party of special magnificence, there was much talk and excitement in Hobbiton. Bilbo was very rich and very peculiar, and had been the wonder of the Shire for sixty years, ever since his remarkable disappearance and unexpected return. The riches he had brought back from his travels had now become a local legend, and it was popularly believed, whatever the old folk might say, that the Hill at Bag End was full of tunnels stuffed with treasure. And if that was not enough for fame, there was also his prolonged vigour to marvel at.",
         "fr": "Lorsque M. Bilbo Baggins de Cul-de-Sac a annoncé qu'il allait bientôt fêter son cent-onzième anniversaire avec une fête d'une magnificence particulière, il y a eu beaucoup de discussions et d'excitation à Hobbiton. Bilbo était très riche et très particulier, et avait été l'émerveillement de la Comté pendant soixante ans, depuis sa disparition remarquable et son retour inattendu. Les richesses qu'il avait rapportées de ses voyages étaient devenues une légende locale, et on croyait communément, quoique puissent dire les vieux, que la Colline à Cul-de-Sac était pleine de tunnels remplis de trésors. Et si cela ne suffisait pas pour la renommée, il y avait aussi sa vigueur prolongée à admirer."
+    },
+    "settings.import.all.conversations": {
+        "en": "Import conversations from file",
+        "fr": "Importer des conversations depuis un fichier"
+    },
+    "settings.import.success": {
+        "en": "Chat history imported",
+        "fr": "Historique de discussion importé"
+    },
+    "settings.import.error": {
+        "en": "Unable to import chat history",
+        "fr": "Impossible d'importer l'historique de discussion"
+    },
+    "settings.import.confirmation.title": {
+        "en": "Replace Existing Chats",
+        "fr": "Remplacer les conversations existantes"
+    },
+    "settings.import.confirmation.message": {
+        "en": "Importing will replace all conversations currently saved on this device. Do you want to continue?",
+        "fr": "L'importation remplacera toutes les conversations actuellement enregistrées sur cet appareil. Voulez-vous continuer?"
     },
     "clear.conversation": {
         "en": "Clear Current Chat",
@@ -490,6 +514,18 @@
     "settings": {
         "en": "Settings",
         "fr": "Paramètres"
+    },
+    "settings.export.all.conversations": {
+        "en": "Export all conversations",
+        "fr": "Exporter toutes les conversations"
+    },
+    "settings.export.success": {
+        "en": "Chat history exported",
+        "fr": "Historique de discussion exporté"
+    },
+    "settings.export.error": {
+        "en": "Unable to export chat history",
+        "fr": "Impossible d'exporter l'historique de discussion"
     },
     "settings.delete.all.conversations": {
         "en": "Delete all conversations",
@@ -876,28 +912,68 @@
         "fr": "CEGP"
     },
     "suggestions.pmcoe.q1": {
-        "en": "What does the Financial and Investment Management Board ensure?",
-        "fr": "Que garantit le Conseil de gestion financière et des investissements ?"
+        "en": "What is the purpose of the Project Management Operating Guide?",
+        "fr": "Quel est le but du Guide de gestion de projet ?"
     },
     "suggestions.pmcoe.q2": {
-        "en": "What happens if during the preliminary planning stage the project doesn't receive approval?",
-        "fr": "Que se passe-t-il si, au cours de la phase de planification préliminaire, le projet n'est pas approuvé ?"
+        "en": "What is EPS and what does it stand for?",
+        "fr": "Qu’est-ce que le système SPE et que signifie cet acronyme ?"
     },
     "suggestions.pmcoe.q3": {
-        "en": "What is a project?",
-        "fr": "Qu'est-ce qu'un projet ?"
+        "en": "What is the OPMCA and why does it matter?",
+        "fr": "Qu’est-ce que l’ECGPO et pourquoi est-ce important ?"
     },
     "suggestions.pmcoe.q4": {
-        "en": "How can I learn more about Shared Services Canada tailored processes and guidelines?",
-        "fr": "Comment puis-je en savoir plus sur les processus et les lignes directrices adaptés de Services partagés Canada ?"
+        "en": "What types of documents and/or templates are available in the SSC PGoF and how can we use them?",
+        "fr": "Quels types de documents et/ou modèles sont disponibles dans le SSC CFGP et comment les utiliser ?"
     },
     "suggestions.pmcoe.q5": {
-        "en": "Does Shared Services Canada have an Operating Framework?",
-        "fr": "Services partagés Canada a-t-il un cadre opérationnel ?"
+        "en": "What is the purpose of the OPMCA?",
+        "fr": "Quel est le but de l’ECGPO ?"
     },
     "suggestions.pmcoe.q6": {
-        "en": "Where can I find information regarding Shared Services Canada Project Governance and Operating Framework?",
-        "fr": "Où puis-je trouver des informations concernant la gouvernance de projet et le cadre opérationnel de Services partagés Canada ?"
+        "en": "Where can I find the latest version of a gating template, and how do I ensure I’m using the correct one?",
+        "fr": "Où puis-je trouver la dernière version d’un modèle de validation, et comment m’assurer d’utiliser le bon ?"
+    },
+    "suggestions.pmcoe.q7": {
+        "en": "What documents are required at each gate?",
+        "fr": "Quels documents sont requis à chaque porte ?"
+    },
+    "suggestions.pmcoe.q8": {
+        "en": "How is the Operating Guide structured?",
+        "fr": "Comment est structuré le Guide de gestion de projet ?"
+    },
+    "suggestions.pmcoe.q9": {
+        "en": "How do I know if my project qualifies for an “Expedited Gate Review”?",
+        "fr": "Comment savoir si mon projet est admissible à une “Revue de porte accélérée” ?"
+    },
+    "suggestions.pmcoe.q10": {
+        "en": "What does the OPMCA evaluate?",
+        "fr": "Que mesure l’ECGPO ?"
+    },
+    "suggestions.pmcoe.q11": {
+        "en": "How do I track the progress of my project through the gates?",
+        "fr": "Comment suivre l’avancement de mon projet à travers les portes ?"
+    },
+    "suggestions.pmcoe.q12": {
+        "en": "What is the purpose of the Enterprise Project System (EPS)?",
+        "fr": "Quel est le but du système SPE ?"
+    },
+    "suggestions.pmcoe.q13": {
+        "en": "What type of information is stored in EPS?",
+        "fr": "Quel type d’information est stocké dans SPE ?"
+    },
+    "suggestions.pmcoe.q14": {
+        "en": "How does EPS fit within the project management lifecycle?",
+        "fr": "Comment SPE s’intègre-t-il au cycle de vie de la gestion de projet ?"
+    },
+    "suggestions.pmcoe.q15": {
+        "en": "What are Project Manager-Led Initiatives (PMLI)?",
+        "fr": "Que sont les initiatives dirigées par les chefs de projet (IDGP) ?"
+    },
+    "suggestions.pmcoe.q16": {
+        "en": "How is a Project Manager-Led Initiative different from a regular project?",
+        "fr": "En quoi une initiative dirigée par un chef de projet (IDGP) diffère-t-elle d’un projet régulier ?"
     },
     "br.disclaimer2": {
         "en": "Please note that the data retrieved from the Enterprise Data Repository (EDR), sourced from the Business Intake and Tracking System (BITS), may be up to 48 hours old.",

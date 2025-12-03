@@ -5,12 +5,22 @@
  * and provides a unified interface for completions with streaming support.
  */
 
+import type {
+  ChatCompletionContentPart,
+  ChatCompletionMessageParam,
+} from "openai/resources/chat/completions";
+import { ChatCompletionFunctionTool } from "openai/resources/index.mjs";
 import { AzureOpenAIProvider } from "./providers/azureOpenAIProvider";
 
-export interface CompletionMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
+export type CompletionContentPart = Extract<
+  ChatCompletionContentPart,
+  { type: "text" | "image_url" }
+>;
+
+export type CompletionMessage = Extract<
+  ChatCompletionMessageParam,
+  { role: "system" | "user" | "assistant" }
+>;
 
 export interface CompletionRequest {
   messages: CompletionMessage[];
@@ -18,10 +28,13 @@ export interface CompletionRequest {
   provider?: 'azure-openai' | 'aws-bedrock' | "goc-ai-platform";
   userToken: string;
   signal?: AbortSignal;
+  tools?: ChatCompletionFunctionTool[];
+  currentOutput?: string;
 }
 
 export interface StreamingCallbacks {
   onChunk?: (chunk: string) => void;
+  onToolCall?: (toolName: string) => void;
   onError?: (error: Error) => void;
   onComplete?: (fullText: string) => void;
 }
@@ -55,10 +68,16 @@ export class CompletionService {
     // Future: this.registerProvider(new GoCLLMProvider());
   }
 
+  /**
+   * Register or replace a provider so consumers can route completions dynamically.
+   */
   registerProvider(provider: CompletionProvider): void {
     this.providers.set(provider.name, provider);
   }
 
+  /**
+   * Delegate completion creation to the requested provider, defaulting to Azure OpenAI.
+   */
   async createCompletion(
     request: CompletionRequest,
     callbacks: StreamingCallbacks = {}
@@ -73,6 +92,9 @@ export class CompletionService {
     return provider.createCompletion(request, callbacks);
   }
 
+  /**
+   * Return the provider registry so the UI can populate dropdowns/toggles.
+   */
   getAvailableProviders(): string[] {
     return Array.from(this.providers.keys());
   }

@@ -18,11 +18,24 @@ on:
       enable-playground:
         type: boolean
         default: false
-    secrets: 
-      FRONTEND_PUBLISH_PROFILE:
+      runner:
+        type: string
         required: false
-      AZURE_CREDENTIALS:
-        required: true
+        default: 'ubuntu-latest'
+      redirect-uri-domain:
+        type: string
+        required: false
+      enable-mcp:
+        type: boolean
+        default: false
+    secrets:
+      FRONTEND_PUBLISH_PROFILE:
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
       VITE_AZURE_AD_CLIENT_ID:
         required: false
       VITE_AZURE_AD_TENANT_ID:
@@ -37,7 +50,7 @@ permissions:
 jobs:
   build:
     environment: ${{ inputs.environment }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -68,6 +81,9 @@ jobs:
         VITE_DISABLED_FEATURES: ${{ inputs.disabled-features }}
         VITE_CLARITY_TOKEN: ${{ secrets.VITE_CLARITY_TOKEN }}
         VITE_PLAYGROUND_ON: ${{ inputs.enable-playground }}
+        VITE_SHOW_DEV_BANNER: ${{ inputs.environment == 'dev' }}
+        VITE_REDIRECT_URI_DOMAIN: ${{ inputs.redirect-uri-domain }}
+        VITE_MCP_URLS: ${{ inputs.enable-mcp && secrets.VITE_MCP_URLS || '' }}
 
     # This step will only run when the event is a push to the main branch
     - name: Zip artifact for deployment
@@ -85,13 +101,15 @@ jobs:
   deploy:  # TEMPORARY DEPLOY ONLY ON ARCHIBUS BRANCH OR MAIN
     if: github.event_name != 'pull_request'
     environment: ${{ inputs.environment }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
     needs: build
     steps:
     - name: Log in with Azure
-      uses: azure/login@v1
+      uses: azure/login@v2
       with:
-        creds: '${{ secrets.AZURE_CREDENTIALS }}'
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     - name: Download artifact from build job
       uses: actions/download-artifact@v4.1.8
