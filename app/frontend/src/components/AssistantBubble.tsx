@@ -29,6 +29,7 @@ import { useEffect, useState, Fragment, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { BubbleButtons } from "./BubbleButtons";
 import { styled } from "@mui/system";
+import type { Theme } from "@mui/material/styles";
 import ProfileCardsContainer from "../containers/ProfileCardsContainer";
 import HandymanIcon from "@mui/icons-material/Handyman";
 import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
@@ -1154,13 +1155,16 @@ const ChatBubbleInner = styled(Paper)(() => ({
   maxWidth: "95%",
 }));
 
-const CitationInlinePanel = styled(Box)(({ theme }) => ({
-  marginTop: theme.spacing(2),
-  borderRadius: theme.shape.borderRadius,
-  border: `1px solid ${theme.palette.divider}`,
-  backgroundColor: theme.palette.background.paper,
-  boxShadow: theme.shadows[2],
-}));
+const CitationInlinePanel = styled(Box)(({ theme }) => {
+  const muiTheme = theme as Theme;
+  return {
+    marginTop: muiTheme.spacing(2),
+    borderRadius: muiTheme.shape.borderRadius,
+    border: `1px solid ${muiTheme.palette.divider}`,
+    backgroundColor: muiTheme.palette.background.paper,
+    boxShadow: muiTheme.shadows[2],
+  };
+});
 
 const ToolsUsedBox = styled(Box)`
   display: flex;
