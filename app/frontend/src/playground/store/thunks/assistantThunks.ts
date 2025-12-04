@@ -318,7 +318,7 @@ export const sendAssistantMessage = ({
     await completionService.createCompletion(
       {
         messages: completionMessages,
-        model: "gpt-4o", // Let MCP client decide or the user or the agentic AI decide which model to use...
+        model: "gpt-5-mini", // Need a minimum of GPT 4.1 for MCP // Let MCP client decide or the user or the agentic AI decide which model to use...
         provider,
         userToken: accessToken,
         ...(availableTools && availableTools.length > 0 ? { tools: availableTools } : {}),
