@@ -25,6 +25,7 @@ import { setSessionFiles } from "../store/slices/sessionFilesSlice";
 import { rehydrateSessionFromArchive } from "../store/thunks/sessionBootstrapThunks";
 import { pickLatestArchive } from "../utils/archives";
 import { applyRemoteSessionDeletion } from "../store/thunks/sessionManagementThunks";
+import TokenUsageDrawer from "./TokenUsageDrawer";
 
 const ChatArea: React.FC = () => {
   const { t } = useTranslation('playground');
@@ -264,6 +265,7 @@ const ChatArea: React.FC = () => {
         isLoading={isLoading}
         disabled={messages.length < 2}
       />
+      <TokenUsageDrawer />
       <ChatInput sessionId={currentSessionId} />
     </Box>
   );

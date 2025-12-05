@@ -1,4 +1,4 @@
-import { addMessage, updateMessageContent, setIsLoading, Message } from "../slices/chatSlice";
+import { addMessage, updateMessageContent, setIsLoading, Message, setMessageTokenUsage } from "../slices/chatSlice";
 import { setIsSessionNew } from "../slices/sessionSlice"
 import { addToast } from "../slices/toastSlice";
 import {
@@ -14,7 +14,7 @@ import i18n from "../../../i18n";
 import { extractToolName } from "../../services/toolService";
 import { loadTools } from "../slices/toolSlice";
 
-import { FileAttachment } from "../../types";
+import { FileAttachment, TokenUsageMetrics } from "../../types";
 import { extractFileText, fetchFileDataUrl } from "../../api/storage";
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
@@ -311,6 +311,7 @@ export const sendAssistantMessage = ({
     }
 
     let accumulatedContent = "";
+    let usageAccumulator: TokenUsageMetrics | undefined;
 
     // Use the completion service with streaming callbacks for state management
     const completionMessages = await mapMessagesForCompletion(updatedSessionMessages, dispatchForAttachments, getState);
@@ -353,7 +354,24 @@ export const sendAssistantMessage = ({
         onComplete: (fullText: string) => {
           console.log("Completion finished:", fullText.length, "characters");
           // Final state update if needed
-        }
+        },
+        onUsage: (usageUpdate: TokenUsageMetrics) => {
+          usageAccumulator = {
+            promptTokens: (usageAccumulator?.promptTokens ?? 0) + usageUpdate.promptTokens,
+            completionTokens: (usageAccumulator?.completionTokens ?? 0) + usageUpdate.completionTokens,
+            totalTokens: (usageAccumulator?.totalTokens ?? 0) + usageUpdate.totalTokens,
+            model: usageUpdate.model ?? usageAccumulator?.model,
+            provider: usageUpdate.provider ?? usageAccumulator?.provider,
+            timestamp: usageUpdate.timestamp ?? Date.now(),
+          };
+
+          dispatch(
+            setMessageTokenUsage({
+              messageId: latestAssistantMessage.id,
+              usage: usageAccumulator,
+            })
+          );
+        },
       }
     );
 

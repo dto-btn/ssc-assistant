@@ -79,6 +79,7 @@ async function doArchive(sessionId: string, store: MiddlewareAPI<Dispatch<Unknow
       timestamp: m.timestamp,
       citations: m.citations,
       attachments: m.attachments,
+      tokenUsage: m.tokenUsage,
     } satisfies Partial<Message>)),
   };
 

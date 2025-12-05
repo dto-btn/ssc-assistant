@@ -8,7 +8,7 @@
 
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
-import { FileAttachment } from "../../types";
+import { FileAttachment, TokenUsageMetrics } from "../../types";
 
 export interface Message {
   id: string;
@@ -18,6 +18,7 @@ export interface Message {
   timestamp: number;
   attachments?: FileAttachment[];
   citations?: { title: string; url: string }[];
+  tokenUsage?: TokenUsageMetrics;
 }
 
 interface ChatState {
@@ -56,6 +57,16 @@ const chatSlice = createSlice({
         message.content = content;
       }
     },
+    setMessageTokenUsage: (state, action: PayloadAction<{ messageId: string; usage: TokenUsageMetrics }>) => {
+      const { messageId, usage } = action.payload;
+      const message = state.messages.find((msg) => msg.id === messageId);
+      if (message) {
+        message.tokenUsage = {
+          ...usage,
+          timestamp: usage.timestamp ?? Date.now(),
+        };
+      }
+    },
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
@@ -77,6 +88,7 @@ export const {
   clearSessionMessages,
   updateMessageContent,
   setIsLoading,
+  setMessageTokenUsage,
   hydrateSessionMessages,
 } = chatSlice.actions;
 

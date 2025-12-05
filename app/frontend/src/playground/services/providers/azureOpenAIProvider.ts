@@ -5,6 +5,7 @@
 import { AzureOpenAI } from "openai";
 import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult } from "../completionService";
 import { getToolService } from "../toolService";
+import { TokenUsageMetrics } from "../../types";
 
 export class AzureOpenAIProvider implements CompletionProvider {
   readonly name = 'azure-openai';
@@ -41,10 +42,11 @@ export class AzureOpenAIProvider implements CompletionProvider {
     callbacks: StreamingCallbacks
   ): Promise<CompletionResult> {
     const { messages, userToken, model, signal, tools, currentOutput } = request;
-    const { onChunk, onToolCall, onError, onComplete } = callbacks;
+    const { onChunk, onToolCall, onError, onComplete, onUsage } = callbacks;
 
     let fullText = currentOutput || "";
     let updatedMessages = messages;
+    let latestUsage: TokenUsageMetrics | undefined;
     
     try {
       const client = this.createClient(userToken);
@@ -58,6 +60,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
         messages: updatedMessages,
         ...(tools && tools.length > 0 ? { tools: tools, tool_choice: "auto" } : {}),
         stream: true,
+        stream_options: { include_usage: true },
       });
 
       let currentId: string = "";
@@ -105,6 +108,18 @@ export class AzureOpenAIProvider implements CompletionProvider {
             }
           }
         }
+
+        if (chunk.usage) {
+          latestUsage = {
+            promptTokens: chunk.usage.prompt_tokens ?? 0,
+            completionTokens: chunk.usage.completion_tokens ?? 0,
+            totalTokens: chunk.usage.total_tokens ?? 0,
+            model,
+            provider: this.name,
+            timestamp: Date.now(),
+          };
+          onUsage?.(latestUsage);
+        }
       }
 
       // Finalize the last tool call if any
@@ -149,6 +164,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
         fullText,
         completed: true,
         provider: this.name,
+        usage: latestUsage,
       };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));

@@ -17,3 +17,12 @@ export interface FileAttachment {
   sessionName?: string | null;
   lastUpdated?: string | null;
 }
+
+export interface TokenUsageMetrics {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  model?: string;
+  provider?: string;
+  timestamp?: number;
+}

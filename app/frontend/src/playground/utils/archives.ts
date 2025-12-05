@@ -2,7 +2,7 @@
  * Archive utility helpers shared between components and thunks.
  */
 
-import type { FileAttachment } from "../types";
+import type { FileAttachment, TokenUsageMetrics } from "../types";
 import type { Message } from "../store/slices/chatSlice";
 
 export function isChatArchiveAttachment(file: FileAttachment): boolean {
@@ -99,6 +99,28 @@ export function normalizeArchiveMessage(candidate: unknown, sessionId: string): 
     ? (record.citations as Message["citations"])
     : undefined;
 
+  const rawUsage = record.tokenUsage;
+  let tokenUsage: TokenUsageMetrics | undefined;
+  if (rawUsage && typeof rawUsage === "object") {
+    const usageRecord = rawUsage as Record<string, unknown>;
+    const promptTokens = Number(usageRecord.promptTokens ?? usageRecord.prompt_tokens ?? 0);
+    const completionTokens = Number(usageRecord.completionTokens ?? usageRecord.completion_tokens ?? 0);
+    const totalTokens = Number(usageRecord.totalTokens ?? usageRecord.total_tokens ?? promptTokens + completionTokens);
+    if ([promptTokens, completionTokens, totalTokens].every((value) => Number.isFinite(value) && value >= 0)) {
+      tokenUsage = {
+        promptTokens,
+        completionTokens,
+        totalTokens,
+        model: typeof usageRecord.model === "string" ? usageRecord.model : undefined,
+        provider: typeof usageRecord.provider === "string" ? usageRecord.provider : undefined,
+        timestamp:
+          typeof usageRecord.timestamp === "number" && Number.isFinite(usageRecord.timestamp)
+            ? usageRecord.timestamp
+            : timestamp,
+      } satisfies TokenUsageMetrics;
+    }
+  }
+
   return {
     id,
     sessionId,
@@ -107,5 +129,6 @@ export function normalizeArchiveMessage(candidate: unknown, sessionId: string): 
     timestamp,
     attachments,
     citations,
+    tokenUsage,
   };
 }

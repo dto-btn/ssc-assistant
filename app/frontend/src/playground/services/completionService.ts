@@ -11,6 +11,7 @@ import type {
 } from "openai/resources/chat/completions";
 import { ChatCompletionFunctionTool } from "openai/resources/index.mjs";
 import { AzureOpenAIProvider } from "./providers/azureOpenAIProvider";
+import { TokenUsageMetrics } from "../types";
 
 export type CompletionContentPart = Extract<
   ChatCompletionContentPart,
@@ -37,12 +38,14 @@ export interface StreamingCallbacks {
   onToolCall?: (toolName: string) => void;
   onError?: (error: Error) => void;
   onComplete?: (fullText: string) => void;
+  onUsage?: (usage: TokenUsageMetrics) => void;
 }
 
 export interface CompletionResult {
   fullText: string;
   completed: boolean;
   provider: string;
+  usage?: TokenUsageMetrics;
 }
 
 /**

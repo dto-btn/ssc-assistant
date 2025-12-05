@@ -158,5 +158,49 @@
     "profile.settings": {
         "en": "Settings",
         "fr": "Paramètres"
+    },
+    "token.usage.session.label": {
+        "en": "Session tokens",
+        "fr": "Jetons de la session"
+    },
+    "token.usage.last.label": {
+        "en": "Last response",
+        "fr": "Dernière réponse"
+    },
+    "token.usage.prompt": {
+        "en": "Prompt",
+        "fr": "Invite"
+    },
+    "token.usage.completion": {
+        "en": "Completion",
+        "fr": "Complétion"
+    },
+    "token.usage.total": {
+        "en": "Total",
+        "fr": "Total"
+    },
+    "token.usage.model": {
+        "en": "Model",
+        "fr": "Modèle"
+    },
+    "token.usage.none": {
+        "en": "Token usage will appear after the assistant responds.",
+        "fr": "Les jetons s'afficheront après la réponse de l'assistant."
+    },
+    "token.usage.unknown": {
+        "en": "Unknown",
+        "fr": "Inconnu"
+    },
+    "token.drawer.label": {
+        "en": "Diagnostics",
+        "fr": "Diagnostics"
+    },
+    "token.drawer.expand": {
+        "en": "Show diagnostics",
+        "fr": "Afficher les diagnostics"
+    },
+    "token.drawer.collapse": {
+        "en": "Hide diagnostics",
+        "fr": "Masquer les diagnostics"
     }
 }
