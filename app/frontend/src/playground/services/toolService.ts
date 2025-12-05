@@ -55,6 +55,7 @@ class ToolService {
     // Function to fetch & combine all tools from all MCP servers (cached)
     public async listTools(): Promise<ChatCompletionFunctionTool[]> {
         if (this.cachedTools) {
+            console.log('ToolService: Returning cached tools.', this.cachedTools);
             return this.cachedTools;
         }
 
@@ -100,6 +101,8 @@ class ToolService {
                 console.error('Error listing tools from MCPClient:', err);
             }
         }));
+
+        console.log(`MCP: Fetched total ${MCPtools.length} tools from ${this.mcpClients.length} MCP servers.`);
 
         this.cachedTools = MCPtools;
         return MCPtools;

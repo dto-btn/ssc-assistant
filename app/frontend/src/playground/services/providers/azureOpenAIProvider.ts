@@ -48,8 +48,6 @@ export class AzureOpenAIProvider implements CompletionProvider {
     let updatedMessages = messages as ResponseInput;
     
     try {
-      console.log("Creating Azure OpenAI client with user token:", userToken);
-
       const client = this.createClient(userToken);
 
       const toolService = await getToolService(userToken);
@@ -61,29 +59,49 @@ export class AzureOpenAIProvider implements CompletionProvider {
         input: updatedMessages,
         // tools: [
         //   {
-        //     type: "mcp",
-        //     server_label: "Canadian Parliament MCP Server",
-        //     server_description: "MCP server hosting tools for fetching data about Canadian Members of Parliament (MPs).",
-        //     server_url: "https://testcaontinerapp.blackground-73a376b6.canadacentral.azurecontainerapps.io/mcp",
-        //     require_approval: "never",
-        //     authorization: "Bearer " + userToken.trim(),
+        //     type: "function",
+        //     name: "get_mp_number",
+        //     description: "Get the phone number of a Canadian Member of Parliament (MP) given their full name.",
+        //     parameters: {
+        //       type: "object",
+        //       properties: {
+        //         name: {
+        //           type: "string",
+        //           description: "The full name of the MP (e.g., 'Justin Trudeau')",
+        //         },
+        //       },
+        //       required: ["name"],
+        //     },
+        //     strict: true,
         //   },
         // ],
         // tool_choice: "auto",
+        tools: [
+          {
+            type: "mcp",
+            server_label: "cpMCP",
+            server_description: "MCP server hosting tools for fetching data about Canadian Members of Parliament (MPs).",
+            server_url: "https://ssca-mcp-server.blackground-73a376b6.canadacentral.azurecontainerapps.io/mcp",
+            require_approval: "never",
+            authorization: "Bearer " + userToken.trim(),
+          },
+        ],
+        tool_choice: "auto",
       }, { signal });
 
-      console.log("response = ", stream)
+      for await (const event of stream) {
+        console.log("Received event:", event);
+      }
 
       // Text deltas
-      stream.on("response.output_text.delta", (e) => {
-        console.log("Received text delta:", e.delta);
-        fullText += e.delta;
-        onChunk?.(e.delta);
-      });
+      // stream.on("response.output_text.delta", (e) => {
+      //   fullText += e.delta;
+      //   onChunk?.(e.delta);
+      // });
 
-
-      onChunk?.("\ncompleted.")
-      onComplete?.(fullText);
+      // stream.on("response.completed", () => {
+      //   onComplete?.(fullText);
+      // });
 
       return {
         fullText,
