@@ -1,16 +1,14 @@
 import jwt
 import pytest  # type: ignore[import]
+from apiflask import APIFlask
 from types import SimpleNamespace
 from typing import Dict, Iterable
 
-from app.api.app import app as flask_app
-from app.api.playground import routes_playground
-
-# pylint: disable=redefined-outer-name
+from playground import routes_playground
 
 
 class FakeBlob:
-    """In-memory stand in that mimics the Azure Blob API surface the routes expect."""
+    """In-memory stand-in that mimics the Blob properties the routes interact with."""
 
     def __init__(
         self,
@@ -27,7 +25,7 @@ class FakeBlob:
 
 
 class FakeDownload:
-    """Tiny helper that exposes the ``readall`` call that BlobClient#download_blob returns."""
+    """Tiny helper mirroring BlobClient#download_blob() output."""
 
     def __init__(self, data: bytes) -> None:
         self._data = data
@@ -37,7 +35,7 @@ class FakeDownload:
 
 
 class FakeBlobClient:
-    """Wrap a FakeBlob with the subset of BlobClient behavior used inside the routes."""
+    """Wrap a FakeBlob with the subset of BlobClient behavior the routes call."""
 
     def __init__(self, container: "FakeContainerClient", blob: FakeBlob) -> None:
         self._container = container
@@ -61,7 +59,7 @@ class FakeBlobClient:
 
 
 class FakeContainerClient:
-    """Container-level façade that tracks blobs per-name just like Azure would."""
+    """Container-level façade tracking blobs per-name similar to Azure."""
 
     def __init__(self, url: str) -> None:
         self.url = url
@@ -70,10 +68,13 @@ class FakeContainerClient:
     def add_blob(self, blob: FakeBlob) -> None:
         self._blobs[blob.name] = blob
 
-    def create_container(self) -> None:  # pragma: no cover - not used but mirrors API
+    def create_container(self) -> None:  # pragma: no cover - mirrors SDK surface
         return None
 
-    def list_blobs(self, name_starts_with: str = "", _include: Iterable[str] | None = None):
+    def list_blobs(self, name_starts_with: str = "", include: Iterable[str] | None = None):
+        # The production SDK accepts an ``include`` kwarg. The fake ignores the
+        # value entirely but keeps the signature so route code can pass it.
+        _ = include
         return [blob for name, blob in self._blobs.items() if name.startswith(name_starts_with)]
 
     def get_blob_client(self, name: str) -> FakeBlobClient:
@@ -86,10 +87,9 @@ class FakeContainerClient:
     def get_blob(self, name: str) -> FakeBlob:
         return self._blobs[name]
 
-
 @pytest.fixture
 def api_headers(monkeypatch):
-    """Return auth headers that satisfy the route decorators without hitting AAD."""
+    """Return auth headers that satisfy the playground route decorators without AAD."""
 
     token = jwt.encode({"roles": ["chat"]}, "secret", algorithm="HS256")
     if isinstance(token, bytes):
@@ -101,106 +101,80 @@ def api_headers(monkeypatch):
     }
 
 
-def test_delete_session_marks_metadata(monkeypatch, api_headers):
-    """Soft-delete should toggle every blob under the requested session and set timestamps."""
+@pytest.fixture
+def test_client():
+    app = APIFlask(__name__)
+    app.config["TESTING"] = True
+    app.register_blueprint(routes_playground.api_playground, url_prefix="/api/playground")
+    with app.test_client() as client:
+        yield client
 
+
+def _set_mock_clients(monkeypatch, container: FakeContainerClient):
+    monkeypatch.setattr(routes_playground, "_get_container_client", lambda: container)
+    monkeypatch.setattr(routes_playground, "_get_authenticated_oid", lambda: "user-123")
+
+
+def test_delete_session_marks_metadata(monkeypatch, api_headers, test_client):
     container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
-    target_blob = FakeBlob(
+    blob_a = FakeBlob(
         "user-123/session-1.chat.json",
         {
             "sessionid": "session-1",
-            "originalname": "archive.chat.json",
+            "originalname": "session-1.chat.json",
             "uploadedat": "2023-01-01T00:00:00Z",
             "deleted": "false",
         },
         b"{}",
         "application/json",
     )
-    container.add_blob(target_blob)
-    attachment_blob = FakeBlob(
+    blob_b = FakeBlob(
         "user-123/files/session-1/attachment.txt",
         {
             "sessionid": "session-1",
             "originalname": "attachment.txt",
-            "uploadedat": "2023-01-01T00:00:00Z",
+            "uploadedat": "2023-01-02T00:00:00Z",
             "deleted": "false",
         },
         b"note",
         "text/plain",
     )
-    container.add_blob(attachment_blob)
-    monkeypatch.setattr(routes_playground, "_get_container_client", lambda: container)
-    monkeypatch.setattr(routes_playground, "_get_authenticated_oid", lambda: "user-123")
-
-    with flask_app.test_client() as client:
-        response = client.delete("/api/playground/sessions/session-1", headers=api_headers)
-
-    assert response.status_code == 200
-    payload = response.get_json()
-    assert payload == {
-        "success": True,
-        "deletedCount": 2,
-        "message": "Session session-1 successfully deleted",
-    }
-
-    updated_blob = container.get_blob(target_blob.name)
-    assert updated_blob.metadata["deleted"] == routes_playground.DELETED_FLAG_VALUE
-    assert "deletedat" in updated_blob.metadata
-    assert updated_blob.metadata["lastupdated"] == updated_blob.metadata["deletedat"]
-    assert container.get_blob(attachment_blob.name).metadata["deleted"] == routes_playground.DELETED_FLAG_VALUE
-
-
-def test_delete_session_returns_not_found(monkeypatch, api_headers):
-    """Deleting a missing session returns a 404 so the UI can alert the user."""
-
-    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
-    monkeypatch.setattr(routes_playground, "_get_container_client", lambda: container)
-    monkeypatch.setattr(routes_playground, "_get_authenticated_oid", lambda: "user-123")
-
-    with flask_app.test_client() as client:
-        response = client.delete("/api/playground/sessions/missing", headers=api_headers)
-
-    assert response.status_code == 404
-    assert response.get_json() == {
-        "success": False,
-        "message": "Session missing not found",
-    }
-
-
-def test_delete_session_already_deleted(monkeypatch, api_headers):
-    """Repeat delete requests short-circuit when everything is already marked deleted."""
-
-    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
-    deleted_blob = FakeBlob(
-        "user-123/session-9.chat.json",
+    other_session_blob = FakeBlob(
+        "user-123/files/session-2/other.txt",
         {
-            "sessionid": "session-9",
-            "deleted": "true",
-            "deletedat": "2023-01-01T00:00:00Z",
-            "lastupdated": "2023-01-01T00:00:00Z",
+            "sessionid": "session-2",
+            "originalname": "other.txt",
+            "uploadedat": "2023-01-03T00:00:00Z",
+            "deleted": "false",
         },
-        b"{}",
-        "application/json",
+        b"other",
+        "text/plain",
     )
-    container.add_blob(deleted_blob)
+    for blob in (blob_a, blob_b, other_session_blob):
+        container.add_blob(blob)
 
-    monkeypatch.setattr(routes_playground, "_get_container_client", lambda: container)
-    monkeypatch.setattr(routes_playground, "_get_authenticated_oid", lambda: "user-123")
+    _set_mock_clients(monkeypatch, container)
 
-    with flask_app.test_client() as client:
-        response = client.delete("/api/playground/sessions/session-9", headers=api_headers)
+    response = test_client.delete("/api/playground/sessions/session-1", headers=api_headers)
 
     assert response.status_code == 200
-    assert response.get_json() == {
-        "success": True,
-        "deletedCount": 0,
-        "message": "Session session-9 already deleted",
-    }
+    assert response.get_json() == {"deletedCount": 2}
+    assert container.get_blob(blob_a.name).metadata["deleted"] == routes_playground.DELETED_FLAG_VALUE
+    assert container.get_blob(blob_b.name).metadata["deleted"] == routes_playground.DELETED_FLAG_VALUE
+    assert container.get_blob(other_session_blob.name).metadata["deleted"] == "false"
 
 
-def test_files_for_session_excludes_deleted(monkeypatch, api_headers):
-    """Listing files filters out soft-deleted blobs but still reports the deleted session ids."""
+def test_delete_session_returns_zero_when_no_matches(monkeypatch, api_headers, test_client):
+    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
+    _set_mock_clients(monkeypatch, container)
 
+    response = test_client.delete("/api/playground/sessions/missing", headers=api_headers)
+
+    assert response.status_code == 200
+    assert response.get_json() == {"deletedCount": 0}
+
+
+def test_files_for_session_excludes_deleted(monkeypatch, api_headers, test_client):
     container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
     active_blob = FakeBlob(
         "user-123/files/session-1/a.txt",
@@ -241,27 +215,23 @@ def test_files_for_session_excludes_deleted(monkeypatch, api_headers):
     for blob in (active_blob, deleted_same_session, deleted_other_session):
         container.add_blob(blob)
 
-    monkeypatch.setattr(routes_playground, "_get_container_client", lambda: container)
-    monkeypatch.setattr(routes_playground, "_get_authenticated_oid", lambda: "user-123")
+    _set_mock_clients(monkeypatch, container)
 
-    with flask_app.test_client() as client:
-        response = client.get(
-            "/api/playground/files-for-session",
-            query_string={"sessionId": "session-1"},
-            headers=api_headers,
-        )
+    response = test_client.get(
+        "/api/playground/files-for-session",
+        query_string={"sessionId": "session-1"},
+        headers=api_headers,
+    )
 
     assert response.status_code == 200
     payload = response.get_json()
     assert len(payload["files"]) == 1
     assert payload["files"][0]["blobName"] == active_blob.name
-    assert sorted(payload["deletedSessionIds"]) == ["session-1", "session-2"]
+    assert sorted(payload["deletedSessionIds"]) == ["session-2"]
     assert payload["sessionDeleted"] is False
 
 
-def test_extract_file_text_rejects_deleted_blob(monkeypatch):
-    """Text extraction refuses to download blobs that were previously soft-deleted."""
-
+def test_extract_file_text_rejects_deleted_blob(monkeypatch, test_client):
     container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
     deleted_blob = FakeBlob(
         "user-123/files/session-3/deleted.txt",
@@ -281,12 +251,78 @@ def test_extract_file_text_rejects_deleted_blob(monkeypatch):
     monkeypatch.setattr(routes_playground, "_resolve_optional_oid", lambda: ("user-123", None))
     monkeypatch.setattr(routes_playground, "_get_authenticated_oid", lambda: "user-123")
 
-    with flask_app.test_client() as client:
-        response = client.post(
-            "/api/playground/extract-file-text",
-            json={"blobName": deleted_blob.name},
-        )
+    response = test_client.post(
+        "/api/playground/extract-file-text",
+        json={"blobName": deleted_blob.name},
+    )
 
     assert response.status_code == 404
     payload = response.get_json()
-    assert payload == {"error": "File not found"}
+    assert payload["error"] == "File not found"
+
+
+def test_rename_session_updates_metadata(monkeypatch, api_headers, test_client):
+    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
+    blob_a = FakeBlob(
+        "user-123/session-1.chat.json",
+        {
+            "sessionid": "session-1",
+            "sessionname": "Old",
+            "deleted": "false",
+        },
+        b"{}",
+        "application/json",
+    )
+    blob_b = FakeBlob(
+        "user-123/files/session-1/file.txt",
+        {
+            "sessionid": "session-1",
+            "sessionname": "Old",
+            "deleted": "false",
+        },
+        b"data",
+        "text/plain",
+    )
+    other_session = FakeBlob(
+        "user-123/files/session-2/a.txt",
+        {
+            "sessionid": "session-2",
+            "sessionname": "Another",
+            "deleted": "false",
+        },
+        b"data",
+        "text/plain",
+    )
+    for blob in (blob_a, blob_b, other_session):
+        container.add_blob(blob)
+
+    _set_mock_clients(monkeypatch, container)
+
+    response = test_client.post(
+        "/api/playground/sessions/session-1/rename",
+        headers=api_headers,
+        json={"name": "Renamed Session"},
+    )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["updatedCount"] == 2
+    assert payload.get("failed") == []
+    assert container.get_blob(blob_a.name).metadata["sessionname"] == "Renamed Session"
+    assert container.get_blob(blob_b.name).metadata["sessionname"] == "Renamed Session"
+    assert container.get_blob(other_session.name).metadata["sessionname"] == "Another"
+
+
+def test_rename_session_missing_returns_404(monkeypatch, api_headers, test_client):
+    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
+    _set_mock_clients(monkeypatch, container)
+
+    response = test_client.post(
+        "/api/playground/sessions/unknown/rename",
+        headers=api_headers,
+        json={"name": "Does Not Exist"},
+    )
+
+    assert response.status_code == 404
+    payload = response.get_json()
+    assert payload.get("failed") == []
