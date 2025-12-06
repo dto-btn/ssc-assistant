@@ -17,6 +17,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   useMediaQuery,
+  Collapse,
 } from "@mui/material";
 import { MarkdownHooks } from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -28,6 +29,7 @@ import { useEffect, useState, Fragment, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { BubbleButtons } from "./BubbleButtons";
 import { styled } from "@mui/system";
+import type { Theme } from "@mui/material/styles";
 import ProfileCardsContainer from "../containers/ProfileCardsContainer";
 import HandymanIcon from "@mui/icons-material/Handyman";
 import logo from "../assets/SSC-Logo-Purple-Leaf-300x300.png";
@@ -36,6 +38,8 @@ import Draggable from "react-draggable";
 import FitScreenIcon from "@mui/icons-material/FitScreen";
 import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import BusinessRequestCard from "./BusinessRequests/BusinessRequestCard";
 import { transformToBusinessRequest } from "../util/bits_utils";
 import BusinessRequestTable from "./BusinessRequests/BusinessRequestTable";
@@ -130,12 +134,18 @@ export const AssistantBubble = ({
           rel="noopener noreferrer"
           {...props}
           onClick={(e) => {
-            // Allow ctrl/cmd/middle-click to open in a new tab normally
             if (e.ctrlKey || (e as any).metaKey || (e as any).button === 1)
               return;
             const href = props.href;
-            if (href && openCitationByUrl(href)) {
-              e.preventDefault();
+            if (href) {
+              const [baseUrl, hash] = href.split("#");
+              const docMatch = hash?.match(/citation-(\d+)/i);
+              const docNumber = docMatch ? parseInt(docMatch[1], 10) : undefined;
+              // If the href targets one of our generated inline citations, open
+              // the drawer locally rather than navigating away to SharePoint.
+              if (openCitationByUrl(baseUrl, docNumber)) {
+                e.preventDefault();
+              }
             }
             props.onClick?.(e);
           }}
@@ -218,8 +228,155 @@ export const AssistantBubble = ({
   >(undefined);
   const isSmall = useMediaQuery("(max-width:900px)");
 
+  /**
+   * Handles expanding/collapsing the inline citation panel while ensuring the
+   * first citation group becomes active after reopening.
+   */
+  const handleToggleCitationPanel = () => {
+    setCitationDrawerOpen((open) => {
+      const next = !open;
+      if (next && !activeCitationGroupUrl && groupedCitations.length) {
+        setActiveCitationGroupUrl(groupedCitations[0].url);
+      }
+      return next;
+    });
+  };
+
+  /**
+   * Returns the shared layout for the citation panel, adapting dimensions and
+   * controls based on whether it renders inline or inside the mobile drawer.
+   */
+  const renderCitationPanelBody = (variant: "mobile" | "desktop") => {
+    const maxHeight = variant === "mobile" ? 240 : 520;
+    // Swap button affordances depending on presentation mode.
+    const closeButton =
+      variant === "mobile" ? (
+        <IconButton
+          id="close-citation-drawer-button"
+          aria-label={t("aria.close") as string}
+          onClick={() => setCitationDrawerOpen(false)}
+        >
+          <CloseIcon />
+        </IconButton>
+      ) : (
+        <IconButton
+          id="collapse-citation-drawer-button"
+          aria-label="Collapse citations panel"
+          onClick={handleToggleCitationPanel}
+        >
+          <ChevronLeftIcon />
+        </IconButton>
+      );
+
+    return (
+      <>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            p: 1,
+            pl: 2,
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
+        >
+          <Typography variant="subtitle1">Citations</Typography>
+          {closeButton}
+        </Box>
+        <Box sx={{ p: 1 }}>
+          {groupedCitations.map((group) => (
+            <Accordion
+              key={group.url}
+              expanded={
+                activeCitationGroupUrl
+                  ? activeCitationGroupUrl === group.url
+                  : undefined
+              }
+              onChange={(_, expanded) => {
+                if (expanded) setActiveCitationGroupUrl(group.url);
+                else setActiveCitationGroupUrl(undefined);
+              }}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography variant="subtitle2">{group.title}</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  Source:{" "}
+                  <Link
+                    id={`citation-source-link-${group.displayNumber}`}
+                    href={encodeURI(group.url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {group.url}
+                  </Link>
+                </Typography>
+                <Box
+                  sx={{
+                    mt: 1,
+                    maxHeight,
+                    overflow: "auto",
+                    pr: 1,
+                  }}
+                >
+                  {group.citations.map((c, idx) => {
+                    const fullIndex =
+                      context?.citations?.findIndex((all) => all === c) ?? -1;
+                    const docNum = fullIndex >= 0 ? fullIndex + 1 : undefined;
+                    const mappedNum = docNum
+                      ? citationNumberMapping[docNum]
+                      : undefined;
+                    return (
+                      <Fragment key={`${group.url}-${idx}`}>
+                        {mappedNum !== undefined && (
+                          <Typography
+                            variant="h4"
+                            sx={{
+                              fontWeight: 600,
+                              display: "block",
+                              mb: 0.5,
+                            }}
+                          >
+                            {mappedNum}.
+                          </Typography>
+                        )}
+                        <Box
+                          sx={{
+                            mb: 1.5,
+                            p: 1.5,
+                            borderRadius: 1,
+                            bgcolor: "#f4f1ff",
+                            border: "1px solid #e1dbff",
+                          }}
+                          id={mappedNum ? `citation-${mappedNum}` : undefined}
+                        >
+                          <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+                            {c.content}
+                          </Typography>
+                        </Box>
+                      </Fragment>
+                    );
+                  })}
+                </Box>
+              </AccordionDetails>
+            </Accordion>
+          ))}
+        </Box>
+      </>
+    );
+  };
+
   // Helper: open drawer by URL found in inline links
-  const openCitationByUrl = (url?: string) => {
+  const [pendingCitationNumber, setPendingCitationNumber] = useState<number | null>(null);
+
+  /**
+   * Opens the citation drawer for the provided URL and optionally records the
+   * inline citation number we should scroll to once the drawer finishes
+   * animating into view.
+   */
+  const openCitationByUrl = (url?: string, citationNumber?: number) => {
     if (!url || !processedContent.citedCitations?.length) return false;
     const decoded = safeDecode(url);
     const has = processedContent.citedCitations.some(
@@ -228,12 +385,113 @@ export const AssistantBubble = ({
     if (has) {
       setActiveCitationGroupUrl(decoded);
       setCitationDrawerOpen(true);
+      if (citationNumber) setPendingCitationNumber(citationNumber);
       return true;
     }
     return false;
   };
 
+  /**
+   * Normalizes arbitrary text (titles, filenames, snippets) so we can perform
+   * reliable substring checks when the backend strips [docX] tokens.
+   */
+  const normalizeText = (value?: string | null) =>
+    value
+      ? value
+          .toLowerCase()
+          .replace(/\s+/g, " ")
+          .trim()
+      : "";
+
+  /**
+   * Extracts the basename from a URL or filepath so we can match patterns like
+   * "(Source: Project Charter EN-CLP.docx)" in plain text answers.
+   */
+  const extractFilename = (input?: string | null) => {
+    if (!input) return "";
+    const sanitized = input.split("?")[0];
+    const parts = sanitized.split("/");
+    return parts[parts.length - 1] || "";
+  };
+
+  /**
+   * Builds a list of lightweight aliases (title, filepath, filename) that we
+   * can search for inside the rendered response to infer referenced sources.
+   */
+  const buildCitationAliases = (citation: Citation) => {
+    const aliases = new Set<string>();
+    if (citation.title) aliases.add(normalizeText(citation.title));
+    if (typeof citation.filepath === "string")
+      aliases.add(normalizeText(citation.filepath));
+    if (citation.url) aliases.add(normalizeText(extractFilename(citation.url)));
+    return Array.from(aliases).filter((alias) => alias.length > 3);
+  };
+
+  /**
+   * Builds a lookup map so we can resolve filenames/titles back to their
+   * citation index without re-walking the list during source normalization.
+   */
+  const buildCitationAliasMap = (citations: Citation[]) => {
+    const aliasMap = new Map<string, number>();
+    citations.forEach((citation, idx) => {
+      buildCitationAliases(citation).forEach((alias) => {
+        if (!aliasMap.has(alias)) aliasMap.set(alias, idx + 1);
+      });
+    });
+    return aliasMap;
+  };
+
+  /**
+   * Scans `(Source: filename.ext)` fragments and converts them into standard
+   * `[docX]` markers so the downstream parser can treat all inline citations
+   * uniformly.
+   */
+  const injectStructuredMarkersFromSources = (
+    body: string,
+    citations: Citation[]
+  ) => {
+    if (!body || !citations.length) return body;
+    const aliasMap = buildCitationAliasMap(citations);
+    if (!aliasMap.size) return body;
+    const sourceRegex = /\(source:\s*([^)]+)\)/gi;
+    return body.replace(sourceRegex, (match, rawSource) => {
+      if (!rawSource) return match;
+      const normalizedLabel = normalizeText(rawSource);
+      const normalizedFilename = normalizeText(extractFilename(rawSource));
+      const docNumber =
+        aliasMap.get(normalizedLabel) ||
+        (normalizedFilename ? aliasMap.get(normalizedFilename) : undefined);
+      if (!docNumber) return match;
+      return ` [doc${docNumber}] `;
+    });
+  };
+
+  /**
+   * Detects which citations appear to be referenced by matching aliases inside
+   * the response text when no structured [docX] markers exist.
+   */
+  const detectCitationsByAlias = (text: string, citations: Citation[]) => {
+    const normalizedBody = normalizeText(text);
+    if (!normalizedBody) return [] as number[];
+    const referenced = new Set<number>();
+    citations.forEach((citation, idx) => {
+      const aliases = buildCitationAliases(citation);
+      if (
+        aliases.length > 0 &&
+        aliases.some((alias) => normalizedBody.includes(alias))
+      ) {
+        referenced.add(idx);
+      }
+    });
+    return Array.from(referenced.values());
+  };
+
+  /**
+   * Normalizes inline citation markup, generates ordered chip metadata, and
+   * returns markdown-safe text plus the filtered citation list.
+   */
   function processText(text: string, citations: Citation[]) {
+    const hydratedText = injectStructuredMarkersFromSources(text, citations);
     // Regular expression to find all citation references like [doc1], [doc3], etc.
     const citationRefRegex = /\[doc(\d+)\]/g;
 
@@ -243,34 +501,55 @@ export const AssistantBubble = ({
     // Identify the cited citations and create the citationNumberMapping
     citations.forEach((_, index) => {
       const docNumber = index + 1; // Convert index to docNumber
-      if (text.includes(`[doc${docNumber}]`)) {
+      if (hydratedText.includes(`[doc${docNumber}]`)) {
         citationNumberMapping[docNumber] =
           Object.keys(citationNumberMapping).length + 1;
       }
     });
 
-    // Filter the citations array to only include the cited documents
-    const citedCitations = citations.filter((_, index) => {
-      const docNumber = index + 1; // Convert index to docNumber
-      return citationNumberMapping[docNumber];
-    });
-
     // Replace citation references with Markdown links using the new citation numbers
-    const processedText = text.replace(citationRefRegex, (_, docNumber) => {
+    const processedText = hydratedText.replace(citationRefRegex, (_, docNumber) => {
       const citation = citations[parseInt(docNumber, 10) - 1];
       if (citation && citation.url) {
         // Encode spaces and other unsafe chars; wrap with <> to be robust for parentheses
         const encodedUrl = encodeURI(citation.url);
         const newCitationNumber =
           citationNumberMapping[parseInt(docNumber, 10)];
-        return ` [${newCitationNumber}](<${encodedUrl}>)`;
+        const anchoredUrl = `${encodedUrl}#citation-${newCitationNumber}`;
+        return ` [${newCitationNumber}](<${anchoredUrl}>)`;
       }
       return "";
     });
 
+    // Track whether the backend left structured [docX] markers in place.
+    const hasInlineCitations = Object.keys(citationNumberMapping).length > 0;
+
+    let citedCitations: Citation[];
+    if (hasInlineCitations) {
+      // Filter the citations array to only include the cited documents
+      citedCitations = citations.filter((_, index) => {
+        const docNumber = index + 1; // Convert index to docNumber
+        return citationNumberMapping[docNumber];
+      });
+    } else {
+      // Fall back to fuzzy alias detection so we still show only referenced docs
+      // when the response removed inline [docX] markers for readability.
+      const referencedIndices = detectCitationsByAlias(text, citations);
+      referencedIndices.forEach((citationIndex, orderIdx) => {
+        const docNumber = citationIndex + 1;
+        citationNumberMapping[docNumber] = orderIdx + 1;
+      });
+      citedCitations = referencedIndices.map((idx) => citations[idx]);
+    }
+
     return { processedText, citedCitations, citationNumberMapping };
   }
 
+  /**
+   * Annotates each fetched profile with a `matchedProfile` flag when the
+   * response explicitly mentioned that person (email or phone) so the UI can
+   * surface the most relevant entries first.
+   */
   const processProfiles = (employeeProfiles: EmployeeProfile[]) => {
     const processedProfiles: EmployeeProfile[] = [];
 
@@ -384,6 +663,19 @@ export const AssistantBubble = ({
     document.documentElement.lang = i18n.language;
   }, [i18n.language]);
 
+  useEffect(() => {
+    if (!isCitationDrawerOpen || pendingCitationNumber === null) return;
+    const scrollIntoView = () => {
+      const el = document.getElementById(`citation-${pendingCitationNumber}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      setPendingCitationNumber(null);
+    };
+    // Wait a frame so the drawer content is fully rendered before scrolling
+    requestAnimationFrame(scrollIntoView);
+  }, [isCitationDrawerOpen, pendingCitationNumber, groupedCitations]);
+
   const handleToggleShowProfiles = () => {
     setExpandProfiles(!profilesExpanded);
   };
@@ -452,9 +744,44 @@ export const AssistantBubble = ({
                 <>
                   <Divider />
                   <Box sx={{ m: 2, maxWidth: "100%" }}>
-                    <Typography gutterBottom variant="subtitle2">
-                      Citation(s):
-                    </Typography>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 1,
+                      }}
+                    >
+                      <Typography gutterBottom variant="subtitle2">
+                        Citation(s):
+                      </Typography>
+                      {!isSmall && !isCitationDrawerOpen && (
+                        <Tooltip
+                          title={
+                            isCitationDrawerOpen
+                              ? "Collapse panel"
+                              : "Expand panel"
+                          }
+                        >
+                          <IconButton
+                            aria-label={
+                              isCitationDrawerOpen
+                                ? "Collapse citations panel"
+                                : "Expand citations panel"
+                            }
+                            aria-expanded={isCitationDrawerOpen}
+                            onClick={handleToggleCitationPanel}
+                            size="small"
+                          >
+                            {isCitationDrawerOpen ? (
+                              <ChevronLeftIcon fontSize="small" />
+                            ) : (
+                              <ChevronRightIcon fontSize="small" />
+                            )}
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Box>
                     <Stack
                       direction="row"
                       spacing={1}
@@ -487,136 +814,38 @@ export const AssistantBubble = ({
                         </Fragment>
                       ))}
                     </Stack>
+                    {!isSmall && (
+                      <Collapse
+                        in={isCitationDrawerOpen}
+                        unmountOnExit
+                        timeout={250}
+                      >
+                        {/* Inline panel keeps citations anchored to the bubble on desktop */}
+                        <CitationInlinePanel>
+                          {renderCitationPanelBody("desktop")}
+                        </CitationInlinePanel>
+                      </Collapse>
+                    )}
                   </Box>
                 </>
               )}
 
             {processedContent.citedCitations &&
-              processedContent.citedCitations.length > 0 && (
+              processedContent.citedCitations.length > 0 &&
+              isSmall && (
                 <Drawer
-                  anchor={isSmall ? "bottom" : "right"}
+                  anchor="bottom"
+                  variant="temporary"
+                  ModalProps={{
+                    keepMounted: true,
+                  }}
                   open={isCitationDrawerOpen}
                   onClose={() => setCitationDrawerOpen(false)}
                   PaperProps={{
-                    sx: { width: isSmall ? "100%" : 420, maxWidth: "100%" },
+                    sx: { width: "100%", maxWidth: "100%" },
                   }}
                 >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      p: 1,
-                      pl: 2,
-                      borderBottom: 1,
-                      borderColor: "divider",
-                    }}
-                  >
-                    <Typography variant="subtitle1">Citations</Typography>
-                    <IconButton
-                      id="close-citation-drawer-button"
-                      aria-label={t("aria.close") as string}
-                      onClick={() => setCitationDrawerOpen(false)}
-                    >
-                      <CloseIcon />
-                    </IconButton>
-                  </Box>
-                  <Box sx={{ p: 1 }}>
-                    {groupedCitations.map((group) => (
-                      <Accordion
-                        key={group.url}
-                        expanded={
-                          activeCitationGroupUrl
-                            ? activeCitationGroupUrl === group.url
-                            : undefined
-                        }
-                        onChange={(_, expanded) => {
-                          if (expanded) setActiveCitationGroupUrl(group.url);
-                          else setActiveCitationGroupUrl(undefined);
-                        }}
-                      >
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                          <Typography variant="subtitle2">
-                            {group.title}
-                          </Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                          <Typography
-                            variant="caption"
-                            sx={{ color: "text.secondary" }}
-                          >
-                            Source:{" "}
-                            <Link
-                              id={`citation-source-link-${group.displayNumber}`}
-                              href={encodeURI(group.url)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {group.url}
-                            </Link>
-                          </Typography>
-                          <Box
-                            sx={{
-                              mt: 1,
-                              maxHeight: isSmall ? 240 : 520,
-                              overflow: "auto",
-                              pr: 1,
-                            }}
-                          >
-                            {group.citations.map((c, idx) => {
-                              const fullIndex =
-                                context?.citations?.findIndex(
-                                  (all) => all === c
-                                ) ?? -1;
-                              const docNum =
-                                fullIndex >= 0 ? fullIndex + 1 : undefined;
-                              const mappedNum = docNum
-                                ? citationNumberMapping[docNum]
-                                : undefined;
-                              return (
-                                <>
-                                  {mappedNum !== undefined && (
-                                    <Typography
-                                      variant="h4"
-                                      sx={{
-                                        fontWeight: 600,
-                                        display: "block",
-                                        mb: 0.5,
-                                      }}
-                                    >
-                                      {mappedNum}.
-                                    </Typography>
-                                  )}
-                                  <Box
-                                    key={idx}
-                                    sx={{
-                                      mb: 1.5,
-                                      p: 1.5,
-                                      borderRadius: 1,
-                                      bgcolor: "#f4f1ff",
-                                      border: "1px solid #e1dbff",
-                                    }}
-                                    id={
-                                      mappedNum
-                                        ? `citation-${mappedNum}`
-                                        : undefined
-                                    }
-                                  >
-                                    <Typography
-                                      variant="body2"
-                                      sx={{ whiteSpace: "pre-wrap" }}
-                                    >
-                                      {c.content}
-                                    </Typography>
-                                  </Box>
-                                </>
-                              );
-                            })}
-                          </Box>
-                        </AccordionDetails>
-                      </Accordion>
-                    ))}
-                  </Box>
+                  {renderCitationPanelBody("mobile")}
                 </Drawer>
               )}
 
@@ -925,6 +1154,17 @@ const ChatBubbleInner = styled(Paper)(() => ({
   flexDirection: "row",
   maxWidth: "95%",
 }));
+
+const CitationInlinePanel = styled(Box)(({ theme }) => {
+  const muiTheme = theme as Theme;
+  return {
+    marginTop: muiTheme.spacing(2),
+    borderRadius: muiTheme.shape.borderRadius,
+    border: `1px solid ${muiTheme.palette.divider}`,
+    backgroundColor: muiTheme.palette.background.paper,
+    boxShadow: muiTheme.shadows[2],
+  };
+});
 
 const ToolsUsedBox = styled(Box)`
   display: flex;
