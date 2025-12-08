@@ -3,7 +3,7 @@
  */
 
 import { AzureOpenAI } from "openai";
-import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult, CompletionMessage } from "../completionService";
+import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult } from "../completionService";
 import { ResponseInput } from "openai/resources/responses/responses.mjs";
 
 export class AzureOpenAIProvider implements CompletionProvider {
