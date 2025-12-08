@@ -60,21 +60,9 @@ export class AzureOpenAIProvider implements CompletionProvider {
           fullText += event.delta;
           onChunk?.(event.delta);
         }
-
-        // if (event.type === "response.output_item.done") {
-        //   messages.push({ role: "system", content: JSON.stringify(event.item) });
-        // }
-
-        console.log("Received event:", event);
       }
 
-      console.log("messages after streaming:", updatedMessages);
-
-      // TODO: REMEMBER THAT WE ARE USING 4o, BUT SAYS WE NEED 4.1 FOR MCP TOOLS
-      // 1. Handle tool calls by detecting tool call events from the stream
-      // 2. Store tool calls for future conversations? It will be stored in context, new chats will not have it.
-      // 3. Pass servers through config, not hardcoded
-      // 4. Remove old code
+      onComplete?.(fullText);
 
 
       return {
