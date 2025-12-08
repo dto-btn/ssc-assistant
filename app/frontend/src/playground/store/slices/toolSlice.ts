@@ -11,18 +11,12 @@ import { Tool } from "openai/resources/responses/responses.mjs";
 // Async thunk to load tools using the toolService
 export const loadServers = createAsyncThunk('tools/loadServers', async (token: string, { rejectWithValue }) => {
   try {
-    console.log("Loading MCP servers with token:", token);
-
     const rawServers = import.meta.env.VITE_MCP_SERVERS ? JSON.parse(import.meta.env.VITE_MCP_SERVERS) : [];
-
-    console.log("Raw MCP servers from env:", rawServers);
 
     const mcpServers = rawServers.map((server: Tool) => ({
       ...server,
       authorization: token,
     }));
-
-    console.log("Loaded MCP servers:", mcpServers);
 
     return mcpServers;
 
