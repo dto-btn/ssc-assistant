@@ -335,18 +335,6 @@ export const sendAssistantMessage = ({
             })
           );
         },
-        // onToolCall: (toolName: string) => {
-        //   // Display tool call in chat
-        //   const realToolName = extractToolName(toolName);
-        //   const toolCallMessage = `\n${realToolName} is being called...\n`;
-
-        //   dispatch(
-        //     updateMessageContent({
-        //       messageId: latestAssistantMessage.id,
-        //       content: accumulatedContent + toolCallMessage,
-        //     })
-        //   );
-        // },
         onError: (error: Error) => {
           console.error("Streaming error:", error);
           // Could dispatch error state here if needed

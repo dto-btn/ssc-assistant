@@ -19,7 +19,7 @@ export type CompletionContentPart = Extract<
 
 export type CompletionMessage = Extract<
   ChatCompletionMessageParam,
-  { role: "system" | "user" | "assistant" | "tool" }
+  { role: "system" | "user" | "assistant" }
 >;
 
 export interface CompletionRequest {
