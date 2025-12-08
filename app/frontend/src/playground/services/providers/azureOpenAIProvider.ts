@@ -4,7 +4,6 @@
 
 import { AzureOpenAI } from "openai";
 import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult, CompletionMessage } from "../completionService";
-import { getToolService } from "../toolService";
 import { ResponseInput } from "openai/resources/responses/responses.mjs";
 
 export class AzureOpenAIProvider implements CompletionProvider {
@@ -50,32 +49,11 @@ export class AzureOpenAIProvider implements CompletionProvider {
     try {
       const client = this.createClient(userToken);
 
-      const toolService = await getToolService(userToken);
-
-      let finalToolCalls: Record<string, any> = {};
+      // const newTools = [];
 
       const stream = await client.responses.stream({
         model: model,
         input: updatedMessages,
-        // tools: [
-        //   {
-        //     type: "function",
-        //     name: "get_mp_number",
-        //     description: "Get the phone number of a Canadian Member of Parliament (MP) given their full name.",
-        //     parameters: {
-        //       type: "object",
-        //       properties: {
-        //         name: {
-        //           type: "string",
-        //           description: "The full name of the MP (e.g., 'Justin Trudeau')",
-        //         },
-        //       },
-        //       required: ["name"],
-        //     },
-        //     strict: true,
-        //   },
-        // ],
-        // tool_choice: "auto",
         tools: [
           {
             type: "mcp",
@@ -83,25 +61,31 @@ export class AzureOpenAIProvider implements CompletionProvider {
             server_description: "MCP server hosting tools for fetching data about Canadian Members of Parliament (MPs).",
             server_url: "https://ssca-mcp-server.blackground-73a376b6.canadacentral.azurecontainerapps.io/mcp",
             require_approval: "never",
-            authorization: "Bearer " + userToken.trim(),
+            authorization: userToken,
           },
         ],
         tool_choice: "auto",
       }, { signal });
 
       for await (const event of stream) {
+        if (event.type === "response.output_text.delta") {
+          fullText += event.delta;
+          onChunk?.(event.delta);
+        }
+
+        // if (event.type === "response.output_item.done") {
+        //   newTools.push(event.item);
+        // }
+
         console.log("Received event:", event);
       }
 
-      // Text deltas
-      // stream.on("response.output_text.delta", (e) => {
-      //   fullText += e.delta;
-      //   onChunk?.(e.delta);
-      // });
+      // TODO: REMEMBER THAT WE ARE USING 4o, BUT SAYS WE NEED 4.1 FOR MCP TOOLS
+      // 1. Handle tool calls by detecting tool call events from the stream
+      // 2. Store tool calls for future conversations? It will be stored in context, new chats will not have it.
+      // 3. Pass servers through config, not hardcoded
+      // 4. Remove old code
 
-      // stream.on("response.completed", () => {
-      //   onComplete?.(fullText);
-      // });
 
       return {
         fullText,

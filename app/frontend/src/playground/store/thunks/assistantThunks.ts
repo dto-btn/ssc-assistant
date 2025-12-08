@@ -11,8 +11,8 @@ import { AppThunk, AppDispatch } from "..";
 import type { RootState } from "..";
 import { selectMessagesBySessionId } from "../selectors/chatSelectors";
 import i18n from "../../../i18n";
-import { extractToolName } from "../../services/toolService";
-import { loadTools } from "../slices/toolSlice";
+// import { extractToolName } from "../../services/toolService";
+// import { loadTools } from "../slices/toolSlice";
 
 import { FileAttachment } from "../../types";
 import { extractFileText, fetchFileDataUrl } from "../../api/storage";
@@ -318,7 +318,7 @@ export const sendAssistantMessage = ({
     await completionService.createCompletion(
       {
         messages: completionMessages,
-        model: "gpt-4o", // Let MCP client decide or the user or the agentic AI decide which model to use... (Need a minimum of GPT 4.1 for MCP)
+        model: "gpt-4o", // Let MCP client decide or the user or the agentic AI decide which model to use...
         provider,
         userToken: accessToken,
         // ...(availableTools && availableTools.length > 0 ? { tools: availableTools } : {}),
@@ -334,18 +334,18 @@ export const sendAssistantMessage = ({
             })
           );
         },
-        onToolCall: (toolName: string) => {
-          // Display tool call in chat
-          const realToolName = extractToolName(toolName);
-          const toolCallMessage = `\n${realToolName} is being called...\n`;
+        // onToolCall: (toolName: string) => {
+        //   // Display tool call in chat
+        //   const realToolName = extractToolName(toolName);
+        //   const toolCallMessage = `\n${realToolName} is being called...\n`;
 
-          dispatch(
-            updateMessageContent({
-              messageId: latestAssistantMessage.id,
-              content: accumulatedContent + toolCallMessage,
-            })
-          );
-        },
+        //   dispatch(
+        //     updateMessageContent({
+        //       messageId: latestAssistantMessage.id,
+        //       content: accumulatedContent + toolCallMessage,
+        //     })
+        //   );
+        // },
         onError: (error: Error) => {
           console.error("Streaming error:", error);
           // Could dispatch error state here if needed
