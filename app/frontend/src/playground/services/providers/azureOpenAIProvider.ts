@@ -40,7 +40,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
     request: CompletionRequest,
     callbacks: StreamingCallbacks
   ): Promise<CompletionResult> {
-    const { messages, userToken, model, signal, tools, currentOutput } = request;
+    const { messages, userToken, model, signal, servers, currentOutput } = request;
     const { onChunk, onToolCall, onError, onComplete } = callbacks;
 
     let fullText = currentOutput || "";
@@ -49,22 +49,10 @@ export class AzureOpenAIProvider implements CompletionProvider {
     try {
       const client = this.createClient(userToken);
 
-      // const newTools = [];
-
       const stream = await client.responses.stream({
         model: model,
         input: updatedMessages,
-        tools: [
-          {
-            type: "mcp",
-            server_label: "cpMCP",
-            server_description: "MCP server hosting tools for fetching data about Canadian Members of Parliament (MPs).",
-            server_url: "https://ssca-mcp-server.blackground-73a376b6.canadacentral.azurecontainerapps.io/mcp",
-            require_approval: "never",
-            authorization: userToken,
-          },
-        ],
-        tool_choice: "auto",
+        ...(servers && servers.length > 0 ? { tools: servers, tool_choice: "auto" } : {}),
       }, { signal });
 
       for await (const event of stream) {
@@ -74,11 +62,13 @@ export class AzureOpenAIProvider implements CompletionProvider {
         }
 
         // if (event.type === "response.output_item.done") {
-        //   newTools.push(event.item);
+        //   messages.push({ role: "system", content: JSON.stringify(event.item) });
         // }
 
         console.log("Received event:", event);
       }
+
+      console.log("messages after streaming:", updatedMessages);
 
       // TODO: REMEMBER THAT WE ARE USING 4o, BUT SAYS WE NEED 4.1 FOR MCP TOOLS
       // 1. Handle tool calls by detecting tool call events from the stream
