@@ -340,6 +340,16 @@ export const sendAssistantMessage = ({
             })
           );
         },
+        onToolCall: (toolName?: string) => {
+          const toolCallMessage = `\n${toolName ?? "A tool"} is being called...\n`;
+
+          dispatch(
+            updateMessageContent({
+              messageId: latestAssistantMessage.id,
+              content: accumulatedContent + toolCallMessage,
+            })
+          );
+        },
         onError: (error: Error) => {
           console.error("Streaming error:", error);
           // Could dispatch error state here if needed

@@ -34,7 +34,7 @@ export interface CompletionRequest {
 
 export interface StreamingCallbacks {
   onChunk?: (chunk: string) => void;
-  onToolCall?: (toolName: string) => void;
+  onToolCall?: (toolName?: string) => void;
   onError?: (error: Error) => void;
   onComplete?: (fullText: string) => void;
 }
