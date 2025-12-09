@@ -274,7 +274,7 @@ export const sendAssistantMessage = ({
     // Attach authorization tokens to MCP servers
     const serversWithAuth = (mcpServers && mcpServers.length > 0 && accessToken)
       ? mcpServers.map((server) => ({ ...server, authorization: accessToken }))
-      : (mcpServers && mcpServers.length > 0) ? mcpServers : undefined;
+      : [];
 
     if (!accessToken || isTokenExpired(accessToken)) {
       dispatch(
