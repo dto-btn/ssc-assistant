@@ -324,7 +324,7 @@ export const sendAssistantMessage = ({
     await completionService.createCompletion(
       {
         messages: completionMessages,
-        model: "gpt-5-mini", // Let MCP client decide or the user or the agentic AI decide which model to use...
+        model: "chat", // Currently gpt-4.1-mini, eventually leverage an orchestrator
         provider,
         userToken: accessToken,
         servers: serversWithAuth,
