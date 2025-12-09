@@ -40,10 +40,10 @@ import SessionRenameDialog from "./SessionRenameDialog";
 import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 import SyncStatusIndicator from "./SyncStatusIndicator";
-import { deleteSession as deleteSessionThunk } from "../store/thunks/sessionManagementThunks";
 import ProfileMenu from "./ProfileMenu/ProfileMenu";
 import ThemeToggle from "./ThemeToggle";
 
+import { deleteSession as deleteSessionThunk, persistSessionRename } from "../store/thunks/sessionManagementThunks";
 
 /**
  * Sidebar for listing and managing Playground chat sessions.
@@ -70,17 +70,19 @@ const SessionSidebar: React.FC = () => {
    * case we keep the current session active to avoid creating duplicates.
    */
   const handleNewSession = useCallback(() => {
-    // If current session exists and has no messages, just keep it selected
-    if (currentSessionId && currentSessionMessages.length === 0) {
-      dispatch(setCurrentSession(currentSessionId));
-      return;
-    }
+
+    const newSession = sessions.find(chatSession => chatSession.isNewChat == true)
+    if (newSession) {
+      dispatch(setCurrentSession(newSession.id));
+      return
+    } 
 
     dispatch(
       addSession({
         id: uuidv4(),
         name: `Conversation ${sessions.length + 1}`,
         createdAt: Date.now(),
+        isNewChat: true
       })
     );
   }, [dispatch, sessions.length, currentSessionId, currentSessionMessages.length]);
@@ -103,8 +105,10 @@ const SessionSidebar: React.FC = () => {
    * @param newName The updated name for the session being renamed
    */
   const handleRenameSession = (newName: string) => {
-    if (sessionToRename) {
-      dispatch(renameSession({ id: sessionToRename, name: newName }));
+    const trimmedName = newName.trim();
+    if (sessionToRename && trimmedName) {
+      dispatch(renameSession({ id: sessionToRename, name: trimmedName }));
+      void dispatch(persistSessionRename(sessionToRename, trimmedName));
     }
     setRenameDialogOpen(false);
     setSessionToRename(null);

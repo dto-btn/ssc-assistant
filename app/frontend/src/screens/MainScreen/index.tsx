@@ -215,8 +215,6 @@ const MainScreen = () => {
     });
   };
 
-  console.log("RENDER MainScreen");
-
   // Scrolls the last updated message (if its streaming, or once done) into view
   useEffect(() => {
     chatMessageStreamEnd.current?.scrollIntoView({ behavior: "smooth" });

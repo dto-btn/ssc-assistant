@@ -1,5 +1,6 @@
-import { createAction, Middleware, MiddlewareAPI, UnknownAction, Dispatch } from "@reduxjs/toolkit";
+import { createAction, Middleware, MiddlewareAPI } from "@reduxjs/toolkit";
 import type { RootState } from "..";
+import type { ThunkDispatch, UnknownAction } from "@reduxjs/toolkit";
 import { addMessage, Message } from "../slices/chatSlice";
 import { addChatArchiveToOutbox } from "../slices/outboxSlice";
 import {
@@ -9,7 +10,8 @@ import {
   markSessionError,
 } from "../slices/syncSlice";
 import { uploadEncodedFile } from "../../api/storage";
-import { removeSession } from "../slices/sessionSlice";
+import { removeSession, renameSession } from "../slices/sessionSlice";
+import { rehydrateSessionFromArchive, SessionRehydrationResult } from "../thunks/sessionBootstrapThunks";
 
 /**
  * External trigger used by UI/actions that want to force an immediate archive run.
@@ -27,7 +29,10 @@ const lastArchivedSignature: Record<string, string | undefined> = {};
 /**
  * Debounce archival so idle sessions eventually flush to storage even without hitting the threshold.
  */
-function scheduleArchive(sessionId: string, store: MiddlewareAPI<Dispatch<UnknownAction>, RootState>) {
+type PlaygroundDispatch = ThunkDispatch<RootState, unknown, UnknownAction>;
+type PlaygroundStoreApi = MiddlewareAPI<PlaygroundDispatch, RootState>;
+
+function scheduleArchive(sessionId: string, store: PlaygroundStoreApi) {
   if (timers[sessionId]) {
     clearTimeout(timers[sessionId]);
   }
@@ -42,7 +47,7 @@ function scheduleArchive(sessionId: string, store: MiddlewareAPI<Dispatch<Unknow
  * Serialize a session transcript and ship it to blob storage, falling back to
  * the local outbox when offline or unauthenticated.
  */
-async function doArchive(sessionId: string, store: MiddlewareAPI<Dispatch<UnknownAction>, RootState>) {
+async function doArchive(sessionId: string, store: PlaygroundStoreApi) {
   const state = store.getState();
   const accessToken = state.auth?.accessToken ?? null;
   const sessionRecord = state.sessions.sessions.find((session) => session.id === sessionId);
@@ -60,7 +65,8 @@ async function doArchive(sessionId: string, store: MiddlewareAPI<Dispatch<Unknow
   }
 
   const lastMessage = messages[messages.length - 1];
-  const signature = `${messages.length}:${lastMessage?.id ?? ""}:${lastMessage?.timestamp ?? ""}`;
+  const sessionNameFragment = sessionRecord?.name?.trim() ?? "";
+  const signature = `${messages.length}:${lastMessage?.id ?? ""}:${lastMessage?.timestamp ?? ""}:${sessionNameFragment}`;
   if (lastArchivedSignature[sessionId] === signature) {
     if (!hasQueuedArchive) {
       store.dispatch(markSessionSynced({ sessionId }));
@@ -128,7 +134,7 @@ async function doArchive(sessionId: string, store: MiddlewareAPI<Dispatch<Unknow
 /**
  * Redux middleware that watches chat activity and persists transcripts opportunistically.
  */
-export const archiverMiddleware: Middleware<UnknownAction, RootState> = (store) => (next) => (action) => {
+export const archiverMiddleware: Middleware<unknown, RootState, PlaygroundDispatch> = (store) => (next) => (action) => {
   const result = next(action);
 
   if (addMessage.match(action)) {
@@ -151,6 +157,30 @@ export const archiverMiddleware: Middleware<UnknownAction, RootState> = (store) 
     const { sessionId } = action.payload;
     store.dispatch(markSessionDirty({ sessionId }));
     doArchive(sessionId, store).catch(() => {/* swallow errors to avoid disrupting UI */});
+  }
+
+  if (renameSession.match(action)) {
+    const { id: sessionId } = action.payload;
+    if (sessionId) {
+      const state: RootState = store.getState();
+      const hasMessages = state.chat.messages.some((message) => message.sessionId === sessionId);
+      if (hasMessages) {
+        // A name change should be reflected in the persisted archive immediately so
+        // other browsers learn about it on refresh.
+        store.dispatch(requestArchive({ sessionId }));
+      } else {
+        store
+          .dispatch(rehydrateSessionFromArchive(sessionId, { force: true }))
+          .then((rehydrationResult: SessionRehydrationResult | undefined) => {
+            if (rehydrationResult?.restored || rehydrationResult?.hasArchive) {
+              store.dispatch(requestArchive({ sessionId }));
+            }
+          })
+          .catch(() => {
+            // Ignore hydration failures; rename persistence will retry after history loads.
+          });
+      }
+    }
   }
 
   if (removeSession.match(action)) {
