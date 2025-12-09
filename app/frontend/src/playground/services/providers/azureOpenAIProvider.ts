@@ -69,7 +69,6 @@ export class AzureOpenAIProvider implements CompletionProvider {
 
       onComplete?.(fullText);
 
-
       return {
         fullText,
         completed: true,
