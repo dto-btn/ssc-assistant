@@ -266,7 +266,7 @@ export const sendAssistantMessage = ({
         mcpServers = resultAction.payload; // Use the newly loaded servers
       } else {
         // Handle the case where server loading failed
-        const errorMessage = (resultAction.payload as string) || "Failed to load MCP servers";
+        const errorMessage = (resultAction.payload as string) || "Failed to load assistant tools.";
         throw new Error(errorMessage);
       }
     }
