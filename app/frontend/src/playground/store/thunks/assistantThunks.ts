@@ -259,8 +259,8 @@ export const sendAssistantMessage = ({
     let { mcpServers } = getState().tools;
 
     // If MCP servers are not loaded yet, dispatch the action to load them.
-    if ((!mcpServers || mcpServers.length == 0) && accessToken) {
-      const resultAction = await dispatch(loadServers(accessToken));
+    if (!mcpServers || mcpServers.length === 0) {
+      const resultAction = await dispatch(loadServers());
 
       if (loadServers.fulfilled.match(resultAction)) {
         mcpServers = resultAction.payload; // Use the newly loaded servers
@@ -270,6 +270,11 @@ export const sendAssistantMessage = ({
         throw new Error(errorMessage);
       }
     }
+
+    // Attach authorization tokens to MCP servers
+    const serversWithAuth = (mcpServers && mcpServers.length > 0 && accessToken)
+      ? mcpServers.map((server) => ({ ...server, authorization: accessToken }))
+      : (mcpServers && mcpServers.length > 0) ? mcpServers : undefined;
 
     if (!accessToken || isTokenExpired(accessToken)) {
       dispatch(
@@ -322,7 +327,7 @@ export const sendAssistantMessage = ({
         model: "gpt-5-mini", // Let MCP client decide or the user or the agentic AI decide which model to use...
         provider,
         userToken: accessToken,
-        servers: mcpServers,
+        servers: serversWithAuth,
       },
       {
         onChunk: (chunk: string) => {

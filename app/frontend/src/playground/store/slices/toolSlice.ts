@@ -9,16 +9,11 @@ import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Tool } from "openai/resources/responses/responses.mjs";
 
 // Async thunk to load tools using the toolService
-export const loadServers = createAsyncThunk('tools/loadServers', async (token: string, { rejectWithValue }) => {
+export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rejectWithValue }) => {
   try {
     const rawServers = import.meta.env.VITE_MCP_SERVERS ? JSON.parse(import.meta.env.VITE_MCP_SERVERS) : [];
 
-    const mcpServers = rawServers.map((server: Tool) => ({
-      ...server,
-      authorization: token,
-    }));
-
-    return mcpServers;
+    return rawServers as Tool[];
 
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to parse MCP servers';
