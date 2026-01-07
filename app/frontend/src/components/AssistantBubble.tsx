@@ -24,7 +24,7 @@ import rehypeHighlight from "rehype-highlight";
 import rehypeMermaid from "rehype-mermaid";
 import rehypeMathjax from "rehype-mathjax";
 import "highlight.js/styles/github.css";
-import { useEffect, useState, Fragment, useMemo } from "react";
+import { useEffect, useState, Fragment, useMemo, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { BubbleButtons } from "./BubbleButtons";
 import { styled } from "@mui/system";
@@ -119,6 +119,43 @@ export const AssistantBubble = ({
   const [brSelectFields, setBrSelectFields] = useState<
     BrSelectFields | undefined
   >(undefined);
+  const [pendingCitationNumber, setPendingCitationNumber] = useState<number | undefined>(
+    undefined
+  );
+  const citationScrollRef = useRef<HTMLDivElement | null>(null);
+
+  /**
+   * Safely decode a URL for comparison; return the original string if decoding fails.
+   */
+  const safeDecode = useCallback((url: string) => {
+    try {
+      return decodeURI(url);
+    } catch {
+      return url;
+    }
+  }, []);
+
+  /**
+   * Open the citation drawer when an inline link matches a known citation URL and
+   * optionally queue a scroll to a specific citation number.
+   */
+  const openCitationByUrl = useCallback(
+    (url?: string, citationNumber?: number) => {
+      if (!url || !processedContent.citedCitations?.length) return false;
+      const decoded = safeDecode(url);
+      const has = processedContent.citedCitations.some(
+        (c) => safeDecode(c.url) === decoded || encodeURI(c.url) === url
+      );
+      if (has) {
+        setActiveCitationGroupUrl(decoded);
+        if (citationNumber !== undefined) setPendingCitationNumber(citationNumber);
+        setCitationDrawerOpen(true);
+        return true;
+      }
+      return false;
+    },
+    [processedContent.citedCitations, safeDecode]
+  );
 
   // Intercept inline anchors that match a cited URL to show drawer instead
   const components = useMemo(
@@ -131,10 +168,15 @@ export const AssistantBubble = ({
           {...props}
           onClick={(e) => {
             // Allow ctrl/cmd/middle-click to open in a new tab normally
-            if (e.ctrlKey || (e as any).metaKey || (e as any).button === 1)
+            if (e.ctrlKey || e.metaKey || e.button === 1)
               return;
             const href = props.href;
-            if (href && openCitationByUrl(href)) {
+            const citedNumber = Number.parseInt(
+              (e.currentTarget.textContent || "").trim(),
+              10
+            );
+            const hasNumber = Number.isFinite(citedNumber);
+            if (href && openCitationByUrl(href, hasNumber ? citedNumber : undefined)) {
               e.preventDefault();
             }
             props.onClick?.(e);
@@ -142,21 +184,12 @@ export const AssistantBubble = ({
         />
       ),
     }),
-    [processedContent.citedCitations]
+    [openCitationByUrl]
   );
   const [citationNumberMapping, setCitationNumberMapping] = useState<{
     [key: number]: number;
   }>({});
   const [brMetadata, setBrMetadata] = useState<BrMetadata | undefined>();
-
-  // Helper to safely decode URI, preserving original on failure
-  const safeDecode = (url: string) => {
-    try {
-      return decodeURI(url);
-    } catch {
-      return url;
-    }
-  };
 
   // Group cited citations by normalized URL
   const groupedCitations = useMemo(() => {
@@ -210,6 +243,7 @@ export const AssistantBubble = ({
     processedContent.citedCitations,
     context?.citations,
     citationNumberMapping,
+    safeDecode,
   ]);
   // Citation drawer state
   const [isCitationDrawerOpen, setCitationDrawerOpen] = useState(false);
@@ -218,21 +252,44 @@ export const AssistantBubble = ({
   >(undefined);
   const isSmall = useMediaQuery("(max-width:900px)");
 
-  // Helper: open drawer by URL found in inline links
-  const openCitationByUrl = (url?: string) => {
-    if (!url || !processedContent.citedCitations?.length) return false;
-    const decoded = safeDecode(url);
-    const has = processedContent.citedCitations.some(
-      (c) => safeDecode(c.url) === decoded || encodeURI(c.url) === url
-    );
-    if (has) {
-      setActiveCitationGroupUrl(decoded);
-      setCitationDrawerOpen(true);
-      return true;
-    }
-    return false;
-  };
+  useEffect(() => {
+    if (!isCitationDrawerOpen || pendingCitationNumber === undefined) return;
 
+    const targetId = `citation-${pendingCitationNumber}`;
+
+    const scrollToCitation = () => {
+      const el = document.getElementById(targetId);
+      if (!el) return false;
+      const container =
+        citationScrollRef.current ||
+        (el.closest("[data-citation-scroll]") as HTMLElement) ||
+        (el.parentElement as HTMLElement | null);
+
+      if (container) {
+        const rect = el.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        const targetTop =
+          container.scrollTop + (rect.top - containerRect.top) - 40; // offset to show number
+        container.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+      } else {
+        el.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" });
+      }
+      setPendingCitationNumber(undefined);
+      return true;
+    };
+
+    if (scrollToCitation()) return;
+    // If the node isn't ready yet, retry shortly after render to keep scroll in sync.
+    const timer = window.setTimeout(() => {
+      scrollToCitation();
+    }, 80);
+
+    return () => window.clearTimeout(timer);
+  }, [isCitationDrawerOpen, pendingCitationNumber, activeCitationGroupUrl]);
+
+  /**
+   * Normalize inline [docN] markers to sequenced numbers and collect the cited references.
+   */
   function processText(text: string, citations: Citation[]) {
     // Regular expression to find all citation references like [doc1], [doc3], etc.
     const citationRefRegex = /\[doc(\d+)\]/g;
@@ -271,27 +328,33 @@ export const AssistantBubble = ({
     return { processedText, citedCitations, citationNumberMapping };
   }
 
-  const processProfiles = (employeeProfiles: EmployeeProfile[]) => {
-    const processedProfiles: EmployeeProfile[] = [];
+  /**
+   * Clone profiles and flag those whose email or phone appears in the assistant reply text.
+   */
+  const processProfiles = useCallback(
+    (employeeProfiles: EmployeeProfile[]) => {
+      const processedProfiles: EmployeeProfile[] = [];
 
-    employeeProfiles.forEach((profile) => {
-      // Clone the profile to ensure it is extensible
-      const extensibleProfile = { ...profile };
+      employeeProfiles.forEach((profile) => {
+        // Clone the profile to ensure it is extensible
+        const extensibleProfile = { ...profile };
 
-      if (
-        text.includes(extensibleProfile.email) ||
-        (extensibleProfile.phone && text.includes(extensibleProfile.phone))
-      ) {
-        extensibleProfile.matchedProfile = true;
-      } else {
-        extensibleProfile.matchedProfile = false;
-      }
+        if (
+          text.includes(extensibleProfile.email) ||
+          (extensibleProfile.phone && text.includes(extensibleProfile.phone))
+        ) {
+          extensibleProfile.matchedProfile = true;
+        } else {
+          extensibleProfile.matchedProfile = false;
+        }
 
-      processedProfiles.push(extensibleProfile);
-    });
+        processedProfiles.push(extensibleProfile);
+      });
 
-    return processedProfiles;
-  };
+      return processedProfiles;
+    },
+    [text]
+  );
 
   useEffect(() => {
     if (context?.citations) {
@@ -325,9 +388,9 @@ export const AssistantBubble = ({
         // BRs
         if (payload?.br) {
           try {
-            const brInformation = payload.br;
+            const brInformation = payload.br as Record<string, unknown>[];
             if (brInformation.length) {
-              const brInfoTransformed = brInformation.map((br: any) => {
+              const brInfoTransformed = brInformation.map((br: Record<string, unknown>) => {
                 return transformToBusinessRequest(br);
               });
               setBrData(brInfoTransformed);
@@ -369,7 +432,7 @@ export const AssistantBubble = ({
           setBookingDetails(payload.bookingDetails);
         }
       });
-  }, [toolsInfo, text]);
+  }, [processProfiles, toolsInfo, text]);
 
   // useEffect(
   //   () =>
@@ -475,12 +538,13 @@ export const AssistantBubble = ({
                             onClick={(e) => {
                               if (
                                 e.ctrlKey ||
-                                (e as any).metaKey ||
-                                (e as any).button === 1
+                                e.metaKey ||
+                                e.button === 1
                               )
                                 return;
                               e.preventDefault();
                               setActiveCitationGroupUrl(group.url);
+                              setPendingCitationNumber(group.displayNumber);
                               setCitationDrawerOpen(true);
                             }}
                           />
@@ -562,6 +626,12 @@ export const AssistantBubble = ({
                               overflow: "auto",
                               pr: 1,
                             }}
+                            ref={
+                              activeCitationGroupUrl === group.url
+                                ? citationScrollRef
+                                : undefined
+                            }
+                            data-citation-scroll
                           >
                             {group.citations.map((c, idx) => {
                               const fullIndex =
@@ -574,7 +644,7 @@ export const AssistantBubble = ({
                                 ? citationNumberMapping[docNum]
                                 : undefined;
                               return (
-                                <>
+                                <Fragment key={`${group.url}-${idx}`}>
                                   {mappedNum !== undefined && (
                                     <Typography
                                       variant="h4"
@@ -588,13 +658,13 @@ export const AssistantBubble = ({
                                     </Typography>
                                   )}
                                   <Box
-                                    key={idx}
                                     sx={{
                                       mb: 1.5,
                                       p: 1.5,
                                       borderRadius: 1,
                                       bgcolor: "#f4f1ff",
                                       border: "1px solid #e1dbff",
+                                      scrollMarginTop: 80,
                                     }}
                                     id={
                                       mappedNum
@@ -609,7 +679,7 @@ export const AssistantBubble = ({
                                       {c.content}
                                     </Typography>
                                   </Box>
-                                </>
+                                </Fragment>
                               );
                             })}
                           </Box>

@@ -28,9 +28,6 @@ function isPdfAttachment(attachment: FileAttachment): boolean {
   return pdfExtensions.test(attachment.originalName);
 }
 
-/**
- * Pick a readable download file name even when the blob metadata lacks the original label.
- */
 function deriveDownloadName(attachment: FileAttachment): string | undefined {
   if (attachment.originalName) {
     return attachment.originalName;
@@ -45,9 +42,6 @@ function deriveDownloadName(attachment: FileAttachment): string | undefined {
   return trimmed || blobSegment;
 }
 
-/**
- * Format raw byte lengths into a compact label suitable for secondary metadata.
- */
 function formatBytes(size?: number): string {
   if (typeof size !== "number" || Number.isNaN(size)) return "";
   if (size < 1024) return `${size} B`;

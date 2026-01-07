@@ -12,10 +12,8 @@ const blobStorageUrl = process.env.VITE_BLOB_STORAGE_URL; // Base URL for the bl
 const rawSasToken = process.env.VITE_SAS_TOKEN; // The SAS token with all query parameters
 const sasToken = rawSasToken ? rawSasToken.replace(/^\?/, '') : '';
 
-/**
- * Inject the API key header used by the Flask backend before forwarding the request.
- */
 const onApiProxyReq = (proxyReq) => {
+    // Add the X-API-Key header to the outgoing proxy request
     proxyReq.setHeader('X-API-Key', process.env.VITE_API_KEY);
 };
 
@@ -50,7 +48,6 @@ const blobStorageProxyRoute = () => createProxyMiddleware({
 
 const blobStorageProxy = blobStorageUrl ? blobStorageProxyRoute() : null;
 
-// Reuse the same proxy for every historical container path we might hit in the UI.
 if (blobStorageProxy) {
     app.use('/assistant-chat-files/*', blobStorageProxy);
     app.use('/assistant-chat-files-v2/*', blobStorageProxy);

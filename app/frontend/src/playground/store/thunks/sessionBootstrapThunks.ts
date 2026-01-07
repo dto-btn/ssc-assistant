@@ -9,7 +9,7 @@
 import { fetchFileDataUrl, listSessionFiles } from "../../api/storage";
 import type { AppThunk } from "..";
 import type { Session } from "../slices/sessionSlice";
-import { addSession, setCurrentSession } from "../slices/sessionSlice";
+import { addSession, renameSession, setCurrentSession } from "../slices/sessionSlice";
 import { setSessionFiles } from "../slices/sessionFilesSlice";
 import { hydrateSessionMessages, type Message } from "../slices/chatSlice";
 import type { FileAttachment } from "../../types";
@@ -32,7 +32,18 @@ export interface RehydrateSessionOptions {
 }
 
 /**
- * Load the newest chat archive for a session and hydrate Redux if it is newer than local state.
+ * Attempts to rehydrate the chat history for a session from the latest available archive in Azure Blob Storage.
+ *
+ * The function checks if the session already has messages in the Redux state. If so, and the `force` option is not set,
+ * hydration is skipped to avoid overwriting newer or unsaved local state. Otherwise, it loads the list of files for the session,
+ * finds the latest chat archive, and if the archive is newer than the local state (or if there is no local state), it decodes
+ * and restores the messages into Redux.
+ *
+ * If the session has been deleted remotely, or if no archive is found, the function returns without restoring.
+ *
+ * @param sessionId - The ID of the session to rehydrate.
+ * @param options - Optional settings. If `force` is true, hydration will occur even if local messages exist.
+ * @returns A promise resolving to an object indicating whether restoration occurred, whether an archive was found, and the latest archive version.
  */
 export const rehydrateSessionFromArchive = (
   sessionId: string,
@@ -119,8 +130,19 @@ export const rehydrateSessionFromArchive = (
       const restoredMessages = Array.isArray(parsed.messages)
         ? parsed.messages
             .map((entry) => normalizeArchiveMessage(entry, sessionId))
-            .filter((msg): msg is Message => Boolean(msg))
+            .filter((message): message is Message => message !== null)
         : [];
+
+/**
+ * Generates a human-readable session title for a recovered chat archive.
+ * If the archive provides a name, it is used. Otherwise, falls back to a label
+ * based on the upload timestamp, or as a last resort, a truncated session ID.
+ *
+ * @param sessionId - The unique session identifier.
+ * @param uploadedAtMs - The upload timestamp in milliseconds.
+ * @param providedName - The name from the archive, if available.
+ * @returns A human-readable session title.
+ */
 
       if (!restoredMessages.length) {
         return { restored: false, hasArchive: true, latestVersion };
@@ -134,9 +156,6 @@ export const rehydrateSessionFromArchive = (
     }
   };
 
-/**
- * Generate a human-readable session title when the archive lacks an explicit name.
- */
 const buildRecoveredName = (sessionId: string, uploadedAtMs: number, providedName?: string | null) => {
   if (providedName && providedName.trim().length > 0) {
     return providedName.trim();
@@ -217,17 +236,30 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
     }
     restorationTargets.push(sessionId);
     dispatch(setSessionFiles({ sessionId, files: value.files }));
-    if (!existingSessions.has(sessionId)) {
-      const createdAt = Number.isFinite(value.latestTimestamp) && value.latestTimestamp > 0
-        ? value.latestTimestamp
-        : Date.now();
-      newSessions.push({
-        id: sessionId,
-        name: buildRecoveredName(sessionId, createdAt, value.sessionName),
-        createdAt,
-        isNewChat: false
-      });
+    const existing = existingSessions.get(sessionId);
+    const trimmedRemoteName = value.sessionName?.trim();
+    if (existing) {
+      if (trimmedRemoteName && trimmedRemoteName.length && existing.name !== trimmedRemoteName) {
+        // Align any locally cached session titles with the latest metadata recovered from blob storage.
+        dispatch(
+          renameSession({
+            id: sessionId,
+            name: trimmedRemoteName,
+          }),
+        );
+      }
+      return;
     }
+
+    const createdAt = Number.isFinite(value.latestTimestamp) && value.latestTimestamp > 0
+      ? value.latestTimestamp
+      : Date.now();
+    newSessions.push({
+      id: sessionId,
+      name: buildRecoveredName(sessionId, createdAt, trimmedRemoteName ?? value.sessionName),
+      createdAt,
+      isNewChat: false,
+    });
   });
 
   if (!newSessions.length) {

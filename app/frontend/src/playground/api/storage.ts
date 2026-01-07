@@ -5,6 +5,7 @@ const UPLOAD_ENDPOINT = `${PLAYGROUND_API_BASE}/upload`;
 const FILES_FOR_SESSION_ENDPOINT = `${PLAYGROUND_API_BASE}/files-for-session`;
 const EXTRACT_FILE_TEXT_ENDPOINT = `${PLAYGROUND_API_BASE}/extract-file-text`;
 const sessionDeleteEndpoint = (sessionId: string) => `${PLAYGROUND_API_BASE}/sessions/${encodeURIComponent(sessionId)}`;
+const sessionRenameEndpoint = (sessionId: string) => `${sessionDeleteEndpoint(sessionId)}/rename`;
 
 type MetadataRecord = Record<string, string | number | boolean | null | undefined>;
 
@@ -58,9 +59,6 @@ const asNumber = (value: unknown): number | undefined =>
 
 const HTTP_URL_PATTERN = /^https?:\/\//i;
 
-/**
- * Decode a URL path but keep path separators intact so blob keys remain hierarchical.
- */
 function decodePathPreservingSlashes(candidate: string): string {
   try {
     return decodeURIComponent(candidate);
@@ -70,9 +68,6 @@ function decodePathPreservingSlashes(candidate: string): string {
   }
 }
 
-/**
- * Normalize any blob reference (full URL, relative path, or blob name) into a predictable preview path.
- */
 export function normalizePreviewUrl(rawUrl?: string, blobName?: string): string | undefined {
   if (!rawUrl && !blobName) {
     return undefined;
@@ -103,7 +98,7 @@ export function normalizePreviewUrl(rawUrl?: string, blobName?: string): string 
       }
     }
 
-    const withLeadingSlash = `/${trimmed}`;
+    const withLeadingSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
     return decodePathPreservingSlashes(withLeadingSlash);
   }
 
@@ -115,9 +110,6 @@ export function normalizePreviewUrl(rawUrl?: string, blobName?: string): string 
   return undefined;
 }
 
-/**
- * Translate backend file payloads into strongly typed attachments consumed by the UI.
- */
 function mapFilePayload(payload: RawFilePayload = {}): FileAttachment {
   const candidateType = asString(payload.type);
   const resolvedContentType =
@@ -253,6 +245,7 @@ export async function uploadFile({
   });
 }
 
+
 /**
  * Soft delete every blob tied to a session by calling the playground API on behalf of the user.
  */
@@ -262,7 +255,7 @@ export async function deleteRemoteSession({
 }: {
   sessionId: string;
   accessToken: string;
-}): Promise<void> {
+}): Promise<number> {
   if (!sessionId) throw new Error("sessionId is required");
   if (!accessToken?.trim()) throw new Error("accessToken is required");
 
@@ -274,7 +267,7 @@ export async function deleteRemoteSession({
   });
 
   if (response.status === 204) {
-    return;
+    return 0;
   }
 
   const data = await handleJsonResponse(response);
@@ -285,7 +278,38 @@ export async function deleteRemoteSession({
     throw new Error(message);
   }
 
-  return;
+  const deleted = typeof data?.deletedCount === "number" ? data.deletedCount : 0;
+  if (deleted < 0) {
+    console.warn("Unexpected negative delete count received", { deleted });
+  }
+  return deleted;
+}
+
+export async function renameRemoteSession({
+  sessionId,
+  name,
+  accessToken,
+}: {
+  sessionId: string;
+  name: string;
+  accessToken: string;
+}): Promise<number> {
+  if (!sessionId) throw new Error("sessionId is required");
+  const trimmedName = name?.trim();
+  if (!trimmedName) throw new Error("name is required");
+  if (!accessToken?.trim()) throw new Error("accessToken is required");
+
+  const response = await fetch(sessionRenameEndpoint(sessionId), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken.trim()}`,
+    },
+    body: JSON.stringify({ name: trimmedName }),
+  });
+
+  const data = await handleJsonResponse(response);
+  return typeof data?.updatedCount === "number" ? data.updatedCount : 0;
 }
 
 /**
