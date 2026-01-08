@@ -15,6 +15,7 @@ import { loadServers } from "../slices/toolSlice";
 
 import { FileAttachment } from "../../types";
 import { extractFileText, fetchFileDataUrl } from "../../api/storage";
+import { Tool } from "openai/resources/responses/responses.mjs";
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
 
@@ -272,8 +273,8 @@ export const sendAssistantMessage = ({
     }
 
     // Attach authorization tokens to MCP servers
-    const serversWithAuth = (mcpServers && mcpServers.length > 0 && accessToken)
-      ? mcpServers.map((server) => ({ ...server, authorization: accessToken }))
+    const serversWithAuth: Tool.Mcp[] = (mcpServers && mcpServers.length > 0 && accessToken)
+      ? mcpServers.map((server: Tool.Mcp) => ({ ...server, authorization: accessToken }))
       : [];
 
     if (!accessToken || isTokenExpired(accessToken)) {

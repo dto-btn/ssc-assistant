@@ -13,7 +13,20 @@ export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rej
   try {
     const rawServers = import.meta.env.VITE_MCP_SERVERS ? JSON.parse(import.meta.env.VITE_MCP_SERVERS) : [];
 
-    return rawServers as Tool[];
+    // Validate and map raw server data to Tool.Mcp objects
+    const toolServers: Tool.Mcp[] = rawServers
+      .filter((server: any) => server && server.server_label && server.server_url && server.server_description)
+      .map((server: any) => ({
+        server_label: server.server_label,
+        type: 'mcp',
+        server_url: server.server_url,
+        server_description: server.server_description,
+        require_approval: (server.require_approval === "always" || server.require_approval === "never") 
+          ? server.require_approval 
+          : "never",
+      }));
+    
+    return toolServers;
 
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to parse MCP servers';
@@ -23,7 +36,7 @@ export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rej
 
 export interface ToolState {
   enabledTools: Record<string, boolean>;
-  mcpServers: Tool[];
+  mcpServers: Tool.Mcp[];
   isLoading: boolean;
   error: string | null;
 }
@@ -61,7 +74,7 @@ const toolSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(loadServers.fulfilled, (state, action: PayloadAction<Tool[]>) => {
+      .addCase(loadServers.fulfilled, (state, action: PayloadAction<Tool.Mcp[]>) => {
         state.isLoading = false;
         state.mcpServers = action.payload;
       })
