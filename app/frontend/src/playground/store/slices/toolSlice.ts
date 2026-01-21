@@ -11,21 +11,35 @@ import { Tool } from "openai/resources/responses/responses.mjs";
 // Async thunk to load tools using the toolService
 export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rejectWithValue }) => {
   try {
-    const rawServers = import.meta.env.VITE_MCP_SERVERS ? JSON.parse(import.meta.env.VITE_MCP_SERVERS) : [];
+    const rawValue = import.meta.env.VITE_MCP_SERVERS;
+    if (!rawValue) return [];
 
-    // Validate and map raw server data to Tool.Mcp objects
-    const toolServers: Tool.Mcp[] = rawServers
-      .filter((server: any) => server && server.server_label && server.server_url && server.server_description)
-      .map((server: any) => ({
-        server_label: server.server_label,
-        type: 'mcp',
-        server_url: server.server_url,
-        server_description: server.server_description,
-        require_approval: (server.require_approval === "always" || server.require_approval === "never") 
-          ? server.require_approval 
-          : "never",
-      }));
-    
+    let rawServers;
+    let toolServers: Tool.Mcp[] = [];
+
+    try {
+      rawServers = JSON.parse(rawValue);
+
+      // Validate and map raw server data to Tool.Mcp objects
+      toolServers = rawServers
+        .filter((server: any) => server && server.server_label && server.server_url && server.server_description)
+        .map((server: any) => ({
+          server_label: server.server_label,
+          type: 'mcp',
+          server_url: server.server_url,
+          server_description: server.server_description,
+          require_approval: (server.require_approval === "always" || server.require_approval === "never") 
+            ? server.require_approval 
+            : "never",
+        }));
+    } catch (parseError: any) {
+      console.error("Failed to parse VITE_MCP_SERVERS:", parseError.message);
+      console.dir(rawValue);
+      // Attempt to fix trailing commas and parse again
+      const fixedValue = rawValue.replace(/,\s*([\]}])/g, '$1');
+      rawServers = JSON.parse(fixedValue);
+    }
+
     return toolServers;
 
   } catch (error) {

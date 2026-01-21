@@ -3,8 +3,8 @@
  */
 
 import { AzureOpenAI } from "openai";
-import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult } from "../completionService";
-import { ResponseInput } from "openai/resources/responses/responses.mjs";
+import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult, CompletionMessage } from "../completionService";
+import { EasyInputMessage, ResponseInput } from "openai/resources/responses/responses.mjs";
 
 export class AzureOpenAIProvider implements CompletionProvider {
   readonly name = 'azure-openai';
@@ -33,6 +33,35 @@ export class AzureOpenAIProvider implements CompletionProvider {
     });
   }
 
+  // private convertMessagesToInput(messages: CompletionMessage[]): ResponseInput {
+  //   return messages.map(msg => {
+  //     if (Array.isArray(msg.content)) {
+  //       return {
+  //         content: msg.content.map(part => {
+  //           if (typeof part === "string") {
+  //             return {
+  //               type: "input_text",
+  //               content: part,
+  //             };
+  //           } else if (part.type === "image_url") {
+  //             return {
+  //               type: "input_file",
+  //               file_url: part.url,
+  //             };
+  //           }
+  //         }),
+  //         role: msg.role,
+  //       }
+  //     } else {
+  //       return {
+  //         type: "text",
+  //         content: msg.content || "",
+  //         role: msg.role,
+  //       };
+  //     }
+  //   });
+  // }
+
   /**
    * Stream chat completions, optionally executing tool calls before recursively resuming the run.
    */
@@ -43,8 +72,12 @@ export class AzureOpenAIProvider implements CompletionProvider {
     const { messages, userToken, model, signal, servers, currentOutput } = request;
     const { onChunk, onToolCall, onError, onComplete } = callbacks;
 
+    console.log("messages:", messages);
+
     let fullText = currentOutput || "";
     let updatedMessages = messages as ResponseInput;
+
+    console.log("Updated messages for Azure OpenAI:", updatedMessages);
     
     try {
       const client = this.createClient(userToken);
@@ -56,6 +89,8 @@ export class AzureOpenAIProvider implements CompletionProvider {
       }, { signal });
 
       for await (const event of stream) {
+        console.log("Received event:", event);
+
         if (event.type === "response.output_text.delta") {
           fullText += event.delta;
           onChunk?.(event.delta);

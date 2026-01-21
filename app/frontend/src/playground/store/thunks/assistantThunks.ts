@@ -259,17 +259,29 @@ export const sendAssistantMessage = ({
 
     let { mcpServers } = getState().tools;
 
-    // If MCP servers are not loaded yet, dispatch the action to load them.
-    if (!mcpServers || mcpServers.length === 0) {
-      const resultAction = await dispatch(loadServers());
+    // TODO switch back
 
-      if (loadServers.fulfilled.match(resultAction)) {
-        mcpServers = resultAction.payload; // Use the newly loaded servers
-      } else {
-        // Handle the case where server loading failed
-        const errorMessage = (resultAction.payload as string) || "Failed to load MCP servers.";
-        throw new Error(errorMessage);
-      }
+    // // If MCP servers are not loaded yet, dispatch the action to load them.
+    // if (!mcpServers || mcpServers.length === 0) {
+    //   const resultAction = await dispatch(loadServers());
+
+    //   if (loadServers.fulfilled.match(resultAction)) {
+    //     mcpServers = resultAction.payload; // Use the newly loaded servers
+    //   } else {
+    //     // Handle the case where server loading failed
+    //     const errorMessage = (resultAction.payload as string) || "Failed to load MCP servers.";
+    //     throw new Error(errorMessage);
+    //   }
+    // }
+
+    const resultAction = await dispatch(loadServers());
+
+    if (loadServers.fulfilled.match(resultAction)) {
+      mcpServers = resultAction.payload; // Use the newly loaded servers
+    } else {
+      // Handle the case where server loading failed
+      const errorMessage = (resultAction.payload as string) || "Failed to load MCP servers.";
+      throw new Error(errorMessage);
     }
 
     // Attach authorization tokens to MCP servers
