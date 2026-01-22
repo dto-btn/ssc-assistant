@@ -5,9 +5,8 @@ import { useChatStore } from "../stores/ChatStore";
 import { useAppStore } from "../stores/AppStore";
 import { useTranslation } from "react-i18next";
 import { MAX_CHAT_HISTORIES_LENGTH, MUTUALLY_EXCLUSIVE_TOOLS, SNACKBAR_DEBOUNCE_KEYS } from "../constants";
-import { isACompletion } from "../utils";
+import { isACompletion, isAMessage } from "../utils";
 import { buildDefaultChatHistory } from "../stores/modelBuilders";
-import { useBasicApiRequestService } from "../screens/MainScreen/useApiRequestService";
 // removed duplicate t import; using useTranslation hook's t
 
 let hasFetchedTitle = false
@@ -16,7 +15,6 @@ export const useChatService = () => {
     const { t } = useTranslation()
     // Select only what's needed from stores to avoid re-renders on unrelated updates
     const currentChatIndex = useChatStore((s) => s.currentChatIndex);
-    const chatHistoriesDescriptions = useChatStore((s) => s.chatHistoriesDescriptions);
     const setChatIndexToLoadOrDelete = useChatStore((s) => s.setChatIndexToLoadOrDelete);
     const setChatHistoriesDescriptions = useChatStore((s) => s.setChatHistoriesDescriptions);
     const setDefaultChatHistory = useChatStore((s) => s.setDefaultChatHistory);
@@ -29,7 +27,6 @@ export const useChatService = () => {
     const setAppEnabledTools = useAppStore((s) => s.tools.setEnabledTools);
     const messageThreshold = parseInt(import.meta.env.TITLE_RENAME_THRESHOLD || "1", 10);
 
-    const makeBasicApiRequest = useBasicApiRequestService();
     // This is a custom hook that provides chat-related services. We use useMemo to
     // memoize the value of the service to avoid unnecessary re-renders.
 
@@ -40,63 +37,6 @@ export const useChatService = () => {
         chatStoreSetCurrentChatIndex(index);
     }, [chatStoreSetCurrentChatIndex]);
 
-
-    const fetchChatTitleAndRename = useCallback(async (
-        updatedChatHistory: { chatItems: ChatItem[] }, // Structure of chat history passed to the function
-        currentChatIndex: number,                 // Index of the conversation being updated
-        renameChat: (title: string, index: number) => void,
-         // Callback to rename the conversation                     // Authorization token
-
-    ): Promise<void> => {
-        /**
-         * Fetches a title for the chat conversation using the completionBasic function
-         * and renames the chat using the provided renameChat callback.
-         *
-         * @param updatedChatHistory - The current chat history to be updated.
-         * @param currentChatIndex - The index of the current chat in the chat history.
-         * @param renameChat - Callback function to rename the chat with the new title.
-         */
-        try {
-
-            const message :Message[] = updatedChatHistory.chatItems.map((item) => {
-                // Ensure each chat item is a Message type
-                if (isACompletion(item)) {
-                    return item.message; // Extract the message from the completion
-                }
-                return item as Message; // Cast to Message type
-            }).filter((item) => {
-                // Filter out any undefined or null items
-                return item !== null && item !== undefined;
-            }).map((item) => {
-                // Ensure each item has a role and content
-                return {
-                    role: item.role || "system", // Default to "system" if role is undefined
-                    content: item.content || "", // Default to empty string if content is undefined
-                    context: item.context, // Include context if available
-                    tools_info: item.tools_info, // Include tools_info if available
-                    quotedText: item.quotedText, // Include quotedText if available
-                    attachments: item.attachments // Include attachments if available
-                };
-            });
-
-            // Construct the MessageRequest object
-            const request: MessageRequest = summerizeChatWithChatGPT(message, t);
-
-            // Call the completionBasic function
-            const data = await makeBasicApiRequest(request);
-
-            // Extract the title from the response or use a fallback if unavailable
-            const title = data.json.message.content || `Conversation ${currentChatIndex + 1}`;
-
-            // Apply the title to the current chat using the provided callback
-            renameChat(title, currentChatIndex);
-        } catch (error) {
-            console.error("Error fetching chat title:", error);
-
-            // Provide a fallback title in case of an error
-            renameChat(`Conversation ${currentChatIndex + 1}`, currentChatIndex);
-        }
-    }, [makeBasicApiRequest, t]);
     const saveChatHistories = useCallback((updatedChatHistory: ChatHistory) => {
 
         try {
@@ -187,7 +127,7 @@ export const useChatService = () => {
 
     const createNewChat = useCallback((tool?: string) => {
         const chatHistories = PersistenceUtils.getChatHistories();
-        const newChatIndex = chatHistoriesDescriptions.length;
+        const newChatIndex = chatHistories.length;
 
         if (chatHistories.length === MAX_CHAT_HISTORIES_LENGTH || newChatIndex >= MAX_CHAT_HISTORIES_LENGTH) {
             showSnackbar(
@@ -197,7 +137,7 @@ export const useChatService = () => {
         } else {
             const newChat = buildDefaultChatHistory()
             chatHistories.push(newChat);
-            const newDescription = "...";
+            const newDescription = getNextNewChatTitle(chatHistories);
 
             // Process tools (static tools are generally mutually exclusive tools and work on their own)
             // If tool(s) are enforced specifically here for this new chat, we set them in the convo staticTools
@@ -219,17 +159,19 @@ export const useChatService = () => {
             PersistenceUtils.setChatHistories(chatHistories);
             setCurrentChatIndex(chatHistories.length - 1);
             setCurrentChatHistory(newChat);
-            setChatHistoriesDescriptions([
-                ...chatHistoriesDescriptions,
-                newDescription
-            ]);
+            setChatHistoriesDescriptions(
+                chatHistories.map(
+                    (chatHistory, index) =>
+                        chatHistory.description || "Conversation " + (index + 1)
+                )
+            );
             setAppEnabledTools(updatedTools);
             PersistenceUtils.setEnabledTools(updatedTools);
 
         }
-    }, [chatHistoriesDescriptions, enabledTools, setAppEnabledTools, setChatHistoriesDescriptions, setCurrentChatHistory, setCurrentChatIndex, showSnackbar, t]);
+    }, [enabledTools, setAppEnabledTools, setChatHistoriesDescriptions, setCurrentChatHistory, setCurrentChatIndex, showSnackbar, t]);
 
-        const handleNewChat = useCallback((tool?: string) => {
+        const handleNewChat = useCallback(async (tool?: string) => {
                 const chatHistories = PersistenceUtils.getChatHistories();
                     let chatIndex = chatHistories.length - 1;
             if(chatIndex < 0){
@@ -239,10 +181,10 @@ export const useChatService = () => {
                 const lastChatLength = Array.isArray(lastChat.chatItems) ? lastChat.chatItems.length : 0;
 
         if(lastChatLength === 0 && typeof(tool) !== "undefined"){
-            deleteSavedChat(chatIndex);
+            await deleteSavedChat(chatIndex);
             createNewChat(tool);
         }else if(lastChatLength === 0 && lastChat.staticTools?.length > 0){
-            deleteSavedChat(chatIndex);
+            await deleteSavedChat(chatIndex);
             createNewChat(tool);
         }else if(lastChatLength != 0 || typeof(tool) !== "undefined"){
             createNewChat(tool);
@@ -258,7 +200,7 @@ export const useChatService = () => {
     const deleteAllChatHistory = useCallback(() => {
         // create a new chat history with default values
         const newChat = buildDefaultChatHistory()
-        const newDescription = "...";
+        const newDescription = getNextNewChatTitle([]);
         newChat.description = newDescription;
 
         // update the in-memory state
@@ -360,13 +302,16 @@ export const useChatService = () => {
                             updatedChatHistory.isTopicSet === false &&
                             !hasFetchedTitle
                         ) {
-                            try{
-                            //Fetch and set the chat title using the reusable function
-                            fetchChatTitleAndRename(updatedChatHistory, currentChatIndex, renameChat);
-                            }catch(error){
-                                console.error("Error fetching chat title:", error);
-                            }finally{
-                                hasFetchedTitle = true; // Ensure we only fetch the title once per conversation
+                            try {
+                                if (shouldAutoRename(updatedChatHistory, currentChatIndex)) {
+                                    const derivedTitle = buildTitleFromFirstMessage(updatedChatHistory.chatItems);
+                                    if (derivedTitle) {
+                                        renameChat(derivedTitle, currentChatIndex);
+                                        hasFetchedTitle = true; // Ensure we only auto-title once per conversation
+                                    }
+                                }
+                            } catch (error) {
+                                console.error("Error generating chat title:", error);
                             }
                         }
                     });
@@ -383,7 +328,6 @@ export const useChatService = () => {
         handleNewChat,
         deleteAllChatHistory,
         deleteSavedChat,
-        fetchChatTitleAndRename,
         messageThreshold,
         currentChatIndex,
         setCurrentChatHistory,
@@ -394,70 +338,67 @@ export const useChatService = () => {
     return memoized
 }
 
-function mergeChatItem(chatItem: { role?: string; content?: unknown }): string {
-    /**
-     * Merges a chat item into a string format for logging or display.
-     */
-    if (!chatItem) {
-        return "";
+function getNextNewChatTitle(chatHistories: ChatHistory[]): string {
+    const prefix = "New Chat";
+    let maxIndex = 0;
+
+    for (const history of chatHistories) {
+        const description = typeof history.description === "string" ? history.description.trim() : "";
+        if (!description.startsWith(prefix)) {
+            continue;
+        }
+
+        const match = description.match(/^New Chat\s*(\d+)$/i);
+        if (match) {
+            const value = Number.parseInt(match[1], 10);
+            if (!Number.isNaN(value)) {
+                maxIndex = Math.max(maxIndex, value);
+            }
+        }
     }
 
-    let role: string = chatItem.role ?? "unknown"; // Default 'role' to "unknown" if undefined
-    let content: unknown = chatItem.content ?? ""; // Default 'content' to an empty string if undefined
-
-    // Handle content based on its type
-    if (typeof content === "object" && content !== null && !Array.isArray(content)) {
-        // Convert content to JSON string if it's an object
-        content = JSON.stringify(content as Record<string, unknown>, null, 0); // No extra spaces
-    } else if (Array.isArray(content)) {
-        // Join array items with newline characters
-        content = (content as unknown[]).map(item => String(item)).join("\n");
-    } else if (typeof content !== "string") {
-        // Convert non-string, non-object, non-array content to a string
-        content = String(content);
+    return `${prefix} ${maxIndex + 1}`;
+}
+function shouldAutoRename(chatHistory: ChatHistory, chatIndex: number): boolean {
+    if (chatHistory.isTopicSet) {
+        return false;
     }
 
-    // Ensure 'role' is a string
-    if (typeof role !== "string") {
-        role = String(role);
+    const description = (chatHistory.description || "").trim();
+    if (!description || description === "...") {
+        return true;
     }
 
-    // Normalize to string for final checks
-    const contentStr = typeof content === "string" ? content : String(content);
-    // Skip invalid chat items
-    if (role === "unknown" || !contentStr || !contentStr.trim()) {
-        return "";
-    }
-
-    // Strip leading and trailing whitespace from the content
-    content = contentStr.trim();
-
-    // Return the formatted string
-    return `${role}: ${content}`;
+    const defaultTitle = `Conversation ${chatIndex + 1}`;
+    return description === defaultTitle;
 }
 
-function summerizeChatWithChatGPT(chat: Message[], t: (key: string) => string): MessageRequest {
-    // Merge all chat items (filter undefined or null items)
-    const mergeChatItems = chat
-        .filter(item => item !== null && item !== undefined)
-        .map(item => mergeChatItem(item));
+function buildTitleFromFirstMessage(chatItems: ChatItem[], maxWords = 6): string | null {
+    let normalized = "";
+    for (const item of chatItems) {
+        const content = isACompletion(item)
+            ? item.message?.content
+            : isAMessage(item)
+                ? (item as Message).content
+                : "";
 
-    // Join merged chat items into a single block of text
-    const mergedText = mergeChatItems.join("\n");
+        const candidate = typeof content === "string" ? content.trim() : String(content ?? "").trim();
+        if (candidate) {
+            normalized = candidate;
+            break;
+        }
+    }
 
-    // Build the prompt for ChatGPT
-    const SUMMERIZECHATWITHCHATGPT_MESSAGE = t("summerize.conversation");
-    const prompt = `${SUMMERIZECHATWITHCHATGPT_MESSAGE}:\n\n${mergedText}`;
+    if (!normalized) {
+        return null;
+    }
 
-    // Create a request message
-    const messages: Message[] = [{ role: "user", content: prompt }];
-    const messageRequest: MessageRequest = {
-        messages: messages,
-        query: prompt,
-        quotedText: "",
-        model: import.meta.env.TITLE_RENAME_MODEL || "gpt-4.1-nano",
-    };
+    const words = normalized.split(/\s+/).filter(Boolean);
+    if (!words.length) {
+        return null;
+    }
 
-    return messageRequest;
+    const truncated = words.slice(0, maxWords).join(" ");
+    return words.length > maxWords ? `${truncated}…` : truncated;
 }
 
