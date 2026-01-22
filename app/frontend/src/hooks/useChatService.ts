@@ -127,6 +127,7 @@ export const useChatService = () => {
 
     const createNewChat = useCallback((tool?: string) => {
         const chatHistories = PersistenceUtils.getChatHistories();
+        // Always use persisted length to avoid duplicate sidebar titles.
         const newChatIndex = chatHistories.length;
 
         if (chatHistories.length === MAX_CHAT_HISTORIES_LENGTH || newChatIndex >= MAX_CHAT_HISTORIES_LENGTH) {
@@ -137,6 +138,7 @@ export const useChatService = () => {
         } else {
             const newChat = buildDefaultChatHistory()
             chatHistories.push(newChat);
+            // Generate a stable fallback title for the new chat.
             const newDescription = getNextNewChatTitle(chatHistories);
 
             // Process tools (static tools are generally mutually exclusive tools and work on their own)
@@ -159,6 +161,7 @@ export const useChatService = () => {
             PersistenceUtils.setChatHistories(chatHistories);
             setCurrentChatIndex(chatHistories.length - 1);
             setCurrentChatHistory(newChat);
+            // Rebuild descriptions from persisted histories to keep UI in sync.
             setChatHistoriesDescriptions(
                 chatHistories.map(
                     (chatHistory, index) =>
@@ -181,9 +184,11 @@ export const useChatService = () => {
                 const lastChatLength = Array.isArray(lastChat.chatItems) ? lastChat.chatItems.length : 0;
 
         if(lastChatLength === 0 && typeof(tool) !== "undefined"){
+            // Ensure deletions complete before creating a new chat to avoid duplicates.
             await deleteSavedChat(chatIndex);
             createNewChat(tool);
         }else if(lastChatLength === 0 && lastChat.staticTools?.length > 0){
+            // Same deletion-before-create logic for tool-specific chats.
             await deleteSavedChat(chatIndex);
             createNewChat(tool);
         }else if(lastChatLength != 0 || typeof(tool) !== "undefined"){
@@ -303,6 +308,7 @@ export const useChatService = () => {
                             !hasFetchedTitle
                         ) {
                             try {
+                                // Only auto-title when the chat still has a default label.
                                 if (shouldAutoRename(updatedChatHistory, currentChatIndex)) {
                                     const derivedTitle = buildTitleFromFirstMessage(updatedChatHistory.chatItems);
                                     if (derivedTitle) {
@@ -338,6 +344,11 @@ export const useChatService = () => {
     return memoized
 }
 
+/**
+ * Provides a stable fallback title for new chats: "New Chat N".
+ *
+ * Uses existing persisted histories to increment the counter safely.
+ */
 function getNextNewChatTitle(chatHistories: ChatHistory[]): string {
     const prefix = "New Chat";
     let maxIndex = 0;
@@ -359,6 +370,12 @@ function getNextNewChatTitle(chatHistories: ChatHistory[]): string {
 
     return `${prefix} ${maxIndex + 1}`;
 }
+/**
+ * Determines whether a chat can be auto-titled.
+ *
+ * Skips auto-renaming if the user has already renamed the chat or
+ * if a title has been explicitly set.
+ */
 function shouldAutoRename(chatHistory: ChatHistory, chatIndex: number): boolean {
     if (chatHistory.isTopicSet) {
         return false;
@@ -373,6 +390,11 @@ function shouldAutoRename(chatHistory: ChatHistory, chatIndex: number): boolean 
     return description === defaultTitle;
 }
 
+/**
+ * Builds a short chat title from the first non-empty message content.
+ *
+ * This is intentionally simple and avoids AI-based renaming.
+ */
 function buildTitleFromFirstMessage(chatItems: ChatItem[], maxWords = 6): string | null {
     let normalized = "";
     for (const item of chatItems) {
