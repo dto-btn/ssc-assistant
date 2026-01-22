@@ -84,6 +84,8 @@ export const useChatService = () => {
     const handleLoadSavedChat = useCallback((index: number) => {
         const chatHistories = PersistenceUtils.getChatHistories();
         if (chatHistories) {
+            // Reset auto-title state when switching chats.
+            hasFetchedTitle = false;
             const newChat = chatHistories[index];
             setCurrentChatHistory(newChat);
             setCurrentChatIndex(index);
@@ -161,6 +163,8 @@ export const useChatService = () => {
             PersistenceUtils.setChatHistories(chatHistories);
             setCurrentChatIndex(chatHistories.length - 1);
             setCurrentChatHistory(newChat);
+            // Allow auto-title for the newly created chat.
+            hasFetchedTitle = false;
             // Rebuild descriptions from persisted histories to keep UI in sync.
             setChatHistoriesDescriptions(
                 chatHistories.map(
@@ -207,6 +211,8 @@ export const useChatService = () => {
         const newChat = buildDefaultChatHistory()
         const newDescription = getNextNewChatTitle([]);
         newChat.description = newDescription;
+        // Reset auto-title state for the fresh chat.
+        hasFetchedTitle = false;
 
         // update the in-memory state
         setChatHistoriesDescriptions([newDescription]);
@@ -387,7 +393,12 @@ function shouldAutoRename(chatHistory: ChatHistory, chatIndex: number): boolean 
     }
 
     const defaultTitle = `Conversation ${chatIndex + 1}`;
-    return description === defaultTitle;
+    if (description === defaultTitle) {
+        return true;
+    }
+
+    // Treat "New Chat N" placeholders as auto-renamable defaults.
+    return /^New Chat\s*\d+$/i.test(description);
 }
 
 /**
