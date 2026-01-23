@@ -10,6 +10,7 @@ import { Tool } from "openai/resources/responses/responses.mjs";
 
 // Async thunk to load tools using the toolService
 export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rejectWithValue }) => {
+  
   try {
     const rawValue = import.meta.env.VITE_MCP_SERVERS;
     if (!rawValue) return [];
