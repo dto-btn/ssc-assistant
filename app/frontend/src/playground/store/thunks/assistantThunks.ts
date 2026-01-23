@@ -11,7 +11,6 @@ import { AppThunk, AppDispatch } from "..";
 import type { RootState } from "..";
 import { selectMessagesBySessionId } from "../selectors/chatSelectors";
 import i18n from "../../../i18n";
-import { loadServers } from "../slices/toolSlice";
 
 import { FileAttachment } from "../../types";
 import { extractFileText, fetchFileDataUrl } from "../../api/storage";
