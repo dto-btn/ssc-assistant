@@ -4,7 +4,7 @@
 
 import { AzureOpenAI } from "openai";
 import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult, CompletionMessage } from "../completionService";
-import { EasyInputMessage, ResponseInput } from "openai/resources/responses/responses.mjs";
+import { ResponseInput } from "openai/resources/responses/responses.mjs";
 
 export class AzureOpenAIProvider implements CompletionProvider {
   readonly name = 'azure-openai';
@@ -33,34 +33,40 @@ export class AzureOpenAIProvider implements CompletionProvider {
     });
   }
 
-  // private convertMessagesToInput(messages: CompletionMessage[]): ResponseInput {
-  //   return messages.map(msg => {
-  //     if (Array.isArray(msg.content)) {
-  //       return {
-  //         content: msg.content.map(part => {
-  //           if (typeof part === "string") {
-  //             return {
-  //               type: "input_text",
-  //               content: part,
-  //             };
-  //           } else if (part.type === "image_url") {
-  //             return {
-  //               type: "input_file",
-  //               file_url: part.url,
-  //             };
-  //           }
-  //         }),
-  //         role: msg.role,
-  //       }
-  //     } else {
-  //       return {
-  //         type: "text",
-  //         content: msg.content || "",
-  //         role: msg.role,
-  //       };
-  //     }
-  //   });
-  // }
+  /**
+   * Convert CompletionMessage array to ResponseInput format.
+   * Key Changes: 
+   *  - type name from text & image_url to input_text & input_image
+   *  - taking nested image_url properties (url & detail) out one level
+   */
+  private convertMessagesToInput(messages: CompletionMessage[]): ResponseInput {
+
+    return messages.map((msg) => {
+      if (Array.isArray(msg.content)) {
+        // Handle content as array of CompletionContentPart
+        const contentArray = msg.content.map((part) => {
+          if (part.type === "text") {
+            return { type: "input_text", text: part.text };
+          } else if (part.type === "image_url") {
+            return { type: "input_image", image_url: part.image_url.url, detail: part.image_url.detail };
+          } else {
+            throw new Error(`Unsupported content part type: ${part.type}`);
+          }
+        });
+        return {
+          role: msg.role,
+          content: contentArray,
+        }
+      }
+      else {
+        // Handle content as simple string
+        return {
+          role: msg.role,
+          content: msg.content || "",
+        }
+      }
+    }) as ResponseInput;
+  }
 
   /**
    * Stream chat completions, optionally executing tool calls before recursively resuming the run.
@@ -72,14 +78,11 @@ export class AzureOpenAIProvider implements CompletionProvider {
     const { messages, userToken, model, signal, servers, currentOutput } = request;
     const { onChunk, onToolCall, onError, onComplete } = callbacks;
 
-    console.log("messages:", messages);
-
     let fullText = currentOutput || "";
-    let updatedMessages = messages as ResponseInput;
-
-    console.log("Updated messages for Azure OpenAI:", updatedMessages);
     
     try {
+      const updatedMessages = this.convertMessagesToInput(messages);
+
       const client = this.createClient(userToken);
 
       const stream = await client.responses.stream({
@@ -89,8 +92,6 @@ export class AzureOpenAIProvider implements CompletionProvider {
       }, { signal });
 
       for await (const event of stream) {
-        console.log("Received event:", event);
-
         if (event.type === "response.output_text.delta") {
           fullText += event.delta;
           onChunk?.(event.delta);
