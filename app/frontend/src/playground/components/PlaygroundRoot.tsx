@@ -15,10 +15,19 @@ import { apiUse } from "../../authConfig";
 import isFeatureEnabled from "../FeatureGate";
 import { DevBanner } from "./DevBanner";
 import SessionBootstrapper from "./SessionBootstrapper";
+import { useAppDispatch } from "../store/hooks";
+import { loadServers } from "../store/slices/toolSlice";
 
 const PlaygroundRoot: React.FC = () => {
   // Initialize authentication and get token on app load
   useAuth(apiUse);
+
+  const dispatch = useAppDispatch();
+
+  // Load MCP server configuration on startup
+  React.useEffect(() => {
+    dispatch(loadServers());
+  }, [dispatch]);
 
   return (
     <>

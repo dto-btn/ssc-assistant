@@ -17,33 +17,26 @@ export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rej
     let rawServers;
     let toolServers: Tool.Mcp[] = [];
 
-    try {
-      rawServers = JSON.parse(rawValue);
+    rawServers = JSON.parse(rawValue);
 
-      // Validate and map raw server data to Tool.Mcp objects
-      toolServers = rawServers
-        .filter((server: any) => server && server.server_label && server.server_url && server.server_description)
-        .map((server: any) => ({
-          server_label: server.server_label,
-          type: 'mcp',
-          server_url: server.server_url,
-          server_description: server.server_description,
-          require_approval: (server.require_approval === "always" || server.require_approval === "never") 
-            ? server.require_approval 
-            : "never",
-        }));
-    } catch (parseError: any) {
-      console.error("Failed to parse VITE_MCP_SERVERS:", parseError.message);
-      console.dir(rawValue);
-      // Attempt to fix trailing commas and parse again
-      const fixedValue = rawValue.replace(/,\s*([\]}])/g, '$1');
-      rawServers = JSON.parse(fixedValue);
-    }
+    // Validate and map raw server data to Tool.Mcp objects
+    toolServers = rawServers
+      .filter((server: any) => server && server.server_label && server.server_url && server.server_description)
+      .map((server: any) => ({
+        server_label: server.server_label,
+        type: 'mcp',
+        server_url: server.server_url,
+        server_description: server.server_description,
+        require_approval: (server.require_approval === "always" || server.require_approval === "never") 
+          ? server.require_approval 
+          : "never",
+      }));
 
     return toolServers;
 
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to parse MCP servers';
+    console.error(message);
     return rejectWithValue(message);
   }
 });
