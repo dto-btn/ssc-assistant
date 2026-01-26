@@ -258,16 +258,13 @@ export const sendAssistantMessage = ({
     const dispatchForAttachments = dispatch as AppDispatch;
     let { availableTools } = getState().tools;
 
-    // If tools are not loaded yet, dispatch the action to load them.
-    if (availableTools.length == 0) {
-      const resultAction = await dispatch(loadTools());
-      if (loadTools.fulfilled.match(resultAction)) {
-        availableTools = resultAction.payload; // Use the newly loaded tools
-      } else {
-        // Handle the case where tool loading failed
-        const errorMessage = (resultAction.payload as string) || "Failed to load assistant tools.";
-        throw new Error(errorMessage);
-      }
+    const resultAction = await dispatch(loadTools());
+    if (loadTools.fulfilled.match(resultAction)) {
+      availableTools = resultAction.payload; // Use the newly loaded tools
+    } else {
+      // Handle the case where tool loading failed
+      const errorMessage = (resultAction.payload as string) || "Failed to load assistant tools.";
+      throw new Error(errorMessage);
     }
 
     if (!accessToken || isTokenExpired(accessToken)) {
