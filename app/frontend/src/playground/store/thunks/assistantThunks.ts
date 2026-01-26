@@ -310,7 +310,7 @@ export const sendAssistantMessage = ({
     await completionService.createCompletion(
       {
         messages: completionMessages,
-        model: "chat", // Currently gpt-4.1-mini, eventually leverage an orchestrator
+        model: "gpt-4.1-mini", // Currently gpt-4.1-mini, eventually leverage an orchestrator
         provider,
         userToken: accessToken,
         servers: serversWithAuth,
