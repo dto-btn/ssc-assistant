@@ -6,24 +6,45 @@
  */
 
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { getToolService } from "../../services/toolService";
-import { ChatCompletionFunctionTool } from 'openai/resources/index.mjs';
+import { Tool } from "openai/resources/responses/responses.mjs";
 
 // Async thunk to load tools using the toolService
-export const loadTools = createAsyncThunk('tools/loadTools', async (_, { rejectWithValue }) => {
+export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rejectWithValue }) => {
+  
   try {
-    const toolService = await getToolService();
-    const tools = await toolService.listTools();
-    return tools;
+    const rawValue = import.meta.env.VITE_MCP_SERVERS;
+    if (!rawValue) return [];
+
+    let rawServers;
+    let toolServers: Tool.Mcp[] = [];
+
+    rawServers = JSON.parse(rawValue);
+
+    // Validate and map raw server data to Tool.Mcp objects
+    toolServers = rawServers
+      .filter((server: any) => server && server.server_label && server.server_url && server.server_description)
+      .map((server: any) => ({
+        server_label: server.server_label,
+        type: 'mcp',
+        server_url: server.server_url,
+        server_description: server.server_description,
+        require_approval: (server.require_approval === "always" || server.require_approval === "never") 
+          ? server.require_approval 
+          : "never",
+      }));
+
+    return toolServers;
+
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to load tools';
+    const message = error instanceof Error ? error.message : 'Failed to parse MCP servers';
+    console.error(message);
     return rejectWithValue(message);
   }
 });
 
 export interface ToolState {
   enabledTools: Record<string, boolean>;
-  availableTools: ChatCompletionFunctionTool[];
+  mcpServers: Tool.Mcp[];
   isLoading: boolean;
   error: string | null;
 }
@@ -36,7 +57,7 @@ const defaultEnabledTools: Record<string, boolean> = {
 
 const initialState: ToolState = {
   enabledTools: defaultEnabledTools,
-  availableTools: [],
+  mcpServers: [],
   isLoading: false,
   error: null,
 };
@@ -57,15 +78,15 @@ const toolSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(loadTools.pending, (state) => {
+      .addCase(loadServers.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(loadTools.fulfilled, (state, action: PayloadAction<ChatCompletionFunctionTool[]>) => {
+      .addCase(loadServers.fulfilled, (state, action: PayloadAction<Tool.Mcp[]>) => {
         state.isLoading = false;
-        state.availableTools = action.payload;
+        state.mcpServers = action.payload;
       })
-      .addCase(loadTools.rejected, (state, action) => {
+      .addCase(loadServers.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       });

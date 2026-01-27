@@ -9,8 +9,8 @@ import type {
   ChatCompletionContentPart,
   ChatCompletionMessageParam,
 } from "openai/resources/chat/completions";
-import { ChatCompletionFunctionTool } from "openai/resources/index.mjs";
 import { AzureOpenAIProvider } from "./providers/azureOpenAIProvider";
+import { Tool } from "openai/resources/responses/responses.mjs";
 
 export type CompletionContentPart = Extract<
   ChatCompletionContentPart,
@@ -28,13 +28,13 @@ export interface CompletionRequest {
   provider?: 'azure-openai' | 'aws-bedrock' | "goc-ai-platform";
   userToken: string;
   signal?: AbortSignal;
-  tools?: ChatCompletionFunctionTool[];
+  servers?: Tool.Mcp[];
   currentOutput?: string;
 }
 
 export interface StreamingCallbacks {
   onChunk?: (chunk: string) => void;
-  onToolCall?: (toolName: string) => void;
+  onToolCall?: (toolName?: string) => void;
   onError?: (error: Error) => void;
   onComplete?: (fullText: string) => void;
 }
