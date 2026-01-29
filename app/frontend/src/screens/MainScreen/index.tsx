@@ -437,6 +437,53 @@ const MainScreen = () => {
     tool: string,
     isStatic: boolean
   ) => {
+    const shouldAutoRenameFromSuggestion = () => {
+      if (currentChatHistory.isTopicSet) {
+        return false;
+      }
+
+      const description = (currentChatHistory.description || "").trim();
+      if (!description || description === "...") {
+        return true;
+      }
+
+      const defaultTitle = `Conversation ${currentChatIndex + 1}`;
+      if (description === defaultTitle) {
+        return true;
+      }
+
+      const normalizedDescription = description.replace(/\s+/g, " ");
+      return /^New Chat \d+$/i.test(normalizedDescription);
+    };
+
+    const buildTitleFromSuggestion = (raw: string, maxWords = 6): string | null => {
+      const normalized = raw.trim();
+      if (!normalized) {
+        return null;
+      }
+
+      let normalizedMaxWords = Number.isFinite(maxWords) ? Math.floor(maxWords) : 1;
+      if (normalizedMaxWords < 1) {
+        normalizedMaxWords = 1;
+      }
+
+      const words = normalized.split(/\s+/).filter(Boolean);
+      if (!words.length) {
+        return null;
+      }
+
+      const truncated = words.slice(0, normalizedMaxWords).join(" ");
+      const title = words.length > normalizedMaxWords ? `${truncated}…` : truncated;
+      return title ? `${title.charAt(0).toUpperCase()}${title.slice(1)}` : null;
+    };
+
+    if (shouldAutoRenameFromSuggestion()) {
+      const derivedTitle = buildTitleFromSuggestion(question);
+      if (derivedTitle) {
+        chatService.renameChat(derivedTitle, currentChatIndex);
+      }
+    }
+
     const updatedTools: Record<string, boolean> = {
       ...enabledTools,
     };
