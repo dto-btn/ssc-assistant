@@ -32,7 +32,11 @@ const PlaygroundRoot: React.FC = () => {
   return (
     <>
       <SessionBootstrapper />
-      <Box display="flex" height="100vh">
+      <Box
+        display="flex"
+        height="100vh"
+        sx={{ backgroundColor: "var(--pg-body-bg)", color: "var(--pg-text)" }}
+      >
         <SessionSidebar />
         <ChatArea />
       </Box>

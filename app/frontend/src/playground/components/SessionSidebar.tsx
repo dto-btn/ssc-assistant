@@ -41,6 +41,8 @@ import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 import SyncStatusIndicator from "./SyncStatusIndicator";
 import ProfileMenu from "./ProfileMenu/ProfileMenu";
+import ThemeToggle from "./ThemeToggle";
+
 import { deleteSession as deleteSessionThunk, persistSessionRename } from "../store/thunks/sessionManagementThunks";
 
 /**
@@ -162,8 +164,9 @@ const SessionSidebar: React.FC = () => {
         flexDirection: "column",
         height: "100vh",
         overflowX: "hidden",
-        borderRight: "1px solid #ddd",
-        bgcolor: "#ededf3",
+        borderRight: "1px solid var(--pg-border-subtle)",
+        bgcolor: "var(--pg-sidebar-bg)",
+        color: "var(--pg-text)",
       }}
     >
       <List>
@@ -193,9 +196,11 @@ const SessionSidebar: React.FC = () => {
                 flexDirection: "row",
                 p: "2px 0px",
                 backgroundColor:
-                  session.id === currentSessionId ? "lightgray" : "transparent",
+                  session.id === currentSessionId
+                    ? "var(--pg-sidebar-hover)"
+                    : "transparent",
                 "&:hover": {
-                  backgroundColor: "lightgray",
+                  backgroundColor: "var(--pg-sidebar-hover)",
                 },
                 transition: "none",
                 // Hide the more button by default; show on hover or focus within
@@ -237,22 +242,16 @@ const SessionSidebar: React.FC = () => {
                 aria-controls={moreMenuOpen ? "session-menu" : undefined}
                 aria-expanded={moreMenuOpen ? "true" : undefined}
                 aria-haspopup="true"
-                sx={{ mr: "10px", "&:hover": { backgroundColor: "transparent", color: "black" } }}
+                sx={{
+                  mr: "10px",
+                  color: "inherit",
+                  "&:hover": {
+                    backgroundColor: "transparent",
+                    color: "var(--pg-text)",
+                  },
+                }}
               >
-                <Tooltip
-                  title={t('options')}
-                  placement="top"
-                  slotProps={{
-                    popper: {
-                      sx: {
-                        "& .MuiTooltip-tooltip": { backgroundColor: "black", color: "white" },
-                      },
-                      modifiers: [
-                        { name: "offset", options: { offset: [0, 5] } },
-                      ],
-                    },
-                  }}
-                >
+                <Tooltip title={t('options')} placement="top">
                   <MoreHorizIcon />
                 </Tooltip>
               </IconButton>
@@ -287,13 +286,17 @@ const SessionSidebar: React.FC = () => {
         onClose={() => setRenameDialogOpen(false)}
         onRename={handleRenameSession}
       />
-      <Box  //floats to bottom of sidebar
+      <Box
         sx={{
           marginTop: "auto",
           display: "flex",
-          gap: "1rem",
+          flexDirection: "column",
+          gap: 1,
+          px: 2,
+          pb: 2,
         }}
       >
+        <ThemeToggle />
         <ProfileMenu
           size="30px"
           fontSize="12px"
