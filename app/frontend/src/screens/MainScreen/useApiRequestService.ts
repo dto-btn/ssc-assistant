@@ -16,7 +16,7 @@ import { MAX_MESSAGES_SENT } from "../../constants";
 export const useApiRequestService = () => {
     const { instance } = useMsal();
     const [apiAccessToken, setApiAccessToken] = useState<string>("");
-    const { updateLastMessage, saveChatHistories } = useChatService();
+    const { updateLastMessage, saveChatHistories, renameChat } = useChatService();
     const { t, i18n } = useTranslation();
     // Narrow store subscriptions to avoid full-store reactivity
     const setQuotedText = useChatStore((s) => s.setQuotedText);
@@ -135,6 +135,55 @@ export const useApiRequestService = () => {
             attachments: attachments,
         };
 
+        const shouldAutoRenameFromQuestion = (history: ChatHistory, chatIndex: number) => {
+            if (history.isTopicSet) {
+                return false;
+            }
+
+            const description = (history.description || "").trim();
+            if (!description || description === "...") {
+                return true;
+            }
+
+            const defaultTitle = `Conversation ${chatIndex + 1}`;
+            if (description === defaultTitle) {
+                return true;
+            }
+
+            const normalizedDescription = description.replace(/\s+/g, " ");
+            return /^New Chat \d+$/i.test(normalizedDescription);
+        };
+
+        const buildTitleFromQuestion = (raw: string, maxWords = 6): string | null => {
+            const normalized = raw.trim();
+            if (!normalized) {
+                return null;
+            }
+
+            let normalizedMaxWords = Number.isFinite(maxWords) ? Math.floor(maxWords) : 1;
+            if (normalizedMaxWords < 1) {
+                normalizedMaxWords = 1;
+            }
+
+            const words = normalized.split(/\s+/).filter(Boolean);
+            if (!words.length) {
+                return null;
+            }
+
+            const truncated = words.slice(0, normalizedMaxWords).join(" ");
+            const title = words.length > normalizedMaxWords ? `${truncated}…` : truncated;
+            return title ? `${title.charAt(0).toUpperCase()}${title.slice(1)}` : null;
+        };
+
+        const currentHistorySnapshot = getCurrentChatHistory();
+        const currentIndexSnapshot = useChatStore.getState().currentChatIndex;
+        if (shouldAutoRenameFromQuestion(currentHistorySnapshot, currentIndexSnapshot)) {
+            const derivedTitle = buildTitleFromQuestion(question);
+            if (derivedTitle) {
+                renameChat(derivedTitle, currentIndexSnapshot);
+            }
+        }
+
         const responsePlaceholder: Completion = {
             message: {
                 role: "assistant",
@@ -181,7 +230,7 @@ export const useApiRequestService = () => {
 
         sendApiRequest(request);
         setQuotedText(undefined)
-    }, [getCurrentChatHistory, i18n.language, quotedText, saveChatHistories, sendApiRequest, setCurrentChatHistory, setQuotedText]);
+    }, [getCurrentChatHistory, i18n.language, quotedText, renameChat, saveChatHistories, sendApiRequest, setCurrentChatHistory, setQuotedText]);
 
     const abortRequest = useCallback(() => {
         if (abortControllerRef.current) {

@@ -199,8 +199,24 @@ export const useChatService = () => {
         }else{
             //set chat index to first chat
             setCurrentChatIndex(chatIndex);
-            const currentChat = chatHistories[chatIndex];
-            setCurrentChatHistory(currentChat);
+            const currentChat = chatHistories[chatIndex] || buildDefaultChatHistory();
+            const normalizedDescription = (currentChat.description || "").trim();
+            const isPlaceholderTitle =
+                !normalizedDescription ||
+                normalizedDescription === "..." ||
+                normalizedDescription === `Conversation ${chatIndex + 1}` ||
+                /^New Chat \d+$/i.test(normalizedDescription);
+
+            let nextChat = currentChat;
+            if (lastChatLength === 0 && isPlaceholderTitle && currentChat.isTopicSet) {
+                nextChat = { ...currentChat, isTopicSet: false };
+                chatHistories[chatIndex] = nextChat;
+                PersistenceUtils.setChatHistories(chatHistories);
+            }
+
+            setCurrentChatHistory(nextChat);
+            // Allow auto-title for the reused empty chat.
+            hasFetchedTitleRef.current = false;
         }
     }, [createNewChat, deleteSavedChat, setCurrentChatHistory, setCurrentChatIndex])
 
