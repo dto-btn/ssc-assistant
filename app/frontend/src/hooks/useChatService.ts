@@ -1,25 +1,25 @@
-import { useCallback, useMemo } from "react"
+import { useCallback, useMemo, useRef } from "react"
 
 import { PersistenceUtils } from "../util/persistence";
 import { useChatStore } from "../stores/ChatStore";
 import { useAppStore } from "../stores/AppStore";
 import { useTranslation } from "react-i18next";
 import { MAX_CHAT_HISTORIES_LENGTH, MUTUALLY_EXCLUSIVE_TOOLS, SNACKBAR_DEBOUNCE_KEYS } from "../constants";
-import { isACompletion } from "../utils";
+import { isACompletion, isAMessage } from "../utils";
 import { buildDefaultChatHistory } from "../stores/modelBuilders";
-import { useBasicApiRequestService } from "../screens/MainScreen/useApiRequestService";
-// removed duplicate t import; using useTranslation hook's t
 
-let hasFetchedTitle = false
-
+/**
+ * Custom hook that provides chat-related services.
+ * Uses memoized callbacks to avoid unnecessary re-renders.
+ */
 export const useChatService = () => {
     const { t } = useTranslation()
     // Select only what's needed from stores to avoid re-renders on unrelated updates
     const currentChatIndex = useChatStore((s) => s.currentChatIndex);
-    const chatHistoriesDescriptions = useChatStore((s) => s.chatHistoriesDescriptions);
     const setChatIndexToLoadOrDelete = useChatStore((s) => s.setChatIndexToLoadOrDelete);
     const setChatHistoriesDescriptions = useChatStore((s) => s.setChatHistoriesDescriptions);
     const setDefaultChatHistory = useChatStore((s) => s.setDefaultChatHistory);
+    const hasFetchedTitleRef = useRef(false);
     const setCurrentChatHistory = useChatStore((s) => s.setCurrentChatHistory);
     const chatStoreSetCurrentChatIndex = useChatStore((s) => s.setCurrentChatIndex);
     const hydrateChatStore = useChatStore((s) => s.hydrateOnBoot);
@@ -29,10 +29,6 @@ export const useChatService = () => {
     const setAppEnabledTools = useAppStore((s) => s.tools.setEnabledTools);
     const messageThreshold = parseInt(import.meta.env.TITLE_RENAME_THRESHOLD || "1", 10);
 
-    const makeBasicApiRequest = useBasicApiRequestService();
-    // This is a custom hook that provides chat-related services. We use useMemo to
-    // memoize the value of the service to avoid unnecessary re-renders.
-
     const setCurrentChatIndex = useCallback((index: number) => {
         // Set the index in local storage
         PersistenceUtils.setCurrentChatIndex(index);
@@ -40,63 +36,6 @@ export const useChatService = () => {
         chatStoreSetCurrentChatIndex(index);
     }, [chatStoreSetCurrentChatIndex]);
 
-
-    const fetchChatTitleAndRename = useCallback(async (
-        updatedChatHistory: { chatItems: ChatItem[] }, // Structure of chat history passed to the function
-        currentChatIndex: number,                 // Index of the conversation being updated
-        renameChat: (title: string, index: number) => void,
-         // Callback to rename the conversation                     // Authorization token
-
-    ): Promise<void> => {
-        /**
-         * Fetches a title for the chat conversation using the completionBasic function
-         * and renames the chat using the provided renameChat callback.
-         *
-         * @param updatedChatHistory - The current chat history to be updated.
-         * @param currentChatIndex - The index of the current chat in the chat history.
-         * @param renameChat - Callback function to rename the chat with the new title.
-         */
-        try {
-
-            const message :Message[] = updatedChatHistory.chatItems.map((item) => {
-                // Ensure each chat item is a Message type
-                if (isACompletion(item)) {
-                    return item.message; // Extract the message from the completion
-                }
-                return item as Message; // Cast to Message type
-            }).filter((item) => {
-                // Filter out any undefined or null items
-                return item !== null && item !== undefined;
-            }).map((item) => {
-                // Ensure each item has a role and content
-                return {
-                    role: item.role || "system", // Default to "system" if role is undefined
-                    content: item.content || "", // Default to empty string if content is undefined
-                    context: item.context, // Include context if available
-                    tools_info: item.tools_info, // Include tools_info if available
-                    quotedText: item.quotedText, // Include quotedText if available
-                    attachments: item.attachments // Include attachments if available
-                };
-            });
-
-            // Construct the MessageRequest object
-            const request: MessageRequest = summerizeChatWithChatGPT(message, t);
-
-            // Call the completionBasic function
-            const data = await makeBasicApiRequest(request);
-
-            // Extract the title from the response or use a fallback if unavailable
-            const title = data.json.message.content || `Conversation ${currentChatIndex + 1}`;
-
-            // Apply the title to the current chat using the provided callback
-            renameChat(title, currentChatIndex);
-        } catch (error) {
-            console.error("Error fetching chat title:", error);
-
-            // Provide a fallback title in case of an error
-            renameChat(`Conversation ${currentChatIndex + 1}`, currentChatIndex);
-        }
-    }, [makeBasicApiRequest, t]);
     const saveChatHistories = useCallback((updatedChatHistory: ChatHistory) => {
 
         try {
@@ -136,7 +75,7 @@ export const useChatService = () => {
         setChatHistoriesDescriptions(
             updatedChatHistories.map(
                 (chatHistory, index) =>
-                    chatHistory.description || "Conversation " + (index + 1)
+                    chatHistory.description || `New Chat ${index + 1}`
             )
         );
     }, [currentChatIndex, setChatHistoriesDescriptions, setCurrentChatHistory]);
@@ -144,6 +83,8 @@ export const useChatService = () => {
     const handleLoadSavedChat = useCallback((index: number) => {
         const chatHistories = PersistenceUtils.getChatHistories();
         if (chatHistories) {
+            // Reset auto-title state when switching chats.
+            hasFetchedTitleRef.current = false;
             const newChat = chatHistories[index];
             setCurrentChatHistory(newChat);
             setCurrentChatIndex(index);
@@ -171,12 +112,12 @@ export const useChatService = () => {
         }
 
         if (updatedChatHistories.length === 0) {
-            setChatHistoriesDescriptions(["Conversation 1"]);
+            setChatHistoriesDescriptions([getNextNewChatTitle([])]);
         } else {
             setChatHistoriesDescriptions(
                 updatedChatHistories.map(
                     (chatHistory, index) =>
-                        chatHistory.description || "Conversation " + (index + 1)
+                        chatHistory.description || `New Chat ${index + 1}`
                 )
             );
         }
@@ -187,7 +128,8 @@ export const useChatService = () => {
 
     const createNewChat = useCallback((tool?: string) => {
         const chatHistories = PersistenceUtils.getChatHistories();
-        const newChatIndex = chatHistoriesDescriptions.length;
+        // Always use persisted length to avoid duplicate sidebar titles.
+        const newChatIndex = chatHistories.length;
 
         if (chatHistories.length === MAX_CHAT_HISTORIES_LENGTH || newChatIndex >= MAX_CHAT_HISTORIES_LENGTH) {
             showSnackbar(
@@ -197,7 +139,8 @@ export const useChatService = () => {
         } else {
             const newChat = buildDefaultChatHistory()
             chatHistories.push(newChat);
-            const newDescription = "...";
+            // Generate a stable fallback title for the new chat.
+            const newDescription = getNextNewChatTitle(chatHistories);
 
             // Process tools (static tools are generally mutually exclusive tools and work on their own)
             // If tool(s) are enforced specifically here for this new chat, we set them in the convo staticTools
@@ -216,20 +159,25 @@ export const useChatService = () => {
                 });
             }
             newChat.description = newDescription;
-            PersistenceUtils.setChatHistories(chatHistories);
             setCurrentChatIndex(chatHistories.length - 1);
             setCurrentChatHistory(newChat);
-            setChatHistoriesDescriptions([
-                ...chatHistoriesDescriptions,
-                newDescription
-            ]);
+            // Allow auto-title for the newly created chat.
+            hasFetchedTitleRef.current = false;
+            // Rebuild descriptions from persisted histories to keep UI in sync.
+            setChatHistoriesDescriptions(
+                chatHistories.map(
+                    (chatHistory, index) =>
+                        chatHistory.description || `New Chat ${index + 1}`
+                )
+            );
+            PersistenceUtils.setChatHistories(chatHistories);
             setAppEnabledTools(updatedTools);
             PersistenceUtils.setEnabledTools(updatedTools);
 
         }
-    }, [chatHistoriesDescriptions, enabledTools, setAppEnabledTools, setChatHistoriesDescriptions, setCurrentChatHistory, setCurrentChatIndex, showSnackbar, t]);
+    }, [enabledTools, setAppEnabledTools, setChatHistoriesDescriptions, setCurrentChatHistory, setCurrentChatIndex, showSnackbar, t]);
 
-        const handleNewChat = useCallback((tool?: string) => {
+        const handleNewChat = useCallback(async (tool?: string) => {
                 const chatHistories = PersistenceUtils.getChatHistories();
                     let chatIndex = chatHistories.length - 1;
             if(chatIndex < 0){
@@ -239,18 +187,36 @@ export const useChatService = () => {
                 const lastChatLength = Array.isArray(lastChat.chatItems) ? lastChat.chatItems.length : 0;
 
         if(lastChatLength === 0 && typeof(tool) !== "undefined"){
-            deleteSavedChat(chatIndex);
+            // Ensure deletions complete before creating a new chat to avoid duplicates.
+            await deleteSavedChat(chatIndex);
             createNewChat(tool);
         }else if(lastChatLength === 0 && lastChat.staticTools?.length > 0){
-            deleteSavedChat(chatIndex);
+            // Same deletion-before-create logic for tool-specific chats.
+            await deleteSavedChat(chatIndex);
             createNewChat(tool);
-        }else if(lastChatLength != 0 || typeof(tool) !== "undefined"){
+        }else if(lastChatLength !== 0 || typeof(tool) !== "undefined"){
             createNewChat(tool);
         }else{
             //set chat index to first chat
             setCurrentChatIndex(chatIndex);
-            const currentChat = chatHistories[chatIndex];
-            setCurrentChatHistory(currentChat);
+            const currentChat = chatHistories[chatIndex] || buildDefaultChatHistory();
+            const normalizedDescription = (currentChat.description || "").trim();
+            const isPlaceholderTitle =
+                !normalizedDescription ||
+                normalizedDescription === "..." ||
+                normalizedDescription === `Conversation ${chatIndex + 1}` ||
+                /^New Chat \d+$/i.test(normalizedDescription);
+
+            let nextChat = currentChat;
+            if (lastChatLength === 0 && isPlaceholderTitle && currentChat.isTopicSet) {
+                nextChat = { ...currentChat, isTopicSet: false };
+                chatHistories[chatIndex] = nextChat;
+                PersistenceUtils.setChatHistories(chatHistories);
+            }
+
+            setCurrentChatHistory(nextChat);
+            // Allow auto-title for the reused empty chat.
+            hasFetchedTitleRef.current = false;
         }
     }, [createNewChat, deleteSavedChat, setCurrentChatHistory, setCurrentChatIndex])
 
@@ -258,8 +224,10 @@ export const useChatService = () => {
     const deleteAllChatHistory = useCallback(() => {
         // create a new chat history with default values
         const newChat = buildDefaultChatHistory()
-        const newDescription = "...";
+        const newDescription = getNextNewChatTitle([]);
         newChat.description = newDescription;
+        // Reset auto-title state for the fresh chat.
+        hasFetchedTitleRef.current = false;
 
         // update the in-memory state
         setChatHistoriesDescriptions([newDescription]);
@@ -291,11 +259,11 @@ export const useChatService = () => {
                 ...history,
                 description: history.description && history.description.trim().length > 0
                     ? history.description
-                    : `Conversation ${index + 1}`,
+                    : `New Chat ${index + 1}`,
             }));
 
             const descriptions = hydratedHistories.map((chatHistory, index) =>
-                chatHistory.description || `Conversation ${index + 1}`
+                chatHistory.description || `New Chat ${index + 1}`
             );
 
             const nextCurrentChatIndex = Math.min(Math.max(currentChatIndex, 0), hydratedHistories.length - 1);
@@ -358,15 +326,19 @@ export const useChatService = () => {
                         if (
                             updatedChatHistory.chatItems.length >= messageThreshold &&
                             updatedChatHistory.isTopicSet === false &&
-                            !hasFetchedTitle
+                            !hasFetchedTitleRef.current
                         ) {
-                            try{
-                            //Fetch and set the chat title using the reusable function
-                            fetchChatTitleAndRename(updatedChatHistory, currentChatIndex, renameChat);
-                            }catch(error){
-                                console.error("Error fetching chat title:", error);
-                            }finally{
-                                hasFetchedTitle = true; // Ensure we only fetch the title once per conversation
+                            try {
+                                // Only auto-title when the chat still has a default label.
+                                if (shouldAutoRename(updatedChatHistory, currentChatIndex)) {
+                                    const derivedTitle = buildTitleFromFirstMessage(updatedChatHistory.chatItems);
+                                    if (derivedTitle) {
+                                        renameChat(derivedTitle, currentChatIndex);
+                                        hasFetchedTitleRef.current = true; // Ensure we only auto-title once per conversation
+                                    }
+                                }
+                            } catch (error) {
+                                console.error("Error generating chat title:", error);
                             }
                         }
                     });
@@ -383,7 +355,6 @@ export const useChatService = () => {
         handleNewChat,
         deleteAllChatHistory,
         deleteSavedChat,
-        fetchChatTitleAndRename,
         messageThreshold,
         currentChatIndex,
         setCurrentChatHistory,
@@ -394,70 +365,102 @@ export const useChatService = () => {
     return memoized
 }
 
-function mergeChatItem(chatItem: { role?: string; content?: unknown }): string {
-    /**
-     * Merges a chat item into a string format for logging or display.
-     */
-    if (!chatItem) {
-        return "";
+/**
+ * Provides a stable fallback title for new chats: "New Chat N".
+ *
+ * Uses existing persisted histories to increment the counter safely.
+ */
+function getNextNewChatTitle(chatHistories: ChatHistory[]): string {
+    const prefix = "New Chat";
+    let maxIndex = 0;
+
+    for (const history of chatHistories) {
+        const rawDescription = typeof history.description === "string" ? history.description : "";
+        const description = rawDescription.replace(/\s+/g, " ").trim();
+        if (!description.startsWith(prefix)) {
+            continue;
+        }
+
+        const match = description.match(/^New Chat (\d+)$/i);
+        if (match) {
+            const value = Number.parseInt(match[1], 10);
+            if (!Number.isNaN(value)) {
+                maxIndex = Math.max(maxIndex, value);
+            }
+        }
     }
 
-    let role: string = chatItem.role ?? "unknown"; // Default 'role' to "unknown" if undefined
-    let content: unknown = chatItem.content ?? ""; // Default 'content' to an empty string if undefined
-
-    // Handle content based on its type
-    if (typeof content === "object" && content !== null && !Array.isArray(content)) {
-        // Convert content to JSON string if it's an object
-        content = JSON.stringify(content as Record<string, unknown>, null, 0); // No extra spaces
-    } else if (Array.isArray(content)) {
-        // Join array items with newline characters
-        content = (content as unknown[]).map(item => String(item)).join("\n");
-    } else if (typeof content !== "string") {
-        // Convert non-string, non-object, non-array content to a string
-        content = String(content);
+    return `${prefix} ${maxIndex + 1}`;
+}
+/**
+ * Determines whether a chat can be auto-titled.
+ *
+ * Skips auto-renaming if the user has already renamed the chat or
+ * if a title has been explicitly set.
+ */
+function shouldAutoRename(chatHistory: ChatHistory, chatIndex: number): boolean {
+    if (chatHistory.isTopicSet) {
+        return false;
     }
 
-    // Ensure 'role' is a string
-    if (typeof role !== "string") {
-        role = String(role);
+    const description = (chatHistory.description || "").trim();
+    // The "..." value is a legacy default description used by older chat histories.
+    // Keep treating it like an empty/placeholder title so those chats can still be auto-renamed.
+    if (!description || description === "...") {
+        return true;
     }
 
-    // Normalize to string for final checks
-    const contentStr = typeof content === "string" ? content : String(content);
-    // Skip invalid chat items
-    if (role === "unknown" || !contentStr || !contentStr.trim()) {
-        return "";
+    const defaultTitle = `Conversation ${chatIndex + 1}`;
+    if (description === defaultTitle) {
+        return true;
     }
 
-    // Strip leading and trailing whitespace from the content
-    content = contentStr.trim();
-
-    // Return the formatted string
-    return `${role}: ${content}`;
+    const normalizedDescription = description.replace(/\s+/g, " ");
+    // Treat "New Chat N" placeholders as auto-renamable defaults.
+    return /^New Chat \d+$/i.test(normalizedDescription);
 }
 
-function summerizeChatWithChatGPT(chat: Message[], t: (key: string) => string): MessageRequest {
-    // Merge all chat items (filter undefined or null items)
-    const mergeChatItems = chat
-        .filter(item => item !== null && item !== undefined)
-        .map(item => mergeChatItem(item));
+/**
+ * Builds a short chat title from the first non-empty message content.
+ *
+ * This is intentionally simple and avoids AI-based renaming.
+ */
+function buildTitleFromFirstMessage(chatItems: ChatItem[], maxWords = 6): string | null {
+    let normalizedMaxWords = Number.isFinite(maxWords) ? Math.floor(maxWords) : 1;
+    if (normalizedMaxWords < 1) {
+        normalizedMaxWords = 1;
+    }
 
-    // Join merged chat items into a single block of text
-    const mergedText = mergeChatItems.join("\n");
+    let normalized = "";
+    for (const item of chatItems) {
+        const content = isACompletion(item)
+            ? item.message?.content
+            : isAMessage(item)
+                ? (item as Message).content
+                : "";
 
-    // Build the prompt for ChatGPT
-    const SUMMERIZECHATWITHCHATGPT_MESSAGE = t("summerize.conversation");
-    const prompt = `${SUMMERIZECHATWITHCHATGPT_MESSAGE}:\n\n${mergedText}`;
+        if (typeof content !== "string") {
+            continue;
+        }
 
-    // Create a request message
-    const messages: Message[] = [{ role: "user", content: prompt }];
-    const messageRequest: MessageRequest = {
-        messages: messages,
-        query: prompt,
-        quotedText: "",
-        model: import.meta.env.TITLE_RENAME_MODEL || "gpt-4.1-nano",
-    };
+        const candidate = content.trim();
+        if (candidate) {
+            normalized = candidate;
+            break;
+        }
+    }
 
-    return messageRequest;
+    if (!normalized) {
+        return null;
+    }
+
+    const words = normalized.split(/\s+/).filter(Boolean);
+    if (!words.length) {
+        return null;
+    }
+
+    const truncated = words.slice(0, normalizedMaxWords).join(" ");
+    const title = words.length > normalizedMaxWords ? `${truncated}…` : truncated;
+    return title ? `${title.charAt(0).toUpperCase()}${title.slice(1)}` : null;
 }
 
