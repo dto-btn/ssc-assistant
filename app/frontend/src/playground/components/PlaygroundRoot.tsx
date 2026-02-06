@@ -11,6 +11,7 @@ import SessionSidebar from "./SessionSidebar";
 import ChatArea from "./ChatArea";
 import FeedbackForm from "./FeedbackForm";
 import { useAuth } from "../store/hooks/useAuth";
+import { useKeycloakAuth } from "../store/hooks/useKeycloakAuth";
 import { apiUse } from "../../authConfig";
 import isFeatureEnabled from "../FeatureGate";
 import { DevBanner } from "./DevBanner";
@@ -18,10 +19,21 @@ import SessionBootstrapper from "./SessionBootstrapper";
 import { useAppDispatch } from "../store/hooks";
 import { loadServers } from "../store/slices/toolSlice";
 
-const PlaygroundRoot: React.FC = () => {
-  // Initialize authentication and get token on app load
-  useAuth(apiUse);
+const authProvider = (import.meta.env.VITE_AUTH_PROVIDER as string) || "msal";
 
+const MsalAuthBootstrap: React.FC = () => {
+  useAuth(apiUse);
+  return null;
+};
+
+const KeycloakAuthBootstrap: React.FC = () => {
+  useKeycloakAuth();
+  return null;
+};
+
+const AuthBootstrap = authProvider === "keycloak" ? KeycloakAuthBootstrap : MsalAuthBootstrap;
+
+const PlaygroundRoot: React.FC = () => {
   const dispatch = useAppDispatch();
 
   // Load MCP server configuration on startup
@@ -31,6 +43,7 @@ const PlaygroundRoot: React.FC = () => {
 
   return (
     <>
+      <AuthBootstrap />
       <SessionBootstrapper />
       <Box display="flex" height="100vh">
         <SessionSidebar />

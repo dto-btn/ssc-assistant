@@ -56,6 +56,17 @@ from the UI.
 - [react msal App reg setup](https://learn.microsoft.com/en-us/entra/identity-platform/tutorial-single-page-app-react-register-app)
 - [react msal app config](https://learn.microsoft.com/en-us/entra/identity-platform/tutorial-single-page-app-react-prepare-spa?tabs=visual-studio)
 
+### Keycloak Authentication (optional)
+
+Set `VITE_AUTH_PROVIDER=keycloak` in [app/frontend/.env](.env), then provide:
+- `VITE_KEYCLOAK_URL`
+- `VITE_KEYCLOAK_REALM`
+- `VITE_KEYCLOAK_CLIENT_ID`
+
+The frontend will use Keycloak instead of MSAL to obtain the access token.
+
+Note: Keycloak mode currently targets the playground UI; the main MSAL-based app remains unchanged.
+
 ### Setting up custom SSL/TSL certs and bindings in Azure App Services
 
 General documentation on the subject: 

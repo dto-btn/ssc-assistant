@@ -13,6 +13,7 @@
   "dependencies": {
     "@azure/msal-browser": "^4.26.2",
     "@azure/msal-react": "^3.0.22",
+    "keycloak-js": "^26.0.0",
     "@azure/openai": "^2.0.0",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",

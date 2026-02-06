@@ -10,6 +10,9 @@ export async function callMsGraph(accessToken?: string) {
     // if no access token provided, we simply acquire it silently via 
     // the loginRequest ([User.Read] scope) and with the current authenticated account
     if (!accessToken) {
+        if (!msalInstance) {
+            throw Error("MSAL instance is not initialized.");
+        }
         const account = msalInstance.getActiveAccount();
         if (!account) {
             throw Error("No active account! Verify a user has been signed in and setActiveAccount has been called.");

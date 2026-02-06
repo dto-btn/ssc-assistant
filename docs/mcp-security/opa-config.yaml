@@ -1,0 +1,17 @@
+services:
+  envoy:
+    url: http://0.0.0.0:9191
+
+plugins:
+  envoy_ext_authz_grpc:
+    addr: :9191
+    query: data.mcp.authz.allow
+    enable-reflection: true
+
+bundles:
+  mcp:
+    resource: /v1/bundles/mcp
+    persist: false
+    polling:
+      min_delay_seconds: 60
+      max_delay_seconds: 120
