@@ -1,0 +1,25 @@
+# SearXNG settings
+use_default_settings: true
+
+server:
+  port: 8080
+  bind_address: "0.0.0.0"
+  secret_key: "2a2c8910231620b601a9c63ec7db02637282dc6618c3ef76c9f09c794303d2e4"
+
+search:
+  safe_search: 0
+  autocomplete: ""
+
+engines:
+  - name: google
+    engine: google
+    shortcut: g
+    enabled: true
+  - name: bing
+    engine: bing
+    shortcut: b
+    enabled: true
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: ddg
+    enabled: true

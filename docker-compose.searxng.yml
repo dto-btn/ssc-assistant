@@ -1,0 +1,33 @@
+services:
+  searxng:
+    container_name: searxng
+    image: searxng/searxng:latest
+    restart: always
+    networks:
+      - searxng-network
+    ports:
+      - "9090:8080"
+    volumes:
+      - ./mcp-servers/searxng/searxng_settings.yml:/etc/searxng/settings.yml
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:9090/
+
+  searxng-mcp:
+    container_name: searxng-mcp
+    build:
+      context: ./mcp-servers/searxng
+    restart: always
+    networks:
+      - searxng-network
+    ports:
+      - "8000:8000"
+    environment:
+      - SEARXNG_URL=http://searxng:8080
+    volumes:
+      - ./mcp-servers/searxng:/app
+    depends_on:
+      - searxng
+
+networks:
+  searxng-network:
+    driver: bridge

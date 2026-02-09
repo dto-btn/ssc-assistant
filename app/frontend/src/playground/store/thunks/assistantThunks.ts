@@ -255,11 +255,19 @@ export const sendAssistantMessage = ({
 
     const { accessToken } = getState().auth;
     const dispatchForAttachments = dispatch as AppDispatch;
-    const { mcpServers } = getState().tools;
+    const { mcpServers, enabledTools } = getState().tools;
 
-    // Attach authorization tokens to MCP servers
+    // Attach authorization tokens to MCP servers and filter by enabled tools
     const serversWithAuth: Tool.Mcp[] = (mcpServers && mcpServers.length > 0 && accessToken)
-      ? mcpServers.map((server: Tool.Mcp) => ({ ...server, authorization: accessToken }))
+      ? mcpServers
+          .filter((server: Tool.Mcp) => {
+            // If the server is SearXNG, only include if 'web' tool is enabled
+            if (server.server_label === "SearXNG") {
+              return enabledTools.web !== false;
+            }
+            return true;
+          })
+          .map((server: Tool.Mcp) => ({ ...server, authorization: accessToken }))
       : [];
 
     if (!accessToken || isTokenExpired(accessToken)) {

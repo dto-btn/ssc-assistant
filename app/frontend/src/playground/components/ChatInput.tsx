@@ -21,6 +21,8 @@ import {
   CircularProgress,
   Chip,
   useTheme,
+  Switch,
+  FormControlLabel,
 } from "@mui/material";
 import FileUpload from "./FileUpload";
 import { addToast } from "../store/slices/toastSlice";
@@ -31,9 +33,11 @@ import SendIcon from "@mui/icons-material/Send";
 import InfoIcon from "@mui/icons-material/Info";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import StopCircleIcon from "@mui/icons-material/StopCircle";
+import LanguageIcon from "@mui/icons-material/Language";
 import isFeatureEnabled from "../FeatureGate";
 import { sendAssistantMessage } from "../store/thunks/assistantThunks";
 import { createPortal } from "react-dom";
+import { toggleTool } from "../store/slices/toolSlice";
 
 /**
  * Props for the Playground ChatInput component.
@@ -81,6 +85,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
   const dispatch = useAppDispatch();
   const quotedText = useAppSelector((state: RootState) => state.quoted.quotedText);
   const isLoading = useAppSelector((state: RootState) => state.chat.isLoading);
+  const enabledTools = useAppSelector((state: RootState) => state.tools.enabledTools);
 
   // Local UI state
   const [input, setInput] = useState("");
@@ -435,6 +440,28 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
         pb: 'env(safe-area-inset-bottom)',
       }}
     >
+      {/* Tool Toggles */}
+      <Box sx={{ display: 'flex', gap: 2, px: 2, pb: 1, alignItems: 'center' }}>
+        <FormControlLabel
+          control={
+            <Switch
+              size="small"
+              checked={!!enabledTools.web}
+              onChange={() => dispatch(toggleTool("web"))}
+              color="primary"
+            />
+          }
+          label={
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <LanguageIcon fontSize="small" color={enabledTools.web ? "primary" : "disabled"} />
+              <Typography variant="caption" color={enabledTools.web ? "text.primary" : "text.secondary"}>
+                {t('tools.webSearch', { defaultValue: 'Web Search' })}
+              </Typography>
+            </Box>
+          }
+        />
+      </Box>
+
       {/* Quoted text banner */}
       {quotedText && (
         <Paper
