@@ -17,3 +17,14 @@ export interface FileAttachment {
   sessionName?: string | null;
   lastUpdated?: string | null;
 }
+
+/**
+ * MCP Server configuration for the playground.
+ */
+export interface PlaygroundMCPServer {
+  server_label: string;
+  server_description: string;
+  server_url: string;
+  require_approval: "always" | "never";
+  type: "mcp";
+}

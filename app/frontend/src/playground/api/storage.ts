@@ -1,4 +1,4 @@
-import { FileAttachment, FileCategory, Tool } from "../types";
+import { FileAttachment, FileCategory, PlaygroundMCPServer } from "../types";
 
 const PLAYGROUND_API_BASE = "/api/playground";
 const UPLOAD_ENDPOINT = `${PLAYGROUND_API_BASE}/upload`;
@@ -422,7 +422,7 @@ export async function getMCPConfig({
   accessToken,
 }: {
   accessToken: string;
-}): Promise<any[]> {
+}): Promise<PlaygroundMCPServer[]> {
   if (!accessToken?.trim()) throw new Error("accessToken is required");
 
   const response = await fetch(MCP_CONFIG_ENDPOINT, {

@@ -9,6 +9,7 @@ import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Tool } from "openai/resources/responses/responses.mjs";
 import { getMCPConfig } from "../../api/storage";
 import { RootState } from "../index";
+import { PlaygroundMCPServer } from "../../types";
 
 // Async thunk to load tools using the toolService
 export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rejectWithValue, getState }) => {
@@ -27,10 +28,10 @@ export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rej
 
     // Validate and map raw server data to Tool.Mcp objects
     toolServers = rawServers
-      .filter((server: any) => server && server.server_label && server.server_url && server.server_description)
-      .map((server: any) => ({
+      .filter((server: PlaygroundMCPServer) => server && server.server_label && server.server_url && server.server_description)
+      .map((server: PlaygroundMCPServer) => ({
         server_label: server.server_label,
-        type: 'mcp',
+        type: 'mcp' as const,
         server_url: server.server_url,
         server_description: server.server_description,
         require_approval: (server.require_approval === "always" || server.require_approval === "never") 
