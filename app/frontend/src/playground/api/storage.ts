@@ -1,9 +1,10 @@
-import { FileAttachment, FileCategory } from "../types";
+import { FileAttachment, FileCategory, Tool } from "../types";
 
 const PLAYGROUND_API_BASE = "/api/playground";
 const UPLOAD_ENDPOINT = `${PLAYGROUND_API_BASE}/upload`;
 const FILES_FOR_SESSION_ENDPOINT = `${PLAYGROUND_API_BASE}/files-for-session`;
 const EXTRACT_FILE_TEXT_ENDPOINT = `${PLAYGROUND_API_BASE}/extract-file-text`;
+const MCP_CONFIG_ENDPOINT = `${PLAYGROUND_API_BASE}/mcp/config`;
 const sessionDeleteEndpoint = (sessionId: string) => `${PLAYGROUND_API_BASE}/sessions/${encodeURIComponent(sessionId)}`;
 const sessionRenameEndpoint = (sessionId: string) => `${sessionDeleteEndpoint(sessionId)}/rename`;
 
@@ -412,4 +413,24 @@ export async function fetchFileDataUrl({
       ? data.contentType
       : fileType ?? "application/octet-stream",
   };
+}
+
+/**
+ * Fetch the MCP server configuration from the backend.
+ */
+export async function getMCPConfig({
+  accessToken,
+}: {
+  accessToken: string;
+}): Promise<any[]> {
+  if (!accessToken?.trim()) throw new Error("accessToken is required");
+
+  const response = await fetch(MCP_CONFIG_ENDPOINT, {
+    headers: {
+      Authorization: `Bearer ${accessToken.trim()}`,
+    },
+  });
+
+  const data = await handleJsonResponse(response);
+  return Array.isArray(data?.servers) ? data.servers : [];
 }

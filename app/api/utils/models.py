@@ -182,6 +182,22 @@ class PlaygroundExtractTextResponse:
 
 
 @dataclass
+class PlaygroundMCPServer:
+    """Definition of an MCP server for the playground."""
+    server_label: str
+    server_description: str
+    server_url: str
+    require_approval: Optional[str] = "never"
+    type: str = "mcp"
+
+
+@dataclass
+class PlaygroundMCPConfigResponse:
+    """Response containing the list of MCP servers configured for the playground."""
+    servers: List[PlaygroundMCPServer]
+
+
+@dataclass
 class SuggestionCitationApiResponse:
     url: str
     title: str

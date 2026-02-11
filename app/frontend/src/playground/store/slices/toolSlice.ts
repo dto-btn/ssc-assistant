@@ -7,18 +7,23 @@
 
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Tool } from "openai/resources/responses/responses.mjs";
+import { getMCPConfig } from "../../api/storage";
+import { RootState } from "../index";
 
 // Async thunk to load tools using the toolService
-export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rejectWithValue }) => {
+export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rejectWithValue, getState }) => {
   
   try {
-    const rawValue = import.meta.env.VITE_MCP_SERVERS;
-    if (!rawValue) return [];
+    const state = getState() as RootState;
+    const { accessToken } = state.auth;
 
-    let rawServers;
+    if (!accessToken) {
+      return [];
+    }
+
+    const rawServers = await getMCPConfig({ accessToken });
+
     let toolServers: Tool.Mcp[] = [];
-
-    rawServers = JSON.parse(rawValue);
 
     // Validate and map raw server data to Tool.Mcp objects
     toolServers = rawServers
@@ -36,7 +41,7 @@ export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rej
     return toolServers;
 
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to parse MCP servers';
+    const message = error instanceof Error ? error.message : 'Failed to fetch MCP servers';
     console.error(message);
     return rejectWithValue(message);
   }

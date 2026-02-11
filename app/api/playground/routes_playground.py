@@ -1,5 +1,7 @@
 import base64
 import uuid
+import json
+import os
 from datetime import datetime
 from typing import Dict, Any, Optional, Tuple, List, Type, TypeVar
 import logging
@@ -22,6 +24,8 @@ from utils.models import (
     PlaygroundRenameSessionResponse,
     PlaygroundExtractTextRequest,
     PlaygroundExtractTextResponse,
+    PlaygroundMCPConfigResponse,
+    PlaygroundMCPServer,
 )
 
 api_playground = APIBlueprint("api_playground", __name__, tag="Playground")
@@ -739,3 +743,37 @@ def extract_file_text(payload: PlaygroundExtractTextRequest):
         return {"error": "Failed to extract text"}, 500
 
     return {"extractedText": text}
+
+
+@api_playground.get("/mcp/config")
+@api_playground.doc(
+    summary="Get MCP server configuration",
+    description="Returns the list of MCP servers configured for the playground space.",
+)
+@api_playground.output(PlaygroundMCPConfigResponse.Schema)  # type: ignore[attr-defined]
+@auth.login_required(role="chat")
+@user_ad.login_required
+def get_mcp_config():
+    """Returns the MCP server configuration from environment variables."""
+    raw_servers = os.getenv("MCP_SERVERS")
+    if not raw_servers:
+        return {"servers": []}
+
+    try:
+        servers_list = json.loads(raw_servers)
+        parsed_servers = []
+        for s in servers_list:
+            # Basic validation/filtering to match PlaygroundMCPServer expected fields
+            parsed_servers.append(
+                PlaygroundMCPServer(
+                    server_label=s.get("server_label", "Unknown"),
+                    server_description=s.get("server_description", ""),
+                    server_url=s.get("server_url", ""),
+                    require_approval=s.get("require_approval", "never"),
+                    type=s.get("type", "mcp"),
+                )
+            )
+        return {"servers": parsed_servers}
+    except (json.JSONDecodeError, TypeError):
+        logger.error("Failed to parse MCP_SERVERS environment variable")
+        return {"servers": []}
