@@ -14,7 +14,6 @@ import i18n from "../../../i18n";
 
 import { FileAttachment } from "../../types";
 import { extractFileText, fetchFileDataUrl } from "../../api/storage";
-import { Tool } from "openai/resources/responses/responses.mjs";
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
 
@@ -255,12 +254,6 @@ export const sendAssistantMessage = ({
 
     const { accessToken } = getState().auth;
     const dispatchForAttachments = dispatch as AppDispatch;
-    const { mcpServers } = getState().tools;
-
-    // Attach authorization tokens to MCP servers
-    const serversWithAuth: Tool.Mcp[] = (mcpServers && mcpServers.length > 0 && accessToken)
-      ? mcpServers.map((server: Tool.Mcp) => ({ ...server, authorization: accessToken }))
-      : [];
 
     if (!accessToken || isTokenExpired(accessToken)) {
       dispatch(
@@ -313,7 +306,6 @@ export const sendAssistantMessage = ({
         model: "gpt-4.1-mini", // Eventually leverage an orchestrator
         provider,
         userToken: accessToken,
-        servers: serversWithAuth,
       },
       {
         onChunk: (chunk: string) => {

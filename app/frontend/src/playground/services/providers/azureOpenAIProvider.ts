@@ -75,7 +75,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
     request: CompletionRequest,
     callbacks: StreamingCallbacks
   ): Promise<CompletionResult> {
-    const { messages, userToken, model, signal, servers, currentOutput } = request;
+    const { messages, userToken, model, signal, currentOutput } = request;
     const { onChunk, onToolCall, onError, onComplete } = callbacks;
 
     let fullText = currentOutput || "";
@@ -88,7 +88,6 @@ export class AzureOpenAIProvider implements CompletionProvider {
       const stream = await client.responses.stream({
         model: model,
         input: updatedMessages,
-        ...(servers && servers.length > 0 ? { tools: servers, tool_choice: "auto" } : {}),
       }, { signal });
 
       for await (const event of stream) {

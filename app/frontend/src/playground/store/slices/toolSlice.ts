@@ -5,52 +5,11 @@
  * stores tool-related metadata used by the middleware and UI components.
  */
 
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { Tool } from "openai/resources/responses/responses.mjs";
-import { getMCPConfig } from "../../api/storage";
-import { RootState } from "../index";
-import { PlaygroundMCPServer } from "../../types";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-// Async thunk to load tools using the toolService
-export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rejectWithValue, getState }) => {
-  
-  try {
-    const state = getState() as RootState;
-    const { accessToken } = state.auth;
-
-    if (!accessToken) {
-      return [];
-    }
-
-    const rawServers = await getMCPConfig({ accessToken });
-
-    let toolServers: Tool.Mcp[] = [];
-
-    // Validate and map raw server data to Tool.Mcp objects
-    toolServers = rawServers
-      .filter((server: PlaygroundMCPServer) => server && server.server_label && server.server_url && server.server_description)
-      .map((server: PlaygroundMCPServer) => ({
-        server_label: server.server_label,
-        type: 'mcp' as const,
-        server_url: server.server_url,
-        server_description: server.server_description,
-        require_approval: (server.require_approval === "always" || server.require_approval === "never") 
-          ? server.require_approval 
-          : "never",
-      }));
-
-    return toolServers;
-
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to fetch MCP servers';
-    console.error(message);
-    return rejectWithValue(message);
-  }
-});
 
 export interface ToolState {
   enabledTools: Record<string, boolean>;
-  mcpServers: Tool.Mcp[];
   isLoading: boolean;
   error: string | null;
 }
@@ -63,7 +22,6 @@ const defaultEnabledTools: Record<string, boolean> = {
 
 const initialState: ToolState = {
   enabledTools: defaultEnabledTools,
-  mcpServers: [],
   isLoading: false,
   error: null,
 };
@@ -81,21 +39,6 @@ const toolSlice = createSlice({
       // Flip a single tool flag in-place to keep the UI responsive.
       state.enabledTools[tool] = !state.enabledTools[tool];
     },
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(loadServers.pending, (state) => {
-        state.isLoading = true;
-        state.error = null;
-      })
-      .addCase(loadServers.fulfilled, (state, action: PayloadAction<Tool.Mcp[]>) => {
-        state.isLoading = false;
-        state.mcpServers = action.payload;
-      })
-      .addCase(loadServers.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload as string;
-      });
   },
 });
 

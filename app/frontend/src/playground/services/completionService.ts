@@ -10,7 +10,6 @@ import type {
   ChatCompletionMessageParam,
 } from "openai/resources/chat/completions";
 import { AzureOpenAIProvider } from "./providers/azureOpenAIProvider";
-import { Tool } from "openai/resources/responses/responses.mjs";
 
 export type CompletionContentPart = Extract<
   ChatCompletionContentPart,
@@ -28,7 +27,6 @@ export interface CompletionRequest {
   provider?: 'azure-openai' | 'aws-bedrock' | "goc-ai-platform";
   userToken: string;
   signal?: AbortSignal;
-  servers?: Tool.Mcp[];
   currentOutput?: string;
 }
 
