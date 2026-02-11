@@ -136,4 +136,7 @@ class MSALAuthMiddleware(BaseHTTPMiddleware):
             logger.warning(f"Insufficient permissions for user. Scope: {scp}, Roles: {decoded_token.get('roles')}")
             return JSONResponse({"detail": "Insufficient permissions"}, status_code=403)
 
+        # Log successful invocation for debugging tool calls
+        logger.info(f"MCP Invocation: {request.method} {request.url.path}")
+
         return await call_next(request)

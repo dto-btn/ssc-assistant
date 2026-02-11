@@ -37,6 +37,7 @@ The MCP server expects the same environment variables configuration as the `app/
 | `AZURE_AD_CLIENT_ID` | The Client ID of the API registration. |
 | `API_SCOPE` | Defaults to `api.access`. |
 | `SKIP_USER_VALIDATION` | Set to `True` for local development to bypass security checks. |
+| `FASTMCP_TRANSPORT_SECURITY__ENABLE_DNS_REBINDING_PROTECTION` | Set to `False` when using proxies (like localtunnel). |
 
 ---
 
@@ -124,4 +125,36 @@ sequenceDiagram
 
 - `common/auth.py`: Shared Starlette middleware for JWT validation.
 - `common/mcp_boilerplate.py`: Helper to wrap FastMCP applications with standard security.
+- `example-server/`: A complete Dockerized example of a secure MCP server.
 - `README.md`: This documentation.
+
+## Running the Example Server (Docker)
+
+To test the security layer using the provided example server:
+
+1.  Navigate to the `mcp-servers` directory:
+    ```bash
+    cd mcp-servers
+    ```
+2.  Build the Docker image (from the `mcp-servers` root to include the `common` folder):
+    ```bash
+    docker build -t secure-mcp-example -f example-server/Dockerfile .
+    ```
+3.  Run the container:
+    ```bash
+    docker run -p 8000:8000 \
+      -e AZURE_AD_TENANT_ID=your_tenant_id \
+      -e AZURE_AD_CLIENT_ID=your_client_id \
+      secure-mcp-example
+    ```
+
+### Option B: Run with Docker Compose
+1.  Navigate to the `mcp-servers` directory:
+    ```bash
+    cd mcp-servers
+    ```
+2.  Ensure your `.env` file is populated in the `mcp-servers/` root (copy from `example-server/.env.example`).
+3.  Start the service:
+    ```bash
+    docker-compose up --build
+    ```

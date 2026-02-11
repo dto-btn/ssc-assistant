@@ -1,0 +1,10 @@
+services:
+  secure-mcp-example:
+    build:
+      context: .
+      dockerfile: example-server/Dockerfile
+    ports:
+      - "${PORT:-9000}:${PORT:-9000}"
+    env_file:
+      - .env
+    restart: unless-stopped

@@ -1,0 +1,8 @@
+mcp
+fastmcp
+uvicorn
+starlette
+pyjwt
+cryptography
+python-dotenv
+requests

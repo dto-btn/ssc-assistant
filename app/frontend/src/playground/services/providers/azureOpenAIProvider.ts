@@ -79,6 +79,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
     const { onChunk, onToolCall, onError, onComplete } = callbacks;
 
     let fullText = currentOutput || "";
+    const itemNames = new Map<string, string>();
     
     try {
       const updatedMessages = this.convertMessagesToInput(messages);
@@ -92,14 +93,29 @@ export class AzureOpenAIProvider implements CompletionProvider {
       }, { signal });
 
       for await (const event of stream) {
+        // Track tool names by item_id (useful for MCP and function calls)
+        if (event.type === "response.output_item.added") {
+          const item = (event as any).item;
+          if (item?.id && item?.name) {
+            itemNames.set(item.id, item.name);
+          }
+        }
+
         if (event.type === "response.output_text.delta") {
           fullText += event.delta;
           onChunk?.(event.delta);
         }
-
         else if (event.type === "response.mcp_call.in_progress") {
-          console.log("Tool call in progress:", event);
-          onToolCall?.();
+          const toolId = (event as any).item_id;
+          const toolName = itemNames.get(toolId) || (event as any).call?.name || "unnamed";
+          
+          console.log(`[MCP] Invoking tool call: ${toolName}`, event);
+          onToolCall?.(toolName);
+        }
+        else {
+          if (!event.type.endsWith(".delta")) {
+             console.debug("[SSE Event]", event.type, event);
+          }
         }
       }
 
