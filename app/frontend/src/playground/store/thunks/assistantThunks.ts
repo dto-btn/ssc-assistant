@@ -15,6 +15,12 @@ import i18n from "../../../i18n";
 import { FileAttachment } from "../../types";
 import { extractFileText, fetchFileDataUrl } from "../../api/storage";
 import { Tool } from "openai/resources/responses/responses.mjs";
+import {
+  classifyChatCategory,
+  getAvailableCategories,
+  resolveMcpServersForCategory,
+  CATEGORY_GENERIC,
+} from "../../services/categoryService";
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
 
@@ -257,11 +263,6 @@ export const sendAssistantMessage = ({
     const dispatchForAttachments = dispatch as AppDispatch;
     const { mcpServers } = getState().tools;
 
-    // Attach authorization tokens to MCP servers
-    const serversWithAuth: Tool.Mcp[] = (mcpServers && mcpServers.length > 0 && accessToken)
-      ? mcpServers.map((server: Tool.Mcp) => ({ ...server, authorization: accessToken }))
-      : [];
-
     if (!accessToken || isTokenExpired(accessToken)) {
       dispatch(
         addToast({
@@ -272,6 +273,22 @@ export const sendAssistantMessage = ({
       return;
     }
 
+    const sessionMessages = selectMessagesBySessionId(getState());
+    const availableCategories = getAvailableCategories(mcpServers);
+    const category = await classifyChatCategory(
+      sessionMessages,
+      content,
+      accessToken,
+      availableCategories
+    );
+
+    const selectedServers = resolveMcpServersForCategory(category, mcpServers);
+
+    // Attach authorization tokens to MCP servers
+    const serversWithAuth: Tool.Mcp[] = (selectedServers && selectedServers.length > 0 && accessToken)
+      ? selectedServers.map((server: Tool.Mcp) => ({ ...server, authorization: accessToken }))
+      : [];
+
     // Add user message to state
     dispatch(
       addMessage({
@@ -279,6 +296,7 @@ export const sendAssistantMessage = ({
         role: "user",
         content,
         attachments,
+        category,
       })
     );
 
@@ -288,6 +306,7 @@ export const sendAssistantMessage = ({
         sessionId,
         role: "assistant",
         content: "",
+        category: category || CATEGORY_GENERIC,
       })
     );
 

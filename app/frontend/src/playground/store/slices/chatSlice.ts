@@ -18,6 +18,7 @@ export interface Message {
   timestamp: number;
   attachments?: FileAttachment[];
   citations?: { title: string; url: string }[];
+  category?: string;
 }
 
 interface ChatState {

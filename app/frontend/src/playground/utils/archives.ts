@@ -98,6 +98,7 @@ export function normalizeArchiveMessage(candidate: unknown, sessionId: string): 
   const citations = Array.isArray(record.citations)
     ? (record.citations as Message["citations"])
     : undefined;
+  const category = typeof record.category === "string" ? record.category : undefined;
 
   return {
     id,
@@ -107,5 +108,6 @@ export function normalizeArchiveMessage(candidate: unknown, sessionId: string): 
     timestamp,
     attachments,
     citations,
+    category,
   };
 }
