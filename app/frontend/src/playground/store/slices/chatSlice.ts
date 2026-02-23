@@ -19,6 +19,7 @@ export interface Message {
   attachments?: FileAttachment[];
   citations?: { title: string; url: string }[];
   category?: string;
+  model?: string;
 }
 
 interface ChatState {

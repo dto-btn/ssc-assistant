@@ -99,6 +99,7 @@ export function normalizeArchiveMessage(candidate: unknown, sessionId: string): 
     ? (record.citations as Message["citations"])
     : undefined;
   const category = typeof record.category === "string" ? record.category : undefined;
+  const model = typeof record.model === "string" ? record.model : undefined;
 
   return {
     id,
@@ -109,5 +110,6 @@ export function normalizeArchiveMessage(candidate: unknown, sessionId: string): 
     attachments,
     citations,
     category,
+    model,
   };
 }

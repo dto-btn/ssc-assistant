@@ -18,7 +18,9 @@ import { Tool } from "openai/resources/responses/responses.mjs";
 import {
   classifyChatCategory,
   getAvailableCategories,
+  getAvailableModels,
   resolveMcpServersForCategory,
+  selectChatModel,
   CATEGORY_GENERIC,
 } from "../../services/categoryService";
 
@@ -275,6 +277,7 @@ export const sendAssistantMessage = ({
 
     const sessionMessages = selectMessagesBySessionId(getState());
     const availableCategories = getAvailableCategories(mcpServers);
+    const availableModels = getAvailableModels();
     const category = await classifyChatCategory(
       sessionMessages,
       content,
@@ -283,6 +286,14 @@ export const sendAssistantMessage = ({
     );
 
     const selectedServers = resolveMcpServersForCategory(category, mcpServers);
+    const selectedModel = await selectChatModel(
+      sessionMessages,
+      content,
+      category,
+      selectedServers,
+      accessToken,
+      availableModels
+    );
 
     // Attach authorization tokens to MCP servers
     const serversWithAuth: Tool.Mcp[] = (selectedServers && selectedServers.length > 0 && accessToken)
@@ -297,6 +308,7 @@ export const sendAssistantMessage = ({
         content,
         attachments,
         category,
+        model: selectedModel,
       })
     );
 
@@ -307,6 +319,7 @@ export const sendAssistantMessage = ({
         role: "assistant",
         content: "",
         category: category || CATEGORY_GENERIC,
+        model: selectedModel,
       })
     );
 
@@ -329,7 +342,7 @@ export const sendAssistantMessage = ({
     await completionService.createCompletion(
       {
         messages: completionMessages,
-        model: "gpt-4.1-mini", // Eventually leverage an orchestrator
+        model: selectedModel,
         provider,
         userToken: accessToken,
         servers: serversWithAuth,
