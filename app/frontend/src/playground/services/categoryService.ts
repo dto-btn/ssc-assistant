@@ -12,13 +12,14 @@ const DEFAULT_CLASSIFIER_MODEL =
 const DEFAULT_ALLOWED_MODELS = ["gpt-4.1-nano", "gpt-4o"];
 
 const CATEGORY_MODEL_PREFERENCES: Record<string, string> = {
-  [CATEGORY_GENERIC]: "gpt-4.1-nano",
-  geds: "gpt-4.1-nano",
+  [CATEGORY_GENERIC]: "gpt-4o",
+  geds: "gpt-4o",
   archibus: "gpt-4o",
   bits: "gpt-4o",
   pmcoe: "gpt-4o",
   telecom: "gpt-4o",
   corporate: "gpt-4o",
+  parliamentary: "gpt-4o",
 };
 
 const CATEGORY_DESCRIPTIONS: Record<string, string> = {
@@ -36,6 +37,8 @@ const CATEGORY_DESCRIPTIONS: Record<string, string> = {
     "Telecom services including phone lines, mobile devices, SIM cards, or VoIP support.",
   corporate:
     "Corporate services such as intranet content, HR policies, procurement, pay, or travel guidance.",
+  parliamentary:
+    "Parliamentary information such as Members of Parliament, constituencies, cabinet roles, senators, and prime minister details.",
 };
 
 const MAX_CONTEXT_MESSAGES = 8;
@@ -238,6 +241,34 @@ const CATEGORY_RULES: Array<{ category: string; keywords: string[] }> = [
       "formation",
     ],
   },
+  {
+    category: "parliamentary",
+    keywords: [
+      "parliament",
+      "parliamentary",
+      "parlement",
+      "parlementaire",
+      "member of parliament",
+      "members of parliament",
+      "mp",
+      "mps",
+      "depute",
+      "deputes",
+      "house of commons",
+      "chambre des communes",
+      "senate",
+      "senateur",
+      "senateurs",
+      "prime minister",
+      "premier ministre",
+      "cabinet",
+      "cabinet minister",
+      "minister of",
+      "ministre",
+      "federal riding",
+      "circonscription",
+    ],
+  },
 ];
 
 const CATEGORY_SERVER_HINTS: Record<string, string[]> = {
@@ -247,6 +278,7 @@ const CATEGORY_SERVER_HINTS: Record<string, string[]> = {
   pmcoe: ["pmcoe", "project"],
   telecom: ["telecom", "phone"],
   corporate: ["corporate", "intranet", "myssc"],
+  parliamentary: ["parliament", "mp", "cpmcp", "parlementry", "parliamentary"],
 };
 
 const classificationCache = new Map<string, string>();
@@ -479,14 +511,15 @@ export async function selectModelWithLlm(
 }
 
 export async function selectChatModel(
-  messages: Message[],
-  currentContent: string,
+  _messages: Message[],
+  _currentContent: string,
   category: string,
-  servers: Tool.Mcp[],
-  userToken: string | null,
+  _servers: Tool.Mcp[],
+  _userToken: string | null,
   models: string[]
 ): Promise<string> {
   const allowedModels = models.length ? models : DEFAULT_ALLOWED_MODELS;
+
   const normalizedCategory = (category || CATEGORY_GENERIC).toLowerCase();
   const preferred = CATEGORY_MODEL_PREFERENCES[normalizedCategory] || allowedModels[0];
   if (allowedModels.includes(preferred)) {
@@ -501,7 +534,7 @@ export function resolveMcpServersForCategory(
 ): Tool.Mcp[] {
   const normalized = (category || "").toLowerCase();
   if (!normalized || normalized === CATEGORY_GENERIC) {
-    return [];
+    return servers;
   }
 
   const hints = CATEGORY_SERVER_HINTS[normalized] || [normalized];

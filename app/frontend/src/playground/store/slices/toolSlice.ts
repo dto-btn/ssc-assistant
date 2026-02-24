@@ -15,23 +15,47 @@ export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rej
     const rawValue = import.meta.env.VITE_MCP_SERVERS;
     if (!rawValue) return [];
 
-    let rawServers;
+    let rawServers: unknown;
     let toolServers: Tool.Mcp[] = [];
 
     rawServers = JSON.parse(rawValue);
 
+    if (typeof rawServers === "string") {
+      rawServers = JSON.parse(rawServers);
+    }
+
+    const serverEntries = Array.isArray(rawServers)
+      ? rawServers
+      : rawServers && typeof rawServers === "object" && Array.isArray((rawServers as { servers?: unknown[] }).servers)
+        ? (rawServers as { servers: unknown[] }).servers
+        : [];
+
     // Validate and map raw server data to Tool.Mcp objects
-    toolServers = rawServers
+    toolServers = serverEntries
       .filter((server: any) => server && server.server_label && server.server_url && server.server_description)
-      .map((server: any) => ({
-        server_label: server.server_label,
-        type: 'mcp',
-        server_url: server.server_url,
-        server_description: server.server_description,
-        require_approval: (server.require_approval === "always" || server.require_approval === "never") 
-          ? server.require_approval 
-          : "never",
-      }));
+      .map((server: any) => {
+        const headers =
+          server.headers && typeof server.headers === "object" && !Array.isArray(server.headers)
+            ? Object.fromEntries(
+                Object.entries(server.headers).filter(
+                  ([key, value]) => typeof key === "string" && typeof value === "string"
+                )
+              )
+            : undefined;
+
+        return {
+          server_label: server.server_label,
+          type: 'mcp',
+          server_url: server.server_url,
+          server_description: server.server_description,
+          require_approval: (server.require_approval === "always" || server.require_approval === "never")
+            ? server.require_approval
+            : "never",
+          authorization: typeof server.authorization === "string" ? server.authorization : undefined,
+          headers,
+          allowed_tools: server.allowed_tools,
+        } as Tool.Mcp;
+      });
 
     return toolServers;
 

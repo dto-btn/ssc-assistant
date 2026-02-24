@@ -18,11 +18,12 @@ import { Tool } from "openai/resources/responses/responses.mjs";
 import {
   classifyChatCategory,
   getAvailableCategories,
-  getAvailableModels,
   resolveMcpServersForCategory,
   selectChatModel,
+  getAvailableModels,
   CATEGORY_GENERIC,
 } from "../../services/categoryService";
+import { loadServers } from "../slices/toolSlice";
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
 
@@ -263,6 +264,9 @@ export const sendAssistantMessage = ({
 
     const { accessToken } = getState().auth;
     const dispatchForAttachments = dispatch as AppDispatch;
+    if (getState().tools.mcpServers.length === 0 && import.meta.env.VITE_MCP_SERVERS) {
+      await dispatch(loadServers());
+    }
     const { mcpServers } = getState().tools;
 
     if (!accessToken || isTokenExpired(accessToken)) {
@@ -277,7 +281,6 @@ export const sendAssistantMessage = ({
 
     const sessionMessages = selectMessagesBySessionId(getState());
     const availableCategories = getAvailableCategories(mcpServers);
-    const availableModels = getAvailableModels();
     const category = await classifyChatCategory(
       sessionMessages,
       content,
@@ -292,13 +295,22 @@ export const sendAssistantMessage = ({
       category,
       selectedServers,
       accessToken,
-      availableModels
+      getAvailableModels()
     );
 
-    // Attach authorization tokens to MCP servers
-    const serversWithAuth: Tool.Mcp[] = (selectedServers && selectedServers.length > 0 && accessToken)
-      ? selectedServers.map((server: Tool.Mcp) => ({ ...server, authorization: accessToken }))
-      : [];
+    console.info("[playground:mcp-routing]", {
+      category,
+      selectedModel,
+      selectedServers: selectedServers.map((server) => server.server_label),
+    });
+
+    const serversWithAuth: Tool.Mcp[] =
+      mcpServers && mcpServers.length > 0 && accessToken
+        ? mcpServers.map((server: Tool.Mcp) => ({
+            ...server,
+            authorization: accessToken,
+          }))
+        : [];
 
     // Add user message to state
     dispatch(
