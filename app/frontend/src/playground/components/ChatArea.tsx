@@ -25,6 +25,7 @@ import { setSessionFiles } from "../store/slices/sessionFilesSlice";
 import { rehydrateSessionFromArchive } from "../store/thunks/sessionBootstrapThunks";
 import { pickLatestArchive } from "../utils/archives";
 import { applyRemoteSessionDeletion } from "../store/thunks/sessionManagementThunks";
+import OrchestratorDebugPanel from "./OrchestratorDebugPanel";
 
 const ChatArea: React.FC = () => {
   const { t } = useTranslation('playground');
@@ -249,6 +250,7 @@ const ChatArea: React.FC = () => {
           onSuggestionClicked={handleSuggestion}
           disabled={isLoading}
         />
+        <OrchestratorDebugPanel sessionId={currentSessionId} />
         <ChatInput sessionId={currentSessionId} />
       </Box>
     );
@@ -258,6 +260,7 @@ const ChatArea: React.FC = () => {
     <Box flex={1} display="flex" flexDirection="column" height="100vh">
       <ChatMessages sessionId={currentSessionId} />
       <Citations citations={citations as Citation[]} />
+      <OrchestratorDebugPanel sessionId={currentSessionId} />
       <ReplayStopBar
         onReplay={handleReplay}
         onStop={handleStop}

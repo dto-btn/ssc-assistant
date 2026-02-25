@@ -1,4 +1,10 @@
-import { addMessage, updateMessageContent, setIsLoading, Message } from "../slices/chatSlice";
+import {
+  addMessage,
+  updateMessageContent,
+  setIsLoading,
+  setOrchestratorInsights,
+  Message,
+} from "../slices/chatSlice";
 import { setIsSessionNew } from "../slices/sessionSlice"
 import { addToast } from "../slices/toastSlice";
 import {
@@ -9,14 +15,22 @@ import {
 import { isTokenExpired } from "../../../util/token";
 import { AppThunk, AppDispatch } from "..";
 import type { RootState } from "..";
-import { selectMessagesBySessionId } from "../selectors/chatSelectors";
 import i18n from "../../../i18n";
 
 import { FileAttachment } from "../../types";
 import { extractFileText, fetchFileDataUrl } from "../../api/storage";
 import { Tool } from "openai/resources/responses/responses.mjs";
+import {
+  getOrchestratorInsights,
+  resolveServersFromInsights,
+} from "../../services/orchestratorService";
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
+
+const isOrchestratorServer = (server: Tool.Mcp): boolean => {
+  const label = `${server.server_label || ""} ${server.server_description || ""}`.toLowerCase();
+  return label.includes("orchestrator");
+};
 
 const attachmentTextCache = new Map<string, string>();
 const attachmentImageCache = new Map<string, string>();
@@ -256,6 +270,9 @@ export const sendAssistantMessage = ({
     const { accessToken } = getState().auth;
     const dispatchForAttachments = dispatch as AppDispatch;
     const { mcpServers } = getState().tools;
+    const existingSessionMessages = getState().chat.messages.filter(
+      (message) => message.sessionId === sessionId
+    );
 
     // Attach authorization tokens to MCP servers
     const serversWithAuth: Tool.Mcp[] = (mcpServers && mcpServers.length > 0 && accessToken)
@@ -271,6 +288,87 @@ export const sendAssistantMessage = ({
       );
       return;
     }
+
+    const orchestratorServers = serversWithAuth.filter(isOrchestratorServer);
+    if (orchestratorServers.length === 0) {
+      dispatch(
+        addToast({
+          message: "Orchestrator MCP is required but not configured in VITE_MCP_SERVERS.",
+          isError: true,
+        })
+      );
+      return;
+    }
+
+    const orchestratorInsights = await getOrchestratorInsights({
+      messages: existingSessionMessages,
+      currentContent: content,
+      servers: serversWithAuth,
+    });
+
+    if (!orchestratorInsights || orchestratorInsights.source === "local-fallback") {
+      const orchestratorEndpoint = orchestratorServers[0]?.server_url || "(missing endpoint)";
+      const fallbackError = orchestratorInsights?.error?.trim();
+      const localhostHint = /localhost|127\.0\.0\.1/i.test(orchestratorEndpoint)
+        ? " Verify the browser can access this local endpoint and that MCP/CORS settings allow the playground origin."
+        : "";
+
+      dispatch(
+        addToast({
+          message:
+            `Orchestrator routing failed for this turn (${orchestratorEndpoint}).` +
+            `${fallbackError ? ` ${fallbackError}` : ""}` +
+            localhostHint,
+          isError: true,
+        })
+      );
+
+      dispatch(
+        setOrchestratorInsights({
+          sessionId,
+          insights:
+            orchestratorInsights || {
+              category: "generic",
+              recommendations: [],
+              source: "local-fallback",
+              fallbackReason: "Orchestrator is required and fallback mode is disabled.",
+              timestamp: new Date().toISOString(),
+            },
+        })
+      );
+
+      return;
+    }
+
+    const selectedServers = resolveServersFromInsights(orchestratorInsights, serversWithAuth);
+    const routedServers = selectedServers.filter(
+      (server, index, all) =>
+        all.findIndex(
+          (entry) => entry.server_url === server.server_url && entry.server_label === server.server_label
+        ) === index
+    );
+
+    if (routedServers.length === 0) {
+      dispatch(
+        addToast({
+          message: "Orchestrator did not return any downstream MCP route for this turn.",
+          isError: true,
+        })
+      );
+      return;
+    }
+
+    const insightsWithSelection = orchestratorInsights
+      ? {
+          ...orchestratorInsights,
+          selectedServers: routedServers.map((server) => ({
+            server_label: server.server_label,
+            server_url: server.server_url || "(no-url)",
+          })),
+        }
+      : null;
+
+    dispatch(setOrchestratorInsights({ sessionId, insights: insightsWithSelection }));
 
     // Add user message to state
     dispatch(
@@ -292,7 +390,9 @@ export const sendAssistantMessage = ({
     );
 
     // Re-fetch messages to include the newly added assistant message
-    const updatedSessionMessages = selectMessagesBySessionId(getState());
+    const updatedSessionMessages = getState().chat.messages.filter(
+      (message) => message.sessionId === sessionId
+    );
     const assistantMessages = updatedSessionMessages.filter(
       (message) => message.role === "assistant"
     );
@@ -313,7 +413,7 @@ export const sendAssistantMessage = ({
         model: "gpt-4.1-mini", // Eventually leverage an orchestrator
         provider,
         userToken: accessToken,
-        servers: serversWithAuth,
+        servers: routedServers,
       },
       {
         onChunk: (chunk: string) => {

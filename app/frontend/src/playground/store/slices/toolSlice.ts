@@ -8,6 +8,26 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Tool } from "openai/resources/responses/responses.mjs";
 
+const isLocalHttpMcpUrl = (parsed: URL): boolean => {
+  const host = parsed.hostname.toLowerCase();
+  return parsed.protocol === "http:" && ["localhost", "127.0.0.1"].includes(host);
+};
+
+const isValidMcpUrl = (rawUrl: string): boolean => {
+  try {
+    const parsed = new URL(rawUrl);
+    if (!parsed.pathname.toLowerCase().endsWith("/mcp")) {
+      return false;
+    }
+    if (parsed.protocol === "https:") {
+      return true;
+    }
+    return import.meta.env.DEV && isLocalHttpMcpUrl(parsed);
+  } catch {
+    return false;
+  }
+};
+
 // Async thunk to load tools using the toolService
 export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rejectWithValue }) => {
   
@@ -22,7 +42,14 @@ export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rej
 
     // Validate and map raw server data to Tool.Mcp objects
     toolServers = rawServers
-      .filter((server: any) => server && server.server_label && server.server_url && server.server_description)
+      .filter(
+        (server: any) =>
+          server &&
+          server.server_label &&
+          server.server_url &&
+          server.server_description &&
+            isValidMcpUrl(server.server_url)
+      )
       .map((server: any) => ({
         server_label: server.server_label,
         type: 'mcp',
