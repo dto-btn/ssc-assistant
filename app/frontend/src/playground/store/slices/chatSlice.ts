@@ -20,14 +20,39 @@ export interface Message {
   citations?: { title: string; url: string }[];
 }
 
+export interface OrchestratorRecommendation {
+  mcp_server_id: string;
+  endpoint?: string;
+  category?: string;
+  confidence?: number;
+  matched_keywords?: string[];
+  rationale?: string;
+}
+
+export interface OrchestratorInsights {
+  category: string;
+  recommendations: OrchestratorRecommendation[];
+  selectedServers?: Array<{
+    server_label: string;
+    server_url: string;
+  }>;
+  fallbackReason?: string;
+  source: "orchestrator" | "local-fallback";
+  transport?: "streamable-http" | "sse";
+  timestamp: string;
+  error?: string;
+}
+
 interface ChatState {
   messages: Message[];
   isLoading: boolean;
+  orchestratorInsightsBySessionId: Record<string, OrchestratorInsights | undefined>;
 }
 
 const initialState: ChatState = {
   messages: [],
   isLoading: false,
+  orchestratorInsightsBySessionId: {},
 };
 
 const chatSlice = createSlice({
@@ -59,6 +84,27 @@ const chatSlice = createSlice({
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
+    setOrchestratorInsights: (
+      state,
+      action: PayloadAction<{ sessionId: string; insights: OrchestratorInsights | null }>
+    ) => {
+      const { sessionId, insights } = action.payload;
+      if (!state.orchestratorInsightsBySessionId) {
+        state.orchestratorInsightsBySessionId = {};
+      }
+      if (!insights) {
+        delete state.orchestratorInsightsBySessionId[sessionId];
+        return;
+      }
+
+      state.orchestratorInsightsBySessionId[sessionId] = insights;
+    },
+    clearOrchestratorInsights: (state, action: PayloadAction<string>) => {
+      if (!state.orchestratorInsightsBySessionId) {
+        state.orchestratorInsightsBySessionId = {};
+      }
+      delete state.orchestratorInsightsBySessionId[action.payload];
+    },
     hydrateSessionMessages: (
       state,
       action: PayloadAction<{ sessionId: string; messages: Message[] }>,
@@ -77,6 +123,8 @@ export const {
   clearSessionMessages,
   updateMessageContent,
   setIsLoading,
+  setOrchestratorInsights,
+  clearOrchestratorInsights,
   hydrateSessionMessages,
 } = chatSlice.actions;
 

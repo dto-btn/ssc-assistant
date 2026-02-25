@@ -36,12 +36,14 @@ The following `.env` settings are there to control certain components from being
 ```bash
 VITE_ALLOWED_TOOLS=geds,corporate,archibus,pmcoe,telecom
 VITE_DISABLED_FEATURES="file_upload"
+VITE_PLAYGROUND_SHOW_ORCHESTRATOR_DEBUG=false
 ```
 
 * `VITE_ALLOWED_TOOLS`: This controls the tools that will be presented in the tools menu, example, the BITS (EDR) data,
 geds API And so on.
 * `VITE_DISABLED_FEATURES`: disables the listed features. For instance `file_upload` will disable the file upload button
 from the UI.
+* `VITE_PLAYGROUND_SHOW_ORCHESTRATOR_DEBUG`: when `true`, shows a playground-only dev panel with orchestrator category and MCP route suggestions.
 
 **NOTE**: Important note here those values are controlled by the [github frontend.yml workflow](../../.github/workflows/frontend.yml)
 
