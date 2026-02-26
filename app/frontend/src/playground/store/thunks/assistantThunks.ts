@@ -306,41 +306,12 @@ export const sendAssistantMessage = ({
       servers: serversWithAuth,
     });
 
-    if (!orchestratorInsights || orchestratorInsights.source === "local-fallback") {
-      const orchestratorEndpoint = orchestratorServers[0]?.server_url || "(missing endpoint)";
-      const fallbackError = orchestratorInsights?.error?.trim();
-      const localhostHint = /localhost|127\.0\.0\.1/i.test(orchestratorEndpoint)
-        ? " Verify the browser can access this local endpoint and that MCP/CORS settings allow the playground origin."
-        : "";
+    const orchestratorUnavailable =
+      !orchestratorInsights || orchestratorInsights.source === "local-fallback";
 
-      dispatch(
-        addToast({
-          message:
-            `Orchestrator routing failed for this turn (${orchestratorEndpoint}).` +
-            `${fallbackError ? ` ${fallbackError}` : ""}` +
-            localhostHint,
-          isError: true,
-        })
-      );
-
-      dispatch(
-        setOrchestratorInsights({
-          sessionId,
-          insights:
-            orchestratorInsights || {
-              category: "generic",
-              recommendations: [],
-              source: "local-fallback",
-              fallbackReason: "Orchestrator is required and fallback mode is disabled.",
-              timestamp: new Date().toISOString(),
-            },
-        })
-      );
-
-      return;
-    }
-
-    const selectedServers = resolveServersFromInsights(orchestratorInsights, serversWithAuth);
+    const selectedServers = orchestratorUnavailable
+      ? serversWithAuth.filter((server) => !isOrchestratorServer(server))
+      : resolveServersFromInsights(orchestratorInsights, serversWithAuth);
     const routedServers = selectedServers.filter(
       (server, index, all) =>
         all.findIndex(
@@ -348,25 +319,46 @@ export const sendAssistantMessage = ({
         ) === index
     );
 
+    const noDownstreamExpected =
+      !orchestratorUnavailable &&
+      (orchestratorInsights.fallbackUpstream === null ||
+        (orchestratorInsights.category === "generic" && orchestratorInsights.recommendations.length === 0));
+
+    const shouldHideOrchestratorMetadata =
+      orchestratorUnavailable ||
+      (orchestratorInsights.category === "generic" &&
+        orchestratorInsights.recommendations.length === 0);
+
     if (routedServers.length === 0) {
-      dispatch(
-        addToast({
-          message: "Orchestrator did not return any downstream MCP route for this turn.",
-          isError: true,
-        })
-      );
-      return;
+      if (noDownstreamExpected || orchestratorUnavailable) {
+        dispatch(
+          setOrchestratorInsights({
+            sessionId,
+            insights: shouldHideOrchestratorMetadata ? null : orchestratorInsights,
+          })
+        );
+      } else {
+        dispatch(
+          addToast({
+            message: "Orchestrator did not return any downstream MCP route for this turn.",
+            isError: true,
+          })
+        );
+        return;
+      }
     }
 
-    const insightsWithSelection = orchestratorInsights
+    const insightsWithSelection = routedServers.length > 0
       ? {
-          ...orchestratorInsights,
+          ...(orchestratorInsights as NonNullable<typeof orchestratorInsights>),
           selectedServers: routedServers.map((server) => ({
             server_label: server.server_label,
             server_url: server.server_url || "(no-url)",
           })),
         }
-      : null;
+      : shouldHideOrchestratorMetadata
+        ? null
+        : orchestratorInsights;
 
     dispatch(setOrchestratorInsights({ sessionId, insights: insightsWithSelection }));
 
@@ -406,6 +398,10 @@ export const sendAssistantMessage = ({
 
     // Use the completion service with streaming callbacks for state management
     const completionMessages = await mapMessagesForCompletion(updatedSessionMessages, dispatchForAttachments, getState);
+    const routedServersWithAuth: Tool.Mcp[] = routedServers.map((server) => ({
+      ...server,
+      authorization: (server as Tool.Mcp & { authorization?: string }).authorization || accessToken,
+    }));
 
     await completionService.createCompletion(
       {
@@ -413,7 +409,7 @@ export const sendAssistantMessage = ({
         model: "gpt-4.1-mini", // Eventually leverage an orchestrator
         provider,
         userToken: accessToken,
-        servers: routedServers,
+        servers: routedServersWithAuth,
       },
       {
         onChunk: (chunk: string) => {

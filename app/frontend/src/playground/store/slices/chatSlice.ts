@@ -37,6 +37,7 @@ export interface OrchestratorInsights {
     server_url: string;
   }>;
   fallbackReason?: string;
+  fallbackUpstream?: string | null;
   source: "orchestrator" | "local-fallback";
   transport?: "streamable-http" | "sse";
   timestamp: string;

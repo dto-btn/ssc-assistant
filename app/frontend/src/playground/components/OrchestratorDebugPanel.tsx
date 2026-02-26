@@ -61,6 +61,12 @@ const OrchestratorDebugPanel: React.FC<OrchestratorDebugPanelProps> = ({ session
         </Typography>
       ) : null}
 
+      {insights.fallbackUpstream === null ? (
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+          No upstream selected (fallback).
+        </Typography>
+      ) : null}
+
       {insights.selectedServers && insights.selectedServers.length > 0 ? (
         <Box sx={{ mt: 0.5, mb: 0.5 }}>
           <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>

@@ -159,11 +159,30 @@ const sanitizeServerId = (value: string): string => {
     .replace(/^_+|_+$/g, "") || "unknown_mcp";
 };
 
-const toDisplayLabel = (serverId: string): string => {
-  return serverId
-    .replace(/[_-]+/g, " ")
-    .trim()
-    .replace(/\b\w/g, (char) => char.toUpperCase()) || "Recommended MCP";
+const isAllowedRecommendedEndpoint = (rawEndpoint: string): boolean => {
+  try {
+    const parsed = new URL(rawEndpoint.trim());
+    const host = parsed.hostname.toLowerCase();
+    const path = parsed.pathname.toLowerCase();
+
+    const isLocalHttp = import.meta.env.DEV && parsed.protocol === "http:" && isLocalHost(host);
+    const isHttps = parsed.protocol === "https:";
+    if (!isHttps && !isLocalHttp) {
+      return false;
+    }
+
+    if (!path.endsWith("/mcp")) {
+      return false;
+    }
+
+    if (host.endsWith(".example.com") || host === "example.com") {
+      return false;
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 const dedupeServers = (servers: Tool.Mcp[]): Tool.Mcp[] => {
@@ -176,6 +195,17 @@ const dedupeServers = (servers: Tool.Mcp[]): Tool.Mcp[] => {
   });
 };
 
+const normalizeEndpointForMatch = (endpoint?: string): string => {
+  if (!endpoint) return "";
+  try {
+    const parsed = new URL(endpoint.trim());
+    const path = parsed.pathname.replace(/\/+$/, "") || "/";
+    return `${parsed.protocol.toLowerCase()}//${parsed.host.toLowerCase()}${path}`;
+  } catch {
+    return endpoint.trim().replace(/\/+$/, "").toLowerCase();
+  }
+};
+
 export const resolveServersFromInsights = (
   insights: OrchestratorInsights | null,
   servers: Tool.Mcp[],
@@ -183,7 +213,7 @@ export const resolveServersFromInsights = (
   const downstreamServers = servers.filter((server) => !isOrchestratorServer(server));
 
   if (!insights || insights.recommendations.length === 0) {
-    return downstreamServers;
+    return [];
   }
 
   const byEndpoint = new Map<string, Tool.Mcp>();
@@ -191,7 +221,7 @@ export const resolveServersFromInsights = (
 
   downstreamServers.forEach((server) => {
     if (server.server_url) {
-      byEndpoint.set(server.server_url, server);
+      byEndpoint.set(normalizeEndpointForMatch(server.server_url), server);
     }
     byId.set(sanitizeServerId(server.server_label || server.server_url || "mcp"), server);
   });
@@ -199,8 +229,9 @@ export const resolveServersFromInsights = (
   const recommended: Tool.Mcp[] = [];
   insights.recommendations.forEach((recommendation) => {
     const endpoint = recommendation.endpoint?.trim();
-    if (endpoint && byEndpoint.has(endpoint)) {
-      recommended.push(byEndpoint.get(endpoint)!);
+    const normalizedEndpoint = normalizeEndpointForMatch(endpoint);
+    if (normalizedEndpoint && byEndpoint.has(normalizedEndpoint)) {
+      recommended.push(byEndpoint.get(normalizedEndpoint)!);
       return;
     }
 
@@ -210,11 +241,11 @@ export const resolveServersFromInsights = (
       return;
     }
 
-    if (endpoint) {
+    if (endpoint && isAllowedRecommendedEndpoint(endpoint)) {
       recommended.push({
         type: "mcp",
         server_url: endpoint,
-        server_label: toDisplayLabel(recommendation.mcp_server_id),
+        server_label: recommendation.mcp_server_id,
         server_description:
           recommendation.rationale ||
           `Recommended by orchestrator for category ${recommendation.category || CATEGORY_GENERIC}.`,
@@ -224,52 +255,10 @@ export const resolveServersFromInsights = (
   });
 
   if (recommended.length === 0) {
-    return downstreamServers;
+    return [];
   }
 
   return dedupeServers(recommended);
-};
-
-const detectCategoryFromText = (messages: Message[], currentContent: string): string => {
-  const corpus = `${messages.map((message) => message.content).join(" ")} ${currentContent}`.toLowerCase();
-
-  if (/\b(geds|employee directory|staff directory|annuaire)\b/.test(corpus)) return "geds";
-  if (/\b(archibus|desk booking|room booking|workspace|workplace)\b/.test(corpus)) return "archibus";
-  if (/\b(bits|business request|\bbr\b|change request)\b/.test(corpus)) return "bits";
-  if (/\b(pmcoe|project charter|project management)\b/.test(corpus)) return "pmcoe";
-  if (/\b(telecom|phone line|voip|mobile device|sim card)\b/.test(corpus)) return "telecom";
-  if (/\b(corporate|intranet|hr policy|procurement|travel)\b/.test(corpus)) return "corporate";
-
-  return CATEGORY_GENERIC;
-};
-
-const buildLocalFallback = async (
-  messages: Message[],
-  currentContent: string,
-  servers: Tool.Mcp[],
-  error?: string,
-): Promise<OrchestratorInsights> => {
-  const downstreamServers = servers.filter((server) => !isOrchestratorServer(server));
-  const category = detectCategoryFromText(messages, currentContent);
-  const suggested = downstreamServers
-    .slice(0, 3)
-    .map((server: Tool.Mcp) => ({
-      mcp_server_id: sanitizeServerId(server.server_label || server.server_url || "mcp"),
-      endpoint: server.server_url,
-      category,
-      confidence: undefined,
-      matched_keywords: undefined,
-      rationale: `Matched local category hints for ${category}.`,
-    }));
-
-  return {
-    category: category || CATEGORY_GENERIC,
-    recommendations: suggested,
-    fallbackReason: "Orchestrator output unavailable. Used local category fallback.",
-    source: "local-fallback",
-    timestamp: new Date().toISOString(),
-    error,
-  };
 };
 
 interface OrchestratorInsightsRequest {
@@ -304,7 +293,7 @@ export const getOrchestratorInsights = async ({
 
   try {
     if (!orchestratorServer.server_url) {
-      return buildLocalFallback(messages, currentContent, servers, "Orchestrator server URL is missing.");
+      return null;
     }
 
     const { client, transport, transportKind } = await connectOrchestratorClient(orchestratorServer.server_url);
@@ -330,7 +319,7 @@ export const getOrchestratorInsights = async ({
       const suggestPayload = extractToolPayload(suggestResult);
 
       if (!suggestPayload) {
-        return buildLocalFallback(messages, currentContent, servers, "Invalid orchestrator suggest_route payload.");
+        return null;
       }
 
       const categories = Array.isArray(classifyPayload?.categories)
@@ -346,12 +335,24 @@ export const getOrchestratorInsights = async ({
       ) as Record<string, unknown> | undefined;
 
       const recommendations = normalizeRecommendations(suggestPayload.recommendations);
+      const fallback = suggestPayload.fallback as Record<string, unknown> | undefined;
+      const fallbackCategory =
+        typeof fallback?.category === "string" && fallback.category.trim().length > 0
+          ? fallback.category
+          : undefined;
+      const fallbackUpstream =
+        fallback && Object.prototype.hasOwnProperty.call(fallback, "upstream")
+          ? typeof fallback.upstream === "string" && fallback.upstream.trim().length > 0
+            ? fallback.upstream
+            : null
+          : undefined;
+      const effectiveRecommendations = fallbackUpstream === null ? [] : recommendations;
+
       const category =
         (typeof topCategory?.name === "string" ? topCategory.name : undefined) ||
-        recommendations[0]?.category ||
+        effectiveRecommendations[0]?.category ||
+        fallbackCategory ||
         CATEGORY_GENERIC;
-
-      const fallback = suggestPayload.fallback as Record<string, unknown> | undefined;
       const fallbackReason =
         typeof fallback?.reason === "string" && fallback.reason.trim().length > 0
           ? fallback.reason
@@ -359,8 +360,9 @@ export const getOrchestratorInsights = async ({
 
       return {
         category,
-        recommendations,
+        recommendations: effectiveRecommendations,
         fallbackReason,
+        fallbackUpstream,
         source: "orchestrator",
         transport: transportKind,
         timestamp: new Date().toISOString(),
@@ -369,7 +371,7 @@ export const getOrchestratorInsights = async ({
       await transport.close().catch(() => undefined);
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown orchestrator error";
-    return buildLocalFallback(messages, currentContent, servers, message);
+    console.error("Orchestrator call failed", error);
+    return null;
   }
 };
