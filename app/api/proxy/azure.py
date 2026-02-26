@@ -9,7 +9,7 @@ from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from flask import Response, abort, request, stream_with_context, g
 
 from utils.auth import user_ad
-from proxy.common import PROXY_TIMEOUT, upstream_headers, stream_response
+from proxy.common import PROXY_TIMEOUT, upstream_headers, stream_response, filtered_response_headers
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -53,29 +53,54 @@ def openai_chat_completions(subpath: str):
         # Note: requests will stream the body to AOAI as-is
         data = request.get_data() if request.method != "GET" else None
 
-        def generate():
-            with requests.request(
-                request.method,
-                upstream_url,
-                params=request.args.to_dict(flat=False),
-                headers=headers,
-                data=data,
-                stream=True,
-                timeout=PROXY_TIMEOUT,
-            ) as r:
-                # Log key metadata
-                logger.info("AOAI proxy upstream resp req_id=%s status=%s x-request-id=%s",
-                            req_id, r.status_code, r.headers.get("x-request-id"))
+        upstream_response = requests.request(
+            request.method,
+            upstream_url,
+            params=request.args.to_dict(flat=False),
+            headers=headers,
+            data=data,
+            stream=True,
+            timeout=PROXY_TIMEOUT,
+        )
 
-                yield from stream_response(r)
+        logger.info(
+            "AOAI proxy upstream resp req_id=%s status=%s x-request-id=%s content-type=%s",
+            req_id,
+            upstream_response.status_code,
+            upstream_response.headers.get("x-request-id"),
+            upstream_response.headers.get("content-type"),
+        )
+
+        response_headers = dict(filtered_response_headers(upstream_response))
+        response_headers["X-Request-Id"] = req_id
+
+        if upstream_response.status_code >= 400:
+            try:
+                error_body = upstream_response.content
+            finally:
+                upstream_response.close()
+
+            return Response(
+                error_body,
+                status=upstream_response.status_code,
+                headers=response_headers,
+                direct_passthrough=True,
+            )
+
+        def generate():
+            try:
+                yield from stream_response(upstream_response)
+            finally:
+                upstream_response.close()
+
+        response_headers["Cache-Control"] = "no-cache"
+        response_headers["Connection"] = "keep-alive"
+        response_headers["X-Accel-Buffering"] = "no"
 
         return Response(
             stream_with_context(generate()),
-            headers={
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-                "X-Accel-Buffering": "no",
-            },
+            status=upstream_response.status_code,
+            headers=response_headers,
             direct_passthrough=True,
         )
 
