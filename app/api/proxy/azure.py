@@ -30,6 +30,12 @@ def openai_chat_completions(subpath: str):
 
     This endpoint accepts requests in the OpenAI API format and proxies them to Azure OpenAI.
     It allows the frontend to use the OpenAI SDK with a custom base URL pointing to this route.
+
+        Implementation notes:
+        - Preserves streaming semantics by forwarding chunked upstream responses.
+        - Injects Entra ID bearer token generated with `DefaultAzureCredential`.
+        - Returns upstream status/body as-is for non-2xx responses to avoid masking
+            Azure OpenAI error diagnostics.
     """
     # Generate a request id to correlate logs across client/proxy/upstream
     req_id = request.headers.get("x-request-id") or str(uuid.uuid4())
@@ -74,6 +80,7 @@ def openai_chat_completions(subpath: str):
         response_headers = dict(filtered_response_headers(upstream_response))
         response_headers["X-Request-Id"] = req_id
 
+        # Surface upstream error payload directly (JSON/text) for client diagnostics.
         if upstream_response.status_code >= 400:
             try:
                 error_body = upstream_response.content
@@ -89,6 +96,7 @@ def openai_chat_completions(subpath: str):
 
         def generate():
             try:
+                # Relay upstream chunks without buffering to preserve token streaming UX.
                 yield from stream_response(upstream_response)
             finally:
                 upstream_response.close()
