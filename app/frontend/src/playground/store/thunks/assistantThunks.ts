@@ -4,6 +4,7 @@ import {
   setIsLoading,
   setOrchestratorInsights,
   Message,
+  OrchestratorInsights,
 } from "../slices/chatSlice";
 import { setIsSessionNew } from "../slices/sessionSlice"
 import { addToast } from "../slices/toastSlice";
@@ -22,6 +23,7 @@ import { extractFileText, fetchFileDataUrl } from "../../api/storage";
 import { Tool } from "openai/resources/responses/responses.mjs";
 import {
   getOrchestratorInsights,
+  OrchestratorProgressEvent,
   resolveServersFromInsights,
 } from "../../services/orchestratorService";
 
@@ -34,6 +36,46 @@ const isOrchestratorServer = (server: Tool.Mcp): boolean => {
 
 const attachmentTextCache = new Map<string, string>();
 const attachmentImageCache = new Map<string, string>();
+const MAX_ORCHESTRATOR_PROGRESS_UPDATES = 20;
+const IS_DEV = import.meta.env.DEV;
+
+const dedupeMcpServers = (servers: Tool.Mcp[]): Tool.Mcp[] => {
+  const seen = new Set<string>();
+  const deduped: Tool.Mcp[] = [];
+  for (const server of servers) {
+    const key = `${server.server_url || ""}|${server.server_label || ""}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(server);
+  }
+  return deduped;
+};
+
+const isDuplicateProgressUpdate = (
+  previous: OrchestratorProgressEvent | undefined,
+  next: OrchestratorProgressEvent,
+): boolean => {
+  if (!previous) return false;
+  return (
+    previous.status === next.status
+    && previous.message === next.message
+    && previous.transport === next.transport
+  );
+};
+
+const buildOrchestratorProgressInsights = (
+  event: OrchestratorProgressEvent,
+  progressUpdates: OrchestratorProgressEvent[],
+): OrchestratorInsights => ({
+  category: "routing",
+  recommendations: [],
+  source: "orchestrator",
+  transport: event.transport,
+  status: event.status,
+  statusMessage: event.message,
+  progressUpdates,
+  timestamp: event.timestamp,
+});
 
 /**
  * Clamp long attachment transcripts so prompts stay within token limits.
@@ -81,7 +123,9 @@ async function resolveAttachmentParts(
             attachmentImageCache.set(cacheKey, dataUrl);
           }
         } catch (error) {
-          console.error("Failed to load attachment image", error);
+          if (IS_DEV) {
+            console.error("Failed to load attachment image", error);
+          }
         }
       }
 
@@ -115,7 +159,9 @@ async function resolveAttachmentParts(
           attachmentTextCache.set(cacheKey, resolvedText);
         }
       } catch (error) {
-        console.error("Failed to extract attachment text", error);
+        if (IS_DEV) {
+          console.error("Failed to extract attachment text", error);
+        }
         extractionFailures.push(attachmentName);
       }
     }
@@ -252,7 +298,13 @@ export interface SendAssistantMessageArgs {
 }
 
 /**
- * Primary thunk that streams assistant completions, handling tools and attachment hydration.
+ * Primary chat execution thunk for one user turn.
+ *
+ * Flow summary:
+ * 1) Validate auth and discover orchestrator server.
+ * 2) Ask orchestrator to classify and select downstream MCP servers.
+ * 3) Build completion messages (including attachment hydration).
+ * 4) Stream model output and keep Redux message content in sync.
  */
 export const sendAssistantMessage = ({
   sessionId,
@@ -268,17 +320,6 @@ export const sendAssistantMessage = ({
     dispatch(setIsSessionNew({id: sessionId, isNew: false}))
 
     const { accessToken } = getState().auth;
-    const dispatchForAttachments = dispatch as AppDispatch;
-    const { mcpServers } = getState().tools;
-    const existingSessionMessages = getState().chat.messages.filter(
-      (message) => message.sessionId === sessionId
-    );
-
-    // Attach authorization tokens to MCP servers
-    const serversWithAuth: Tool.Mcp[] = (mcpServers && mcpServers.length > 0 && accessToken)
-      ? mcpServers.map((server: Tool.Mcp) => ({ ...server, authorization: accessToken }))
-      : [];
-
     if (!accessToken || isTokenExpired(accessToken)) {
       dispatch(
         addToast({
@@ -289,8 +330,18 @@ export const sendAssistantMessage = ({
       return;
     }
 
-    const orchestratorServers = serversWithAuth.filter(isOrchestratorServer);
-    if (orchestratorServers.length === 0) {
+    const dispatchForAttachments = dispatch as AppDispatch;
+    const { mcpServers } = getState().tools;
+    const existingSessionMessages = getState().chat.messages.filter(
+      (message) => message.sessionId === sessionId
+    );
+
+    const serversWithAuth: Tool.Mcp[] = (mcpServers || []).map((server: Tool.Mcp) => ({
+      ...server,
+      authorization: accessToken,
+    }));
+
+    if (!serversWithAuth.some(isOrchestratorServer)) {
       dispatch(
         addToast({
           message: "Orchestrator MCP is required but not configured in VITE_MCP_SERVERS.",
@@ -300,24 +351,38 @@ export const sendAssistantMessage = ({
       return;
     }
 
+    const progressUpdates: OrchestratorProgressEvent[] = [];
+
     const orchestratorInsights = await getOrchestratorInsights({
       messages: existingSessionMessages,
       currentContent: content,
       servers: serversWithAuth,
+      onProgress: (event: OrchestratorProgressEvent) => {
+        if (isDuplicateProgressUpdate(progressUpdates[progressUpdates.length - 1], event)) {
+          return;
+        }
+        progressUpdates.push(event);
+        if (progressUpdates.length > MAX_ORCHESTRATOR_PROGRESS_UPDATES) {
+          progressUpdates.shift();
+        }
+        dispatch(
+          setOrchestratorInsights({
+            sessionId,
+            insights: buildOrchestratorProgressInsights(event, progressUpdates.slice()),
+          })
+        );
+      },
     });
 
+    // Orchestrator fallback means we route to all non-orchestrator servers.
     const orchestratorUnavailable =
       !orchestratorInsights || orchestratorInsights.source === "local-fallback";
 
     const selectedServers = orchestratorUnavailable
       ? serversWithAuth.filter((server) => !isOrchestratorServer(server))
       : resolveServersFromInsights(orchestratorInsights, serversWithAuth);
-    const routedServers = selectedServers.filter(
-      (server, index, all) =>
-        all.findIndex(
-          (entry) => entry.server_url === server.server_url && entry.server_label === server.server_label
-        ) === index
-    );
+
+    const routedServers = dedupeMcpServers(selectedServers);
 
     const noDownstreamExpected =
       !orchestratorUnavailable &&
@@ -329,36 +394,40 @@ export const sendAssistantMessage = ({
       (orchestratorInsights.category === "generic" &&
         orchestratorInsights.recommendations.length === 0);
 
-    if (routedServers.length === 0) {
-      if (noDownstreamExpected || orchestratorUnavailable) {
-        dispatch(
-          setOrchestratorInsights({
-            sessionId,
-            insights: shouldHideOrchestratorMetadata ? null : orchestratorInsights,
-          })
-        );
-      } else {
-        dispatch(
-          addToast({
-            message: "Orchestrator did not return any downstream MCP route for this turn.",
-            isError: true,
-          })
-        );
-        return;
-      }
+    if (routedServers.length === 0 && !noDownstreamExpected && !orchestratorUnavailable) {
+      dispatch(
+        addToast({
+          message: "Orchestrator did not return any downstream MCP route for this turn.",
+          isError: true,
+        })
+      );
+      return;
     }
 
-    const insightsWithSelection = routedServers.length > 0
+    const finalProgress = progressUpdates[progressUpdates.length - 1];
+
+    const baseInsights = !orchestratorInsights || shouldHideOrchestratorMetadata
+      ? null
+      : {
+          ...orchestratorInsights,
+          status: finalProgress?.status || "done",
+          statusMessage:
+            finalProgress?.message ||
+            (orchestratorInsights.fallbackReason
+              ? "Completed with fallback"
+              : "Orchestrator routing completed"),
+          progressUpdates: progressUpdates.slice(),
+        };
+
+    const insightsWithSelection = baseInsights && routedServers.length > 0
       ? {
-          ...(orchestratorInsights as NonNullable<typeof orchestratorInsights>),
+          ...baseInsights,
           selectedServers: routedServers.map((server) => ({
             server_label: server.server_label,
             server_url: server.server_url || "(no-url)",
           })),
         }
-      : shouldHideOrchestratorMetadata
-        ? null
-        : orchestratorInsights;
+      : baseInsights;
 
     dispatch(setOrchestratorInsights({ sessionId, insights: insightsWithSelection }));
 
@@ -398,6 +467,8 @@ export const sendAssistantMessage = ({
 
     // Use the completion service with streaming callbacks for state management
     const completionMessages = await mapMessagesForCompletion(updatedSessionMessages, dispatchForAttachments, getState);
+
+    // Ensure every routed MCP server carries an auth token for downstream calls.
     const routedServersWithAuth: Tool.Mcp[] = routedServers.map((server) => ({
       ...server,
       authorization: (server as Tool.Mcp & { authorization?: string }).authorization || accessToken,
@@ -433,13 +504,11 @@ export const sendAssistantMessage = ({
           );
         },
         onError: (error: Error) => {
-          console.error("Streaming error:", error);
-          // Could dispatch error state here if needed
+          if (IS_DEV) {
+            console.error("Streaming error:", error);
+          }
         },
-        onComplete: (fullText: string) => {
-          console.log("Completion finished:", fullText.length, "characters");
-          // Final state update if needed
-        }
+        onComplete: () => undefined,
       }
     );
 

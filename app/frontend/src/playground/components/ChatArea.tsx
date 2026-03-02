@@ -8,7 +8,7 @@
 
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
-import type { RootState, AppDispatch } from "../store"; // Ensure AppDispatch is exported from your store
+import type { RootState, AppDispatch } from "../store";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
 import ReplayStopBar from "./ReplayStopBar";
@@ -26,6 +26,7 @@ import { rehydrateSessionFromArchive } from "../store/thunks/sessionBootstrapThu
 import { pickLatestArchive } from "../utils/archives";
 import { applyRemoteSessionDeletion } from "../store/thunks/sessionManagementThunks";
 import OrchestratorDebugPanel from "./OrchestratorDebugPanel";
+import AgentActivityPanel from "./AgentActivityPanel";
 
 const ChatArea: React.FC = () => {
   const { t } = useTranslation('playground');
@@ -250,6 +251,7 @@ const ChatArea: React.FC = () => {
           onSuggestionClicked={handleSuggestion}
           disabled={isLoading}
         />
+        <AgentActivityPanel sessionId={currentSessionId} />
         <OrchestratorDebugPanel sessionId={currentSessionId} />
         <ChatInput sessionId={currentSessionId} />
       </Box>
@@ -260,6 +262,7 @@ const ChatArea: React.FC = () => {
     <Box flex={1} display="flex" flexDirection="column" height="100vh">
       <ChatMessages sessionId={currentSessionId} />
       <Citations citations={citations as Citation[]} />
+      <AgentActivityPanel sessionId={currentSessionId} />
       <OrchestratorDebugPanel sessionId={currentSessionId} />
       <ReplayStopBar
         onReplay={handleReplay}

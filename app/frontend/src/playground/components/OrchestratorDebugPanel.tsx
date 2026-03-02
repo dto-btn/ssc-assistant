@@ -15,6 +15,15 @@ const formatPercent = (value?: number): string => {
   return `${Math.max(0, Math.min(100, normalized)).toFixed(0)}%`;
 };
 
+const formatClassificationMethod = (method?: string): string => {
+  if (!method) return "unknown";
+  const normalized = method.trim().toLowerCase();
+  if (normalized === "ai") return "AI classified";
+  if (normalized === "keyword") return "Keyword classified";
+  if (normalized === "fallback") return "Fallback";
+  return method;
+};
+
 const OrchestratorDebugPanel: React.FC<OrchestratorDebugPanelProps> = ({ sessionId }) => {
   const insights = useAppSelector(
     (state) => state.chat.orchestratorInsightsBySessionId?.[sessionId]
@@ -49,6 +58,17 @@ const OrchestratorDebugPanel: React.FC<OrchestratorDebugPanelProps> = ({ session
         Recommendations: {insights.recommendations.length}
       </Typography>
 
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+        Classification: {formatClassificationMethod(insights.classificationMethod)}
+      </Typography>
+
+      {insights.status ? (
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+          Status: {insights.status}
+          {insights.statusMessage ? ` • ${insights.statusMessage}` : ""}
+        </Typography>
+      ) : null}
+
       {insights.transport ? (
         <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
           Transport: {insights.transport}
@@ -80,6 +100,24 @@ const OrchestratorDebugPanel: React.FC<OrchestratorDebugPanelProps> = ({ session
               sx={{ display: "block" }}
             >
               {server.server_label} • {server.server_url}
+            </Typography>
+          ))}
+        </Box>
+      ) : null}
+
+      {insights.progressUpdates && insights.progressUpdates.length > 0 ? (
+        <Box sx={{ mt: 0.5, mb: 0.5 }}>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+            Orchestrator updates:
+          </Typography>
+          {insights.progressUpdates.slice(-6).map((update, index) => (
+            <Typography
+              key={`${update.timestamp}-${index}`}
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block" }}
+            >
+              {new Date(update.timestamp).toLocaleTimeString()} • {update.status} • {update.message}
             </Typography>
           ))}
         </Box>

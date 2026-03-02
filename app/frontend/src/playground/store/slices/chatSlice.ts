@@ -26,12 +26,24 @@ export interface OrchestratorRecommendation {
   category?: string;
   confidence?: number;
   matched_keywords?: string[];
+  classification_method?: string;
   rationale?: string;
+}
+
+export interface OrchestratorProgressUpdate {
+  status: "connecting" | "connected" | "classifying" | "routing" | "done" | "error";
+  message: string;
+  timestamp: string;
+  transport?: "streamable-http";
 }
 
 export interface OrchestratorInsights {
   category: string;
   recommendations: OrchestratorRecommendation[];
+  classificationMethod?: string;
+  status?: OrchestratorProgressUpdate["status"];
+  statusMessage?: string;
+  progressUpdates?: OrchestratorProgressUpdate[];
   selectedServers?: Array<{
     server_label: string;
     server_url: string;
@@ -90,9 +102,6 @@ const chatSlice = createSlice({
       action: PayloadAction<{ sessionId: string; insights: OrchestratorInsights | null }>
     ) => {
       const { sessionId, insights } = action.payload;
-      if (!state.orchestratorInsightsBySessionId) {
-        state.orchestratorInsightsBySessionId = {};
-      }
       if (!insights) {
         delete state.orchestratorInsightsBySessionId[sessionId];
         return;
@@ -101,9 +110,6 @@ const chatSlice = createSlice({
       state.orchestratorInsightsBySessionId[sessionId] = insights;
     },
     clearOrchestratorInsights: (state, action: PayloadAction<string>) => {
-      if (!state.orchestratorInsightsBySessionId) {
-        state.orchestratorInsightsBySessionId = {};
-      }
       delete state.orchestratorInsightsBySessionId[action.payload];
     },
     hydrateSessionMessages: (
