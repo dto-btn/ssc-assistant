@@ -13,10 +13,10 @@ const isLocalHttpMcpUrl = (parsed: URL): boolean => {
   return parsed.protocol === "http:" && ["localhost", "127.0.0.1"].includes(host);
 };
 
-const isValidMcpUrl = (rawUrl: string): boolean => {
+export const isValidMcpUrl = (rawUrl: string): boolean => {
   try {
     const parsed = new URL(rawUrl);
-    if (!parsed.pathname.toLowerCase().endsWith("/mcp")) {
+    if (!/\/mcp\/?$/i.test(parsed.pathname)) {
       return false;
     }
     if (parsed.protocol === "https:") {

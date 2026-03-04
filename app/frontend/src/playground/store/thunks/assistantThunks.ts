@@ -341,38 +341,40 @@ export const sendAssistantMessage = ({
       authorization: accessToken,
     }));
 
-    if (!serversWithAuth.some(isOrchestratorServer)) {
+    const hasOrchestratorServer = serversWithAuth.some(isOrchestratorServer);
+    if (!hasOrchestratorServer) {
       dispatch(
         addToast({
-          message: "Orchestrator MCP is required but not configured in VITE_MCP_SERVERS.",
-          isError: true,
+          message: "Orchestrator MCP is not configured; routing will fall back to available MCP servers.",
+          isError: false,
         })
       );
-      return;
     }
 
     const progressUpdates: OrchestratorProgressEvent[] = [];
 
-    const orchestratorInsights = await getOrchestratorInsights({
-      messages: existingSessionMessages,
-      currentContent: content,
-      servers: serversWithAuth,
-      onProgress: (event: OrchestratorProgressEvent) => {
-        if (isDuplicateProgressUpdate(progressUpdates[progressUpdates.length - 1], event)) {
-          return;
-        }
-        progressUpdates.push(event);
-        if (progressUpdates.length > MAX_ORCHESTRATOR_PROGRESS_UPDATES) {
-          progressUpdates.shift();
-        }
-        dispatch(
-          setOrchestratorInsights({
-            sessionId,
-            insights: buildOrchestratorProgressInsights(event, progressUpdates.slice()),
-          })
-        );
-      },
-    });
+    const orchestratorInsights = hasOrchestratorServer
+      ? await getOrchestratorInsights({
+          messages: existingSessionMessages,
+          currentContent: content,
+          servers: serversWithAuth,
+          onProgress: (event: OrchestratorProgressEvent) => {
+            if (isDuplicateProgressUpdate(progressUpdates[progressUpdates.length - 1], event)) {
+              return;
+            }
+            progressUpdates.push(event);
+            if (progressUpdates.length > MAX_ORCHESTRATOR_PROGRESS_UPDATES) {
+              progressUpdates.shift();
+            }
+            dispatch(
+              setOrchestratorInsights({
+                sessionId,
+                insights: buildOrchestratorProgressInsights(event, progressUpdates.slice()),
+              })
+            );
+          },
+        })
+      : null;
 
     // Orchestrator fallback means we route to all non-orchestrator servers.
     const orchestratorUnavailable =
