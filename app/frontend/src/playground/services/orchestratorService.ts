@@ -104,7 +104,7 @@ const tryParseJson = (value: string): Record<string, unknown> | null => {
  * - Rejects SSE endpoints.
  * - Normalizes endpoint path to end with `/mcp`.
  */
-const normalizeHttpsMcpUrl = (rawServerUrl: string): URL => {
+export const normalizeHttpsMcpUrl = (rawServerUrl: string): URL => {
   const normalized = rawServerUrl.trim();
   const parsed = new URL(normalized);
 
@@ -117,9 +117,11 @@ const normalizeHttpsMcpUrl = (rawServerUrl: string): URL => {
     throw new Error(`SSE transport is not supported. Configure MCP streamable HTTP endpoint (/mcp): ${normalized}`);
   }
 
-  if (!parsed.pathname.endsWith("/mcp")) {
-    const trimmedPath = parsed.pathname.replace(/\/$/, "");
-    parsed.pathname = `${trimmedPath}/mcp`;
+  const normalizedPath = parsed.pathname.replace(/\/+$/, "");
+  if (!normalizedPath.endsWith("/mcp")) {
+    parsed.pathname = `${normalizedPath}/mcp`;
+  } else {
+    parsed.pathname = normalizedPath || "/";
   }
 
   return parsed;

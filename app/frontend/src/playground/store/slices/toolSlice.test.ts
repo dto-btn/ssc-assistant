@@ -1,0 +1,17 @@
+import { describe, expect, it } from "vitest";
+
+import { isValidMcpUrl } from "./toolSlice";
+
+describe("isValidMcpUrl", () => {
+  it("accepts https MCP endpoint", () => {
+    expect(isValidMcpUrl("https://example.com/mcp")).toBe(true);
+  });
+
+  it("accepts https MCP endpoint with trailing slash", () => {
+    expect(isValidMcpUrl("https://example.com/mcp/")).toBe(true);
+  });
+
+  it("rejects endpoints without MCP path", () => {
+    expect(isValidMcpUrl("https://example.com/api")).toBe(false);
+  });
+});
