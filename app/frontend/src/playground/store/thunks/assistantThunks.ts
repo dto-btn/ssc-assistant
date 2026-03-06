@@ -29,6 +29,9 @@ import {
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
 
+/**
+ * Identify orchestrator MCP entries so they are excluded from downstream tool runs.
+ */
 const isOrchestratorServer = (server: Tool.Mcp): boolean => {
   const label = `${server.server_label || ""} ${server.server_description || ""}`.toLowerCase();
   return label.includes("orchestrator");
@@ -39,6 +42,9 @@ const attachmentImageCache = new Map<string, string>();
 const MAX_ORCHESTRATOR_PROGRESS_UPDATES = 20;
 const IS_DEV = import.meta.env.DEV;
 
+/**
+ * Remove duplicate servers while preserving first-seen ordering.
+ */
 const dedupeMcpServers = (servers: Tool.Mcp[]): Tool.Mcp[] => {
   const seen = new Set<string>();
   const deduped: Tool.Mcp[] = [];
@@ -51,6 +57,9 @@ const dedupeMcpServers = (servers: Tool.Mcp[]): Tool.Mcp[] => {
   return deduped;
 };
 
+/**
+ * Prevent noisy UI updates when identical progress events are emitted repeatedly.
+ */
 const isDuplicateProgressUpdate = (
   previous: OrchestratorProgressEvent | undefined,
   next: OrchestratorProgressEvent,
@@ -63,6 +72,9 @@ const isDuplicateProgressUpdate = (
   );
 };
 
+/**
+ * Build a lightweight interim insights object used while routing is in progress.
+ */
 const buildOrchestratorProgressInsights = (
   event: OrchestratorProgressEvent,
   progressUpdates: OrchestratorProgressEvent[],
@@ -377,24 +389,29 @@ export const sendAssistantMessage = ({
       : null;
 
     // Orchestrator fallback means we route to all non-orchestrator servers.
-    const orchestratorUnavailable =
-      !orchestratorInsights || orchestratorInsights.source === "local-fallback";
+    const orchestratorUnavailable = !orchestratorInsights;
 
-    const selectedServers = orchestratorUnavailable
-      ? serversWithAuth.filter((server) => !isOrchestratorServer(server))
+    const downstreamServers = serversWithAuth.filter((server) => !isOrchestratorServer(server));
+
+    const orchestratorRecommendedServers = orchestratorUnavailable
+      ? []
       : resolveServersFromInsights(orchestratorInsights, serversWithAuth);
-
-    const routedServers = dedupeMcpServers(selectedServers);
 
     const noDownstreamExpected =
       !orchestratorUnavailable &&
       (orchestratorInsights.fallbackUpstream === null ||
-        (orchestratorInsights.category === "generic" && orchestratorInsights.recommendations.length === 0));
+        orchestratorInsights.recommendations.length === 0 ||
+        (orchestratorInsights.category === "general" && orchestratorInsights.recommendations.length === 0));
 
-    const shouldHideOrchestratorMetadata =
-      orchestratorUnavailable ||
-      (orchestratorInsights.category === "generic" &&
-        orchestratorInsights.recommendations.length === 0);
+    const routedServers = orchestratorUnavailable
+      ? dedupeMcpServers(downstreamServers)
+      : noDownstreamExpected
+        // Respect explicit "no upstream" decisions from orchestrator.
+        ? []
+        // Keep orchestrator picks first but include configured downstream defaults.
+        : dedupeMcpServers([...orchestratorRecommendedServers, ...downstreamServers]);
+
+    const shouldHideOrchestratorMetadata = orchestratorUnavailable;
 
     if (routedServers.length === 0 && !noDownstreamExpected && !orchestratorUnavailable) {
       dispatch(
@@ -421,10 +438,10 @@ export const sendAssistantMessage = ({
           progressUpdates: progressUpdates.slice(),
         };
 
-    const insightsWithSelection = baseInsights && routedServers.length > 0
+    const insightsWithSelection = baseInsights && orchestratorRecommendedServers.length > 0
       ? {
           ...baseInsights,
-          selectedServers: routedServers.map((server) => ({
+          selectedServers: orchestratorRecommendedServers.map((server) => ({
             server_label: server.server_label,
             server_url: server.server_url || "(no-url)",
           })),
@@ -476,43 +493,101 @@ export const sendAssistantMessage = ({
       authorization: (server as Tool.Mcp & { authorization?: string }).authorization || accessToken,
     }));
 
-    await completionService.createCompletion(
-      {
-        messages: completionMessages,
-        model: "gpt-4.1-mini", // Eventually leverage an orchestrator
-        provider,
-        userToken: accessToken,
-        servers: routedServersWithAuth,
-      },
-      {
-        onChunk: (chunk: string) => {
-          accumulatedContent += chunk;
-          // This is where the thunk manages state during streaming
-          dispatch(
-            updateMessageContent({
-              messageId: latestAssistantMessage.id,
-              content: accumulatedContent,
-            })
-          );
+    const runCompletion = async (serversForRun: Tool.Mcp[]): Promise<void> => {
+      // One execution path used for both primary run and no-tools retry.
+      await completionService.createCompletion(
+        {
+          messages: completionMessages,
+          model: "gpt-4.1-mini", // Eventually leverage an orchestrator
+          provider,
+          userToken: accessToken,
+          servers: serversForRun,
         },
-        onToolCall: (toolName?: string) => {
-          const toolCallMessage = `\n${toolName ?? "A tool"} is being called...\n`;
+        {
+          onChunk: (chunk: string) => {
+            accumulatedContent += chunk;
+            // This is where the thunk manages state during streaming
+            dispatch(
+              updateMessageContent({
+                messageId: latestAssistantMessage.id,
+                content: accumulatedContent,
+              })
+            );
+          },
+          onToolCall: (toolName?: string) => {
+            const toolCallMessage = `\n${toolName ?? "A tool"} is being called...\n`;
 
-          dispatch(
-            updateMessageContent({
-              messageId: latestAssistantMessage.id,
-              content: accumulatedContent + toolCallMessage,
-            })
-          );
-        },
-        onError: (error: Error) => {
-          if (IS_DEV) {
-            console.error("Streaming error:", error);
-          }
-        },
-        onComplete: () => undefined,
+            dispatch(
+              updateMessageContent({
+                messageId: latestAssistantMessage.id,
+                content: accumulatedContent + toolCallMessage,
+              })
+            );
+          },
+          onError: (error: Error) => {
+            if (IS_DEV) {
+              console.error("Streaming error:", error);
+            }
+          },
+          onComplete: () => undefined,
+        }
+      );
+    };
+
+    try {
+      await runCompletion(routedServersWithAuth);
+    } catch (toolEnabledError) {
+      if (routedServersWithAuth.length === 0) {
+        throw toolEnabledError;
       }
-    );
+
+      const retryEvent: OrchestratorProgressEvent = {
+        status: "routing",
+        message: "Retried without tools after downstream tool failure",
+        timestamp: new Date().toISOString(),
+        transport: orchestratorInsights?.transport === "streamable-http" ? "streamable-http" : undefined,
+      };
+
+      if (!isDuplicateProgressUpdate(progressUpdates[progressUpdates.length - 1], retryEvent)) {
+        progressUpdates.push(retryEvent);
+        if (progressUpdates.length > MAX_ORCHESTRATOR_PROGRESS_UPDATES) {
+          progressUpdates.shift();
+        }
+      }
+
+      const existingInsights = getState().chat.orchestratorInsightsBySessionId?.[sessionId];
+      if (existingInsights) {
+        dispatch(
+          setOrchestratorInsights({
+            sessionId,
+            insights: {
+              ...existingInsights,
+              status: retryEvent.status,
+              statusMessage: retryEvent.message,
+              progressUpdates: progressUpdates.slice(),
+              timestamp: retryEvent.timestamp,
+            },
+          })
+        );
+      }
+
+      if (IS_DEV) {
+        console.warn(
+          "Tool-enabled completion failed; retrying without MCP tools.",
+          toolEnabledError
+        );
+      }
+
+      accumulatedContent = "";
+      dispatch(
+        updateMessageContent({
+          messageId: latestAssistantMessage.id,
+          content: "",
+        })
+      );
+
+      await runCompletion([]);
+    }
 
   } catch (error) {
     console.error("Completion failed:", error);

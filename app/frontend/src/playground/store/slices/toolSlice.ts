@@ -8,11 +8,21 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Tool } from "openai/resources/responses/responses.mjs";
 
+/**
+ * Allow insecure transport only for local development loopback MCP endpoints.
+ */
 const isLocalHttpMcpUrl = (parsed: URL): boolean => {
   const host = parsed.hostname.toLowerCase();
   return parsed.protocol === "http:" && ["localhost", "127.0.0.1"].includes(host);
 };
 
+/**
+ * Validate MCP server URLs accepted by the playground.
+ *
+ * Accepted forms:
+ * - `https://.../mcp`
+ * - `http://localhost|127.0.0.1/.../mcp` during dev
+ */
 export const isValidMcpUrl = (rawUrl: string): boolean => {
   try {
     const parsed = new URL(rawUrl);
@@ -55,6 +65,7 @@ export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rej
         type: 'mcp',
         server_url: server.server_url,
         server_description: server.server_description,
+        // Default to never so unsupported values do not break tool execution.
         require_approval: (server.require_approval === "always" || server.require_approval === "never") 
           ? server.require_approval 
           : "never",

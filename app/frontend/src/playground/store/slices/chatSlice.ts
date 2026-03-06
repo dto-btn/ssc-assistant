@@ -30,6 +30,9 @@ export interface OrchestratorRecommendation {
   rationale?: string;
 }
 
+/**
+ * Lifecycle updates emitted while the orchestrator is classifying/routing.
+ */
 export interface OrchestratorProgressUpdate {
   status: "connecting" | "connected" | "classifying" | "routing" | "done" | "error";
   message: string;
@@ -37,6 +40,9 @@ export interface OrchestratorProgressUpdate {
   transport?: "streamable-http";
 }
 
+/**
+ * Persisted routing metadata for the active chat turn.
+ */
 export interface OrchestratorInsights {
   category: string;
   recommendations: OrchestratorRecommendation[];
@@ -50,7 +56,7 @@ export interface OrchestratorInsights {
   }>;
   fallbackReason?: string;
   fallbackUpstream?: string | null;
-  source: "orchestrator" | "local-fallback";
+  source: "orchestrator";
   transport?: "streamable-http" | "sse";
   timestamp: string;
   error?: string;
@@ -59,6 +65,7 @@ export interface OrchestratorInsights {
 interface ChatState {
   messages: Message[];
   isLoading: boolean;
+  // Keyed by session id so each tab/session can show independent routing state.
   orchestratorInsightsBySessionId: Record<string, OrchestratorInsights | undefined>;
 }
 
@@ -102,6 +109,7 @@ const chatSlice = createSlice({
       action: PayloadAction<{ sessionId: string; insights: OrchestratorInsights | null }>
     ) => {
       const { sessionId, insights } = action.payload;
+      // Null indicates the caller wants to clear current orchestrator metadata.
       if (!insights) {
         delete state.orchestratorInsightsBySessionId[sessionId];
         return;

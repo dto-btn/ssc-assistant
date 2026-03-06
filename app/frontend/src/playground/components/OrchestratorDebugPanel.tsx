@@ -9,12 +9,18 @@ interface OrchestratorDebugPanelProps {
 const showOrchestratorDebug =
   import.meta.env.DEV && import.meta.env.VITE_PLAYGROUND_SHOW_ORCHESTRATOR_DEBUG === "true";
 
+/**
+ * Format confidence values from either 0..1 or 0..100 into a display percent.
+ */
 const formatPercent = (value?: number): string => {
   if (typeof value !== "number" || Number.isNaN(value)) return "n/a";
   const normalized = value <= 1 ? value * 100 : value;
   return `${Math.max(0, Math.min(100, normalized)).toFixed(0)}%`;
 };
 
+/**
+ * Map classifier method tags into human-readable debug labels.
+ */
 const formatClassificationMethod = (method?: string): string => {
   if (!method) return "unknown";
   const normalized = method.trim().toLowerCase();
@@ -24,6 +30,9 @@ const formatClassificationMethod = (method?: string): string => {
   return method;
 };
 
+/**
+ * Developer-only panel with verbose orchestrator routing diagnostics.
+ */
 const OrchestratorDebugPanel: React.FC<OrchestratorDebugPanelProps> = ({ sessionId }) => {
   const insights = useAppSelector(
     (state) => state.chat.orchestratorInsightsBySessionId?.[sessionId]
