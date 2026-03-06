@@ -6,6 +6,9 @@ interface AgentActivityPanelProps {
   sessionId: string;
 }
 
+/**
+ * Convert raw orchestrator status values to short UI-friendly labels.
+ */
 const titleForStatus = (status?: string): string => {
   if (!status) return "Waiting for orchestrator";
   if (status === "connecting") return "Connecting";
@@ -17,6 +20,9 @@ const titleForStatus = (status?: string): string => {
   return status;
 };
 
+/**
+ * Compact status widget that surfaces recent orchestrator routing activity.
+ */
 const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({ sessionId }) => {
   const insights = useAppSelector(
     (state) => state.chat.orchestratorInsightsBySessionId?.[sessionId]
@@ -28,8 +34,31 @@ const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({ sessionId }) =>
 
   const updates = insights.progressUpdates ?? [];
   const latestUpdates = updates.slice(-3);
+  // If no explicit status exists, infer done state once a concrete category is set.
   const derivedStatus = insights.status || updates[updates.length - 1]?.status ||
     (insights.category && insights.category !== "routing" ? "done" : undefined);
+
+  const assignedCategories = Array.from(
+    new Set(
+      [
+        insights.category,
+        ...insights.recommendations
+          .map((recommendation) => recommendation.category)
+          .filter((category): category is string => Boolean(category && category.trim())),
+      ]
+        .map((category) => category.trim())
+        .filter(Boolean)
+    )
+  );
+
+  const pickedServerNames = Array.from(
+    new Set(
+      [
+        ...(insights.selectedServers || []).map((server) => server.server_label).filter(Boolean),
+        ...insights.recommendations.map((recommendation) => recommendation.mcp_server_id).filter(Boolean),
+      ]
+    )
+  );
 
   return (
     <Box
@@ -49,6 +78,18 @@ const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({ sessionId }) =>
         {titleForStatus(derivedStatus)}
         {insights.statusMessage ? ` • ${insights.statusMessage}` : ""}
       </Typography>
+
+      {assignedCategories.length > 0 ? (
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+          Categories: {assignedCategories.join(", ")}
+        </Typography>
+      ) : null}
+
+      {pickedServerNames.length > 0 ? (
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+          MCP servers: {pickedServerNames.join(", ")}
+        </Typography>
+      ) : null}
 
       {latestUpdates.map((update, index) => (
         <Typography

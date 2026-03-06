@@ -7,23 +7,76 @@ import type {
   OrchestratorRecommendation,
 } from "../store/slices/chatSlice";
 
-const CATEGORY_GENERIC = "generic";
+const CATEGORY_GENERIC = "general";
 
 const MAX_CONTEXT_MESSAGES = 8;
 
 const ORCHESTRATOR_CLIENT_NAME = "ssc-playground-orchestrator-client";
 const ORCHESTRATOR_CLIENT_VERSION = "1.0.0";
 
+/**
+ * Normalize orchestrator confidence values into a 0..1 float.
+ *
+ * Supports providers that emit confidence either as a ratio (0..1)
+ * or as a percentage (0..100).
+ */
+const normalizeConfidenceValue = (value?: number): number | undefined => {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return undefined;
+  }
+  const scaled = value > 1 ? value / 100 : value;
+  return Math.max(0, Math.min(1, scaled));
+};
+
+/**
+ * Read and sanitize the minimum confidence threshold from environment.
+ */
+const parseMinRecommendationConfidence = (): number => {
+  const rawValue = import.meta.env.VITE_ORCHESTRATOR_MIN_RECOMMENDATION_CONFIDENCE;
+  if (!rawValue || rawValue.trim().length === 0) {
+    return 0.4;
+  }
+
+  const parsed = Number(rawValue);
+  if (Number.isNaN(parsed)) {
+    return 0.4;
+  }
+
+  const normalized = parsed > 1 ? parsed / 100 : parsed;
+  return Math.max(0, Math.min(1, normalized));
+};
+
+const MIN_RECOMMENDATION_CONFIDENCE = parseMinRecommendationConfidence();
+
+/**
+ * Return whether the host is one of the allowed local development loopbacks.
+ */
 const isLocalHost = (host: string): boolean => {
   const normalized = host.toLowerCase();
   return normalized === "localhost" || normalized === "127.0.0.1";
 };
 
+/**
+ * Detect whether an MCP server entry is the orchestrator itself.
+ */
 const isOrchestratorServer = (server: Tool.Mcp): boolean => {
   const label = `${server.server_label || ""} ${server.server_description || ""}`.toLowerCase();
   return label.includes("orchestrator");
 };
 
+/**
+ * Normalize category names for consistent downstream comparisons.
+ */
+const normalizeCategory = (value?: string): string | undefined => {
+  if (!value) return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return undefined;
+  return normalized === "generic" ? "general" : normalized;
+};
+
+/**
+ * Coerce raw orchestrator recommendation payloads into typed objects.
+ */
 const normalizeRecommendations = (raw: unknown): OrchestratorRecommendation[] => {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -36,7 +89,7 @@ const normalizeRecommendations = (raw: unknown): OrchestratorRecommendation[] =>
       return {
         mcp_server_id: idValue,
         endpoint: typeof value.endpoint === "string" ? value.endpoint : undefined,
-        category: typeof value.category === "string" ? value.category : undefined,
+        category: typeof value.category === "string" ? normalizeCategory(value.category) : undefined,
         confidence: typeof value.confidence === "number" ? value.confidence : undefined,
         matched_keywords: Array.isArray(value.matched_keywords)
           ? value.matched_keywords.filter((keyword): keyword is string => typeof keyword === "string")
@@ -162,6 +215,7 @@ const connectOrchestratorClient = async (serverUrl: string): Promise<{
   transport: StreamableHTTPClientTransport;
   transportKind: "streamable-http";
 }> => {
+  // This call establishes a streamable HTTP session reused by the caller.
   const mcpUrl = normalizeHttpsMcpUrl(serverUrl);
   const client = new Client({
     name: ORCHESTRATOR_CLIENT_NAME,
@@ -172,6 +226,9 @@ const connectOrchestratorClient = async (serverUrl: string): Promise<{
   return { client, transport, transportKind: "streamable-http" };
 };
 
+/**
+ * Convert arbitrary server IDs into a deterministic matching key.
+ */
 const sanitizeServerId = (value: string): string => {
   return value
     .toLowerCase()
@@ -179,6 +236,9 @@ const sanitizeServerId = (value: string): string => {
     .replace(/^_+|_+$/g, "") || "unknown_mcp";
 };
 
+/**
+ * Validate ad-hoc recommended endpoints before adding them to tool routing.
+ */
 const isAllowedRecommendedEndpoint = (rawEndpoint: string): boolean => {
   try {
     const parsed = new URL(rawEndpoint.trim());
@@ -205,6 +265,9 @@ const isAllowedRecommendedEndpoint = (rawEndpoint: string): boolean => {
   }
 };
 
+/**
+ * Remove duplicate MCP servers based on URL + label identity.
+ */
 const dedupeServers = (servers: Tool.Mcp[]): Tool.Mcp[] => {
   const seen = new Set<string>();
   return servers.filter((server) => {
@@ -215,6 +278,9 @@ const dedupeServers = (servers: Tool.Mcp[]): Tool.Mcp[] => {
   });
 };
 
+/**
+ * Canonicalize endpoints so recommendations can be matched reliably.
+ */
 const normalizeEndpointForMatch = (endpoint?: string): string => {
   if (!endpoint) return "";
   try {
@@ -249,6 +315,15 @@ export const resolveServersFromInsights = (
 
   const recommended: Tool.Mcp[] = [];
   insights.recommendations.forEach((recommendation) => {
+    const normalizedConfidence = normalizeConfidenceValue(recommendation.confidence);
+    // Filter weak recommendations early to reduce noisy downstream tool calls.
+    if (
+      normalizedConfidence === undefined
+      || normalizedConfidence < MIN_RECOMMENDATION_CONFIDENCE
+    ) {
+      return;
+    }
+
     // Prefer exact endpoint matches against already configured servers.
     const endpoint = recommendation.endpoint?.trim();
     const normalizedEndpoint = normalizeEndpointForMatch(endpoint);
@@ -322,6 +397,9 @@ const progressFingerprint = (event: Omit<OrchestratorProgressEvent, "timestamp">
   return `${event.status}|${event.message}|${event.transport || ""}`;
 };
 
+/**
+ * Emit progress updates while suppressing repeated equivalent events.
+ */
 const emitProgress = (
   onProgress: ((event: OrchestratorProgressEvent) => void) | undefined,
   event: Omit<OrchestratorProgressEvent, "timestamp">
@@ -358,6 +436,9 @@ const invalidateOrchestratorConnection = (serverUrl: string): void => {
     .catch(() => undefined);
 };
 
+/**
+ * Get or create a memoized orchestrator connection for a server URL.
+ */
 const getOrchestratorConnection = async (
   serverUrl: string,
   onProgress?: (event: OrchestratorProgressEvent) => void
@@ -401,12 +482,9 @@ export const getOrchestratorInsights = async ({
   servers,
   onProgress,
 }: OrchestratorInsightsRequest): Promise<OrchestratorInsights | null> => {
-  /**
-   * Query orchestrator classification/routing and normalize result for UI state.
-   *
-   * The function first attempts `classify_and_suggest` for single-pass routing,
-   * then falls back to legacy `classify_context` + `suggest_route` if needed.
-   */
+  // Query orchestrator classification/routing and normalize result for UI state.
+  // The function first attempts `classify_and_suggest`, then falls back to
+  // legacy `classify_context` + `suggest_route` when required.
   const orchestratorServer = servers.find(isOrchestratorServer);
   if (!orchestratorServer) {
     return null;
@@ -489,11 +567,21 @@ export const getOrchestratorInsights = async ({
 
     if (!suggestPayload) {
       emitProgress(onProgress, {
-        status: "error",
-        message: "Orchestrator returned an empty routing payload",
+        status: "done",
+        message: "Orchestrator returned no routing data; continuing without downstream routing",
         transport: transportKind,
       });
-      return null;
+      return {
+        category: CATEGORY_GENERIC,
+        recommendations: [],
+        classificationMethod: undefined,
+        fallbackReason: "Orchestrator returned no routing data.",
+        fallbackUpstream: null,
+        source: "orchestrator",
+        transport: transportKind,
+        timestamp: new Date().toISOString(),
+        error: "empty_routing_payload",
+      };
     }
 
     const categories = Array.isArray(classifyPayload?.categories)
@@ -514,21 +602,21 @@ export const getOrchestratorInsights = async ({
         ? suggestPayload.classification_method
         : undefined;
     const fallback = suggestPayload.fallback as Record<string, unknown> | undefined;
-    const fallbackCategory =
-      typeof fallback?.category === "string" && fallback.category.trim().length > 0
-        ? fallback.category
-        : undefined;
+    const fallbackCategory = normalizeCategory(
+      typeof fallback?.category === "string" ? fallback.category : undefined
+    );
     const fallbackUpstream =
       fallback && Object.prototype.hasOwnProperty.call(fallback, "upstream")
         ? typeof fallback.upstream === "string" && fallback.upstream.trim().length > 0
           ? fallback.upstream
           : null
         : undefined;
+    // When upstream is explicitly null, orchestrator intentionally selected no MCP server.
     const effectiveRecommendations = fallbackUpstream === null ? [] : recommendations;
 
     const category =
       // Resolve category using strongest available signal in priority order.
-      (typeof topCategory?.name === "string" ? topCategory.name : undefined) ||
+      normalizeCategory(typeof topCategory?.name === "string" ? topCategory.name : undefined) ||
       effectiveRecommendations[0]?.category ||
       fallbackCategory ||
       CATEGORY_GENERIC;
