@@ -2,6 +2,7 @@
  * Azure OpenAI Provider Implementation
  */
 
+import OpenAI from "openai";
 import { AzureOpenAI } from "openai";
 import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult, CompletionMessage } from "../completionService";
 import { ResponseInput } from "openai/resources/responses/responses.mjs";
@@ -9,27 +10,47 @@ import { ResponseInput } from "openai/resources/responses/responses.mjs";
 export class AzureOpenAIProvider implements CompletionProvider {
   readonly name = 'azure-openai';
 
+  private useLiteLLMProxy(): boolean {
+    return import.meta.env.VITE_PLAYGROUND_USE_LITELLM === "true";
+  }
+
   /**
    * Resolve the backend proxy URL so browser calls stay within the same origin.
    */
   private getBaseURL(): string {
-    return import.meta.env.VITE_API_BACKEND 
-      ? `${import.meta.env.VITE_API_BACKEND}/proxy/azure` 
-      : "http://localhost:5001/proxy/azure";
+    const backend = import.meta.env.VITE_API_BACKEND
+      ? String(import.meta.env.VITE_API_BACKEND).replace(/\/$/, "")
+      : "http://localhost:5001";
+
+    if (this.useLiteLLMProxy()) {
+      return `${backend}/proxy/litellm/v1`;
+    }
+    return `${backend}/proxy/azure`;
   }
 
   /**
    * Build an Azure OpenAI SDK client that forwards the user's token via Authorization.
    */
-  private createClient(userToken: string): AzureOpenAI {
+  private createClient(userToken: string): AzureOpenAI | OpenAI {
+    const defaultHeaders = {
+      "Authorization": "Bearer " + userToken.trim(),
+    };
+
+    if (this.useLiteLLMProxy()) {
+      return new OpenAI({
+        baseURL: this.getBaseURL(),
+        apiKey: "#no-thank-you",
+        dangerouslyAllowBrowser: true,
+        defaultHeaders,
+      });
+    }
+
     return new AzureOpenAI({
       baseURL: this.getBaseURL(),
       apiKey: "#no-thank-you",
       apiVersion: "2025-03-01-preview",
       dangerouslyAllowBrowser: true,
-      defaultHeaders: {
-        "Authorization": "Bearer " + userToken.trim(),
-      }
+      defaultHeaders,
     });
   }
 
