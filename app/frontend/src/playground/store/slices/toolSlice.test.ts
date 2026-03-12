@@ -1,3 +1,8 @@
+/**
+ * URL validation tests that protect MCP onboarding constraints introduced in
+ * the orchestrator routing work.
+ */
+
 import { describe, expect, it } from "vitest";
 
 import { isValidMcpUrl } from "./toolSlice";

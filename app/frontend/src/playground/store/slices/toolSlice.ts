@@ -3,6 +3,9 @@
  *
  * Tracks which external tools (if any) are enabled for the playground and
  * stores tool-related metadata used by the middleware and UI components.
+ *
+ * Validates MCP URLs strictly so orchestrator-provided endpoints cannot route
+ * to unsupported transports or paths.
  */
 
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";

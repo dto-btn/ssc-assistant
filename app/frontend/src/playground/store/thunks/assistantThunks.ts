@@ -1,3 +1,13 @@
+/**
+ * Assistant orchestration thunks.
+ *
+ * Wires orchestrator-guided MCP routing into the chat send path, including
+ * progress streaming, fallback behavior, and selected-server capture for UI
+ * Wires orchestrator-guided MCP routing into the chat send path, including
+ * progress streaming, fallback behavior, and selected-server capture for UI
+ * visibility.
+ */
+
 import {
   addMessage,
   updateMessageContent,
@@ -371,6 +381,7 @@ export const sendAssistantMessage = ({
           currentContent: content,
           servers: serversWithAuth,
           onProgress: (event: OrchestratorProgressEvent) => {
+            // Keep only meaningful transitions so progress UI stays readable.
             if (isDuplicateProgressUpdate(progressUpdates[progressUpdates.length - 1], event)) {
               return;
             }
@@ -404,6 +415,9 @@ export const sendAssistantMessage = ({
         ? dedupeMcpServers(orchestratorRecommendedServers)
         // If no downstream route is recommended, continue chat without MCP tools.
         : [];
+
+    // Persist the final orchestrator decision snapshot so both end-user and
+    // developer panels can explain why a tool route was or was not selected.
 
     const finalProgress = progressUpdates[progressUpdates.length - 1];
 

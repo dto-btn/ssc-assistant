@@ -1,5 +1,8 @@
 /**
  * Azure OpenAI Provider Implementation
+ *
+ * Uses stronger timeout/abort handling so orchestrator-routed calls can fail
+ * fast and emit predictable errors during streamed completions.
  */
 
 import OpenAI from "openai";
@@ -10,6 +13,7 @@ import { ResponseInput } from "openai/resources/responses/responses.mjs";
 const DEFAULT_RESPONSES_TIMEOUT_MS = 90000;
 
 const resolveResponsesTimeoutMs = (): number => {
+  // Environment override keeps timeout tuning deploy-specific without code edits.
   const raw = import.meta.env.VITE_AZURE_RESPONSES_TIMEOUT_MS;
   if (!raw || raw.trim().length === 0) {
     return DEFAULT_RESPONSES_TIMEOUT_MS;
@@ -24,6 +28,7 @@ const resolveResponsesTimeoutMs = (): number => {
 };
 
 const isAbortLikeError = (error: unknown): boolean => {
+  // Normalizes AbortController and network-timeout variants into one predicate.
   if (!error) return false;
   const value = error as { name?: string; message?: string };
   const name = (value.name || "").toLowerCase();

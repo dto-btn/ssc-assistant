@@ -1,3 +1,8 @@
+/**
+ * Regression tests for orchestrator URL normalization and recommendation
+ * resolution behavior in the orchestrator-routing flow.
+ */
+
 import { describe, expect, it } from "vitest";
 
 import type { OrchestratorInsights } from "../store/slices/chatSlice";
