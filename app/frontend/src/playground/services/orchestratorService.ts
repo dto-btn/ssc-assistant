@@ -15,40 +15,6 @@ const ORCHESTRATOR_CLIENT_NAME = "ssc-playground-orchestrator-client";
 const ORCHESTRATOR_CLIENT_VERSION = "1.0.0";
 
 /**
- * Normalize orchestrator confidence values into a 0..1 float.
- *
- * Supports providers that emit confidence either as a ratio (0..1)
- * or as a percentage (0..100).
- */
-const normalizeConfidenceValue = (value?: number): number | undefined => {
-  if (typeof value !== "number" || Number.isNaN(value)) {
-    return undefined;
-  }
-  const scaled = value > 1 ? value / 100 : value;
-  return Math.max(0, Math.min(1, scaled));
-};
-
-/**
- * Read and sanitize the minimum confidence threshold from environment.
- */
-const parseMinRecommendationConfidence = (): number => {
-  const rawValue = import.meta.env.VITE_ORCHESTRATOR_MIN_RECOMMENDATION_CONFIDENCE;
-  if (!rawValue || rawValue.trim().length === 0) {
-    return 0.4;
-  }
-
-  const parsed = Number(rawValue);
-  if (Number.isNaN(parsed)) {
-    return 0.4;
-  }
-
-  const normalized = parsed > 1 ? parsed / 100 : parsed;
-  return Math.max(0, Math.min(1, normalized));
-};
-
-const MIN_RECOMMENDATION_CONFIDENCE = parseMinRecommendationConfidence();
-
-/**
  * Return whether the host is one of the allowed local development loopbacks.
  */
 const isLocalHost = (host: string): boolean => {
@@ -315,15 +281,6 @@ export const resolveServersFromInsights = (
 
   const recommended: Tool.Mcp[] = [];
   insights.recommendations.forEach((recommendation) => {
-    const normalizedConfidence = normalizeConfidenceValue(recommendation.confidence);
-    // Filter weak recommendations early to reduce noisy downstream tool calls.
-    if (
-      normalizedConfidence === undefined
-      || normalizedConfidence < MIN_RECOMMENDATION_CONFIDENCE
-    ) {
-      return;
-    }
-
     // Prefer exact endpoint matches against already configured servers.
     const endpoint = recommendation.endpoint?.trim();
     const normalizedEndpoint = normalizeEndpointForMatch(endpoint);

@@ -16,7 +16,7 @@ const titleForStatus = (status?: string): string => {
   if (status === "classifying") return "Classifying";
   if (status === "routing") return "Routing";
   if (status === "done") return "Ready";
-  if (status === "error") return "Issue";
+  if (status === "error") return "Unavailable";
   return status;
 };
 
