@@ -388,7 +388,7 @@ export const sendAssistantMessage = ({
         })
       : null;
 
-    // Orchestrator fallback means we route to all non-orchestrator servers.
+    // If orchestrator is unavailable, preserve existing behavior by using configured downstream servers.
     const orchestratorUnavailable = !orchestratorInsights;
 
     const downstreamServers = serversWithAuth.filter((server) => !isOrchestratorServer(server));
@@ -397,37 +397,18 @@ export const sendAssistantMessage = ({
       ? []
       : resolveServersFromInsights(orchestratorInsights, serversWithAuth);
 
-    const noDownstreamExpected =
-      !orchestratorUnavailable &&
-      (orchestratorInsights.fallbackUpstream === null ||
-        orchestratorInsights.recommendations.length === 0 ||
-        (orchestratorInsights.category === "general" && orchestratorInsights.recommendations.length === 0));
-
     const routedServers = orchestratorUnavailable
       ? dedupeMcpServers(downstreamServers)
-      : noDownstreamExpected
-        // Respect explicit "no upstream" decisions from orchestrator.
-        ? []
-        // Keep orchestrator picks first but include configured downstream defaults.
-        : dedupeMcpServers([...orchestratorRecommendedServers, ...downstreamServers]);
-
-    const shouldHideOrchestratorMetadata = orchestratorUnavailable;
-
-    if (routedServers.length === 0 && !noDownstreamExpected && !orchestratorUnavailable) {
-      dispatch(
-        addToast({
-          message: "Orchestrator did not return any downstream MCP route for this turn.",
-          isError: true,
-        })
-      );
-      return;
-    }
+      : orchestratorRecommendedServers.length > 0
+        // Orchestrator recommendations are authoritative when present.
+        ? dedupeMcpServers(orchestratorRecommendedServers)
+        // If no downstream route is recommended, continue chat without MCP tools.
+        : [];
 
     const finalProgress = progressUpdates[progressUpdates.length - 1];
 
-    const baseInsights = !orchestratorInsights || shouldHideOrchestratorMetadata
-      ? null
-      : {
+    const baseInsights = orchestratorInsights
+      ? {
           ...orchestratorInsights,
           status: finalProgress?.status || "done",
           statusMessage:
@@ -436,7 +417,19 @@ export const sendAssistantMessage = ({
               ? "Completed with fallback"
               : "Orchestrator routing completed"),
           progressUpdates: progressUpdates.slice(),
-        };
+        }
+      : hasOrchestratorServer
+        ? {
+            category: "general",
+            recommendations: [],
+            source: "orchestrator" as const,
+            status: "error" as const,
+            statusMessage: finalProgress?.message || "Orchestrator unavailable",
+            progressUpdates: progressUpdates.slice(),
+            timestamp: finalProgress?.timestamp || new Date().toISOString(),
+            error: "orchestrator_unavailable",
+          }
+        : null;
 
     const insightsWithSelection = baseInsights && orchestratorRecommendedServers.length > 0
       ? {
