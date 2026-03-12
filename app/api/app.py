@@ -1,6 +1,7 @@
 import logging
 import os
 import importlib.util
+from pathlib import Path
 
 from apiflask import APIFlask
 from dotenv import load_dotenv
@@ -9,6 +10,7 @@ from playground.routes_playground import api_playground
 from proxy import (
     ROOT_PATH_PROXY_AZURE,
     ROOT_PATH_PROXY_LITELLM,
+    get_litellm_auth_mode_summary,
     proxy_azure,
     proxy_litellm,
 )
@@ -24,12 +26,21 @@ def _log_litellm_startup_status() -> None:
     default_model = os.getenv("LITELLM_DEFAULT_MODEL", "").strip()
     json_logs = os.getenv("LITELLM_JSON_LOGS", "true").strip().lower() in {"1", "true", "yes", "on"}
     litellm_installed = importlib.util.find_spec("litellm") is not None
+    auth_mode = get_litellm_auth_mode_summary()
 
     if litellm_installed and default_model:
         logging.getLogger(__name__).info(
-            "LiteLLM gateway ready mode=embedded model=%s json_logs=%s route=/proxy/litellm/v1/responses",
+            (
+                "LiteLLM gateway ready mode=embedded model=%s json_logs=%s "
+                "auth_priority=%s expected_primary=%s has_api_key=%s caller_bearer_forwarding=%s "
+                "route=/proxy/litellm/v1/responses"
+            ),
             default_model,
             json_logs,
+            auth_mode["auth_priority"],
+            auth_mode["expected_primary"],
+            auth_mode["has_api_key"],
+            auth_mode["caller_bearer_forwarding"],
         )
         return
 
@@ -40,11 +51,21 @@ def _log_litellm_startup_status() -> None:
         missing.append("LITELLM_DEFAULT_MODEL")
 
     logging.getLogger(__name__).warning(
-        "LiteLLM gateway not ready mode=embedded missing=%s route=/proxy/litellm/v1/responses",
+        (
+            "LiteLLM gateway not ready mode=embedded missing=%s auth_priority=%s expected_primary=%s "
+            "has_api_key=%s caller_bearer_forwarding=%s route=/proxy/litellm/v1/responses"
+        ),
         ", ".join(missing),
+        auth_mode["auth_priority"],
+        auth_mode["expected_primary"],
+        auth_mode["has_api_key"],
+        auth_mode["caller_bearer_forwarding"],
     )
 
-load_dotenv()
+# Prefer app/api/.env regardless of current working directory, then allow generic dotenv discovery.
+api_env_path = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path=api_env_path, override=False)
+load_dotenv(override=False)
 _log_litellm_startup_status()
 
 app = APIFlask(__name__, title="SSC Assistant API", version="2.0")

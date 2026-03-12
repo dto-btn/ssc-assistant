@@ -103,6 +103,31 @@ const shouldUseOrchestratorPreflight = (): boolean => {
   return import.meta.env.VITE_PLAYGROUND_ORCHESTRATOR_PREFLIGHT !== "false";
 };
 
+const useLiteLLMProxy = (): boolean => {
+  return import.meta.env.VITE_PLAYGROUND_USE_LITELLM === "true";
+};
+
+const resolveCompletionModel = (state: RootState): string => {
+  const selectedModel = String(state.models?.selectedModel || "").trim();
+
+  if (useLiteLLMProxy()) {
+    // LiteLLM model id should match backend provider config (e.g. azure/<deployment>). 
+    // If unset, send an empty model and let backend LITELLM_DEFAULT_MODEL decide.
+    const configuredLiteLLMModel = String(import.meta.env.VITE_LITELLM_MODEL || "").trim();
+    if (configuredLiteLLMModel) {
+      return configuredLiteLLMModel;
+    }
+
+    return "";
+  }
+
+  if (selectedModel) {
+    return selectedModel;
+  }
+
+  return "gpt-4o";
+};
+
 const findOrchestratorServer = (servers: Tool.Mcp[]): Tool.Mcp | undefined => {
   return servers.find((server) => {
     const label = String(server.server_label || "").toLowerCase();
@@ -580,12 +605,14 @@ export const sendAssistantMessage = ({
       }
     }
 
+    const completionModel = resolveCompletionModel(getState());
+
     const runCompletion = async (messagesForRun: CompletionMessage[], serversForRun: Tool.Mcp[]): Promise<void> => {
       // One execution path used for both primary run and no-tools retry.
       await completionService.createCompletion(
         {
           messages: messagesForRun,
-          model: "gpt-4.1-mini", // Eventually leverage an orchestrator
+          model: completionModel,
           provider,
           userToken: accessToken,
           servers: serversForRun,

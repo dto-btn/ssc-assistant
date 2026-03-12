@@ -148,8 +148,66 @@ def _try_get_azure_ad_token() -> str | None:
         return None
 
 
-def _apply_azure_defaults(payload: dict[str, Any]) -> None:
+def _extract_bearer_token_from_request() -> str | None:
+    """Return raw bearer token from Authorization header when present."""
+    auth_header = request.headers.get("Authorization", "")
+    if not isinstance(auth_header, str):
+        return None
+
+    parts = auth_header.strip().split(" ", 1)
+    if len(parts) != 2:
+        return None
+    scheme, token = parts
+    if scheme.lower() != "bearer":
+        return None
+    token = token.strip()
+    return token or None
+
+
+def _allow_forwarding_caller_bearer_token() -> bool:
+    """Whether to forward caller bearer token to Azure OpenAI via LiteLLM."""
+    value = os.getenv("LITELLM_FORWARD_CALLER_BEARER_TOKEN", "false").strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
+
+def _inject_mcp_transport_enabled() -> bool:
+    """Whether to preserve/inject tools[].transport for MCP tool entries."""
+    value = os.getenv("LITELLM_INJECT_MCP_TRANSPORT", "false").strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
+
+def get_litellm_auth_mode_summary() -> dict[str, Any]:
+    """Return auth mode intent for startup diagnostics.
+
+    This reports configured precedence (not runtime token validity).
+    """
+    has_api_key = bool((os.getenv("AZURE_OPENAI_API_KEY") or os.getenv("AZURE_API_KEY") or "").strip())
+    caller_forwarding_enabled = _allow_forwarding_caller_bearer_token()
+
+    return {
+        "auth_priority": "api_key,dac,caller_bearer_opt_in",
+        "has_api_key": has_api_key,
+        "caller_bearer_forwarding": caller_forwarding_enabled,
+        "expected_primary": "api_key" if has_api_key else "dac",
+    }
+
+
+def _apply_azure_defaults(payload: dict[str, Any], inbound_bearer_token: str | None = None) -> None:
     """Populate LiteLLM Azure params when model targets Azure provider."""
+    model = payload.get("model")
+    default_model = os.getenv("LITELLM_DEFAULT_MODEL", "").strip()
+
+    # If the client sends a bare model id (e.g., gpt-4.1-mini), route to the
+    # configured provider-scoped default to avoid accidental OpenAI fallback.
+    if (
+        isinstance(model, str)
+        and model.strip()
+        and "/" not in model
+        and default_model.lower().startswith("azure/")
+    ):
+        payload["model"] = default_model
+        model = payload.get("model")
+
     model = payload.get("model")
     if not isinstance(model, str) or not model.strip().lower().startswith("azure/"):
         return
@@ -166,16 +224,26 @@ def _apply_azure_defaults(payload: dict[str, Any]) -> None:
     if api_version and "api_version" not in payload:
         payload["api_version"] = api_version
 
-    # Prefer explicit key env vars if present, otherwise use Azure AD bearer token.
+    # Prefer API key env vars if present.
     if "api_key" not in payload:
         api_key = os.getenv("AZURE_OPENAI_API_KEY") or os.getenv("AZURE_API_KEY")
         if api_key:
             payload["api_key"] = api_key
 
+    # Next fallback: service identity via DefaultAzureCredential (matches /proxy/azure behavior).
     if "api_key" not in payload and "azure_ad_token" not in payload:
         token = _try_get_azure_ad_token()
         if token:
             payload["azure_ad_token"] = token
+
+    # Optional final fallback: forward caller token only when explicitly enabled.
+    if (
+        "api_key" not in payload
+        and "azure_ad_token" not in payload
+        and _allow_forwarding_caller_bearer_token()
+        and inbound_bearer_token
+    ):
+        payload["azure_ad_token"] = inbound_bearer_token
 
 
 def _build_litellm_payload(req_id: str, user_oid: str) -> dict[str, Any]:
@@ -190,13 +258,23 @@ def _build_litellm_payload(req_id: str, user_oid: str) -> dict[str, Any]:
     metadata.update({"request_id": req_id, "user_oid": user_oid})
     payload["metadata"] = metadata
 
-    if not payload.get("model") and os.getenv("LITELLM_DEFAULT_MODEL"):
-        payload["model"] = os.getenv("LITELLM_DEFAULT_MODEL")
+    # Normalize empty model strings from clients (e.g., model="") so fallback logic can apply.
+    incoming_model = payload.get("model")
+    if isinstance(incoming_model, str) and not incoming_model.strip():
+        payload.pop("model", None)
 
-    _apply_azure_defaults(payload)
+    default_model = os.getenv("LITELLM_DEFAULT_MODEL", "").strip()
+    if not payload.get("model") and default_model:
+        payload["model"] = default_model
 
-    # LiteLLM defaults MCP transport to SSE when unset, but our local orchestrator
-    # exposes streamable HTTP at /mcp. Default to HTTP unless explicitly provided.
+    if not payload.get("model"):
+        abort(500, "LiteLLM model missing: provide request model or set LITELLM_DEFAULT_MODEL")
+
+    _apply_azure_defaults(payload, inbound_bearer_token=_extract_bearer_token_from_request())
+
+    # Azure Responses rejects unknown parameter tools[].transport. Keep this off
+    # by default and allow opt-in for environments that require transport hints.
+    inject_transport = _inject_mcp_transport_enabled()
     default_mcp_transport = os.getenv("LITELLM_DEFAULT_MCP_TRANSPORT", "http").strip().lower()
     tools = payload.get("tools")
     if isinstance(tools, list):
@@ -204,6 +282,9 @@ def _build_litellm_payload(req_id: str, user_oid: str) -> dict[str, Any]:
             if not isinstance(tool, dict):
                 continue
             if tool.get("type") != "mcp":
+                continue
+            if not inject_transport:
+                tool.pop("transport", None)
                 continue
             transport = tool.get("transport")
             if isinstance(transport, str) and transport.strip():
