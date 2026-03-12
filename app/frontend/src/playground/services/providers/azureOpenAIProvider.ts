@@ -80,6 +80,42 @@ export class AzureOpenAIProvider implements CompletionProvider {
   }
 
   /**
+   * Build an abort signal that enforces an upper bound on streaming completion time.
+   */
+  private createTimeoutSignal(externalSignal?: AbortSignal): {
+    signal: AbortSignal;
+    cleanup: () => void;
+  } {
+    const controller = new AbortController();
+    const timeoutMs = resolveResponsesTimeoutMs();
+    const timeoutId = window.setTimeout(() => {
+      controller.abort(new Error(`Azure Responses timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    const onExternalAbort = () => {
+      controller.abort(externalSignal?.reason);
+    };
+
+    if (externalSignal) {
+      if (externalSignal.aborted) {
+        controller.abort(externalSignal.reason);
+      } else {
+        externalSignal.addEventListener("abort", onExternalAbort, { once: true });
+      }
+    }
+
+    return {
+      signal: controller.signal,
+      cleanup: () => {
+        window.clearTimeout(timeoutId);
+        if (externalSignal) {
+          externalSignal.removeEventListener("abort", onExternalAbort);
+        }
+      },
+    };
+  }
+
+  /**
    * Resolve the backend proxy URL so browser calls stay within the same origin.
    */
   private getBaseURL(): string {
