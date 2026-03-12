@@ -97,6 +97,58 @@ def _input_metrics(payload: dict[str, Any]) -> tuple[int, int]:
     return 1, len(encoded)
 
 
+def _extract_tool_name(tool: dict[str, Any]) -> str | None:
+    """Best-effort extraction of a human-readable tool identifier."""
+    tool_type = str(tool.get("type") or "").strip().lower()
+
+    if tool_type == "function":
+        fn = tool.get("function")
+        if isinstance(fn, dict):
+            name = fn.get("name")
+            if isinstance(name, str) and name.strip():
+                return name.strip()
+
+    for key in ("name", "server_label", "server", "url"):
+        value = tool.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+
+    if tool_type:
+        return tool_type
+    return None
+
+
+def _tool_metrics(payload: dict[str, Any]) -> dict[str, Any]:
+    """Extract structured tool metadata for log filtering."""
+    tools = payload.get("tools")
+    if not isinstance(tools, list):
+        return {
+            "tools_count": 0,
+            "tool_names": [],
+            "tool_types": [],
+        }
+
+    tool_names: list[str] = []
+    tool_types: list[str] = []
+    for tool in tools:
+        if not isinstance(tool, dict):
+            continue
+
+        tool_type = str(tool.get("type") or "").strip().lower()
+        if tool_type and tool_type not in tool_types:
+            tool_types.append(tool_type)
+
+        tool_name = _extract_tool_name(tool)
+        if tool_name and tool_name not in tool_names:
+            tool_names.append(tool_name)
+
+    return {
+        "tools_count": len(tools),
+        "tool_names": tool_names,
+        "tool_types": tool_types,
+    }
+
+
 def _response_metrics(response_obj: Any) -> dict[str, Any]:
     """Extract common response metadata such as id/model/token usage for logs."""
     payload_dict = _event_to_dict(response_obj) or {}
@@ -343,6 +395,7 @@ def litellm_proxy(subpath: str):
     payload = _build_litellm_payload(req_id=req_id, user_oid=str(user_oid))
     requested_model = _extract_request_model() or str(payload.get("model", "")).strip() or None
     input_items, input_chars = _input_metrics(payload)
+    tool_metrics = _tool_metrics(payload)
     stream_enabled = bool(payload.get("stream"))
 
     _log_event(
@@ -355,6 +408,9 @@ def litellm_proxy(subpath: str):
         stream=stream_enabled,
         input_items=input_items,
         input_chars=input_chars,
+        tools_count=tool_metrics["tools_count"],
+        tool_names=tool_metrics["tool_names"],
+        tool_types=tool_metrics["tool_types"],
     )
 
     try:
@@ -397,6 +453,9 @@ def litellm_proxy(subpath: str):
                         usage_input_tokens=final_usage.get("input_tokens"),
                         usage_output_tokens=final_usage.get("output_tokens"),
                         usage_total_tokens=final_usage.get("total_tokens"),
+                        tools_count=tool_metrics["tools_count"],
+                        tool_names=tool_metrics["tool_names"],
+                        tool_types=tool_metrics["tool_types"],
                     )
 
             return Response(
@@ -423,6 +482,9 @@ def litellm_proxy(subpath: str):
             usage_input_tokens=metrics.get("usage_input_tokens"),
             usage_output_tokens=metrics.get("usage_output_tokens"),
             usage_total_tokens=metrics.get("usage_total_tokens"),
+            tools_count=tool_metrics["tools_count"],
+            tool_names=tool_metrics["tool_names"],
+            tool_types=tool_metrics["tool_types"],
         )
         return Response(
             serialized_response,
@@ -437,6 +499,9 @@ def litellm_proxy(subpath: str):
             status=500,
             latency_ms=round((time.perf_counter() - start_time) * 1000, 1),
             model=requested_model or "unknown",
+            tools_count=tool_metrics["tools_count"],
+            tool_names=tool_metrics["tool_names"],
+            tool_types=tool_metrics["tool_types"],
         )
         logger.exception("LiteLLM embedded exception req_id=%s", req_id)
         return Response("Proxy error", status=502)
