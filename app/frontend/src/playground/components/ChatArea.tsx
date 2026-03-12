@@ -4,6 +4,9 @@
  * Renders the main chat area for the playground including messages and
  * metadata such as citations and feedback controls. Exports a React
  * component used by `PlaygroundRoot`/`Playground`.
+ *
+ * Embeds orchestrator activity/debug panels and keeps archive rehydration in
+ * sync when remote session files change.
  */
 
 import React from "react";

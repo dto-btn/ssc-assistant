@@ -4,6 +4,9 @@
  * Redux slice that stores chat messages and related metadata for the
  * playground. Exposes actions for adding messages, updating status, and
  * clearing chat history.
+ *
+ * This state carries orchestrator routing insights, progress events, and
+ * selected MCP targets per session.
  */
 
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";

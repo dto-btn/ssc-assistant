@@ -1,3 +1,9 @@
+"""Azure OpenAI reverse-proxy endpoints used by the playground.
+
+Preserves OpenAI-compatible request/response semantics for the frontend SDK
+while supporting orchestrated tool-routing flows.
+"""
+
 import logging
 import os
 import uuid

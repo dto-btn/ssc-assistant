@@ -1,3 +1,13 @@
+/**
+ * Orchestrator integration service for client-side pre-routing.
+ *
+ * Core responsibilities:
+ * - Establish and reuse streamable-http MCP connections to orchestrator.
+ * - Normalize mixed orchestrator payload shapes into typed routing insights.
+ * - Resolve recommendations into concrete downstream MCP server entries.
+ * - Preserve backward compatibility via legacy classify/suggest fallback.
+ */
+
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { Tool } from "openai/resources/responses/responses.mjs";
@@ -442,6 +452,10 @@ export const getOrchestratorInsights = async ({
   // Query orchestrator classification/routing and normalize result for UI state.
   // The function first attempts `classify_and_suggest`, then falls back to
   // legacy `classify_context` + `suggest_route` when required.
+  //
+  // The final payload intentionally captures both route choices and fallback
+  // reasoning so the chat thunk can decide whether to call tools or continue
+  // model-only without losing debuggability.
   const orchestratorServer = servers.find(isOrchestratorServer);
   if (!orchestratorServer) {
     return null;

@@ -1,3 +1,10 @@
+/**
+ * Displays compact, user-facing orchestrator activity for the active session.
+ *
+ * Shows live classification/routing progress without requiring developer
+ * diagnostics panels.
+ */
+
 import React from "react";
 import { Box, Typography } from "@mui/material";
 import { useAppSelector } from "../store/hooks";

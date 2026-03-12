@@ -1,3 +1,11 @@
+/**
+ * Developer-only diagnostics panel for orchestrator routing internals.
+ *
+ * This was introduced with orchestrator integration to expose confidence,
+ * fallback, and recommendation details that are intentionally hidden from
+ * standard end-user chat UI.
+ */
+
 import React from "react";
 import { Box, Divider, List, ListItem, ListItemText, Typography } from "@mui/material";
 import { useAppSelector } from "../store/hooks";
