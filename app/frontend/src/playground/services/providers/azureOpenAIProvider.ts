@@ -39,6 +39,30 @@ const isAbortLikeError = (error: unknown): boolean => {
 export class AzureOpenAIProvider implements CompletionProvider {
   readonly name = 'azure-openai';
 
+  private createTimeoutSignal(externalSignal?: AbortSignal): { signal: AbortSignal; cleanup: () => void } {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), resolveResponsesTimeoutMs());
+
+    const onExternalAbort = () => controller.abort();
+    if (externalSignal) {
+      if (externalSignal.aborted) {
+        controller.abort();
+      } else {
+        externalSignal.addEventListener("abort", onExternalAbort, { once: true });
+      }
+    }
+
+    return {
+      signal: controller.signal,
+      cleanup: () => {
+        window.clearTimeout(timeoutId);
+        if (externalSignal) {
+          externalSignal.removeEventListener("abort", onExternalAbort);
+        }
+      },
+    };
+  }
+
   private useLiteLLMProxy(): boolean {
     return import.meta.env.VITE_PLAYGROUND_USE_LITELLM === "true";
   }
