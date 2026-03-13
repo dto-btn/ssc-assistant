@@ -3,12 +3,12 @@ import os
 import time
 import uuid
 import json
-import importlib
 from collections.abc import Iterator
 from typing import Any
 
 from apiflask import APIBlueprint
 from flask import Response, abort, request, stream_with_context, g
+import litellm
 
 from utils.auth import user_ad
 
@@ -167,18 +167,7 @@ def _normalize_subpath(subpath: str) -> str:
     return subpath.strip().lstrip("/").rstrip("/")
 
 
-def _load_litellm_module():
-    try:
-        return importlib.import_module("litellm")
-    except Exception:
-        return None
-
-
 def _run_litellm_responses(payload: dict[str, Any]) -> Any:
-    litellm = _load_litellm_module()
-    if litellm is None:
-        raise RuntimeError("litellm package is not installed")
-
     responses_fn = getattr(litellm, "responses", None)
     if not callable(responses_fn):
         responses_fn = getattr(litellm, "response", None)
@@ -186,6 +175,19 @@ def _run_litellm_responses(payload: dict[str, Any]) -> Any:
         raise RuntimeError("installed litellm version does not expose responses API")
 
     return responses_fn(**payload)
+
+
+def _resolve_litellm_responses_fn() -> Any:
+    """Return the LiteLLM responses callable used by this gateway."""
+    responses_fn = getattr(litellm, "responses", None)
+    if callable(responses_fn):
+        return responses_fn
+
+    responses_fn = getattr(litellm, "response", None)
+    if callable(responses_fn):
+        return responses_fn
+
+    return None
 
 
 def _try_get_azure_ad_token() -> str | None:
@@ -361,16 +363,20 @@ def _extract_request_model() -> str | None:
 @proxy_litellm.get("/health")
 def litellm_proxy_health():
     """Simple health endpoint to validate embedded LiteLLM configuration."""
+    responses_fn = _resolve_litellm_responses_fn()
+    if responses_fn is None:
+        return {"status": "unhealthy", "reason": "litellm responses API unavailable"}, 503
+
     default_model = os.getenv("LITELLM_DEFAULT_MODEL", "").strip()
-    litellm = _load_litellm_module()
-    if litellm is None:
-        return {"status": "unhealthy", "reason": "litellm package not installed"}, 503
     if not default_model:
         return {"status": "unhealthy", "reason": "LITELLM_DEFAULT_MODEL missing"}, 503
+
+    litellm_version = str(getattr(litellm, "__version__", "unknown"))
     return {
         "status": "ok",
         "mode": "embedded",
         "default_model": default_model,
+        "litellm_version": litellm_version,
     }, 200
 
 
