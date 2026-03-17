@@ -1,3 +1,9 @@
+"""APIFlask application entrypoint for SSC Assistant backend services.
+
+Registers core API, playground, and proxy blueprints and logs startup status
+for embedded LiteLLM gateway readiness.
+"""
+
 import logging
 import os
 import importlib.util
@@ -16,6 +22,7 @@ from proxy import (
 )
 from flask_cors import CORS
 
+# Global log defaults for API startup/runtime diagnostics.
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("v1").setLevel(logging.DEBUG)
 logging.getLogger("azure.core.pipeline.policies").setLevel(logging.ERROR)

@@ -1,3 +1,11 @@
+"""Flask route layer for the embedded LiteLLM gateway.
+
+This module owns HTTP concerns (routing, request/response objects, and status
+codes) and delegates business logic to sibling modules:
+- `litellm_proxy.py` for payload/provider behavior
+- `litellm_logging.py` for structured logging helpers
+"""
+
 import logging
 import os
 import time
@@ -21,7 +29,6 @@ from .litellm_logging import (
 from .litellm_proxy import (
     build_litellm_payload,
     extract_request_model,
-    get_litellm_auth_mode_summary,
     normalize_subpath,
     resolve_litellm_responses_fn,
     run_litellm_responses,
@@ -98,9 +105,11 @@ def litellm_proxy(subpath: str):
         response_or_stream = run_litellm_responses(payload)
 
         if stream_enabled:
+            # Keep a local alias so the closure only captures what it needs.
             stream_iterator = response_or_stream
 
             def generate_sse() -> Iterator[str]:
+                """Yield LiteLLM stream chunks as OpenAI-style SSE frames."""
                 event_count = 0
                 final_usage: dict[str, Any] = {}
                 response_id = None
@@ -118,10 +127,12 @@ def litellm_proxy(subpath: str):
                                 response_model = response_payload.get("model")
                             usage = response_payload.get("usage")
                             if isinstance(usage, dict):
+                                # Track the last usage object observed in the stream.
                                 final_usage = usage
                         yield f"data: {serialize_event(event)}\n\n"
                     yield "data: [DONE]\n\n"
                 finally:
+                    # Emit completion metrics even if the client disconnects early.
                     log_event(
                         "stream_done",
                         req_id=req_id,

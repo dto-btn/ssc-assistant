@@ -1,3 +1,10 @@
+"""Provider-aware payload preparation utilities for embedded LiteLLM gateway.
+
+This module keeps request shaping separate from Flask routing and provides a
+small provider dispatch layer so new providers can be added without changing
+the main request flow.
+"""
+
 import os
 from collections.abc import Callable
 from typing import Any
@@ -6,14 +13,17 @@ from flask import abort, request
 import litellm
 
 
+# Signature for provider-specific payload mutators.
 ProviderDefaultsHandler = Callable[[dict[str, Any], str | None], None]
 
 
 def normalize_subpath(subpath: str) -> str:
+    """Normalize a Flask subpath for strict endpoint matching."""
     return subpath.strip().lstrip("/").rstrip("/")
 
 
 def run_litellm_responses(payload: dict[str, Any]) -> Any:
+    """Invoke LiteLLM Responses API across compatible LiteLLM versions."""
     responses_fn = getattr(litellm, "responses", None)
     if not callable(responses_fn):
         responses_fn = getattr(litellm, "response", None)
@@ -37,6 +47,7 @@ def resolve_litellm_responses_fn() -> Any:
 
 
 def _extract_provider_from_model(model: str | None) -> str | None:
+    """Extract provider prefix from model string in the form provider/model."""
     if not isinstance(model, str):
         return None
     normalized = model.strip().lower()
@@ -178,6 +189,7 @@ def _apply_noop_provider_defaults(payload: dict[str, Any], inbound_bearer_token:
     intentionally a no-op and exists so provider-specific defaults can be added
     without touching request orchestration.
     """
+    # Intentionally explicit no-op to keep function signature symmetrical.
     _ = payload
     _ = inbound_bearer_token
 
@@ -191,6 +203,7 @@ PROVIDER_DEFAULT_HANDLERS: dict[str, ProviderDefaultsHandler] = {
 
 
 def _apply_provider_defaults(payload: dict[str, Any], inbound_bearer_token: str | None = None) -> None:
+    """Dispatch provider-specific defaulting based on resolved model prefix."""
     provider = _extract_provider_from_model(payload.get("model"))
     if not provider:
         return
@@ -202,6 +215,7 @@ def _apply_provider_defaults(payload: dict[str, Any], inbound_bearer_token: str 
 
 
 def build_litellm_payload(req_id: str, user_oid: str) -> dict[str, Any]:
+    """Build validated request payload with metadata and provider defaults."""
     payload = request.get_json(silent=True)
     if not isinstance(payload, dict):
         abort(400, "Expected JSON request body")

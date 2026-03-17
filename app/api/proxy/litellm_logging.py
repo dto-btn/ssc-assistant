@@ -1,3 +1,5 @@
+"""Structured logging and metrics extraction utilities for LiteLLM gateway."""
+
 import json
 import logging
 import os
@@ -8,6 +10,7 @@ logger.setLevel(logging.DEBUG)
 
 
 def json_logs_enabled() -> bool:
+    """Return whether JSON line logging is enabled for LiteLLM gateway events."""
     value = os.getenv("LITELLM_JSON_LOGS", "true").strip().lower()
     return value in {"1", "true", "yes", "on"}
 

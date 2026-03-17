@@ -3,8 +3,6 @@
  *
  * Wires orchestrator-guided MCP routing into the chat send path, including
  * progress streaming, fallback behavior, and selected-server capture for UI
- * Wires orchestrator-guided MCP routing into the chat send path, including
- * progress streaming, fallback behavior, and selected-server capture for UI
  * visibility.
  */
 
@@ -99,14 +97,23 @@ const buildOrchestratorProgressInsights = (
   timestamp: event.timestamp,
 });
 
+/**
+ * Feature flag for orchestrator preflight classification/routing.
+ */
 const shouldUseOrchestratorPreflight = (): boolean => {
   return import.meta.env.VITE_PLAYGROUND_ORCHESTRATOR_PREFLIGHT !== "false";
 };
 
+/**
+ * Feature flag to route completion calls through embedded LiteLLM proxy.
+ */
 const useLiteLLMProxy = (): boolean => {
   return import.meta.env.VITE_PLAYGROUND_USE_LITELLM === "true";
 };
 
+/**
+ * Resolve model id based on active provider routing mode.
+ */
 const resolveCompletionModel = (state: RootState): string => {
   const selectedModel = String(state.models?.selectedModel || "").trim();
 
@@ -128,6 +135,9 @@ const resolveCompletionModel = (state: RootState): string => {
   return "gpt-4o";
 };
 
+/**
+ * Locate orchestrator MCP server definition from configured tool servers.
+ */
 const findOrchestratorServer = (servers: Tool.Mcp[]): Tool.Mcp | undefined => {
   return servers.find((server) => {
     const label = String(server.server_label || "").toLowerCase();
@@ -136,6 +146,9 @@ const findOrchestratorServer = (servers: Tool.Mcp[]): Tool.Mcp | undefined => {
   });
 };
 
+/**
+ * Translate orchestrator MCP endpoint into the preflight REST route.
+ */
 const toOrchestratorPreflightUrl = (serverUrl: string): string => {
   const trimmed = serverUrl.replace(/\/$/, "");
   if (trimmed.endsWith("/mcp")) {
@@ -144,6 +157,9 @@ const toOrchestratorPreflightUrl = (serverUrl: string): string => {
   return `${trimmed}/orchestrator/suggest-route`;
 };
 
+/**
+ * Extract text content from the most recent user message for preflight routing.
+ */
 const extractLastUserText = (messages: CompletionMessage[]): string => {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const message = messages[i];
