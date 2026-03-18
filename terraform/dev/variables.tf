@@ -53,6 +53,24 @@ variable "vite_api_key" {
     sensitive = true
 }
 
+variable "vite_playground_orchestrator_preflight" {
+    type = bool
+    default = true
+    description = "Call orchestrator before sending final LiteLLM request"
+}
+
+variable "vite_playground_show_orchestrator_debug" {
+    type = bool
+    default = false
+    description = "Show playground orchestrator debug panel in dev"
+}
+
+variable "vite_mcp_servers" {
+    type = string
+    default = ""
+    description = "JSON string array of MCP server definitions exposed to frontend playground"
+}
+
 variable "geds_api_token" {
     type = string
     description = "value of the geds api token"

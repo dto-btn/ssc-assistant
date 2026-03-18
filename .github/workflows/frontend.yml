@@ -42,6 +42,8 @@ on:
         required: false
       VITE_CLARITY_TOKEN:
         required: false
+      VITE_MCP_SERVERS:
+        required: false
 
 permissions:
   id-token: write
@@ -83,7 +85,7 @@ jobs:
         VITE_PLAYGROUND_ON: ${{ inputs.enable-playground }}
         VITE_SHOW_DEV_BANNER: ${{ inputs.environment == 'dev' }}
         VITE_REDIRECT_URI_DOMAIN: ${{ inputs.redirect-uri-domain }}
-        VITE_MCP_URLS: ${{ inputs.enable-mcp && secrets.VITE_MCP_URLS || '' }}
+        VITE_MCP_SERVERS: ${{ inputs.enable-mcp && secrets.VITE_MCP_SERVERS || '' }}
 
     # This step will only run when the event is a push to the main branch
     - name: Zip artifact for deployment
