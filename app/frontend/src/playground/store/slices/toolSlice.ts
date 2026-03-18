@@ -3,10 +3,43 @@
  *
  * Tracks which external tools (if any) are enabled for the playground and
  * stores tool-related metadata used by the middleware and UI components.
+ *
+ * Validates MCP URLs strictly so orchestrator-provided endpoints cannot route
+ * to unsupported transports or paths.
  */
 
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Tool } from "openai/resources/responses/responses.mjs";
+
+/**
+ * Allow insecure transport only for local development loopback MCP endpoints.
+ */
+const isLocalHttpMcpUrl = (parsed: URL): boolean => {
+  const host = parsed.hostname.toLowerCase();
+  return parsed.protocol === "http:" && ["localhost", "127.0.0.1"].includes(host);
+};
+
+/**
+ * Validate MCP server URLs accepted by the playground.
+ *
+ * Accepted forms:
+ * - `https://.../mcp`
+ * - `http://localhost|127.0.0.1/.../mcp` during dev
+ */
+export const isValidMcpUrl = (rawUrl: string): boolean => {
+  try {
+    const parsed = new URL(rawUrl);
+    if (!/\/mcp\/?$/i.test(parsed.pathname)) {
+      return false;
+    }
+    if (parsed.protocol === "https:") {
+      return true;
+    }
+    return import.meta.env.DEV && isLocalHttpMcpUrl(parsed);
+  } catch {
+    return false;
+  }
+};
 
 // Async thunk to load tools using the toolService
 export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rejectWithValue }) => {
@@ -22,12 +55,20 @@ export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rej
 
     // Validate and map raw server data to Tool.Mcp objects
     toolServers = rawServers
-      .filter((server: any) => server && server.server_label && server.server_url && server.server_description)
+      .filter(
+        (server: any) =>
+          server &&
+          server.server_label &&
+          server.server_url &&
+          server.server_description &&
+            isValidMcpUrl(server.server_url)
+      )
       .map((server: any) => ({
         server_label: server.server_label,
         type: 'mcp',
         server_url: server.server_url,
         server_description: server.server_description,
+        // Default to never so unsupported values do not break tool execution.
         require_approval: (server.require_approval === "always" || server.require_approval === "never") 
           ? server.require_approval 
           : "never",

@@ -4,6 +4,9 @@
  * Redux slice that stores chat messages and related metadata for the
  * playground. Exposes actions for adding messages, updating status, and
  * clearing chat history.
+ *
+ * This state carries orchestrator routing insights, progress events, and
+ * selected MCP targets per session.
  */
 
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
@@ -20,14 +23,59 @@ export interface Message {
   citations?: { title: string; url: string }[];
 }
 
+export interface OrchestratorRecommendation {
+  mcp_server_id: string;
+  endpoint?: string;
+  category?: string;
+  confidence?: number;
+  matched_keywords?: string[];
+  classification_method?: string;
+  rationale?: string;
+}
+
+/**
+ * Lifecycle updates emitted while the orchestrator is classifying/routing.
+ */
+export interface OrchestratorProgressUpdate {
+  status: "connecting" | "connected" | "classifying" | "routing" | "done" | "error";
+  message: string;
+  timestamp: string;
+  transport?: "streamable-http";
+}
+
+/**
+ * Persisted routing metadata for the active chat turn.
+ */
+export interface OrchestratorInsights {
+  category: string;
+  recommendations: OrchestratorRecommendation[];
+  classificationMethod?: string;
+  status?: OrchestratorProgressUpdate["status"];
+  statusMessage?: string;
+  progressUpdates?: OrchestratorProgressUpdate[];
+  selectedServers?: Array<{
+    server_label: string;
+    server_url: string;
+  }>;
+  fallbackReason?: string;
+  fallbackUpstream?: string | null;
+  source: "orchestrator";
+  transport?: "streamable-http" | "sse";
+  timestamp: string;
+  error?: string;
+}
+
 interface ChatState {
   messages: Message[];
   isLoading: boolean;
+  // Keyed by session id so each tab/session can show independent routing state.
+  orchestratorInsightsBySessionId: Record<string, OrchestratorInsights | undefined>;
 }
 
 const initialState: ChatState = {
   messages: [],
   isLoading: false,
+  orchestratorInsightsBySessionId: {},
 };
 
 const chatSlice = createSlice({
@@ -59,6 +107,22 @@ const chatSlice = createSlice({
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
+    setOrchestratorInsights: (
+      state,
+      action: PayloadAction<{ sessionId: string; insights: OrchestratorInsights | null }>
+    ) => {
+      const { sessionId, insights } = action.payload;
+      // Null indicates the caller wants to clear current orchestrator metadata.
+      if (!insights) {
+        delete state.orchestratorInsightsBySessionId[sessionId];
+        return;
+      }
+
+      state.orchestratorInsightsBySessionId[sessionId] = insights;
+    },
+    clearOrchestratorInsights: (state, action: PayloadAction<string>) => {
+      delete state.orchestratorInsightsBySessionId[action.payload];
+    },
     hydrateSessionMessages: (
       state,
       action: PayloadAction<{ sessionId: string; messages: Message[] }>,
@@ -77,6 +141,8 @@ export const {
   clearSessionMessages,
   updateMessageContent,
   setIsLoading,
+  setOrchestratorInsights,
+  clearOrchestratorInsights,
   hydrateSessionMessages,
 } = chatSlice.actions;
 

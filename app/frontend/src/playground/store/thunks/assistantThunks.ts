@@ -1,4 +1,21 @@
-import { addMessage, updateMessageContent, setIsLoading, Message } from "../slices/chatSlice";
+/**
+ * Assistant orchestration thunks.
+ *
+ * Wires orchestrator-guided MCP routing into the chat send path, including
+ * progress streaming, fallback behavior, and selected-server capture for UI
+ * Wires orchestrator-guided MCP routing into the chat send path, including
+ * progress streaming, fallback behavior, and selected-server capture for UI
+ * visibility.
+ */
+
+import {
+  addMessage,
+  updateMessageContent,
+  setIsLoading,
+  setOrchestratorInsights,
+  Message,
+  OrchestratorInsights,
+} from "../slices/chatSlice";
 import { setIsSessionNew } from "../slices/sessionSlice"
 import { addToast } from "../slices/toastSlice";
 import {
@@ -9,17 +26,78 @@ import {
 import { isTokenExpired } from "../../../util/token";
 import { AppThunk, AppDispatch } from "..";
 import type { RootState } from "..";
-import { selectMessagesBySessionId } from "../selectors/chatSelectors";
 import i18n from "../../../i18n";
 
 import { FileAttachment } from "../../types";
 import { extractFileText, fetchFileDataUrl } from "../../api/storage";
 import { Tool } from "openai/resources/responses/responses.mjs";
+import {
+  getOrchestratorInsights,
+  OrchestratorProgressEvent,
+  resolveServersFromInsights,
+} from "../../services/orchestratorService";
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
 
+/**
+ * Identify orchestrator MCP entries so they are excluded from downstream tool runs.
+ */
+const isOrchestratorServer = (server: Tool.Mcp): boolean => {
+  const label = `${server.server_label || ""} ${server.server_description || ""}`.toLowerCase();
+  return label.includes("orchestrator");
+};
+
 const attachmentTextCache = new Map<string, string>();
 const attachmentImageCache = new Map<string, string>();
+const MAX_ORCHESTRATOR_PROGRESS_UPDATES = 20;
+const IS_DEV = import.meta.env.DEV;
+
+/**
+ * Remove duplicate servers while preserving first-seen ordering.
+ */
+const dedupeMcpServers = (servers: Tool.Mcp[]): Tool.Mcp[] => {
+  const seen = new Set<string>();
+  const deduped: Tool.Mcp[] = [];
+  for (const server of servers) {
+    const key = `${server.server_url || ""}|${server.server_label || ""}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(server);
+  }
+  return deduped;
+};
+
+/**
+ * Prevent noisy UI updates when identical progress events are emitted repeatedly.
+ */
+const isDuplicateProgressUpdate = (
+  previous: OrchestratorProgressEvent | undefined,
+  next: OrchestratorProgressEvent,
+): boolean => {
+  if (!previous) return false;
+  return (
+    previous.status === next.status
+    && previous.message === next.message
+    && previous.transport === next.transport
+  );
+};
+
+/**
+ * Build a lightweight interim insights object used while routing is in progress.
+ */
+const buildOrchestratorProgressInsights = (
+  event: OrchestratorProgressEvent,
+  progressUpdates: OrchestratorProgressEvent[],
+): OrchestratorInsights => ({
+  category: "routing",
+  recommendations: [],
+  source: "orchestrator",
+  transport: event.transport,
+  status: event.status,
+  statusMessage: event.message,
+  progressUpdates,
+  timestamp: event.timestamp,
+});
 
 /**
  * Clamp long attachment transcripts so prompts stay within token limits.
@@ -67,7 +145,9 @@ async function resolveAttachmentParts(
             attachmentImageCache.set(cacheKey, dataUrl);
           }
         } catch (error) {
-          console.error("Failed to load attachment image", error);
+          if (IS_DEV) {
+            console.error("Failed to load attachment image", error);
+          }
         }
       }
 
@@ -101,7 +181,9 @@ async function resolveAttachmentParts(
           attachmentTextCache.set(cacheKey, resolvedText);
         }
       } catch (error) {
-        console.error("Failed to extract attachment text", error);
+        if (IS_DEV) {
+          console.error("Failed to extract attachment text", error);
+        }
         extractionFailures.push(attachmentName);
       }
     }
@@ -238,7 +320,13 @@ export interface SendAssistantMessageArgs {
 }
 
 /**
- * Primary thunk that streams assistant completions, handling tools and attachment hydration.
+ * Primary chat execution thunk for one user turn.
+ *
+ * Flow summary:
+ * 1) Validate auth and discover orchestrator server.
+ * 2) Ask orchestrator to classify and select downstream MCP servers.
+ * 3) Build completion messages (including attachment hydration).
+ * 4) Stream model output and keep Redux message content in sync.
  */
 export const sendAssistantMessage = ({
   sessionId,
@@ -254,14 +342,6 @@ export const sendAssistantMessage = ({
     dispatch(setIsSessionNew({id: sessionId, isNew: false}))
 
     const { accessToken } = getState().auth;
-    const dispatchForAttachments = dispatch as AppDispatch;
-    const { mcpServers } = getState().tools;
-
-    // Attach authorization tokens to MCP servers
-    const serversWithAuth: Tool.Mcp[] = (mcpServers && mcpServers.length > 0 && accessToken)
-      ? mcpServers.map((server: Tool.Mcp) => ({ ...server, authorization: accessToken }))
-      : [];
-
     if (!accessToken || isTokenExpired(accessToken)) {
       dispatch(
         addToast({
@@ -271,6 +351,111 @@ export const sendAssistantMessage = ({
       );
       return;
     }
+
+    const dispatchForAttachments = dispatch as AppDispatch;
+    const { mcpServers } = getState().tools;
+    const existingSessionMessages = getState().chat.messages.filter(
+      (message) => message.sessionId === sessionId
+    );
+
+    const serversWithAuth: Tool.Mcp[] = (mcpServers || []).map((server: Tool.Mcp) => ({
+      ...server,
+      authorization: accessToken,
+    }));
+
+    const hasOrchestratorServer = serversWithAuth.some(isOrchestratorServer);
+    if (!hasOrchestratorServer) {
+      dispatch(
+        addToast({
+          message: "Orchestrator MCP is not configured; routing will fall back to available MCP servers.",
+          isError: false,
+        })
+      );
+    }
+
+    const progressUpdates: OrchestratorProgressEvent[] = [];
+
+    const orchestratorInsights = hasOrchestratorServer
+      ? await getOrchestratorInsights({
+          messages: existingSessionMessages,
+          currentContent: content,
+          servers: serversWithAuth,
+          onProgress: (event: OrchestratorProgressEvent) => {
+            // Keep only meaningful transitions so progress UI stays readable.
+            if (isDuplicateProgressUpdate(progressUpdates[progressUpdates.length - 1], event)) {
+              return;
+            }
+            progressUpdates.push(event);
+            if (progressUpdates.length > MAX_ORCHESTRATOR_PROGRESS_UPDATES) {
+              progressUpdates.shift();
+            }
+            dispatch(
+              setOrchestratorInsights({
+                sessionId,
+                insights: buildOrchestratorProgressInsights(event, progressUpdates.slice()),
+              })
+            );
+          },
+        })
+      : null;
+
+    // If orchestrator is unavailable, preserve existing behavior by using configured downstream servers.
+    const orchestratorUnavailable = !orchestratorInsights;
+
+    const downstreamServers = serversWithAuth.filter((server) => !isOrchestratorServer(server));
+
+    const orchestratorRecommendedServers = orchestratorUnavailable
+      ? []
+      : resolveServersFromInsights(orchestratorInsights, serversWithAuth);
+
+    const routedServers = orchestratorUnavailable
+      ? dedupeMcpServers(downstreamServers)
+      : orchestratorRecommendedServers.length > 0
+        // Orchestrator recommendations are authoritative when present.
+        ? dedupeMcpServers(orchestratorRecommendedServers)
+        // If no downstream route is recommended, continue chat without MCP tools.
+        : [];
+
+    // Persist the final orchestrator decision snapshot so both end-user and
+    // developer panels can explain why a tool route was or was not selected.
+
+    const finalProgress = progressUpdates[progressUpdates.length - 1];
+
+    const baseInsights = orchestratorInsights
+      ? {
+          ...orchestratorInsights,
+          status: finalProgress?.status || "done",
+          statusMessage:
+            finalProgress?.message ||
+            (orchestratorInsights.fallbackReason
+              ? "Completed with fallback"
+              : "Orchestrator routing completed"),
+          progressUpdates: progressUpdates.slice(),
+        }
+      : hasOrchestratorServer
+        ? {
+            category: "general",
+            recommendations: [],
+            source: "orchestrator" as const,
+            status: "error" as const,
+            statusMessage: finalProgress?.message || "Orchestrator unavailable",
+            progressUpdates: progressUpdates.slice(),
+            timestamp: finalProgress?.timestamp || new Date().toISOString(),
+            error: "orchestrator_unavailable",
+          }
+        : null;
+
+    const insightsWithSelection = baseInsights && orchestratorRecommendedServers.length > 0
+      ? {
+          ...baseInsights,
+          selectedServers: orchestratorRecommendedServers.map((server) => ({
+            server_label: server.server_label,
+            server_url: server.server_url || "(no-url)",
+          })),
+        }
+      : baseInsights;
+
+    dispatch(setOrchestratorInsights({ sessionId, insights: insightsWithSelection }));
 
     // Add user message to state
     dispatch(
@@ -292,7 +477,9 @@ export const sendAssistantMessage = ({
     );
 
     // Re-fetch messages to include the newly added assistant message
-    const updatedSessionMessages = selectMessagesBySessionId(getState());
+    const updatedSessionMessages = getState().chat.messages.filter(
+      (message) => message.sessionId === sessionId
+    );
     const assistantMessages = updatedSessionMessages.filter(
       (message) => message.role === "assistant"
     );
@@ -307,45 +494,107 @@ export const sendAssistantMessage = ({
     // Use the completion service with streaming callbacks for state management
     const completionMessages = await mapMessagesForCompletion(updatedSessionMessages, dispatchForAttachments, getState);
 
-    await completionService.createCompletion(
-      {
-        messages: completionMessages,
-        model: "gpt-4.1-mini", // Eventually leverage an orchestrator
-        provider,
-        userToken: accessToken,
-        servers: serversWithAuth,
-      },
-      {
-        onChunk: (chunk: string) => {
-          accumulatedContent += chunk;
-          // This is where the thunk manages state during streaming
-          dispatch(
-            updateMessageContent({
-              messageId: latestAssistantMessage.id,
-              content: accumulatedContent,
-            })
-          );
-        },
-        onToolCall: (toolName?: string) => {
-          const toolCallMessage = `\n${toolName ?? "A tool"} is being called...\n`;
+    // Ensure every routed MCP server carries an auth token for downstream calls.
+    const routedServersWithAuth: Tool.Mcp[] = routedServers.map((server) => ({
+      ...server,
+      authorization: (server as Tool.Mcp & { authorization?: string }).authorization || accessToken,
+    }));
 
-          dispatch(
-            updateMessageContent({
-              messageId: latestAssistantMessage.id,
-              content: accumulatedContent + toolCallMessage,
-            })
-          );
+    const runCompletion = async (serversForRun: Tool.Mcp[]): Promise<void> => {
+      // One execution path used for both primary run and no-tools retry.
+      await completionService.createCompletion(
+        {
+          messages: completionMessages,
+          model: "gpt-4.1-mini", // Eventually leverage an orchestrator
+          provider,
+          userToken: accessToken,
+          servers: serversForRun,
         },
-        onError: (error: Error) => {
-          console.error("Streaming error:", error);
-          // Could dispatch error state here if needed
-        },
-        onComplete: (fullText: string) => {
-          console.log("Completion finished:", fullText.length, "characters");
-          // Final state update if needed
+        {
+          onChunk: (chunk: string) => {
+            accumulatedContent += chunk;
+            // This is where the thunk manages state during streaming
+            dispatch(
+              updateMessageContent({
+                messageId: latestAssistantMessage.id,
+                content: accumulatedContent,
+              })
+            );
+          },
+          onToolCall: (toolName?: string) => {
+            const toolCallMessage = `\n${toolName ?? "A tool"} is being called...\n`;
+
+            dispatch(
+              updateMessageContent({
+                messageId: latestAssistantMessage.id,
+                content: accumulatedContent + toolCallMessage,
+              })
+            );
+          },
+          onError: (error: Error) => {
+            if (IS_DEV) {
+              console.error("Streaming error:", error);
+            }
+          },
+          onComplete: () => undefined,
+        }
+      );
+    };
+
+    try {
+      await runCompletion(routedServersWithAuth);
+    } catch (toolEnabledError) {
+      if (routedServersWithAuth.length === 0) {
+        throw toolEnabledError;
+      }
+
+      const retryEvent: OrchestratorProgressEvent = {
+        status: "routing",
+        message: "Retried without tools after downstream tool failure",
+        timestamp: new Date().toISOString(),
+        transport: orchestratorInsights?.transport === "streamable-http" ? "streamable-http" : undefined,
+      };
+
+      if (!isDuplicateProgressUpdate(progressUpdates[progressUpdates.length - 1], retryEvent)) {
+        progressUpdates.push(retryEvent);
+        if (progressUpdates.length > MAX_ORCHESTRATOR_PROGRESS_UPDATES) {
+          progressUpdates.shift();
         }
       }
-    );
+
+      const existingInsights = getState().chat.orchestratorInsightsBySessionId?.[sessionId];
+      if (existingInsights) {
+        dispatch(
+          setOrchestratorInsights({
+            sessionId,
+            insights: {
+              ...existingInsights,
+              status: retryEvent.status,
+              statusMessage: retryEvent.message,
+              progressUpdates: progressUpdates.slice(),
+              timestamp: retryEvent.timestamp,
+            },
+          })
+        );
+      }
+
+      if (IS_DEV) {
+        console.warn(
+          "Tool-enabled completion failed; retrying without MCP tools.",
+          toolEnabledError
+        );
+      }
+
+      accumulatedContent = "";
+      dispatch(
+        updateMessageContent({
+          messageId: latestAssistantMessage.id,
+          content: "",
+        })
+      );
+
+      await runCompletion([]);
+    }
 
   } catch (error) {
     console.error("Completion failed:", error);

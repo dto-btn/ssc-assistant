@@ -1,13 +1,78 @@
 /**
  * Azure OpenAI Provider Implementation
+ *
+ * Uses stronger timeout/abort handling so orchestrator-routed calls can fail
+ * fast and emit predictable errors during streamed completions.
  */
 
 import { AzureOpenAI } from "openai";
 import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult, CompletionMessage } from "../completionService";
 import { ResponseInput } from "openai/resources/responses/responses.mjs";
 
+const DEFAULT_RESPONSES_TIMEOUT_MS = 90000;
+
+const resolveResponsesTimeoutMs = (): number => {
+  // Environment override keeps timeout tuning deploy-specific without code edits.
+  const raw = import.meta.env.VITE_AZURE_RESPONSES_TIMEOUT_MS;
+  if (!raw || raw.trim().length === 0) {
+    return DEFAULT_RESPONSES_TIMEOUT_MS;
+  }
+
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return DEFAULT_RESPONSES_TIMEOUT_MS;
+  }
+
+  return parsed;
+};
+
+const isAbortLikeError = (error: unknown): boolean => {
+  // Normalizes AbortController and network-timeout variants into one predicate.
+  if (!error) return false;
+  const value = error as { name?: string; message?: string };
+  const name = (value.name || "").toLowerCase();
+  const message = (value.message || "").toLowerCase();
+  return name.includes("abort") || message.includes("aborted") || message.includes("timeout");
+};
+
 export class AzureOpenAIProvider implements CompletionProvider {
   readonly name = 'azure-openai';
+
+  /**
+   * Build an abort signal that enforces an upper bound on streaming completion time.
+   */
+  private createTimeoutSignal(externalSignal?: AbortSignal): {
+    signal: AbortSignal;
+    cleanup: () => void;
+  } {
+    const controller = new AbortController();
+    const timeoutMs = resolveResponsesTimeoutMs();
+    const timeoutId = window.setTimeout(() => {
+      controller.abort(new Error(`Azure Responses timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+
+    const onExternalAbort = () => {
+      controller.abort(externalSignal?.reason);
+    };
+
+    if (externalSignal) {
+      if (externalSignal.aborted) {
+        controller.abort(externalSignal.reason);
+      } else {
+        externalSignal.addEventListener("abort", onExternalAbort, { once: true });
+      }
+    }
+
+    return {
+      signal: controller.signal,
+      cleanup: () => {
+        window.clearTimeout(timeoutId);
+        if (externalSignal) {
+          externalSignal.removeEventListener("abort", onExternalAbort);
+        }
+      },
+    };
+  }
 
   /**
    * Resolve the backend proxy URL so browser calls stay within the same origin.
@@ -79,6 +144,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
     const { onChunk, onToolCall, onError, onComplete } = callbacks;
 
     let fullText = currentOutput || "";
+    const timeout = this.createTimeoutSignal(signal);
     
     try {
       const updatedMessages = this.convertMessagesToInput(messages);
@@ -89,7 +155,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
         model: model,
         input: updatedMessages,
         ...(servers && servers.length > 0 ? { tools: servers, tool_choice: "auto" } : {}),
-      }, { signal });
+      }, { signal: timeout.signal });
 
       for await (const event of stream) {
         if (event.type === "response.output_text.delta") {
@@ -111,9 +177,18 @@ export class AzureOpenAIProvider implements CompletionProvider {
         provider: this.name,
       };
     } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
+      let err = error instanceof Error ? error : new Error(String(error));
+      if (isAbortLikeError(error)) {
+        err = new Error(
+          servers && servers.length > 0
+            ? "Azure request timed out while waiting for MCP tool execution."
+            : "Azure request timed out before completion."
+        );
+      }
       onError?.(err);
       throw err;
+    } finally {
+      timeout.cleanup();
     }
   }
 }
