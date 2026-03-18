@@ -72,6 +72,15 @@ interface ChatState {
   orchestratorInsightsBySessionId: Record<string, OrchestratorInsights | undefined>;
 }
 
+const ensureOrchestratorInsightsMap = (
+  state: ChatState,
+): Record<string, OrchestratorInsights | undefined> => {
+  if (!state.orchestratorInsightsBySessionId) {
+    state.orchestratorInsightsBySessionId = {};
+  }
+  return state.orchestratorInsightsBySessionId;
+};
+
 const initialState: ChatState = {
   messages: [],
   isLoading: false,
@@ -112,16 +121,18 @@ const chatSlice = createSlice({
       action: PayloadAction<{ sessionId: string; insights: OrchestratorInsights | null }>
     ) => {
       const { sessionId, insights } = action.payload;
+      const insightsBySessionId = ensureOrchestratorInsightsMap(state);
       // Null indicates the caller wants to clear current orchestrator metadata.
       if (!insights) {
-        delete state.orchestratorInsightsBySessionId[sessionId];
+        delete insightsBySessionId[sessionId];
         return;
       }
 
-      state.orchestratorInsightsBySessionId[sessionId] = insights;
+      insightsBySessionId[sessionId] = insights;
     },
     clearOrchestratorInsights: (state, action: PayloadAction<string>) => {
-      delete state.orchestratorInsightsBySessionId[action.payload];
+      const insightsBySessionId = ensureOrchestratorInsightsMap(state);
+      delete insightsBySessionId[action.payload];
     },
     hydrateSessionMessages: (
       state,
