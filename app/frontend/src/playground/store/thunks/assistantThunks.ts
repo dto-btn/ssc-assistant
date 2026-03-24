@@ -105,34 +105,24 @@ const shouldUseOrchestratorPreflight = (): boolean => {
 };
 
 /**
- * Feature flag to route completion calls through embedded LiteLLM proxy.
- */
-const useLiteLLMProxy = (): boolean => {
-  return import.meta.env.VITE_PLAYGROUND_USE_LITELLM === "true";
-};
-
-/**
- * Resolve model id based on active provider routing mode.
+ * Resolve model id for LiteLLM-backed Playground calls.
  */
 const resolveCompletionModel = (state: RootState): string => {
   const selectedModel = String(state.models?.selectedModel || "").trim();
 
-  if (useLiteLLMProxy()) {
-    // LiteLLM model id should match backend provider config (e.g. azure/<deployment>). 
-    // If unset, send an empty model and let backend LITELLM_DEFAULT_MODEL decide.
-    const configuredLiteLLMModel = String(import.meta.env.VITE_LITELLM_MODEL || "").trim();
-    if (configuredLiteLLMModel) {
-      return configuredLiteLLMModel;
-    }
-
-    return "";
+  // LiteLLM model id should match backend provider config (for example azure/<deployment>). 
+  // If unset, send an empty model and let backend LITELLM_DEFAULT_MODEL decide.
+  const configuredLiteLLMModel = String(import.meta.env.VITE_LITELLM_MODEL || "").trim();
+  if (configuredLiteLLMModel) {
+    return configuredLiteLLMModel;
   }
 
-  if (selectedModel) {
+  // Preserve manually selected provider-scoped models from UI/state.
+  if (selectedModel && selectedModel.includes("/")) {
     return selectedModel;
   }
 
-  return "gpt-4o";
+  return "";
 };
 
 /**

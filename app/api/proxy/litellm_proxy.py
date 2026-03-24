@@ -9,12 +9,83 @@ import os
 from collections.abc import Callable
 from typing import Any
 
-from flask import abort, request
 import litellm
 
 
 # Signature for provider-specific payload mutators.
 ProviderDefaultsHandler = Callable[[dict[str, Any], str | None], None]
+
+
+class PayloadValidationError(Exception):
+    """Validation error raised while preparing LiteLLM payload."""
+
+    def __init__(self, status_code: int, message: str) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+        self.message = message
+
+
+class GatewayAdapter:
+    """Gateway execution contract to ease future runtime swaps."""
+
+    def resolve_responses_fn(self) -> Any:
+        raise NotImplementedError
+
+    def run_responses(self, payload: dict[str, Any]) -> Any:
+        raise NotImplementedError
+
+
+class EmbeddedLiteLLMGatewayAdapter(GatewayAdapter):
+    """In-process gateway implementation backed by installed LiteLLM package."""
+
+    def resolve_responses_fn(self) -> Any:
+        responses_fn = getattr(litellm, "responses", None)
+        if callable(responses_fn):
+            return responses_fn
+
+        responses_fn = getattr(litellm, "response", None)
+        if callable(responses_fn):
+            return responses_fn
+
+        return None
+
+    def run_responses(self, payload: dict[str, Any]) -> Any:
+        responses_fn = self.resolve_responses_fn()
+        if not callable(responses_fn):
+            raise RuntimeError("installed litellm version does not expose responses API")
+        return responses_fn(**payload)
+
+
+class StandaloneHttpGatewayAdapter(GatewayAdapter):
+    """Placeholder adapter for future standalone LiteLLM gateway mode.
+
+    This adapter is intentionally minimal in this iteration so runtime behavior
+    stays unchanged unless explicitly selected via configuration.
+    """
+
+    def resolve_responses_fn(self) -> Any:
+        # A remote gateway does not expose a local callable in-process.
+        return None
+
+    def run_responses(self, payload: dict[str, Any]) -> Any:
+        _ = payload
+        raise RuntimeError(
+            "standalone_http adapter is not implemented yet; use LITELLM_GATEWAY_MODE=embedded"
+        )
+
+
+def get_gateway_adapter() -> GatewayAdapter:
+    """Return runtime-selected gateway adapter.
+
+    Currently only embedded mode is implemented. The interface exists so a
+    standalone transport adapter can be added without route-layer changes.
+    """
+    mode = os.getenv("LITELLM_GATEWAY_MODE", "embedded").strip().lower()
+    if mode == "embedded":
+        return EmbeddedLiteLLMGatewayAdapter()
+    if mode == "standalone_http":
+        return StandaloneHttpGatewayAdapter()
+    raise RuntimeError(f"unsupported LITELLM_GATEWAY_MODE: {mode}")
 
 
 def normalize_subpath(subpath: str) -> str:
@@ -23,27 +94,41 @@ def normalize_subpath(subpath: str) -> str:
 
 
 def run_litellm_responses(payload: dict[str, Any]) -> Any:
-    """Invoke LiteLLM Responses API across compatible LiteLLM versions."""
-    responses_fn = getattr(litellm, "responses", None)
-    if not callable(responses_fn):
-        responses_fn = getattr(litellm, "response", None)
-    if not callable(responses_fn):
-        raise RuntimeError("installed litellm version does not expose responses API")
-
-    return responses_fn(**payload)
+    """Invoke Responses API through selected gateway adapter."""
+    return get_gateway_adapter().run_responses(payload)
 
 
 def resolve_litellm_responses_fn() -> Any:
-    """Return the LiteLLM responses callable used by this gateway."""
-    responses_fn = getattr(litellm, "responses", None)
-    if callable(responses_fn):
-        return responses_fn
+    """Return the Responses callable exposed by the selected gateway adapter."""
+    return get_gateway_adapter().resolve_responses_fn()
 
-    responses_fn = getattr(litellm, "response", None)
-    if callable(responses_fn):
-        return responses_fn
 
-    return None
+def _parse_allowed_models() -> set[str]:
+    """Return configured allow-list for requested models.
+
+    Empty set means allow all models.
+    """
+    raw = os.getenv("LITELLM_ALLOWED_MODELS", "")
+    if not raw.strip():
+        return set()
+    return {item.strip() for item in raw.split(",") if item.strip()}
+
+
+def _enforce_allowed_model(payload: dict[str, Any]) -> None:
+    """Reject models that are not explicitly allowed by configuration."""
+    allowed_models = _parse_allowed_models()
+    if not allowed_models:
+        return
+
+    model = payload.get("model")
+    if not isinstance(model, str) or not model.strip():
+        raise PayloadValidationError(400, "Model is required when allow-list is enabled")
+
+    requested_model = model.strip()
+    if requested_model in allowed_models:
+        return
+
+    raise PayloadValidationError(400, f"Model '{requested_model}' is not allowed")
 
 
 def _extract_provider_from_model(model: str | None) -> str | None:
@@ -94,9 +179,8 @@ def _try_get_azure_ad_token() -> str | None:
         return None
 
 
-def extract_bearer_token_from_request() -> str | None:
-    """Return raw bearer token from Authorization header when present."""
-    auth_header = request.headers.get("Authorization", "")
+def extract_bearer_token_from_auth_header(auth_header: str | None) -> str | None:
+    """Return raw bearer token from an Authorization header when present."""
     if not isinstance(auth_header, str):
         return None
 
@@ -214,11 +298,15 @@ def _apply_provider_defaults(payload: dict[str, Any], inbound_bearer_token: str 
     handler(payload, inbound_bearer_token)
 
 
-def build_litellm_payload(req_id: str, user_oid: str) -> dict[str, Any]:
+def build_litellm_payload(
+    payload: Any,
+    req_id: str,
+    user_oid: str,
+    inbound_bearer_token: str | None = None,
+) -> dict[str, Any]:
     """Build validated request payload with metadata and provider defaults."""
-    payload = request.get_json(silent=True)
     if not isinstance(payload, dict):
-        abort(400, "Expected JSON request body")
+        raise PayloadValidationError(400, "Expected JSON request body")
 
     # Propagate request context for traceability in LiteLLM logs and callbacks.
     metadata = payload.get("metadata")
@@ -235,9 +323,11 @@ def build_litellm_payload(req_id: str, user_oid: str) -> dict[str, Any]:
     _resolve_effective_model(payload)
 
     if not payload.get("model"):
-        abort(500, "LiteLLM model missing: provide request model or set LITELLM_DEFAULT_MODEL")
+        raise PayloadValidationError(500, "LiteLLM model missing: provide request model or set LITELLM_DEFAULT_MODEL")
 
-    _apply_provider_defaults(payload, inbound_bearer_token=extract_bearer_token_from_request())
+    _enforce_allowed_model(payload)
+
+    _apply_provider_defaults(payload, inbound_bearer_token=inbound_bearer_token)
 
     # Azure Responses rejects unknown parameter tools[].transport. Keep this off
     # by default and allow opt-in for environments that require transport hints.
@@ -262,11 +352,8 @@ def build_litellm_payload(req_id: str, user_oid: str) -> dict[str, Any]:
     return payload
 
 
-def extract_request_model() -> str | None:
-    """Best-effort extraction of the requested model for structured logging."""
-    payload = request.get_json(silent=True)
-    if not isinstance(payload, dict):
-        return None
+def resolve_requested_model(payload: dict[str, Any]) -> str | None:
+    """Best-effort extraction of requested model from a prepared payload."""
     model = payload.get("model")
     if isinstance(model, str) and model.strip():
         return model.strip()

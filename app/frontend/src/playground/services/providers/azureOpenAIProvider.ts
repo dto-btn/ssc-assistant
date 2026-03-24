@@ -6,11 +6,11 @@
  */
 
 import OpenAI from "openai";
-import { AzureOpenAI } from "openai";
 import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult, CompletionMessage } from "../completionService";
 import { ResponseInput } from "openai/resources/responses/responses.mjs";
 
 const DEFAULT_RESPONSES_TIMEOUT_MS = 90000;
+const LITELLM_PROXY_BASE_PATH = "/proxy/litellm/v1";
 
 const resolveResponsesTimeoutMs = (): number => {
   // Environment override keeps timeout tuning deploy-specific without code edits.
@@ -63,44 +63,28 @@ export class AzureOpenAIProvider implements CompletionProvider {
     };
   }
 
-  private useLiteLLMProxy(): boolean {
-    return import.meta.env.VITE_PLAYGROUND_USE_LITELLM === "true";
-  }
   /**
-   * Resolve the backend proxy URL so browser calls stay within the same origin.
+   * Resolve the backend URL for the embedded LiteLLM OpenAI-compatible path.
    */
   private getBaseURL(): string {
     const backend = import.meta.env.VITE_API_BACKEND
       ? String(import.meta.env.VITE_API_BACKEND).replace(/\/$/, "")
       : "http://localhost:5001";
 
-    if (this.useLiteLLMProxy()) {
-      return `${backend}/proxy/litellm/v1`;
-    }
-    return `${backend}/proxy/azure`;
+    return `${backend}${LITELLM_PROXY_BASE_PATH}`;
   }
 
   /**
    * Build an Azure OpenAI SDK client that forwards the user's token via Authorization.
    */
-  private createClient(userToken: string): AzureOpenAI | OpenAI {
+  private createClient(userToken: string): OpenAI {
     const defaultHeaders = {
       "Authorization": "Bearer " + userToken.trim(),
     };
 
-    if (this.useLiteLLMProxy()) {
-      return new OpenAI({
-        baseURL: this.getBaseURL(),
-        apiKey: "#no-thank-you",
-        dangerouslyAllowBrowser: true,
-        defaultHeaders,
-      });
-    }
-
-    return new AzureOpenAI({
+    return new OpenAI({
       baseURL: this.getBaseURL(),
       apiKey: "#no-thank-you",
-      apiVersion: "2025-03-01-preview",
       dangerouslyAllowBrowser: true,
       defaultHeaders,
     });
@@ -189,8 +173,8 @@ export class AzureOpenAIProvider implements CompletionProvider {
       if (isAbortLikeError(error)) {
         err = new Error(
           servers && servers.length > 0
-            ? "Azure request timed out while waiting for MCP tool execution."
-            : "Azure request timed out before completion."
+            ? "Playground request timed out while waiting for MCP tool execution."
+            : "Playground request timed out before completion."
         );
       }
       onError?.(err);

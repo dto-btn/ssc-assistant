@@ -16,6 +16,7 @@ from typing import Any
 from apiflask import APIBlueprint
 from flask import Response, abort, g, request, stream_with_context
 import litellm
+from werkzeug.exceptions import HTTPException
 
 from utils.auth import user_ad
 from .litellm_logging import (
@@ -28,8 +29,10 @@ from .litellm_logging import (
 )
 from .litellm_proxy import (
     build_litellm_payload,
-    extract_request_model,
+    extract_bearer_token_from_auth_header,
     normalize_subpath,
+    PayloadValidationError,
+    resolve_requested_model,
     resolve_litellm_responses_fn,
     run_litellm_responses,
 )
@@ -40,6 +43,26 @@ logger.setLevel(logging.DEBUG)
 ROOT_PATH_PROXY_LITELLM = "/proxy/litellm"
 
 proxy_litellm = APIBlueprint("proxy_litellm", __name__)
+
+
+def _log_response_error(
+    req_id: str,
+    start_time: float,
+    requested_model: str | None,
+    payload_tool_metrics: dict[str, Any],
+    status: int,
+) -> None:
+    """Emit a consistent error log shape for all response failures."""
+    log_event(
+        "response_error",
+        req_id=req_id,
+        status=status,
+        latency_ms=round((time.perf_counter() - start_time) * 1000, 1),
+        model=requested_model or "unknown",
+        tools_count=payload_tool_metrics["tools_count"],
+        tool_names=payload_tool_metrics["tool_names"],
+        tool_types=payload_tool_metrics["tool_types"],
+    )
 
 
 @proxy_litellm.get("/health")
@@ -80,28 +103,40 @@ def litellm_proxy(subpath: str):
     user_token = g.user.token if hasattr(g, "user") and g.user and g.user.token else None
     user_oid = user_token.get("oid") if isinstance(user_token, dict) else "anon"
 
-    payload = build_litellm_payload(req_id=req_id, user_oid=str(user_oid))
-    requested_model = extract_request_model() or str(payload.get("model", "")).strip() or None
-    input_items, input_chars = input_metrics(payload)
-    payload_tool_metrics = tool_metrics(payload)
-    stream_enabled = bool(payload.get("stream"))
-
-    log_event(
-        "request_start",
-        req_id=req_id,
-        user=str(user_oid),
-        method=request.method,
-        path=normalized_subpath,
-        model=requested_model or "unknown",
-        stream=stream_enabled,
-        input_items=input_items,
-        input_chars=input_chars,
-        tools_count=payload_tool_metrics["tools_count"],
-        tool_names=payload_tool_metrics["tool_names"],
-        tool_types=payload_tool_metrics["tool_types"],
-    )
+    requested_model: str | None = None
+    payload_tool_metrics: dict[str, Any] = {
+        "tools_count": 0,
+        "tool_names": [],
+        "tool_types": [],
+    }
 
     try:
+        payload = build_litellm_payload(
+            payload=request.get_json(silent=True),
+            req_id=req_id,
+            user_oid=str(user_oid),
+            inbound_bearer_token=extract_bearer_token_from_auth_header(request.headers.get("Authorization")),
+        )
+        requested_model = resolve_requested_model(payload)
+        input_items, input_chars = input_metrics(payload)
+        payload_tool_metrics = tool_metrics(payload)
+        stream_enabled = bool(payload.get("stream"))
+
+        log_event(
+            "request_start",
+            req_id=req_id,
+            user=str(user_oid),
+            method=request.method,
+            path=normalized_subpath,
+            model=requested_model or "unknown",
+            stream=stream_enabled,
+            input_items=input_items,
+            input_chars=input_chars,
+            tools_count=payload_tool_metrics["tools_count"],
+            tool_names=payload_tool_metrics["tool_names"],
+            tool_types=payload_tool_metrics["tool_types"],
+        )
+
         response_or_stream = run_litellm_responses(payload)
 
         if stream_enabled:
@@ -184,16 +219,15 @@ def litellm_proxy(subpath: str):
             content_type="application/json",
             headers={"X-Request-Id": req_id},
         )
+    except PayloadValidationError as validation_error:
+        _log_response_error(req_id, start_time, requested_model, payload_tool_metrics, validation_error.status_code)
+        return Response(str(validation_error.message), status=validation_error.status_code, headers={"X-Request-Id": req_id})
+    except HTTPException as http_error:
+        status_code = http_error.code or 500
+        description = http_error.description or "Request validation failed"
+        _log_response_error(req_id, start_time, requested_model, payload_tool_metrics, status_code)
+        return Response(str(description), status=status_code, headers={"X-Request-Id": req_id})
     except Exception:
-        log_event(
-            "response_error",
-            req_id=req_id,
-            status=500,
-            latency_ms=round((time.perf_counter() - start_time) * 1000, 1),
-            model=requested_model or "unknown",
-            tools_count=payload_tool_metrics["tools_count"],
-            tool_names=payload_tool_metrics["tool_names"],
-            tool_types=payload_tool_metrics["tool_types"],
-        )
+        _log_response_error(req_id, start_time, requested_model, payload_tool_metrics, 500)
         logger.exception("LiteLLM embedded exception req_id=%s", req_id)
         return Response("Proxy error", status=502)

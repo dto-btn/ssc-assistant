@@ -73,6 +73,35 @@ After this all should be working.
 
 ## LiteLLM logs in Azure Monitor
 
+## Embedded LiteLLM gateway contract
+
+The LiteLLM gateway is embedded in this API process and exposed through:
+
+- `/proxy/litellm/health`
+- `/proxy/litellm/v1/responses`
+
+This route is intentionally thin. It owns HTTP/auth/request-id concerns while LiteLLM helper code owns provider defaults and request shaping. No standalone LiteLLM service is required for local or deployed usage.
+
+The helper layer (`app/api/proxy/litellm_proxy.py`) is intentionally framework-agnostic:
+
+- accepts raw payload objects instead of reading Flask request globals
+- accepts raw Authorization header value for bearer extraction
+- raises typed validation errors that the route maps to HTTP responses
+
+This keeps migration to a future standalone service mostly to adapter/wiring changes.
+
+Key env vars for this path:
+
+- `LITELLM_GATEWAY_MODE` (`embedded` by default, `standalone_http` placeholder)
+- `LITELLM_DEFAULT_MODEL`
+- `LITELLM_ALLOWED_MODELS` (optional comma-separated allow-list)
+- `LITELLM_JSON_LOGS`
+- `LITELLM_INJECT_MCP_TRANSPORT`
+- `LITELLM_DEFAULT_MCP_TRANSPORT`
+- `LITELLM_FORWARD_CALLER_BEARER_TOKEN`
+
+Note: `standalone_http` mode is intentionally scaffolded for future migration and currently returns a clear runtime error if selected.
+
 When `LITELLM_JSON_LOGS=true`, the embedded LiteLLM gateway emits one-line JSON records that include:
 
 - `event` (`request_start`, `response_done`, `stream_done`, `response_error`)
