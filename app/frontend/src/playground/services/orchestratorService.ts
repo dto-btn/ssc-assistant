@@ -186,7 +186,10 @@ const extractToolPayload = (toolResult: unknown): Record<string, unknown> | null
   return null;
 };
 
-const connectOrchestratorClient = async (serverUrl: string): Promise<{
+const connectOrchestratorClient = async (
+  serverUrl: string,
+  accessToken?: string
+): Promise<{
   client: Client;
   transport: StreamableHTTPClientTransport;
   transportKind: "streamable-http";
@@ -197,7 +200,15 @@ const connectOrchestratorClient = async (serverUrl: string): Promise<{
     name: ORCHESTRATOR_CLIENT_NAME,
     version: ORCHESTRATOR_CLIENT_VERSION,
   });
-  const transport = new StreamableHTTPClientTransport(mcpUrl);
+  const transport = new StreamableHTTPClientTransport(mcpUrl, {
+    requestInit: {
+      headers: accessToken
+        ? {
+            Authorization: `Bearer ${accessToken}`,
+          }
+        : undefined,
+    },
+  });
   await client.connect(transport);
   return { client, transport, transportKind: "streamable-http" };
 };
@@ -330,6 +341,7 @@ interface OrchestratorInsightsRequest {
   messages: Message[];
   currentContent: string;
   servers: Tool.Mcp[];
+  accessToken?: string;
   onProgress?: (event: OrchestratorProgressEvent) => void;
 }
 
@@ -408,6 +420,7 @@ const invalidateOrchestratorConnection = (serverUrl: string): void => {
  */
 const getOrchestratorConnection = async (
   serverUrl: string,
+  accessToken?: string,
   onProgress?: (event: OrchestratorProgressEvent) => void
 ): Promise<OrchestratorClientConnection> => {
   // Connection promises are memoized to avoid parallel handshakes for one URL.
@@ -424,7 +437,7 @@ const getOrchestratorConnection = async (
   });
 
   const connectionPromise = (async () => {
-    const connection = await connectOrchestratorClient(mcpUrl.toString());
+    const connection = await connectOrchestratorClient(mcpUrl.toString(), accessToken);
     emitProgress(onProgress, {
       status: "connected",
       message: "Orchestrator connection established",
@@ -447,6 +460,7 @@ export const getOrchestratorInsights = async ({
   messages,
   currentContent,
   servers,
+  accessToken,
   onProgress,
 }: OrchestratorInsightsRequest): Promise<OrchestratorInsights | null> => {
   // Query orchestrator classification/routing and normalize result for UI state.
@@ -482,6 +496,7 @@ export const getOrchestratorInsights = async ({
 
     const { client, transportKind } = await getOrchestratorConnection(
       orchestratorServer.server_url,
+      accessToken,
       onProgress
     );
 
