@@ -8,6 +8,7 @@ from apiflask import APIFlask
 from werkzeug.exceptions import BadRequest
 
 from proxy.litellm import ROOT_PATH_PROXY_LITELLM, proxy_litellm
+from proxy.litellm_logging import reset_gateway_metrics
 from proxy.litellm_proxy import (
     build_litellm_payload,
     extract_bearer_token_from_auth_header,
@@ -174,8 +175,91 @@ def test_litellm_route_stream_emits_done(monkeypatch, test_client, api_headers):
     body = response.get_data(as_text=True)
     assert response.status_code == 200
     assert response.headers.get("Content-Type", "").startswith("text/event-stream")
+    assert response.headers.get("X-LiteLLM-Attempts") == "1"
+    assert response.headers.get("X-LiteLLM-Fallback-Used") == "false"
     assert "data: [DONE]" in body
     assert '"type": "response.output_text.delta"' in body
+
+
+def test_litellm_route_sets_execution_headers_from_metadata(monkeypatch, test_client, api_headers):
+    monkeypatch.setenv("LITELLM_DEFAULT_MODEL", "azure/gpt-4o-mini")
+
+    def _mock_response(payload):
+        payload.setdefault("metadata", {})["litellm_proxy_execution"] = {
+            "selected_model": "openai/gpt-4.1-mini",
+            "attempts": 3,
+            "fallback_used": True,
+        }
+        return {"id": "resp_1", "model": "openai/gpt-4.1-mini", "output": []}
+
+    monkeypatch.setattr("proxy.litellm.run_litellm_responses", _mock_response)
+
+    response = test_client.post(
+        "/proxy/litellm/v1/responses",
+        json={"input": "hello", "model": "azure/gpt-4o-mini"},
+        headers=api_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.headers.get("X-LiteLLM-Attempts") == "3"
+    assert response.headers.get("X-LiteLLM-Fallback-Used") == "true"
+
+
+def test_litellm_metrics_endpoint_reports_counters(monkeypatch, test_client, api_headers):
+    monkeypatch.setenv("LITELLM_ENABLE_METRICS", "true")
+    monkeypatch.setenv("LITELLM_DEFAULT_MODEL", "azure/gpt-4o-mini")
+    reset_gateway_metrics()
+
+    def _mock_response(_payload):
+        return {"id": "resp_2", "model": "azure/gpt-4o-mini", "output": []}
+
+    monkeypatch.setattr("proxy.litellm.run_litellm_responses", _mock_response)
+
+    proxy_response = test_client.post(
+        "/proxy/litellm/v1/responses",
+        json={"input": "hello", "model": "azure/gpt-4o-mini"},
+        headers=api_headers,
+    )
+    assert proxy_response.status_code == 200
+
+    metrics_response = test_client.get("/proxy/litellm/metrics", headers=api_headers)
+    assert metrics_response.status_code == 200
+    payload = metrics_response.get_json()
+
+    assert payload["enabled"] is True
+    assert payload["counters"]["total_requests"] == 1
+    assert payload["counters"]["total_success"] == 1
+    assert payload["counters"]["total_errors"] == 0
+    assert payload["counters"]["total_non_stream_requests"] == 1
+
+
+def test_litellm_metrics_endpoint_increments_errors(monkeypatch, test_client, api_headers):
+    monkeypatch.setenv("LITELLM_ENABLE_METRICS", "true")
+    monkeypatch.setenv("LITELLM_DEFAULT_MODEL", "azure/gpt-4o-mini")
+    reset_gateway_metrics()
+
+    def _raise_error(_payload):
+        raise RuntimeError("simulated provider failure")
+
+    monkeypatch.setattr("proxy.litellm.run_litellm_responses", _raise_error)
+
+    proxy_response = test_client.post(
+        "/proxy/litellm/v1/responses",
+        json={"input": "hello", "model": "azure/gpt-4o-mini"},
+        headers=api_headers,
+    )
+    assert proxy_response.status_code == 502
+
+    metrics_response = test_client.get("/proxy/litellm/metrics", headers=api_headers)
+    assert metrics_response.status_code == 200
+    payload = metrics_response.get_json()
+
+    assert payload["enabled"] is True
+    assert payload["counters"]["total_requests"] == 1
+    assert payload["counters"]["total_success"] == 0
+    assert payload["counters"]["total_errors"] == 1
+    assert payload["counters"]["total_non_stream_requests"] == 1
+    assert payload["counters"]["last_status"] == 500
 
 
 def test_get_gateway_adapter_selects_standalone_http_mode(monkeypatch):

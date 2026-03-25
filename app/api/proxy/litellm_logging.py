@@ -3,16 +3,106 @@
 import json
 import logging
 import os
+import threading
+import time
 from typing import Any
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+_METRICS_LOCK = threading.Lock()
+_GATEWAY_METRICS: dict[str, Any] = {
+    "total_requests": 0,
+    "total_success": 0,
+    "total_errors": 0,
+    "total_stream_requests": 0,
+    "total_non_stream_requests": 0,
+    "total_retries": 0,
+    "total_fallbacks": 0,
+    "last_request_id": None,
+    "last_model": None,
+    "last_status": None,
+    "updated_at": None,
+}
 
 
 def json_logs_enabled() -> bool:
     """Return whether JSON line logging is enabled for LiteLLM gateway events."""
     value = os.getenv("LITELLM_JSON_LOGS", "true").strip().lower()
     return value in {"1", "true", "yes", "on"}
+
+
+def metrics_enabled() -> bool:
+    """Return whether in-memory LiteLLM gateway metrics tracking is enabled."""
+    value = os.getenv("LITELLM_ENABLE_METRICS", "false").strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
+
+def reset_gateway_metrics() -> None:
+    """Reset in-memory counters. Intended for tests and local diagnostics."""
+    with _METRICS_LOCK:
+        _GATEWAY_METRICS.update(
+            {
+                "total_requests": 0,
+                "total_success": 0,
+                "total_errors": 0,
+                "total_stream_requests": 0,
+                "total_non_stream_requests": 0,
+                "total_retries": 0,
+                "total_fallbacks": 0,
+                "last_request_id": None,
+                "last_model": None,
+                "last_status": None,
+                "updated_at": None,
+            }
+        )
+
+
+def record_gateway_metrics(
+    *,
+    request_id: str,
+    status: int,
+    stream: bool,
+    selected_model: str | None,
+    attempts: int,
+    fallback_used: bool,
+) -> None:
+    """Update aggregate in-memory counters for Playground LiteLLM diagnostics."""
+    if not metrics_enabled():
+        return
+
+    retries = max(attempts - 1, 0)
+    with _METRICS_LOCK:
+        _GATEWAY_METRICS["total_requests"] += 1
+        if 200 <= status < 400:
+            _GATEWAY_METRICS["total_success"] += 1
+        else:
+            _GATEWAY_METRICS["total_errors"] += 1
+
+        if stream:
+            _GATEWAY_METRICS["total_stream_requests"] += 1
+        else:
+            _GATEWAY_METRICS["total_non_stream_requests"] += 1
+
+        _GATEWAY_METRICS["total_retries"] += retries
+        if fallback_used:
+            _GATEWAY_METRICS["total_fallbacks"] += 1
+
+        _GATEWAY_METRICS["last_request_id"] = request_id
+        _GATEWAY_METRICS["last_model"] = selected_model
+        _GATEWAY_METRICS["last_status"] = status
+        _GATEWAY_METRICS["updated_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def get_gateway_metrics_snapshot() -> dict[str, Any]:
+    """Return a JSON-safe snapshot of current gateway diagnostics counters."""
+    with _METRICS_LOCK:
+        counters = dict(_GATEWAY_METRICS)
+
+    return {
+        "enabled": metrics_enabled(),
+        "counters": counters,
+    }
 
 
 def log_event(event: str, **fields: Any) -> None:

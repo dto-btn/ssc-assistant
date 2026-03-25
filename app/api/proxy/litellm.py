@@ -21,8 +21,10 @@ from werkzeug.exceptions import HTTPException
 from utils.auth import user_ad
 from .litellm_logging import (
     event_to_dict,
+    get_gateway_metrics_snapshot,
     input_metrics,
     log_event,
+    record_gateway_metrics,
     response_metrics,
     serialize_event,
     tool_metrics,
@@ -43,6 +45,28 @@ logger.setLevel(logging.DEBUG)
 ROOT_PATH_PROXY_LITELLM = "/proxy/litellm"
 
 proxy_litellm = APIBlueprint("proxy_litellm", __name__)
+
+
+def _extract_execution_metadata(payload: dict[str, Any] | None) -> dict[str, Any]:
+    """Extract execution metadata injected by the proxy runtime for diagnostics."""
+    if not isinstance(payload, dict):
+        return {"selected_model": None, "attempts": 1, "fallback_used": False}
+
+    metadata = payload.get("metadata")
+    if not isinstance(metadata, dict):
+        return {"selected_model": None, "attempts": 1, "fallback_used": False}
+
+    execution = metadata.get("litellm_proxy_execution")
+    if not isinstance(execution, dict):
+        return {"selected_model": None, "attempts": 1, "fallback_used": False}
+
+    attempts = execution.get("attempts")
+    attempts_value = attempts if isinstance(attempts, int) and attempts > 0 else 1
+    return {
+        "selected_model": execution.get("selected_model") if isinstance(execution.get("selected_model"), str) else None,
+        "attempts": attempts_value,
+        "fallback_used": bool(execution.get("fallback_used", False)),
+    }
 
 
 def _log_response_error(
@@ -85,6 +109,13 @@ def litellm_proxy_health():
     }, 200
 
 
+@proxy_litellm.get("/metrics")
+@user_ad.login_required
+def litellm_proxy_metrics():
+    """Diagnostics endpoint exposing in-memory proxy metrics for Playground troubleshooting."""
+    return get_gateway_metrics_snapshot(), 200
+
+
 @proxy_litellm.post("<path:subpath>")
 @user_ad.login_required
 def litellm_proxy(subpath: str):
@@ -103,6 +134,7 @@ def litellm_proxy(subpath: str):
     user_token = g.user.token if hasattr(g, "user") and g.user and g.user.token else None
     user_oid = user_token.get("oid") if isinstance(user_token, dict) else "anon"
 
+    payload: dict[str, Any] | None = None
     requested_model: str | None = None
     payload_tool_metrics: dict[str, Any] = {
         "tools_count": 0,
@@ -138,6 +170,7 @@ def litellm_proxy(subpath: str):
         )
 
         response_or_stream = run_litellm_responses(payload)
+        execution = _extract_execution_metadata(payload)
 
         if stream_enabled:
             # Keep a local alias so the closure only captures what it needs.
@@ -183,6 +216,17 @@ def litellm_proxy(subpath: str):
                         tools_count=payload_tool_metrics["tools_count"],
                         tool_names=payload_tool_metrics["tool_names"],
                         tool_types=payload_tool_metrics["tool_types"],
+                        attempt_count=execution["attempts"],
+                        selected_model=execution["selected_model"],
+                        fallback_used=execution["fallback_used"],
+                    )
+                    record_gateway_metrics(
+                        request_id=req_id,
+                        status=200,
+                        stream=True,
+                        selected_model=execution["selected_model"] or requested_model,
+                        attempts=execution["attempts"],
+                        fallback_used=execution["fallback_used"],
                     )
 
             return Response(
@@ -193,6 +237,8 @@ def litellm_proxy(subpath: str):
                     "Connection": "keep-alive",
                     "X-Accel-Buffering": "no",
                     "X-Request-Id": req_id,
+                    "X-LiteLLM-Attempts": str(execution["attempts"]),
+                    "X-LiteLLM-Fallback-Used": str(execution["fallback_used"]).lower(),
                 },
             )
 
@@ -212,22 +258,64 @@ def litellm_proxy(subpath: str):
             tools_count=payload_tool_metrics["tools_count"],
             tool_names=payload_tool_metrics["tool_names"],
             tool_types=payload_tool_metrics["tool_types"],
+            attempt_count=execution["attempts"],
+            selected_model=execution["selected_model"],
+            fallback_used=execution["fallback_used"],
+        )
+        record_gateway_metrics(
+            request_id=req_id,
+            status=200,
+            stream=False,
+            selected_model=execution["selected_model"] or requested_model,
+            attempts=execution["attempts"],
+            fallback_used=execution["fallback_used"],
         )
         return Response(
             serialized_response,
             status=200,
             content_type="application/json",
-            headers={"X-Request-Id": req_id},
+            headers={
+                "X-Request-Id": req_id,
+                "X-LiteLLM-Attempts": str(execution["attempts"]),
+                "X-LiteLLM-Fallback-Used": str(execution["fallback_used"]).lower(),
+            },
         )
     except PayloadValidationError as validation_error:
+        execution = _extract_execution_metadata(payload)
+        record_gateway_metrics(
+            request_id=req_id,
+            status=validation_error.status_code,
+            stream=bool(payload and payload.get("stream")),
+            selected_model=execution["selected_model"] or requested_model,
+            attempts=execution["attempts"],
+            fallback_used=execution["fallback_used"],
+        )
         _log_response_error(req_id, start_time, requested_model, payload_tool_metrics, validation_error.status_code)
         return Response(str(validation_error.message), status=validation_error.status_code, headers={"X-Request-Id": req_id})
     except HTTPException as http_error:
         status_code = http_error.code or 500
         description = http_error.description or "Request validation failed"
+        execution = _extract_execution_metadata(payload)
+        record_gateway_metrics(
+            request_id=req_id,
+            status=status_code,
+            stream=bool(payload and payload.get("stream")),
+            selected_model=execution["selected_model"] or requested_model,
+            attempts=execution["attempts"],
+            fallback_used=execution["fallback_used"],
+        )
         _log_response_error(req_id, start_time, requested_model, payload_tool_metrics, status_code)
         return Response(str(description), status=status_code, headers={"X-Request-Id": req_id})
     except Exception:
+        execution = _extract_execution_metadata(payload)
+        record_gateway_metrics(
+            request_id=req_id,
+            status=500,
+            stream=bool(payload and payload.get("stream")),
+            selected_model=execution["selected_model"] or requested_model,
+            attempts=execution["attempts"],
+            fallback_used=execution["fallback_used"],
+        )
         _log_response_error(req_id, start_time, requested_model, payload_tool_metrics, 500)
         logger.exception("LiteLLM embedded exception req_id=%s", req_id)
         return Response("Proxy error", status=502)

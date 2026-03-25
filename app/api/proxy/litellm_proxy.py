@@ -100,6 +100,12 @@ def run_litellm_responses(payload: dict[str, Any]) -> Any:
 
     # Keep streaming behavior stable: stream-level retries need event-aware handling.
     if bool(payload.get("stream")):
+        _set_execution_metadata(
+            payload,
+            selected_model=payload.get("model") if isinstance(payload.get("model"), str) else None,
+            attempts=1,
+            fallback_used=False,
+        )
         return adapter.run_responses(payload)
 
     retry_enabled = _env_flag("LITELLM_ENABLE_RETRY", "false")
@@ -111,14 +117,23 @@ def run_litellm_responses(payload: dict[str, Any]) -> Any:
         return adapter.run_responses(payload)
 
     last_error: Exception | None = None
+    total_attempts = 0
 
     for model_index, model in enumerate(model_candidates):
         request_payload = _build_payload_for_model(payload, model)
         attempts_for_model = retry_max_attempts if retry_enabled else 1
 
         for attempt in range(attempts_for_model):
+            total_attempts += 1
             try:
-                return adapter.run_responses(request_payload)
+                response = adapter.run_responses(request_payload)
+                _set_execution_metadata(
+                    payload,
+                    selected_model=model,
+                    attempts=total_attempts,
+                    fallback_used=model_index > 0,
+                )
+                return response
             except Exception as error:
                 last_error = error
 
@@ -136,6 +151,12 @@ def run_litellm_responses(payload: dict[str, Any]) -> Any:
                     break
 
     if last_error is not None:
+        _set_execution_metadata(
+            payload,
+            selected_model=model_candidates[-1] if model_candidates else None,
+            attempts=total_attempts if total_attempts > 0 else 1,
+            fallback_used=len(model_candidates) > 1,
+        )
         raise last_error
 
     return adapter.run_responses(payload)
@@ -332,6 +353,26 @@ def _build_payload_for_model(payload: dict[str, Any], model: str) -> dict[str, A
     cloned = dict(payload)
     cloned["model"] = model
     return cloned
+
+
+def _set_execution_metadata(
+    payload: dict[str, Any],
+    *,
+    selected_model: str | None,
+    attempts: int,
+    fallback_used: bool,
+) -> None:
+    """Persist runtime execution details for route-level logging and response shaping."""
+    metadata = payload.get("metadata")
+    if not isinstance(metadata, dict):
+        metadata = {}
+        payload["metadata"] = metadata
+
+    metadata["litellm_proxy_execution"] = {
+        "selected_model": selected_model,
+        "attempts": max(int(attempts), 1),
+        "fallback_used": bool(fallback_used),
+    }
 
 
 def get_litellm_auth_mode_summary() -> dict[str, Any]:
