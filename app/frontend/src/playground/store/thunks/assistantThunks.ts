@@ -3,8 +3,6 @@
  *
  * Wires orchestrator-guided MCP routing into the chat send path, including
  * progress streaming, fallback behavior, and selected-server capture for UI
- * Wires orchestrator-guided MCP routing into the chat send path, including
- * progress streaming, fallback behavior, and selected-server capture for UI
  * visibility.
  */
 
@@ -98,6 +96,79 @@ const buildOrchestratorProgressInsights = (
   progressUpdates,
   timestamp: event.timestamp,
 });
+
+/**
+ * Feature flag for orchestrator preflight classification/routing.
+ */
+const shouldUseOrchestratorPreflight = (): boolean => {
+  return import.meta.env.VITE_PLAYGROUND_ORCHESTRATOR_PREFLIGHT !== "false";
+};
+
+/**
+ * Resolve model id for LiteLLM-backed Playground calls.
+ */
+const resolveCompletionModel = (state: RootState): string => {
+  const selectedModel = String(state.models?.selectedModel || "").trim();
+
+  // LiteLLM model id should match backend provider config (for example azure/<deployment>). 
+  // If unset, send an empty model and let backend LITELLM_DEFAULT_MODEL decide.
+  const configuredLiteLLMModel = String(import.meta.env.VITE_LITELLM_MODEL || "").trim();
+  if (configuredLiteLLMModel) {
+    return configuredLiteLLMModel;
+  }
+
+  // Preserve manually selected provider-scoped models from UI/state.
+  if (selectedModel && selectedModel.includes("/")) {
+    return selectedModel;
+  }
+
+  return "";
+};
+
+/**
+ * Locate orchestrator MCP server definition from configured tool servers.
+ */
+const findOrchestratorServer = (servers: Tool.Mcp[]): Tool.Mcp | undefined => {
+  return servers.find((server) => {
+    const label = String(server.server_label || "").toLowerCase();
+    const description = String(server.server_description || "").toLowerCase();
+    return label.includes("orchestrator") || description.includes("orchestrator");
+  });
+};
+
+/**
+ * Translate orchestrator MCP endpoint into the preflight REST route.
+ */
+const toOrchestratorPreflightUrl = (serverUrl: string): string => {
+  const trimmed = serverUrl.replace(/\/$/, "");
+  if (trimmed.endsWith("/mcp")) {
+    return `${trimmed.slice(0, -4)}/orchestrator/suggest-route`;
+  }
+  return `${trimmed}/orchestrator/suggest-route`;
+};
+
+/**
+ * Extract text content from the most recent user message for preflight routing.
+ */
+const extractLastUserText = (messages: CompletionMessage[]): string => {
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const message = messages[i];
+    if (message.role !== "user") {
+      continue;
+    }
+    if (typeof message.content === "string") {
+      return message.content;
+    }
+    const textParts = message.content
+      .filter((part) => part.type === "text")
+      .map((part) => part.text)
+      .join("\n");
+    if (textParts.trim()) {
+      return textParts;
+    }
+  }
+  return "";
+};
 
 /**
  * Clamp long attachment transcripts so prompts stay within token limits.
@@ -501,12 +572,54 @@ export const sendAssistantMessage = ({
       authorization: (server as Tool.Mcp & { authorization?: string }).authorization || accessToken,
     }));
 
-    const runCompletion = async (serversForRun: Tool.Mcp[]): Promise<void> => {
+    let finalMessages = completionMessages;
+    const finalServersWithAuth = routedServersWithAuth;
+
+    const orchestratorServer = findOrchestratorServer(serversWithAuth);
+    const orchestratorServerUrl = orchestratorServer?.server_url;
+    if (shouldUseOrchestratorPreflight() && orchestratorServerUrl) {
+      try {
+        const preflightResponse = await fetch(toOrchestratorPreflightUrl(orchestratorServerUrl), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            messages: [{ role: "user", content: extractLastUserText(completionMessages) }],
+            max_recommendations: 3,
+            require_single_best: false,
+            metadata: { source: "playground-preflight" },
+          }),
+        });
+
+        if (preflightResponse.ok) {
+          const routing = await preflightResponse.json();
+          const firstRecommendation = Array.isArray(routing?.recommendations) ? routing.recommendations[0] : null;
+          const selectedCategory = firstRecommendation?.category || routing?.fallback?.category || "general";
+          const selectedServerId = firstRecommendation?.mcp_server_id || "none";
+
+          finalMessages = [
+            {
+              role: "system",
+              content: `Orchestrator preflight selected category '${selectedCategory}' and server '${selectedServerId}'. Use this as routing context.`,
+            },
+            ...completionMessages,
+          ];
+        }
+      } catch (preflightError) {
+        console.warn("Orchestrator preflight failed, continuing without preflight", preflightError);
+      }
+    }
+
+    const completionModel = resolveCompletionModel(getState());
+
+    const runCompletion = async (messagesForRun: CompletionMessage[], serversForRun: Tool.Mcp[]): Promise<void> => {
       // One execution path used for both primary run and no-tools retry.
       await completionService.createCompletion(
         {
-          messages: completionMessages,
-          model: "gpt-4.1-mini", // Eventually leverage an orchestrator
+          messages: messagesForRun,
+          model: completionModel,
           provider,
           userToken: accessToken,
           servers: serversForRun,
@@ -543,9 +656,9 @@ export const sendAssistantMessage = ({
     };
 
     try {
-      await runCompletion(routedServersWithAuth);
+      await runCompletion(finalMessages, finalServersWithAuth);
     } catch (toolEnabledError) {
-      if (routedServersWithAuth.length === 0) {
+      if (finalServersWithAuth.length === 0) {
         throw toolEnabledError;
       }
 
@@ -594,7 +707,7 @@ export const sendAssistantMessage = ({
         })
       );
 
-      await runCompletion([]);
+      await runCompletion(finalMessages, []);
     }
 
   } catch (error) {

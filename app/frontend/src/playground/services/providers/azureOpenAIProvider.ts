@@ -5,11 +5,16 @@
  * fast and emit predictable errors during streamed completions.
  */
 
-import { AzureOpenAI } from "openai";
+import OpenAI from "openai";
 import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult, CompletionMessage } from "../completionService";
 import { ResponseInput } from "openai/resources/responses/responses.mjs";
 
 const DEFAULT_RESPONSES_TIMEOUT_MS = 90000;
+const LITELLM_PROXY_BASE_PATH = "/proxy/litellm/v1";
+
+const isPlaygroundLiteLLMEnabled = (): boolean => {
+  return String(import.meta.env.VITE_PLAYGROUND_USE_LITELLM || "true").toLowerCase() === "true";
+};
 
 const resolveResponsesTimeoutMs = (): number => {
   // Environment override keeps timeout tuning deploy-specific without code edits.
@@ -38,26 +43,14 @@ const isAbortLikeError = (error: unknown): boolean => {
 export class AzureOpenAIProvider implements CompletionProvider {
   readonly name = 'azure-openai';
 
-  /**
-   * Build an abort signal that enforces an upper bound on streaming completion time.
-   */
-  private createTimeoutSignal(externalSignal?: AbortSignal): {
-    signal: AbortSignal;
-    cleanup: () => void;
-  } {
+  private createTimeoutSignal(externalSignal?: AbortSignal): { signal: AbortSignal; cleanup: () => void } {
     const controller = new AbortController();
-    const timeoutMs = resolveResponsesTimeoutMs();
-    const timeoutId = window.setTimeout(() => {
-      controller.abort(new Error(`Azure Responses timed out after ${timeoutMs}ms`));
-    }, timeoutMs);
+    const timeoutId = window.setTimeout(() => controller.abort(), resolveResponsesTimeoutMs());
 
-    const onExternalAbort = () => {
-      controller.abort(externalSignal?.reason);
-    };
-
+    const onExternalAbort = () => controller.abort();
     if (externalSignal) {
       if (externalSignal.aborted) {
-        controller.abort(externalSignal.reason);
+        controller.abort();
       } else {
         externalSignal.addEventListener("abort", onExternalAbort, { once: true });
       }
@@ -75,26 +68,33 @@ export class AzureOpenAIProvider implements CompletionProvider {
   }
 
   /**
-   * Resolve the backend proxy URL so browser calls stay within the same origin.
+   * Resolve the backend URL for the embedded LiteLLM OpenAI-compatible path.
    */
   private getBaseURL(): string {
-    return import.meta.env.VITE_API_BACKEND 
-      ? `${import.meta.env.VITE_API_BACKEND}/proxy/azure` 
-      : "http://localhost:5001/proxy/azure";
+    if (!isPlaygroundLiteLLMEnabled()) {
+      throw new Error("Playground LiteLLM proxy is disabled (set VITE_PLAYGROUND_USE_LITELLM=true).");
+    }
+
+    const backend = import.meta.env.VITE_API_BACKEND
+      ? String(import.meta.env.VITE_API_BACKEND).replace(/\/$/, "")
+      : "http://localhost:5001";
+
+    return `${backend}${LITELLM_PROXY_BASE_PATH}`;
   }
 
   /**
    * Build an Azure OpenAI SDK client that forwards the user's token via Authorization.
    */
-  private createClient(userToken: string): AzureOpenAI {
-    return new AzureOpenAI({
+  private createClient(userToken: string): OpenAI {
+    const defaultHeaders = {
+      "Authorization": "Bearer " + userToken.trim(),
+    };
+
+    return new OpenAI({
       baseURL: this.getBaseURL(),
       apiKey: "#no-thank-you",
-      apiVersion: "2025-03-01-preview",
       dangerouslyAllowBrowser: true,
-      defaultHeaders: {
-        "Authorization": "Bearer " + userToken.trim(),
-      }
+      defaultHeaders,
     });
   }
 
@@ -181,8 +181,8 @@ export class AzureOpenAIProvider implements CompletionProvider {
       if (isAbortLikeError(error)) {
         err = new Error(
           servers && servers.length > 0
-            ? "Azure request timed out while waiting for MCP tool execution."
-            : "Azure request timed out before completion."
+            ? "Playground request timed out while waiting for MCP tool execution."
+            : "Playground request timed out before completion."
         );
       }
       onError?.(err);

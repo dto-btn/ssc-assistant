@@ -26,3 +26,4 @@ openpyxl
 python-pptx
 requests
 flask-cors
+litellm @ git+https://github.com/BerriAI/litellm.git

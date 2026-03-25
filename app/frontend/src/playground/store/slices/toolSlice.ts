@@ -42,6 +42,9 @@ export const isValidMcpUrl = (rawUrl: string): boolean => {
 };
 
 // Async thunk to load tools using the toolService
+/**
+ * Load MCP server definitions from environment config and validate URLs.
+ */
 export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rejectWithValue }) => {
   
   try {
