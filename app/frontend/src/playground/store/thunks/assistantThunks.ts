@@ -380,6 +380,7 @@ export const sendAssistantMessage = ({
           messages: existingSessionMessages,
           currentContent: content,
           servers: serversWithAuth,
+          accessToken,
           onProgress: (event: OrchestratorProgressEvent) => {
             // Keep only meaningful transitions so progress UI stays readable.
             if (isDuplicateProgressUpdate(progressUpdates[progressUpdates.length - 1], event)) {
