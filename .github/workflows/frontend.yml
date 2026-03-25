@@ -42,6 +42,14 @@ on:
         required: false
       VITE_CLARITY_TOKEN:
         required: false
+      VITE_MCP_SERVERS:
+        required: false
+      VITE_PLAYGROUND_ALLOWED_MODELS:
+        required: false
+      VITE_PLAYGROUND_ORCHESTRATOR_PREFLIGHT:
+        required: false
+      VITE_PLAYGROUND_SHOW_ORCHESTRATOR_DEBUG:
+        required: false
 
 permissions:
   id-token: write
@@ -83,7 +91,10 @@ jobs:
         VITE_PLAYGROUND_ON: ${{ inputs.enable-playground }}
         VITE_SHOW_DEV_BANNER: ${{ inputs.environment == 'dev' }}
         VITE_REDIRECT_URI_DOMAIN: ${{ inputs.redirect-uri-domain }}
-        VITE_MCP_URLS: ${{ inputs.enable-mcp && secrets.VITE_MCP_URLS || '' }}
+        VITE_MCP_SERVERS: ${{ inputs.enable-mcp && secrets.VITE_MCP_SERVERS || '' }}
+        VITE_PLAYGROUND_ALLOWED_MODELS: ${{ inputs.enable-playground && secrets.VITE_PLAYGROUND_ALLOWED_MODELS || '' }}
+        VITE_PLAYGROUND_ORCHESTRATOR_PREFLIGHT: ${{ inputs.enable-playground && secrets.VITE_PLAYGROUND_ORCHESTRATOR_PREFLIGHT || '' }}
+        VITE_PLAYGROUND_SHOW_ORCHESTRATOR_DEBUG: ${{ inputs.enable-playground && secrets.VITE_PLAYGROUND_SHOW_ORCHESTRATOR_DEBUG || '' }}
 
     # This step will only run when the event is a push to the main branch
     - name: Zip artifact for deployment
