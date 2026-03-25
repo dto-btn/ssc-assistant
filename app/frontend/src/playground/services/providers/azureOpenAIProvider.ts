@@ -12,6 +12,10 @@ import { ResponseInput } from "openai/resources/responses/responses.mjs";
 const DEFAULT_RESPONSES_TIMEOUT_MS = 90000;
 const LITELLM_PROXY_BASE_PATH = "/proxy/litellm/v1";
 
+const isPlaygroundLiteLLMEnabled = (): boolean => {
+  return String(import.meta.env.VITE_PLAYGROUND_USE_LITELLM || "true").toLowerCase() === "true";
+};
+
 const resolveResponsesTimeoutMs = (): number => {
   // Environment override keeps timeout tuning deploy-specific without code edits.
   const raw = import.meta.env.VITE_AZURE_RESPONSES_TIMEOUT_MS;
@@ -67,6 +71,10 @@ export class AzureOpenAIProvider implements CompletionProvider {
    * Resolve the backend URL for the embedded LiteLLM OpenAI-compatible path.
    */
   private getBaseURL(): string {
+    if (!isPlaygroundLiteLLMEnabled()) {
+      throw new Error("Playground LiteLLM proxy is disabled (set VITE_PLAYGROUND_USE_LITELLM=true).");
+    }
+
     const backend = import.meta.env.VITE_API_BACKEND
       ? String(import.meta.env.VITE_API_BACKEND).replace(/\/$/, "")
       : "http://localhost:5001";

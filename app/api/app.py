@@ -17,6 +17,7 @@ from proxy import (
     ROOT_PATH_PROXY_AZURE,
     ROOT_PATH_PROXY_LITELLM,
     get_litellm_auth_mode_summary,
+    get_litellm_policy_summary,
     proxy_azure,
     proxy_litellm,
 )
@@ -34,13 +35,15 @@ def _log_litellm_startup_status() -> None:
     json_logs = os.getenv("LITELLM_JSON_LOGS", "true").strip().lower() in {"1", "true", "yes", "on"}
     litellm_installed = importlib.util.find_spec("litellm") is not None
     auth_mode = get_litellm_auth_mode_summary()
+    policy_mode = get_litellm_policy_summary()
 
     if litellm_installed and default_model:
         logging.getLogger(__name__).info(
             (
                 "LiteLLM gateway ready mode=embedded model=%s json_logs=%s "
                 "auth_priority=%s expected_primary=%s has_api_key=%s caller_bearer_forwarding=%s "
-                "route=/proxy/litellm/v1/responses"
+                "policy_retry_enabled=%s policy_retry_max_attempts=%s policy_fallback_models_count=%s "
+                "policy_guardrails_enabled=%s route=/proxy/litellm/v1/responses"
             ),
             default_model,
             json_logs,
@@ -48,6 +51,10 @@ def _log_litellm_startup_status() -> None:
             auth_mode["expected_primary"],
             auth_mode["has_api_key"],
             auth_mode["caller_bearer_forwarding"],
+            policy_mode["retry_enabled"],
+            policy_mode["retry_max_attempts"],
+            policy_mode["fallback_models_count"],
+            policy_mode["guardrails_enabled"],
         )
         return
 
@@ -60,13 +67,16 @@ def _log_litellm_startup_status() -> None:
     logging.getLogger(__name__).warning(
         (
             "LiteLLM gateway not ready mode=embedded missing=%s auth_priority=%s expected_primary=%s "
-            "has_api_key=%s caller_bearer_forwarding=%s route=/proxy/litellm/v1/responses"
+            "has_api_key=%s caller_bearer_forwarding=%s policy_retry_enabled=%s "
+            "policy_fallback_models_count=%s route=/proxy/litellm/v1/responses"
         ),
         ", ".join(missing),
         auth_mode["auth_priority"],
         auth_mode["expected_primary"],
         auth_mode["has_api_key"],
         auth_mode["caller_bearer_forwarding"],
+        policy_mode["retry_enabled"],
+        policy_mode["fallback_models_count"],
     )
 
 # Prefer app/api/.env regardless of current working directory, then allow generic dotenv discovery.

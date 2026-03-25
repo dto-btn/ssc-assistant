@@ -12,7 +12,9 @@ from proxy.litellm_proxy import (
     build_litellm_payload,
     extract_bearer_token_from_auth_header,
     get_gateway_adapter,
+    get_litellm_policy_summary,
     PayloadValidationError,
+    run_litellm_responses,
     StandaloneHttpGatewayAdapter,
 )
 
@@ -193,3 +195,104 @@ def test_standalone_http_adapter_raises_clear_runtime_error(monkeypatch):
         adapter.run_responses({"model": "azure/gpt-4o-mini", "input": "hello"})
 
     assert "not implemented" in str(error.value)
+
+
+def test_get_litellm_policy_summary_defaults(monkeypatch):
+    monkeypatch.delenv("LITELLM_ENABLE_RETRY", raising=False)
+    monkeypatch.delenv("LITELLM_RETRY_MAX_ATTEMPTS", raising=False)
+    monkeypatch.delenv("LITELLM_RETRY_BACKOFF_MS", raising=False)
+    monkeypatch.delenv("LITELLM_FALLBACK_MODELS", raising=False)
+
+    summary = get_litellm_policy_summary()
+
+    assert summary["retry_enabled"] is False
+    assert summary["retry_max_attempts"] == 1
+    assert summary["retry_backoff_ms"] == 250
+    assert summary["fallback_models_count"] == 0
+
+
+def test_get_litellm_policy_summary_with_config(monkeypatch):
+    monkeypatch.setenv("LITELLM_ENABLE_RETRY", "true")
+    monkeypatch.setenv("LITELLM_RETRY_MAX_ATTEMPTS", "4")
+    monkeypatch.setenv("LITELLM_RETRY_BACKOFF_MS", "900")
+    monkeypatch.setenv("LITELLM_FALLBACK_MODELS", "azure/gpt-4o-mini, openai/gpt-4.1-mini")
+
+    summary = get_litellm_policy_summary()
+
+    assert summary["retry_enabled"] is True
+    assert summary["retry_max_attempts"] == 4
+    assert summary["retry_backoff_ms"] == 900
+    assert summary["fallback_enabled"] is True
+    assert summary["fallback_models_count"] == 2
+
+
+def test_run_litellm_responses_retries_transient_errors(monkeypatch):
+    monkeypatch.setenv("LITELLM_ENABLE_RETRY", "true")
+    monkeypatch.setenv("LITELLM_RETRY_MAX_ATTEMPTS", "2")
+    monkeypatch.setenv("LITELLM_RETRY_BACKOFF_MS", "0")
+    monkeypatch.delenv("LITELLM_FALLBACK_MODELS", raising=False)
+
+    calls = {"count": 0}
+
+    class _Adapter:
+        def run_responses(self, _payload):
+            calls["count"] += 1
+            if calls["count"] == 1:
+                raise RuntimeError("temporary network timeout")
+            return {"ok": True}
+
+    def _get_adapter():
+        return _Adapter()
+
+    monkeypatch.setattr("proxy.litellm_proxy.get_gateway_adapter", _get_adapter)
+
+    response = run_litellm_responses({"model": "azure/gpt-4o-mini", "input": "hello"})
+
+    assert response == {"ok": True}
+    assert calls["count"] == 2
+
+
+def test_run_litellm_responses_uses_fallback_model(monkeypatch):
+    monkeypatch.setenv("LITELLM_ENABLE_RETRY", "false")
+    monkeypatch.setenv("LITELLM_FALLBACK_MODELS", "openai/gpt-4.1-mini")
+
+    seen_models: list[str] = []
+
+    class _Adapter:
+        def run_responses(self, payload):
+            seen_models.append(payload["model"])
+            if payload["model"] == "azure/gpt-4o-mini":
+                raise RuntimeError("provider unavailable")
+            return {"model": payload["model"]}
+
+    def _get_adapter():
+        return _Adapter()
+
+    monkeypatch.setattr("proxy.litellm_proxy.get_gateway_adapter", _get_adapter)
+
+    response = run_litellm_responses({"model": "azure/gpt-4o-mini", "input": "hello"})
+
+    assert response == {"model": "openai/gpt-4.1-mini"}
+    assert seen_models == ["azure/gpt-4o-mini", "openai/gpt-4.1-mini"]
+
+
+def test_run_litellm_responses_stream_skips_retry_policy(monkeypatch):
+    monkeypatch.setenv("LITELLM_ENABLE_RETRY", "true")
+    monkeypatch.setenv("LITELLM_RETRY_MAX_ATTEMPTS", "5")
+
+    calls = {"count": 0}
+
+    class _Adapter:
+        def run_responses(self, _payload):
+            calls["count"] += 1
+            raise RuntimeError("temporary network timeout")
+
+    def _get_adapter():
+        return _Adapter()
+
+    monkeypatch.setattr("proxy.litellm_proxy.get_gateway_adapter", _get_adapter)
+
+    with pytest.raises(RuntimeError):
+        run_litellm_responses({"model": "azure/gpt-4o-mini", "input": "hello", "stream": True})
+
+    assert calls["count"] == 1

@@ -6,6 +6,7 @@ the main request flow.
 """
 
 import os
+import time
 from collections.abc import Callable
 from typing import Any
 
@@ -94,8 +95,50 @@ def normalize_subpath(subpath: str) -> str:
 
 
 def run_litellm_responses(payload: dict[str, Any]) -> Any:
-    """Invoke Responses API through selected gateway adapter."""
-    return get_gateway_adapter().run_responses(payload)
+    """Invoke Responses API through selected gateway adapter with optional retry/fallback policy."""
+    adapter = get_gateway_adapter()
+
+    # Keep streaming behavior stable: stream-level retries need event-aware handling.
+    if bool(payload.get("stream")):
+        return adapter.run_responses(payload)
+
+    retry_enabled = _env_flag("LITELLM_ENABLE_RETRY", "false")
+    retry_max_attempts = _env_int("LITELLM_RETRY_MAX_ATTEMPTS", default=1, min_value=1, max_value=10)
+    retry_backoff_ms = _env_int("LITELLM_RETRY_BACKOFF_MS", default=250, min_value=0, max_value=30_000)
+    model_candidates = _resolve_model_candidates(payload)
+
+    if not model_candidates:
+        return adapter.run_responses(payload)
+
+    last_error: Exception | None = None
+
+    for model_index, model in enumerate(model_candidates):
+        request_payload = _build_payload_for_model(payload, model)
+        attempts_for_model = retry_max_attempts if retry_enabled else 1
+
+        for attempt in range(attempts_for_model):
+            try:
+                return adapter.run_responses(request_payload)
+            except Exception as error:
+                last_error = error
+
+                is_last_attempt = attempt >= attempts_for_model - 1
+                has_next_model = model_index < len(model_candidates) - 1
+
+                if not is_last_attempt:
+                    if not _is_retryable_error(error):
+                        break
+                    if retry_backoff_ms > 0:
+                        time.sleep((retry_backoff_ms * (2**attempt)) / 1000.0)
+                    continue
+
+                if has_next_model:
+                    break
+
+    if last_error is not None:
+        raise last_error
+
+    return adapter.run_responses(payload)
 
 
 def resolve_litellm_responses_fn() -> Any:
@@ -206,6 +249,91 @@ def inject_mcp_transport_enabled() -> bool:
     return value in {"1", "true", "yes", "on"}
 
 
+def _env_flag(name: str, default: str = "false") -> bool:
+    """Parse common boolean-like env values using a single rule."""
+    value = os.getenv(name, default).strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
+
+def _env_int(name: str, default: int, min_value: int = 0, max_value: int = 1_000_000) -> int:
+    """Parse bounded integer values from env with safe fallback behavior."""
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        parsed = int(raw)
+    except (TypeError, ValueError):
+        return default
+
+    if parsed < min_value:
+        return min_value
+    if parsed > max_value:
+        return max_value
+    return parsed
+
+
+def _parse_fallback_models() -> list[str]:
+    """Return configured fallback model chain as provider/model values."""
+    raw = os.getenv("LITELLM_FALLBACK_MODELS", "")
+    if not raw.strip():
+        return []
+
+    models: list[str] = []
+    seen: set[str] = set()
+    for item in raw.split(","):
+        model = item.strip()
+        if not model or model in seen:
+            continue
+        seen.add(model)
+        models.append(model)
+    return models
+
+
+def _resolve_model_candidates(payload: dict[str, Any]) -> list[str]:
+    """Return ordered model candidates: primary request model then configured fallbacks."""
+    current_model = payload.get("model")
+    primary = current_model.strip() if isinstance(current_model, str) else ""
+    candidates: list[str] = []
+    seen: set[str] = set()
+
+    for model in [primary, *_parse_fallback_models()]:
+        if not model or model in seen:
+            continue
+        seen.add(model)
+        candidates.append(model)
+
+    return candidates
+
+
+def _is_retryable_error(error: Exception) -> bool:
+    """Best-effort retry classification for transient provider and transport failures."""
+    message = str(error).lower()
+    name = error.__class__.__name__.lower()
+    retry_tokens = (
+        "timeout",
+        "temporar",
+        "rate limit",
+        "429",
+        "503",
+        "connection",
+        "network",
+        "service unavailable",
+        "too many requests",
+    )
+
+    if any(token in message for token in retry_tokens):
+        return True
+
+    return any(token in name for token in ("timeout", "connection", "temporar"))
+
+
+def _build_payload_for_model(payload: dict[str, Any], model: str) -> dict[str, Any]:
+    """Clone request payload while overriding the model for fallback attempts."""
+    cloned = dict(payload)
+    cloned["model"] = model
+    return cloned
+
+
 def get_litellm_auth_mode_summary() -> dict[str, Any]:
     """Return auth mode intent for startup diagnostics.
 
@@ -223,6 +351,25 @@ def get_litellm_auth_mode_summary() -> dict[str, Any]:
         "expected_primary": "api_key" if has_api_key else "dac",
         "default_provider": default_provider or "unscoped",
         "supported_provider_defaults": ["anthropic", "azure", "openai", "vertex_ai"],
+    }
+
+
+def get_litellm_policy_summary() -> dict[str, Any]:
+    """Return embedded LiteLLM policy toggles used by the Playground proxy path."""
+    gateway_mode = os.getenv("LITELLM_GATEWAY_MODE", "embedded").strip().lower() or "embedded"
+    fallback_models = _parse_fallback_models()
+    return {
+        "gateway_mode": gateway_mode,
+        "allow_model_list_enabled": len(_parse_allowed_models()) > 0,
+        "json_logs_enabled": _env_flag("LITELLM_JSON_LOGS", "true"),
+        "inject_mcp_transport": inject_mcp_transport_enabled(),
+        "retry_enabled": _env_flag("LITELLM_ENABLE_RETRY", "false"),
+        "retry_max_attempts": _env_int("LITELLM_RETRY_MAX_ATTEMPTS", default=1, min_value=1, max_value=10),
+        "retry_backoff_ms": _env_int("LITELLM_RETRY_BACKOFF_MS", default=250, min_value=0, max_value=30_000),
+        "fallback_enabled": len(fallback_models) > 0,
+        "fallback_models_count": len(fallback_models),
+        "metrics_enabled": _env_flag("LITELLM_ENABLE_METRICS", "false"),
+        "guardrails_enabled": _env_flag("LITELLM_ENABLE_GUARDRAILS", "false"),
     }
 
 
