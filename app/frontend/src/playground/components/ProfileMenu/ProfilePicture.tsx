@@ -102,17 +102,17 @@ export const UserProfilePicture = ({ size, fontSize }: UserProfileProps) => {
   }, [graphData]);
 
   if (profilePictureURL) {
-    return (
-      <>
-        <Avatar
-          aria-hidden
-          alt={fullName}
-          src={profilePictureURL}
-          sx={size ? { width: size, height: size } : {}}
-        />
-        <Typography sx={{ marginLeft: 3, textTransform: 'none', color: 'black' }}>{fullName}</Typography>
-      </>
-    );
+       return <> 
+       <Avatar aria-hidden alt={fullName} src={profilePictureURL} sx={size ? { width: size, height: size } : {}} />
+       {/* Tie label color to the active theme so it stays legible in dark mode. */}
+       <Typography sx={{ marginLeft: 3, textTransform: 'none', color: 'var(--pg-text)'}}>{fullName}</Typography>
+       </>
+  } else {
+    const letterAvatar = getLetterAvatar(fullName, size, fontSize);
+    return <>
+      <Avatar aria-hidden alt={fullName} sx={letterAvatar?.sx} children={letterAvatar?.children}/>
+      <Typography sx={{ marginLeft: 1, textTransform: 'none', color: 'var(--pg-text)'}}>{fullName}</Typography>
+    </> 
   }
 
   const letterAvatar = getLetterAvatar(fullName, size, fontSize);
