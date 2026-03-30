@@ -89,6 +89,8 @@ export class AzureOpenAIProvider implements CompletionProvider {
     const authToken = proxyKey.length > 0 ? proxyKey : userToken.trim();
     const defaultHeaders = {
       "Authorization": "Bearer " + authToken,
+      "x-caller-system": "ssc-assistant",
+      "x-caller-component": "ssc-assistant-playground",
     };
 
     return new OpenAI({
