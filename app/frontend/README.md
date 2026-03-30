@@ -31,20 +31,24 @@ export default {
 
 ## Developpers
 
-### Playground LiteLLM routing (in-process)
+### Playground LiteLLM routing (standalone proxy)
 
-Playground requests are routed through the API's embedded LiteLLM endpoint at `/proxy/litellm/v1/responses`.
-This is an in-process proxy inside the existing API service, not a separate LiteLLM deployment.
+Playground requests are sent directly to a standalone LiteLLM proxy endpoint.
+Set the base URL to include `/v1`, for example `http://localhost:4000/v1`.
 
 Relevant env settings:
 
 ```bash
+VITE_PLAYGROUND_LITELLM_BASE_URL=http://localhost:4000/v1
+VITE_PLAYGROUND_LITELLM_PROXY_KEY=
 VITE_LITELLM_MODEL=
 VITE_PLAYGROUND_ORCHESTRATOR_PREFLIGHT=true
 ```
 
+- `VITE_PLAYGROUND_LITELLM_BASE_URL`: standalone LiteLLM proxy base URL (must include `/v1`).
+- `VITE_PLAYGROUND_LITELLM_PROXY_KEY`: optional bearer token (LiteLLM master key) used for proxy auth.
 - `VITE_LITELLM_MODEL`: optional provider-scoped model id (for example `azure/gpt-4o-mini`).
-- If `VITE_LITELLM_MODEL` is empty, backend `LITELLM_DEFAULT_MODEL` is used.
+- If `VITE_LITELLM_MODEL` is empty, model selection follows standalone LiteLLM config defaults.
 - `VITE_PLAYGROUND_ORCHESTRATOR_PREFLIGHT`: enables the orchestrator route suggestion preflight before the completion request.
 
 The following `.env` settings are there to control certain components from being made available to the end-user: 

@@ -10,7 +10,7 @@ import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionRe
 import { ResponseInput } from "openai/resources/responses/responses.mjs";
 
 const DEFAULT_RESPONSES_TIMEOUT_MS = 90000;
-const LITELLM_PROXY_BASE_PATH = "/proxy/litellm/v1";
+const DEFAULT_STANDALONE_LITELLM_BASE_URL = "http://localhost:4000/v1";
 
 const isPlaygroundLiteLLMEnabled = (): boolean => {
   return String(import.meta.env.VITE_PLAYGROUND_USE_LITELLM || "true").toLowerCase() === "true";
@@ -68,26 +68,27 @@ export class AzureOpenAIProvider implements CompletionProvider {
   }
 
   /**
-   * Resolve the backend URL for the embedded LiteLLM OpenAI-compatible path.
+   * Resolve the standalone LiteLLM proxy URL (must include `/v1`).
    */
   private getBaseURL(): string {
     if (!isPlaygroundLiteLLMEnabled()) {
       throw new Error("Playground LiteLLM proxy is disabled (set VITE_PLAYGROUND_USE_LITELLM=true).");
     }
 
-    const backend = import.meta.env.VITE_API_BACKEND
-      ? String(import.meta.env.VITE_API_BACKEND).replace(/\/$/, "")
-      : "http://localhost:5001";
-
-    return `${backend}${LITELLM_PROXY_BASE_PATH}`;
+    const configured = String(import.meta.env.VITE_PLAYGROUND_LITELLM_BASE_URL || "").trim();
+    const base = configured.length > 0 ? configured : DEFAULT_STANDALONE_LITELLM_BASE_URL;
+    return base.replace(/\/$/, "");
   }
 
   /**
-   * Build an Azure OpenAI SDK client that forwards the user's token via Authorization.
+   * Build an OpenAI-compatible client for standalone LiteLLM proxy.
+   * Uses dedicated proxy key when configured, otherwise falls back to user token.
    */
   private createClient(userToken: string): OpenAI {
+    const proxyKey = String(import.meta.env.VITE_PLAYGROUND_LITELLM_PROXY_KEY || "").trim();
+    const authToken = proxyKey.length > 0 ? proxyKey : userToken.trim();
     const defaultHeaders = {
-      "Authorization": "Bearer " + userToken.trim(),
+      "Authorization": "Bearer " + authToken,
     };
 
     return new OpenAI({

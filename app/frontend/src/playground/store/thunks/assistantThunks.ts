@@ -110,19 +110,23 @@ const shouldUseOrchestratorPreflight = (): boolean => {
 const resolveCompletionModel = (state: RootState): string => {
   const selectedModel = String(state.models?.selectedModel || "").trim();
 
-  // LiteLLM model id should match backend provider config (for example azure/<deployment>). 
-  // If unset, send an empty model and let backend LITELLM_DEFAULT_MODEL decide.
+  // Explicit env override has highest priority for LiteLLM-backed Playground calls.
   const configuredLiteLLMModel = String(import.meta.env.VITE_LITELLM_MODEL || "").trim();
   if (configuredLiteLLMModel) {
     return configuredLiteLLMModel;
   }
 
-  // Preserve manually selected provider-scoped models from UI/state.
-  if (selectedModel && selectedModel.includes("/")) {
+  // Preserve manually selected model when present.
+  if (selectedModel) {
+    // Map legacy/default selections to the currently configured LiteLLM model id.
+    if (["gpt-3.5", "gpt-4", "gpt-4-turbo"].includes(selectedModel)) {
+      return "gpt-4o";
+    }
     return selectedModel;
   }
 
-  return "";
+  // Fallback must be non-empty for /v1/responses.
+  return "gpt-4o";
 };
 
 /**
