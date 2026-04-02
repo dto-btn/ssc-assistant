@@ -31,10 +31,11 @@ export default {
 
 ## Developpers
 
-### Playground LiteLLM routing (standalone proxy)
+### Playground LiteLLM routing (standalone proxy only)
 
 Playground requests are sent directly to a standalone LiteLLM proxy endpoint.
 Set the base URL to include `/v1`, for example `http://localhost:4000/v1`.
+The playground does not use embedded backend proxy routes such as `/proxy/litellm/*`.
 
 Relevant env settings:
 
