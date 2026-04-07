@@ -45,13 +45,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         <DialogContent dividers>
           <Box sx={{ mb: 2 }}>
             <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-              {t("settings.dangerZone.title", { defaultValue: "Danger Zone" })}
+              {t("settings.dangerZone.title")}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              {t("settings.dangerZone.description", {
-                defaultValue:
-                  "Actions in this section are permanent and cannot be undone.",
-              })}
+              {t("settings.dangerZone.description")}
             </Typography>
             <Box
               sx={{
@@ -66,14 +63,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             >
               <Box>
                 <Typography variant="body1" fontWeight="medium">
-                  {t("settings.deleteChats.title", {
-                    defaultValue: "Delete all chats",
-                  })}
+                  {t("settings.deleteChats.title")}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {t("settings.deleteChats.description", {
-                    defaultValue: "Permanently delete all your chat history.",
-                  })}
+                  {t("settings.deleteChats.description")}
                 </Typography>
               </Box>
               <Button
@@ -82,16 +75,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 startIcon={<DeleteSweepIcon />}
                 onClick={handleDeleteClick}
               >
-                {t("settings.deleteChats.button", {
-                  defaultValue: "Delete All",
-                })}
+                {t("settings.deleteChats.button")}
               </Button>
             </Box>
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} color="inherit">
-            {t("close", { defaultValue: "Close" })}
+            {t("close")}
           </Button>
         </DialogActions>
       </Dialog>
@@ -102,21 +93,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         maxWidth="xs"
       >
         <DialogTitle>
-          {t("settings.deleteChats.confirm.title", {
-            defaultValue: "Confirm deletion?",
-          })}
+          {t("settings.deleteChats.confirm.title")}
         </DialogTitle>
         <DialogContent>
           <Typography variant="body1">
-            {t("settings.deleteChats.confirm.message", {
-              defaultValue:
-                "Are you sure you want to delete ALL chats? This action is permanent.",
-            })}
+            {t("settings.deleteChats.confirm.message")}
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCancelDelete} color="inherit">
-            {t("cancel", { defaultValue: "Cancel" })}
+            {t("cancel")}
           </Button>
           <Button
             onClick={handleConfirmDelete}
@@ -124,7 +110,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             variant="contained"
             autoFocus
           >
-            {t("delete", { defaultValue: "Delete" })}
+            {t("delete")}
           </Button>
         </DialogActions>
       </Dialog>

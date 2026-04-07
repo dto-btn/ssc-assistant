@@ -158,5 +158,37 @@
     "profile.settings": {
         "en": "Settings",
         "fr": "Paramètres"
+    },
+    "settings.dangerZone.title": {
+        "en": "Danger Zone",
+        "fr": "Zone de danger"
+    },
+    "settings.dangerZone.description": {
+        "en": "Actions in this section are permanent and cannot be undone.",
+        "fr": "Les actions dans cette section sont permanentes et ne peuvent pas être annulées."
+    },
+    "settings.deleteChats.title": {
+        "en": "Delete all chats",
+        "fr": "Supprimer toutes les conversations"
+    },
+    "settings.deleteChats.description": {
+        "en": "Permanently delete all your chat history.",
+        "fr": "Supprimer définitivement tout votre historique de chat."
+    },
+    "settings.deleteChats.button": {
+        "en": "Delete All",
+        "fr": "Tout supprimer"
+    },
+    "settings.deleteChats.confirm.title": {
+        "en": "Confirm deletion?",
+        "fr": "Confirmer la suppression ?"
+    },
+    "settings.deleteChats.confirm.message": {
+        "en": "Are you sure you want to delete ALL chats? This action is permanent.",
+        "fr": "Êtes-vous sûr de vouloir supprimer TOUTES les conversations ? Cette action est permanente."
+    },
+    "close": {
+        "en": "Close",
+        "fr": "Fermer"
     }
 }
