@@ -32,9 +32,14 @@ export interface CompletionRequest {
   currentOutput?: string;
 }
 
+export interface ToolCallEvent {
+  name: string;
+  serverLabel?: string;
+}
+
 export interface StreamingCallbacks {
   onChunk?: (chunk: string) => void;
-  onToolCall?: (toolName?: string) => void;
+  onToolCall?: (toolCallEvent: ToolCallEvent) => void;
   onError?: (error: Error) => void;
   onComplete?: (fullText: string) => void;
 }

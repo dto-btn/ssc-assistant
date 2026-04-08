@@ -24,6 +24,7 @@ import AttachmentPreview from "./AttachmentPreview";
 import { selectSessionFilesById } from "../store/selectors/sessionFilesSelectors";
 import { FileAttachment } from "../types";
 import { Message } from "../store/slices/chatSlice";
+import ToolCallsDisplay from "./ToolCallsDisplay";
 
 interface ChatMessagesProps {
   sessionId: string;
@@ -105,6 +106,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                 primary={message.role === "user" ? "You" : "Assistant"}
                 secondary={
                   <>
+                    {message.role === "assistant" && message.toolCalls && message.toolCalls.length > 0 && (
+                      <ToolCallsDisplay toolCalls={message.toolCalls} />
+                    )}
                     <ReactMarkdown
                       components={{
                         a: ({ ...props }) => (

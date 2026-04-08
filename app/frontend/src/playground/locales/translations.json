@@ -158,5 +158,9 @@
     "profile.settings": {
         "en": "Settings",
         "fr": "Paramètres"
+    },
+    "tool.calls.used": {
+        "en": "Tools used",
+        "fr": "Outils utilisés"
     }
 }

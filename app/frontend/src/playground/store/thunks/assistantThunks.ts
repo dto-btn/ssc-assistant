@@ -9,6 +9,7 @@
 import {
   addMessage,
   updateMessageContent,
+  addToolCallToMessage,
   setIsLoading,
   setOrchestratorInsights,
   Message,
@@ -20,6 +21,7 @@ import {
   completionService,
   CompletionMessage,
   CompletionContentPart,
+  ToolCallEvent,
 } from "../../services/completionService";
 import { isTokenExpired } from "../../../util/token";
 import { AppThunk, AppDispatch } from "..";
@@ -639,13 +641,15 @@ export const sendAssistantMessage = ({
               })
             );
           },
-          onToolCall: (toolName?: string) => {
-            const toolCallMessage = `\n${toolName ?? "A tool"} is being called...\n`;
-
+          onToolCall: (toolCallEvent: ToolCallEvent) => {
             dispatch(
-              updateMessageContent({
+              addToolCallToMessage({
                 messageId: latestAssistantMessage.id,
-                content: accumulatedContent + toolCallMessage,
+                toolCall: {
+                  name: toolCallEvent.name,
+                  serverLabel: toolCallEvent.serverLabel,
+                  status: "in_progress",
+                },
               })
             );
           },

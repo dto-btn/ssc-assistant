@@ -166,9 +166,11 @@ export class AzureOpenAIProvider implements CompletionProvider {
           onChunk?.(event.delta);
         }
 
-        else if (event.type === "response.mcp_call.in_progress") {
-          console.log("Tool call in progress:", event);
-          onToolCall?.();
+        else if (event.type === "response.output_item.added") {
+          const item = event.item;
+          if (item.type === "mcp_call") {
+            onToolCall?.({ name: item.name, serverLabel: item.server_label });
+          }
         }
       }
 

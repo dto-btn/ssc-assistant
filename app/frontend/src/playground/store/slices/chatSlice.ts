@@ -13,6 +13,12 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
 import { FileAttachment } from "../../types";
 
+export interface ToolCallInfo {
+  name: string;
+  serverLabel?: string;
+  status: "in_progress" | "completed" | "failed";
+}
+
 export interface Message {
   id: string;
   sessionId: string;
@@ -21,6 +27,7 @@ export interface Message {
   timestamp: number;
   attachments?: FileAttachment[];
   citations?: { title: string; url: string }[];
+  toolCalls?: ToolCallInfo[];
 }
 
 export interface OrchestratorRecommendation {
@@ -113,6 +120,16 @@ const chatSlice = createSlice({
         message.content = content;
       }
     },
+    addToolCallToMessage: (state, action: PayloadAction<{ messageId: string; toolCall: ToolCallInfo }>) => {
+      const { messageId, toolCall } = action.payload;
+      const message = state.messages.find(msg => msg.id === messageId);
+      if (message) {
+        if (!message.toolCalls) {
+          message.toolCalls = [];
+        }
+        message.toolCalls.push(toolCall);
+      }
+    },
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
@@ -151,6 +168,7 @@ export const {
   deleteMessage,
   clearSessionMessages,
   updateMessageContent,
+  addToolCallToMessage,
   setIsLoading,
   setOrchestratorInsights,
   clearOrchestratorInsights,
