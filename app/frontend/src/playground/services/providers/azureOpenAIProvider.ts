@@ -168,8 +168,11 @@ export class AzureOpenAIProvider implements CompletionProvider {
 
         else if (event.type === "response.output_item.added") {
           const item = event.item;
-          if (item.type === "mcp_call") {
-            onToolCall?.({ name: item.name, serverLabel: item.server_label });
+          if (item.type === "mcp_call" && typeof item.name === "string") {
+            onToolCall?.({
+              name: item.name,
+              serverLabel: typeof item.server_label === "string" ? item.server_label : undefined,
+            });
           }
         }
       }
