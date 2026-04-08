@@ -13,6 +13,7 @@ type PersistedState = Record<string, unknown>;
 const migratePersistedState = (parsed: PersistedState): PersistedState => {
   const next = { ...parsed };
   const chat = (next.chat as Record<string, unknown> | undefined) ?? {};
+  const ui = (next.ui as Record<string, unknown> | undefined) ?? {};
 
   next.chat = {
     messages: Array.isArray(chat.messages) ? chat.messages : [],
@@ -21,6 +22,13 @@ const migratePersistedState = (parsed: PersistedState): PersistedState => {
       chat.orchestratorInsightsBySessionId && typeof chat.orchestratorInsightsBySessionId === "object"
         ? chat.orchestratorInsightsBySessionId
         : {},
+  };
+
+  next.ui = {
+    isSidebarCollapsed:
+      typeof ui.isSidebarCollapsed === "boolean" ? ui.isSidebarCollapsed : false,
+    // Always start closed on page load for mobile overlays.
+    isMobileSidebarOpen: false,
   };
 
   return next;
