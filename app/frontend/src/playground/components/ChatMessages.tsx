@@ -24,6 +24,7 @@ import AttachmentPreview from "./AttachmentPreview";
 import { selectSessionFilesById } from "../store/selectors/sessionFilesSelectors";
 import { FileAttachment } from "../types";
 import { Message } from "../store/slices/chatSlice";
+import McpAttributionPill from "./McpAttributionPill";
 
 interface ChatMessagesProps {
   sessionId: string;
@@ -105,6 +106,24 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                 primary={message.role === "user" ? "You" : "Assistant"}
                 secondary={
                   <>
+                    {message.role === "assistant"
+                      && message.mcpAttribution?.source === "live"
+                      && message.mcpAttribution.servers.length > 0 && (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            alignItems: "flex-start",
+                            mb: 0.75,
+                            width: "100%",
+                          }}
+                        >
+                          <McpAttributionPill
+                            attribution={message.mcpAttribution}
+                            messageId={message.id}
+                          />
+                        </Box>
+                      )}
                     <ReactMarkdown
                       components={{
                         a: ({ ...props }) => (

@@ -21,6 +21,24 @@ export interface Message {
   timestamp: number;
   attachments?: FileAttachment[];
   citations?: { title: string; url: string }[];
+  mcpAttribution?: MessageMcpAttribution;
+}
+
+export interface MessageMcpAttributionServer {
+  serverLabel: string;
+  serverUrl?: string;
+}
+
+/**
+ * Snapshot of MCP routing used for an individual assistant response.
+ */
+export interface MessageMcpAttribution {
+  source: "live";
+  generatedAt: string;
+  category?: string;
+  status?: OrchestratorProgressUpdate["status"];
+  statusMessage?: string;
+  servers: MessageMcpAttributionServer[];
 }
 
 export interface OrchestratorRecommendation {

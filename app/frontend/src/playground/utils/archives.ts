@@ -3,7 +3,83 @@
  */
 
 import type { FileAttachment } from "../types";
-import type { Message } from "../store/slices/chatSlice";
+import type {
+  Message,
+  MessageMcpAttribution,
+  MessageMcpAttributionServer,
+  OrchestratorProgressUpdate,
+} from "../store/slices/chatSlice";
+
+const isKnownProgressStatus = (
+  value: unknown,
+): value is OrchestratorProgressUpdate["status"] => {
+  return (
+    value === "connecting"
+    || value === "connected"
+    || value === "classifying"
+    || value === "routing"
+    || value === "done"
+    || value === "error"
+  );
+};
+
+const normalizeMcpAttributionServer = (
+  candidate: unknown,
+): MessageMcpAttributionServer | null => {
+  if (!candidate || typeof candidate !== "object") {
+    return null;
+  }
+
+  const record = candidate as Record<string, unknown>;
+  const serverLabel = typeof record.serverLabel === "string"
+    ? record.serverLabel.trim()
+    : "";
+
+  if (!serverLabel) {
+    return null;
+  }
+
+  return {
+    serverLabel,
+    serverUrl: typeof record.serverUrl === "string" ? record.serverUrl : undefined,
+  };
+};
+
+const normalizeMessageMcpAttribution = (
+  candidate: unknown,
+): MessageMcpAttribution | undefined => {
+  if (!candidate || typeof candidate !== "object") {
+    return undefined;
+  }
+
+  const record = candidate as Record<string, unknown>;
+  if (record.source !== "live") {
+    return undefined;
+  }
+
+  const generatedAt = typeof record.generatedAt === "string"
+    ? record.generatedAt
+    : new Date().toISOString();
+
+  const servers = Array.isArray(record.servers)
+    ? record.servers
+        .map(normalizeMcpAttributionServer)
+        .filter((server): server is MessageMcpAttributionServer => server !== null)
+    : [];
+
+  if (servers.length === 0) {
+    return undefined;
+  }
+
+  return {
+    source: "live",
+    generatedAt,
+    category: typeof record.category === "string" ? record.category : undefined,
+    status: isKnownProgressStatus(record.status) ? record.status : undefined,
+    statusMessage: typeof record.statusMessage === "string" ? record.statusMessage : undefined,
+    servers,
+  };
+};
 
 export function isChatArchiveAttachment(file: FileAttachment): boolean {
   const metadataType = file.metadataType?.toLowerCase();
@@ -98,6 +174,7 @@ export function normalizeArchiveMessage(candidate: unknown, sessionId: string): 
   const citations = Array.isArray(record.citations)
     ? (record.citations as Message["citations"])
     : undefined;
+  const mcpAttribution = normalizeMessageMcpAttribution(record.mcpAttribution);
 
   return {
     id,
@@ -107,5 +184,6 @@ export function normalizeArchiveMessage(candidate: unknown, sessionId: string): 
     timestamp,
     attachments,
     citations,
+    mcpAttribution,
   };
 }

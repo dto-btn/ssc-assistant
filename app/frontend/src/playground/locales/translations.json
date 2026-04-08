@@ -158,5 +158,33 @@
     "profile.settings": {
         "en": "Settings",
         "fr": "Paramètres"
+    },
+    "mcp.attribution.unknown": {
+        "en": "Tool server",
+        "fr": "Serveur MCP"
+    },
+    "mcp.attribution.summary": {
+        "en": "Tool: {{primaryServer}}{{suffix}}",
+        "fr": "Outil : {{primaryServer}}{{suffix}}"
+    },
+    "mcp.attribution.trigger": {
+        "en": "MCP servers used for this response: {{servers}}",
+        "fr": "Serveurs MCP utilises pour cette reponse : {{servers}}"
+    },
+    "mcp.attribution.title": {
+        "en": "MCP attribution",
+        "fr": "Attribution MCP"
+    },
+    "mcp.attribution.description": {
+        "en": "This response used the following MCP server.",
+        "fr": "Cette reponse a utilise le serveur MCP suivant."
+    },
+    "mcp.attribution.category": {
+        "en": "Category: {{category}}",
+        "fr": "Categorie : {{category}}"
+    },
+    "mcp.attribution.status": {
+        "en": "Status: {{status}}",
+        "fr": "Statut : {{status}}"
     }
 }
