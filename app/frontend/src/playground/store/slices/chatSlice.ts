@@ -13,6 +13,11 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
 import { FileAttachment } from "../../types";
 
+export interface McpServerUsed {
+  server_label: string;
+  server_url?: string;
+}
+
 export interface Message {
   id: string;
   sessionId: string;
@@ -21,6 +26,7 @@ export interface Message {
   timestamp: number;
   attachments?: FileAttachment[];
   citations?: { title: string; url: string }[];
+  usedMcpServers?: McpServerUsed[];
 }
 
 export interface OrchestratorRecommendation {

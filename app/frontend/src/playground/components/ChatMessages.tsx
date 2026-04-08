@@ -10,11 +10,15 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
 import {
   Box,
+  Chip,
   List,
   ListItem,
   ListItemText,
+  Stack,
+  Tooltip,
   IconButton,
 } from "@mui/material";
+import DnsIcon from "@mui/icons-material/Dns";
 import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
 import { setQuotedText } from "../store/slices/quotedSlice";
 import ReactMarkdown from "react-markdown";
@@ -119,6 +123,39 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                     {resolvedAttachments.length > 0 && (
                       <AttachmentPreview attachments={resolvedAttachments} />
                     )}
+                    {message.role === "assistant" &&
+                      message.usedMcpServers &&
+                      message.usedMcpServers.length > 0 && (
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          useFlexGap
+                          flexWrap="wrap"
+                          sx={{ mt: 1 }}
+                        >
+                          {message.usedMcpServers.map((server, idx) => (
+                            <Tooltip
+                              key={idx}
+                              title={server.server_url || server.server_label}
+                              arrow
+                            >
+                              <Chip
+                                icon={
+                                  <DnsIcon
+                                    style={{ fontSize: 14, color: "#4b3e99" }}
+                                  />
+                                }
+                                label={server.server_label}
+                                size="small"
+                                aria-label={t("mcp.server.used", {
+                                  server: server.server_label,
+                                })}
+                                sx={{ fontSize: "0.7rem" }}
+                              />
+                            </Tooltip>
+                          ))}
+                        </Stack>
+                      )}
                   </>
                 }
                 slotProps={{

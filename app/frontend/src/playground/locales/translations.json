@@ -158,5 +158,13 @@
     "profile.settings": {
         "en": "Settings",
         "fr": "Paramètres"
+    },
+    "mcp.server.used": {
+        "en": "MCP server used: {{server}}",
+        "fr": "Serveur MCP utilisé : {{server}}"
+    },
+    "mcp.servers.used": {
+        "en": "MCP servers used",
+        "fr": "Serveurs MCP utilisés"
     }
 }

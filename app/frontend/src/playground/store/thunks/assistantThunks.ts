@@ -543,12 +543,16 @@ export const sendAssistantMessage = ({
       })
     );
 
-    // Add empty assistant message to state
+    // Add empty assistant message to state, recording which MCP servers were used
     dispatch(
       addMessage({
         sessionId,
         role: "assistant",
         content: "",
+        usedMcpServers: routedServers.map((server) => ({
+          server_label: server.server_label,
+          server_url: server.server_url,
+        })),
       })
     );
 
