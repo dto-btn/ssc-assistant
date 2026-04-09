@@ -83,9 +83,12 @@ export interface OrchestratorInsights {
   error?: string;
 }
 
+export type AssistantResponsePhase = "idle" | "waiting-first-token" | "streaming";
+
 interface ChatState {
   messages: Message[];
   isLoading: boolean;
+  assistantResponsePhaseBySessionId: Record<string, AssistantResponsePhase | undefined>;
   // Keyed by session id so each tab/session can show independent routing state.
   orchestratorInsightsBySessionId: Record<string, OrchestratorInsights | undefined>;
 }
@@ -102,6 +105,7 @@ const ensureOrchestratorInsightsMap = (
 const initialState: ChatState = {
   messages: [],
   isLoading: false,
+  assistantResponsePhaseBySessionId: {},
   orchestratorInsightsBySessionId: {},
 };
 
@@ -137,6 +141,16 @@ const chatSlice = createSlice({
     },
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
+    },
+    setAssistantResponsePhase: (
+      state,
+      action: PayloadAction<{ sessionId: string; phase: AssistantResponsePhase }>,
+    ) => {
+      const { sessionId, phase } = action.payload;
+      state.assistantResponsePhaseBySessionId[sessionId] = phase;
+    },
+    clearAssistantResponsePhase: (state, action: PayloadAction<string>) => {
+      delete state.assistantResponsePhaseBySessionId[action.payload];
     },
     setOrchestratorInsights: (
       state,
@@ -175,6 +189,8 @@ export const {
   clearAllMessages,
   updateMessageContent,
   setIsLoading,
+  setAssistantResponsePhase,
+  clearAssistantResponsePhase,
   setOrchestratorInsights,
   clearOrchestratorInsights,
   hydrateSessionMessages,

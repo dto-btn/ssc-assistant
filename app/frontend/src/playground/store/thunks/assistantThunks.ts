@@ -10,6 +10,7 @@ import {
   addMessage,
   updateMessageContent,
   setIsLoading,
+  setAssistantResponsePhase,
   setOrchestratorInsights,
   Message,
   MessageMcpAttribution,
@@ -35,6 +36,7 @@ import {
   OrchestratorProgressEvent,
   resolveServersFromInsights,
 } from "../../services/orchestratorService";
+import { createStreamTypewriter } from "../../utils/streamTypewriter";
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
 
@@ -438,6 +440,7 @@ export const sendAssistantMessage = ({
   getState
 ) => {
   dispatch(setIsLoading(true));
+  dispatch(setAssistantResponsePhase({ sessionId, phase: "waiting-first-token" }));
   try {
     dispatch(setIsSessionNew({id: sessionId, isNew: false}))
 
@@ -596,8 +599,6 @@ export const sendAssistantMessage = ({
       throw new Error("Failed to create assistant message");
     }
 
-    let accumulatedContent = "";
-
     // Use the completion service with streaming callbacks for state management
     const completionMessages = await mapMessagesForCompletion(updatedSessionMessages, dispatchForAttachments, getState);
 
@@ -649,45 +650,67 @@ export const sendAssistantMessage = ({
 
     const completionModel = resolveCompletionModel(getState());
 
-    const runCompletion = async (messagesForRun: CompletionMessage[], serversForRun: Tool.Mcp[]): Promise<void> => {
+    const runCompletion = async (
+      messagesForRun: CompletionMessage[],
+      serversForRun: Tool.Mcp[],
+    ): Promise<void> => {
       // One execution path used for both primary run and no-tools retry.
-      await completionService.createCompletion(
-        {
-          messages: messagesForRun,
-          model: completionModel,
-          provider,
-          userToken: accessToken,
-          servers: serversForRun,
-        },
-        {
-          onChunk: (chunk: string) => {
-            accumulatedContent += chunk;
-            // This is where the thunk manages state during streaming
-            dispatch(
-              updateMessageContent({
-                messageId: latestAssistantMessage.id,
-                content: accumulatedContent,
-              })
-            );
-          },
-          onToolCall: (toolName?: string) => {
-            const toolCallMessage = `\n${toolName ?? "A tool"} is being called...\n`;
+      let receivedFirstChunk = false;
 
-            dispatch(
-              updateMessageContent({
-                messageId: latestAssistantMessage.id,
-                content: accumulatedContent + toolCallMessage,
-              })
-            );
+      const typewriter = createStreamTypewriter({
+        tickMs: 20,
+        charsPerTick: 4,
+        burstMultiplier: 2,
+        maxBufferedChars: 900,
+        onUpdate: (nextText) => {
+          dispatch(
+            updateMessageContent({
+              messageId: latestAssistantMessage.id,
+              content: nextText,
+            })
+          );
+        },
+      });
+
+      try {
+        await completionService.createCompletion(
+          {
+            messages: messagesForRun,
+            model: completionModel,
+            provider,
+            userToken: accessToken,
+            servers: serversForRun,
           },
-          onError: (error: Error) => {
-            if (IS_DEV) {
-              console.error("Streaming error:", error);
-            }
-          },
-          onComplete: () => undefined,
-        }
-      );
+          {
+            onChunk: (chunk: string) => {
+              typewriter.enqueue(chunk);
+              if (!receivedFirstChunk) {
+                receivedFirstChunk = true;
+                dispatch(setAssistantResponsePhase({ sessionId, phase: "streaming" }));
+              }
+            },
+            onToolCall: (toolName?: string) => {
+              const toolCallMessage = `\n${toolName ?? "A tool"} is being called...\n`;
+              typewriter.enqueue(toolCallMessage);
+              if (!receivedFirstChunk) {
+                receivedFirstChunk = true;
+                dispatch(setAssistantResponsePhase({ sessionId, phase: "streaming" }));
+              }
+            },
+            onError: (error: Error) => {
+              if (IS_DEV) {
+                console.error("Streaming error:", error);
+              }
+            },
+            onComplete: () => undefined,
+          }
+        );
+      } finally {
+        // Let the buffer drain with pacing to avoid end-of-stream "content dump".
+        await typewriter.complete({ maxWaitMs: 5000 });
+        typewriter.stop();
+      }
+
     };
 
     try {
@@ -734,13 +757,14 @@ export const sendAssistantMessage = ({
         );
       }
 
-      accumulatedContent = "";
       dispatch(
         updateMessageContent({
           messageId: latestAssistantMessage.id,
           content: "",
         })
       );
+
+      dispatch(setAssistantResponsePhase({ sessionId, phase: "waiting-first-token" }));
 
       await runCompletion(finalMessages, []);
     }
@@ -771,6 +795,7 @@ export const sendAssistantMessage = ({
       })
     );
   } finally {
+    dispatch(setAssistantResponsePhase({ sessionId, phase: "idle" }));
     dispatch(setIsLoading(false));
   }
 };

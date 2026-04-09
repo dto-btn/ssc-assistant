@@ -143,6 +143,10 @@
         "en": "An error occurred during completion.",
         "fr": "Une erreur est survenue pendant le traitement."
     },
+    "assistant.waiting": {
+        "en": "Assistant is thinking...",
+        "fr": "L'assistant réfléchit..."
+    },
     "errors.deleteFailed": {
         "en": "Could not delete the chat. Please try again.",
         "fr": "Impossible de supprimer la conversation. Veuillez réessayer."
