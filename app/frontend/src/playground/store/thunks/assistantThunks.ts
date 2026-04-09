@@ -12,6 +12,7 @@ import {
   setIsLoading,
   setOrchestratorInsights,
   Message,
+  MessageMcpAttribution,
   OrchestratorInsights,
 } from "../slices/chatSlice";
 import { setIsSessionNew } from "../slices/sessionSlice"
@@ -63,6 +64,30 @@ const dedupeMcpServers = (servers: Tool.Mcp[]): Tool.Mcp[] => {
     deduped.push(server);
   }
   return deduped;
+};
+
+/**
+ * Build message-scoped MCP attribution from routed servers for UI rendering.
+ */
+const buildMessageMcpAttribution = (
+  routedServers: Tool.Mcp[],
+  insights: Pick<OrchestratorInsights, "category" | "status" | "statusMessage"> | null,
+): MessageMcpAttribution | undefined => {
+  if (routedServers.length === 0) {
+    return undefined;
+  }
+
+  return {
+    source: "live",
+    generatedAt: new Date().toISOString(),
+    category: insights?.category,
+    status: insights?.status,
+    statusMessage: insights?.statusMessage,
+    servers: routedServers.map((server) => ({
+      serverLabel: String(server.server_label || server.server_url || "MCP server"),
+      serverUrl: server.server_url,
+    })),
+  };
 };
 
 /**
@@ -531,6 +556,11 @@ export const sendAssistantMessage = ({
         }
       : baseInsights;
 
+    const assistantMcpAttribution = buildMessageMcpAttribution(
+      routedServers,
+      insightsWithSelection,
+    );
+
     dispatch(setOrchestratorInsights({ sessionId, insights: insightsWithSelection }));
 
     // Add user message to state
@@ -549,6 +579,7 @@ export const sendAssistantMessage = ({
         sessionId,
         role: "assistant",
         content: "",
+        mcpAttribution: assistantMcpAttribution,
       })
     );
 

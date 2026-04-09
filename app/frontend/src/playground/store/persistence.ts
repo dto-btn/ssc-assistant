@@ -10,13 +10,34 @@ const CHAT_KEY = "playground_chat_state";
 
 type PersistedState = Record<string, unknown>;
 
+const normalizePersistedMessages = (messages: unknown): unknown[] => {
+  if (!Array.isArray(messages)) {
+    return [];
+  }
+
+  return messages.filter((message) => {
+    if (!message || typeof message !== "object") {
+      return false;
+    }
+
+    const record = message as Record<string, unknown>;
+    return (
+      typeof record.id === "string"
+      && typeof record.sessionId === "string"
+      && (record.role === "user" || record.role === "assistant" || record.role === "system")
+      && typeof record.content === "string"
+      && typeof record.timestamp === "number"
+    );
+  });
+};
+
 const migratePersistedState = (parsed: PersistedState): PersistedState => {
   const next = { ...parsed };
   const chat = (next.chat as Record<string, unknown> | undefined) ?? {};
   const ui = (next.ui as Record<string, unknown> | undefined) ?? {};
 
   next.chat = {
-    messages: Array.isArray(chat.messages) ? chat.messages : [],
+    messages: normalizePersistedMessages(chat.messages),
     isLoading: typeof chat.isLoading === "boolean" ? chat.isLoading : false,
     orchestratorInsightsBySessionId:
       chat.orchestratorInsightsBySessionId && typeof chat.orchestratorInsightsBySessionId === "object"
