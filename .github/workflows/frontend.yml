@@ -50,6 +50,12 @@ on:
         required: false
       VITE_PLAYGROUND_SHOW_ORCHESTRATOR_DEBUG:
         required: false
+      VITE_PLAYGROUND_USE_LITELLM:
+        required: false
+      VITE_PLAYGROUND_LITELLM_BASE_URL:
+        required: false
+      VITE_PLAYGROUND_LITELLM_PROXY_KEY:
+        required: false
 
 permissions:
   id-token: write
@@ -95,7 +101,9 @@ jobs:
         VITE_PLAYGROUND_ALLOWED_MODELS: ${{ inputs.enable-playground && secrets.VITE_PLAYGROUND_ALLOWED_MODELS || '' }}
         VITE_PLAYGROUND_ORCHESTRATOR_PREFLIGHT: ${{ inputs.enable-playground && secrets.VITE_PLAYGROUND_ORCHESTRATOR_PREFLIGHT || '' }}
         VITE_PLAYGROUND_SHOW_ORCHESTRATOR_DEBUG: ${{ inputs.enable-playground && secrets.VITE_PLAYGROUND_SHOW_ORCHESTRATOR_DEBUG || '' }}
-
+        VITE_PLAYGROUND_USE_LITELLM: ${{ inputs.enable-playground && secrets.VITE_PLAYGROUND_USE_LITELLM || '' }}
+        VITE_PLAYGROUND_LITELLM_BASE_URL: ${{ inputs.enable-playground && secrets.VITE_PLAYGROUND_LITELLM_BASE_URL || '' }}
+        VITE_PLAYGROUND_LITELLM_PROXY_KEY: ${{ inputs.enable-playground && secrets.VITE_PLAYGROUND_LITELLM_PROXY_KEY || '' }}
     # This step will only run when the event is a push to the main branch
     - name: Zip artifact for deployment
       if: github.event_name != 'pull_request'
