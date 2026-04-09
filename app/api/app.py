@@ -1,18 +1,25 @@
+"""APIFlask application entrypoint for SSC Assistant backend services."""
+
 import logging
 import os
+from pathlib import Path
 
 from apiflask import APIFlask
 from dotenv import load_dotenv
 from v1.routes_v1 import api_v1
 from playground.routes_playground import api_playground
-from proxy.azure import ROOT_PATH_PROXY_AZURE, proxy_azure
+from proxy import ROOT_PATH_PROXY_AZURE, proxy_azure
 from flask_cors import CORS
 
+# Global log defaults for API startup/runtime diagnostics.
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("v1").setLevel(logging.DEBUG)
 logging.getLogger("azure.core.pipeline.policies").setLevel(logging.ERROR)
 
-load_dotenv()
+# Prefer app/api/.env regardless of current working directory, then allow generic dotenv discovery.
+api_env_path = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path=api_env_path, override=False)
+load_dotenv(override=False)
 
 app = APIFlask(__name__, title="SSC Assistant API", version="2.0")
 CORS(app)

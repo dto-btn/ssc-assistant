@@ -85,6 +85,7 @@ async function doArchive(sessionId: string, store: PlaygroundStoreApi) {
       timestamp: m.timestamp,
       citations: m.citations,
       attachments: m.attachments,
+      mcpAttribution: m.mcpAttribution,
     } satisfies Partial<Message>)),
   };
 

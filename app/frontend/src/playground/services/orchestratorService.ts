@@ -279,6 +279,9 @@ const normalizeEndpointForMatch = (endpoint?: string): string => {
   }
 };
 
+/**
+ * Resolve orchestrator recommendations into concrete downstream MCP servers.
+ */
 export const resolveServersFromInsights = (
   insights: OrchestratorInsights | null,
   servers: Tool.Mcp[],
@@ -372,6 +375,9 @@ const lastProgressByHandler = new WeakMap<
   string
 >();
 
+/**
+ * Build a stable signature used to suppress duplicate progress emissions.
+ */
 const progressFingerprint = (event: Omit<OrchestratorProgressEvent, "timestamp">): string => {
   return `${event.status}|${event.message}|${event.transport || ""}`;
 };
@@ -399,6 +405,7 @@ const emitProgress = (
 };
 
 const invalidateOrchestratorConnection = (serverUrl: string): void => {
+  // Close and evict failed connection so the next call performs a fresh handshake.
   let key: string;
   try {
     key = normalizeHttpsMcpUrl(serverUrl).toString();
@@ -463,6 +470,9 @@ export const getOrchestratorInsights = async ({
   accessToken,
   onProgress,
 }: OrchestratorInsightsRequest): Promise<OrchestratorInsights | null> => {
+  /**
+   * Query orchestrator routing, normalize payload shape, and return UI-ready insights.
+   */
   // Query orchestrator classification/routing and normalize result for UI state.
   // The function first attempts `classify_and_suggest`, then falls back to
   // legacy `classify_context` + `suggest_route` when required.

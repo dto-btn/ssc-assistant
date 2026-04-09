@@ -26,6 +26,7 @@ import { saveChatState, loadChatState } from "./persistence";
 import outboxReducer from "./slices/outboxSlice";
 import sessionFilesReducer from "./slices/sessionFilesSlice";
 import syncReducer from "./slices/syncSlice";
+import uiReducer from "./slices/uiSlice";
 
 const rootReducer = combineReducers({
   chat: chatReducer,
@@ -39,6 +40,7 @@ const rootReducer = combineReducers({
   outbox: outboxReducer,
   sessionFiles: sessionFilesReducer,
   sync: syncReducer,
+  ui: uiReducer,
 });
 
 // Infer the RootState type *before* using it for preloadedState
