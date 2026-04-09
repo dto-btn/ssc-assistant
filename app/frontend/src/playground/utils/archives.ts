@@ -81,6 +81,9 @@ const normalizeMessageMcpAttribution = (
   };
 };
 
+/**
+ * Detects chat archive attachments from either explicit metadata or filename convention.
+ */
 export function isChatArchiveAttachment(file: FileAttachment): boolean {
   const metadataType = file.metadataType?.toLowerCase();
   if (metadataType === "chat-archive") {
@@ -94,6 +97,9 @@ export function isChatArchiveAttachment(file: FileAttachment): boolean {
   return typeof name === "string" && name.endsWith(".chat.json");
 }
 
+/**
+ * Selects the newest archive candidate based on metadata timestamps.
+ */
 export function pickLatestArchive(files?: FileAttachment[] | null): FileAttachment | undefined {
   if (!Array.isArray(files) || files.length === 0) {
     return undefined;
@@ -107,6 +113,9 @@ export function pickLatestArchive(files?: FileAttachment[] | null): FileAttachme
   })[0];
 }
 
+/**
+ * Decodes a base64 data URL payload into UTF-8 JSON text.
+ */
 export function decodeArchiveDataUrl(dataUrl: string): string {
   const commaIndex = dataUrl.indexOf(",");
   const base64 = commaIndex >= 0 ? dataUrl.slice(commaIndex + 1) : dataUrl;
@@ -118,6 +127,9 @@ export function decodeArchiveDataUrl(dataUrl: string): string {
   return new TextDecoder().decode(bytes);
 }
 
+/**
+ * Normalizes heterogeneous archive message payloads into the canonical chat shape.
+ */
 export function normalizeArchiveMessage(candidate: unknown, sessionId: string): Message | null {
   if (!candidate || typeof candidate !== "object") {
     return null;
@@ -126,6 +138,7 @@ export function normalizeArchiveMessage(candidate: unknown, sessionId: string): 
 
   const rawRole = (record.role ?? record.author ?? record.type) as unknown;
   let role: Message["role"] | null = null;
+  // Accept common legacy aliases so old archives remain restorable.
   if (rawRole === "assistant" || rawRole === "system") {
     role = rawRole;
   } else if (rawRole === "user" || rawRole === "human" || rawRole === "client") {

@@ -10,11 +10,18 @@ import {
 import { useTranslation } from "react-i18next";
 import type { MessageMcpAttribution } from "../store/slices/chatSlice";
 
+/**
+ * Props for the MCP attribution summary chip attached to assistant messages.
+ */
 interface McpAttributionPillProps {
   attribution: MessageMcpAttribution;
   messageId: string;
 }
 
+/**
+ * Compact disclosure control that summarizes which MCP servers participated
+ * in generating an assistant response.
+ */
 const McpAttributionPill: React.FC<McpAttributionPillProps> = ({ attribution, messageId }) => {
   const { t } = useTranslation("playground");
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
@@ -26,6 +33,7 @@ const McpAttributionPill: React.FC<McpAttributionPillProps> = ({ attribution, me
   const serverNames = attribution.servers.map((server) => server.serverLabel).filter(Boolean);
   const primaryServer = serverNames[0] || t("mcp.attribution.unknown");
   const additionalCount = Math.max(serverNames.length - 1, 0);
+  // Keep the chip label short; full details are available in the popover.
   const summaryLabel = t("mcp.attribution.summary", {
     primaryServer,
     suffix: additionalCount > 0 ? ` +${additionalCount}` : "",
@@ -56,6 +64,7 @@ const McpAttributionPill: React.FC<McpAttributionPillProps> = ({ attribution, me
         aria-expanded={open ? "true" : "false"}
         aria-controls={popoverId}
         onKeyDown={(event) => {
+          // Chip behaves like a button for keyboard-only users.
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
             setAnchorEl(event.currentTarget);

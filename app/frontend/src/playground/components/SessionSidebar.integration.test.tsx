@@ -8,6 +8,9 @@ import SessionSidebar from "./SessionSidebar";
 import sessionReducer from "../store/slices/sessionSlice";
 import uiReducer from "../store/slices/uiSlice";
 
+/**
+ * Integration tests for responsive sidebar behavior (desktop collapse and mobile drawer UX).
+ */
 vi.mock("react-i18next", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-i18next")>();
   return {
@@ -35,6 +38,9 @@ type TestStoreState = {
   ui: ReturnType<typeof uiReducer>;
 };
 
+/**
+ * Creates a minimal Redux harness for rendering SessionSidebar in isolation.
+ */
 function renderSidebar(isMobile: boolean, preloadedState?: TestStoreState) {
   const store = configureStore({
     reducer: {
@@ -137,6 +143,7 @@ describe("SessionSidebar responsive behavior", () => {
   it("returns focus to opener when mobile drawer closes", async () => {
     const user = userEvent.setup();
 
+    // Simulate the chat-area toggle button so focus restoration can be asserted.
     const opener = document.createElement("button");
     opener.id = "playground-open-sidebar-button";
     opener.textContent = "open";
