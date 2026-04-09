@@ -1,4 +1,3 @@
-import React from "react";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import { render, screen, waitFor } from "@testing-library/react";
@@ -31,23 +30,12 @@ vi.mock("./ProfileMenu/ProfileMenu", () => ({
   default: () => null,
 }));
 
-type PreloadedState = {
-  sessions?: {
-    sessions: Array<{
-      id: string;
-      name: string;
-      createdAt: number;
-      isNewChat: boolean;
-    }>;
-    currentSessionId: string | null;
-  };
-  ui?: {
-    isSidebarCollapsed: boolean;
-    isMobileSidebarOpen: boolean;
-  };
+type TestStoreState = {
+  sessions: ReturnType<typeof sessionReducer>;
+  ui: ReturnType<typeof uiReducer>;
 };
 
-function renderSidebar(isMobile: boolean, preloadedState?: PreloadedState) {
+function renderSidebar(isMobile: boolean, preloadedState?: TestStoreState) {
   const store = configureStore({
     reducer: {
       sessions: sessionReducer,
