@@ -91,6 +91,26 @@
         "en": "New",
         "fr": "Nouveau"
     },
+    "options": {
+        "en": "Options",
+        "fr": "Options"
+    },
+    "sidebar.navigation": {
+        "en": "Chat sessions",
+        "fr": "Sessions de conversation"
+    },
+    "sidebar.collapse": {
+        "en": "Collapse sidebar",
+        "fr": "Réduire la barre latérale"
+    },
+    "sidebar.open": {
+        "en": "Open chat sessions",
+        "fr": "Ouvrir les sessions de conversation"
+    },
+    "sidebar.close": {
+        "en": "Close chat sessions",
+        "fr": "Fermer les sessions de conversation"
+    },
     "delete.conversation": {
         "en": "Delete Conversation",
         "fr": "Supprimer la conversation"
