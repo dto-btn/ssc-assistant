@@ -29,7 +29,6 @@ import { rehydrateSessionFromArchive } from "../store/thunks/sessionBootstrapThu
 import { pickLatestArchive } from "../utils/archives";
 import { applyRemoteSessionDeletion } from "../store/thunks/sessionManagementThunks";
 import OrchestratorDebugPanel from "./OrchestratorDebugPanel";
-import AgentActivityPanel from "./AgentActivityPanel";
 import MenuIcon from "@mui/icons-material/Menu";
 import { IconButton, Tooltip } from "@mui/material";
 
@@ -303,7 +302,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           onSuggestionClicked={handleSuggestion}
           disabled={isLoading}
         />
-        <AgentActivityPanel sessionId={currentSessionId} />
         <OrchestratorDebugPanel sessionId={currentSessionId} />
         <ChatInput sessionId={currentSessionId} />
       </Box>
@@ -315,7 +313,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       {renderSidebarToggle()}
       <ChatMessages sessionId={currentSessionId} />
       <Citations citations={citations as Citation[]} />
-      <AgentActivityPanel sessionId={currentSessionId} />
       <OrchestratorDebugPanel sessionId={currentSessionId} />
       <ReplayStopBar
         onReplay={handleReplay}
