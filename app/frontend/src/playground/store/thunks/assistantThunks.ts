@@ -5,7 +5,6 @@
  * progress streaming, fallback behavior, and selected-server capture for UI
  * visibility.
  */
-
 import {
   addMessage,
   updateMessageContent,
@@ -39,6 +38,7 @@ import {
 import { createStreamTypewriter } from "../../utils/streamTypewriter";
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
+const TOOL_CALL_STATUS_PATTERN = /\n[^\n]* is being called\.\.\.\n/g;
 
 /**
  * Identify orchestrator MCP entries so they are excluded from downstream tool runs.
@@ -52,6 +52,8 @@ const attachmentTextCache = new Map<string, string>();
 const attachmentImageCache = new Map<string, string>();
 const MAX_ORCHESTRATOR_PROGRESS_UPDATES = 20;
 const IS_DEV = import.meta.env.DEV;
+const stripToolCallStatusMessages = (content: string): string =>
+  content.replace(TOOL_CALL_STATUS_PATTERN, "\n").replace(/\n{3,}/g, "\n\n").trim();
 
 /**
  * Remove duplicate servers while preserving first-seen ordering.
@@ -708,6 +710,17 @@ export const sendAssistantMessage = ({
       } finally {
         // Let the buffer drain with pacing to avoid end-of-stream "content dump".
         await typewriter.complete({ maxWaitMs: 5000 });
+
+        const cleanedContent = stripToolCallStatusMessages(
+          typewriter.getDisplayedText(),
+        );
+        dispatch(
+          updateMessageContent({
+            messageId: latestAssistantMessage.id,
+            content: cleanedContent,
+          })
+        );
+
         typewriter.stop();
       }
 
