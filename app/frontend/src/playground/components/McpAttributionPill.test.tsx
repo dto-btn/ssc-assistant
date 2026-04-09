@@ -55,8 +55,8 @@ describe("McpAttributionPill", () => {
     await user.click(screen.getByText("Tool: geds-server +1"));
 
     expect(screen.getByText("MCP attribution")).toBeInTheDocument();
-    expect(screen.getByText("geds-server (https://example.com/geds)")).toBeInTheDocument();
-    expect(screen.getByText("pmcoe-server (https://example.com/pmcoe)")).toBeInTheDocument();
+    expect(screen.getByText("geds-server")).toBeInTheDocument();
+    expect(screen.getByText("pmcoe-server")).toBeInTheDocument();
     expect(screen.getByText("Category: geds")).toBeInTheDocument();
     expect(screen.getByText("Status: done - Completed")).toBeInTheDocument();
   });

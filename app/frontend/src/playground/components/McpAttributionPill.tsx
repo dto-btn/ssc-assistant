@@ -118,7 +118,6 @@ const McpAttributionPill: React.FC<McpAttributionPillProps> = ({ attribution, me
                 sx={{ overflowWrap: "anywhere" }}
               >
                 {server.serverLabel}
-                {server.serverUrl ? ` (${server.serverUrl})` : ""}
               </Typography>
             ))}
           </Stack>
