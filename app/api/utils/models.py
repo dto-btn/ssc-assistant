@@ -164,6 +164,14 @@ class PlaygroundRenameSessionResponse:
 
 
 @dataclass
+class PlaygroundDeleteSessionsResponse:
+    """Detailed result for bulk deletion of playground sessions."""
+    deletedCount: int
+    failed: List[str] = field(default_factory=list)
+    message: Optional[str] = None
+
+
+@dataclass
 class PlaygroundExtractTextRequest:
     """Payload requesting either a text extraction or raw data-url response."""
     fileUrl: Optional[str] = None

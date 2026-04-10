@@ -124,6 +124,10 @@ const chatSlice = createSlice({
         (message) => message.sessionId !== action.payload
       );
     },
+    clearAllMessages: (state) => {
+      state.messages = [];
+      state.orchestratorInsightsBySessionId = {};
+    },
     updateMessageContent: (state, action: PayloadAction<{ messageId: string; content: string }>) => {
       const { messageId, content } = action.payload;
       const message = state.messages.find(msg => msg.id === messageId);
@@ -168,6 +172,7 @@ export const {
   addMessage,
   deleteMessage,
   clearSessionMessages,
+  clearAllMessages,
   updateMessageContent,
   setIsLoading,
   setOrchestratorInsights,

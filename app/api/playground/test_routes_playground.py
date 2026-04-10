@@ -164,6 +164,58 @@ def test_delete_session_marks_metadata(monkeypatch, api_headers, test_client):
     assert container.get_blob(other_session_blob.name).metadata["deleted"] == "false"
 
 
+def test_delete_all_sessions_marks_all_user_blobs_deleted(monkeypatch, api_headers, test_client):
+    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
+    user_blob_1 = FakeBlob(
+        "user-123/session-1.chat.json",
+        {
+            "sessionid": "session-1",
+            "originalname": "session-1.chat.json",
+            "uploadedat": "2023-01-01T00:00:00Z",
+            "deleted": "false",
+            "category": "chat",
+        },
+        b"{}",
+        "application/json",
+    )
+    user_blob_2 = FakeBlob(
+        "user-123/session-2.chat.json",
+        {
+            "sessionid": "session-2",
+            "originalname": "session-2.chat.json",
+            "uploadedat": "2023-01-02T00:00:00Z",
+            "deleted": "false",
+            "category": "chat",
+        },
+        b"{}",
+        "application/json",
+    )
+    other_user_blob = FakeBlob(
+        "user-789/session-1.chat.json",
+        {
+            "sessionid": "session-1",
+            "originalname": "session-1.chat.json",
+            "uploadedat": "2023-01-01T00:00:00Z",
+            "deleted": "false",
+            "category": "chat",
+        },
+        b"{}",
+        "application/json",
+    )
+    for blob in (user_blob_1, user_blob_2, other_user_blob):
+        container.add_blob(blob)
+
+    _set_mock_clients(monkeypatch, container)
+
+    response = test_client.delete("/api/playground/sessions", headers=api_headers)
+
+    assert response.status_code == 200
+    assert response.get_json() == {"deletedCount": 2}
+    assert container.get_blob(user_blob_1.name).metadata["deleted"] == routes_playground.DELETED_FLAG_VALUE
+    assert container.get_blob(user_blob_2.name).metadata["deleted"] == routes_playground.DELETED_FLAG_VALUE
+    assert container.get_blob(other_user_blob.name).metadata["deleted"] == "false"
+
+
 def test_delete_session_returns_zero_when_no_matches(monkeypatch, api_headers, test_client):
     container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
     _set_mock_clients(monkeypatch, container)

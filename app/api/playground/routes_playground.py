@@ -20,6 +20,7 @@ from utils.models import (
     PlaygroundUploadResponse,
     PlaygroundRenameSessionRequest,
     PlaygroundRenameSessionResponse,
+    PlaygroundDeleteSessionsResponse,
     PlaygroundExtractTextRequest,
     PlaygroundExtractTextResponse,
 )
@@ -684,6 +685,72 @@ def delete_session(session_id: str):
         }, 207
 
     return {"deletedCount": deleted_count}
+
+
+@api_playground.delete("/sessions")
+@api_playground.doc(
+    summary="Soft delete all playground sessions",
+    description="Marks all blobs associated with the caller as deleted.",
+    security="ApiKeyAuth",
+)
+@api_playground.output(PlaygroundDeleteSessionsResponse.Schema)  # type: ignore[attr-defined]
+@auth.login_required(role="chat")
+@user_ad.login_required
+def delete_all_sessions():
+    """Mark all files for the caller as deleted in blob metadata."""
+    try:
+        oid = _get_authenticated_oid()
+    except PlaygroundAPIError as exc:
+        logger.info("Delete-all-sessions request blocked: %s", exc)
+        return {"message": _public_error_message(exc)}, exc.status_code
+
+    try:
+        container_client = _get_container_client()
+    except AzureError:
+        logger.exception("Failed to access blob service for oid %s", oid)
+        return {"message": "Delete failed"}, 500
+
+    timestamp = datetime.utcnow().isoformat() + "Z"
+    deleted_count = 0
+    failed: List[str] = []
+
+    try:
+        blobs_iterator = container_client.list_blobs(name_starts_with=f"{oid}/", include=["metadata"])
+    except ResourceNotFoundError:
+        return {"deletedCount": 0}
+    except AzureError:
+        logger.exception("Failed to enumerate blobs for delete all", extra={"oid": oid})
+        return {"message": "Delete failed"}, 500
+
+    for blob in blobs_iterator:
+        metadata = getattr(blob, "metadata", {}) or {}
+        if _is_marked_deleted(metadata):
+            continue
+        metadata = {str(k).lower(): str(v) for k, v in metadata.items() if v is not None}
+        metadata["deleted"] = DELETED_FLAG_VALUE
+        metadata["deletedat"] = timestamp
+        metadata["lastupdated"] = timestamp
+
+        blob_client = container_client.get_blob_client(blob.name)
+        try:
+            blob_client.set_blob_metadata(metadata)
+            deleted_count += 1
+        except AzureError:
+            failed.append(blob.name)
+            logger.exception(
+                "Failed to mark blob deleted during bulk operation",
+                extra={"oid": oid, "blob_name": blob.name},
+            )
+
+    if failed:
+        return {
+            "message": "Bulk delete completed with errors",
+            "deletedCount": deleted_count,
+            "failed": failed,
+        }, 207
+
+    return {"deletedCount": deleted_count}
+
 
 # POST /api/playground/extract-file-text: Accepts fileUrl and fileType, returns extracted text
 @api_playground.post("/extract-file-text")

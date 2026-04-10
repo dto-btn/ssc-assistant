@@ -47,6 +47,9 @@ const sessionFilesSlice = createSlice({
       // Drop the session cache entirely when the session disappears locally.
       delete state.bySessionId[action.payload];
     },
+    clearAllSessionFiles: (state) => {
+      state.bySessionId = {};
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(removeSession, (state, action) => {
@@ -55,5 +58,10 @@ const sessionFilesSlice = createSlice({
   },
 });
 
-export const { setSessionFiles, upsertSessionFile, removeSessionFiles } = sessionFilesSlice.actions;
+export const {
+  setSessionFiles,
+  upsertSessionFile,
+  removeSessionFiles,
+  clearAllSessionFiles,
+} = sessionFilesSlice.actions;
 export default sessionFilesSlice.reducer;

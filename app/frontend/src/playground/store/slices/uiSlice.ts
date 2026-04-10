@@ -15,11 +15,14 @@ interface UiState {
   isSidebarCollapsed: boolean;
   /** Tracks temporary mobile drawer visibility for the current page session. */
   isMobileSidebarOpen: boolean;
+  /** True strictly while a bulk session deletion is in-flight via the API. */
+  isDeletingAllChats: boolean;
 }
 
 const initialState: UiState = {
   isSidebarCollapsed: false,
   isMobileSidebarOpen: false,
+  isDeletingAllChats: false,
 };
 
 const uiSlice = createSlice({
@@ -43,6 +46,9 @@ const uiSlice = createSlice({
     setMobileSidebarOpen: (state, action: PayloadAction<boolean>) => {
       state.isMobileSidebarOpen = action.payload;
     },
+    setIsDeletingAllChats: (state, action: PayloadAction<boolean>) => {
+      state.isDeletingAllChats = action.payload;
+    },
   },
 });
 
@@ -52,6 +58,7 @@ export const {
   openMobileSidebar,
   closeMobileSidebar,
   setMobileSidebarOpen,
+  setIsDeletingAllChats,
 } = uiSlice.actions;
 
 export default uiSlice.reducer;

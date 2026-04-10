@@ -7,30 +7,34 @@ import {
   Button,
   Typography,
   Box,
+  CircularProgress,
+  LinearProgress,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { deleteAllSessions } from "../../store/thunks/sessionManagementThunks";
 
 interface SettingsModalProps {
   open: boolean;
   onClose: () => void;
-  onDeleteAllChats: () => void;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
   open,
   onClose,
-  onDeleteAllChats,
 }) => {
   const { t } = useTranslation("playground");
+  const dispatch = useAppDispatch();
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const isDeletingAllChats = useAppSelector((state) => state.ui.isDeletingAllChats);
 
   const handleDeleteClick = () => {
     setIsConfirmDeleteOpen(true);
   };
 
   const handleConfirmDelete = () => {
-    onDeleteAllChats();
+    dispatch(deleteAllSessions());
     setIsConfirmDeleteOpen(false);
   };
 
@@ -40,8 +44,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
   return (
     <>
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <Dialog
+        open={open}
+        onClose={isDeletingAllChats ? undefined : onClose}
+        fullWidth
+        maxWidth="sm"
+        aria-busy={isDeletingAllChats}
+      >
         <DialogTitle>{t("profile.settings")}</DialogTitle>
+        {isDeletingAllChats && <LinearProgress color="error" />}
         <DialogContent dividers>
           <Box sx={{ mb: 2 }}>
             <Typography variant="subtitle1" gutterBottom fontWeight="bold">
@@ -59,6 +70,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
+                opacity: isDeletingAllChats ? 0.7 : 1,
               }}
             >
               <Box>
@@ -72,8 +84,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               <Button
                 variant="outlined"
                 color="error"
-                startIcon={<DeleteSweepIcon />}
+                startIcon={
+                  isDeletingAllChats ? (
+                    <CircularProgress size={20} color="error" />
+                  ) : (
+                    <DeleteSweepIcon />
+                  )
+                }
                 onClick={handleDeleteClick}
+                disabled={isDeletingAllChats}
+                aria-label={t("settings.deleteChats.button")}
               >
                 {t("settings.deleteChats.button")}
               </Button>
@@ -81,18 +101,23 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={onClose} color="inherit">
+          <Button
+            onClick={onClose}
+            color="inherit"
+            disabled={isDeletingAllChats}
+          >
             {t("close")}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog
-        open={isConfirmDeleteOpen}
+        open={isConfirmDeleteOpen && !isDeletingAllChats}
         onClose={handleCancelDelete}
         maxWidth="xs"
+        aria-labelledby="confirm-delete-title"
       >
-        <DialogTitle>
+        <DialogTitle id="confirm-delete-title">
           {t("settings.deleteChats.confirm.title")}
         </DialogTitle>
         <DialogContent>

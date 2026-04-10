@@ -69,14 +69,13 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
     setIsSettingsOpen(false);
   };
 
-  const handleDeleteAllChats = () => {
-    // Placeholder - will be linked to Redux thunk later
-    console.log("Delete all chats clicked");
-    handleSettingsClose();
-  };
-  
   return (
-    <><Button
+    <>
+      <SettingsModal
+        open={isSettingsOpen}
+        onClose={handleSettingsClose}
+      />
+      <Button
         id="profile-menu-button"
         sx={{
           cursor: "pointer",
@@ -150,11 +149,6 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
           </>
         )}
       </Menu>
-      <SettingsModal
-        open={isSettingsOpen}
-        onClose={handleSettingsClose}
-        onDeleteAllChats={handleDeleteAllChats}
-      />
     </>
   )
 }
