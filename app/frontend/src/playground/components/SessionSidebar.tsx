@@ -34,8 +34,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import CloseIcon from "@mui/icons-material/Close";
 import type { Session } from "../store/slices/sessionSlice";
 import { useTranslation } from 'react-i18next';
 import { LEFT_MENU_EXPANDED_WIDTH } from "../constants";
@@ -225,27 +223,15 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
           px: 1,
           py: 1,
+          height: 60,
+          boxSizing: 'border-box'
         }}
       >
-        <Typography component="h2" id={sidebarTitleId} variant="subtitle2" sx={{ px: 1 }}>
+        <Typography component="h2" id={sidebarTitleId} variant="subtitle2" sx={{ px: 1, fontWeight: 'bold' }}>
           {t("chats")}
         </Typography>
-        <IconButton
-          onClick={handleSidebarToggle}
-          aria-controls="playground-session-sidebar"
-          aria-expanded={isMobile ? isMobileSidebarOpen : !isSidebarCollapsed}
-          aria-label={isMobile ? t("sidebar.close") : t("sidebar.collapse")}
-          title={isMobile ? t("sidebar.close") : t("sidebar.collapse")}
-        >
-          {isMobile ? (
-            <CloseIcon />
-          ) : (
-            <ChevronLeftIcon />
-          )}
-        </IconButton>
       </Box>
 
       <List id="playground-session-sidebar" aria-labelledby={sidebarTitleId}>

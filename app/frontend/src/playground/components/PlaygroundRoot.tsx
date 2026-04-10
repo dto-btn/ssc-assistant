@@ -13,14 +13,13 @@ import FeedbackForm from "./FeedbackForm";
 import { useAuth } from "../store/hooks/useAuth";
 import { apiUse } from "../../authConfig";
 import isFeatureEnabled from "../FeatureGate";
-import { DevBanner } from "./DevBanner";
 import SessionBootstrapper from "./SessionBootstrapper";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { loadServers } from "../store/slices/toolSlice";
 import {
   closeMobileSidebar,
   openMobileSidebar,
-  setSidebarCollapsed,
+  toggleSidebarCollapsed,
 } from "../store/slices/uiSlice";
 
 /**
@@ -53,22 +52,21 @@ const PlaygroundRoot: React.FC = () => {
   }, [dispatch, isMobile, isMobileSidebarOpen]);
 
   return (
-    <>
+    <Box display="flex" height="100vh">
       <SessionBootstrapper />
-      <Box display="flex" height="100vh">
-        <SessionSidebar isMobile={isMobile} />
-        <ChatArea
-          showSidebarToggle={isMobile || isSidebarCollapsed}
-          isSidebarOpen={isMobile ? isMobileSidebarOpen : !isSidebarCollapsed}
-          onOpenSidebar={() =>
-            // On desktop, the same control re-expands a fully hidden sidebar.
-            dispatch(isMobile ? openMobileSidebar() : setSidebarCollapsed(false))
+      <SessionSidebar isMobile={isMobile} />
+      <ChatArea
+        isSidebarOpen={isMobile ? isMobileSidebarOpen : !isSidebarCollapsed}
+        onOpenSidebar={() => {
+          if (isMobile) {
+            dispatch(isMobileSidebarOpen ? closeMobileSidebar() : openMobileSidebar());
+          } else {
+            dispatch(toggleSidebarCollapsed());
           }
-        />
-      </Box>
+        }}
+      />
       {isFeatureEnabled("FeedbackForm") && <FeedbackForm />}
-      <DevBanner />
-    </>
+    </Box>
   );
 };
 

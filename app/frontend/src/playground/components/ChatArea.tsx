@@ -30,20 +30,18 @@ import { pickLatestArchive } from "../utils/archives";
 import { applyRemoteSessionDeletion } from "../store/thunks/sessionManagementThunks";
 import OrchestratorDebugPanel from "./OrchestratorDebugPanel";
 import AgentActivityPanel from "./AgentActivityPanel";
-import MenuIcon from "@mui/icons-material/Menu";
-import { IconButton, Tooltip } from "@mui/material";
+import TopBar from "./TopBar";
+
 
 /**
  * Optional controls passed from layout so ChatArea can reopen a hidden sidebar.
  */
 interface ChatAreaProps {
-  showSidebarToggle?: boolean;
   onOpenSidebar?: () => void;
   isSidebarOpen?: boolean;
 }
 
 const ChatArea: React.FC<ChatAreaProps> = ({
-  showSidebarToggle = false,
   onOpenSidebar,
   isSidebarOpen,
 }) => {
@@ -81,32 +79,18 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const citations = lastAssistantMessage?.citations ?? [];
 
   /**
-   * Renders a single shared opener for both mobile drawer mode and
-   * desktop hidden-sidebar mode.
+   * Renders the brand TopBar with sidebar toggle.
    */
-  const renderSidebarToggle = () => {
-    if (!showSidebarToggle || !onOpenSidebar) {
-      return null;
-    }
-
+  const renderHeader = () => {
     return (
-      <Tooltip title={t("sidebar.open")}>
-        <IconButton
-          id="playground-open-sidebar-button"
-          onClick={onOpenSidebar}
-          aria-controls="playground-session-sidebar"
-          aria-expanded={typeof isSidebarOpen === "boolean" ? isSidebarOpen : undefined}
-          aria-label={t("sidebar.open")}
-          sx={{
-            position: "fixed",
-            top: 8,
-            left: 8,
-            zIndex: (theme) => theme.zIndex.appBar + 1,
-          }}
-        >
-          <MenuIcon />
-        </IconButton>
-      </Tooltip>
+      <Box display="flex" alignItems="center" width="100%">
+        <Box flexGrow={1}>
+          <TopBar 
+            onToggleSidebar={onOpenSidebar} 
+            isSidebarOpen={isSidebarOpen}
+          />
+        </Box>
+      </Box>
     );
   };
 
@@ -276,8 +260,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
   if (!currentSessionId) {
     return (
-      <Box flex={1} display="flex" flexDirection="column">
-        {renderSidebarToggle()}
+      <Box flex={1} display="flex" flexDirection="column" height="100vh">
+        {renderHeader()}
         <Box flex={1} display="flex" alignItems="center" justifyContent="center">
           {t("select.or.create.session")}
         </Box>
@@ -291,20 +275,20 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         flex={1}
         display="flex"
         flexDirection="column"
-        alignItems="center"
-        justifyContent="center"
-        p={6}
+        height="100vh"
       >
-        {renderSidebarToggle()}
-        <Typography variant="h3" gutterBottom>
-          {t("how.can.i.help")}
-        </Typography>
-        <Suggestions
-          onSuggestionClicked={handleSuggestion}
-          disabled={isLoading}
-        />
-        <AgentActivityPanel sessionId={currentSessionId} />
-        <OrchestratorDebugPanel sessionId={currentSessionId} />
+        {renderHeader()}
+        <Box flex={1} display="flex" flexDirection="column" alignItems="center" justifyContent="center" p={6}>
+          <Typography variant="h3" gutterBottom>
+            {t("how.can.i.help")}
+          </Typography>
+          <Suggestions
+            onSuggestionClicked={handleSuggestion}
+            disabled={isLoading}
+          />
+          <AgentActivityPanel sessionId={currentSessionId} />
+          <OrchestratorDebugPanel sessionId={currentSessionId} />
+        </Box>
         <ChatInput sessionId={currentSessionId} />
       </Box>
     );
@@ -312,7 +296,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
   return (
     <Box flex={1} display="flex" flexDirection="column" height="100vh">
-      {renderSidebarToggle()}
+      {renderHeader()}
       <ChatMessages sessionId={currentSessionId} />
       <Citations citations={citations as Citation[]} />
       <AgentActivityPanel sessionId={currentSessionId} />
