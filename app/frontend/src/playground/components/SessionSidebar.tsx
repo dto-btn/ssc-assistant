@@ -217,8 +217,9 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         flexDirection: "column",
         height: "100vh",
         overflowX: "hidden",
-        borderRight: "1px solid #ddd",
-        bgcolor: "#ededf3",
+        borderRight: "1px solid",
+        borderColor: "divider",
+        bgcolor: "background.default",
       }}
     >
       <Box
@@ -274,13 +275,13 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
               flexDirection: "row",
               p: "2px 0px",
               backgroundColor:
-                session.id === currentSessionId ? "lightgray" : "transparent",
+                session.id === currentSessionId ? "action.selected" : "transparent",
               "&:hover": {
-                backgroundColor: "lightgray",
+                backgroundColor: "action.hover",
               },
               transition: "none",
               "& .more-button": {
-                opacity: 0,
+                opacity: isMobile ? 1 : 0.55,
                 transition: "opacity 0.15s ease-in-out",
               },
               "&:hover .more-button, &:focus-within .more-button": {
@@ -302,7 +303,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
                   dispatch(closeMobileSidebar());
                 }
               }}
-              aria-current={session.id === currentSessionId ? "true" : undefined}
+              aria-current={session.id === currentSessionId ? "page" : undefined}
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%", minWidth: 0 }}>
                 <Typography
@@ -323,16 +324,13 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
               aria-controls={moreMenuOpen ? "session-menu" : undefined}
               aria-expanded={moreMenuOpen && selectedSessionId === session.id ? "true" : undefined}
               aria-haspopup="true"
-              sx={{ mr: "10px", "&:hover": { backgroundColor: "transparent", color: "black" } }}
+              sx={{ mr: "10px", color: "text.secondary", "&:hover": { backgroundColor: "transparent", color: "text.primary" } }}
             >
               <Tooltip
                 title={t('options')}
                 placement="top"
                 slotProps={{
                   popper: {
-                    sx: {
-                      "& .MuiTooltip-tooltip": { backgroundColor: "black", color: "white" },
-                    },
                     modifiers: [{ name: "offset", options: { offset: [0, 5] } }],
                   },
                 }}

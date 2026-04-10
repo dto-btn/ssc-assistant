@@ -33,6 +33,10 @@ const McpAttributionPill: React.FC<McpAttributionPillProps> = ({ attribution, me
   const serverNames = attribution.servers.map((server) => server.serverLabel).filter(Boolean);
   const primaryServer = serverNames[0] || t("mcp.attribution.unknown");
   const additionalCount = Math.max(serverNames.length - 1, 0);
+  const descriptionKey =
+    serverNames.length === 1
+      ? "mcp.attribution.description.single"
+      : "mcp.attribution.description.multiple";
   // Keep the chip label short; full details are available in the popover.
   const summaryLabel = t("mcp.attribution.summary", {
     primaryServer,
@@ -116,7 +120,7 @@ const McpAttributionPill: React.FC<McpAttributionPillProps> = ({ attribution, me
             {t("mcp.attribution.title")}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {t("mcp.attribution.description", { count: serverNames.length || 1 })}
+            {t(descriptionKey)}
           </Typography>
           <Divider />
           <Stack spacing={0.75}>

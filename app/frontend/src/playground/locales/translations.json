@@ -147,6 +147,10 @@
         "en": "Assistant is thinking...",
         "fr": "L'assistant réfléchit..."
     },
+    "assistant.streaming": {
+        "en": "Assistant is responding.",
+        "fr": "L'assistant répond."
+    },
     "errors.deleteFailed": {
         "en": "Could not delete the chat. Please try again.",
         "fr": "Impossible de supprimer la conversation. Veuillez réessayer."
@@ -199,9 +203,13 @@
         "en": "MCP attribution",
         "fr": "Attribution MCP"
     },
-    "mcp.attribution.description": {
+    "mcp.attribution.description.single": {
         "en": "This response used the following MCP server.",
         "fr": "Cette reponse a utilise le serveur MCP suivant."
+    },
+    "mcp.attribution.description.multiple": {
+        "en": "This response used the following MCP servers.",
+        "fr": "Cette reponse a utilise les serveurs MCP suivants."
     },
     "mcp.attribution.category": {
         "en": "Category: {{category}}",
