@@ -50,18 +50,43 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         fullWidth
         maxWidth="sm"
         aria-busy={isDeletingAllChats}
+        aria-labelledby="settings-dialog-title"
+        aria-describedby="settings-dialog-description"
       >
-        <DialogTitle>{t("profile.settings")}</DialogTitle>
-        {isDeletingAllChats && <LinearProgress color="error" />}
-        <DialogContent dividers>
+        <DialogTitle id="settings-dialog-title">{t("profile.settings")}</DialogTitle>
+        {isDeletingAllChats && (
+          <Box sx={{ width: "100%" }}>
+            <LinearProgress color="error" />
+            <Box
+              component="span"
+              sx={{
+                border: 0,
+                clip: "rect(0 0 0 0)",
+                height: "1px",
+                margin: -1,
+                overflow: "hidden",
+                padding: 0,
+                position: "absolute",
+                whiteSpace: "nowrap",
+                width: "1px",
+              }}
+              aria-live="assertive"
+            >
+              {t("settings.deleteChats.deletingIndicator")}
+            </Box>
+          </Box>
+        )}
+        <DialogContent dividers id="settings-dialog-description">
           <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+            <Typography variant="subtitle1" gutterBottom fontWeight="bold" component="h2">
               {t("settings.dangerZone.title")}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               {t("settings.dangerZone.description")}
             </Typography>
             <Box
+              role="region"
+              aria-labelledby="delete-chats-section-title"
               sx={{
                 p: 2,
                 border: "1px solid",
@@ -74,7 +99,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               }}
             >
               <Box>
-                <Typography variant="body1" fontWeight="medium">
+                <Typography id="delete-chats-section-title" variant="body1" fontWeight="medium">
                   {t("settings.deleteChats.title")}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -93,7 +118,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 }
                 onClick={handleDeleteClick}
                 disabled={isDeletingAllChats}
-                aria-label={t("settings.deleteChats.button")}
+                aria-label={
+                  isDeletingAllChats
+                    ? t("settings.deleteChats.deletingIndicator")
+                    : t("settings.deleteChats.button")
+                }
               >
                 {t("settings.deleteChats.button")}
               </Button>
@@ -116,12 +145,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         onClose={handleCancelDelete}
         maxWidth="xs"
         aria-labelledby="confirm-delete-title"
+        aria-describedby="confirm-delete-description"
       >
         <DialogTitle id="confirm-delete-title">
           {t("settings.deleteChats.confirm.title")}
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body1">
+          <Typography variant="body1" id="confirm-delete-description">
             {t("settings.deleteChats.confirm.message")}
           </Typography>
         </DialogContent>

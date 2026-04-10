@@ -82,17 +82,12 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
           width: 1
         }}
         onClick={handleOpen}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            handleOpen(event);
-          }
-        }}
         tabIndex={0}
         title={t("profile.icon.title")}
         aria-label={t("profile.icon.title")}
-        role="button"
         aria-haspopup="true"
-        aria-expanded={isOpen ? "true" : undefined}
+        aria-controls={isOpen ? "profile-menu" : undefined}
+        aria-expanded={isOpen ? "true" : "false"}
       >
           <UserProfilePicture size={size} fontSize={fontSize} />
           <Box //floats the avatar and name to left

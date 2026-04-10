@@ -235,6 +235,10 @@
         "en": "Are you sure you want to delete ALL chats? This action is permanent.",
         "fr": "Êtes-vous sûr de vouloir supprimer TOUTES les conversations ? Cette action est permanente."
     },
+    "settings.deleteChats.deletingIndicator": {
+        "en": "Deleting all chats, please wait...",
+        "fr": "Suppression de toutes les conversations, veuillez patienter..."
+    },
     "close": {
         "en": "Close",
         "fr": "Fermer"
