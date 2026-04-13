@@ -74,6 +74,11 @@ describe("Suggestions Integration", () => {
   let store: any;
   const sessionId = "test-session";
 
+  /**
+   * Setup for each integration test.
+   * Initializes a fresh Redux store with core state and mocks the `sendAssistantMessage`
+   * thunk to intercept and verify outgoing message requests to the AI orchestrator.
+   */
   beforeEach(() => {
     store = createTestStore({
       sessions: {
@@ -99,9 +104,17 @@ describe("Suggestions Integration", () => {
   });
 
   /**
-   * Verified mapping from UI interactions to Orchestration logic.
-   * Ensures clicking a card correctly identifies the session and sets 
-   * exactly the content the orchestrator expects for autonomous routing.
+   * End-to-End Test: UI Interaction to Redux Orchestration.
+   * 
+   * This test simulates a real user workflow:
+   * 1. Rendering the `ChatArea` container.
+   * 2. Finding a valid suggestion button.
+   * 3. Clicking it.
+   * 4. Verifies that `sendAssistantMessage` is dispatched with the correct
+   *    `sessionId` and `content`.
+   * 
+   * This confirms that the logic correctly maps human-readable UI cards to the
+   * precise prompt keys expected by the backend orchestrator's autonomous routing.
    */
   it("triggers the assistant with the correct prompt content when a suggestion is clicked", async () => {
     const user = userEvent.setup();

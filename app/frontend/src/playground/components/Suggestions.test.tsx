@@ -3,6 +3,14 @@ import userEvent from "@testing-library/user-event";
 import { vi, describe, it, expect } from "vitest";
 import Suggestions from "./Suggestions";
 
+/**
+ * Unit Tests for the Suggestions Component
+ * 
+ * This file contains isolated unit tests for the `Suggestions` UI component.
+ * It verifies that the component correctly renders the expected number of cards,
+ * displays translated content, handles disabled states, and triggers callbacks.
+ */
+
 // Mock react-i18next
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -11,6 +19,10 @@ vi.mock("react-i18next", () => ({
 }));
 
 describe("Suggestions Component", () => {
+  /**
+   * Verifies that exactly 6 suggestion cards are rendered.
+   * This ensures the layout meets the design requirement of showing a fixed set of options.
+   */
   it("renders 6 suggestion cards", () => {
     render(<Suggestions onSuggestionClicked={() => {}} />);
     
@@ -20,6 +32,10 @@ describe("Suggestions Component", () => {
     expect(buttons).toHaveLength(6);
   });
 
+  /**
+   * Verifies that clicking a suggestion card correctly invokes the `onSuggestionClicked` callback.
+   * This is critical for ensuring user interactions are bubbled up to the parent component.
+   */
   it("calls onSuggestionClicked with the translated title when a card is clicked", async () => {
     const onSuggestionClicked = vi.fn();
     const user = userEvent.setup();
@@ -36,6 +52,10 @@ describe("Suggestions Component", () => {
     expect(onSuggestionClicked).toHaveBeenCalledWith(expect.any(String));
   });
 
+  /**
+   * Verifies that all buttons are disabled when the `disabled` prop is passed.
+   * This prevents users from triggering actions during loading or error states.
+   */
   it("disables all cards when the disabled prop is true", () => {
     render(<Suggestions onSuggestionClicked={() => {}} disabled={true} />);
     
@@ -45,6 +65,10 @@ describe("Suggestions Component", () => {
     });
   });
 
+  /**
+   * Ensures every suggestion card has an `aria-label`.
+   * This is a fundamental check for ensuring the component is accessible to screen readers.
+   */
   it("has correct accessibility attributes", () => {
     render(<Suggestions onSuggestionClicked={() => {}} />);
     
@@ -55,6 +79,10 @@ describe("Suggestions Component", () => {
     });
   });
 
+  /**
+   * Verifies that the UI correctly groups suggestions into categories.
+   * Confirms that category labels (translated keys) are visible to the user.
+   */
   it("renders distinct categories for suggestions", () => {
     render(<Suggestions onSuggestionClicked={() => {}} />);
     
