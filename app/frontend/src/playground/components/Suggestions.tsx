@@ -78,14 +78,14 @@ const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
     ...Array.from({ length: 16 }, (_, i) => ({
       titleKey: `suggestions.pmcoe.q${i + 1}`,
       tool: "pmcoe",
-      icon: <TopicIcon sx={{ color: "#da920d" }} />,
+      icon: <TopicIcon sx={{ color: "#a66d00" }} />,
       category: "pmcoe" as const,
-      color: "#da920d", // Gold
+      color: "#a66d00", // Darker Gold (PMCOE)
     })),
   ], []);
 
   const shuffledSuggestions = useMemo(() => {
-    const categories = ["geds", "general", "corporate", "br", "pmcoe"];
+    const categories: ("geds" | "general" | "corporate" | "br" | "pmcoe")[] = ["geds", "general", "corporate", "br", "pmcoe"];
     const selection: SuggestionCard[] = [];
     const pool = [...allSuggestions];
 
@@ -112,7 +112,10 @@ const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
   }, [allSuggestions]);
 
   return (
-    <Box sx={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, mb: 10 }}>
+    <Box 
+      sx={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, mb: 10 }}
+      aria-label={t("suggestions.aria_label", { defaultValue: "Suggested prompts" })}
+    >
       <Grid container spacing={2} justifyContent="center" sx={{ maxWidth: "1000px" }}>
         {shuffledSuggestions.map((card, index) => (
           <Grid item xs={12} sm={6} md={4} key={index}>
@@ -131,7 +134,14 @@ const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
               <CardActionArea
                 onClick={() => onSuggestionClicked(t(card.titleKey))}
                 disabled={disabled}
-                sx={{ height: "100%" }}
+                sx={{ 
+                  height: "100%",
+                  "&:focus-visible": {
+                    outline: `2px solid ${card.color}`,
+                    outlineOffset: "-2px",
+                  }
+                }}
+                aria-label={t(card.titleKey)}
               >
                 <CardContent
                   sx={{
