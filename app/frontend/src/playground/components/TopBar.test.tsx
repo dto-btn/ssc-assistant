@@ -3,21 +3,22 @@ import { configureStore } from "@reduxjs/toolkit";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { useTranslation } from "react-i18next";
 
 import TopBar from "./TopBar";
 import uiReducer from "../store/slices/uiSlice";
 
 const mockChangeLanguage = vi.fn();
 
-vi.mock("react-i18next", async () => {
+vi.mock("react-i18next", () => {
   return {
-    useTranslation: () => ({
+    useTranslation: vi.fn(() => ({
       t: (key: string) => (key === "title" ? "SSC Assistant" : key),
       i18n: {
         language: 'en',
         changeLanguage: mockChangeLanguage,
       }
-    }),
+    })),
   };
 });
 
@@ -53,7 +54,7 @@ describe("TopBar", () => {
   it("renders branding and title", () => {
     renderTopBar(true);
     expect(screen.getByText("SSC Assistant")).toBeInTheDocument();
-    expect(screen.getByAltText("SSC Logo")).toBeInTheDocument();
+    expect(screen.getByAltText("logo.alt")).toBeInTheDocument();
     expect(screen.getByTestId("dev-banner")).toBeInTheDocument();
   });
 
@@ -105,5 +106,21 @@ describe("TopBar", () => {
     
     await user.click(langButton);
     expect(mockChangeLanguage).toHaveBeenCalledWith("fr");
+  });
+
+  it("should have correct aria-label for language toggle when language is fr", async () => {
+    mockChangeLanguage.mockReset();
+    vi.mocked(useTranslation).mockReturnValue({
+      t: (key: string) => (key === "title" ? "SSC Assistant" : key),
+      i18n: {
+        language: 'fr',
+        changeLanguage: mockChangeLanguage,
+      }
+    } as any);
+
+    renderTopBar(true);
+    const langButton = screen.getByRole("button", { name: /switch to english/i });
+    expect(langButton).toBeInTheDocument();
+    expect(langButton).toHaveTextContent("FR");
   });
 });
