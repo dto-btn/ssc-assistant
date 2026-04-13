@@ -36,49 +36,49 @@ const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
     {
       titleKey: "suggestions.general.contact",
       tool: "geds",
-      icon: <PersonIcon sx={{ color: "#00695c" }} />,
+      icon: <PersonIcon aria-hidden="true" sx={{ color: "#00695c" }} />,
       category: "geds",
       color: "#00695c", // Deep Teal (GEDS)
     },
     {
       titleKey: "suggestions.general.email",
       tool: "corporate",
-      icon: <EmailIcon sx={{ color: "#5c6bc0" }} />,
+      icon: <EmailIcon aria-hidden="true" sx={{ color: "#5c6bc0" }} />,
       category: "general",
       color: "#5c6bc0", // Indigo (General)
     },
     {
       titleKey: "suggestions.general.hire",
       tool: "corporate",
-      icon: <HelpOutlineIcon sx={{ color: "#1565c0" }} />,
+      icon: <HelpOutlineIcon aria-hidden="true" sx={{ color: "#1565c0" }} />,
       category: "corporate",
       color: "#1565c0", // Strong Blue (Corporate)
     },
     {
       titleKey: "suggestions.business.find",
       tool: "bits",
-      icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
+      icon: <ReceiptLongIcon aria-hidden="true" sx={{ color: "#8e24aa" }} />,
       category: "br",
       color: "#8e24aa", // Purple
     },
     {
       titleKey: "suggestions.business.pspc",
       tool: "bits",
-      icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
+      icon: <ReceiptLongIcon aria-hidden="true" sx={{ color: "#8e24aa" }} />,
       category: "br",
       color: "#8e24aa", // Purple
     },
     {
       titleKey: "suggestions.business.piechart",
       tool: "bits",
-      icon: <ReceiptLongIcon sx={{ color: "#8e24aa" }} />,
+      icon: <ReceiptLongIcon aria-hidden="true" sx={{ color: "#8e24aa" }} />,
       category: "br",
       color: "#8e24aa", // Purple
     },
     ...Array.from({ length: 16 }, (_, i) => ({
       titleKey: `suggestions.pmcoe.q${i + 1}`,
       tool: "pmcoe",
-      icon: <TopicIcon sx={{ color: "#a66d00" }} />,
+      icon: <TopicIcon aria-hidden="true" sx={{ color: "#a66d00" }} />,
       category: "pmcoe" as const,
       color: "#a66d00", // Darker Gold (PMCOE)
     })),
@@ -122,7 +122,7 @@ const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
             <Card
               elevation={1}
               sx={{
-                height: "160px",
+                minHeight: "160px",
                 borderLeft: `5px solid ${card.color}`,
                 transition: "transform 0.2s, box-shadow 0.2s",
                 "&:hover": {
@@ -177,7 +177,7 @@ const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
                         backgroundColor: `${card.color}15`,
                         color: card.color,
                         fontWeight: "bold",
-                        fontSize: "0.65rem",
+                        fontSize: "0.75rem",
                         textTransform: "uppercase",
                         letterSpacing: "0.05em",
                       }}
