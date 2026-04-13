@@ -45,7 +45,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   return (
     <>
       <Dialog
-        open={open}
+        open={open && !isConfirmDeleteOpen}
         onClose={isDeletingAllChats ? undefined : onClose}
         fullWidth
         maxWidth="sm"
@@ -85,7 +85,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               {t("settings.dangerZone.description")}
             </Typography>
             <Box
-              role="region"
+              role="group"
               aria-labelledby="delete-chats-section-title"
               sx={{
                 p: 2,
@@ -93,14 +93,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 borderColor: "error.light",
                 borderRadius: 1,
                 display: "flex",
-                flexDirection: { xs: "column", sm: "row" },
-                alignItems: { xs: "stretch", sm: "center" },
+                flexDirection: { xs: "column", md: "row" },
+                alignItems: { xs: "stretch", md: "center" },
                 justifyContent: "space-between",
                 gap: 2,
                 opacity: isDeletingAllChats ? 0.7 : 1,
               }}
             >
-              <Box>
+              <Box sx={{ flex: 1 }}>
                 <Typography id="delete-chats-section-title" variant="body1" fontWeight="medium">
                   {t("settings.deleteChats.title")}
                 </Typography>
@@ -111,7 +111,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               <Button
                 variant="outlined"
                 color="error"
-                sx={{ minWidth: { sm: "fit-content" } }}
+                sx={{ width: { xs: "100%", md: "auto" }, minWidth: { md: "fit-content" } }}
                 startIcon={
                   isDeletingAllChats ? (
                     <CircularProgress size={20} color="error" />
@@ -144,32 +144,45 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       </Dialog>
 
       <Dialog
-        open={isConfirmDeleteOpen && !isDeletingAllChats}
-        onClose={handleCancelDelete}
+        open={isConfirmDeleteOpen || isDeletingAllChats}
+        onClose={isDeletingAllChats ? undefined : handleCancelDelete}
         maxWidth="xs"
         aria-labelledby="confirm-delete-title"
         aria-describedby="confirm-delete-description"
       >
         <DialogTitle id="confirm-delete-title">
-          {t("settings.deleteChats.confirm.title")}
+          {isDeletingAllChats 
+            ? t("settings.deleteChats.deletingIndicator")
+            : t("settings.deleteChats.confirm.title")}
         </DialogTitle>
         <DialogContent>
           <Typography variant="body1" id="confirm-delete-description">
-            {t("settings.deleteChats.confirm.message")}
+            {isDeletingAllChats 
+              ? t("settings.deleteChats.deletingIndicator")
+              : t("settings.deleteChats.confirm.message")}
           </Typography>
+          {isDeletingAllChats && (
+             <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                <CircularProgress color="error" />
+             </Box>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelDelete} color="inherit">
-            {t("cancel")}
-          </Button>
-          <Button
-            onClick={handleConfirmDelete}
-            color="error"
-            variant="contained"
-            autoFocus
-          >
-            {t("delete")}
-          </Button>
+          {!isDeletingAllChats && (
+            <>
+              <Button onClick={handleCancelDelete} color="inherit">
+                {t("cancel")}
+              </Button>
+              <Button
+                onClick={handleConfirmDelete}
+                color="error"
+                variant="contained"
+                autoFocus
+              >
+                {t("delete")}
+              </Button>
+            </>
+          )}
         </DialogActions>
       </Dialog>
     </>

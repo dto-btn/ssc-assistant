@@ -166,14 +166,13 @@ export const deleteAllSessions = (): AppThunk<Promise<void>> => async (
   dispatch(setIsDeletingAllChats(true));
 
   try {
-    const { deletedCount, failed, message } = await deleteAllRemoteSessions({ accessToken });
+    const { failed, message } = await deleteAllRemoteSessions({ accessToken });
     
-    // Always clean up local state if anything was deleted, even if some failed.
+    // Always clean up local state to ensure UI reflects the destructive intent.
     // In a partial failure, the local state will be reconciled with what was successfully deleted.
-    // If deletedCount is high, it's better to clear local state than to leave it inconsistent.
-    if (deletedCount > 0) {
-      dispatch(cleanupAllSessionsLocally());
-    }
+    // Even if deletedCount is 0 (e.g., race conditions or eventual consistency),
+    // we clear local state to avoid stale chat lists.
+    dispatch(cleanupAllSessionsLocally());
 
     if (failed.length > 0) {
       dispatch(

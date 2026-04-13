@@ -252,6 +252,50 @@ def test_delete_all_sessions_returns_success_when_no_blobs(monkeypatch, api_head
     assert response.get_json() == {"deletedCount": 0, "failed": [], "message": "Success"}
 
 
+def test_delete_all_sessions_skips_already_deleted(monkeypatch, api_headers, test_client):
+    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
+    user_blob_1 = FakeBlob(
+        "user-123/session-1.chat.json",
+        {"sessionid": "session-1", "deleted": routes_playground.DELETED_FLAG_VALUE},
+    )
+    user_blob_2 = FakeBlob(
+        "user-123/session-2.chat.json",
+        {"sessionid": "session-2", "deleted": "false"},
+    )
+    container.add_blob(user_blob_1)
+    container.add_blob(user_blob_2)
+
+    _set_mock_clients(monkeypatch, container)
+
+    response = test_client.delete("/api/playground/sessions", headers=api_headers)
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["deletedCount"] == 1
+    assert data["failed"] == []
+    assert container.get_blob(user_blob_2.name).metadata["deleted"] == routes_playground.DELETED_FLAG_VALUE
+
+
+def test_delete_all_sessions_handles_large_blob_sets(monkeypatch, api_headers, test_client):
+    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
+    num_blobs = 50
+    for i in range(num_blobs):
+        blob = FakeBlob(
+            f"user-123/session-{i}.chat.json",
+            {"sessionid": f"session-{i}", "deleted": "false"},
+        )
+        container.add_blob(blob)
+
+    _set_mock_clients(monkeypatch, container)
+
+    response = test_client.delete("/api/playground/sessions", headers=api_headers)
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["deletedCount"] == num_blobs
+    assert len(data["failed"]) == 0
+
+
 def test_delete_session_returns_zero_when_no_matches(monkeypatch, api_headers, test_client):
     container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
     _set_mock_clients(monkeypatch, container)
