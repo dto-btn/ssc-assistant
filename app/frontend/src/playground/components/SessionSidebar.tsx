@@ -42,10 +42,7 @@ import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
 import SyncStatusIndicator from "./SyncStatusIndicator";
 import ProfileMenu from "./ProfileMenu/ProfileMenu";
 import { deleteSession as deleteSessionThunk, persistSessionRename } from "../store/thunks/sessionManagementThunks";
-import {
-  closeMobileSidebar,
-  toggleSidebarCollapsed,
-} from "../store/slices/uiSlice";
+import { closeMobileSidebar } from "../store/slices/uiSlice";
 
 /**
  * Sidebar for listing and managing Playground chat sessions.
