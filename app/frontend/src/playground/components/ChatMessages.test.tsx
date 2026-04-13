@@ -56,7 +56,7 @@ function renderMessages(sessionId: string, preloadedState: TestStoreState) {
 }
 
 describe("ChatMessages", () => {
-  it("shows waiting indicator and hides empty assistant placeholder", () => {
+  it("does not render helper status text while waiting for first token", () => {
     renderMessages("s1", {
       chat: {
         messages: [
@@ -79,11 +79,11 @@ describe("ChatMessages", () => {
       },
     });
 
-    expect(screen.getAllByText("Assistant is thinking...").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Assistant is thinking...")).not.toBeInTheDocument();
     expect(screen.queryByText("Assistant is responding.")).not.toBeInTheDocument();
   });
 
-  it("shows visible streaming status cue while streaming", () => {
+  it("does not render helper status text while streaming", () => {
     renderMessages("s1", {
       chat: {
         messages: [
@@ -106,7 +106,7 @@ describe("ChatMessages", () => {
       },
     });
 
-    expect(screen.getAllByText("Assistant is responding.").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Assistant is responding.")).not.toBeInTheDocument();
     expect(screen.getByText("Hello there")).toBeInTheDocument();
   });
 

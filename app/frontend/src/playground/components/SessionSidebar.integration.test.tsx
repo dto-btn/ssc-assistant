@@ -197,6 +197,7 @@ describe("SessionSidebar responsive behavior", () => {
       ui: {
         isSidebarCollapsed: false,
         isMobileSidebarOpen: true,
+        isDeletingAllChats: false,
       },
     });
 
