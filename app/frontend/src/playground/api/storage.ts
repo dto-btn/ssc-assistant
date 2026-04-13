@@ -4,7 +4,8 @@ const PLAYGROUND_API_BASE = "/api/playground";
 const UPLOAD_ENDPOINT = `${PLAYGROUND_API_BASE}/upload`;
 const FILES_FOR_SESSION_ENDPOINT = `${PLAYGROUND_API_BASE}/files-for-session`;
 const EXTRACT_FILE_TEXT_ENDPOINT = `${PLAYGROUND_API_BASE}/extract-file-text`;
-const sessionDeleteEndpoint = (sessionId: string) => `${PLAYGROUND_API_BASE}/sessions/${encodeURIComponent(sessionId)}`;
+const sessionsEndpoint = `${PLAYGROUND_API_BASE}/sessions`;
+const sessionDeleteEndpoint = (sessionId: string) => `${sessionsEndpoint}/${encodeURIComponent(sessionId)}`;
 const sessionRenameEndpoint = (sessionId: string) => `${sessionDeleteEndpoint(sessionId)}/rename`;
 
 type MetadataRecord = Record<string, string | number | boolean | null | undefined>;
@@ -283,6 +284,35 @@ export async function deleteRemoteSession({
     console.warn("Unexpected negative delete count received", { deleted });
   }
   return deleted;
+}
+
+/**
+ * Soft delete every blob tied to the user by calling the playground API.
+ */
+export async function deleteAllRemoteSessions({
+  accessToken,
+}: {
+  accessToken: string;
+}): Promise<{ deletedCount: number; failed: string[]; message?: string }> {
+  if (!accessToken?.trim()) throw new Error("accessToken is required");
+
+  const response = await fetch(sessionsEndpoint, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken.trim()}`,
+    },
+  });
+
+  if (response.status === 204) {
+    return { deletedCount: 0, failed: [] };
+  }
+
+  const data = await handleJsonResponse(response);
+  const deletedCount = typeof data?.deletedCount === "number" ? data.deletedCount : 0;
+  const failed = Array.isArray(data?.failed) ? data.failed : [];
+  const message = typeof data?.message === "string" ? data.message : undefined;
+
+  return { deletedCount, failed, message };
 }
 
 export async function renameRemoteSession({

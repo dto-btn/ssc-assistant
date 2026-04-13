@@ -67,6 +67,7 @@ describe("SessionSidebar responsive behavior", () => {
       ui: {
         isSidebarCollapsed: true,
         isMobileSidebarOpen: false,
+        isDeletingAllChats: false,
       },
     });
 
@@ -83,6 +84,7 @@ describe("SessionSidebar responsive behavior", () => {
       ui: {
         isSidebarCollapsed: false,
         isMobileSidebarOpen: false,
+        isDeletingAllChats: false,
       },
     });
 
@@ -119,6 +121,7 @@ describe("SessionSidebar responsive behavior", () => {
       ui: {
         isSidebarCollapsed: false,
         isMobileSidebarOpen: true,
+        isDeletingAllChats: false,
       },
     });
 
@@ -127,5 +130,43 @@ describe("SessionSidebar responsive behavior", () => {
     await waitFor(() => {
       expect(store.getState().ui.isMobileSidebarOpen).toBe(false);
     });
+  });
+
+  it("returns focus to opener when mobile drawer closes", async () => {
+    const user = userEvent.setup();
+
+    const opener = document.createElement("button");
+    opener.id = "playground-open-sidebar-button";
+    opener.textContent = "open";
+    document.body.appendChild(opener);
+
+    try {
+      renderSidebar(true, {
+        sessions: {
+          sessions: [
+            {
+              id: "s1",
+              name: "Session 1",
+              createdAt: 1,
+              isNewChat: false,
+            },
+          ],
+          currentSessionId: "s1",
+        },
+        ui: {
+          isSidebarCollapsed: false,
+          isMobileSidebarOpen: true,
+          isDeletingAllChats: false,
+        },
+      });
+
+      await user.click(screen.getByRole("button", { name: "sidebar.close" }));
+
+      await waitFor(() => {
+        expect(document.activeElement).toBe(opener);
+      });
+    } finally {
+      opener.remove();
+    }
   });
 });

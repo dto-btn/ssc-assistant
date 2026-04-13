@@ -16,6 +16,7 @@ import MenuDivider from "./MenuDivider";
 import LogoutIcon from "@mui/icons-material/Logout";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { PROFILE_MENU_WIDTH } from "../../constants";
+import SettingsModal from "./SettingsModal";
 
 
 /**
@@ -48,7 +49,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
   const { t } = useTranslation('playground');
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [isOpen, setIsOpen] = React.useState(false);
-  // const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
   const handleOpen = (
     event: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>
   ) => {
@@ -60,32 +61,33 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
     setIsOpen(false);
   };
   const handleSettingsOpen = () => {
-    // setIsSettingsOpen(true);
-    // handleClose(); // Close the profile menu when opening settings
+    setIsSettingsOpen(true);
+    handleClose(); // Close the profile menu when opening settings
   };
-  // const handleSettingsClose = () => {
-  //   setIsSettingsOpen(false);
-  // };
-  
+
+  const handleSettingsClose = () => {
+    setIsSettingsOpen(false);
+  };
+
   return (
-    <><Button
+    <>
+      <SettingsModal
+        open={isSettingsOpen}
+        onClose={handleSettingsClose}
+      />
+      <Button
         id="profile-menu-button"
         sx={{
           cursor: "pointer",
           width: 1
         }}
         onClick={handleOpen}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            handleOpen(event);
-          }
-        }}
         tabIndex={0}
         title={t("profile.icon.title")}
         aria-label={t("profile.icon.title")}
-        role="button"
         aria-haspopup="true"
-        aria-expanded={isOpen ? "true" : undefined}
+        aria-controls={isOpen ? "profile-menu" : undefined}
+        aria-expanded={isOpen ? "true" : "false"}
       >
           <UserProfilePicture size={size} fontSize={fontSize} />
           <Box //floats the avatar and name to left
