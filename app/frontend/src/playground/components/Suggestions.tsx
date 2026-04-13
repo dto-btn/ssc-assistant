@@ -113,17 +113,27 @@ const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
 
   return (
     <Box 
-      sx={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, mb: 10 }}
+      sx={{ 
+        width: "100%", 
+        display: "flex", 
+        flexDirection: "column", 
+        alignItems: "center", 
+        gap: { xs: 2, md: 3 }, 
+        mb: { xs: 6, md: 10 },
+        px: { xs: 2, sm: 3, md: 4 }
+      }}
       aria-label={t("suggestions.aria_label", { defaultValue: "Suggested prompts" })}
     >
-      <Grid container spacing={2} justifyContent="center" sx={{ maxWidth: "1000px" }}>
+      <Grid container spacing={{ xs: 1.5, sm: 2 }} justifyContent="center" sx={{ maxWidth: "1200px" }}>
         {shuffledSuggestions.map((card, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index}>
+          <Grid item xs={12} sm={6} md={4} key={index} sx={{ display: "flex" }}>
             <Card
               elevation={1}
               sx={{
-                minHeight: "160px",
-                borderLeft: `5px solid ${card.color}`,
+                width: "100%",
+                minHeight: { xs: "auto", sm: "160px" },
+                display: "flex",
+                flexDirection: "column",
                 transition: "transform 0.2s, box-shadow 0.2s",
                 "&:hover": {
                   transform: "translateY(-4px)",
