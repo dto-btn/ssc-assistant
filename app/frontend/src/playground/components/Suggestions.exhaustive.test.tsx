@@ -96,6 +96,11 @@ describe("Exhaustive Suggestions & Routing Test", () => {
   let store: any;
   const sessionId = "test-session";
 
+  /**
+   * Initializes the test environment before each test case.
+   * This includes creating a fresh Redux store and mocking the assistant thunk
+   * to capture and verify any dispatched API messages.
+   */
   beforeEach(() => {
     store = createTestStore({
       sessions: {
@@ -115,6 +120,10 @@ describe("Exhaustive Suggestions & Routing Test", () => {
     });
   });
 
+  /**
+   * Cleanup activity after each test case.
+   * Resets the DOM and clears all active Vitest mocks to prevent cross-test contamination.
+   */
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
@@ -136,8 +145,13 @@ describe("Exhaustive Suggestions & Routing Test", () => {
 
   /**
    * Verified orchestrator intent mapping.
-   * Looping through every possible suggestion ensures the backend 
-   * dispatcher receives the correct context for autonomous tool selection.
+   * 
+   * This dynamic test suite iterates through EVERY possible suggestion (22 total)
+   * across multiple categories to ensure thatclicking any given card results
+   * in the correct backend prompt key being dispatched.
+   * 
+   * This is critical because the backend orchestrator relies on these specific keys
+   * to perform autonomous tool selection (e.g., GEDS, PMCOE, BITS).
    */
   allSuggestions.forEach(({ key, expectedTool }) => {
     it(`simulates clicking "${key}" and verifies it sends correct content for "${expectedTool}" tool`, async () => {
