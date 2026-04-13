@@ -28,6 +28,7 @@ import { setSessionFiles } from "../store/slices/sessionFilesSlice";
 import { rehydrateSessionFromArchive } from "../store/thunks/sessionBootstrapThunks";
 import { pickLatestArchive } from "../utils/archives";
 import { applyRemoteSessionDeletion } from "../store/thunks/sessionManagementThunks";
+import { sendAssistantMessage } from "../store/thunks/assistantThunks";
 import OrchestratorDebugPanel from "./OrchestratorDebugPanel";
 import MenuIcon from "@mui/icons-material/Menu";
 import { IconButton, Tooltip } from "@mui/material";
@@ -145,9 +146,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
    */
   const handleSuggestion = (suggestion: string): void => {
     dispatch(
-      addMessage({
+      sendAssistantMessage({
         sessionId: currentSessionId!,
-        role: "user",
         content: suggestion,
       })
     );
