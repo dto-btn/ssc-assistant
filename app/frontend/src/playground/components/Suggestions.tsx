@@ -78,9 +78,9 @@ const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
     ...Array.from({ length: 16 }, (_, i) => ({
       titleKey: `suggestions.pmcoe.q${i + 1}`,
       tool: "pmcoe",
-      icon: <TopicIcon aria-hidden="true" sx={{ color: "#a66d00" }} />,
+      icon: <TopicIcon aria-hidden="true" sx={{ color: "#935d00" }} />,
       category: "pmcoe" as const,
-      color: "#a66d00", // Darker Gold (PMCOE)
+      color: "#935d00", // Darker Gold (PMCOE)
     })),
   ], []);
 
