@@ -3,6 +3,7 @@ import { AppBar, Toolbar, Typography, Box, useTheme, Tooltip, IconButton, Button
 import { useTranslation } from "react-i18next";
 import MenuIcon from "@mui/icons-material/Menu";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
+import CloseIcon from "@mui/icons-material/Close";
 import logo from "../../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { DevBanner } from "./DevBanner";
 import TopmenuMicrosofTeamsIcon from "./TopmenuMicrosofTeamsIcon.svg";
@@ -15,9 +16,11 @@ import TopmenuMicrosofTeamsIcon from "./TopmenuMicrosofTeamsIcon.svg";
 interface TopBarProps {
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
+  isMobile?: boolean;
+  isMobileSidebarOpen?: boolean;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen }) => {
+const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobile, isMobileSidebarOpen }) => {
   const { t, i18n } = useTranslation(["playground", "translations"]);
   const theme = useTheme();
 
@@ -57,16 +60,20 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen }) => {
             flexShrink: 0,
           }}
         >
-          <Tooltip title={isSidebarOpen ? t("sidebar.collapse", { ns: "playground" }) : t("sidebar.open", { ns: "playground" })}>
-            <IconButton
-              onClick={onToggleSidebar}
-              aria-label={isSidebarOpen ? t("sidebar.collapse", { ns: "playground" }) : t("sidebar.open", { ns: "playground" })}
-              aria-expanded={isSidebarOpen}
-              sx={{ color: "white" }}
-            >
-              {isSidebarOpen ? <MenuOpenIcon /> : <MenuIcon />}
-            </IconButton>
-          </Tooltip>
+          {(!isMobile || !isMobileSidebarOpen) && (
+            <Tooltip title={isSidebarOpen ? t("sidebar.collapse", { ns: "playground" }) : t("sidebar.open", { ns: "playground" })}>
+              <IconButton
+                id="playground-open-sidebar-button"
+                onClick={onToggleSidebar}
+                aria-label={isSidebarOpen ? t("sidebar.collapse", { ns: "playground" }) : t("sidebar.open", { ns: "playground" })}
+                aria-expanded={isSidebarOpen}
+                aria-controls="playground-session-sidebar"
+                sx={{ color: "white" }}
+              >
+                {isSidebarOpen ? <MenuOpenIcon /> : <MenuIcon />}
+              </IconButton>
+            </Tooltip>
+          )}
           <img
             src={logo}
             style={{
@@ -91,16 +98,31 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen }) => {
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: { xs: "0.5rem", sm: "1rem" } }}>
+          {isMobile && isMobileSidebarOpen && (
+            <Tooltip title={t("sidebar.close", { ns: "playground" })}>
+              <IconButton
+                onClick={onToggleSidebar}
+                aria-label={t("sidebar.close", { ns: "playground" })}
+                sx={{ color: "white" }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Tooltip>
+          )}
           <Button
             variant="contained"
             disableElevation
             onClick={() => {
-              window.open("https://teams.microsoft.com/l/channel/19%3Au1yOceUvSm8spn8ZAyma2zT90c042tzBQAwst9Gem1c1%40thread.tacv2/SSC%20Assistant?groupId=9c07bdb4-3403-464b-a1c2-91cdaf3a2496&ngc=true&allowXTenantAccess=true", "_blank");
+              window.open(
+                "https://teams.microsoft.com/l/channel/19%3Au1yOceUvSm8spn8ZAyma2zT90c042tzBQAwst9Gem1c1%40thread.tacv2/SSC%20Assistant?groupId=9c07bdb4-3403-464b-a1c2-91cdaf3a2496&ngc=true&allowXTenantAccess=true",
+                "_blank",
+                "noopener,noreferrer"
+              );
             }}
-            startIcon={<img src={TopmenuMicrosofTeamsIcon} alt="" style={{ width: "1.1rem" }} />}
+            startIcon={<img src={TopmenuMicrosofTeamsIcon} alt={t("button.joinchat", { ns: "translations" })} style={{ width: "1.1rem" }} />}
             sx={{
               bgcolor: "white",
-              color: "#7a81eb",
+              color: "#3f479a",
               textTransform: "none",
               fontWeight: "bold",
               lineHeight: 1.2,
@@ -116,6 +138,7 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen }) => {
               },
               "&:hover": {
                 bgcolor: "#f5f5f5",
+                color: "#2e3470",
               },
             }}
           >

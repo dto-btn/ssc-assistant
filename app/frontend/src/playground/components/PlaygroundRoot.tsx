@@ -52,7 +52,7 @@ const PlaygroundRoot: React.FC = () => {
   }, [dispatch, isMobile, isMobileSidebarOpen]);
 
   return (
-    <Box display="flex" height="100vh">
+    <Box display="flex" height="100dvh">
       <SessionBootstrapper />
       <SessionSidebar isMobile={isMobile} />
       <ChatArea

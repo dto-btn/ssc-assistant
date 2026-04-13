@@ -58,6 +58,10 @@ function renderSidebar(isMobile: boolean, preloadedState?: TestStoreState) {
 }
 
 describe("SessionSidebar responsive behavior", () => {
+  /**
+   * Test that the "chats" section heading is hidden when the desktop sidebar
+   * is in a collapsed state.
+   */
   it("hides desktop sidebar when collapsed", () => {
     renderSidebar(false, {
       sessions: {
@@ -75,6 +79,10 @@ describe("SessionSidebar responsive behavior", () => {
     expect(screen.queryByRole("heading", { name: "chats" })).not.toBeInTheDocument();
   });
 
+  /**
+   * Integration test verifying that dispatching a sidebar collapse action correctly
+   * updates the UI to show or hide the sidebar content.
+   */
   it("reacts to sidebar collapse state change", async () => {
     const store = renderSidebar(false, {
       sessions: {
@@ -97,6 +105,10 @@ describe("SessionSidebar responsive behavior", () => {
     });
   });
 
+  /**
+   * Test that the mobile drawer/sidebar automatically closes after a user
+   * selects a chat session from the list (improves mobile UX flow).
+   */
   it("closes mobile drawer after selecting a session", async () => {
     const user = userEvent.setup();
 
@@ -132,6 +144,11 @@ describe("SessionSidebar responsive behavior", () => {
     });
   });
 
+  /**
+   * Test that closing the mobile drawer returns focus to the trigger element
+   * (e.g., the open button in the TopBar). This is critical for keyboard and
+   * screen reader accessibility (WCAG 2.4.3).
+   */
   it("returns focus to opener when mobile drawer closes", async () => {
     const user = userEvent.setup();
 

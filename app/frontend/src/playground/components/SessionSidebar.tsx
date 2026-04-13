@@ -34,6 +34,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
+import CloseIcon from "@mui/icons-material/Close";
 import type { Session } from "../store/slices/sessionSlice";
 import { useTranslation } from 'react-i18next';
 import { LEFT_MENU_EXPANDED_WIDTH } from "../constants";
@@ -198,7 +199,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         width: LEFT_MENU_EXPANDED_WIDTH,
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
+        height: "100dvh",
         overflowX: "hidden",
         borderRight: "1px solid #ddd",
         bgcolor: "#ededf3",
@@ -208,6 +209,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         sx={{
           display: "flex",
           alignItems: "center",
+          justifyContent: "space-between",
           px: 1,
           py: 1,
           height: 60,
@@ -217,6 +219,15 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         <Typography component="h2" id={sidebarTitleId} variant="subtitle2" sx={{ px: 1, fontWeight: 'bold' }}>
           {t("chats")}
         </Typography>
+        {isMobile && (
+          <IconButton
+            onClick={() => dispatch(closeMobileSidebar())}
+            aria-label={t("sidebar.close")}
+            title={t("sidebar.close")}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        )}
       </Box>
 
       <List id="playground-session-sidebar" aria-labelledby={sidebarTitleId}>

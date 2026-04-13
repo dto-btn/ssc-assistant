@@ -51,6 +51,12 @@ function renderTopBar(isSidebarOpen: boolean, onToggle?: () => void) {
 }
 
 describe("TopBar", () => {
+  /**
+   * Test that the TopBar renders the essential branding elements:
+   * - App Title (SSC Assistant)
+   * - Logo (with correct alt text)
+   * - Development Banner (if configured)
+   */
   it("renders branding and title", () => {
     renderTopBar(true);
     expect(screen.getByText("SSC Assistant")).toBeInTheDocument();
@@ -58,6 +64,10 @@ describe("TopBar", () => {
     expect(screen.getByTestId("dev-banner")).toBeInTheDocument();
   });
 
+  /**
+   * Test that the sidebar toggle button displays the "collapse" state 
+   * and correct ARIA attributes when the sidebar is currently open.
+   */
   it("shows collapse icon and correct accessibility label when sidebar is open", () => {
     renderTopBar(true);
     const button = screen.getByRole("button", { name: "sidebar.collapse" });
@@ -66,6 +76,10 @@ describe("TopBar", () => {
     expect(screen.getByTestId("MenuOpenIcon")).toBeInTheDocument();
   });
 
+  /**
+   * Test that the sidebar toggle button displays the "expand" state
+   * and correct ARIA attributes when the sidebar is currently closed/collapsed.
+   */
   it("shows expand icon and correct accessibility label when sidebar is closed", () => {
     renderTopBar(false);
     const button = screen.getByRole("button", { name: "sidebar.open" });
@@ -74,6 +88,10 @@ describe("TopBar", () => {
     expect(screen.getByTestId("MenuIcon")).toBeInTheDocument();
   });
 
+  /**
+   * Test that clicking the sidebar toggle icon triggers the provided
+   * callback function (used for collapsing/expanding the navigation).
+   */
   it("calls onToggleSidebar when toggle button is clicked", async () => {
     const onToggle = vi.fn();
     const user = userEvent.setup();
@@ -83,6 +101,10 @@ describe("TopBar", () => {
     expect(onToggle).toHaveBeenCalled();
   });
 
+  /**
+   * Test that the Teams external link button renders correctly and
+   * opens the expected URL with secure window attributes (noopener, noreferrer).
+   */
   it("renders Teams join chat button with correct link", async () => {
     const windowSpy = vi.spyOn(window, "open").mockImplementation(() => null);
     const user = userEvent.setup();
@@ -92,10 +114,18 @@ describe("TopBar", () => {
     expect(teamsButton).toBeInTheDocument();
     
     await user.click(teamsButton);
-    expect(windowSpy).toHaveBeenCalledWith(expect.stringContaining("teams.microsoft.com"), "_blank");
+    expect(windowSpy).toHaveBeenCalledWith(
+      expect.stringContaining("teams.microsoft.com"),
+      "_blank",
+      "noopener,noreferrer"
+    );
     windowSpy.mockRestore();
   });
 
+  /**
+   * Test that clicking the language toggle changes the application language
+   * (e.g., from English to French).
+   */
   it("toggles language when language button is clicked", async () => {
     const user = userEvent.setup();
     renderTopBar(true);
@@ -108,6 +138,10 @@ describe("TopBar", () => {
     expect(mockChangeLanguage).toHaveBeenCalledWith("fr");
   });
 
+  /**
+   * Test that the language toggle button shows correct ARIA labels 
+   * when the active language is French (switching to English).
+   */
   it("should have correct aria-label for language toggle when language is fr", async () => {
     mockChangeLanguage.mockReset();
     vi.mocked(useTranslation).mockReturnValue({
