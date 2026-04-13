@@ -711,7 +711,8 @@ def delete_all_sessions():
         logger.exception("Failed to access blob service for oid %s", oid)
         return {"message": "Delete failed"}, 500
 
-    timestamp = datetime.utcnow().isoformat() + "Z"
+    from datetime import timezone
+    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     deleted_count = 0
     failed: List[str] = []
 

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import reducer, {
   closeMobileSidebar,
   openMobileSidebar,
+  setIsDeletingAllChats,
   setMobileSidebarOpen,
   setSidebarCollapsed,
   toggleSidebarCollapsed,
@@ -39,5 +40,13 @@ describe("uiSlice", () => {
 
     const closed = reducer(opened, setMobileSidebarOpen(false));
     expect(closed.isMobileSidebarOpen).toBe(false);
+  });
+
+  it("sets deleting all chats state explicitly", () => {
+    const deleting = reducer(undefined, setIsDeletingAllChats(true));
+    expect(deleting.isDeletingAllChats).toBe(true);
+
+    const notDeleting = reducer(deleting, setIsDeletingAllChats(false));
+    expect(notDeleting.isDeletingAllChats).toBe(false);
   });
 });
