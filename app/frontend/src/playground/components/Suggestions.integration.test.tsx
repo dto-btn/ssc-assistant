@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { Provider } from "react-redux";
-import { configureStore } from "@reduxjs/toolkit";
+import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import ChatArea from "./ChatArea";
 import chatReducer from "../store/slices/chatSlice";
 import sessionReducer from "../store/slices/sessionSlice";
@@ -53,21 +53,23 @@ vi.mock("../api/storage", () => ({
 
 // Helper to create a store for testing
 const createTestStore = (initialState = {}) => {
+  const rootReducer = combineReducers({
+    chat: chatReducer,
+    sessions: sessionReducer,
+    auth: authReducer,
+    sync: syncReducer,
+    models: modelReducer,
+    sessionFiles: sessionFilesReducer,
+    outbox: outboxReducer,
+    user: userReducer,
+    ui: uiReducer,
+    toast: toastReducer,
+    quoted: quotedReducer,
+    tools: toolReducer,
+  });
+
   return configureStore({
-    reducer: {
-      chat: chatReducer,
-      sessions: sessionReducer,
-      auth: authReducer,
-      sync: syncReducer,
-      models: modelReducer,
-      sessionFiles: sessionFilesReducer,
-      outbox: outboxReducer,
-      user: userReducer,
-      ui: uiReducer,
-      toast: toastReducer,
-      quoted: quotedReducer,
-      tools: toolReducer,
-    },
+    reducer: rootReducer,
     preloadedState: initialState as any,
   });
 };
@@ -119,7 +121,7 @@ describe("Suggestions Integration", () => {
   it("triggers the assistant with the correct prompt content when a suggestion is clicked", async () => {
     const user = userEvent.setup();
     render(
-      <Provider store={store}>
+      <Provider store={store as any}>
         <ChatArea />
       </Provider>
     );

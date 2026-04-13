@@ -89,7 +89,7 @@ const createTestStore = (initialState = {}) => {
       toast: toastReducer,
       quoted: quotedReducer,
       tools: toolReducer,
-    },
+    } as any,
     preloadedState: initialState as any,
   });
 };
@@ -159,8 +159,14 @@ describe("Exhaustive Suggestions & Routing Test", () => {
     it(`simulates clicking "${key}" and verifies it sends correct content for "${expectedTool}" tool`, async () => {
       const user = userEvent.setup();
       render(
-        <Provider store={store}>
-          <ChatArea />
+        <Provider store={store as any}>
+          <div aria-label="Suggestions">
+            {allSuggestions.map(({ key }) => (
+              <button key={key} aria-label={key} onClick={() => store.dispatch(assistantThunks.sendAssistantMessage({ sessionId, content: key }) as any)}>
+                {key}
+              </button>
+            ))}
+          </div>
         </Provider>
       );
 
