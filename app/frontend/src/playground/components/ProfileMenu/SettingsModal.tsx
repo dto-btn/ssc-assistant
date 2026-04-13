@@ -93,8 +93,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 borderColor: "error.light",
                 borderRadius: 1,
                 display: "flex",
-                alignItems: "center",
+                flexDirection: { xs: "column", sm: "row" },
+                alignItems: { xs: "stretch", sm: "center" },
                 justifyContent: "space-between",
+                gap: 2,
                 opacity: isDeletingAllChats ? 0.7 : 1,
               }}
             >
@@ -109,6 +111,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               <Button
                 variant="outlined"
                 color="error"
+                sx={{ minWidth: { sm: "fit-content" } }}
                 startIcon={
                   isDeletingAllChats ? (
                     <CircularProgress size={20} color="error" />

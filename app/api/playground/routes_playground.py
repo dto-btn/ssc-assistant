@@ -716,12 +716,12 @@ def delete_all_sessions():
     failed: List[str] = []
 
     try:
-        blobs_iterator = list(container_client.list_blobs(name_starts_with=f"{oid}/", include=["metadata"]))
+        blobs_iterator = container_client.list_blobs(name_starts_with=f"{oid}/", include=["metadata"])
     except ResourceNotFoundError:
-        return {"deletedCount": 0}
+        return {"deletedCount": 0, "failed": [], "message": "No sessions found to delete"}
     except AzureError:
         logger.exception("Failed to enumerate blobs for delete all", extra={"oid": oid})
-        return {"message": "Delete failed"}, 500
+        return {"message": "Delete failed", "deletedCount": 0, "failed": []}, 500
 
     def _mark_deleted(blob):
         metadata = getattr(blob, "metadata", {}) or {}
@@ -745,16 +745,17 @@ def delete_all_sessions():
             return False, blob.name
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        results = list(executor.map(_mark_deleted, blobs_iterator))
+        # Process blobs as they are yielded by the iterator to avoid materializing the full list
+        results = executor.map(_mark_deleted, blobs_iterator)
 
-    for res in results:
-        if res is None:
-            continue
-        success, blob_name = res
-        if success:
-            deleted_count += 1
-        else:
-            failed.append(blob_name)
+        for res in results:
+            if res is None:
+                continue
+            success, blob_name = res
+            if success:
+                deleted_count += 1
+            else:
+                failed.append(blob_name)
 
     if failed:
         return {
@@ -763,7 +764,7 @@ def delete_all_sessions():
             "failed": failed,
         }, 207
 
-    return {"deletedCount": deleted_count}
+    return {"deletedCount": deleted_count, "failed": [], "message": "Success"}
 
 
 # POST /api/playground/extract-file-text: Accepts fileUrl and fileType, returns extracted text

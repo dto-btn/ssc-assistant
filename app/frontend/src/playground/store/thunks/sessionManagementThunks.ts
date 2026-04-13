@@ -166,16 +166,34 @@ export const deleteAllSessions = (): AppThunk<Promise<void>> => async (
   dispatch(setIsDeletingAllChats(true));
 
   try {
-    await deleteAllRemoteSessions({ accessToken });
-    dispatch(cleanupAllSessionsLocally());
-    dispatch(
-      addToast({
-        message: i18n.t("playground:delete.all.success", {
-          defaultValue: "All conversations deleted",
-        }),
-        isError: false,
-      })
-    );
+    const { deletedCount, failed, message } = await deleteAllRemoteSessions({ accessToken });
+    
+    // Always clean up local state if anything was deleted, even if some failed.
+    // In a partial failure, the local state will be reconciled with what was successfully deleted.
+    // If deletedCount is high, it's better to clear local state than to leave it inconsistent.
+    if (deletedCount > 0) {
+      dispatch(cleanupAllSessionsLocally());
+    }
+
+    if (failed.length > 0) {
+      dispatch(
+        addToast({
+          message: message || i18n.t("playground:errors.deleteAllPartial", {
+            defaultValue: "Some conversations could not be deleted. Please refresh to see current state.",
+          }),
+          isError: true,
+        })
+      );
+    } else {
+      dispatch(
+        addToast({
+          message: i18n.t("playground:delete.all.success", {
+            defaultValue: "All conversations deleted",
+          }),
+          isError: false,
+        })
+      );
+    }
   } catch (error) {
     const message =
       error instanceof Error && error.message.trim().length > 0

@@ -293,7 +293,7 @@ export async function deleteAllRemoteSessions({
   accessToken,
 }: {
   accessToken: string;
-}): Promise<number> {
+}): Promise<{ deletedCount: number; failed: string[]; message?: string }> {
   if (!accessToken?.trim()) throw new Error("accessToken is required");
 
   const response = await fetch(sessionsEndpoint, {
@@ -304,19 +304,15 @@ export async function deleteAllRemoteSessions({
   });
 
   if (response.status === 204) {
-    return 0;
+    return { deletedCount: 0, failed: [] };
   }
 
   const data = await handleJsonResponse(response);
-  if (Array.isArray(data?.failed) && data.failed.length > 0) {
-    const message = typeof data?.message === "string" && data.message.trim().length > 0
-      ? data.message
-      : "Bulk delete completed with errors.";
-    throw new Error(message);
-  }
+  const deletedCount = typeof data?.deletedCount === "number" ? data.deletedCount : 0;
+  const failed = Array.isArray(data?.failed) ? data.failed : [];
+  const message = typeof data?.message === "string" ? data.message : undefined;
 
-  const deleted = typeof data?.deletedCount === "number" ? data.deletedCount : 0;
-  return deleted;
+  return { deletedCount, failed, message };
 }
 
 export async function renameRemoteSession({
