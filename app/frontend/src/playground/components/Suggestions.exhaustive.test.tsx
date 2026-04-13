@@ -15,6 +15,7 @@ import userReducer from "../store/slices/userSlice";
 import uiReducer from "../store/slices/uiSlice";
 import toastReducer from "../store/slices/toastSlice";
 import quotedReducer from "../store/slices/quotedSlice";
+import toolReducer from "../store/slices/toolSlice";
 import * as assistantThunks from "../store/thunks/assistantThunks";
 
 /**
@@ -87,6 +88,7 @@ const createTestStore = (initialState = {}) => {
       ui: uiReducer,
       toast: toastReducer,
       quoted: quotedReducer,
+      tools: toolReducer,
     },
     preloadedState: initialState as any,
   });
@@ -105,7 +107,7 @@ describe("Exhaustive Suggestions & Routing Test", () => {
     store = createTestStore({
       sessions: {
         currentSessionId: sessionId,
-        sessions: [{ id: sessionId, title: "Test Session" }],
+        sessions: [{ id: sessionId, name: "Test Session", createdAt: Date.now(), isNewChat: true }],
       },
       chat: {
         messages: [],
@@ -115,8 +117,8 @@ describe("Exhaustive Suggestions & Routing Test", () => {
       auth: { accessToken: "token" }
     });
 
-    vi.spyOn(assistantThunks, "sendAssistantMessage").mockImplementation((args: any) => {
-      return async (dispatch: any) => ({ success: true });
+    vi.spyOn(assistantThunks, "sendAssistantMessage").mockImplementation((_args: any) => {
+      return (async (_dispatch: any) => {}) as any;
     });
   });
 
