@@ -5,26 +5,26 @@
  * Handles message grouping, quoting highlights, and feeds message UI events
  * back to the store.
  */
-import React, { useRef, useEffect, useMemo, useCallback } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import React, { useRef, useEffect, useMemo, useCallback, useState } from "react";
+import { useSelector } from "react-redux";
 import { RootState } from "../store";
 import {
   Box,
   List,
   ListItem,
-  ListItemText,
   IconButton,
+  Tooltip,
 } from "@mui/material";
-import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
-import { setQuotedText } from "../store/slices/quotedSlice";
 import ReactMarkdown from "react-markdown";
 import Link from "@mui/material/Link";
-import { useTranslation } from 'react-i18next';
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import CheckIcon from "@mui/icons-material/Check";
 import AttachmentPreview from "./AttachmentPreview";
 import { selectSessionFilesById } from "../store/selectors/sessionFilesSelectors";
 import { FileAttachment } from "../types";
 import { Message } from "../store/slices/chatSlice";
 import McpAttributionPill from "./McpAttributionPill";
+import assistantLogo from "../../assets/SSC-Logo-Purple-Leaf-300x300.png";
 
 interface ChatMessagesProps {
   sessionId: string;
@@ -41,11 +41,174 @@ const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({
   );
 };
 
+interface MarkdownCodeBlockProps extends React.ComponentPropsWithoutRef<"code"> {
+  inline?: boolean;
+}
+
+const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
+  inline,
+  className,
+  children,
+  ...rest
+}) => {
+  const [isCopied, setIsCopied] = useState(false);
+  const codeText = useMemo(() => String(children ?? "").replace(/\n$/, ""), [children]);
+
+  const handleCopyCode = async () => {
+    if (!codeText) return;
+    try {
+      await navigator.clipboard.writeText(codeText);
+      setIsCopied(true);
+      window.setTimeout(() => setIsCopied(false), 1400);
+    } catch {
+      // Clipboard API may be unavailable in some browser contexts.
+    }
+  };
+
+  if (inline) {
+    return (
+      <code className={className} {...rest}>
+        {children}
+      </code>
+    );
+  }
+
+  return (
+    <Box sx={{ position: "relative" }}>
+      <Tooltip title={isCopied ? "Copied" : "Copy code"}>
+        <IconButton
+          size="small"
+          aria-label="Copy code"
+          onClick={handleCopyCode}
+          sx={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            bgcolor: "rgba(255,255,255,0.86)",
+            border: "1px solid rgba(0,0,0,0.12)",
+            zIndex: 1,
+            "&:hover": { bgcolor: "rgba(255,255,255,0.96)" },
+          }}
+        >
+          {isCopied ? <CheckIcon fontSize="inherit" /> : <ContentCopyIcon fontSize="inherit" />}
+        </IconButton>
+      </Tooltip>
+      <pre className={className} style={{ margin: 0 }}>
+        <code {...rest}>{codeText}</code>
+      </pre>
+    </Box>
+  );
+};
+
 const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
-  const { t } = useTranslation('playground');
+  const baseMarkdownSx = {
+    fontSize: "0.98rem",
+    lineHeight: 1.65,
+    wordBreak: "break-word",
+    "& > *:first-of-type": { mt: 0 },
+    "& > *:last-child": { mb: 0 },
+    "& p": { m: 0 },
+    "& p + p": { mt: 1.25 },
+    "& h1, & h2, & h3, & h4": { mt: 1.5, mb: 0.75, lineHeight: 1.3 },
+    "& ul, & ol": { my: 1, pl: 3 },
+    "& li + li": { mt: 0.4 },
+    "& code": {
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+      fontSize: "0.88em",
+      px: 0.5,
+      py: 0.2,
+      borderRadius: "6px",
+      bgcolor: "rgba(0,0,0,0.06)",
+    },
+    "& pre": {
+      my: 1.25,
+      p: 1.25,
+      borderRadius: "10px",
+      overflowX: "auto",
+      bgcolor: "rgba(0,0,0,0.06)",
+    },
+    "& pre code": {
+      bgcolor: "transparent",
+      p: 0,
+      borderRadius: 0,
+      fontSize: "0.86em",
+    },
+    "& blockquote": {
+      m: 0,
+      my: 1,
+      pl: 1.25,
+      borderLeft: "3px solid",
+      borderColor: "rgba(75,63,168,0.45)",
+      color: "text.secondary",
+    },
+    "& table": {
+      width: "100%",
+      borderCollapse: "collapse",
+      my: 1.25,
+      fontSize: "0.92em",
+    },
+    "& th, & td": {
+      border: "1px solid rgba(0,0,0,0.16)",
+      p: 0.65,
+      textAlign: "left",
+      verticalAlign: "top",
+    },
+    "& a": {
+      textUnderlineOffset: "2px",
+    },
+  };
+
+  const assistantMarkdownSx = {
+    ...baseMarkdownSx,
+    "& a": {
+      color: "#4B3FA8",
+      fontWeight: 500,
+    },
+  };
+
+  const userMarkdownSx = {
+    ...baseMarkdownSx,
+    "& code": {
+      ...baseMarkdownSx["& code"],
+      bgcolor: "rgba(255,255,255,0.2)",
+    },
+    "& pre": {
+      ...baseMarkdownSx["& pre"],
+      bgcolor: "rgba(255,255,255,0.2)",
+    },
+    "& blockquote": {
+      ...baseMarkdownSx["& blockquote"],
+      borderColor: "rgba(255,255,255,0.55)",
+      color: "rgba(255,255,255,0.92)",
+    },
+    "& th, & td": {
+      ...baseMarkdownSx["& th, & td"],
+      border: "1px solid rgba(255,255,255,0.35)",
+    },
+    "& a": {
+      color: "#FFFFFF",
+      fontWeight: 500,
+    },
+  };
+
+  const markdownComponents = {
+    a: ({ ...props }) => (
+      <MarkdownLink
+        {...(props as React.ComponentPropsWithoutRef<"a">)}
+      />
+    ),
+    code: ({ ...props }) => (
+      <MarkdownCodeBlock
+        {...(props as MarkdownCodeBlockProps)}
+      />
+    ),
+  };
 
   // Select a stable reference from the store
   const allMessages = useSelector((state: RootState) => state.chat.messages);
+  const assistantResponsePhase = useSelector(
+    (state: RootState) => state.chat.assistantResponsePhaseBySessionId[sessionId],
+  );
 
   // Derive the filtered list with useMemo to keep a stable reference
   const messages = useMemo(
@@ -53,8 +216,21 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
     [allMessages, sessionId]
   );
 
+  const activeAssistantMessageId = useMemo(() => {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      if (messages[index].role === "assistant") {
+        return messages[index].id;
+      }
+    }
+    return null;
+  }, [messages]);
+
+  const shouldPulseAssistantIcon =
+    assistantResponsePhase === "waiting-first-token"
+    || assistantResponsePhase === "streaming";
+  const shouldShowThinkingLabel = assistantResponsePhase === "waiting-first-token";
+
   const listRef = useRef<HTMLUListElement>(null);
-  const dispatch = useDispatch();
   const sessionFiles = useSelector(selectSessionFilesById(sessionId));
 
   // Merge lightweight attachment stubs from the transcript with any richer
@@ -80,8 +256,27 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
 
   return (
     <Box flex={1} overflow="auto" p={2}>
-      <List ref={listRef}>
+      <List
+        ref={listRef}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          width: "100%",
+        }}
+      >
         {messages.map((message: Message) => {
+          const isUserMessage = message.role === "user";
+          const isAssistantMessage = message.role === "assistant";
+          const pulseThisAssistantIcon = Boolean(
+            isAssistantMessage
+            && shouldPulseAssistantIcon
+            && message.id === activeAssistantMessageId,
+          );
+          const hasLiveAttribution = isAssistantMessage
+            && message.mcpAttribution?.source === "live"
+            && message.mcpAttribution.servers.length > 0;
+          const liveAttribution = hasLiveAttribution ? message.mcpAttribution : undefined;
           const resolvedAttachments = resolveAttachments(
             message.attachments as FileAttachment[] | undefined,
           );
@@ -89,62 +284,102 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
             <ListItem
               key={message.id}
               alignItems="flex-start"
-              secondaryAction={
-                message.role === "user" ? (
-                  <IconButton
-                    size="small"
-                    onClick={() => dispatch(setQuotedText(message.content || ""))}
-                    title={t("quote.this.message")}
-                    aria-label={t("quote.this.message")}
-                  >
-                    <FormatQuoteIcon />
-                  </IconButton>
-                ) : undefined
-              }
+              sx={{
+                px: 0,
+                py: 1,
+                width: "100%",
+                maxWidth: { xs: "100%", md: "980px" },
+                justifyContent: isUserMessage ? "flex-end" : "flex-start",
+              }}
             >
-              <ListItemText
-                primary={message.role === "user" ? "You" : "Assistant"}
-                secondary={
-                  <>
-                    {message.role === "assistant"
-                      && message.mcpAttribution?.source === "live"
-                      && message.mcpAttribution.servers.length > 0 && (
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "flex-end",
-                            alignItems: "flex-start",
-                            mb: 0.75,
-                            width: "100%",
-                          }}
-                        >
-                          <McpAttributionPill
-                            attribution={message.mcpAttribution}
-                            messageId={message.id}
-                          />
-                        </Box>
-                      )}
-                    <ReactMarkdown
-                      components={{
-                        a: ({ ...props }) => (
-                          <MarkdownLink
-                            {...(props as React.ComponentPropsWithoutRef<"a">)}
-                          />
-                        ),
+              {isAssistantMessage ? (
+                <Box sx={{ width: { xs: "min(100%, 680px)", lg: "800px" }, maxWidth: "100%" }}>
+                  {liveAttribution && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        alignItems: "flex-start",
+                        mb: 0.75,
+                        width: "100%",
                       }}
                     >
+                      <McpAttributionPill
+                        attribution={liveAttribution}
+                        messageId={message.id}
+                      />
+                    </Box>
+                  )}
+                  <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexShrink: 0 }}>
+                      <Box
+                        component="img"
+                        src={assistantLogo}
+                        alt="Assistant"
+                        sx={{
+                          "@keyframes assistantIconPulse": {
+                            "0%": { transform: "scale(1)", opacity: 1 },
+                            "50%": { transform: "scale(1.08)", opacity: 0.78 },
+                            "100%": { transform: "scale(1)", opacity: 1 },
+                          },
+                          mt: 0.1,
+                          width: 26,
+                          height: 26,
+                          borderRadius: "50%",
+                          flexShrink: 0,
+                          animation: pulseThisAssistantIcon
+                            ? "assistantIconPulse 1.2s ease-in-out infinite"
+                            : "none",
+                        }}
+                      />
+                      {pulseThisAssistantIcon && shouldShowThinkingLabel && (
+                        <Box
+                          component="span"
+                          sx={{
+                            fontSize: "0.86rem",
+                            color: "text.secondary",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          Thinking ....
+                        </Box>
+                      )}
+                    </Box>
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Box sx={assistantMarkdownSx}>
+                        <ReactMarkdown components={markdownComponents}>
+                          {message.content}
+                        </ReactMarkdown>
+                      </Box>
+                      {resolvedAttachments.length > 0 && (
+                        <AttachmentPreview attachments={resolvedAttachments} />
+                      )}
+                    </Box>
+                  </Box>
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    minWidth: 0,
+                    width: "fit-content",
+                    maxWidth: "88%",
+                    px: 1.5,
+                    py: 1.1,
+                    bgcolor: "#4B3FA8",
+                    color: "#FFFFFF",
+                    borderRadius: "16px 4px 16px 16px",
+                  }}
+                >
+                  <Box sx={userMarkdownSx}>
+                    <ReactMarkdown components={markdownComponents}>
                       {message.content}
                     </ReactMarkdown>
-                    {resolvedAttachments.length > 0 && (
-                      <AttachmentPreview attachments={resolvedAttachments} />
-                    )}
-                  </>
-                }
-                slotProps={{
-                  primary: { component: "span" },
-                  secondary: { component: "div" },
-                }}
-              />
+                  </Box>
+                  {resolvedAttachments.length > 0 && (
+                    <AttachmentPreview attachments={resolvedAttachments} />
+                  )}
+                </Box>
+              )}
             </ListItem>
           );
         })}
