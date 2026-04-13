@@ -1,16 +1,15 @@
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import React from "react";
 
 import TopBar from "./TopBar";
 import uiReducer from "../store/slices/uiSlice";
 
 const mockChangeLanguage = vi.fn();
 
-vi.mock("react-i18next", async (importOriginal) => {
+vi.mock("react-i18next", async () => {
   return {
     useTranslation: () => ({
       t: (key: string) => (key === "title" ? "SSC Assistant" : key),
