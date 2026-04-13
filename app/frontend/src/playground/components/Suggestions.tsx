@@ -38,21 +38,21 @@ const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
       tool: "geds",
       icon: <PersonIcon sx={{ color: "#00695c" }} />,
       category: "geds",
-      color: "#00695c", // Deep Teal
+      color: "#00695c", // Deep Teal (GEDS)
     },
     {
       titleKey: "suggestions.general.email",
       tool: "corporate",
-      icon: <EmailIcon sx={{ color: "#455a64" }} />,
+      icon: <EmailIcon sx={{ color: "#5c6bc0" }} />,
       category: "general",
-      color: "#455a64", // Blue Grey
+      color: "#5c6bc0", // Indigo (General)
     },
     {
       titleKey: "suggestions.general.hire",
       tool: "corporate",
       icon: <HelpOutlineIcon sx={{ color: "#1565c0" }} />,
       category: "corporate",
-      color: "#1565c0", // Stronger Blue
+      color: "#1565c0", // Strong Blue (Corporate)
     },
     {
       titleKey: "suggestions.business.find",
