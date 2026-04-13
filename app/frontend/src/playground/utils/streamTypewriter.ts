@@ -26,6 +26,14 @@ const DEFAULT_CHARS_PER_TICK = 5;
 const DEFAULT_BURST_MULTIPLIER = 4;
 const DEFAULT_MAX_BUFFERED_CHARS = 1200;
 
+const prefersReducedMotion = (): boolean => {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return false;
+  }
+
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+};
+
 export const createStreamTypewriter = (
   options: StreamTypewriterOptions,
 ): StreamTypewriterController => {
@@ -61,6 +69,16 @@ export const createStreamTypewriter = (
 
   const ensureTimer = (): void => {
     if (intervalId !== null) return;
+
+    if (prefersReducedMotion()) {
+      // Respect reduced-motion preferences by rendering pending content immediately.
+      while (pendingBuffer.length) {
+        drainOnce();
+      }
+      resolveIdle();
+      return;
+    }
+
     intervalId = window.setInterval(() => {
       drainOnce();
       if (!pendingBuffer.length) {

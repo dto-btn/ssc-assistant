@@ -88,7 +88,14 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
     if (!isMobileSidebarOpen && wasMobileSidebarOpenRef.current) {
       // Return focus to the opener after the temporary drawer closes.
       const opener = document.getElementById("playground-open-sidebar-button");
-      opener?.focus();
+      if (opener instanceof HTMLElement) {
+        opener.focus();
+      } else {
+        const fallback = document.getElementById("new-chat-button");
+        if (fallback instanceof HTMLElement) {
+          fallback.focus();
+        }
+      }
     }
 
     wasMobileSidebarOpenRef.current = isMobileSidebarOpen;
@@ -324,7 +331,13 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
               aria-controls={moreMenuOpen ? "session-menu" : undefined}
               aria-expanded={moreMenuOpen && selectedSessionId === session.id ? "true" : undefined}
               aria-haspopup="true"
-              sx={{ mr: "10px", color: "text.secondary", "&:hover": { backgroundColor: "transparent", color: "text.primary" } }}
+              sx={{
+                minWidth: 44,
+                minHeight: 44,
+                mr: "10px",
+                color: "text.secondary",
+                "&:hover": { backgroundColor: "transparent", color: "text.primary" },
+              }}
             >
               <Tooltip
                 title={t('options')}

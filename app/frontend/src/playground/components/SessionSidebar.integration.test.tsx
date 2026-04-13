@@ -178,4 +178,32 @@ describe("SessionSidebar responsive behavior", () => {
       opener.remove();
     }
   });
+
+  it("falls back to new chat button focus when opener is absent", async () => {
+    const user = userEvent.setup();
+
+    renderSidebar(true, {
+      sessions: {
+        sessions: [
+          {
+            id: "s1",
+            name: "Session 1",
+            createdAt: 1,
+            isNewChat: false,
+          },
+        ],
+        currentSessionId: "s1",
+      },
+      ui: {
+        isSidebarCollapsed: false,
+        isMobileSidebarOpen: true,
+      },
+    });
+
+    await user.click(screen.getByRole("button", { name: "sidebar.close" }));
+
+    await waitFor(() => {
+      expect((document.activeElement as HTMLElement | null)?.id).toBe("new-chat-button");
+    });
+  });
 });

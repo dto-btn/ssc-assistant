@@ -55,6 +55,8 @@ const McpAttributionPill: React.FC<McpAttributionPillProps> = ({ attribution, me
     setAnchorEl(null);
   };
 
+  const descriptionId = `${popoverId}-description`;
+
   return (
     <Box sx={{ maxWidth: "100%" }}>
       <Chip
@@ -67,13 +69,6 @@ const McpAttributionPill: React.FC<McpAttributionPillProps> = ({ attribution, me
         aria-haspopup="dialog"
         aria-expanded={open ? "true" : "false"}
         aria-controls={popoverId}
-        onKeyDown={(event) => {
-          // Chip behaves like a button for keyboard-only users.
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            setAnchorEl(event.currentTarget);
-          }
-        }}
         sx={{
           borderRadius: 9999,
           maxWidth: "100%",
@@ -112,6 +107,7 @@ const McpAttributionPill: React.FC<McpAttributionPillProps> = ({ attribution, me
             },
             role: "dialog",
             "aria-labelledby": titleId,
+            "aria-describedby": descriptionId,
           },
         }}
       >
@@ -119,13 +115,14 @@ const McpAttributionPill: React.FC<McpAttributionPillProps> = ({ attribution, me
           <Typography id={titleId} variant="subtitle2">
             {t("mcp.attribution.title")}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography id={descriptionId} variant="body2" color="text.secondary">
             {t(descriptionKey)}
           </Typography>
           <Divider />
-          <Stack spacing={0.75}>
+          <Box component="ul" sx={{ m: 0, pl: 2.5, display: "grid", gap: 0.75 }}>
             {attribution.servers.map((server, index) => (
               <Typography
+                component="li"
                 key={`${server.serverLabel}-${index}`}
                 variant="body2"
                 sx={{ overflowWrap: "anywhere" }}
@@ -133,7 +130,7 @@ const McpAttributionPill: React.FC<McpAttributionPillProps> = ({ attribution, me
                 {server.serverLabel}
               </Typography>
             ))}
-          </Stack>
+          </Box>
           {attribution.category ? (
             <Typography variant="caption" color="text.secondary">
               {t("mcp.attribution.category", { category: attribution.category })}
