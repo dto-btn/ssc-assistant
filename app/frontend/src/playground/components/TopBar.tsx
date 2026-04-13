@@ -54,6 +54,7 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen }) => {
             alignItems: "center",
             gap: "0.5rem",
             userSelect: "none",
+            flexShrink: 0,
           }}
         >
           <Tooltip title={isSidebarOpen ? t("sidebar.collapse", { ns: "playground" }) : t("sidebar.open", { ns: "playground" })}>
@@ -72,7 +73,7 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen }) => {
               width: "32px",
               height: "auto",
             }}
-            alt="SSC Logo"
+            alt={t("logo.alt", { ns: "translations", defaultValue: "SSC Logo" })}
           />
           <Typography
             variant="h6"
