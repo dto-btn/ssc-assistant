@@ -3,7 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import ChatArea from "./ChatArea";
 import chatReducer from "../store/slices/chatSlice";
 import sessionReducer from "../store/slices/sessionSlice";
 import authReducer from "../store/slices/authSlice";
