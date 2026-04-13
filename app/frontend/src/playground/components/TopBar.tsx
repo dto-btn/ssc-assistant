@@ -103,9 +103,11 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen }) => {
               color: "#7a81eb",
               textTransform: "none",
               fontWeight: "bold",
+              lineHeight: 1.2,
               borderRadius: "8px",
               padding: { xs: "4px 8px", sm: "6px 16px" },
               fontSize: { xs: "0.75rem", sm: "0.875rem" },
+              minHeight: { xs: "32px", sm: "36px" },
               "& .MuiButton-startIcon": {
                 marginRight: { xs: 0, sm: 1 }
               },
@@ -126,7 +128,8 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen }) => {
             onClick={handleLanguageToggle}
             sx={{
               color: "white",
-              minWidth: "40px",
+              minWidth: "44px",
+              minHeight: "44px",
               fontWeight: "bold",
               fontSize: { xs: "14px", sm: "16px" },
               "&:hover": {
