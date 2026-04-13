@@ -102,8 +102,17 @@ const outboxSlice = createSlice({
         return true;
       });
     },
+    clearAllOutboxItems: (state) => {
+      state.items = [];
+    },
   },
 });
 
-export const { addUserFileToOutbox, addChatArchiveToOutbox, removeOutboxItem, removeSessionOutboxItems } = outboxSlice.actions;
+export const {
+  addUserFileToOutbox,
+  addChatArchiveToOutbox,
+  removeOutboxItem,
+  removeSessionOutboxItems,
+  clearAllOutboxItems,
+} = outboxSlice.actions;
 export default outboxSlice.reducer;

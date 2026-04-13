@@ -6,13 +6,24 @@
  */
 
 import i18n from "../../../i18n";
-import { deleteRemoteSession, renameRemoteSession } from "../../api/storage";
+import {
+  deleteAllRemoteSessions,
+  deleteRemoteSession,
+  renameRemoteSession,
+} from "../../api/storage";
 import { AppThunk } from "..";
 import { addToast } from "../slices/toastSlice";
-import { clearSessionMessages } from "../slices/chatSlice";
-import { removeSession } from "../slices/sessionSlice";
-import { removeSessionFiles } from "../slices/sessionFilesSlice";
-import { removeSessionOutboxItems } from "../slices/outboxSlice";
+import { clearAllMessages, clearSessionMessages } from "../slices/chatSlice";
+import { clearAllSessions, removeSession } from "../slices/sessionSlice";
+import {
+  clearAllSessionFiles,
+  removeSessionFiles,
+} from "../slices/sessionFilesSlice";
+import {
+  clearAllOutboxItems,
+  removeSessionOutboxItems,
+} from "../slices/outboxSlice";
+import { setIsDeletingAllChats } from "../slices/uiSlice";
 
 /**
  * Cleans up all local Redux state associated with a session.
@@ -27,6 +38,16 @@ const cleanupSessionLocally = (sessionId: string): AppThunk<void> => (dispatch) 
   dispatch(removeSessionFiles(sessionId));
   dispatch(removeSessionOutboxItems(sessionId));
   dispatch(removeSession(sessionId));
+};
+
+/**
+ * Cleans up all local Redux state for all playground sessions.
+ */
+const cleanupAllSessionsLocally = (): AppThunk<void> => (dispatch) => {
+  dispatch(clearAllMessages());
+  dispatch(clearAllSessionFiles());
+  dispatch(clearAllOutboxItems());
+  dispatch(clearAllSessions());
 };
 
 /**
@@ -120,6 +141,75 @@ export const deleteSession = (sessionId: string): AppThunk<Promise<void>> => asy
       isError: false,
     })
   );
+};
+
+/**
+ * Bulk soft-delete all chats for the authenticated user and clean up local Redux state.
+ */
+export const deleteAllSessions = (): AppThunk<Promise<void>> => async (
+  dispatch,
+  getState
+) => {
+  const { accessToken } = getState().auth;
+  if (!accessToken?.trim()) {
+    dispatch(
+      addToast({
+        message: i18n.t("playground:auth.tokenExpired", {
+          defaultValue: "Authentication required. Please refresh the page.",
+        }),
+        isError: true,
+      })
+    );
+    return;
+  }
+
+  dispatch(setIsDeletingAllChats(true));
+
+  try {
+    const { failed, message } = await deleteAllRemoteSessions({ accessToken });
+    
+    // Always clean up local state to ensure UI reflects the destructive intent.
+    // In a partial failure, the local state will be reconciled with what was successfully deleted.
+    // Even if deletedCount is 0 (e.g., race conditions or eventual consistency),
+    // we clear local state to avoid stale chat lists.
+    dispatch(cleanupAllSessionsLocally());
+
+    if (failed.length > 0) {
+      dispatch(
+        addToast({
+          message: message || i18n.t("playground:errors.deleteAllPartial", {
+            defaultValue: "Some conversations could not be deleted. Please refresh to see current state.",
+          }),
+          isError: true,
+        })
+      );
+    } else {
+      dispatch(
+        addToast({
+          message: i18n.t("playground:delete.all.success", {
+            defaultValue: "All conversations deleted",
+          }),
+          isError: false,
+        })
+      );
+    }
+  } catch (error) {
+    const message =
+      error instanceof Error && error.message.trim().length > 0
+        ? error.message
+        : i18n.t("playground:errors.deleteAllFailed", {
+            defaultValue: "Could not delete all chats. Please try again.",
+          });
+
+    dispatch(
+      addToast({
+        message,
+        isError: true,
+      })
+    );
+  } finally {
+    dispatch(setIsDeletingAllChats(false));
+  }
 };
 
 /**

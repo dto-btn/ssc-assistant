@@ -41,6 +41,10 @@ const sessionSlice = createSlice({
           : null;
       }
     },
+    clearAllSessions: (state) => {
+      state.sessions = [];
+      state.currentSessionId = null;
+    },
     setCurrentSession: (state, action: PayloadAction<string>) => {
       state.currentSessionId = action.payload;
     },
@@ -71,6 +75,7 @@ const sessionSlice = createSlice({
 export const {
   addSession,
   removeSession,
+  clearAllSessions,
   setCurrentSession,
   renameSession,
   setSessionStaticTools,

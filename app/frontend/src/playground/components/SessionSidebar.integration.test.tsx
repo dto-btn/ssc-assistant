@@ -63,6 +63,7 @@ describe("SessionSidebar responsive behavior", () => {
       ui: {
         isSidebarCollapsed: true,
         isMobileSidebarOpen: false,
+        isDeletingAllChats: false,
       },
     });
 
@@ -87,6 +88,7 @@ describe("SessionSidebar responsive behavior", () => {
       ui: {
         isSidebarCollapsed: false,
         isMobileSidebarOpen: false,
+        isDeletingAllChats: false,
       },
     });
 
@@ -121,6 +123,7 @@ describe("SessionSidebar responsive behavior", () => {
       ui: {
         isSidebarCollapsed: false,
         isMobileSidebarOpen: true,
+        isDeletingAllChats: false,
       },
     });
 
@@ -155,6 +158,7 @@ describe("SessionSidebar responsive behavior", () => {
         ui: {
           isSidebarCollapsed: false,
           isMobileSidebarOpen: true,
+          isDeletingAllChats: false,
         },
       });
 

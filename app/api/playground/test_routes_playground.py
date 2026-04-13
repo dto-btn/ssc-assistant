@@ -55,6 +55,8 @@ class FakeBlobClient:
         return FakeDownload(self._blob.data)
 
     def set_blob_metadata(self, metadata: Dict[str, str]) -> None:
+        if getattr(self._container, "should_fail", False):
+            raise routes_playground.AzureError("Simulated write failure")
         self._blob.metadata = dict(metadata)
 
 
@@ -64,6 +66,7 @@ class FakeContainerClient:
     def __init__(self, url: str) -> None:
         self.url = url
         self._blobs: Dict[str, FakeBlob] = {}
+        self.should_fail = False
 
     def add_blob(self, blob: FakeBlob) -> None:
         self._blobs[blob.name] = blob
@@ -162,6 +165,135 @@ def test_delete_session_marks_metadata(monkeypatch, api_headers, test_client):
     assert container.get_blob(blob_a.name).metadata["deleted"] == routes_playground.DELETED_FLAG_VALUE
     assert container.get_blob(blob_b.name).metadata["deleted"] == routes_playground.DELETED_FLAG_VALUE
     assert container.get_blob(other_session_blob.name).metadata["deleted"] == "false"
+
+
+def test_delete_all_sessions_marks_all_user_blobs_deleted(monkeypatch, api_headers, test_client):
+    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
+    user_blob_1 = FakeBlob(
+        "user-123/session-1.chat.json",
+        {
+            "sessionid": "session-1",
+            "originalname": "session-1.chat.json",
+            "uploadedat": "2023-01-01T00:00:00Z",
+            "deleted": "false",
+            "category": "chat",
+        },
+        b"{}",
+        "application/json",
+    )
+    user_blob_2 = FakeBlob(
+        "user-123/session-2.chat.json",
+        {
+            "sessionid": "session-2",
+            "originalname": "session-2.chat.json",
+            "uploadedat": "2023-01-02T00:00:00Z",
+            "deleted": "false",
+            "category": "chat",
+        },
+        b"{}",
+        "application/json",
+    )
+    other_user_blob = FakeBlob(
+        "user-789/session-1.chat.json",
+        {
+            "sessionid": "session-1",
+            "originalname": "session-1.chat.json",
+            "uploadedat": "2023-01-01T00:00:00Z",
+            "deleted": "false",
+            "category": "chat",
+        },
+        b"{}",
+        "application/json",
+    )
+    for blob in (user_blob_1, user_blob_2, other_user_blob):
+        container.add_blob(blob)
+
+    _set_mock_clients(monkeypatch, container)
+
+    response = test_client.delete("/api/playground/sessions", headers=api_headers)
+
+    assert response.status_code == 200
+    assert response.get_json() == {"deletedCount": 2, "failed": [], "message": "Success"}
+    assert container.get_blob(user_blob_1.name).metadata["deleted"] == routes_playground.DELETED_FLAG_VALUE
+    assert container.get_blob(user_blob_2.name).metadata["deleted"] == routes_playground.DELETED_FLAG_VALUE
+    assert container.get_blob(other_user_blob.name).metadata["deleted"] == "false"
+
+
+def test_delete_all_sessions_handles_partial_failure(monkeypatch, api_headers, test_client):
+    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
+    user_blob_1 = FakeBlob(
+        "user-123/session-1.chat.json",
+        {"sessionid": "session-1", "deleted": "false"},
+    )
+    container.add_blob(user_blob_1)
+    
+    _set_mock_clients(monkeypatch, container)
+    
+    # Force failure on the second set_blob_metadata call (though we only have one here, 
+    # we can just set it to fail and expect a 207)
+    container.should_fail = True
+
+    response = test_client.delete("/api/playground/sessions", headers=api_headers)
+
+    assert response.status_code == 207
+    data = response.get_json()
+    assert data["deletedCount"] == 0
+    assert user_blob_1.name in data["failed"]
+    assert "Bulk delete completed with errors" in data["message"]
+
+
+def test_delete_all_sessions_returns_success_when_no_blobs(monkeypatch, api_headers, test_client):
+    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
+    _set_mock_clients(monkeypatch, container)
+
+    response = test_client.delete("/api/playground/sessions", headers=api_headers)
+
+    assert response.status_code == 200
+    assert response.get_json() == {"deletedCount": 0, "failed": [], "message": "Success"}
+
+
+def test_delete_all_sessions_skips_already_deleted(monkeypatch, api_headers, test_client):
+    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
+    user_blob_1 = FakeBlob(
+        "user-123/session-1.chat.json",
+        {"sessionid": "session-1", "deleted": routes_playground.DELETED_FLAG_VALUE},
+    )
+    user_blob_2 = FakeBlob(
+        "user-123/session-2.chat.json",
+        {"sessionid": "session-2", "deleted": "false"},
+    )
+    container.add_blob(user_blob_1)
+    container.add_blob(user_blob_2)
+
+    _set_mock_clients(monkeypatch, container)
+
+    response = test_client.delete("/api/playground/sessions", headers=api_headers)
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["deletedCount"] == 1
+    assert data["failed"] == []
+    assert container.get_blob(user_blob_2.name).metadata["deleted"] == routes_playground.DELETED_FLAG_VALUE
+
+
+def test_delete_all_sessions_handles_large_blob_sets(monkeypatch, api_headers, test_client):
+    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
+    num_blobs = 50
+    for i in range(num_blobs):
+        blob = FakeBlob(
+            f"user-123/session-{i}.chat.json",
+            {"sessionid": f"session-{i}", "deleted": "false"},
+        )
+        container.add_blob(blob)
+
+    _set_mock_clients(monkeypatch, container)
+
+    response = test_client.delete("/api/playground/sessions", headers=api_headers)
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["deletedCount"] == num_blobs
+    assert len(data["failed"]) == 0
 
 
 def test_delete_session_returns_zero_when_no_matches(monkeypatch, api_headers, test_client):
