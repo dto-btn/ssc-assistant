@@ -198,18 +198,6 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
 
   const moreMenuOpen = Boolean(moreMenuAnchor);
 
-  /**
-   * Closes the mobile drawer or collapses the desktop sidebar.
-   */
-  const handleSidebarToggle = useCallback(() => {
-    if (isMobile) {
-      dispatch(closeMobileSidebar());
-      return;
-    }
-
-    dispatch(toggleSidebarCollapsed());
-  }, [dispatch, isMobile]);
-
   const sidebarTitleId = "playground-session-sidebar-title";
 
   const sidebarContent = (
