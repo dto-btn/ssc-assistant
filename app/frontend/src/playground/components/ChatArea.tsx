@@ -17,7 +17,7 @@ import ChatInput from "./ChatInput";
 import ReplayStopBar from "./ReplayStopBar";
 import Citations from "./Citations";
 import type { Citation } from "./Citations";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useTheme, useMediaQuery } from "@mui/material";
 import { addMessage, setIsLoading } from "../store/slices/chatSlice";
 import Suggestions from "./Suggestions";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
@@ -32,6 +32,7 @@ import { sendAssistantMessage } from "../store/thunks/assistantThunks";
 import OrchestratorDebugPanel from "./OrchestratorDebugPanel";
 import MenuIcon from "@mui/icons-material/Menu";
 import { IconButton, Tooltip } from "@mui/material";
+import { useAppSelector } from "../store/hooks";
 
 /**
  * Optional controls passed from layout so ChatArea can reopen a hidden sidebar.
@@ -88,6 +89,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           <TopBar 
             onToggleSidebar={onOpenSidebar} 
             isSidebarOpen={isSidebarOpen}
+            isMobile={useMediaQuery(useTheme().breakpoints.down("md"))}
+            isMobileSidebarOpen={useAppSelector((state) => state.ui.isMobileSidebarOpen)}
           />
         </Box>
       </Box>
@@ -259,7 +262,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
   if (!currentSessionId) {
     return (
-      <Box flex={1} display="flex" flexDirection="column" height="100vh">
+      <Box flex={1} display="flex" flexDirection="column" height="100dvh">
         {renderHeader()}
         <Box flex={1} display="flex" alignItems="center" justifyContent="center">
           {t("select.or.create.session")}
@@ -274,7 +277,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         flex={1}
         display="flex"
         flexDirection="column"
-        height="100vh"
+        height="100dvh"
       >
         {renderSidebarToggle()}
         <Typography variant="h3" gutterBottom>
@@ -291,7 +294,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   }
 
   return (
-    <Box flex={1} display="flex" flexDirection="column" height="100vh">
+    <Box flex={1} display="flex" flexDirection="column" height="100dvh">
       {renderHeader()}
       <ChatMessages sessionId={currentSessionId} />
       <Citations citations={citations as Citation[]} />
