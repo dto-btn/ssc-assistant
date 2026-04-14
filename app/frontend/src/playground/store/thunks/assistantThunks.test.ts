@@ -8,6 +8,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { type UnknownAction } from "@reduxjs/toolkit";
 import { deriveSessionName, sendAssistantMessage } from "./assistantThunks";
 import { renameSession, setIsSessionNew } from "../slices/sessionSlice";
 import type { RootState } from "..";
@@ -66,12 +67,12 @@ function makeState(overrides: { isNewChat: boolean; accessToken?: string | null 
 
 /** Collects plain Redux actions dispatched by a thunk. */
 function makeDispatch() {
-  const dispatched: ReturnType<typeof renameSession>[] = [];
+  const dispatched: UnknownAction[] = [];
   const dispatch = vi.fn((action: unknown) => {
     if (typeof action === "function") {
       return (action as (d: typeof dispatch, g: () => RootState) => unknown)(dispatch, () => ({}) as RootState);
     }
-    dispatched.push(action as ReturnType<typeof renameSession>);
+    dispatched.push(action as UnknownAction);
     return action;
   });
   return { dispatch, dispatched };
