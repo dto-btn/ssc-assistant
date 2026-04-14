@@ -119,6 +119,7 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobil
           <Button
             variant="contained"
             disableElevation
+            aria-label={t("button.joinchat", { ns: "translations" })}
             onClick={() => {
               window.open(
                 "https://teams.microsoft.com/l/channel/19%3Au1yOceUvSm8spn8ZAyma2zT90c042tzBQAwst9Gem1c1%40thread.tacv2/SSC%20Assistant?groupId=9c07bdb4-3403-464b-a1c2-91cdaf3a2496&ngc=true&allowXTenantAccess=true",
@@ -126,7 +127,7 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobil
                 "noopener,noreferrer"
               );
             }}
-            startIcon={<img src={TopmenuMicrosofTeamsIcon} alt={t("button.joinchat", { ns: "translations" })} style={{ width: "1.1rem" }} />}
+            startIcon={<img src={TopmenuMicrosofTeamsIcon} alt="" style={{ width: "1.1rem" }} />}
             sx={{
               bgcolor: "white",
               color: "#3f479a",
@@ -136,7 +137,8 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobil
               borderRadius: "8px",
               padding: { xs: "4px 8px", sm: "6px 16px" },
               fontSize: { xs: "0.75rem", sm: "0.875rem" },
-              minHeight: { xs: "32px", sm: "36px" },
+              minHeight: { xs: "44px", sm: "44px" },
+              minWidth: { xs: "44px" },
               "& .MuiButton-startIcon": {
                 marginRight: { xs: 0, sm: 1 }
               },
