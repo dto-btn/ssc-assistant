@@ -82,7 +82,9 @@ export const createStreamTypewriter = (
     intervalId = window.setInterval(() => {
       drainOnce();
       if (!pendingBuffer.length) {
-        window.clearInterval(intervalId!);
+        if (intervalId !== null) {
+          window.clearInterval(intervalId);
+        }
         intervalId = null;
         resolveIdle();
       }

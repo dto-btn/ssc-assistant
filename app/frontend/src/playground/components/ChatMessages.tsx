@@ -5,25 +5,24 @@
  * Handles message grouping, quoting highlights, and feeds message UI events
  * back to the store.
  */
-import React, { useRef, useEffect, useMemo, useCallback, useState } from "react";
+import React, { useRef, useEffect, useMemo, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../store";
 import {
   Box,
   List,
   ListItem,
-  IconButton,
-  Tooltip,
 } from "@mui/material";
 import ReactMarkdown from "react-markdown";
 import Link from "@mui/material/Link";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import CheckIcon from "@mui/icons-material/Check";
+import { useTranslation } from "react-i18next";
 import AttachmentPreview from "./AttachmentPreview";
 import { selectSessionFilesById } from "../store/selectors/sessionFilesSelectors";
 import { FileAttachment } from "../types";
 import { Message } from "../store/slices/chatSlice";
 import McpAttributionPill from "./McpAttributionPill";
+import MarkdownCodeBlock, { MarkdownCodeBlockProps } from "./MarkdownCodeBlock";
+import { ASSISTANT_MARKDOWN_SX, USER_MARKDOWN_SX } from "./chatMessageStyles";
 import assistantLogo from "../../assets/SSC-Logo-Purple-Leaf-300x300.png";
 
 interface ChatMessagesProps {
@@ -41,168 +40,24 @@ const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({
   );
 };
 
-interface MarkdownCodeBlockProps extends React.ComponentPropsWithoutRef<"code"> {
-  inline?: boolean;
-}
-
-const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
-  inline,
-  className,
-  children,
-  ...rest
-}) => {
-  const [isCopied, setIsCopied] = useState(false);
-  const codeText = useMemo(() => String(children ?? "").replace(/\n$/, ""), [children]);
-
-  const handleCopyCode = async () => {
-    if (!codeText) return;
-    try {
-      await navigator.clipboard.writeText(codeText);
-      setIsCopied(true);
-      window.setTimeout(() => setIsCopied(false), 1400);
-    } catch {
-      // Clipboard API may be unavailable in some browser contexts.
-    }
-  };
-
-  if (inline) {
-    return (
-      <code className={className} {...rest}>
-        {children}
-      </code>
-    );
-  }
-
-  return (
-    <Box sx={{ position: "relative" }}>
-      <Tooltip title={isCopied ? "Copied" : "Copy code"}>
-        <IconButton
-          size="small"
-          aria-label="Copy code"
-          onClick={handleCopyCode}
-          sx={{
-            position: "absolute",
-            top: 8,
-            right: 8,
-            bgcolor: "rgba(255,255,255,0.86)",
-            border: "1px solid rgba(0,0,0,0.12)",
-            zIndex: 1,
-            "&:hover": { bgcolor: "rgba(255,255,255,0.96)" },
-          }}
-        >
-          {isCopied ? <CheckIcon fontSize="inherit" /> : <ContentCopyIcon fontSize="inherit" />}
-        </IconButton>
-      </Tooltip>
-      <pre className={className} style={{ margin: 0 }}>
-        <code {...rest}>{codeText}</code>
-      </pre>
-    </Box>
-  );
-};
-
 const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
-  const baseMarkdownSx = {
-    fontSize: "0.98rem",
-    lineHeight: 1.65,
-    wordBreak: "break-word",
-    "& > *:first-of-type": { mt: 0 },
-    "& > *:last-child": { mb: 0 },
-    "& p": { m: 0 },
-    "& p + p": { mt: 1.25 },
-    "& h1, & h2, & h3, & h4": { mt: 1.5, mb: 0.75, lineHeight: 1.3 },
-    "& ul, & ol": { my: 1, pl: 3 },
-    "& li + li": { mt: 0.4 },
-    "& code": {
-      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-      fontSize: "0.88em",
-      px: 0.5,
-      py: 0.2,
-      borderRadius: "6px",
-      bgcolor: "rgba(0,0,0,0.06)",
-    },
-    "& pre": {
-      my: 1.25,
-      p: 1.25,
-      borderRadius: "10px",
-      overflowX: "auto",
-      bgcolor: "rgba(0,0,0,0.06)",
-    },
-    "& pre code": {
-      bgcolor: "transparent",
-      p: 0,
-      borderRadius: 0,
-      fontSize: "0.86em",
-    },
-    "& blockquote": {
-      m: 0,
-      my: 1,
-      pl: 1.25,
-      borderLeft: "3px solid",
-      borderColor: "rgba(75,63,168,0.45)",
-      color: "text.secondary",
-    },
-    "& table": {
-      width: "100%",
-      borderCollapse: "collapse",
-      my: 1.25,
-      fontSize: "0.92em",
-    },
-    "& th, & td": {
-      border: "1px solid rgba(0,0,0,0.16)",
-      p: 0.65,
-      textAlign: "left",
-      verticalAlign: "top",
-    },
-    "& a": {
-      textUnderlineOffset: "2px",
-    },
-  };
+  const { t } = useTranslation("playground");
 
-  const assistantMarkdownSx = {
-    ...baseMarkdownSx,
-    "& a": {
-      color: "#4B3FA8",
-      fontWeight: 500,
-    },
-  };
-
-  const userMarkdownSx = {
-    ...baseMarkdownSx,
-    "& code": {
-      ...baseMarkdownSx["& code"],
-      bgcolor: "rgba(255,255,255,0.2)",
-    },
-    "& pre": {
-      ...baseMarkdownSx["& pre"],
-      bgcolor: "rgba(255,255,255,0.2)",
-    },
-    "& blockquote": {
-      ...baseMarkdownSx["& blockquote"],
-      borderColor: "rgba(255,255,255,0.55)",
-      color: "rgba(255,255,255,0.92)",
-    },
-    "& th, & td": {
-      ...baseMarkdownSx["& th, & td"],
-      border: "1px solid rgba(255,255,255,0.35)",
-    },
-    "& a": {
-      color: "#FFFFFF",
-      fontWeight: 500,
-    },
-  };
-
-  const markdownComponents = {
-    a: ({ ...props }) => (
-      <MarkdownLink
-        {...(props as React.ComponentPropsWithoutRef<"a">)}
-      />
-    ),
-    code: ({ ...props }) => (
-      <MarkdownCodeBlock
-        {...(props as MarkdownCodeBlockProps)}
-      />
-    ),
-  };
+  const markdownComponents = useMemo(
+    () => ({
+      a: ({ ...props }) => (
+        <MarkdownLink
+          {...(props as React.ComponentPropsWithoutRef<"a">)}
+        />
+      ),
+      code: ({ ...props }) => (
+        <MarkdownCodeBlock
+          {...(props as MarkdownCodeBlockProps)}
+        />
+      ),
+    }),
+    [],
+  );
 
   // Select a stable reference from the store
   const allMessages = useSelector((state: RootState) => state.chat.messages);
@@ -230,7 +85,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
     || assistantResponsePhase === "streaming";
   const shouldShowThinkingLabel = assistantResponsePhase === "waiting-first-token";
 
-  const listRef = useRef<HTMLUListElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const sessionFiles = useSelector(selectSessionFilesById(sessionId));
 
   // Merge lightweight attachment stubs from the transcript with any richer
@@ -249,15 +104,14 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   );
 
   useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight;
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages.length]);
 
   return (
-    <Box flex={1} overflow="auto" p={2}>
+    <Box ref={scrollRef} flex={1} overflow="auto" p={2}>
       <List
-        ref={listRef}
         sx={{
           display: "flex",
           flexDirection: "column",
@@ -315,7 +169,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                       <Box
                         component="img"
                         src={assistantLogo}
-                        alt="Assistant"
+                        alt={t("assistant.label")}
                         sx={{
                           "@keyframes assistantIconPulse": {
                             "0%": { transform: "scale(1)", opacity: 1 },
@@ -330,23 +184,29 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                           animation: pulseThisAssistantIcon
                             ? "assistantIconPulse 1.2s ease-in-out infinite"
                             : "none",
+                          "@media (prefers-reduced-motion: reduce)": {
+                            animation: "none",
+                          },
                         }}
                       />
                       {pulseThisAssistantIcon && shouldShowThinkingLabel && (
                         <Box
                           component="span"
+                          role="status"
+                          aria-live="polite"
+                          aria-atomic="true"
                           sx={{
                             fontSize: "0.86rem",
                             color: "text.secondary",
                             whiteSpace: "nowrap",
                           }}
                         >
-                          Thinking ....
+                          {t("assistant.waiting")}
                         </Box>
                       )}
                     </Box>
                     <Box sx={{ minWidth: 0, flex: 1 }}>
-                      <Box sx={assistantMarkdownSx}>
+                      <Box sx={ASSISTANT_MARKDOWN_SX}>
                         <ReactMarkdown components={markdownComponents}>
                           {message.content}
                         </ReactMarkdown>
@@ -370,7 +230,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                     borderRadius: "16px 4px 16px 16px",
                   }}
                 >
-                  <Box sx={userMarkdownSx}>
+                  <Box sx={USER_MARKDOWN_SX}>
                     <ReactMarkdown components={markdownComponents}>
                       {message.content}
                     </ReactMarkdown>

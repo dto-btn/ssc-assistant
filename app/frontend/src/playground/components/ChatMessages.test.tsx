@@ -56,7 +56,7 @@ function renderMessages(sessionId: string, preloadedState: TestStoreState) {
 }
 
 describe("ChatMessages", () => {
-  it("does not render helper status text while waiting for first token", () => {
+  it("renders waiting status text as an aria-live status message", () => {
     renderMessages("s1", {
       chat: {
         messages: [
@@ -79,7 +79,7 @@ describe("ChatMessages", () => {
       },
     });
 
-    expect(screen.queryByText("Assistant is thinking...")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Assistant is thinking...");
     expect(screen.queryByText("Assistant is responding.")).not.toBeInTheDocument();
   });
 
