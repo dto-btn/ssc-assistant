@@ -34,7 +34,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import CloseIcon from "@mui/icons-material/Close";
 import type { Session } from "../store/slices/sessionSlice";
 import { useTranslation } from 'react-i18next';
@@ -44,10 +43,7 @@ import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
 import SyncStatusIndicator from "./SyncStatusIndicator";
 import ProfileMenu from "./ProfileMenu/ProfileMenu";
 import { deleteSession as deleteSessionThunk, persistSessionRename } from "../store/thunks/sessionManagementThunks";
-import {
-  closeMobileSidebar,
-  toggleSidebarCollapsed,
-} from "../store/slices/uiSlice";
+import { closeMobileSidebar } from "../store/slices/uiSlice";
 
 /**
  * Sidebar for listing and managing Playground chat sessions.
@@ -200,18 +196,6 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
 
   const moreMenuOpen = Boolean(moreMenuAnchor);
 
-  /**
-   * Closes the mobile drawer or collapses the desktop sidebar.
-   */
-  const handleSidebarToggle = useCallback(() => {
-    if (isMobile) {
-      dispatch(closeMobileSidebar());
-      return;
-    }
-
-    dispatch(toggleSidebarCollapsed());
-  }, [dispatch, isMobile]);
-
   const sidebarTitleId = "playground-session-sidebar-title";
 
   const sidebarContent = (
@@ -222,7 +206,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         width: LEFT_MENU_EXPANDED_WIDTH,
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
+        height: "100dvh",
         overflowX: "hidden",
         borderRight: "1px solid",
         borderColor: "divider",
@@ -236,24 +220,22 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           justifyContent: "space-between",
           px: 1,
           py: 1,
+          height: 60,
+          boxSizing: 'border-box'
         }}
       >
-        <Typography component="h2" id={sidebarTitleId} variant="subtitle2" sx={{ px: 1 }}>
+        <Typography component="h2" id={sidebarTitleId} variant="subtitle2" sx={{ px: 1, fontWeight: 'bold' }}>
           {t("chats")}
         </Typography>
-        <IconButton
-          onClick={handleSidebarToggle}
-          aria-controls="playground-session-sidebar"
-          aria-expanded={isMobile ? isMobileSidebarOpen : !isSidebarCollapsed}
-          aria-label={isMobile ? t("sidebar.close") : t("sidebar.collapse")}
-          title={isMobile ? t("sidebar.close") : t("sidebar.collapse")}
-        >
-          {isMobile ? (
-            <CloseIcon />
-          ) : (
-            <ChevronLeftIcon />
-          )}
-        </IconButton>
+        {isMobile && (
+          <IconButton
+            onClick={() => dispatch(closeMobileSidebar())}
+            aria-label={t("sidebar.close")}
+            title={t("sidebar.close")}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        )}
       </Box>
 
       <List id="playground-session-sidebar" aria-labelledby={sidebarTitleId}>

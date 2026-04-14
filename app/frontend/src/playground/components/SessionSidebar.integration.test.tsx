@@ -4,13 +4,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import SessionSidebar from "./SessionSidebar";
-import sessionReducer from "../store/slices/sessionSlice";
-import uiReducer from "../store/slices/uiSlice";
-
-/**
- * Integration tests for responsive sidebar behavior (desktop collapse and mobile drawer UX).
- */
 vi.mock("react-i18next", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-i18next")>();
   return {
@@ -18,8 +11,16 @@ vi.mock("react-i18next", async (importOriginal) => {
     useTranslation: () => ({
       t: (key: string) => key,
     }),
+    initReactI18next: {
+      type: '3rdParty',
+      init: vi.fn(),
+    }
   };
 });
+
+import SessionSidebar from "./SessionSidebar";
+import sessionReducer from "../store/slices/sessionSlice";
+import uiReducer, { toggleSidebarCollapsed } from "../store/slices/uiSlice";
 
 vi.mock("./SessionRenameDialog", () => ({
   default: () => null,
@@ -60,6 +61,10 @@ function renderSidebar(isMobile: boolean, preloadedState?: TestStoreState) {
 }
 
 describe("SessionSidebar responsive behavior", () => {
+  /**
+   * Test that the "chats" section heading is hidden when the desktop sidebar
+   * is in a collapsed state.
+   */
   it("hides desktop sidebar when collapsed", () => {
     renderSidebar(false, {
       sessions: {
@@ -73,23 +78,19 @@ describe("SessionSidebar responsive behavior", () => {
       },
     });
 
-    expect(screen.queryByText("chats")).not.toBeInTheDocument();
+    // Check for "chats" header using the more specific heading role
+    expect(screen.queryByRole("heading", { name: "chats" })).not.toBeInTheDocument();
   });
 
-  it("collapses desktop sidebar from toggle control", async () => {
-    const user = userEvent.setup();
-
-    renderSidebar(false, {
+  /**
+   * Integration test verifying that dispatching a sidebar collapse action correctly
+   * updates the UI to show or hide the sidebar content.
+   */
+  it("reacts to sidebar collapse state change", async () => {
+    const store = renderSidebar(false, {
       sessions: {
-        sessions: [
-          {
-            id: "s1",
-            name: "Session 1",
-            createdAt: 1,
-            isNewChat: false,
-          },
-        ],
-        currentSessionId: "s1",
+        sessions: [],
+        currentSessionId: null,
       },
       ui: {
         isSidebarCollapsed: false,
@@ -98,13 +99,19 @@ describe("SessionSidebar responsive behavior", () => {
       },
     });
 
-    await user.click(screen.getByRole("button", { name: "sidebar.collapse" }));
+    expect(screen.getByRole("heading", { name: "chats" })).toBeInTheDocument();
+
+    store.dispatch(toggleSidebarCollapsed());
 
     await waitFor(() => {
-      expect(screen.queryByText("chats")).not.toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "chats" })).not.toBeInTheDocument();
     });
   });
 
+  /**
+   * Test that the mobile drawer/sidebar automatically closes after a user
+   * selects a chat session from the list (improves mobile UX flow).
+   */
   it("closes mobile drawer after selecting a session", async () => {
     const user = userEvent.setup();
 
@@ -140,6 +147,11 @@ describe("SessionSidebar responsive behavior", () => {
     });
   });
 
+  /**
+   * Test that closing the mobile drawer returns focus to the trigger element
+   * (e.g., the open button in the TopBar). This is critical for keyboard and
+   * screen reader accessibility (WCAG 2.4.3).
+   */
   it("returns focus to opener when mobile drawer closes", async () => {
     const user = userEvent.setup();
 

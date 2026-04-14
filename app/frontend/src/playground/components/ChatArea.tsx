@@ -17,7 +17,7 @@ import ChatInput from "./ChatInput";
 import ReplayStopBar from "./ReplayStopBar";
 import Citations from "./Citations";
 import type { Citation } from "./Citations";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useTheme, useMediaQuery } from "@mui/material";
 import { addMessage, setIsLoading } from "../store/slices/chatSlice";
 import Suggestions from "./Suggestions";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
@@ -30,20 +30,18 @@ import { pickLatestArchive } from "../utils/archives";
 import { applyRemoteSessionDeletion } from "../store/thunks/sessionManagementThunks";
 import { sendAssistantMessage } from "../store/thunks/assistantThunks";
 import OrchestratorDebugPanel from "./OrchestratorDebugPanel";
-import MenuIcon from "@mui/icons-material/Menu";
-import { IconButton, Tooltip } from "@mui/material";
+import TopBar from "./TopBar";
+import { useAppSelector } from "../store/hooks";
 
 /**
  * Optional controls passed from layout so ChatArea can reopen a hidden sidebar.
  */
 interface ChatAreaProps {
-  showSidebarToggle?: boolean;
   onOpenSidebar?: () => void;
   isSidebarOpen?: boolean;
 }
 
 const ChatArea: React.FC<ChatAreaProps> = ({
-  showSidebarToggle = false,
   onOpenSidebar,
   isSidebarOpen,
 }) => {
@@ -80,33 +78,25 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   );
   const citations = lastAssistantMessage?.citations ?? [];
 
-  /**
-   * Renders a single shared opener for both mobile drawer mode and
-   * desktop hidden-sidebar mode.
-   */
-  const renderSidebarToggle = () => {
-    if (!showSidebarToggle || !onOpenSidebar) {
-      return null;
-    }
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobileSidebarOpen = useAppSelector((state) => state.ui.isMobileSidebarOpen);
 
+  /**
+   * Renders the brand TopBar with sidebar toggle.
+   */
+  const renderHeader = () => {
     return (
-      <Tooltip title={t("sidebar.open")}>
-        <IconButton
-          id="playground-open-sidebar-button"
-          onClick={onOpenSidebar}
-          aria-controls="playground-session-sidebar"
-          aria-expanded={typeof isSidebarOpen === "boolean" ? isSidebarOpen : undefined}
-          aria-label={t("sidebar.open")}
-          sx={{
-            position: "fixed",
-            top: 8,
-            left: 8,
-            zIndex: (theme) => theme.zIndex.appBar + 1,
-          }}
-        >
-          <MenuIcon />
-        </IconButton>
-      </Tooltip>
+      <Box display="flex" alignItems="center" width="100%">
+        <Box flexGrow={1}>
+          <TopBar 
+            onToggleSidebar={onOpenSidebar} 
+            isSidebarOpen={isSidebarOpen}
+            isMobile={isMobile}
+            isMobileSidebarOpen={isMobileSidebarOpen}
+          />
+        </Box>
+      </Box>
     );
   };
 
@@ -275,8 +265,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
   if (!currentSessionId) {
     return (
-      <Box flex={1} display="flex" flexDirection="column">
-        {renderSidebarToggle()}
+      <Box flex={1} display="flex" flexDirection="column" height="100dvh">
+        {renderHeader()}
         <Box flex={1} display="flex" alignItems="center" justifyContent="center">
           {t("select.or.create.session")}
         </Box>
@@ -290,27 +280,27 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         flex={1}
         display="flex"
         flexDirection="column"
-        alignItems="center"
-        justifyContent="center"
-        p={6}
+        height="100dvh"
       >
-        {renderSidebarToggle()}
-        <Typography variant="h3" gutterBottom>
-          {t("how.can.i.help")}
-        </Typography>
-        <Suggestions
-          onSuggestionClicked={handleSuggestion}
-          disabled={isLoading}
-        />
-        <OrchestratorDebugPanel sessionId={currentSessionId} />
+        {renderHeader()}
+        <Box flex={1} display="flex" flexDirection="column" alignItems="center" justifyContent="center" p={6}>
+          <Typography variant="h3" gutterBottom>
+            {t("how.can.i.help")}
+          </Typography>
+          <Suggestions
+            onSuggestionClicked={handleSuggestion}
+            disabled={isLoading}
+          />
+          <OrchestratorDebugPanel sessionId={currentSessionId} />
+        </Box>
         <ChatInput sessionId={currentSessionId} />
       </Box>
     );
   }
 
   return (
-    <Box flex={1} display="flex" flexDirection="column" height="100vh">
-      {renderSidebarToggle()}
+    <Box flex={1} display="flex" flexDirection="column" height="100dvh">
+      {renderHeader()}
       <ChatMessages sessionId={currentSessionId} />
       <Citations citations={citations as Citation[]} />
       <OrchestratorDebugPanel sessionId={currentSessionId} />
