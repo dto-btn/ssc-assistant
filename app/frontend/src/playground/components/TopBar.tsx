@@ -57,7 +57,9 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobil
             alignItems: "center",
             gap: "0.5rem",
             userSelect: "none",
-            flexShrink: 0,
+            flexShrink: 1,
+            minWidth: 0,
+            overflow: "hidden",
           }}
         >
           {(!isMobile || !isMobileSidebarOpen) && (
@@ -89,12 +91,17 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobil
               fontSize: { xs: "16px", sm: "20px" },
               fontWeight: "500",
               color: "white",
-              textWrap: "nowrap",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              minWidth: 0,
             }}
           >
             {t("title", { ns: "translations" })}
           </Typography>
-          <DevBanner />
+          <Box sx={{ display: { xs: "none", sm: "flex" } }}>
+            <DevBanner />
+          </Box>
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: { xs: "0.5rem", sm: "1rem" } }}>
