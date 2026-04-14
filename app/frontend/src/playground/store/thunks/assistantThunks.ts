@@ -15,8 +15,8 @@ import {
   MessageMcpAttribution,
   OrchestratorInsights,
 } from "../slices/chatSlice";
-import { setIsSessionNew, renameSession } from "../slices/sessionSlice"
-import { persistSessionRename } from "./sessionManagementThunks"
+import { setIsSessionNew, renameSession } from "../slices/sessionSlice";
+import { persistSessionRename } from "./sessionManagementThunks";
 import { addToast } from "../slices/toastSlice";
 import {
   completionService,
@@ -452,12 +452,16 @@ export const sendAssistantMessage = ({
     if (isNewChat) {
       // Rename chat if this is the first message in a new session
       const autoName = deriveSessionName(content);
+
       if (autoName) {
         dispatch(renameSession({ id: sessionId, name: autoName }));
         void dispatch(persistSessionRename(sessionId, autoName));
       }
+
+      // Mark session as no longer new
+      dispatch(setIsSessionNew({id: sessionId, isNew: false}))
     }
-    dispatch(setIsSessionNew({id: sessionId, isNew: false}))
+    
 
     const { accessToken } = getState().auth;
     if (!accessToken || isTokenExpired(accessToken)) {
