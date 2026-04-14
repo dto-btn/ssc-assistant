@@ -450,6 +450,7 @@ export const sendAssistantMessage = ({
   try {
     const isNewChat = getState().sessions.sessions.find((s) => s.id === sessionId)?.isNewChat;
     if (isNewChat) {
+      // Rename chat if this is the first message in a new session
       const autoName = deriveSessionName(content);
       if (autoName) {
         dispatch(renameSession({ id: sessionId, name: autoName }));
