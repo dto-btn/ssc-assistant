@@ -79,6 +79,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   );
   const citations = lastAssistantMessage?.citations ?? [];
 
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobileSidebarOpen = useAppSelector((state) => state.ui.isMobileSidebarOpen);
+
   /**
    * Renders the brand TopBar with sidebar toggle.
    */
@@ -89,8 +93,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           <TopBar 
             onToggleSidebar={onOpenSidebar} 
             isSidebarOpen={isSidebarOpen}
-            isMobile={useMediaQuery(useTheme().breakpoints.down("md"))}
-            isMobileSidebarOpen={useAppSelector((state) => state.ui.isMobileSidebarOpen)}
+            isMobile={isMobile}
+            isMobileSidebarOpen={isMobileSidebarOpen}
           />
         </Box>
       </Box>
