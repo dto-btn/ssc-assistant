@@ -60,6 +60,7 @@ const migratePersistedState = (parsed: PersistedState): PersistedState => {
       typeof ui.isSidebarCollapsed === "boolean" ? ui.isSidebarCollapsed : false,
     // Always start closed on page load for mobile overlays.
     isMobileSidebarOpen: false,
+    isDeletingAllChats: false,
   };
 
   return next;
