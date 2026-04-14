@@ -143,6 +143,26 @@
         "en": "An error occurred during completion.",
         "fr": "Une erreur est survenue pendant le traitement."
     },
+    "assistant.waiting": {
+        "en": "Assistant is thinking...",
+        "fr": "L'assistant réfléchit..."
+    },
+    "assistant.streaming": {
+        "en": "Assistant is responding.",
+        "fr": "L'assistant répond."
+    },
+    "assistant.copy.code": {
+        "en": "Copy code",
+        "fr": "Copier le code"
+    },
+    "assistant.copied": {
+        "en": "Copied",
+        "fr": "Copié"
+    },
+    "assistant.label": {
+        "en": "Assistant",
+        "fr": "Assistant"
+    },
     "errors.deleteFailed": {
         "en": "Could not delete the chat. Please try again.",
         "fr": "Impossible de supprimer la conversation. Veuillez réessayer."
@@ -189,19 +209,23 @@
     },
     "mcp.attribution.trigger": {
         "en": "MCP servers used for this response: {{servers}}",
-        "fr": "Serveurs MCP utilises pour cette reponse : {{servers}}"
+        "fr": "Serveurs MCP utilisés pour cette réponse : {{servers}}"
     },
     "mcp.attribution.title": {
         "en": "MCP attribution",
         "fr": "Attribution MCP"
     },
-    "mcp.attribution.description": {
+    "mcp.attribution.description.single": {
         "en": "This response used the following MCP server.",
-        "fr": "Cette reponse a utilise le serveur MCP suivant."
+        "fr": "Cette réponse a utilisé le serveur MCP suivant."
+    },
+    "mcp.attribution.description.multiple": {
+        "en": "This response used the following MCP servers.",
+        "fr": "Cette réponse a utilisé les serveurs MCP suivants."
     },
     "mcp.attribution.category": {
         "en": "Category: {{category}}",
-        "fr": "Categorie : {{category}}"
+        "fr": "Catégorie : {{category}}"
     },
     "mcp.attribution.status": {
         "en": "Status: {{status}}",

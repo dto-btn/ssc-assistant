@@ -29,10 +29,8 @@ import { rehydrateSessionFromArchive } from "../store/thunks/sessionBootstrapThu
 import { pickLatestArchive } from "../utils/archives";
 import { applyRemoteSessionDeletion } from "../store/thunks/sessionManagementThunks";
 import OrchestratorDebugPanel from "./OrchestratorDebugPanel";
-import AgentActivityPanel from "./AgentActivityPanel";
 import TopBar from "./TopBar";
 import { useAppSelector } from "../store/hooks";
-
 
 /**
  * Optional controls passed from layout so ChatArea can reopen a hidden sidebar.
@@ -293,7 +291,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             onSuggestionClicked={handleSuggestion}
             disabled={isLoading}
           />
-          <AgentActivityPanel sessionId={currentSessionId} />
           <OrchestratorDebugPanel sessionId={currentSessionId} />
         </Box>
         <ChatInput sessionId={currentSessionId} />
@@ -306,7 +303,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       {renderHeader()}
       <ChatMessages sessionId={currentSessionId} />
       <Citations citations={citations as Citation[]} />
-      <AgentActivityPanel sessionId={currentSessionId} />
       <OrchestratorDebugPanel sessionId={currentSessionId} />
       <ReplayStopBar
         onReplay={handleReplay}

@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { loadChatState } from "./persistence";
 
+/**
+ * Verifies persistence migration keeps durable preferences and resets transient UI state.
+ */
 describe("playground persistence migration", () => {
   beforeEach(() => {
     localStorage.clear();

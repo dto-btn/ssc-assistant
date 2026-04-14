@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { normalizeArchiveMessage } from "./archives";
 
+/**
+ * Regression tests for archive restoration edge-cases around MCP attribution payloads.
+ */
 describe("normalizeArchiveMessage", () => {
   it("preserves valid mcpAttribution from archived assistant messages", () => {
     const restored = normalizeArchiveMessage(

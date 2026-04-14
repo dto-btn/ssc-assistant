@@ -10,6 +10,9 @@ const CHAT_KEY = "playground_chat_state";
 
 type PersistedState = Record<string, unknown>;
 
+/**
+ * Drops malformed persisted message entries so hydration cannot crash reducers.
+ */
 const normalizePersistedMessages = (messages: unknown): unknown[] => {
   if (!Array.isArray(messages)) {
     return [];
@@ -31,6 +34,9 @@ const normalizePersistedMessages = (messages: unknown): unknown[] => {
   });
 };
 
+/**
+ * Migrates older local-storage payloads to the current reducer contract.
+ */
 const migratePersistedState = (parsed: PersistedState): PersistedState => {
   const next = { ...parsed };
   const chat = (next.chat as Record<string, unknown> | undefined) ?? {};
@@ -39,6 +45,10 @@ const migratePersistedState = (parsed: PersistedState): PersistedState => {
   next.chat = {
     messages: normalizePersistedMessages(chat.messages),
     isLoading: typeof chat.isLoading === "boolean" ? chat.isLoading : false,
+    assistantResponsePhaseBySessionId:
+      chat.assistantResponsePhaseBySessionId && typeof chat.assistantResponsePhaseBySessionId === "object"
+        ? chat.assistantResponsePhaseBySessionId
+        : {},
     orchestratorInsightsBySessionId:
       chat.orchestratorInsightsBySessionId && typeof chat.orchestratorInsightsBySessionId === "object"
         ? chat.orchestratorInsightsBySessionId
@@ -55,6 +65,9 @@ const migratePersistedState = (parsed: PersistedState): PersistedState => {
   return next;
 };
 
+/**
+ * Persists redux state to localStorage while excluding sensitive auth data.
+ */
 export function saveChatState(state: unknown) {
   try {
     // Do not persist auth tokens
@@ -68,6 +81,10 @@ export function saveChatState(state: unknown) {
   }
 }
 
+/**
+ * Loads and migrates persisted playground state, returning undefined on any
+ * read/parse failure so store initialization can continue safely.
+ */
 export function loadChatState() {
   try {
     const raw = localStorage.getItem(CHAT_KEY);

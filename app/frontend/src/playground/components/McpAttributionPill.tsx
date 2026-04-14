@@ -10,11 +10,18 @@ import {
 import { useTranslation } from "react-i18next";
 import type { MessageMcpAttribution } from "../store/slices/chatSlice";
 
+/**
+ * Props for the MCP attribution summary chip attached to assistant messages.
+ */
 interface McpAttributionPillProps {
   attribution: MessageMcpAttribution;
   messageId: string;
 }
 
+/**
+ * Compact disclosure control that summarizes which MCP servers participated
+ * in generating an assistant response.
+ */
 const McpAttributionPill: React.FC<McpAttributionPillProps> = ({ attribution, messageId }) => {
   const { t } = useTranslation("playground");
   const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
@@ -26,6 +33,11 @@ const McpAttributionPill: React.FC<McpAttributionPillProps> = ({ attribution, me
   const serverNames = attribution.servers.map((server) => server.serverLabel).filter(Boolean);
   const primaryServer = serverNames[0] || t("mcp.attribution.unknown");
   const additionalCount = Math.max(serverNames.length - 1, 0);
+  const descriptionKey =
+    serverNames.length === 1
+      ? "mcp.attribution.description.single"
+      : "mcp.attribution.description.multiple";
+  // Keep the chip label short; full details are available in the popover.
   const summaryLabel = t("mcp.attribution.summary", {
     primaryServer,
     suffix: additionalCount > 0 ? ` +${additionalCount}` : "",
@@ -43,6 +55,8 @@ const McpAttributionPill: React.FC<McpAttributionPillProps> = ({ attribution, me
     setAnchorEl(null);
   };
 
+  const descriptionId = `${popoverId}-description`;
+
   return (
     <Box sx={{ maxWidth: "100%" }}>
       <Chip
@@ -55,12 +69,6 @@ const McpAttributionPill: React.FC<McpAttributionPillProps> = ({ attribution, me
         aria-haspopup="dialog"
         aria-expanded={open ? "true" : "false"}
         aria-controls={popoverId}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            setAnchorEl(event.currentTarget);
-          }
-        }}
         sx={{
           borderRadius: 9999,
           maxWidth: "100%",
@@ -99,6 +107,7 @@ const McpAttributionPill: React.FC<McpAttributionPillProps> = ({ attribution, me
             },
             role: "dialog",
             "aria-labelledby": titleId,
+            "aria-describedby": descriptionId,
           },
         }}
       >
@@ -106,13 +115,14 @@ const McpAttributionPill: React.FC<McpAttributionPillProps> = ({ attribution, me
           <Typography id={titleId} variant="subtitle2">
             {t("mcp.attribution.title")}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {t("mcp.attribution.description", { count: serverNames.length || 1 })}
+          <Typography id={descriptionId} variant="body2" color="text.secondary">
+            {t(descriptionKey)}
           </Typography>
           <Divider />
-          <Stack spacing={0.75}>
+          <Box component="ul" sx={{ m: 0, pl: 2.5, display: "grid", gap: 0.75 }}>
             {attribution.servers.map((server, index) => (
               <Typography
+                component="li"
                 key={`${server.serverLabel}-${index}`}
                 variant="body2"
                 sx={{ overflowWrap: "anywhere" }}
@@ -120,7 +130,7 @@ const McpAttributionPill: React.FC<McpAttributionPillProps> = ({ attribution, me
                 {server.serverLabel}
               </Typography>
             ))}
-          </Stack>
+          </Box>
           {attribution.category ? (
             <Typography variant="caption" color="text.secondary">
               {t("mcp.attribution.category", { category: attribution.category })}

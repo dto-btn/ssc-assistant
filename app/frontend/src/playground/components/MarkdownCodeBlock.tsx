@@ -1,0 +1,72 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { Box, IconButton, Tooltip } from "@mui/material";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import CheckIcon from "@mui/icons-material/Check";
+import { useTranslation } from "react-i18next";
+
+export interface MarkdownCodeBlockProps extends React.ComponentPropsWithoutRef<"code"> {
+  inline?: boolean;
+}
+
+const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
+  inline,
+  className,
+  children,
+  ...rest
+}) => {
+  const { t } = useTranslation("playground");
+  const [isCopied, setIsCopied] = useState(false);
+  const codeText = useMemo(() => String(children ?? "").replace(/\n$/, ""), [children]);
+
+  useEffect(() => {
+    if (!isCopied) return;
+    const timerId = window.setTimeout(() => setIsCopied(false), 1400);
+    return () => window.clearTimeout(timerId);
+  }, [isCopied]);
+
+  const handleCopyCode = async () => {
+    if (!codeText) return;
+    try {
+      await navigator.clipboard.writeText(codeText);
+      setIsCopied(true);
+    } catch {
+      // Clipboard API may be unavailable in some browser contexts.
+    }
+  };
+
+  if (inline) {
+    return (
+      <code className={className} {...rest}>
+        {children}
+      </code>
+    );
+  }
+
+  return (
+    <Box sx={{ position: "relative" }}>
+      <Tooltip title={isCopied ? t("assistant.copied") : t("assistant.copy.code")}>
+        <IconButton
+          size="small"
+          aria-label={t("assistant.copy.code")}
+          onClick={handleCopyCode}
+          sx={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            bgcolor: "rgba(255,255,255,0.86)",
+            border: "1px solid rgba(0,0,0,0.12)",
+            zIndex: 1,
+            "&:hover": { bgcolor: "rgba(255,255,255,0.96)" },
+          }}
+        >
+          {isCopied ? <CheckIcon fontSize="inherit" /> : <ContentCopyIcon fontSize="inherit" />}
+        </IconButton>
+      </Tooltip>
+      <pre className={className} style={{ margin: 0 }}>
+        <code {...rest}>{codeText}</code>
+      </pre>
+    </Box>
+  );
+};
+
+export default MarkdownCodeBlock;

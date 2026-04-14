@@ -39,6 +39,9 @@ type TestStoreState = {
   ui: ReturnType<typeof uiReducer>;
 };
 
+/**
+ * Creates a minimal Redux harness for rendering SessionSidebar in isolation.
+ */
 function renderSidebar(isMobile: boolean, preloadedState?: TestStoreState) {
   const store = configureStore({
     reducer: {
@@ -152,6 +155,7 @@ describe("SessionSidebar responsive behavior", () => {
   it("returns focus to opener when mobile drawer closes", async () => {
     const user = userEvent.setup();
 
+    // Simulate the chat-area toggle button so focus restoration can be asserted.
     const opener = document.createElement("button");
     opener.id = "playground-open-sidebar-button";
     opener.textContent = "open";
@@ -185,5 +189,34 @@ describe("SessionSidebar responsive behavior", () => {
     } finally {
       opener.remove();
     }
+  });
+
+  it("falls back to new chat button focus when opener is absent", async () => {
+    const user = userEvent.setup();
+
+    renderSidebar(true, {
+      sessions: {
+        sessions: [
+          {
+            id: "s1",
+            name: "Session 1",
+            createdAt: 1,
+            isNewChat: false,
+          },
+        ],
+        currentSessionId: "s1",
+      },
+      ui: {
+        isSidebarCollapsed: false,
+        isMobileSidebarOpen: true,
+        isDeletingAllChats: false,
+      },
+    });
+
+    await user.click(screen.getByRole("button", { name: "sidebar.close" }));
+
+    await waitFor(() => {
+      expect((document.activeElement as HTMLElement | null)?.id).toBe("new-chat-button");
+    });
   });
 });

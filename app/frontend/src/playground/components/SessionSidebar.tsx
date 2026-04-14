@@ -84,7 +84,14 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
     if (!isMobileSidebarOpen && wasMobileSidebarOpenRef.current) {
       // Return focus to the opener after the temporary drawer closes.
       const opener = document.getElementById("playground-open-sidebar-button");
-      opener?.focus();
+      if (opener instanceof HTMLElement) {
+        opener.focus();
+      } else {
+        const fallback = document.getElementById("new-chat-button");
+        if (fallback instanceof HTMLElement) {
+          fallback.focus();
+        }
+      }
     }
 
     wasMobileSidebarOpenRef.current = isMobileSidebarOpen;
@@ -201,8 +208,9 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         flexDirection: "column",
         height: "100dvh",
         overflowX: "hidden",
-        borderRight: "1px solid #ddd",
-        bgcolor: "#ededf3",
+        borderRight: "1px solid",
+        borderColor: "divider",
+        bgcolor: "background.default",
       }}
     >
       <Box
@@ -256,17 +264,19 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
               flexDirection: "row",
               p: "2px 0px",
               backgroundColor:
-                session.id === currentSessionId ? "lightgray" : "transparent",
+                session.id === currentSessionId ? "action.selected" : "transparent",
               "&:hover": {
-                backgroundColor: "lightgray",
+                backgroundColor: "action.hover",
               },
               transition: "none",
               "& .more-button": {
-                opacity: 0,
+                opacity: 1,
+                color: "text.disabled",
                 transition: "opacity 0.15s ease-in-out",
               },
               "&:hover .more-button, &:focus-within .more-button": {
                 opacity: 1,
+                color: "text.primary",
               },
             }}
           >
@@ -284,7 +294,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
                   dispatch(closeMobileSidebar());
                 }
               }}
-              aria-current={session.id === currentSessionId ? "true" : undefined}
+              aria-current={session.id === currentSessionId ? "page" : undefined}
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%", minWidth: 0 }}>
                 <Typography
@@ -305,16 +315,19 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
               aria-controls={moreMenuOpen ? "session-menu" : undefined}
               aria-expanded={moreMenuOpen && selectedSessionId === session.id ? "true" : undefined}
               aria-haspopup="true"
-              sx={{ mr: "10px", "&:hover": { backgroundColor: "transparent", color: "black" } }}
+              sx={{
+                minWidth: 44,
+                minHeight: 44,
+                mr: "10px",
+                color: "inherit",
+                "&:hover": { backgroundColor: "transparent" },
+              }}
             >
               <Tooltip
                 title={t('options')}
                 placement="top"
                 slotProps={{
                   popper: {
-                    sx: {
-                      "& .MuiTooltip-tooltip": { backgroundColor: "black", color: "white" },
-                    },
                     modifiers: [{ name: "offset", options: { offset: [0, 5] } }],
                   },
                 }}
