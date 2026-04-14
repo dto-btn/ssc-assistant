@@ -15,7 +15,12 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
-import ReactMarkdown from "react-markdown";
+import { MarkdownHooks } from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import rehypeMermaid from "rehype-mermaid";
+import rehypeMathjax from "rehype-mathjax";
+import "highlight.js/styles/github.css";
 import Link from "@mui/material/Link";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
@@ -45,6 +50,16 @@ interface MarkdownCodeBlockProps extends React.ComponentPropsWithoutRef<"code"> 
   inline?: boolean;
 }
 
+const getNodeText = (node: React.ReactNode): string => {
+  if (node == null || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(getNodeText).join("");
+  if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
+    return getNodeText(node.props.children);
+  }
+  return "";
+};
+
 const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
   inline,
   className,
@@ -52,7 +67,7 @@ const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
   ...rest
 }) => {
   const [isCopied, setIsCopied] = useState(false);
-  const codeText = useMemo(() => String(children ?? "").replace(/\n$/, ""), [children]);
+  const codeText = useMemo(() => getNodeText(children).replace(/\n$/, ""), [children]);
 
   const handleCopyCode = async () => {
     if (!codeText) return;
@@ -94,7 +109,7 @@ const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
         </IconButton>
       </Tooltip>
       <pre className={className} style={{ margin: 0 }}>
-        <code {...rest}>{codeText}</code>
+        <code {...rest}>{children}</code>
       </pre>
     </Box>
   );
@@ -156,6 +171,14 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
     "& a": {
       textUnderlineOffset: "2px",
     },
+    "& svg[id^='mermaid-']": {
+      width: "100% !important",
+      height: "auto !important",
+      maxWidth: "100%",
+      display: "block",
+      margin: "0 auto",
+      minHeight: "420px",
+    },
   };
 
   const assistantMarkdownSx = {
@@ -203,6 +226,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
       />
     ),
   };
+
+  const remarkPlugins = [remarkGfm];
 
   // Select a stable reference from the store
   const allMessages = useSelector((state: RootState) => state.chat.messages);
@@ -277,6 +302,11 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
             && message.mcpAttribution?.source === "live"
             && message.mcpAttribution.servers.length > 0;
           const liveAttribution = hasLiveAttribution ? message.mcpAttribution : undefined;
+          const isActiveStreamingAssistant = Boolean(
+            isAssistantMessage
+            && message.id === activeAssistantMessageId
+            && assistantResponsePhase === "streaming",
+          );
           const resolvedAttachments = resolveAttachments(
             message.attachments as FileAttachment[] | undefined,
           );
@@ -347,9 +377,26 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                     </Box>
                     <Box sx={{ minWidth: 0, flex: 1 }}>
                       <Box sx={assistantMarkdownSx}>
-                        <ReactMarkdown components={markdownComponents}>
+                        <MarkdownHooks
+                          components={markdownComponents}
+                          remarkPlugins={remarkPlugins}
+                          rehypePlugins={
+                            isActiveStreamingAssistant
+                              ? [rehypeHighlight, rehypeMathjax]
+                              : [
+                                rehypeHighlight,
+                                rehypeMathjax,
+                                [
+                                  rehypeMermaid,
+                                  {
+                                    errorFallback: () => <div>Invalid diagram format!</div>,
+                                  },
+                                ],
+                              ]
+                          }
+                        >
                           {message.content}
-                        </ReactMarkdown>
+                        </MarkdownHooks>
                       </Box>
                       {resolvedAttachments.length > 0 && (
                         <AttachmentPreview attachments={resolvedAttachments} />
@@ -371,9 +418,22 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                   }}
                 >
                   <Box sx={userMarkdownSx}>
-                    <ReactMarkdown components={markdownComponents}>
+                    <MarkdownHooks
+                      components={markdownComponents}
+                      remarkPlugins={remarkPlugins}
+                      rehypePlugins={[
+                        rehypeHighlight,
+                        rehypeMathjax,
+                        [
+                          rehypeMermaid,
+                          {
+                            errorFallback: () => <div>Invalid diagram format!</div>,
+                          },
+                        ],
+                      ]}
+                    >
                       {message.content}
-                    </ReactMarkdown>
+                    </MarkdownHooks>
                   </Box>
                   {resolvedAttachments.length > 0 && (
                     <AttachmentPreview attachments={resolvedAttachments} />
