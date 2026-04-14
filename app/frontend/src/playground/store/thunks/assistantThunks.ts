@@ -658,6 +658,7 @@ export const sendAssistantMessage = ({
     ): Promise<void> => {
       // One execution path used for both primary run and no-tools retry.
       let receivedFirstChunk = false;
+      let pendingToolCallStatusText = "";
 
       const typewriter = createStreamTypewriter({
         tickMs: 20,
@@ -685,6 +686,17 @@ export const sendAssistantMessage = ({
           },
           {
             onChunk: (chunk: string) => {
+              if (!receivedFirstChunk && pendingToolCallStatusText) {
+                // Clear transient tool-call status before typed response starts.
+                pendingToolCallStatusText = "";
+                dispatch(
+                  updateMessageContent({
+                    messageId: latestAssistantMessage.id,
+                    content: "",
+                  })
+                );
+              }
+
               typewriter.enqueue(chunk);
               if (!receivedFirstChunk) {
                 receivedFirstChunk = true;
@@ -693,10 +705,14 @@ export const sendAssistantMessage = ({
             },
             onToolCall: (toolName?: string) => {
               const toolCallMessage = `\n${toolName ?? "A tool"} is being called...\n`;
-              typewriter.enqueue(toolCallMessage);
               if (!receivedFirstChunk) {
-                receivedFirstChunk = true;
-                dispatch(setAssistantResponsePhase({ sessionId, phase: "streaming" }));
+                pendingToolCallStatusText += toolCallMessage;
+                dispatch(
+                  updateMessageContent({
+                    messageId: latestAssistantMessage.id,
+                    content: pendingToolCallStatusText,
+                  })
+                );
               }
             },
             onError: (error: Error) => {

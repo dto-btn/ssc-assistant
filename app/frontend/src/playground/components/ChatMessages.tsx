@@ -5,15 +5,13 @@
  * Handles message grouping, quoting highlights, and feeds message UI events
  * back to the store.
  */
-import React, { useRef, useEffect, useMemo, useCallback, useState } from "react";
+import React, { useRef, useEffect, useMemo, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../store";
 import {
   Box,
   List,
   ListItem,
-  IconButton,
-  Tooltip,
 } from "@mui/material";
 import { MarkdownHooks } from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -22,13 +20,14 @@ import rehypeMermaid from "rehype-mermaid";
 import rehypeMathjax from "rehype-mathjax";
 import "highlight.js/styles/github.css";
 import Link from "@mui/material/Link";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import CheckIcon from "@mui/icons-material/Check";
+import { useTranslation } from "react-i18next";
 import AttachmentPreview from "./AttachmentPreview";
 import { selectSessionFilesById } from "../store/selectors/sessionFilesSelectors";
 import { FileAttachment } from "../types";
 import { Message } from "../store/slices/chatSlice";
 import McpAttributionPill from "./McpAttributionPill";
+import MarkdownCodeBlock, { MarkdownCodeBlockProps } from "./MarkdownCodeBlock";
+import { ASSISTANT_MARKDOWN_SX, USER_MARKDOWN_SX } from "./chatMessageStyles";
 import assistantLogo from "../../assets/SSC-Logo-Purple-Leaf-300x300.png";
 
 interface ChatMessagesProps {
@@ -116,6 +115,7 @@ const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
 };
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
+  const { t } = useTranslation("playground");
   const baseMarkdownSx = {
     fontSize: "0.98rem",
     lineHeight: 1.65,
@@ -255,7 +255,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
     || assistantResponsePhase === "streaming";
   const shouldShowThinkingLabel = assistantResponsePhase === "waiting-first-token";
 
-  const listRef = useRef<HTMLUListElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const sessionFiles = useSelector(selectSessionFilesById(sessionId));
 
   // Merge lightweight attachment stubs from the transcript with any richer
@@ -274,15 +274,14 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   );
 
   useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight;
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages.length]);
 
   return (
-    <Box flex={1} overflow="auto" p={2}>
+    <Box ref={scrollRef} flex={1} overflow="auto" p={2}>
       <List
-        ref={listRef}
         sx={{
           display: "flex",
           flexDirection: "column",
@@ -345,7 +344,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                       <Box
                         component="img"
                         src={assistantLogo}
-                        alt="Assistant"
+                        alt={t("assistant.label")}
                         sx={{
                           "@keyframes assistantIconPulse": {
                             "0%": { transform: "scale(1)", opacity: 1 },
@@ -360,18 +359,24 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                           animation: pulseThisAssistantIcon
                             ? "assistantIconPulse 1.2s ease-in-out infinite"
                             : "none",
+                          "@media (prefers-reduced-motion: reduce)": {
+                            animation: "none",
+                          },
                         }}
                       />
                       {pulseThisAssistantIcon && shouldShowThinkingLabel && (
                         <Box
                           component="span"
+                          role="status"
+                          aria-live="polite"
+                          aria-atomic="true"
                           sx={{
                             fontSize: "0.86rem",
                             color: "text.secondary",
                             whiteSpace: "nowrap",
                           }}
                         >
-                          Thinking ....
+                          {t("assistant.waiting")}
                         </Box>
                       )}
                     </Box>

@@ -288,11 +288,13 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
               },
               transition: "none",
               "& .more-button": {
-                opacity: isMobile ? 1 : 0.55,
+                opacity: 1,
+                color: "text.disabled",
                 transition: "opacity 0.15s ease-in-out",
               },
               "&:hover .more-button, &:focus-within .more-button": {
                 opacity: 1,
+                color: "text.primary",
               },
             }}
           >
@@ -335,8 +337,8 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
                 minWidth: 44,
                 minHeight: 44,
                 mr: "10px",
-                color: "text.secondary",
-                "&:hover": { backgroundColor: "transparent", color: "text.primary" },
+                color: "inherit",
+                "&:hover": { backgroundColor: "transparent" },
               }}
             >
               <Tooltip
