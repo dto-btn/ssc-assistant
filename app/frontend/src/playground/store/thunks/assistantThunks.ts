@@ -461,7 +461,9 @@ export const sendAssistantMessage = ({
 
       if (autoName) {
         dispatch(renameSession({ id: sessionId, name: autoName }));
-        void dispatch(persistSessionRename(sessionId, autoName));
+        // Removed: void dispatch(persistSessionRename(sessionId, autoName));
+        // The rename will be persisted automatically in the next archive cycle.
+        // The session file is not yet created remotely to accept the rename remotely
       }
 
       // Mark session as no longer new
