@@ -6,25 +6,24 @@
  * back to the store.
  */
 import React, { useRef, useEffect, useMemo, useCallback } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "../store";
 import {
   Box,
   List,
   ListItem,
-  ListItemText,
-  IconButton,
 } from "@mui/material";
-import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
-import { setQuotedText } from "../store/slices/quotedSlice";
 import ReactMarkdown from "react-markdown";
 import Link from "@mui/material/Link";
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 import AttachmentPreview from "./AttachmentPreview";
 import { selectSessionFilesById } from "../store/selectors/sessionFilesSelectors";
 import { FileAttachment } from "../types";
 import { Message } from "../store/slices/chatSlice";
 import McpAttributionPill from "./McpAttributionPill";
+import MarkdownCodeBlock, { MarkdownCodeBlockProps } from "./MarkdownCodeBlock";
+import { ASSISTANT_MARKDOWN_SX, USER_MARKDOWN_SX } from "./chatMessageStyles";
+import assistantLogo from "../../assets/SSC-Logo-Purple-Leaf-300x300.png";
 
 interface ChatMessagesProps {
   sessionId: string;
@@ -42,10 +41,29 @@ const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({
 };
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
-  const { t } = useTranslation('playground');
+  const { t } = useTranslation("playground");
+
+  const markdownComponents = useMemo(
+    () => ({
+      a: ({ ...props }) => (
+        <MarkdownLink
+          {...(props as React.ComponentPropsWithoutRef<"a">)}
+        />
+      ),
+      code: ({ ...props }) => (
+        <MarkdownCodeBlock
+          {...(props as MarkdownCodeBlockProps)}
+        />
+      ),
+    }),
+    [],
+  );
 
   // Select a stable reference from the store
   const allMessages = useSelector((state: RootState) => state.chat.messages);
+  const assistantResponsePhase = useSelector(
+    (state: RootState) => state.chat.assistantResponsePhaseBySessionId[sessionId],
+  );
 
   // Derive the filtered list with useMemo to keep a stable reference
   const messages = useMemo(
@@ -53,8 +71,21 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
     [allMessages, sessionId]
   );
 
-  const listRef = useRef<HTMLUListElement>(null);
-  const dispatch = useDispatch();
+  const activeAssistantMessageId = useMemo(() => {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      if (messages[index].role === "assistant") {
+        return messages[index].id;
+      }
+    }
+    return null;
+  }, [messages]);
+
+  const shouldPulseAssistantIcon =
+    assistantResponsePhase === "waiting-first-token"
+    || assistantResponsePhase === "streaming";
+  const shouldShowThinkingLabel = assistantResponsePhase === "waiting-first-token";
+
+  const scrollRef = useRef<HTMLDivElement>(null);
   const sessionFiles = useSelector(selectSessionFilesById(sessionId));
 
   // Merge lightweight attachment stubs from the transcript with any richer
@@ -73,15 +104,33 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   );
 
   useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight;
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages.length]);
 
   return (
-    <Box flex={1} overflow="auto" p={2}>
-      <List ref={listRef}>
+    <Box ref={scrollRef} flex={1} overflow="auto" p={2}>
+      <List
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          width: "100%",
+        }}
+      >
         {messages.map((message: Message) => {
+          const isUserMessage = message.role === "user";
+          const isAssistantMessage = message.role === "assistant";
+          const pulseThisAssistantIcon = Boolean(
+            isAssistantMessage
+            && shouldPulseAssistantIcon
+            && message.id === activeAssistantMessageId,
+          );
+          const hasLiveAttribution = isAssistantMessage
+            && message.mcpAttribution?.source === "live"
+            && message.mcpAttribution.servers.length > 0;
+          const liveAttribution = hasLiveAttribution ? message.mcpAttribution : undefined;
           const resolvedAttachments = resolveAttachments(
             message.attachments as FileAttachment[] | undefined,
           );
@@ -89,62 +138,108 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
             <ListItem
               key={message.id}
               alignItems="flex-start"
-              secondaryAction={
-                message.role === "user" ? (
-                  <IconButton
-                    size="small"
-                    onClick={() => dispatch(setQuotedText(message.content || ""))}
-                    title={t("quote.this.message")}
-                    aria-label={t("quote.this.message")}
-                  >
-                    <FormatQuoteIcon />
-                  </IconButton>
-                ) : undefined
-              }
+              sx={{
+                px: 0,
+                py: 1,
+                width: "100%",
+                maxWidth: { xs: "100%", md: "980px" },
+                justifyContent: isUserMessage ? "flex-end" : "flex-start",
+              }}
             >
-              <ListItemText
-                primary={message.role === "user" ? "You" : "Assistant"}
-                secondary={
-                  <>
-                    {message.role === "assistant"
-                      && message.mcpAttribution?.source === "live"
-                      && message.mcpAttribution.servers.length > 0 && (
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "flex-end",
-                            alignItems: "flex-start",
-                            mb: 0.75,
-                            width: "100%",
-                          }}
-                        >
-                          <McpAttributionPill
-                            attribution={message.mcpAttribution}
-                            messageId={message.id}
-                          />
-                        </Box>
-                      )}
-                    <ReactMarkdown
-                      components={{
-                        a: ({ ...props }) => (
-                          <MarkdownLink
-                            {...(props as React.ComponentPropsWithoutRef<"a">)}
-                          />
-                        ),
+              {isAssistantMessage ? (
+                <Box sx={{ width: { xs: "min(100%, 680px)", lg: "800px" }, maxWidth: "100%" }}>
+                  {liveAttribution && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        alignItems: "flex-start",
+                        mb: 0.75,
+                        width: "100%",
                       }}
                     >
+                      <McpAttributionPill
+                        attribution={liveAttribution}
+                        messageId={message.id}
+                      />
+                    </Box>
+                  )}
+                  <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexShrink: 0 }}>
+                      <Box
+                        component="img"
+                        src={assistantLogo}
+                        alt={t("assistant.label")}
+                        sx={{
+                          "@keyframes assistantIconPulse": {
+                            "0%": { transform: "scale(1)", opacity: 1 },
+                            "50%": { transform: "scale(1.08)", opacity: 0.78 },
+                            "100%": { transform: "scale(1)", opacity: 1 },
+                          },
+                          mt: 0.1,
+                          width: 26,
+                          height: 26,
+                          borderRadius: "50%",
+                          flexShrink: 0,
+                          animation: pulseThisAssistantIcon
+                            ? "assistantIconPulse 1.2s ease-in-out infinite"
+                            : "none",
+                          "@media (prefers-reduced-motion: reduce)": {
+                            animation: "none",
+                          },
+                        }}
+                      />
+                      {pulseThisAssistantIcon && shouldShowThinkingLabel && (
+                        <Box
+                          component="span"
+                          role="status"
+                          aria-live="polite"
+                          aria-atomic="true"
+                          sx={{
+                            fontSize: "0.86rem",
+                            color: "text.secondary",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {t("assistant.waiting")}
+                        </Box>
+                      )}
+                    </Box>
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Box sx={ASSISTANT_MARKDOWN_SX}>
+                        <ReactMarkdown components={markdownComponents}>
+                          {message.content}
+                        </ReactMarkdown>
+                      </Box>
+                      {resolvedAttachments.length > 0 && (
+                        <AttachmentPreview attachments={resolvedAttachments} />
+                      )}
+                    </Box>
+                  </Box>
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    minWidth: 0,
+                    width: "fit-content",
+                    maxWidth: "88%",
+                    px: 1.5,
+                    py: 1.1,
+                    bgcolor: "#4B3FA8",
+                    color: "#FFFFFF",
+                    borderRadius: "16px 4px 16px 16px",
+                  }}
+                >
+                  <Box sx={USER_MARKDOWN_SX}>
+                    <ReactMarkdown components={markdownComponents}>
                       {message.content}
                     </ReactMarkdown>
-                    {resolvedAttachments.length > 0 && (
-                      <AttachmentPreview attachments={resolvedAttachments} />
-                    )}
-                  </>
-                }
-                slotProps={{
-                  primary: { component: "span" },
-                  secondary: { component: "div" },
-                }}
-              />
+                  </Box>
+                  {resolvedAttachments.length > 0 && (
+                    <AttachmentPreview attachments={resolvedAttachments} />
+                  )}
+                </Box>
+              )}
             </ListItem>
           );
         })}
