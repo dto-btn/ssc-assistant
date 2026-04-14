@@ -170,7 +170,7 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobil
             }}
             aria-label={i18n.language === "en" ? "Passer au français" : "Switch to English"}
           >
-            {i18n.language.toUpperCase()}
+            {(i18n.language || "en").toUpperCase()}
           </Button>
         </Box>
       </Toolbar>
