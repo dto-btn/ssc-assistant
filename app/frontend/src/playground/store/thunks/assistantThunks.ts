@@ -16,7 +16,6 @@ import {
   OrchestratorInsights,
 } from "../slices/chatSlice";
 import { setIsSessionNew, renameSession } from "../slices/sessionSlice";
-import { persistSessionRename } from "./sessionManagementThunks";
 import { addToast } from "../slices/toastSlice";
 import {
   completionService,
