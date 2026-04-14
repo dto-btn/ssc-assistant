@@ -283,9 +283,24 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         height="100dvh"
       >
         {renderHeader()}
-        <Box flex={1} display="flex" flexDirection="column" alignItems="center" justifyContent="center" p={6}>
+        <Box flex={1} display="flex" flexDirection="column" alignItems="center" justifyContent="center" p={{ xs: 2, sm: 4, md: 6 }}>
           <Typography variant="h3" gutterBottom>
             {t("how.can.i.help")}
+          </Typography>
+          <Typography
+            component="p"
+            variant="body1"
+            align="center"
+            sx={{
+              width: "100%",
+              maxWidth: { xs: "100%", sm: "600px", md: "800px" },
+              mb: { xs: 2, sm: 3, md: 4 },
+              px: { xs: 1, sm: 2 },
+              lineHeight: 1.7,
+              color: "text.secondary",
+            }}
+          >
+            {t("how.can.i.help.description")}
           </Typography>
           <Suggestions
             onSuggestionClicked={handleSuggestion}
