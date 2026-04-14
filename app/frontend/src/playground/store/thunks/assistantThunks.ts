@@ -41,10 +41,11 @@ const ATTACHMENT_TEXT_LIMIT = 12000;
 
 /**
  * Derive a short session name from the first 5 words of the user's first message.
+ * Trims words longer than 20 characters.
  */
 const deriveSessionName = (content: string): string => {
   const words = content.trim().split(/\s+/).filter(Boolean);
-  return words.slice(0, 5).join(" ");
+  return words.slice(0, 5).join(" ").slice(0, 20);
 };
 
 /**
