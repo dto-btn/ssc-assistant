@@ -15,7 +15,8 @@ import {
   MessageMcpAttribution,
   OrchestratorInsights,
 } from "../slices/chatSlice";
-import { setIsSessionNew } from "../slices/sessionSlice"
+import { setIsSessionNew, renameSession } from "../slices/sessionSlice"
+import { persistSessionRename } from "./sessionManagementThunks"
 import { addToast } from "../slices/toastSlice";
 import {
   completionService,
@@ -37,6 +38,14 @@ import {
 } from "../../services/orchestratorService";
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
+
+/**
+ * Derive a short session name from the first 5 words of the user's first message.
+ */
+const deriveSessionName = (content: string): string => {
+  const words = content.trim().split(/\s+/).filter(Boolean);
+  return words.slice(0, 5).join(" ");
+};
 
 /**
  * Identify orchestrator MCP entries so they are excluded from downstream tool runs.
@@ -439,6 +448,14 @@ export const sendAssistantMessage = ({
 ) => {
   dispatch(setIsLoading(true));
   try {
+    const isNewChat = getState().sessions.sessions.find((s) => s.id === sessionId)?.isNewChat;
+    if (isNewChat) {
+      const autoName = deriveSessionName(content);
+      if (autoName) {
+        dispatch(renameSession({ id: sessionId, name: autoName }));
+        void dispatch(persistSessionRename(sessionId, autoName));
+      }
+    }
     dispatch(setIsSessionNew({id: sessionId, isNew: false}))
 
     const { accessToken } = getState().auth;
