@@ -115,21 +115,113 @@
         "en": "Delete Conversation",
         "fr": "Supprimer la conversation"
     },
-    "suggestion.use.api": {
-        "en": "How can I use the API?",
-        "fr": "Comment puis-je utiliser l'API ?"
+    "suggestions.pmcoe.q1": {
+        "en": "What is the purpose of the Project Management Operating Guide?",
+        "fr": "Quel est le but du Guide de gestion de projet ?"
     },
-    "suggestion.github.issues": {
-        "en": "Show me recent GitHub issues",
-        "fr": "Montrez-moi les problèmes GitHub récents"
+    "suggestions.pmcoe.q2": {
+        "en": "What is EPS and what does it stand for?",
+        "fr": "Qu’est-ce que le système SPE et que signifie cet acronyme ?"
     },
-    "suggestion.ts.interface": {
-        "en": "Generate a TypeScript interface",
-        "fr": "Générez une interface TypeScript"
+    "suggestions.pmcoe.q3": {
+        "en": "What is the OPMCA and why does it matter?",
+        "fr": "Qu’est-ce que l’ECGPO et pourquoi est-ce important ?"
     },
-    "suggestion.summarize.doc": {
-        "en": "Summarize this document",
-        "fr": "Résumez ce document"
+    "suggestions.pmcoe.q4": {
+        "en": "What types of documents and/or templates are available in the SSC PGoF and how can we use them?",
+        "fr": "Quels types de documents et/ou modèles sont disponibles dans le SSC CFGP et comment les utiliser ?"
+    },
+    "suggestions.pmcoe.q5": {
+        "en": "What is the purpose of the OPMCA?",
+        "fr": "Quel est le but de l’ECGPO ?"
+    },
+    "suggestions.pmcoe.q6": {
+        "en": "Where can I find the latest version of a gating template, and how do I ensure I’m using the correct one?",
+        "fr": "Où puis-je trouver la dernière version d’un modèle de validation, et comment m’assurer d’utiliser le bon ?"
+    },
+    "suggestions.pmcoe.q7": {
+        "en": "What documents are required at each gate?",
+        "fr": "Quels documents sont requis à chaque porte ?"
+    },
+    "suggestions.pmcoe.q8": {
+        "en": "How is the Operating Guide structured?",
+        "fr": "Comment est structuré le Guide de gestion de projet ?"
+    },
+    "suggestions.pmcoe.q9": {
+        "en": "How do I know if my project qualifies for an “Expedited Gate Review”?",
+        "fr": "Comment savoir si mon projet est admissible à une “Revue de porte accélérée” ?"
+    },
+    "suggestions.pmcoe.q10": {
+        "en": "What does the OPMCA evaluate?",
+        "fr": "Que mesure l’ECGPO ?"
+    },
+    "suggestions.pmcoe.q11": {
+        "en": "How do I track the progress of my project through the gates?",
+        "fr": "Comment suivre l’avancement de mon projet à travers les portes ?"
+    },
+    "suggestions.pmcoe.q12": {
+        "en": "What is the purpose of the Enterprise Project System (EPS)?",
+        "fr": "Quel est le but du système SPE ?"
+    },
+    "suggestions.pmcoe.q13": {
+        "en": "What type of information is stored in EPS?",
+        "fr": "Quel type d’information est stocké dans SPE ?"
+    },
+    "suggestions.pmcoe.q14": {
+        "en": "How does EPS fit within the project management lifecycle?",
+        "fr": "Comment SPE s’intègre-t-il au cycle de vie de la gestion de projet ?"
+    },
+    "suggestions.pmcoe.q15": {
+        "en": "What are Project Manager-Led Initiatives (PMLI)?",
+        "fr": "Que sont les initiatives dirigées par les chefs de projet (IDGP) ?"
+    },
+    "suggestions.pmcoe.q16": {
+        "en": "How is a Project Manager-Led Initiative different from a regular project?",
+        "fr": "En quoi une initiative dirigée par un chef de projet (IDGP) diffère-t-elle d’un projet régulier ?"
+    },
+    "suggestions.general.contact": {
+        "en": "I need to find contact information in GEDS.",
+        "fr": "Aidez-moi à trouver des coordonnées dans SAGE."
+    },
+    "suggestions.general.email": {
+        "en": "Help me rewrite an email so it is more formal.",
+        "fr": "Aidez-moi à réécrire un courriel pour qu'il soit plus formel."
+    },
+    "suggestions.general.hire": {
+        "en": "Can you tell me how do I find information on how to hire a student?",
+        "fr": "Pouvez-vous me dire comment trouver des informations sur l'embauche d'un étudiant?"
+    },
+    "suggestions.business.find": {
+        "en": "What kind of questions can I ask about Business Requests (BR)?",
+        "fr": "Quel genre de questions puis-je poser sur les demandes opérationnelles (DO)?"
+    },
+    "suggestions.business.pspc": {
+        "en": "Find all the BRs submited in the last 3 weeks that are from the client PSPC",
+        "fr": "Trouvez toutes les demandes d'affaires soumises au cours des 3 dernières semaines provenant du client SPAC"
+    },
+    "suggestions.business.piechart": {
+        "en": "Give me a pie chart of BA OPI that worked on BRs for the month of March for the client ESDC for brs of high priority only.",
+        "fr": "Donnez-moi un graphique circulaire des BPR analystes qui ont travaillé sur des DO pour le mois de mars pour le client EDSC, pour les DO de priorité Élevée seulement."
+    },
+    "suggestions.categories.general": {
+        "en": "General",
+        "fr": "Général"
+    },
+    "suggestions.categories.br": {
+        "en": "Business Requests",
+        "fr": "Demandes d'affaires"
+    },
+    "suggestions.categories.geds": {
+        "en": "GEDS",
+        "fr": "SAGE"
+    },
+    "suggestions.categories.corporate": {
+        "en": "MySSC+",
+        "fr": "MonSPC+"
+    },
+    "suggestions.categories.pmcoe": {
+        "en": "PMCoE",
+        "fr": "CEGP"
     },
     "try.asking": {
         "en": "Try asking:",
@@ -142,6 +234,26 @@
     "assistant.error.toast": {
         "en": "An error occurred during completion.",
         "fr": "Une erreur est survenue pendant le traitement."
+    },
+    "assistant.waiting": {
+        "en": "Assistant is thinking...",
+        "fr": "L'assistant réfléchit..."
+    },
+    "assistant.streaming": {
+        "en": "Assistant is responding.",
+        "fr": "L'assistant répond."
+    },
+    "assistant.copy.code": {
+        "en": "Copy code",
+        "fr": "Copier le code"
+    },
+    "assistant.copied": {
+        "en": "Copied",
+        "fr": "Copié"
+    },
+    "assistant.label": {
+        "en": "Assistant",
+        "fr": "Assistant"
     },
     "errors.deleteFailed": {
         "en": "Could not delete the chat. Please try again.",
@@ -189,19 +301,23 @@
     },
     "mcp.attribution.trigger": {
         "en": "MCP servers used for this response: {{servers}}",
-        "fr": "Serveurs MCP utilises pour cette reponse : {{servers}}"
+        "fr": "Serveurs MCP utilisés pour cette réponse : {{servers}}"
     },
     "mcp.attribution.title": {
         "en": "MCP attribution",
         "fr": "Attribution MCP"
     },
-    "mcp.attribution.description": {
+    "mcp.attribution.description.single": {
         "en": "This response used the following MCP server.",
-        "fr": "Cette reponse a utilise le serveur MCP suivant."
+        "fr": "Cette réponse a utilisé le serveur MCP suivant."
+    },
+    "mcp.attribution.description.multiple": {
+        "en": "This response used the following MCP servers.",
+        "fr": "Cette réponse a utilisé les serveurs MCP suivants."
     },
     "mcp.attribution.category": {
         "en": "Category: {{category}}",
-        "fr": "Categorie : {{category}}"
+        "fr": "Catégorie : {{category}}"
     },
     "mcp.attribution.status": {
         "en": "Status: {{status}}",

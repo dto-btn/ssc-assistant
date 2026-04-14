@@ -5,11 +5,11 @@
  * progress streaming, fallback behavior, and selected-server capture for UI
  * visibility.
  */
-
 import {
   addMessage,
   updateMessageContent,
   setIsLoading,
+  setAssistantResponsePhase,
   setOrchestratorInsights,
   Message,
   MessageMcpAttribution,
@@ -36,8 +36,10 @@ import {
   OrchestratorProgressEvent,
   resolveServersFromInsights,
 } from "../../services/orchestratorService";
+import { createStreamTypewriter } from "../../utils/streamTypewriter";
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
+const TOOL_CALL_STATUS_PATTERN = /\n[^\n]* is being called\.\.\.\n/g;
 
 /**
  * Derive a short session name from the first 5 words of the user's first message.
@@ -60,6 +62,8 @@ const attachmentTextCache = new Map<string, string>();
 const attachmentImageCache = new Map<string, string>();
 const MAX_ORCHESTRATOR_PROGRESS_UPDATES = 20;
 const IS_DEV = import.meta.env.DEV;
+const stripToolCallStatusMessages = (content: string): string =>
+  content.replace(TOOL_CALL_STATUS_PATTERN, "\n").replace(/\n{3,}/g, "\n\n").trim();
 
 /**
  * Remove duplicate servers while preserving first-seen ordering.
@@ -448,6 +452,7 @@ export const sendAssistantMessage = ({
   getState
 ) => {
   dispatch(setIsLoading(true));
+  dispatch(setAssistantResponsePhase({ sessionId, phase: "waiting-first-token" }));
   try {
     const isNewChat = getState().sessions.sessions.find((s) => s.id === sessionId)?.isNewChat;
     if (isNewChat) {
@@ -619,8 +624,6 @@ export const sendAssistantMessage = ({
       throw new Error("Failed to create assistant message");
     }
 
-    let accumulatedContent = "";
-
     // Use the completion service with streaming callbacks for state management
     const completionMessages = await mapMessagesForCompletion(updatedSessionMessages, dispatchForAttachments, getState);
 
@@ -672,45 +675,94 @@ export const sendAssistantMessage = ({
 
     const completionModel = resolveCompletionModel(getState());
 
-    const runCompletion = async (messagesForRun: CompletionMessage[], serversForRun: Tool.Mcp[]): Promise<void> => {
+    const runCompletion = async (
+      messagesForRun: CompletionMessage[],
+      serversForRun: Tool.Mcp[],
+    ): Promise<void> => {
       // One execution path used for both primary run and no-tools retry.
-      await completionService.createCompletion(
-        {
-          messages: messagesForRun,
-          model: completionModel,
-          provider,
-          userToken: accessToken,
-          servers: serversForRun,
-        },
-        {
-          onChunk: (chunk: string) => {
-            accumulatedContent += chunk;
-            // This is where the thunk manages state during streaming
-            dispatch(
-              updateMessageContent({
-                messageId: latestAssistantMessage.id,
-                content: accumulatedContent,
-              })
-            );
-          },
-          onToolCall: (toolName?: string) => {
-            const toolCallMessage = `\n${toolName ?? "A tool"} is being called...\n`;
+      let receivedFirstChunk = false;
+      let pendingToolCallStatusText = "";
 
-            dispatch(
-              updateMessageContent({
-                messageId: latestAssistantMessage.id,
-                content: accumulatedContent + toolCallMessage,
-              })
-            );
+      const typewriter = createStreamTypewriter({
+        tickMs: 20,
+        charsPerTick: 4,
+        burstMultiplier: 2,
+        maxBufferedChars: 900,
+        onUpdate: (nextText) => {
+          dispatch(
+            updateMessageContent({
+              messageId: latestAssistantMessage.id,
+              content: nextText,
+            })
+          );
+        },
+      });
+
+      try {
+        await completionService.createCompletion(
+          {
+            messages: messagesForRun,
+            model: completionModel,
+            provider,
+            userToken: accessToken,
+            servers: serversForRun,
           },
-          onError: (error: Error) => {
-            if (IS_DEV) {
-              console.error("Streaming error:", error);
-            }
-          },
-          onComplete: () => undefined,
-        }
-      );
+          {
+            onChunk: (chunk: string) => {
+              if (!receivedFirstChunk && pendingToolCallStatusText) {
+                // Clear transient tool-call status before typed response starts.
+                pendingToolCallStatusText = "";
+                dispatch(
+                  updateMessageContent({
+                    messageId: latestAssistantMessage.id,
+                    content: "",
+                  })
+                );
+              }
+
+              typewriter.enqueue(chunk);
+              if (!receivedFirstChunk) {
+                receivedFirstChunk = true;
+                dispatch(setAssistantResponsePhase({ sessionId, phase: "streaming" }));
+              }
+            },
+            onToolCall: (toolName?: string) => {
+              const toolCallMessage = `\n${toolName ?? "A tool"} is being called...\n`;
+              if (!receivedFirstChunk) {
+                pendingToolCallStatusText += toolCallMessage;
+                dispatch(
+                  updateMessageContent({
+                    messageId: latestAssistantMessage.id,
+                    content: pendingToolCallStatusText,
+                  })
+                );
+              }
+            },
+            onError: (error: Error) => {
+              if (IS_DEV) {
+                console.error("Streaming error:", error);
+              }
+            },
+            onComplete: () => undefined,
+          }
+        );
+      } finally {
+        // Let the buffer drain with pacing to avoid end-of-stream "content dump".
+        await typewriter.complete({ maxWaitMs: 5000 });
+
+        const cleanedContent = stripToolCallStatusMessages(
+          typewriter.getDisplayedText(),
+        );
+        dispatch(
+          updateMessageContent({
+            messageId: latestAssistantMessage.id,
+            content: cleanedContent,
+          })
+        );
+
+        typewriter.stop();
+      }
+
     };
 
     try {
@@ -757,13 +809,14 @@ export const sendAssistantMessage = ({
         );
       }
 
-      accumulatedContent = "";
       dispatch(
         updateMessageContent({
           messageId: latestAssistantMessage.id,
           content: "",
         })
       );
+
+      dispatch(setAssistantResponsePhase({ sessionId, phase: "waiting-first-token" }));
 
       await runCompletion(finalMessages, []);
     }
@@ -794,6 +847,7 @@ export const sendAssistantMessage = ({
       })
     );
   } finally {
+    dispatch(setAssistantResponsePhase({ sessionId, phase: "idle" }));
     dispatch(setIsLoading(false));
   }
 };

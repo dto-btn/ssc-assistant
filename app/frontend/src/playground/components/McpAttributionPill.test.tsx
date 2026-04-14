@@ -4,6 +4,9 @@ import { vi, describe, it, expect } from "vitest";
 import McpAttributionPill from "./McpAttributionPill";
 import type { MessageMcpAttribution } from "../store/slices/chatSlice";
 
+/**
+ * Focused unit coverage for the MCP attribution disclosure pill.
+ */
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string, options?: Record<string, unknown>) => {
@@ -55,6 +58,7 @@ describe("McpAttributionPill", () => {
     await user.click(screen.getByText("Tool: geds-server +1"));
 
     expect(screen.getByText("MCP attribution")).toBeInTheDocument();
+    expect(screen.getByRole("list")).toBeInTheDocument();
     expect(screen.getByText("geds-server")).toBeInTheDocument();
     expect(screen.getByText("pmcoe-server")).toBeInTheDocument();
     expect(screen.getByText("Category: geds")).toBeInTheDocument();
@@ -65,6 +69,7 @@ describe("McpAttributionPill", () => {
     const user = userEvent.setup();
     render(<McpAttributionPill attribution={sampleAttribution} messageId="msg-3" />);
 
+    // Verify the a11y label communicates all routed servers to assistive tech.
     const trigger = screen.getByRole("button", {
       name: "MCP servers used for this response: geds-server, pmcoe-server",
     });
