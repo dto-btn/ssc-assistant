@@ -13,9 +13,13 @@ import {
   List,
   ListItem,
 } from "@mui/material";
-import ReactMarkdown from "react-markdown";
+import { MarkdownHooks } from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import rehypeMermaid from "rehype-mermaid";
 import Link from "@mui/material/Link";
 import { useTranslation } from "react-i18next";
+import type { Pluggable } from "unified";
 import AttachmentPreview from "./AttachmentPreview";
 import { selectSessionFilesById } from "../store/selectors/sessionFilesSelectors";
 import { FileAttachment } from "../types";
@@ -24,6 +28,7 @@ import McpAttributionPill from "./McpAttributionPill";
 import MarkdownCodeBlock, { MarkdownCodeBlockProps } from "./MarkdownCodeBlock";
 import { ASSISTANT_MARKDOWN_SX, USER_MARKDOWN_SX } from "./chatMessageStyles";
 import assistantLogo from "../../assets/SSC-Logo-Purple-Leaf-300x300.png";
+import "highlight.js/styles/github.css";
 
 interface ChatMessagesProps {
   sessionId: string;
@@ -84,6 +89,22 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
     assistantResponsePhase === "waiting-first-token"
     || assistantResponsePhase === "streaming";
   const shouldShowThinkingLabel = assistantResponsePhase === "waiting-first-token";
+  const shouldDeferMermaidRendering =
+    assistantResponsePhase === "waiting-first-token"
+    || assistantResponsePhase === "streaming";
+
+  const rehypePlugins = useMemo(() => {
+    const plugins: Pluggable[] = [rehypeHighlight];
+    if (!shouldDeferMermaidRendering) {
+      plugins.push([
+        rehypeMermaid,
+        {
+          errorFallback: () => <div>Invalid diagram format!</div>,
+        },
+      ]);
+    }
+    return plugins;
+  }, [shouldDeferMermaidRendering]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const sessionFiles = useSelector(selectSessionFilesById(sessionId));
@@ -207,9 +228,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                     </Box>
                     <Box sx={{ minWidth: 0, flex: 1 }}>
                       <Box sx={ASSISTANT_MARKDOWN_SX}>
-                        <ReactMarkdown components={markdownComponents}>
+                        <MarkdownHooks
+                          components={markdownComponents}
+                          remarkPlugins={[remarkGfm]}
+                          rehypePlugins={rehypePlugins}
+                        >
                           {message.content}
-                        </ReactMarkdown>
+                        </MarkdownHooks>
                       </Box>
                       {resolvedAttachments.length > 0 && (
                         <AttachmentPreview attachments={resolvedAttachments} />
@@ -231,9 +256,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                   }}
                 >
                   <Box sx={USER_MARKDOWN_SX}>
-                    <ReactMarkdown components={markdownComponents}>
+                    <MarkdownHooks
+                      components={markdownComponents}
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={rehypePlugins}
+                    >
                       {message.content}
-                    </ReactMarkdown>
+                    </MarkdownHooks>
                   </Box>
                   {resolvedAttachments.length > 0 && (
                     <AttachmentPreview attachments={resolvedAttachments} />

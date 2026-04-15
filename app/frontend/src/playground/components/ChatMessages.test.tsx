@@ -7,6 +7,10 @@ import ChatMessages from "./ChatMessages";
 import chatReducer from "../store/slices/chatSlice";
 import sessionFilesReducer from "../store/slices/sessionFilesSlice";
 
+vi.mock("rehype-mermaid", () => ({
+  default: () => undefined,
+}));
+
 vi.mock("react-i18next", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-i18next")>();
   return {
@@ -139,5 +143,59 @@ describe("ChatMessages", () => {
     });
 
     expect(screen.getByRole("button", { name: /MCP servers used for this response/i })).toBeInTheDocument();
+  });
+
+  it("renders GFM tables in assistant markdown content", async () => {
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "| Name | Value |\n| --- | --- |\n| Speed | Fast |",
+            timestamp: 1,
+          },
+        ],
+        isLoading: false,
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    expect(await screen.findByRole("table")).toBeInTheDocument();
+    expect(screen.getByText("Speed")).toBeInTheDocument();
+    expect(screen.getByText("Fast")).toBeInTheDocument();
+  });
+
+  it("keeps code block copy action available for assistant markdown", async () => {
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "```ts\nconst total = 42;\n```",
+            timestamp: 1,
+          },
+        ],
+        isLoading: false,
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    expect(await screen.findByRole("button", { name: "assistant.copy.code" })).toBeInTheDocument();
   });
 });

@@ -63,6 +63,14 @@ export const BASE_MARKDOWN_SX: SxProps<Theme> = {
   "& a": {
     textUnderlineOffset: "2px",
   },
+  "& svg[id^='mermaid-']": {
+    width: "100% !important",
+    height: "auto !important",
+    maxWidth: "100%",
+    display: "block",
+    margin: "0 auto",
+    minHeight: "600px",
+  },
 };
 
 export const ASSISTANT_MARKDOWN_SX: SxProps<Theme> = {
