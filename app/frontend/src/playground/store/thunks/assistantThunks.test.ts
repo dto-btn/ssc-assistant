@@ -133,9 +133,9 @@ describe("sendAssistantMessage auto-rename", () => {
     vi.clearAllMocks();
   });
 
-  it("dispatches renameSession with derived name when isNewChat is true", async () => {
+  it("dispatches renameSession with derived name when isNewChat is true and token is valid", async () => {
     const { dispatch, dispatched } = makeDispatch();
-    const getState = makeState({ isNewChat: true, accessToken: null });
+    const getState = makeState({ isNewChat: true, accessToken: "valid-token" });
 
     await sendAssistantMessage({
       sessionId: "session-1",
@@ -150,9 +150,9 @@ describe("sendAssistantMessage auto-rename", () => {
     });
   });
 
-  it("dispatches setIsSessionNew(false) when isNewChat is true", async () => {
+  it("dispatches setIsSessionNew(false) when isNewChat is true and token is valid", async () => {
     const { dispatch, dispatched } = makeDispatch();
-    const getState = makeState({ isNewChat: true, accessToken: null });
+    const getState = makeState({ isNewChat: true, accessToken: "valid-token" });
 
     await sendAssistantMessage({
       sessionId: "session-1",
@@ -164,9 +164,25 @@ describe("sendAssistantMessage auto-rename", () => {
     expect(newChatAction?.payload).toEqual({ id: "session-1", isNew: false });
   });
 
+  it("does not dispatch renameSession or setIsSessionNew when token is missing", async () => {
+    const { dispatch, dispatched } = makeDispatch();
+    const getState = makeState({ isNewChat: true, accessToken: null });
+
+    await sendAssistantMessage({
+      sessionId: "session-1",
+      content: "Hello there",
+    })(dispatch, getState, undefined);
+
+    const renameAction = dispatched.find((a) => a.type === renameSession.type);
+    const newChatAction = dispatched.find((a) => a.type === setIsSessionNew.type);
+
+    expect(renameAction).toBeUndefined();
+    expect(newChatAction).toBeUndefined();
+  });
+
   it("does not dispatch renameSession when isNewChat is false", async () => {
     const { dispatch, dispatched } = makeDispatch();
-    const getState = makeState({ isNewChat: false, accessToken: null });
+    const getState = makeState({ isNewChat: false, accessToken: "valid-token" });
 
     await sendAssistantMessage({
       sessionId: "session-1",
@@ -177,9 +193,9 @@ describe("sendAssistantMessage auto-rename", () => {
     expect(renameAction).toBeUndefined();
   });
 
-  it("does not dispatch renameSession when content is empty", async () => {
+  it("does not dispatch renameSession or setIsSessionNew when content is empty", async () => {
     const { dispatch, dispatched } = makeDispatch();
-    const getState = makeState({ isNewChat: true, accessToken: null });
+    const getState = makeState({ isNewChat: true, accessToken: "valid-token" });
 
     await sendAssistantMessage({
       sessionId: "session-1",
@@ -187,6 +203,27 @@ describe("sendAssistantMessage auto-rename", () => {
     })(dispatch, getState, undefined);
 
     const renameAction = dispatched.find((a) => a.type === renameSession.type);
+    const newChatAction = dispatched.find((a) => a.type === setIsSessionNew.type);
+
     expect(renameAction).toBeUndefined();
+    expect(newChatAction).toBeUndefined();
+  });
+
+  it("dispatches setIsSessionNew(false) but not renameSession when only attachments are present", async () => {
+    const { dispatch, dispatched } = makeDispatch();
+    const getState = makeState({ isNewChat: true, accessToken: "valid-token" });
+
+    await sendAssistantMessage({
+      sessionId: "session-1",
+      content: "   ",
+      attachments: [{ id: '1', fileName: 'test.pdf', fileType: 'application/pdf', status: 'ready' } as any]
+    })(dispatch, getState, undefined);
+
+    const renameAction = dispatched.find((a) => a.type === renameSession.type);
+    const newChatAction = dispatched.find((a) => a.type === setIsSessionNew.type);
+
+    expect(renameAction).toBeUndefined();
+    expect(newChatAction).toBeDefined();
+    expect(newChatAction?.payload).toEqual({ id: "session-1", isNew: false });
   });
 });

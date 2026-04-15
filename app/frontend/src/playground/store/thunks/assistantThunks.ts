@@ -453,23 +453,6 @@ export const sendAssistantMessage = ({
   dispatch(setIsLoading(true));
   dispatch(setAssistantResponsePhase({ sessionId, phase: "waiting-first-token" }));
   try {
-    const isNewChat = getState().sessions.sessions.find((s) => s.id === sessionId)?.isNewChat;
-    if (isNewChat) {
-      // Rename chat if this is the first message in a new session
-      const autoName = deriveSessionName(content);
-
-      if (autoName) {
-        dispatch(renameSession({ id: sessionId, name: autoName }));
-        // Removed: void dispatch(persistSessionRename(sessionId, autoName));
-        // The rename will be persisted automatically in the next archive cycle.
-        // The session file is not yet created remotely to accept the rename remotely
-      }
-
-      // Mark session as no longer new
-      dispatch(setIsSessionNew({id: sessionId, isNew: false}))
-    }
-    
-
     const { accessToken } = getState().auth;
     if (!accessToken || isTokenExpired(accessToken)) {
       dispatch(
@@ -478,7 +461,27 @@ export const sendAssistantMessage = ({
           isError: true,
         })
       );
+      dispatch(setIsLoading(false));
       return;
+    }
+
+    const isNewChat = getState().sessions.sessions.find((s) => s.id === sessionId)?.isNewChat;
+    if (isNewChat) {
+      const meaningfulText = content.trim().length > 0;
+      const meaningfulTurn = meaningfulText || (attachments && attachments.length > 0);
+
+      if (meaningfulText) {
+        // Rename chat if this is the first message with text in a new session
+        const autoName = deriveSessionName(content);
+        if (autoName) {
+          dispatch(renameSession({ id: sessionId, name: autoName }));
+        }
+      }
+
+      if (meaningfulTurn) {
+        // Mark session as no longer new if there's text or attachments
+        dispatch(setIsSessionNew({ id: sessionId, isNew: false }));
+      }
     }
 
     const dispatchForAttachments = dispatch as AppDispatch;
