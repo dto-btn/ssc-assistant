@@ -297,7 +297,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
               mb: { xs: 2, sm: 3, md: 4 },
               px: { xs: 1, sm: 2 },
               lineHeight: 1.7,
-              color: "text.secondary",
+              color: "text.primary",
             }}
           >
             {t("how.can.i.help.description")}
