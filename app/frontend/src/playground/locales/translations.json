@@ -7,6 +7,10 @@
         "en": "How can I help?",
         "fr": "Comment puis-je vous aider?"
     },
+    "how.can.i.help.description": {
+        "en": "Have Business request, project management or HR questions, need MySSC+ info, or some policy guidance? I'm on it! I can also crunch data, look someone up for you in GEDS, jazz up your drafts, or take your outline and turn it into something awesome for you to review. And that's just the beginning...",
+        "fr": "Vous avez des questions sur les demandes d'affaires, la gestion de projet ou les RH, vous avez besoin d'informations sur MonSSC+ ou de conseils sur les politiques ? Je m'en occupe ! Je peux aussi traiter des données, chercher quelqu'un pour vous dans SAGE, donner du style à vos ébauches ou transformer un plan en un document de qualité pour votre révision. Et ce n'est que le début..."
+    },
     "type.a.message": {
         "en": "Type a message...",
         "fr": "Tapez un message..."
