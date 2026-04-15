@@ -29,6 +29,8 @@ const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
   const { t } = useTranslation("playground");
   const [isCopied, setIsCopied] = useState(false);
   const codeText = useMemo(() => extractNodeText(children).replace(/\n$/, ""), [children]);
+  const isLikelyBlockCode = Boolean(className?.includes("language-")) || codeText.includes("\n");
+  const shouldRenderInline = inline ?? !isLikelyBlockCode;
 
   useEffect(() => {
     if (!isCopied) return;
@@ -46,7 +48,7 @@ const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
     }
   };
 
-  if (inline) {
+  if (shouldRenderInline) {
     return (
       <code className={className} {...rest}>
         {children}

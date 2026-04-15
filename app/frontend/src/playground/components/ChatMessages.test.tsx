@@ -198,4 +198,31 @@ describe("ChatMessages", () => {
 
     expect(await screen.findByRole("button", { name: "assistant.copy.code" })).toBeInTheDocument();
   });
+
+  it("renders inline code without block copy controls", async () => {
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "Use `npm test` to run checks.",
+            timestamp: 1,
+          },
+        ],
+        isLoading: false,
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    expect(await screen.findByText("npm test")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "assistant.copy.code" })).not.toBeInTheDocument();
+  });
 });
