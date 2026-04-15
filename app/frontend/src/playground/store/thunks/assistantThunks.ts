@@ -15,7 +15,7 @@ import {
   MessageMcpAttribution,
   OrchestratorInsights,
 } from "../slices/chatSlice";
-import { setIsSessionNew } from "../slices/sessionSlice"
+import { setIsSessionNew, renameSession } from "../slices/sessionSlice";
 import { addToast } from "../slices/toastSlice";
 import {
   completionService,
@@ -39,6 +39,15 @@ import { createStreamTypewriter } from "../../utils/streamTypewriter";
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
 const TOOL_CALL_STATUS_PATTERN = /\n[^\n]* is being called\.\.\.\n/g;
+
+/**
+ * Derive a short session name from the first 5 words of the user's first message.
+ * Keeps title within 30 characters.
+ */
+export const deriveSessionName = (content: string): string => {
+  const words = content.trim().split(/\s+/).filter(Boolean);
+  return words.slice(0, 5).join(" ").slice(0, 30);
+};
 
 /**
  * Identify orchestrator MCP entries so they are excluded from downstream tool runs.
@@ -444,8 +453,6 @@ export const sendAssistantMessage = ({
   dispatch(setIsLoading(true));
   dispatch(setAssistantResponsePhase({ sessionId, phase: "waiting-first-token" }));
   try {
-    dispatch(setIsSessionNew({id: sessionId, isNew: false}))
-
     const { accessToken } = getState().auth;
     if (!accessToken || isTokenExpired(accessToken)) {
       dispatch(
@@ -454,7 +461,27 @@ export const sendAssistantMessage = ({
           isError: true,
         })
       );
+      dispatch(setIsLoading(false));
       return;
+    }
+
+    const isNewChat = getState().sessions.sessions.find((s) => s.id === sessionId)?.isNewChat;
+    if (isNewChat) {
+      const meaningfulText = content.trim().length > 0;
+      const meaningfulTurn = meaningfulText || (attachments && attachments.length > 0);
+
+      if (meaningfulText) {
+        // Rename chat if this is the first message with text in a new session
+        const autoName = deriveSessionName(content);
+        if (autoName) {
+          dispatch(renameSession({ id: sessionId, name: autoName }));
+        }
+      }
+
+      if (meaningfulTurn) {
+        // Mark session as no longer new if there's text or attachments
+        dispatch(setIsSessionNew({ id: sessionId, isNew: false }));
+      }
     }
 
     const dispatchForAttachments = dispatch as AppDispatch;

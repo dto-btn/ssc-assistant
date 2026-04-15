@@ -12,7 +12,7 @@ export interface Session {
   name: string;
   createdAt: number;
   staticTools?: string[];
-  isNewChat: boolean
+  isNewChat: boolean;
 }
 
 interface SessionsState {

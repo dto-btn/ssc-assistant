@@ -5,8 +5,8 @@ const UPLOAD_ENDPOINT = `${PLAYGROUND_API_BASE}/upload`;
 const FILES_FOR_SESSION_ENDPOINT = `${PLAYGROUND_API_BASE}/files-for-session`;
 const EXTRACT_FILE_TEXT_ENDPOINT = `${PLAYGROUND_API_BASE}/extract-file-text`;
 const sessionsEndpoint = `${PLAYGROUND_API_BASE}/sessions`;
+const sessionRenameEndpoint = (sessionId: string) => `${sessionsEndpoint}/${encodeURIComponent(sessionId)}/rename`;
 const sessionDeleteEndpoint = (sessionId: string) => `${sessionsEndpoint}/${encodeURIComponent(sessionId)}`;
-const sessionRenameEndpoint = (sessionId: string) => `${sessionDeleteEndpoint(sessionId)}/rename`;
 
 type MetadataRecord = Record<string, string | number | boolean | null | undefined>;
 
