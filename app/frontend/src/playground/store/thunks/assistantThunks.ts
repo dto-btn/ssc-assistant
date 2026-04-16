@@ -783,8 +783,6 @@ export const sendAssistantMessage = ({
         );
 
         // Append a stop marker so the user knows the response was cut short.
-        // If nothing was displayed yet (aborted before first token), show only
-        // the marker so the message is not left empty.
         const stopMarker = `\n\n*${i18n.t("playground:assistant.stopped")}*`;
         const finalContent = wasAborted
           ? (cleanedContent.length > 0 ? cleanedContent + stopMarker : stopMarker.trimStart())
