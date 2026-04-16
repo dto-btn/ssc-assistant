@@ -550,9 +550,18 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
 
         {/** Disable when there's nothing to send; show stop or upload states when busy */}
         <IconButton
+          type="button"
           onClick={isLoading ? onStop : handleSend}
           disabled={isUploading || (!isLoading && !canSend)}
-          sx={{ '&:hover': { backgroundColor: 'rgba(0,0,0,0.08)' } }}
+          sx={{
+            '&:hover': { backgroundColor: 'rgba(0,0,0,0.08)' },
+            minWidth: 44,
+            minHeight: 44,
+            '&:focus-visible': {
+              outline: `3px solid ${theme.palette.primary.main}`,
+              outlineOffset: 3,
+            },
+          }}
           aria-label={
             isLoading
               ? t('stop', { defaultValue: 'Stop' })
@@ -564,20 +573,56 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
           id="send-or-stop-question-button"
         >
           {isUploading ? (
-            <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-              <CircularProgress size={30} aria-label={t('files.uploading', { defaultValue: 'Uploading files' })} />
+            <Box sx={{ position: 'relative', display: 'inline-flex' }} aria-hidden="true">
+              <CircularProgress
+                size={30}
+                sx={{
+                  // Scale down on very small viewports
+                  '@media (max-width: 360px)': { width: '24px !important', height: '24px !important' },
+                }}
+              />
             </Box>
           ) : isLoading ? (
-            <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-              <CircularProgress size={30} aria-label={t('stop', { defaultValue: 'Stop' })} />
+            <Box sx={{ position: 'relative', display: 'inline-flex' }} aria-hidden="true">
+              <CircularProgress
+                size={30}
+                sx={{
+                  '@media (max-width: 360px)': { width: '24px !important', height: '24px !important' },
+                }}
+              />
               <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <StopCircleIcon sx={{ color: 'primary.main' }} />
               </Box>
             </Box>
           ) : (
-            <SendIcon sx={{ color: 'primary.main' }} />
+            <SendIcon sx={{ color: 'primary.main' }} aria-hidden="true" />
           )}
         </IconButton>
+        {/*
+          Visually-hidden live region — announces button-state transitions
+          (e.g. "Stop", "Uploading files") to screen readers without duplicating
+          visible text. Satisfies WCAG 4.1.3 (Status Messages).
+        */}
+        <Box
+          component="span"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          sx={{
+            position: 'absolute',
+            width: 1,
+            height: 1,
+            overflow: 'hidden',
+            clip: 'rect(0 0 0 0)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {isLoading
+            ? t('stop', { defaultValue: 'Stop' })
+            : isUploading
+              ? t('files.uploading', { defaultValue: 'Uploading files' })
+              : null}
+        </Box>
       </Paper>
 
       {isUploading && (
