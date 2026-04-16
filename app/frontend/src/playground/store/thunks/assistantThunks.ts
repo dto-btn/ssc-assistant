@@ -761,6 +761,8 @@ export const sendAssistantMessage = ({
               }
             },
             onError: (error: Error) => {
+              // Abort errors are expected (user clicked Stop) — don't log them.
+              if (abortController.signal.aborted) return;
               if (IS_DEV) {
                 console.error("Streaming error:", error);
               }
@@ -861,13 +863,13 @@ export const sendAssistantMessage = ({
     }
 
   } catch (error) {
-    console.error("Completion failed:", error);
-
     // If the user explicitly stopped the response, swallow the abort error
     // silently — no toast or error message should appear in the chat.
     if (abortController.signal.aborted) {
       return;
     }
+
+    console.error("Completion failed:", error);
 
     const fallbackToastMessage = i18n.t("playground:assistant.error.toast");
     const assistantErrorMessage = i18n.t("playground:assistant.error.chat");
