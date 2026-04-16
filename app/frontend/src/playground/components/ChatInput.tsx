@@ -10,7 +10,6 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { setIsLoading } from "../store/slices/chatSlice";
 import {
   Box,
   Paper,
@@ -32,7 +31,7 @@ import InfoIcon from "@mui/icons-material/Info";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import StopCircleIcon from "@mui/icons-material/StopCircle";
 import isFeatureEnabled from "../FeatureGate";
-import { sendAssistantMessage } from "../store/thunks/assistantThunks";
+import { sendAssistantMessage, stopAssistantMessage } from "../store/thunks/assistantThunks";
 import { createPortal } from "react-dom";
 
 /**
@@ -416,9 +415,8 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
    * playground.
    */
   const onStop = useCallback(() => {
-    // Best-effort stop: toggle loading off. In real app this would cancel request.
-    dispatch(setIsLoading(false));
-  }, [dispatch]);
+    stopAssistantMessage(sessionId);
+  }, [sessionId]);
 
   /** Whether the input should act in a busy/disabled state (mirrors main app). */
   const composerBusy = isLoading || isUploading; // also disable while uploads are pending

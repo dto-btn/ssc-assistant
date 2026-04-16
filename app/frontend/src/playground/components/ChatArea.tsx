@@ -14,11 +14,9 @@ import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "../store";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
-import ReplayStopBar from "./ReplayStopBar";
 import Citations from "./Citations";
 import type { Citation } from "./Citations";
 import { Box, Typography, useTheme, useMediaQuery } from "@mui/material";
-import { addMessage, setIsLoading } from "../store/slices/chatSlice";
 import Suggestions from "./Suggestions";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 import { selectCurrentSessionFiles } from "../store/selectors/sessionFilesSelectors";
@@ -98,37 +96,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         </Box>
       </Box>
     );
-  };
-
-  /**
-   * Replay sends the most recent user utterance so the assistant can retry with new context.
-   */
-  const handleReplay = (): void => {
-    if (messages.length < 2) return;
-    // Index of the last user message in the reversed array
-    const lastUserMessageIndexFromEnd = reversedMessages.findIndex(
-      (message) => message.role === "user"
-    );
-    if (lastUserMessageIndexFromEnd === -1) return;
-    const userMessage =
-      messages[messages.length - 2 - lastUserMessageIndexFromEnd];
-    if (userMessage) {
-      dispatch(
-        addMessage({
-          sessionId: currentSessionId!,
-          role: "user",
-          content: userMessage.content,
-          attachments: userMessage.attachments,
-        })
-      );
-    }
-  };
-
-  /**
-   * Stop flips the loading flag which signals the UI to hide the typing indicator.
-   */
-  const handleStop = (): void => {
-    dispatch(setIsLoading(false));
   };
 
   /**
@@ -319,12 +286,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       <ChatMessages sessionId={currentSessionId} />
       <Citations citations={citations as Citation[]} />
       <OrchestratorDebugPanel sessionId={currentSessionId} />
-      <ReplayStopBar
-        onReplay={handleReplay}
-        onStop={handleStop}
-        isLoading={isLoading}
-        disabled={messages.length < 2}
-      />
       <ChatInput sessionId={currentSessionId} />
     </Box>
   );

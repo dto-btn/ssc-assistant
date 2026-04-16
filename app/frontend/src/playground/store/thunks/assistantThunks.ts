@@ -28,6 +28,21 @@ import type { RootState } from "..";
 import i18n from "../../../i18n";
 
 import { FileAttachment } from "../../types";
+
+/**
+ * Per-session AbortControllers for in-flight streaming requests.
+ * Stored outside Redux because AbortController instances are not serializable.
+ * The map is keyed by sessionId and cleaned up in the thunk's finally block.
+ */
+const sessionAbortControllers = new Map<string, AbortController>();
+
+/**
+ * Cancels the active streaming request for the given session.
+ * Safe to call even if no request is in-flight (no-op).
+ */
+export function stopAssistantMessage(sessionId: string): void {
+  sessionAbortControllers.get(sessionId)?.abort();
+}
 import { extractFileText, fetchFileDataUrl } from "../../api/storage";
 import { Tool } from "openai/resources/responses/responses.mjs";
 import {
@@ -452,6 +467,8 @@ export const sendAssistantMessage = ({
 ) => {
   dispatch(setIsLoading(true));
   dispatch(setAssistantResponsePhase({ sessionId, phase: "waiting-first-token" }));
+  const abortController = new AbortController();
+  sessionAbortControllers.set(sessionId, abortController);
   try {
     const { accessToken } = getState().auth;
     if (!accessToken || isTokenExpired(accessToken)) {
@@ -710,6 +727,7 @@ export const sendAssistantMessage = ({
             provider,
             userToken: accessToken,
             servers: serversForRun,
+            signal: abortController.signal,
           },
           {
             onChunk: (chunk: string) => {
@@ -751,16 +769,33 @@ export const sendAssistantMessage = ({
           }
         );
       } finally {
-        // Let the buffer drain with pacing to avoid end-of-stream "content dump".
-        await typewriter.complete({ maxWaitMs: 5000 });
+        const wasAborted = abortController.signal.aborted;
+
+        if (wasAborted) {
+          // User stopped mid-stream: discard the pending animation buffer
+          // immediately so the typewriter doesn't keep draining after stop.
+          typewriter.stop();
+        } else {
+          // Let the buffer drain with pacing to avoid end-of-stream "content dump".
+          await typewriter.complete({ maxWaitMs: 5000 });
+        }
 
         const cleanedContent = stripToolCallStatusMessages(
           typewriter.getDisplayedText(),
         );
+
+        // Append a stop marker so the user knows the response was cut short.
+        // If nothing was displayed yet (aborted before first token), show only
+        // the marker so the message is not left empty.
+        const stopMarker = `\n\n*${i18n.t("playground:assistant.stopped")}*`;
+        const finalContent = wasAborted
+          ? (cleanedContent.length > 0 ? cleanedContent + stopMarker : stopMarker.trimStart())
+          : cleanedContent;
+
         dispatch(
           updateMessageContent({
             messageId: latestAssistantMessage.id,
-            content: cleanedContent,
+            content: finalContent,
           })
         );
 
@@ -772,7 +807,7 @@ export const sendAssistantMessage = ({
     try {
       await runCompletion(finalMessages, finalServersWithAuth);
     } catch (toolEnabledError) {
-      if (finalServersWithAuth.length === 0) {
+      if (finalServersWithAuth.length === 0 || abortController.signal.aborted) {
         throw toolEnabledError;
       }
 
@@ -828,6 +863,12 @@ export const sendAssistantMessage = ({
   } catch (error) {
     console.error("Completion failed:", error);
 
+    // If the user explicitly stopped the response, swallow the abort error
+    // silently — no toast or error message should appear in the chat.
+    if (abortController.signal.aborted) {
+      return;
+    }
+
     const fallbackToastMessage = i18n.t("playground:assistant.error.toast");
     const assistantErrorMessage = i18n.t("playground:assistant.error.chat");
 
@@ -851,6 +892,7 @@ export const sendAssistantMessage = ({
       })
     );
   } finally {
+    sessionAbortControllers.delete(sessionId);
     dispatch(setAssistantResponsePhase({ sessionId, phase: "idle" }));
     dispatch(setIsLoading(false));
   }
