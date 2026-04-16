@@ -278,7 +278,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
    * and current validation errors.
    */
   const handleSend = useCallback(async () => {
-    if (isUploading) return;
+    if (isLoading || isUploading) return;
     if (!input.trim() && attachments.length === 0) return;
 
     const messageContent = quotedText ? `> ${quotedText}\n\n${input}` : input;
@@ -395,7 +395,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
     if (quotedText) {
       dispatch(clearQuotedText());
     }
-  }, [input, attachments, quotedText, dispatch, sessionId, accessToken, t, isUploading]);
+  }, [input, attachments, quotedText, dispatch, sessionId, accessToken, t, isLoading, isUploading]);
 
   /**
    * Keyboard behavior: Enter sends the message, Shift+Enter inserts a newline.
@@ -608,10 +608,13 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
           aria-atomic="true"
           sx={{
             position: 'absolute',
-            width: 1,
-            height: 1,
+            width: '1px',
+            height: '1px',
+            padding: 0,
+            margin: '-1px',
             overflow: 'hidden',
             clip: 'rect(0 0 0 0)',
+            clipPath: 'inset(50%)',
             whiteSpace: 'nowrap',
           }}
         >

@@ -28,6 +28,14 @@ import type { RootState } from "..";
 import i18n from "../../../i18n";
 
 import { FileAttachment } from "../../types";
+import { extractFileText, fetchFileDataUrl } from "../../api/storage";
+import { Tool } from "openai/resources/responses/responses.mjs";
+import {
+  getOrchestratorInsights,
+  OrchestratorProgressEvent,
+  resolveServersFromInsights,
+} from "../../services/orchestratorService";
+import { createStreamTypewriter } from "../../utils/streamTypewriter";
 
 /**
  * Per-session AbortControllers for in-flight streaming requests.
@@ -43,14 +51,6 @@ const sessionAbortControllers = new Map<string, AbortController>();
 export function stopAssistantMessage(sessionId: string): void {
   sessionAbortControllers.get(sessionId)?.abort();
 }
-import { extractFileText, fetchFileDataUrl } from "../../api/storage";
-import { Tool } from "openai/resources/responses/responses.mjs";
-import {
-  getOrchestratorInsights,
-  OrchestratorProgressEvent,
-  resolveServersFromInsights,
-} from "../../services/orchestratorService";
-import { createStreamTypewriter } from "../../utils/streamTypewriter";
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
 const TOOL_CALL_STATUS_PATTERN = /\n[^\n]* is being called\.\.\.\n/g;
@@ -773,11 +773,7 @@ export const sendAssistantMessage = ({
       } finally {
         const wasAborted = abortController.signal.aborted;
 
-        if (wasAborted) {
-          // User stopped mid-stream: discard the pending animation buffer
-          // immediately so the typewriter doesn't keep draining after stop.
-          typewriter.stop();
-        } else {
+        if (!wasAborted) {
           // Let the buffer drain with pacing to avoid end-of-stream "content dump".
           await typewriter.complete({ maxWaitMs: 5000 });
         }

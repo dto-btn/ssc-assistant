@@ -127,10 +127,12 @@ const chatSlice = createSlice({
       state.messages = state.messages.filter(
         (message) => message.sessionId !== action.payload
       );
+      delete state.isLoadingBySessionId[action.payload];
     },
     clearAllMessages: (state) => {
       state.messages = [];
       state.orchestratorInsightsBySessionId = {};
+      state.isLoadingBySessionId = {};
     },
     updateMessageContent: (state, action: PayloadAction<{ messageId: string; content: string }>) => {
       const { messageId, content } = action.payload;
