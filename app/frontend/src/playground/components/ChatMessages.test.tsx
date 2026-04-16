@@ -1,6 +1,7 @@
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import ChatMessages from "./ChatMessages";
@@ -48,11 +49,16 @@ function renderMessages(sessionId: string, preloadedState: TestStoreState) {
     preloadedState,
   });
 
-  return render(
+  const renderResult = render(
     <Provider store={store as never}>
       <ChatMessages sessionId={sessionId} />
     </Provider>
   );
+
+  return {
+    ...renderResult,
+    store,
+  };
 }
 
 describe("ChatMessages", () => {
@@ -221,5 +227,99 @@ describe("ChatMessages", () => {
 
     expect(await screen.findByText("npm test")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "assistant.copy.code" })).not.toBeInTheDocument();
+  });
+
+  it("does not render user mermaid markdown as a diagram", async () => {
+    const { container } = renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "user",
+            content: "```mermaid\ngraph TD\n  A-->B\n```",
+            timestamp: 1,
+          },
+        ],
+        isLoading: false,
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    expect(await screen.findByText(/graph TD/)).toBeInTheDocument();
+    expect(container.querySelector("svg[id^='mermaid-']")).toBeNull();
+    expect(screen.queryByRole("button", { name: "assistant.mermaid.viewCode" })).not.toBeInTheDocument();
+  });
+
+  it("shows mermaid toggle for assistant messages and switches labels on click", async () => {
+    const user = userEvent.setup();
+
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "```mermaid\ngraph TD\n  A-->B\n```",
+            timestamp: 1,
+          },
+        ],
+        isLoading: false,
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    const toggleButton = await screen.findByRole("button", { name: "assistant.mermaid.viewCode" });
+    expect(toggleButton).toHaveAttribute("aria-pressed", "false");
+
+    await user.click(toggleButton);
+    expect(screen.getByRole("button", { name: "assistant.mermaid.viewDiagram" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("keeps a single mermaid toggle after rerender with unchanged state", async () => {
+    const view = renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "```mermaid\ngraph TD\n  A-->B\n```",
+            timestamp: 1,
+          },
+        ],
+        isLoading: false,
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    expect(await screen.findByRole("button", { name: "assistant.mermaid.viewCode" })).toBeInTheDocument();
+
+    view.rerender(
+      <Provider store={view.store as never}>
+        <ChatMessages sessionId="s1" />
+      </Provider>
+    );
+
+    expect(screen.getAllByRole("button", { name: "assistant.mermaid.viewCode" })).toHaveLength(1);
   });
 });

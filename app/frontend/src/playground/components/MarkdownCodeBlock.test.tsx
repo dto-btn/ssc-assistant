@@ -20,6 +20,7 @@ describe("MarkdownCodeBlock", () => {
     const pre = screen.getByLabelText("assistant.code.scrollRegion");
     expect(pre.tagName).toBe("PRE");
     expect(pre).toHaveAttribute("tabIndex", "0");
+    expect(pre).toHaveAttribute("role", "region");
   });
 
   it("renders inline code without a focusable pre region", () => {

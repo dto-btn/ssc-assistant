@@ -78,6 +78,7 @@ const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
       </Tooltip>
       <pre
         style={{ margin: 0 }}
+        role="region"
         tabIndex={0}
         aria-label={t("assistant.code.scrollRegion")}
       >
