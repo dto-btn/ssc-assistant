@@ -44,8 +44,6 @@ const migratePersistedState = (parsed: PersistedState): PersistedState => {
 
   next.chat = {
     messages: normalizePersistedMessages(chat.messages),
-    // isLoadingBySessionId is intentionally omitted: in-flight requests do not
-    // survive a page reload, so the map always starts empty.
     isLoadingBySessionId: {},
     assistantResponsePhaseBySessionId:
       chat.assistantResponsePhaseBySessionId && typeof chat.assistantResponsePhaseBySessionId === "object"
