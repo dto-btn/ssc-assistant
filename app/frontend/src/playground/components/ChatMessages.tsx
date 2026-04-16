@@ -10,12 +10,18 @@ import { useSelector } from "react-redux";
 import { RootState } from "../store";
 import {
   Box,
+  Button,
   List,
   ListItem,
 } from "@mui/material";
-import ReactMarkdown from "react-markdown";
+import { MarkdownHooks } from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import rehypeMermaid from "rehype-mermaid";
 import Link from "@mui/material/Link";
 import { useTranslation } from "react-i18next";
+import type { ElementContent } from "hast";
+import type { Pluggable } from "unified";
 import AttachmentPreview from "./AttachmentPreview";
 import { selectSessionFilesById } from "../store/selectors/sessionFilesSelectors";
 import { FileAttachment } from "../types";
@@ -24,6 +30,7 @@ import McpAttributionPill from "./McpAttributionPill";
 import MarkdownCodeBlock, { MarkdownCodeBlockProps } from "./MarkdownCodeBlock";
 import { ASSISTANT_MARKDOWN_SX, USER_MARKDOWN_SX } from "./chatMessageStyles";
 import assistantLogo from "../../assets/SSC-Logo-Purple-Leaf-300x300.png";
+import "highlight.js/styles/github.css";
 
 interface ChatMessagesProps {
   sessionId: string;
@@ -42,6 +49,7 @@ const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   const { t } = useTranslation("playground");
+  const [mermaidCodeViewByMessageId, setMermaidCodeViewByMessageId] = React.useState<Record<string, boolean>>({});
 
   const markdownComponents = useMemo(
     () => ({
@@ -54,6 +62,11 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
         <MarkdownCodeBlock
           {...(props as MarkdownCodeBlockProps)}
         />
+      ),
+      th: ({ children, ...props }: React.ComponentPropsWithoutRef<"th">) => (
+        <th scope="col" {...props}>
+          {children}
+        </th>
       ),
     }),
     [],
@@ -84,6 +97,33 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
     assistantResponsePhase === "waiting-first-token"
     || assistantResponsePhase === "streaming";
   const shouldShowThinkingLabel = assistantResponsePhase === "waiting-first-token";
+  const mermaidErrorText = t("assistant.mermaid.error");
+
+  const baseRehypePlugins = useMemo<Pluggable[]>(() => [rehypeHighlight], []);
+  const remarkPlugins = useMemo<Pluggable[]>(() => [remarkGfm], []);
+
+  const mermaidRehypePlugin = useMemo<Pluggable>(
+    () => ([
+      rehypeMermaid,
+      {
+        errorFallback: (): ElementContent => ({
+          type: "element",
+          tagName: "div",
+          properties: {
+            className: ["mermaid-error"],
+            role: "alert",
+          },
+          children: [{ type: "text", value: mermaidErrorText }],
+        }),
+      },
+    ]),
+    [mermaidErrorText],
+  );
+
+  const rehypePluginsWithMermaid = useMemo<Pluggable[]>(
+    () => [...baseRehypePlugins, mermaidRehypePlugin],
+    [baseRehypePlugins, mermaidRehypePlugin],
+  );
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const sessionFiles = useSelector(selectSessionFilesById(sessionId));
@@ -109,6 +149,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
     }
   }, [messages.length]);
 
+  const toggleMermaidCodeView = useCallback((messageId: string) => {
+    setMermaidCodeViewByMessageId((previous) => ({
+      ...previous,
+      [messageId]: !previous[messageId],
+    }));
+  }, []);
+
   return (
     <Box ref={scrollRef} flex={1} overflow="auto" p={2}>
       <List
@@ -130,6 +177,20 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
           const hasLiveAttribution = isAssistantMessage
             && message.mcpAttribution?.source === "live"
             && message.mcpAttribution.servers.length > 0;
+          const isActiveStreamingAssistantMessage = Boolean(
+            isAssistantMessage
+            && message.id === activeAssistantMessageId
+            && shouldPulseAssistantIcon,
+          );
+          const hasMermaidFence = /```\s*mermaid\b/i.test(message.content);
+          const isShowingMermaidCode = Boolean(mermaidCodeViewByMessageId[message.id]);
+          const shouldRenderMermaid = isAssistantMessage
+            && hasMermaidFence
+            && !isActiveStreamingAssistantMessage
+            && !isShowingMermaidCode;
+          const messageRehypePlugins = (!isAssistantMessage || !shouldRenderMermaid)
+            ? baseRehypePlugins
+            : rehypePluginsWithMermaid;
           const liveAttribution = hasLiveAttribution ? message.mcpAttribution : undefined;
           const resolvedAttachments = resolveAttachments(
             message.attachments as FileAttachment[] | undefined,
@@ -206,10 +267,29 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                       )}
                     </Box>
                     <Box sx={{ minWidth: 0, flex: 1 }}>
+                      {isAssistantMessage && hasMermaidFence && !isActiveStreamingAssistantMessage && (
+                        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 0.5 }}>
+                          <Button
+                            size="small"
+                            variant="text"
+                            onClick={() => toggleMermaidCodeView(message.id)}
+                            aria-pressed={isShowingMermaidCode}
+                            sx={{ minWidth: 0, px: 0.5, textTransform: "none", fontSize: "0.78rem" }}
+                          >
+                            {isShowingMermaidCode
+                              ? t("assistant.mermaid.viewDiagram")
+                              : t("assistant.mermaid.viewCode")}
+                          </Button>
+                        </Box>
+                      )}
                       <Box sx={ASSISTANT_MARKDOWN_SX}>
-                        <ReactMarkdown components={markdownComponents}>
+                        <MarkdownHooks
+                          components={markdownComponents}
+                          remarkPlugins={remarkPlugins}
+                          rehypePlugins={messageRehypePlugins}
+                        >
                           {message.content}
-                        </ReactMarkdown>
+                        </MarkdownHooks>
                       </Box>
                       {resolvedAttachments.length > 0 && (
                         <AttachmentPreview attachments={resolvedAttachments} />
@@ -231,9 +311,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                   }}
                 >
                   <Box sx={USER_MARKDOWN_SX}>
-                    <ReactMarkdown components={markdownComponents}>
+                    <MarkdownHooks
+                      components={markdownComponents}
+                      remarkPlugins={remarkPlugins}
+                      rehypePlugins={messageRehypePlugins}
+                    >
                       {message.content}
-                    </ReactMarkdown>
+                    </MarkdownHooks>
                   </Box>
                   {resolvedAttachments.length > 0 && (
                     <AttachmentPreview attachments={resolvedAttachments} />
