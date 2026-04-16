@@ -8,7 +8,7 @@
 import {
   addMessage,
   updateMessageContent,
-  setIsLoading,
+  setSessionLoading,
   setAssistantResponsePhase,
   setOrchestratorInsights,
   Message,
@@ -465,7 +465,7 @@ export const sendAssistantMessage = ({
   dispatch,
   getState
 ) => {
-  dispatch(setIsLoading(true));
+  dispatch(setSessionLoading({ sessionId, loading: true }));
   dispatch(setAssistantResponsePhase({ sessionId, phase: "waiting-first-token" }));
   const abortController = new AbortController();
   sessionAbortControllers.set(sessionId, abortController);
@@ -478,7 +478,7 @@ export const sendAssistantMessage = ({
           isError: true,
         })
       );
-      dispatch(setIsLoading(false));
+      dispatch(setSessionLoading({ sessionId, loading: false }));
       return;
     }
 
@@ -894,6 +894,6 @@ export const sendAssistantMessage = ({
   } finally {
     sessionAbortControllers.delete(sessionId);
     dispatch(setAssistantResponsePhase({ sessionId, phase: "idle" }));
-    dispatch(setIsLoading(false));
+    dispatch(setSessionLoading({ sessionId, loading: false }));
   }
 };

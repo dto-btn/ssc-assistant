@@ -79,7 +79,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const quotedText = useAppSelector((state: RootState) => state.quoted.quotedText);
-  const isLoading = useAppSelector((state: RootState) => state.chat.isLoading);
+  const isLoading = useAppSelector((state: RootState) => state.chat.isLoadingBySessionId[sessionId] ?? false);
 
   // Local UI state
   const [input, setInput] = useState("");

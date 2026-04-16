@@ -74,7 +74,7 @@ describe("ChatMessages", () => {
             timestamp: 1,
           },
         ],
-        isLoading: true,
+        isLoadingBySessionId: { s1: true },
         assistantResponsePhaseBySessionId: {
           s1: "waiting-first-token",
         },
@@ -101,7 +101,7 @@ describe("ChatMessages", () => {
             timestamp: 1,
           },
         ],
-        isLoading: true,
+        isLoadingBySessionId: { s1: true },
         assistantResponsePhaseBySessionId: {
           s1: "streaming",
         },
@@ -133,7 +133,7 @@ describe("ChatMessages", () => {
             },
           },
         ],
-        isLoading: false,
+        isLoadingBySessionId: {},
         assistantResponsePhaseBySessionId: {
           s1: "idle",
         },
@@ -159,7 +159,7 @@ describe("ChatMessages", () => {
             timestamp: 1,
           },
         ],
-        isLoading: false,
+        isLoadingBySessionId: {},
         assistantResponsePhaseBySessionId: {
           s1: "idle",
         },
@@ -188,7 +188,7 @@ describe("ChatMessages", () => {
             timestamp: 1,
           },
         ],
-        isLoading: false,
+        isLoadingBySessionId: {},
         assistantResponsePhaseBySessionId: {
           s1: "idle",
         },
@@ -214,7 +214,7 @@ describe("ChatMessages", () => {
             timestamp: 1,
           },
         ],
-        isLoading: false,
+        isLoadingBySessionId: {},
         assistantResponsePhaseBySessionId: {
           s1: "idle",
         },
@@ -241,7 +241,7 @@ describe("ChatMessages", () => {
             timestamp: 1,
           },
         ],
-        isLoading: false,
+        isLoadingBySessionId: {},
         assistantResponsePhaseBySessionId: {
           s1: "idle",
         },
@@ -271,7 +271,7 @@ describe("ChatMessages", () => {
             timestamp: 1,
           },
         ],
-        isLoading: false,
+        isLoadingBySessionId: {},
         assistantResponsePhaseBySessionId: {
           s1: "idle",
         },
@@ -301,7 +301,7 @@ describe("ChatMessages", () => {
             timestamp: 1,
           },
         ],
-        isLoading: false,
+        isLoadingBySessionId: {},
         assistantResponsePhaseBySessionId: {
           s1: "idle",
         },

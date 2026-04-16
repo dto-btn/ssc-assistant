@@ -48,7 +48,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const currentSessionId = useSelector(
     (state: RootState) => state.sessions.currentSessionId
   );
-  const isLoading = useSelector((state: RootState) => state.chat.isLoading);
+  const isLoading = useSelector((state: RootState) =>
+    currentSessionId ? (state.chat.isLoadingBySessionId[currentSessionId] ?? false) : false
+  );
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
   const syncEntries = useSelector((state: RootState) => state.sync.byId);
   const rehydratedSessionsRef = React.useRef<Set<string>>(new Set());
