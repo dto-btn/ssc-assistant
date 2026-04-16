@@ -7,10 +7,6 @@ import ChatMessages from "./ChatMessages";
 import chatReducer from "../store/slices/chatSlice";
 import sessionFilesReducer from "../store/slices/sessionFilesSlice";
 
-vi.mock("rehype-mermaid", () => ({
-  default: () => undefined,
-}));
-
 vi.mock("react-i18next", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-i18next")>();
   return {
@@ -169,6 +165,7 @@ describe("ChatMessages", () => {
     });
 
     expect(await screen.findByRole("table")).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Name" })).toHaveAttribute("scope", "col");
     expect(screen.getByText("Speed")).toBeInTheDocument();
     expect(screen.getByText("Fast")).toBeInTheDocument();
   });

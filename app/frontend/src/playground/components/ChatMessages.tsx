@@ -19,6 +19,7 @@ import rehypeHighlight from "rehype-highlight";
 import rehypeMermaid from "rehype-mermaid";
 import Link from "@mui/material/Link";
 import { useTranslation } from "react-i18next";
+import type { ElementContent } from "hast";
 import type { Pluggable } from "unified";
 import AttachmentPreview from "./AttachmentPreview";
 import { selectSessionFilesById } from "../store/selectors/sessionFilesSelectors";
@@ -60,6 +61,11 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
           {...(props as MarkdownCodeBlockProps)}
         />
       ),
+      th: ({ children, ...props }: React.ComponentPropsWithoutRef<"th">) => (
+        <th scope="col" {...props}>
+          {children}
+        </th>
+      ),
     }),
     [],
   );
@@ -89,22 +95,34 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
     assistantResponsePhase === "waiting-first-token"
     || assistantResponsePhase === "streaming";
   const shouldShowThinkingLabel = assistantResponsePhase === "waiting-first-token";
-  const shouldDeferMermaidRendering =
+  const shouldDeferActiveAssistantMermaidRendering =
     assistantResponsePhase === "waiting-first-token"
     || assistantResponsePhase === "streaming";
 
-  const rehypePlugins = useMemo(() => {
-    const plugins: Pluggable[] = [rehypeHighlight];
-    if (!shouldDeferMermaidRendering) {
-      plugins.push([
-        rehypeMermaid,
-        {
-          errorFallback: () => <div>Invalid diagram format!</div>,
-        },
-      ]);
-    }
-    return plugins;
-  }, [shouldDeferMermaidRendering]);
+  const baseRehypePlugins = useMemo<Pluggable[]>(() => [rehypeHighlight], []);
+
+  const mermaidRehypePlugin = useMemo<Pluggable>(
+    () => ([
+      rehypeMermaid,
+      {
+        errorFallback: (): ElementContent => ({
+          type: "element",
+          tagName: "div",
+          properties: {
+            className: ["mermaid-error"],
+            role: "alert",
+          },
+          children: [{ type: "text", value: t("assistant.mermaid.error") }],
+        }),
+      },
+    ]),
+    [t],
+  );
+
+  const rehypePluginsWithMermaid = useMemo<Pluggable[]>(
+    () => [...baseRehypePlugins, mermaidRehypePlugin],
+    [baseRehypePlugins, mermaidRehypePlugin],
+  );
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const sessionFiles = useSelector(selectSessionFilesById(sessionId));
@@ -151,6 +169,14 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
           const hasLiveAttribution = isAssistantMessage
             && message.mcpAttribution?.source === "live"
             && message.mcpAttribution.servers.length > 0;
+          const isActiveStreamingAssistantMessage = Boolean(
+            isAssistantMessage
+            && message.id === activeAssistantMessageId
+            && shouldDeferActiveAssistantMermaidRendering,
+          );
+          const messageRehypePlugins = isActiveStreamingAssistantMessage
+            ? baseRehypePlugins
+            : rehypePluginsWithMermaid;
           const liveAttribution = hasLiveAttribution ? message.mcpAttribution : undefined;
           const resolvedAttachments = resolveAttachments(
             message.attachments as FileAttachment[] | undefined,
@@ -231,7 +257,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                         <MarkdownHooks
                           components={markdownComponents}
                           remarkPlugins={[remarkGfm]}
-                          rehypePlugins={rehypePlugins}
+                          rehypePlugins={messageRehypePlugins}
                         >
                           {message.content}
                         </MarkdownHooks>
@@ -259,7 +285,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                     <MarkdownHooks
                       components={markdownComponents}
                       remarkPlugins={[remarkGfm]}
-                      rehypePlugins={rehypePlugins}
+                      rehypePlugins={messageRehypePlugins}
                     >
                       {message.content}
                     </MarkdownHooks>

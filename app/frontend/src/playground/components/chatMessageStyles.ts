@@ -69,7 +69,7 @@ export const BASE_MARKDOWN_SX: SxProps<Theme> = {
     maxWidth: "100%",
     display: "block",
     margin: "0 auto",
-    minHeight: "600px",
+    minHeight: { xs: "200px", md: "400px" },
   },
 };
 

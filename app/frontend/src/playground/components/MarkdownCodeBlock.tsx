@@ -76,7 +76,11 @@ const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
           {isCopied ? <CheckIcon fontSize="inherit" /> : <ContentCopyIcon fontSize="inherit" />}
         </IconButton>
       </Tooltip>
-      <pre style={{ margin: 0 }}>
+      <pre
+        style={{ margin: 0 }}
+        tabIndex={0}
+        aria-label={t("assistant.code.scrollRegion")}
+      >
         <code className={className} {...rest}>
           {children}
         </code>

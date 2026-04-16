@@ -247,9 +247,17 @@
         "en": "Copy code",
         "fr": "Copier le code"
     },
+    "assistant.code.scrollRegion": {
+        "en": "Scrollable code block",
+        "fr": "Bloc de code defilable"
+    },
     "assistant.copied": {
         "en": "Copied",
         "fr": "Copié"
+    },
+    "assistant.mermaid.error": {
+        "en": "Invalid diagram format.",
+        "fr": "Format de diagramme invalide."
     },
     "assistant.label": {
         "en": "Assistant",
