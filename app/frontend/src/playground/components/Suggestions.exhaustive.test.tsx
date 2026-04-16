@@ -110,7 +110,8 @@ describe("Exhaustive Suggestions & Routing Test", () => {
       },
       chat: {
         messages: [],
-        isLoading: false,
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {},
         orchestratorInsightsBySessionId: {},
       },
       auth: { accessToken: "token" }

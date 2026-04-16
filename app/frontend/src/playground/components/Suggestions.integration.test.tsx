@@ -95,7 +95,8 @@ describe("Suggestions Integration", () => {
       },
       chat: {
         messages: [],
-        isLoading: false,
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {},
         orchestratorInsightsBySessionId: {},
       },
       auth: {
