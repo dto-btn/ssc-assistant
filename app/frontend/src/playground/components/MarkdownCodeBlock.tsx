@@ -8,6 +8,18 @@ export interface MarkdownCodeBlockProps extends React.ComponentPropsWithoutRef<"
   inline?: boolean;
 }
 
+const extractNodeText = (node: React.ReactNode): string => {
+  if (node == null || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) {
+    return node.map((child) => extractNodeText(child)).join("");
+  }
+  if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
+    return extractNodeText(node.props.children);
+  }
+  return "";
+};
+
 const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
   inline,
   className,
@@ -16,7 +28,9 @@ const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
 }) => {
   const { t } = useTranslation("playground");
   const [isCopied, setIsCopied] = useState(false);
-  const codeText = useMemo(() => String(children ?? "").replace(/\n$/, ""), [children]);
+  const codeText = useMemo(() => extractNodeText(children).replace(/\n$/, ""), [children]);
+  const isLikelyBlockCode = Boolean(className?.includes("language-")) || codeText.includes("\n");
+  const shouldRenderInline = inline ?? !isLikelyBlockCode;
 
   useEffect(() => {
     if (!isCopied) return;
@@ -34,7 +48,7 @@ const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
     }
   };
 
-  if (inline) {
+  if (shouldRenderInline) {
     return (
       <code className={className} {...rest}>
         {children}
@@ -62,8 +76,15 @@ const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
           {isCopied ? <CheckIcon fontSize="inherit" /> : <ContentCopyIcon fontSize="inherit" />}
         </IconButton>
       </Tooltip>
-      <pre className={className} style={{ margin: 0 }}>
-        <code {...rest}>{codeText}</code>
+      <pre
+        style={{ margin: 0 }}
+        role="region"
+        tabIndex={0}
+        aria-label={t("assistant.code.scrollRegion")}
+      >
+        <code className={className} {...rest}>
+          {children}
+        </code>
       </pre>
     </Box>
   );
