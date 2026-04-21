@@ -30,6 +30,7 @@ import McpAttributionPill from "./McpAttributionPill";
 import MarkdownCodeBlock, { MarkdownCodeBlockProps } from "./MarkdownCodeBlock";
 import { ASSISTANT_MARKDOWN_SX, USER_MARKDOWN_SX } from "./chatMessageStyles";
 import assistantLogo from "../../assets/SSC-Logo-Purple-Leaf-300x300.png";
+import ResponseButtons from "./ResponseButtons";
 import "highlight.js/styles/github.css";
 
 interface ChatMessagesProps {
@@ -50,6 +51,7 @@ const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({
 const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   const { t } = useTranslation("playground");
   const [mermaidCodeViewByMessageId, setMermaidCodeViewByMessageId] = React.useState<Record<string, boolean>>({});
+  const [hoveredMessageId, setHoveredMessageId] = React.useState<string | null>(null);
 
   const markdownComponents = useMemo(
     () => ({
@@ -199,6 +201,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
             <ListItem
               key={message.id}
               alignItems="flex-start"
+              onMouseEnter={() => setHoveredMessageId(message.id)}
+              onMouseLeave={() => setHoveredMessageId(null)}
               sx={{
                 px: 0,
                 py: 1,
@@ -293,6 +297,15 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                       </Box>
                       {resolvedAttachments.length > 0 && (
                         <AttachmentPreview attachments={resolvedAttachments} />
+                      )}
+                      {!isActiveStreamingAssistantMessage && (
+                        <ResponseButtons
+                          isHovering={hoveredMessageId === message.id}
+                          isMostRecent={message.id === activeAssistantMessageId}
+                          text={message.content}
+                          messageId={message.id}
+                          isStreaming={Boolean(shouldPulseAssistantIcon)}
+                        />
                       )}
                     </Box>
                   </Box>

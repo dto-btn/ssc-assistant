@@ -378,5 +378,41 @@
     "close": {
         "en": "Close",
         "fr": "Fermer"
+    },
+    "copy": {
+        "en": "Copy",
+        "fr": "Copier"
+    },
+    "copy.success": {
+        "en": "Copied!",
+        "fr": "Copié !"
+    },
+    "regenerate": {
+        "en": "Regenerate",
+        "fr": "Régénérer"
+    },
+    "good.response": {
+        "en": "Good response",
+        "fr": "Bonne réponse"
+    },
+    "bad.response": {
+        "en": "Bad response",
+        "fr": "Mauvaise réponse"
+    },
+    "feedback.liked": {
+        "en": "User liked this response",
+        "fr": "L'utilisateur a aimé cette réponse"
+    },
+    "feedback.disliked": {
+        "en": "User disliked this response",
+        "fr": "L'utilisateur n'a pas aimé cette réponse"
+    },
+    "feedback.success": {
+        "en": "Feedback submitted, thank you!",
+        "fr": "Retour soumis, merci !"
+    },
+    "feedback.error": {
+        "en": "Error sending feedback",
+        "fr": "Erreur lors de l'envoi du retour"
     }
 }
