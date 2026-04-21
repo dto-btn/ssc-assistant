@@ -8,9 +8,16 @@
 import OpenAI from "openai";
 import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult, CompletionMessage } from "../completionService";
 import { ResponseInput } from "openai/resources/responses/responses.mjs";
+import {
+  Citation,
+  extractCitationsFromPayload,
+  extractResponseCitations,
+  mergeCitations,
+} from "../../utils/citations";
 
 const DEFAULT_RESPONSES_TIMEOUT_MS = 90000;
 const DEFAULT_STANDALONE_LITELLM_BASE_URL = "http://localhost:4000/v1";
+const IS_DEV = import.meta.env.DEV;
 
 const isPlaygroundLiteLLMEnabled = (): boolean => {
   return String(import.meta.env.VITE_PLAYGROUND_USE_LITELLM || "true").toLowerCase() === "true";
@@ -147,6 +154,8 @@ export class AzureOpenAIProvider implements CompletionProvider {
     const { onChunk, onToolCall, onError, onComplete } = callbacks;
 
     let fullText = currentOutput || "";
+    let citations: Citation[] = [];
+    const seenEventTypes = new Set<string>();
     const timeout = this.createTimeoutSignal(signal);
     
     try {
@@ -161,6 +170,21 @@ export class AzureOpenAIProvider implements CompletionProvider {
       }, { signal: timeout.signal });
 
       for await (const event of stream) {
+        const eventRecord = event as { type?: string };
+        if (typeof eventRecord.type === "string" && eventRecord.type.length > 0) {
+          seenEventTypes.add(eventRecord.type);
+        }
+
+        const extractedFromEvent = extractCitationsFromPayload(event);
+        citations = mergeCitations(citations, extractedFromEvent);
+
+        if (IS_DEV && extractedFromEvent.length > 0) {
+          console.debug("[playground-citations] extracted from stream event", {
+            eventType: eventRecord.type,
+            extractedCount: extractedFromEvent.length,
+          });
+        }
+
         if (event.type === "response.output_text.delta") {
           fullText += event.delta;
           onChunk?.(event.delta);
@@ -172,12 +196,36 @@ export class AzureOpenAIProvider implements CompletionProvider {
         }
       }
 
+      if (typeof stream.finalResponse === "function") {
+        const finalResponse = await stream.finalResponse();
+        const extractedFromFinalResponse = extractResponseCitations(finalResponse);
+        const extractedFromFinalPayload = extractCitationsFromPayload(finalResponse);
+        citations = mergeCitations(citations, extractedFromFinalResponse);
+        citations = mergeCitations(citations, extractedFromFinalPayload);
+
+        if (IS_DEV && (extractedFromFinalResponse.length > 0 || extractedFromFinalPayload.length > 0)) {
+          console.debug("[playground-citations] extracted from final response", {
+            extractedFromFinalResponse: extractedFromFinalResponse.length,
+            extractedFromFinalPayload: extractedFromFinalPayload.length,
+          });
+        }
+      }
+
+      if (IS_DEV) {
+        console.debug("[playground-citations] completion summary", {
+          citationCount: citations.length,
+          containsDocMarkers: /\[doc\d+\]/i.test(fullText),
+          eventTypesSeen: Array.from(seenEventTypes),
+        });
+      }
+
       onComplete?.(fullText);
 
       return {
         fullText,
         completed: true,
         provider: this.name,
+        citations,
       };
     } catch (error) {
       let err = error instanceof Error ? error : new Error(String(error));

@@ -1,6 +1,7 @@
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import ChatMessages from "./ChatMessages";
@@ -139,5 +140,176 @@ describe("ChatMessages", () => {
     });
 
     expect(screen.getByRole("button", { name: /MCP servers used for this response/i })).toBeInTheDocument();
+  });
+
+  it("renders renumbered inline citations and citation chips for [docN] content", () => {
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "Please see [doc2] and [doc1] for details.",
+            timestamp: 1,
+            citations: [
+              { title: "Citation One", url: "https://example.com/one", content: "Excerpt one" },
+              { title: "Citation Two", url: "https://example.com/two", content: "Excerpt two" },
+            ],
+          },
+        ],
+        isLoading: false,
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    expect(screen.getByRole("link", { name: "1" })).toHaveAttribute("href", "https://example.com/one");
+    expect(screen.getByRole("link", { name: "2" })).toHaveAttribute("href", "https://example.com/two");
+    expect(screen.getByRole("link", { name: "Citation One" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Citation Two" })).toBeInTheDocument();
+  });
+
+  it("opens the citation drawer from chip clicks and inline numbered links", async () => {
+    const user = userEvent.setup();
+
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "Reference text [doc1].",
+            timestamp: 1,
+            citations: [
+              {
+                title: "Citation One",
+                url: "https://example.com/one",
+                content: "Drawer excerpt one",
+              },
+            ],
+          },
+        ],
+        isLoading: false,
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    await user.click(screen.getByRole("link", { name: "Citation One" }));
+    expect(await screen.findByText("Drawer excerpt one")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "sidebar.close" }));
+    await waitFor(() => {
+      expect(screen.queryByText("Drawer excerpt one")).not.toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("link", { name: "1" }));
+    expect(await screen.findByText("Drawer excerpt one")).toBeInTheDocument();
+  });
+
+  it("renders and opens annotation-style citations when response has no [docN] markers", async () => {
+    const user = userEvent.setup();
+
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "Alpha beta gamma.",
+            timestamp: 1,
+            citations: [
+              {
+                title: "Alpha Source",
+                url: "https://example.com/alpha",
+                content: "Alpha excerpt",
+                endIndex: 5,
+              },
+            ],
+          },
+        ],
+        isLoading: false,
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    const inlineCitation = screen.getByRole("link", { name: "1" });
+    expect(inlineCitation).toHaveAttribute("href", "https://example.com/alpha");
+    expect(screen.getByRole("link", { name: "Alpha Source" })).toBeInTheDocument();
+
+    await user.click(inlineCitation);
+    expect(await screen.findByText("Alpha excerpt")).toBeInTheDocument();
+  });
+
+  it("shows source-like citation details in drawer instead of echoed answer text", async () => {
+    const user = userEvent.setup();
+    const answerText = "EPS is SSC's project system of record.";
+    const sourceExcerpt = [
+      "Project Management and Delivery Operating Guide",
+      "Page 71 of 91",
+      "F.1 Enterprise Portfolio System (EPS)",
+      "Authoritative data source for all project data.",
+    ].join("\n");
+
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: answerText,
+            timestamp: 1,
+            citations: [
+              {
+                title: "Project Management Operating Guide EN.pdf",
+                url: "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
+                content: answerText,
+                endIndex: answerText.length,
+              },
+              {
+                title: "Project Management Operating Guide EN.pdf",
+                url: "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
+                content: sourceExcerpt,
+                endIndex: answerText.length,
+              },
+            ],
+          },
+        ],
+        isLoading: false,
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    await user.click(screen.getByRole("link", { name: "1" }));
+    const pageMarkers = await screen.findAllByText(/Page 71 of 91/i);
+    expect(pageMarkers.length).toBeGreaterThan(0);
+    const sourceLines = screen.getAllByText(/Authoritative data source for all project data/i);
+    expect(sourceLines.length).toBeGreaterThan(0);
   });
 });

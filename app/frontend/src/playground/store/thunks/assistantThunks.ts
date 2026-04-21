@@ -21,6 +21,7 @@ import {
   completionService,
   CompletionMessage,
   CompletionContentPart,
+  CompletionResult,
 } from "../../services/completionService";
 import { isTokenExpired } from "../../../util/token";
 import { AppThunk, AppDispatch } from "..";
@@ -682,7 +683,7 @@ export const sendAssistantMessage = ({
     const runCompletion = async (
       messagesForRun: CompletionMessage[],
       serversForRun: Tool.Mcp[],
-    ): Promise<void> => {
+    ): Promise<CompletionResult | undefined> => {
       // One execution path used for both primary run and no-tools retry.
       let receivedFirstChunk = false;
       let pendingToolCallStatusText = "";
@@ -702,8 +703,10 @@ export const sendAssistantMessage = ({
         },
       });
 
+      let completionResult: CompletionResult | undefined;
+
       try {
-        await completionService.createCompletion(
+        completionResult = await completionService.createCompletion(
           {
             messages: messagesForRun,
             model: completionModel,
@@ -761,11 +764,14 @@ export const sendAssistantMessage = ({
           updateMessageContent({
             messageId: latestAssistantMessage.id,
             content: cleanedContent,
+            citations: completionResult?.citations,
           })
         );
 
         typewriter.stop();
       }
+
+      return completionResult;
 
     };
 
@@ -775,6 +781,13 @@ export const sendAssistantMessage = ({
       if (finalServersWithAuth.length === 0) {
         throw toolEnabledError;
       }
+
+      dispatch(
+        addToast({
+          message: "MCP tools were unavailable for this response, so the assistant retried without tools. Citations may be missing.",
+          isError: false,
+        })
+      );
 
       const retryEvent: OrchestratorProgressEvent = {
         status: "routing",
@@ -817,6 +830,7 @@ export const sendAssistantMessage = ({
         updateMessageContent({
           messageId: latestAssistantMessage.id,
           content: "",
+          citations: [],
         })
       );
 

@@ -1,45 +1,52 @@
-/**
- * Citations component
- *
- * Displays a list of source citations referenced by a chat response. This
- * component transforms citation metadata into clickable links and adds any
- * necessary UI affordances for copying or opening sources.
- */
-
 import React from "react";
-import { Box, Typography, Link } from "@mui/material";
-import { useTranslation } from 'react-i18next';
-
-export interface Citation {
-  title: string;
-  url: string;
-}
+import { Box, Chip, Divider, Stack, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
+import { GroupedCitation } from "../utils/citations";
 
 interface Props {
-  citations: Citation[];
+  groupedCitations: GroupedCitation[];
+  onCitationClick: (citation: GroupedCitation) => void;
 }
 
-const Citations: React.FC<Props> = ({ citations }) => {
-  const { t } = useTranslation('playground');
+const Citations: React.FC<Props> = ({ groupedCitations, onCitationClick }) => {
+  const { t } = useTranslation("playground");
 
-  if (!citations || citations.length === 0) return null;
+  if (!groupedCitations || groupedCitations.length === 0) {
+    return null;
+  }
 
   return (
-    <Box bgcolor="grey.50" p={2} mt={2} borderRadius={2}>
-      <Typography variant="subtitle2" gutterBottom>
-        Citations
-      </Typography>
-      {citations.map((citation, i) => (
-        <Box key={i} mb={1}>
-          <Typography variant="body2">
-            {citation.title}{" "}
-            <Link href={citation.url} target="_blank" rel="noopener noreferrer">
-              [{t("link")}]
-            </Link>
-          </Typography>
-        </Box>
-      ))}
-    </Box>
+    <>
+      <Divider />
+      <Box sx={{ m: 2, maxWidth: "100%" }}>
+        <Typography gutterBottom variant="subtitle2">
+          {t("citations.label", { defaultValue: "Citation(s):" })}
+        </Typography>
+        <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+          {groupedCitations.map((group, index) => (
+            <Chip
+              id={`citation-chip-${index}`}
+              key={`${group.url}-${index}`}
+              label={group.title}
+              component="a"
+              href={encodeURI(group.url)}
+              target="_blank"
+              variant="filled"
+              clickable
+              color="primary"
+              onClick={(event) => {
+                if (event.ctrlKey || event.metaKey || event.button === 1) {
+                  return;
+                }
+
+                event.preventDefault();
+                onCitationClick(group);
+              }}
+            />
+          ))}
+        </Stack>
+      </Box>
+    </>
   );
 };
 

@@ -11,6 +11,7 @@ import type {
 } from "openai/resources/chat/completions";
 import { AzureOpenAIProvider } from "./providers/azureOpenAIProvider";
 import { Tool } from "openai/resources/responses/responses.mjs";
+import { Citation } from "../utils/citations";
 
 export type CompletionContentPart = Extract<
   ChatCompletionContentPart,
@@ -43,6 +44,7 @@ export interface CompletionResult {
   fullText: string;
   completed: boolean;
   provider: string;
+  citations?: Citation[];
 }
 
 /**

@@ -259,6 +259,18 @@
         "en": "Assistant",
         "fr": "Assistant"
     },
+    "citations.label": {
+        "en": "Citation(s):",
+        "fr": "Citation(s) :"
+    },
+    "citations.drawer.title": {
+        "en": "Citations",
+        "fr": "Citations"
+    },
+    "citations.source": {
+        "en": "Source:",
+        "fr": "Source :"
+    },
     "errors.deleteFailed": {
         "en": "Could not delete the chat. Please try again.",
         "fr": "Impossible de supprimer la conversation. Veuillez réessayer."

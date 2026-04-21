@@ -5,28 +5,43 @@
  * Handles message grouping, quoting highlights, and feeds message UI events
  * back to the store.
  */
-import React, { useRef, useEffect, useMemo, useCallback } from "react";
+import React, { useRef, useEffect, useMemo, useCallback, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../store";
 import {
   Box,
+  Link,
   List,
   ListItem,
 } from "@mui/material";
 import ReactMarkdown from "react-markdown";
-import Link from "@mui/material/Link";
 import { useTranslation } from "react-i18next";
 import AttachmentPreview from "./AttachmentPreview";
 import { selectSessionFilesById } from "../store/selectors/sessionFilesSelectors";
 import { FileAttachment } from "../types";
-import { Message } from "../store/slices/chatSlice";
+import { Message, MessageMcpAttribution } from "../store/slices/chatSlice";
 import McpAttributionPill from "./McpAttributionPill";
 import MarkdownCodeBlock, { MarkdownCodeBlockProps } from "./MarkdownCodeBlock";
 import { ASSISTANT_MARKDOWN_SX, USER_MARKDOWN_SX } from "./chatMessageStyles";
 import assistantLogo from "../../assets/SSC-Logo-Purple-Leaf-300x300.png";
+import Citations from "./Citations";
+import CitationDrawer from "./CitationDrawer";
+import {
+  groupCitationsByUrl,
+  processTextWithCitations,
+  safeDecodeUri,
+} from "../utils/citations";
 
 interface ChatMessagesProps {
   sessionId: string;
+}
+
+interface AssistantMessageBubbleProps {
+  message: Message;
+  pulseThisAssistantIcon: boolean;
+  shouldShowThinkingLabel: boolean;
+  liveAttribution?: MessageMcpAttribution;
+  resolvedAttachments: FileAttachment[];
 }
 
 const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({
@@ -40,14 +55,83 @@ const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({
   );
 };
 
-const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
+const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
+  message,
+  pulseThisAssistantIcon,
+  shouldShowThinkingLabel,
+  liveAttribution,
+  resolvedAttachments,
+}) => {
   const { t } = useTranslation("playground");
+  const [isCitationDrawerOpen, setCitationDrawerOpen] = useState(false);
+  const [activeCitationGroupUrl, setActiveCitationGroupUrl] = useState<string | undefined>(undefined);
+  const [pendingCitationNumber, setPendingCitationNumber] = useState<number | undefined>(undefined);
+
+  const allCitations = message.citations || [];
+  const processedContent = useMemo(
+    () => processTextWithCitations(message.content, allCitations),
+    [message.content, allCitations],
+  );
+
+  const groupedCitations = useMemo(
+    () => groupCitationsByUrl(
+      processedContent.citedCitations,
+      allCitations,
+      processedContent.citationNumberMapping,
+    ),
+    [processedContent, allCitations],
+  );
+
+  const openCitationByUrl = useCallback(
+    (url?: string, citationNumber?: number) => {
+      if (!url || !groupedCitations.length) {
+        return false;
+      }
+
+      const decoded = safeDecodeUri(url);
+      const hasCitation = groupedCitations.some(
+        (group) => safeDecodeUri(group.url) === decoded || encodeURI(group.url) === url,
+      );
+
+      if (!hasCitation) {
+        return false;
+      }
+
+      setActiveCitationGroupUrl(decoded);
+      if (citationNumber !== undefined) {
+        setPendingCitationNumber(citationNumber);
+      } else {
+        setPendingCitationNumber(undefined);
+      }
+      setCitationDrawerOpen(true);
+      return true;
+    },
+    [groupedCitations],
+  );
 
   const markdownComponents = useMemo(
     () => ({
       a: ({ ...props }) => (
         <MarkdownLink
           {...(props as React.ComponentPropsWithoutRef<"a">)}
+          onClick={(event) => {
+            if (event.ctrlKey || event.metaKey || event.button === 1) {
+              return;
+            }
+
+            const href = props.href;
+            const citedNumber = Number.parseInt(
+              (event.currentTarget.textContent || "").trim(),
+              10,
+            );
+            const hasNumber = Number.isFinite(citedNumber);
+
+            if (href && openCitationByUrl(href, hasNumber ? citedNumber : undefined)) {
+              event.preventDefault();
+            }
+
+            props.onClick?.(event);
+          }}
         />
       ),
       code: ({ ...props }) => (
@@ -56,9 +140,104 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
         />
       ),
     }),
-    [],
+    [openCitationByUrl],
   );
 
+  return (
+    <Box sx={{ width: { xs: "min(100%, 680px)", lg: "800px" }, maxWidth: "100%" }}>
+      {liveAttribution && (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "flex-start",
+            mb: 0.75,
+            width: "100%",
+          }}
+        >
+          <McpAttributionPill
+            attribution={liveAttribution}
+            messageId={message.id}
+          />
+        </Box>
+      )}
+      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexShrink: 0 }}>
+          <Box
+            component="img"
+            src={assistantLogo}
+            alt={t("assistant.label")}
+            sx={{
+              "@keyframes assistantIconPulse": {
+                "0%": { transform: "scale(1)", opacity: 1 },
+                "50%": { transform: "scale(1.08)", opacity: 0.78 },
+                "100%": { transform: "scale(1)", opacity: 1 },
+              },
+              mt: 0.1,
+              width: 26,
+              height: 26,
+              borderRadius: "50%",
+              flexShrink: 0,
+              animation: pulseThisAssistantIcon
+                ? "assistantIconPulse 1.2s ease-in-out infinite"
+                : "none",
+              "@media (prefers-reduced-motion: reduce)": {
+                animation: "none",
+              },
+            }}
+          />
+          {pulseThisAssistantIcon && shouldShowThinkingLabel && (
+            <Box
+              component="span"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              sx={{
+                fontSize: "0.86rem",
+                color: "text.secondary",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {t("assistant.waiting")}
+            </Box>
+          )}
+        </Box>
+        <Box sx={{ minWidth: 0, flex: 1 }}>
+          <Box sx={ASSISTANT_MARKDOWN_SX}>
+            <ReactMarkdown components={markdownComponents}>
+              {processedContent.processedText}
+            </ReactMarkdown>
+          </Box>
+          {resolvedAttachments.length > 0 && (
+            <AttachmentPreview attachments={resolvedAttachments} />
+          )}
+        </Box>
+      </Box>
+      <Citations
+        groupedCitations={groupedCitations}
+        onCitationClick={(group) => {
+          setActiveCitationGroupUrl(group.url);
+          setPendingCitationNumber(group.displayNumber);
+          setCitationDrawerOpen(true);
+        }}
+      />
+      <CitationDrawer
+        open={isCitationDrawerOpen}
+        onClose={() => setCitationDrawerOpen(false)}
+        groupedCitations={groupedCitations}
+        allCitations={allCitations}
+        citationNumberMapping={processedContent.citationNumberMapping}
+        assistantMessageContent={message.content}
+        activeCitationGroupUrl={activeCitationGroupUrl}
+        onActiveCitationGroupUrlChange={setActiveCitationGroupUrl}
+        pendingCitationNumber={pendingCitationNumber}
+        onPendingCitationNumberChange={setPendingCitationNumber}
+      />
+    </Box>
+  );
+};
+
+const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   // Select a stable reference from the store
   const allMessages = useSelector((state: RootState) => state.chat.messages);
   const assistantResponsePhase = useSelector(
@@ -147,76 +326,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
               }}
             >
               {isAssistantMessage ? (
-                <Box sx={{ width: { xs: "min(100%, 680px)", lg: "800px" }, maxWidth: "100%" }}>
-                  {liveAttribution && (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        alignItems: "flex-start",
-                        mb: 0.75,
-                        width: "100%",
-                      }}
-                    >
-                      <McpAttributionPill
-                        attribution={liveAttribution}
-                        messageId={message.id}
-                      />
-                    </Box>
-                  )}
-                  <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexShrink: 0 }}>
-                      <Box
-                        component="img"
-                        src={assistantLogo}
-                        alt={t("assistant.label")}
-                        sx={{
-                          "@keyframes assistantIconPulse": {
-                            "0%": { transform: "scale(1)", opacity: 1 },
-                            "50%": { transform: "scale(1.08)", opacity: 0.78 },
-                            "100%": { transform: "scale(1)", opacity: 1 },
-                          },
-                          mt: 0.1,
-                          width: 26,
-                          height: 26,
-                          borderRadius: "50%",
-                          flexShrink: 0,
-                          animation: pulseThisAssistantIcon
-                            ? "assistantIconPulse 1.2s ease-in-out infinite"
-                            : "none",
-                          "@media (prefers-reduced-motion: reduce)": {
-                            animation: "none",
-                          },
-                        }}
-                      />
-                      {pulseThisAssistantIcon && shouldShowThinkingLabel && (
-                        <Box
-                          component="span"
-                          role="status"
-                          aria-live="polite"
-                          aria-atomic="true"
-                          sx={{
-                            fontSize: "0.86rem",
-                            color: "text.secondary",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {t("assistant.waiting")}
-                        </Box>
-                      )}
-                    </Box>
-                    <Box sx={{ minWidth: 0, flex: 1 }}>
-                      <Box sx={ASSISTANT_MARKDOWN_SX}>
-                        <ReactMarkdown components={markdownComponents}>
-                          {message.content}
-                        </ReactMarkdown>
-                      </Box>
-                      {resolvedAttachments.length > 0 && (
-                        <AttachmentPreview attachments={resolvedAttachments} />
-                      )}
-                    </Box>
-                  </Box>
-                </Box>
+                <AssistantMessageBubble
+                  message={message}
+                  pulseThisAssistantIcon={pulseThisAssistantIcon}
+                  shouldShowThinkingLabel={shouldShowThinkingLabel}
+                  liveAttribution={liveAttribution}
+                  resolvedAttachments={resolvedAttachments}
+                />
               ) : (
                 <Box
                   sx={{
@@ -231,7 +347,20 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                   }}
                 >
                   <Box sx={USER_MARKDOWN_SX}>
-                    <ReactMarkdown components={markdownComponents}>
+                    <ReactMarkdown
+                      components={{
+                        a: ({ ...props }) => (
+                          <MarkdownLink
+                            {...(props as React.ComponentPropsWithoutRef<"a">)}
+                          />
+                        ),
+                        code: ({ ...props }) => (
+                          <MarkdownCodeBlock
+                            {...(props as MarkdownCodeBlockProps)}
+                          />
+                        ),
+                      }}
+                    >
                       {message.content}
                     </ReactMarkdown>
                   </Box>

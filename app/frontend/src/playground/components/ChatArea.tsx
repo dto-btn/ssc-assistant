@@ -15,8 +15,6 @@ import type { RootState, AppDispatch } from "../store";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
 import ReplayStopBar from "./ReplayStopBar";
-import Citations from "./Citations";
-import type { Citation } from "./Citations";
 import { Box, Typography, useTheme, useMediaQuery } from "@mui/material";
 import { addMessage, setIsLoading } from "../store/slices/chatSlice";
 import Suggestions from "./Suggestions";
@@ -66,17 +64,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     [sessionFiles]
   );
 
-  // Create a single reversed view to avoid repeated copying/reversal
+  // Create a single reversed view to avoid repeated copying/reversal.
   const reversedMessages = React.useMemo(
     () => [...messages].reverse(),
     [messages]
   );
-
-  // Find citations from the last assistant message
-  const lastAssistantMessage = reversedMessages.find(
-    (message) => message.role === "assistant"
-  );
-  const citations = lastAssistantMessage?.citations ?? [];
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -317,7 +309,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     <Box flex={1} display="flex" flexDirection="column" height="100dvh">
       {renderHeader()}
       <ChatMessages sessionId={currentSessionId} />
-      <Citations citations={citations as Citation[]} />
       <OrchestratorDebugPanel sessionId={currentSessionId} />
       <ReplayStopBar
         onReplay={handleReplay}
