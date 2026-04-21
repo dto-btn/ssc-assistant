@@ -141,17 +141,17 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
 
       const userMessage = messages[userIdx];
 
-      // Remove the stale pair. sendAssistantMessage will re-add both and stream
-      // a fresh response. The two deletes + sendAssistantMessage's synchronous
-      // setIsLoading/setAssistantResponsePhase all batch into one React render.
+      // Only remove the stale assistant message — the user question stays
+      // visible. skipUserMessage tells sendAssistantMessage not to re-add it,
+      // preventing a duplicate user turn from appearing.
       dispatch(deleteMessage(messageId));
-      dispatch(deleteMessage(userMessage.id));
 
       void dispatch(
         sendAssistantMessage({
           sessionId: currentSessionId,
           content: userMessage.content,
           attachments: userMessage.attachments,
+          skipUserMessage: true,
         }),
       );
     }, [currentSessionId, dispatch, messageId, messages]);

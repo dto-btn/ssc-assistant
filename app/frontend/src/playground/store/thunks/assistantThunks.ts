@@ -430,6 +430,12 @@ export interface SendAssistantMessageArgs {
   content: string;
   attachments?: FileAttachment[];
   provider?: 'azure-openai' | 'aws-bedrock'; // Future provider selection
+  /**
+   * When `true`, skip adding the user message to the store before sending.
+   * Use this when the user message is already present (e.g. regenerate), so
+   * the existing turn stays visible and no duplicate is created.
+   */
+  skipUserMessage?: boolean;
 }
 
 /**
@@ -446,6 +452,7 @@ export const sendAssistantMessage = ({
   content,
   attachments,
   provider = 'azure-openai', // Default provider
+  skipUserMessage = false,
 }: SendAssistantMessageArgs): AppThunk<Promise<void>> => async (
   dispatch,
   getState
@@ -595,15 +602,18 @@ export const sendAssistantMessage = ({
 
     dispatch(setOrchestratorInsights({ sessionId, insights: insightsWithSelection }));
 
-    // Add user message to state
-    dispatch(
-      addMessage({
-        sessionId,
-        role: "user",
-        content,
-        attachments,
-      })
-    );
+    // Add user message to state (skip when the caller has already kept it there,
+    // e.g. when regenerating — the existing user turn should stay visible).
+    if (!skipUserMessage) {
+      dispatch(
+        addMessage({
+          sessionId,
+          role: "user",
+          content,
+          attachments,
+        })
+      );
+    }
 
     // Add empty assistant message to state
     dispatch(
