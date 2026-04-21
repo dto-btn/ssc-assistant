@@ -7,10 +7,25 @@
 
 import OpenAI from "openai";
 import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult, CompletionMessage } from "../completionService";
-import { ResponseInput } from "openai/resources/responses/responses.mjs";
+import { ResponseInput, Tool } from "openai/resources/responses/responses.mjs";
+import {
+  Citation,
+  extractCitationsFromPayloadWithOptions,
+  extractResponseCitations,
+  mergeCitations,
+} from "../../utils/citations";
 
 const DEFAULT_RESPONSES_TIMEOUT_MS = 90000;
 const DEFAULT_STANDALONE_LITELLM_BASE_URL = "http://localhost:4000/v1";
+const IS_DEV = import.meta.env.DEV;
+
+/**
+ * Enable verbose citation diagnostics in development and behind the explicit env override.
+ */
+const isCitationDebugEnabled = (): boolean => {
+  const override = String(import.meta.env.VITE_PLAYGROUND_DEBUG_CITATIONS || "").toLowerCase();
+  return IS_DEV || override === "true";
+};
 
 const isPlaygroundLiteLLMEnabled = (): boolean => {
   return String(import.meta.env.VITE_PLAYGROUND_USE_LITELLM || "true").toLowerCase() === "true";
@@ -38,6 +53,17 @@ const isAbortLikeError = (error: unknown): boolean => {
   const name = (value.name || "").toLowerCase();
   const message = (value.message || "").toLowerCase();
   return name.includes("abort") || message.includes("aborted") || message.includes("timeout");
+};
+
+/**
+ * Detect PMCOE-oriented tool routes so citation extraction can reconstruct
+ * missing blob paths from filenames when needed.
+ */
+const hasPmcoeServer = (servers: Tool.Mcp[] = []): boolean => {
+  return servers.some((server) => {
+    const haystack = `${server.server_label || ""} ${server.server_description || ""} ${server.server_url || ""}`.toLowerCase();
+    return haystack.includes("pmcoe") || haystack.includes("project-management");
+  });
 };
 
 export class AzureOpenAIProvider implements CompletionProvider {
@@ -147,7 +173,16 @@ export class AzureOpenAIProvider implements CompletionProvider {
     const { onChunk, onToolCall, onError, onComplete } = callbacks;
 
     let fullText = currentOutput || "";
+    let citations: Citation[] = [];
+    const citationDebugEnabled = isCitationDebugEnabled();
+    const seenEventTypes = new Set<string>();
     const timeout = this.createTimeoutSignal(signal);
+    // PMCOE routes sometimes emit filenames without a concrete URL, so pass
+    // inference hints into payload-based citation extraction.
+    const citationExtractionOptions = {
+      enablePmcoePathInference: hasPmcoeServer(servers),
+      pmcoeContainer: String(import.meta.env.VITE_PMCOE_CONTAINER || "").trim() || undefined,
+    };
     
     try {
       const updatedMessages = this.convertMessagesToInput(messages);
@@ -161,6 +196,25 @@ export class AzureOpenAIProvider implements CompletionProvider {
       }, { signal: timeout.signal });
 
       for await (const event of stream) {
+        const eventRecord = event as { type?: string };
+        if (typeof eventRecord.type === "string" && eventRecord.type.length > 0) {
+          seenEventTypes.add(eventRecord.type);
+        }
+
+        // Stream annotations can arrive before finalResponse is materialized,
+        // so merge citations continuously instead of relying on the final payload.
+        const extractedFromEvent = extractCitationsFromPayloadWithOptions(event, citationExtractionOptions);
+        citations = mergeCitations(citations, extractedFromEvent);
+
+        if (citationDebugEnabled && extractedFromEvent.length > 0) {
+          console.debug("[playground-citations] extracted from stream event", {
+            eventType: eventRecord.type,
+            extractedCount: extractedFromEvent.length,
+            extractedCitations: extractedFromEvent,
+            rawEvent: event,
+          });
+        }
+
         if (event.type === "response.output_text.delta") {
           fullText += event.delta;
           onChunk?.(event.delta);
@@ -172,12 +226,41 @@ export class AzureOpenAIProvider implements CompletionProvider {
         }
       }
 
+      if (typeof stream.finalResponse === "function") {
+        const finalResponse = await stream.finalResponse();
+        // Some providers only attach complete annotation graphs on the finalized
+        // response object, so merge that pass on top of stream-level extraction.
+        const extractedFromFinalResponse = extractResponseCitations(finalResponse);
+        const extractedFromFinalPayload = extractCitationsFromPayloadWithOptions(finalResponse, citationExtractionOptions);
+        citations = mergeCitations(citations, extractedFromFinalResponse);
+        citations = mergeCitations(citations, extractedFromFinalPayload);
+
+        if (citationDebugEnabled && (extractedFromFinalResponse.length > 0 || extractedFromFinalPayload.length > 0)) {
+          console.debug("[playground-citations] extracted from final response", {
+            extractedFromFinalResponse: extractedFromFinalResponse.length,
+            extractedFromFinalPayload: extractedFromFinalPayload.length,
+            extractedCitations: mergeCitations(extractedFromFinalResponse, extractedFromFinalPayload),
+            rawFinalResponse: finalResponse,
+          });
+        }
+      }
+
+      if (citationDebugEnabled) {
+        console.debug("[playground-citations] completion summary", {
+          citationCount: citations.length,
+          citations,
+          containsDocMarkers: /\[doc\d+\]/i.test(fullText),
+          eventTypesSeen: Array.from(seenEventTypes),
+        });
+      }
+
       onComplete?.(fullText);
 
       return {
         fullText,
         completed: true,
         provider: this.name,
+        citations,
       };
     } catch (error) {
       // If the user explicitly aborted (Stop button), propagate the original

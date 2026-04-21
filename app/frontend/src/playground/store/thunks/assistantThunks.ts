@@ -21,6 +21,7 @@ import {
   completionService,
   CompletionMessage,
   CompletionContentPart,
+  CompletionResult,
 } from "../../services/completionService";
 import { isTokenExpired } from "../../../util/token";
 import { AppThunk, AppDispatch } from "..";
@@ -75,9 +76,24 @@ const isOrchestratorServer = (server: Tool.Mcp): boolean => {
 const attachmentTextCache = new Map<string, string>();
 const attachmentImageCache = new Map<string, string>();
 const MAX_ORCHESTRATOR_PROGRESS_UPDATES = 20;
+const MAX_GROUNDED_REWRITE_CITATIONS = 6;
+const MAX_GROUNDED_REWRITE_EXCERPT_CHARS = 700;
 const IS_DEV = import.meta.env.DEV;
 const stripToolCallStatusMessages = (content: string): string =>
   content.replace(TOOL_CALL_STATUS_PATTERN, "\n").replace(/\n{3,}/g, "\n\n").trim();
+const MCP_GROUNDING_SYSTEM_PROMPT = [
+  "You may receive source-bearing data from routed MCP servers.",
+  "When MCP output includes source snippets, citation content, article passages, chunk text, page details, or document titles, treat that material as the primary evidence for your answer.",
+  "If explicit source wording conflicts with the user's wording or your prior knowledge, prefer the source wording, especially for official names, acronyms, and terminology.",
+  "Mention returned document titles when useful, and if the source data is sparse, ambiguous, or conflicting, state that limitation instead of filling the gap with unsupported details.",
+].join(" ");
+const MCP_GROUNDED_REWRITE_SYSTEM_PROMPT = [
+  "You are revising an assistant answer using cited source excerpts returned from MCP tools.",
+  "Rewrite the answer so every factual claim is supported by the provided source material.",
+  "If a source explicitly defines an acronym, official name, or term, use that exact source wording even when the user's question or the draft answer used a different term.",
+  "Keep the answer concise, preserve the draft language, remove unsupported claims, and do not mention this rewrite instruction.",
+  "Do not invent citation markers or new sources.",
+].join(" ");
 
 /**
  * Remove duplicate servers while preserving first-seen ordering.
@@ -92,6 +108,23 @@ const dedupeMcpServers = (servers: Tool.Mcp[]): Tool.Mcp[] => {
     deduped.push(server);
   }
   return deduped;
+};
+
+/**
+ * Prepend one generic grounding instruction whenever the playground is about
+ * to run with routed MCP servers.
+ */
+const buildMcpGroundingSystemMessage = (
+  routedServers: Tool.Mcp[],
+): CompletionMessage | undefined => {
+  if (routedServers.length === 0) {
+    return undefined;
+  }
+
+  return {
+    role: "system",
+    content: MCP_GROUNDING_SYSTEM_PROMPT,
+  };
 };
 
 /**
@@ -654,8 +687,11 @@ export const sendAssistantMessage = ({
       authorization: (server as Tool.Mcp & { authorization?: string }).authorization || accessToken,
     }));
 
-    let finalMessages = completionMessages;
     const finalServersWithAuth = routedServersWithAuth;
+    const groundingSystemMessage = buildMcpGroundingSystemMessage(finalServersWithAuth);
+    let finalMessages = groundingSystemMessage
+      ? [groundingSystemMessage, ...completionMessages]
+      : completionMessages;
 
     const orchestratorServer = findOrchestratorServer(serversWithAuth);
     const orchestratorServerUrl = orchestratorServer?.server_url;
@@ -680,12 +716,14 @@ export const sendAssistantMessage = ({
           const firstRecommendation = Array.isArray(routing?.recommendations) ? routing.recommendations[0] : null;
           const selectedCategory = firstRecommendation?.category || routing?.fallback?.category || "general";
           const selectedServerId = firstRecommendation?.mcp_server_id || "none";
+          const routingContextMessage: CompletionMessage = {
+            role: "system",
+            content: `Orchestrator preflight selected category '${selectedCategory}' and server '${selectedServerId}'. Use this as routing context.`,
+          };
 
           finalMessages = [
-            {
-              role: "system",
-              content: `Orchestrator preflight selected category '${selectedCategory}' and server '${selectedServerId}'. Use this as routing context.`,
-            },
+            ...(groundingSystemMessage ? [groundingSystemMessage] : []),
+            routingContextMessage,
             ...completionMessages,
           ];
         }
@@ -696,10 +734,125 @@ export const sendAssistantMessage = ({
 
     const completionModel = resolveCompletionModel(getState());
 
+    const maybeRewriteAnswerWithCitations = async (
+      draftText: string,
+      citations: CompletionResult["citations"],
+      serversForRun: Tool.Mcp[],
+    ): Promise<{
+      content: string;
+      citations: CompletionResult["citations"];
+    }> => {
+      if (!draftText.trim() || serversForRun.length === 0 || !citations?.length) {
+        return {
+          content: draftText,
+          citations,
+        };
+      }
+
+      const seenEvidence = new Set<string>();
+      const evidenceBlocks = citations
+        .filter((citation) => typeof citation.content === "string" && citation.content.trim().length > 0)
+        .filter((citation) => {
+          const evidenceKey = `${citation.url}|${citation.content}`;
+          if (seenEvidence.has(evidenceKey)) {
+            return false;
+          }
+
+          seenEvidence.add(evidenceKey);
+          return true;
+        })
+        .slice(0, MAX_GROUNDED_REWRITE_CITATIONS)
+        .map((citation, index) => {
+          const title = String(citation.title || citation.url || `Source ${index + 1}`).trim();
+          const excerpt = truncateText(citation.content!.trim(), MAX_GROUNDED_REWRITE_EXCERPT_CHARS);
+          const location = String(citation.url || "").trim();
+
+          return [
+            `Source ${index + 1}: ${title}`,
+            location ? `Location: ${location}` : undefined,
+            `Excerpt:\n${excerpt}`,
+          ]
+            .filter((value): value is string => Boolean(value && value.trim().length > 0))
+            .join("\n");
+        });
+
+      if (evidenceBlocks.length === 0) {
+        return {
+          content: draftText,
+          citations,
+        };
+      }
+
+      try {
+        const rewriteResult = await completionService.createCompletion(
+          {
+            messages: [
+              {
+                role: "system",
+                content: MCP_GROUNDED_REWRITE_SYSTEM_PROMPT,
+              },
+              {
+                role: "user",
+                content: [
+                  "Revise the assistant draft using only the source excerpts below.",
+                  `Original user request:\n${content.trim()}`,
+                  `Assistant draft:\n${draftText.trim()}`,
+                  `Source excerpts:\n${evidenceBlocks.join("\n\n")}`,
+                  "Return only the revised answer in the same language as the draft answer.",
+                ].join("\n\n"),
+              },
+            ],
+            model: completionModel,
+            provider,
+            userToken: accessToken,
+            signal: abortController.signal,
+            servers: [],
+          },
+          {
+            onChunk: () => undefined,
+            onToolCall: () => undefined,
+            onError: (error: Error) => {
+              if (!abortController.signal.aborted && IS_DEV) {
+                console.warn("Citation-grounded rewrite failed:", error);
+              }
+            },
+            onComplete: () => undefined,
+          }
+        );
+
+        const rewrittenText = rewriteResult.fullText.trim();
+        if (!rewrittenText) {
+          return {
+            content: draftText,
+            citations,
+          };
+        }
+
+        return {
+          content: rewrittenText,
+          // Rewritten text invalidates any annotation offsets from the first pass.
+          citations: citations.map((citation) => ({
+            title: citation.title,
+            url: citation.url,
+            content: citation.content,
+          })),
+        };
+      } catch (rewriteError) {
+        if (!abortController.signal.aborted && IS_DEV) {
+          console.warn("Citation-grounded rewrite failed:", rewriteError);
+        }
+
+        return {
+          content: draftText,
+          citations,
+        };
+      }
+    };
+
     const runCompletion = async (
       messagesForRun: CompletionMessage[],
       serversForRun: Tool.Mcp[],
-    ): Promise<void> => {
+    ): Promise<CompletionResult | undefined> => {
       // One execution path used for both primary run and no-tools retry.
       let receivedFirstChunk = false;
       let pendingToolCallStatusText = "";
@@ -719,8 +872,10 @@ export const sendAssistantMessage = ({
         },
       });
 
+      let completionResult: CompletionResult | undefined;
+
       try {
-        await completionService.createCompletion(
+        completionResult = await completionService.createCompletion(
           {
             messages: messagesForRun,
             model: completionModel,
@@ -778,25 +933,40 @@ export const sendAssistantMessage = ({
           await typewriter.complete({ maxWaitMs: 5000 });
         }
 
-        const cleanedContent = stripToolCallStatusMessages(
-          typewriter.getDisplayedText(),
-        );
+        const streamedContent = typewriter.getDisplayedText();
+        const resolvedContent = streamedContent.trim().length > 0
+          ? streamedContent
+          : (completionResult?.fullText || streamedContent);
+        const cleanedContent = stripToolCallStatusMessages(resolvedContent);
 
         // Append a stop marker so the user knows the response was cut short.
         const stopMarker = `\n\n*${i18n.t("playground:assistant.stopped")}*`;
         const finalContent = wasAborted
           ? (cleanedContent.length > 0 ? cleanedContent + stopMarker : stopMarker.trimStart())
           : cleanedContent;
+        const rewrittenAnswer = wasAborted
+          ? {
+              content: finalContent,
+              citations: completionResult?.citations,
+            }
+          : await maybeRewriteAnswerWithCitations(
+              cleanedContent,
+              completionResult?.citations,
+              serversForRun,
+            );
 
         dispatch(
           updateMessageContent({
             messageId: latestAssistantMessage.id,
-            content: finalContent,
+            content: rewrittenAnswer.content,
+            citations: rewrittenAnswer.citations,
           })
         );
 
         typewriter.stop();
       }
+
+      return completionResult;
 
     };
 
@@ -806,6 +976,13 @@ export const sendAssistantMessage = ({
       if (finalServersWithAuth.length === 0 || abortController.signal.aborted) {
         throw toolEnabledError;
       }
+
+      dispatch(
+        addToast({
+          message: "MCP tools were unavailable for this response, so the assistant retried without tools. Citations may be missing.",
+          isError: false,
+        })
+      );
 
       const retryEvent: OrchestratorProgressEvent = {
         status: "routing",
@@ -848,6 +1025,7 @@ export const sendAssistantMessage = ({
         updateMessageContent({
           messageId: latestAssistantMessage.id,
           content: "",
+          citations: [],
         })
       );
 

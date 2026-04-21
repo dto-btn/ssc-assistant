@@ -1,6 +1,6 @@
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -10,6 +10,20 @@ import sessionFilesReducer from "../store/slices/sessionFilesSlice";
 
 vi.mock("react-i18next", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-i18next")>();
+  const interpolate = (
+    template: string,
+    options?: Record<string, unknown>
+  ): string => {
+    if (!options) {
+      return template;
+    }
+
+    return template.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key: string) => {
+      const value = options[key];
+      return value === undefined ? `{{${key}}}` : String(value);
+    });
+  };
+
   return {
     ...actual,
     useTranslation: () => ({
@@ -29,7 +43,9 @@ vi.mock("react-i18next", async (importOriginal) => {
         if (key === "mcp.attribution.unknown") {
           return "Tool server";
         }
-        return (options?.defaultValue as string) ?? key;
+
+        const defaultValue = (options?.defaultValue as string | undefined) ?? key;
+        return interpolate(defaultValue, options);
       },
     }),
   };
@@ -321,5 +337,194 @@ describe("ChatMessages", () => {
     );
 
     expect(screen.getAllByRole("button", { name: "assistant.mermaid.viewCode" })).toHaveLength(1);
+  });
+
+  it("opens the citation drawer when an inline citation number is clicked", async () => {
+    const user = userEvent.setup();
+
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "Please review [doc1] for the policy details.",
+            timestamp: 1,
+            citations: [
+              {
+                title: "Policy Guide.pdf",
+                url: "https://example.com/policy guide.pdf",
+                content: "Policy guide excerpt.",
+              },
+            ],
+          },
+        ],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    const citationButton = await screen.findByRole("button", {
+      name: "Open citation 1 details",
+    });
+
+    await user.click(citationButton);
+
+    const dialog = await screen.findByRole("dialog", { name: "Citations" });
+
+    expect(dialog).toHaveTextContent("Policy Guide.pdf");
+  });
+
+  it("uses the citation number to open the drawer even when the inline href does not match the source url", async () => {
+    const user = userEvent.setup();
+
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "Please review [1](https://example.com/mismatched-link) for the policy details.",
+            timestamp: 1,
+            citations: [
+              {
+                title: "Policy Guide.pdf",
+                url: "https://example.com/policy guide.pdf",
+                content: "Policy guide excerpt.",
+              },
+            ],
+          },
+        ],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    const citationButton = await screen.findByRole("button", {
+      name: "Open citation 1 details",
+    });
+
+    expect(screen.queryByRole("link", { name: "1" })).not.toBeInTheDocument();
+
+    await user.click(citationButton);
+
+    const dialog = await screen.findByRole("dialog", { name: "Citations" });
+
+    expect(dialog).toHaveTextContent("Policy Guide.pdf");
+  });
+
+  it("renders multiple distinct inline citations as drawer-opening buttons", async () => {
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "Please review [doc1] and [doc2] for the policy details.",
+            timestamp: 1,
+            citations: [
+              {
+                title: "Policy Guide.pdf",
+                url: "https://example.com/policy-guide.pdf",
+                content: "Policy guide excerpt.",
+              },
+              {
+                title: "Procedure Manual.pdf",
+                url: "https://example.com/procedure-manual.pdf",
+                content: "Procedure manual excerpt.",
+              },
+            ],
+          },
+        ],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    const firstCitationButton = await screen.findByRole("button", {
+      name: "Open citation 1 details",
+    });
+    const secondCitationButton = await screen.findByRole("button", {
+      name: "Open citation 2 details",
+    });
+
+    expect(screen.queryByRole("link", { name: "1" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "2" })).not.toBeInTheDocument();
+    expect(firstCitationButton).toBeInTheDocument();
+    expect(secondCitationButton).toBeInTheDocument();
+  });
+
+  it("renders later explicit inline citation links as drawer-opening buttons even when they share the same source url", async () => {
+    const user = userEvent.setup();
+
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "Please review [1](https://example.com/shared.pdf) and [2](https://example.com/shared.pdf).",
+            timestamp: 1,
+            citations: [
+              {
+                title: "Shared Source.pdf",
+                url: "https://example.com/shared.pdf",
+                content: "First shared excerpt.",
+              },
+              {
+                title: "Shared Source.pdf",
+                url: "https://example.com/shared.pdf",
+                content: "Second shared excerpt.",
+              },
+            ],
+          },
+        ],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    const citationButtons = await screen.findAllByRole("button", {
+      name: "Open citation 2 details",
+    });
+
+    expect(screen.queryByRole("link", { name: "2" })).not.toBeInTheDocument();
+
+    expect(citationButtons).toHaveLength(1);
+
+    await user.click(citationButtons[0]);
+
+    const dialog = await screen.findByRole("dialog", { name: "Citations" });
+
+    expect(dialog).toHaveTextContent("Shared Source.pdf");
+    expect(dialog).toHaveTextContent("Second shared excerpt.");
   });
 });
