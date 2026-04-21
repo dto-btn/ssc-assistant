@@ -7,7 +7,11 @@
  *
  * - Copy: writes the message text to the clipboard and shows a brief
  *   confirmation icon for 3 seconds.
- * - Regenerate: TODO — not yet implemented.
+ * - Regenerate: removes the current assistant + preceding user message pair and
+ *   calls sendAssistantMessage to get a fresh response. All three Redux
+ *   dispatches (delete × 2, sendAssistantMessage's sync setIsLoading +
+ *   setPhase) are batched by React 18 into a single render, so the UI jumps
+ *   directly from the old response to the loading state with no flicker.
  * - Like / Dislike: immediately submits feedback via `submitResponseFeedback`
  *   (no modal). The pressed button stays visually active; clicking the same
  *   button again deselects it. Like and dislike are mutually exclusive.
@@ -18,7 +22,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Tooltip, Box, IconButton, useTheme, useMediaQuery } from "@mui/material";
 import ThumbUpAltOutlinedIcon from "@mui/icons-material/ThumbUpAltOutlined";
 import ThumbDownAltOutlinedIcon from "@mui/icons-material/ThumbDownAltOutlined";
@@ -29,8 +33,11 @@ import CheckIcon from "@mui/icons-material/Check";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { useTranslation } from "react-i18next";
-import type { AppDispatch } from "../store";
+import type { AppDispatch, RootState } from "../store";
 import { submitResponseFeedback } from "../store/thunks/feedbackThunks";
+import { deleteMessage } from "../store/slices/chatSlice";
+import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
+import { sendAssistantMessage } from "../store/thunks/assistantThunks";
 
 interface ResponseButtonsProps {
   /** Whether the parent message row is currently hovered. */
@@ -85,6 +92,11 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
     // On touch devices there is no reliable hover, so always show buttons
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
+    const messages = useSelector(selectMessagesBySessionId);
+    const currentSessionId = useSelector(
+      (state: RootState) => state.sessions.currentSessionId,
+    );
+
     const [isCopied, setIsCopied] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
     const [feedbackState, setFeedbackState] = useState<FeedbackState>("none");
@@ -104,6 +116,45 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
 
     const handleFocus = useCallback(() => setIsFocused(true), []);
     const handleBlur = useCallback(() => setIsFocused(false), []);
+
+    /**
+     * Delete the stale assistant + user message pair and re-send via
+     * `sendAssistantMessage`. All dispatches are synchronous before any await,
+     * so React 18 batches them into one render — the UI transitions directly
+     * from the old response to the loading state with no intermediate flash.
+     */
+    const handleRegenerate = useCallback(() => {
+      if (!currentSessionId) return;
+
+      const assistantIdx = messages.findIndex((m) => m.id === messageId);
+      if (assistantIdx === -1) return;
+
+      // Find the closest user message above this assistant turn.
+      let userIdx = -1;
+      for (let i = assistantIdx - 1; i >= 0; i--) {
+        if (messages[i].role === "user") {
+          userIdx = i;
+          break;
+        }
+      }
+      if (userIdx === -1) return;
+
+      const userMessage = messages[userIdx];
+
+      // Remove the stale pair. sendAssistantMessage will re-add both and stream
+      // a fresh response. The two deletes + sendAssistantMessage's synchronous
+      // setIsLoading/setAssistantResponsePhase all batch into one React render.
+      dispatch(deleteMessage(messageId));
+      dispatch(deleteMessage(userMessage.id));
+
+      void dispatch(
+        sendAssistantMessage({
+          sessionId: currentSessionId,
+          content: userMessage.content,
+          attachments: userMessage.attachments,
+        }),
+      );
+    }, [currentSessionId, dispatch, messageId, messages]);
 
     const handleLike = useCallback(() => {
       const next: FeedbackState = feedbackState === "liked" ? "none" : "liked";
@@ -151,13 +202,13 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
           </Tooltip>
         </CopyToClipboard>
 
-        {/* TODO: Regenerate button — hidden until logic is implemented */}
+        {/* Regenerate — only on the most recent non-streaming response */}
         {isMostRecent && !isStreaming && (
           <Tooltip title={t("regenerate")} arrow>
             <IconButton
               aria-label={t("regenerate")}
               size="small"
-              onClick={() => undefined /* TODO */}
+              onClick={handleRegenerate}
               sx={baseIconButtonSx}
               onFocus={handleFocus}
               onBlur={handleBlur}
