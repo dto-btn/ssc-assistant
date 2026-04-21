@@ -11,6 +11,7 @@ import {
   setIsLoading,
   setAssistantResponsePhase,
   setOrchestratorInsights,
+  setMessageAttribution,
   Message,
   MessageMcpAttribution,
   OrchestratorInsights,
@@ -497,6 +498,41 @@ export const sendAssistantMessage = ({
       (message) => message.sessionId === sessionId
     );
 
+    // Add the user message and an empty assistant placeholder synchronously,
+    // BEFORE any await. This ensures activeAssistantMessageId in ChatMessages
+    // immediately points to the new placeholder, so the "thinking" label
+    // appears on the correct (new) message row rather than the previous one.
+    if (!skipUserMessage) {
+      dispatch(
+        addMessage({
+          sessionId,
+          role: "user",
+          content,
+          attachments,
+        })
+      );
+    }
+
+    dispatch(
+      addMessage({
+        sessionId,
+        role: "assistant",
+        content: "",
+      })
+    );
+
+    // Capture the id of the placeholder assistant message we just added so
+    // we can target it for content updates and attribution once routing resolves.
+    const placeholderAssistantMessages = getState().chat.messages.filter(
+      (m) => m.sessionId === sessionId && m.role === "assistant"
+    );
+    const latestAssistantMessage =
+      placeholderAssistantMessages[placeholderAssistantMessages.length - 1];
+
+    if (!latestAssistantMessage) {
+      throw new Error("Failed to create assistant message");
+    }
+
     const serversWithAuth: Tool.Mcp[] = (mcpServers || []).map((server: Tool.Mcp) => ({
       ...server,
       authorization: accessToken,
@@ -602,41 +638,21 @@ export const sendAssistantMessage = ({
 
     dispatch(setOrchestratorInsights({ sessionId, insights: insightsWithSelection }));
 
-    // Add user message to state (skip when the caller has already kept it there,
-    // e.g. when regenerating — the existing user turn should stay visible).
-    if (!skipUserMessage) {
+    // Now that routing is resolved, apply the MCP attribution to the placeholder
+    // assistant message that was already added before the orchestrator await.
+    if (assistantMcpAttribution) {
       dispatch(
-        addMessage({
-          sessionId,
-          role: "user",
-          content,
-          attachments,
+        setMessageAttribution({
+          messageId: latestAssistantMessage.id,
+          attribution: assistantMcpAttribution,
         })
       );
     }
 
-    // Add empty assistant message to state
-    dispatch(
-      addMessage({
-        sessionId,
-        role: "assistant",
-        content: "",
-        mcpAttribution: assistantMcpAttribution,
-      })
-    );
-
-    // Re-fetch messages to include the newly added assistant message
+    // Re-fetch messages (user + placeholder assistant are already in state)
     const updatedSessionMessages = getState().chat.messages.filter(
       (message) => message.sessionId === sessionId
     );
-    const assistantMessages = updatedSessionMessages.filter(
-      (message) => message.role === "assistant"
-    );
-    const latestAssistantMessage = assistantMessages[assistantMessages.length - 1];
-
-    if (!latestAssistantMessage) {
-      throw new Error("Failed to create assistant message");
-    }
 
     // Use the completion service with streaming callbacks for state management
     const completionMessages = await mapMessagesForCompletion(updatedSessionMessages, dispatchForAttachments, getState);

@@ -139,6 +139,16 @@ const chatSlice = createSlice({
         message.content = content;
       }
     },
+    setMessageAttribution: (
+      state,
+      action: PayloadAction<{ messageId: string; attribution: MessageMcpAttribution | undefined }>,
+    ) => {
+      const { messageId, attribution } = action.payload;
+      const message = state.messages.find((msg) => msg.id === messageId);
+      if (message) {
+        message.mcpAttribution = attribution;
+      }
+    },
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
@@ -188,6 +198,7 @@ export const {
   clearSessionMessages,
   clearAllMessages,
   updateMessageContent,
+  setMessageAttribution,
   setIsLoading,
   setAssistantResponsePhase,
   clearAssistantResponsePhase,
