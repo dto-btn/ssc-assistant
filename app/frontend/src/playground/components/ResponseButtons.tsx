@@ -216,7 +216,7 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
         onFocus={handleFocus}
         onBlur={handleBlur}
         sx={{
-          display: "inline-flex",
+          display: isVisible ? "inline-flex" : "none",
           alignItems: "center",
           mt: 0.5,
           // Prevent ghost hover highlights on invisible buttons (WCAG 2.1.1)
