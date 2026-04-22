@@ -71,8 +71,9 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
     const { t } = useTranslation("playground");
     const dispatch = useDispatch<AppDispatch>();
     const theme = useTheme();
-    // md and below covers phones and tablets where hover is unreliable
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
+    // (pointer: coarse) matches any touch-first device regardless of resolution —
+    // more reliable than a breakpoint which misses large tablets (e.g. iPad Pro landscape).
+    const isSmallScreen = useMediaQuery("(pointer: coarse)");
 
     // Source brand colour from the theme so a single-point change propagates everywhere
     const brandColor = theme.palette.primary.main;
@@ -197,9 +198,18 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
       <Box
         role="group"
         aria-label={t("message.actions")}
+        // Hide the entire group from AT when buttons are invisible — prevents screen readers
+        // from announcing "Message actions" and finding no accessible children (WCAG 1.3.1)
+        aria-hidden={!isVisible}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        sx={{ display: "inline-flex", alignItems: "center", mt: 0.5 }}
+        sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          mt: 0.5,
+          // Prevent ghost hover highlights on invisible buttons (WCAG 2.1.1)
+          pointerEvents: isVisible ? "auto" : "none",
+        }}
       >
         {/*
           Visually-hidden live region — announces only copy confirmations to screen
