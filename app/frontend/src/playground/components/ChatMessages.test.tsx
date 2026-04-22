@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import ChatMessages from "./ChatMessages";
 import chatReducer from "../store/slices/chatSlice";
+import sessionReducer from "../store/slices/sessionSlice";
 import sessionFilesReducer from "../store/slices/sessionFilesSlice";
 
 vi.mock("react-i18next", async (importOriginal) => {
@@ -37,6 +38,7 @@ vi.mock("react-i18next", async (importOriginal) => {
 
 type TestStoreState = {
   chat: ReturnType<typeof chatReducer>;
+  sessions?: ReturnType<typeof sessionReducer>;
   sessionFiles: ReturnType<typeof sessionFilesReducer>;
 };
 
@@ -44,9 +46,13 @@ function renderMessages(sessionId: string, preloadedState: TestStoreState) {
   const store = configureStore({
     reducer: {
       chat: chatReducer,
+      sessions: sessionReducer,
       sessionFiles: sessionFilesReducer,
     },
-    preloadedState,
+    preloadedState: {
+      sessions: { sessions: [], currentSessionId: sessionId },
+      ...preloadedState,
+    },
   });
 
   const renderResult = render(
