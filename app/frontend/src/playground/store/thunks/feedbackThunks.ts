@@ -21,6 +21,8 @@ import i18n from "../../../i18n";
 export const submitResponseFeedback =
   (messageId: string, positive: boolean): AppThunk =>
   async (dispatch) => {
+    const feedback = positive ? "liked" : "disliked";
+
     // feedback.liked / feedback.disliked are internal description strings sent
     // to the API, not displayed to the user. User-facing toasts use feedback.success
     // and feedback.error below.
@@ -29,6 +31,7 @@ export const submitResponseFeedback =
       : i18n.t("feedback.disliked", { ns: "playground" });
 
     try {
+      dispatch(setMessageFeedback({ messageId, feedback }));
       await sendFeedback(feedbackMessage, positive, messageId);
       dispatch(
         addToast({
@@ -47,4 +50,13 @@ export const submitResponseFeedback =
         }),
       );
     }
+  };
+
+/**
+ * Clear feedback for a specific message (e.g. when toggling off a like/dislike).
+ */
+export const clearResponseFeedback =
+  (messageId: string): AppThunk =>
+  async (dispatch) => {
+    dispatch(setMessageFeedback({ messageId, feedback: undefined }));
   };
