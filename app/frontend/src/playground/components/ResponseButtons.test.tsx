@@ -82,7 +82,7 @@ describe("ResponseButtons", () => {
   });
 
   it("hides buttons when not visible (Issue 3)", () => {
-    const { container } = renderWithProviders(
+    renderWithProviders(
       <ResponseButtons {...defaultProps} isHovering={false} isMostRecent={false} />
     );
     
@@ -120,7 +120,7 @@ describe("ResponseButtons", () => {
   });
 
   it("triggers feedback thunks correctly (Issue 2 persistence fix)", () => {
-    const { rerender } = renderWithProviders(<ResponseButtons {...defaultProps} />);
+    renderWithProviders(<ResponseButtons {...defaultProps} />);
     
     const likeBtn = screen.getByLabelText("good.response");
     fireEvent.click(likeBtn);
