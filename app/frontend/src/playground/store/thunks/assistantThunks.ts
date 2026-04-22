@@ -8,7 +8,7 @@
 import {
   addMessage,
   updateMessageContent,
-  setIsLoading,
+  setSessionLoading,
   setAssistantResponsePhase,
   setOrchestratorInsights,
   Message,
@@ -36,6 +36,21 @@ import {
   resolveServersFromInsights,
 } from "../../services/orchestratorService";
 import { createStreamTypewriter } from "../../utils/streamTypewriter";
+
+/**
+ * Per-session AbortControllers for in-flight streaming requests.
+ * Stored outside Redux because AbortController instances are not serializable.
+ * The map is keyed by sessionId and cleaned up in the thunk's finally block.
+ */
+const sessionAbortControllers = new Map<string, AbortController>();
+
+/**
+ * Cancels the active streaming request for the given session.
+ * Safe to call even if no request is in-flight (no-op).
+ */
+export function stopAssistantMessage(sessionId: string): void {
+  sessionAbortControllers.get(sessionId)?.abort();
+}
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
 const TOOL_CALL_STATUS_PATTERN = /\n[^\n]* is being called\.\.\.\n/g;
@@ -450,8 +465,10 @@ export const sendAssistantMessage = ({
   dispatch,
   getState
 ) => {
-  dispatch(setIsLoading(true));
+  dispatch(setSessionLoading({ sessionId, loading: true }));
   dispatch(setAssistantResponsePhase({ sessionId, phase: "waiting-first-token" }));
+  const abortController = new AbortController();
+  sessionAbortControllers.set(sessionId, abortController);
   try {
     const { accessToken } = getState().auth;
     if (!accessToken || isTokenExpired(accessToken)) {
@@ -461,7 +478,7 @@ export const sendAssistantMessage = ({
           isError: true,
         })
       );
-      dispatch(setIsLoading(false));
+      dispatch(setSessionLoading({ sessionId, loading: false }));
       return;
     }
 
@@ -710,6 +727,7 @@ export const sendAssistantMessage = ({
             provider,
             userToken: accessToken,
             servers: serversForRun,
+            signal: abortController.signal,
           },
           {
             onChunk: (chunk: string) => {
@@ -743,6 +761,8 @@ export const sendAssistantMessage = ({
               }
             },
             onError: (error: Error) => {
+              // Abort errors are expected (user clicked Stop) — don't log them.
+              if (abortController.signal.aborted) return;
               if (IS_DEV) {
                 console.error("Streaming error:", error);
               }
@@ -751,16 +771,27 @@ export const sendAssistantMessage = ({
           }
         );
       } finally {
-        // Let the buffer drain with pacing to avoid end-of-stream "content dump".
-        await typewriter.complete({ maxWaitMs: 5000 });
+        const wasAborted = abortController.signal.aborted;
+
+        if (!wasAborted) {
+          // Let the buffer drain with pacing to avoid end-of-stream "content dump".
+          await typewriter.complete({ maxWaitMs: 5000 });
+        }
 
         const cleanedContent = stripToolCallStatusMessages(
           typewriter.getDisplayedText(),
         );
+
+        // Append a stop marker so the user knows the response was cut short.
+        const stopMarker = `\n\n*${i18n.t("playground:assistant.stopped")}*`;
+        const finalContent = wasAborted
+          ? (cleanedContent.length > 0 ? cleanedContent + stopMarker : stopMarker.trimStart())
+          : cleanedContent;
+
         dispatch(
           updateMessageContent({
             messageId: latestAssistantMessage.id,
-            content: cleanedContent,
+            content: finalContent,
           })
         );
 
@@ -772,7 +803,7 @@ export const sendAssistantMessage = ({
     try {
       await runCompletion(finalMessages, finalServersWithAuth);
     } catch (toolEnabledError) {
-      if (finalServersWithAuth.length === 0) {
+      if (finalServersWithAuth.length === 0 || abortController.signal.aborted) {
         throw toolEnabledError;
       }
 
@@ -826,6 +857,12 @@ export const sendAssistantMessage = ({
     }
 
   } catch (error) {
+    // If the user explicitly stopped the response, swallow the abort error
+    // silently — no toast or error message should appear in the chat.
+    if (abortController.signal.aborted) {
+      return;
+    }
+
     console.error("Completion failed:", error);
 
     const fallbackToastMessage = i18n.t("playground:assistant.error.toast");
@@ -851,7 +888,8 @@ export const sendAssistantMessage = ({
       })
     );
   } finally {
+    sessionAbortControllers.delete(sessionId);
     dispatch(setAssistantResponsePhase({ sessionId, phase: "idle" }));
-    dispatch(setIsLoading(false));
+    dispatch(setSessionLoading({ sessionId, loading: false }));
   }
 };

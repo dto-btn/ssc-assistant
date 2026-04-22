@@ -60,7 +60,7 @@ function makeState(overrides: { isNewChat: boolean; accessToken?: string | null 
       },
       auth: { accessToken: overrides.accessToken ?? null },
       tools: { mcpServers: [] },
-      chat: { messages: [], isLoading: false, orchestratorInsightsBySessionId: {} },
+      chat: { messages: [], isLoadingBySessionId: {}, orchestratorInsightsBySessionId: {} },
       models: { selectedModel: "" },
     }) as unknown as RootState;
 }

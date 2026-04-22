@@ -239,6 +239,10 @@
         "en": "An error occurred during completion.",
         "fr": "Une erreur est survenue pendant le traitement."
     },
+    "assistant.stopped": {
+        "en": "Response stopped by user.",
+        "fr": "Réponse arrêtée par l'utilisateur."
+    },
     "assistant.waiting": {
         "en": "Assistant is thinking...",
         "fr": "L'assistant réfléchit..."

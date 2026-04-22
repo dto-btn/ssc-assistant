@@ -10,15 +10,13 @@
  */
 
 import React from "react";
-import { useSelector, useDispatch } from "react-redux";
-import type { RootState, AppDispatch } from "../store";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "../store";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
-import ReplayStopBar from "./ReplayStopBar";
 import Citations from "./Citations";
 import type { Citation } from "./Citations";
 import { Box, Typography, useTheme, useMediaQuery } from "@mui/material";
-import { addMessage, setIsLoading } from "../store/slices/chatSlice";
 import Suggestions from "./Suggestions";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 import { selectCurrentSessionFiles } from "../store/selectors/sessionFilesSelectors";
@@ -47,20 +45,22 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 }) => {
   const { t } = useTranslation('playground');
   const dispatch = useDispatch<AppDispatch>();
-  const currentSessionId = useSelector(
-    (state: RootState) => state.sessions.currentSessionId
+  const currentSessionId = useAppSelector(
+    (state) => state.sessions.currentSessionId
   );
-  const isLoading = useSelector((state: RootState) => state.chat.isLoading);
-  const accessToken = useSelector((state: RootState) => state.auth.accessToken);
-  const syncEntries = useSelector((state: RootState) => state.sync.byId);
+  const isLoading = useAppSelector((state) =>
+    currentSessionId ? (state.chat.isLoadingBySessionId[currentSessionId] ?? false) : false
+  );
+  const accessToken = useAppSelector((state) => state.auth.accessToken);
+  const syncEntries = useAppSelector((state) => state.sync.byId);
   const rehydratedSessionsRef = React.useRef<Set<string>>(new Set());
   const rehydratingSessionsRef = React.useRef<Set<string>>(new Set());
   const hydratedArchiveVersionRef = React.useRef<Map<string, string | null>>(new Map());
   const fetchedSessionsRef = React.useRef<Set<string>>(new Set());
 
   // Use memoized selector for messages
-  const messages = useSelector(selectMessagesBySessionId);
-  const sessionFiles = useSelector(selectCurrentSessionFiles);
+  const messages = useAppSelector(selectMessagesBySessionId);
+  const sessionFiles = useAppSelector(selectCurrentSessionFiles);
   const latestRemoteArchive = React.useMemo(
     () => pickLatestArchive(sessionFiles),
     [sessionFiles]
@@ -98,37 +98,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         </Box>
       </Box>
     );
-  };
-
-  /**
-   * Replay sends the most recent user utterance so the assistant can retry with new context.
-   */
-  const handleReplay = (): void => {
-    if (messages.length < 2) return;
-    // Index of the last user message in the reversed array
-    const lastUserMessageIndexFromEnd = reversedMessages.findIndex(
-      (message) => message.role === "user"
-    );
-    if (lastUserMessageIndexFromEnd === -1) return;
-    const userMessage =
-      messages[messages.length - 2 - lastUserMessageIndexFromEnd];
-    if (userMessage) {
-      dispatch(
-        addMessage({
-          sessionId: currentSessionId!,
-          role: "user",
-          content: userMessage.content,
-          attachments: userMessage.attachments,
-        })
-      );
-    }
-  };
-
-  /**
-   * Stop flips the loading flag which signals the UI to hide the typing indicator.
-   */
-  const handleStop = (): void => {
-    dispatch(setIsLoading(false));
   };
 
   /**
@@ -319,12 +288,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       <ChatMessages sessionId={currentSessionId} />
       <Citations citations={citations as Citation[]} />
       <OrchestratorDebugPanel sessionId={currentSessionId} />
-      <ReplayStopBar
-        onReplay={handleReplay}
-        onStop={handleStop}
-        isLoading={isLoading}
-        disabled={messages.length < 2}
-      />
       <ChatInput sessionId={currentSessionId} />
     </Box>
   );

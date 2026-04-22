@@ -14,7 +14,7 @@ describe("playground persistence migration", () => {
     localStorage.setItem(
       "playground_chat_state",
       JSON.stringify({
-        chat: { messages: [], isLoading: false },
+        chat: { messages: [], isLoadingBySessionId: {} },
         ui: { isSidebarCollapsed: true, isMobileSidebarOpen: true },
       })
     );
@@ -53,18 +53,18 @@ describe("playground persistence migration", () => {
     localStorage.setItem(
       "playground_chat_state",
       JSON.stringify({
-        chat: { messages: {}, isLoading: "yes" },
+        chat: { messages: {}, isLoadingBySessionId: "yes" },
         ui: { isSidebarCollapsed: "no", isMobileSidebarOpen: true },
       })
     );
 
     const state = loadChatState() as {
-      chat: { messages: unknown[]; isLoading: boolean };
+      chat: { messages: unknown[]; isLoadingBySessionId: Record<string, boolean> };
       ui: { isSidebarCollapsed: boolean; isMobileSidebarOpen: boolean };
     };
 
     expect(state.chat.messages).toEqual([]);
-    expect(state.chat.isLoading).toBe(false);
+    expect(state.chat.isLoadingBySessionId).toEqual({});
     expect(state.ui.isSidebarCollapsed).toBe(false);
     expect(state.ui.isMobileSidebarOpen).toBe(false);
   });

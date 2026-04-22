@@ -180,6 +180,13 @@ export class AzureOpenAIProvider implements CompletionProvider {
         provider: this.name,
       };
     } catch (error) {
+      // If the user explicitly aborted (Stop button), propagate the original
+      // AbortError unchanged so callers can distinguish it from a real timeout.
+      // Calling onError for an intentional stop would produce misleading logs.
+      if (signal?.aborted) {
+        throw error;
+      }
+
       let err = error instanceof Error ? error : new Error(String(error));
       if (isAbortLikeError(error)) {
         err = new Error(
