@@ -8,8 +8,9 @@
 
 import { addToast } from "../slices/toastSlice";
 import { AppThunk } from "..";
-import { sendFeedback } from "../../../api/api";
-import i18n from "../../../i18n";
+import { sendFeedback } from \"../../../api/api\";
+import { setMessageFeedback } from \"../slices/chatSlice\";
+import i18n from \"../../../i18n\";
 
 /**
  * Submit like or dislike feedback for a specific assistant message.

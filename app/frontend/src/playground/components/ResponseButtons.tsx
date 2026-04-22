@@ -34,9 +34,8 @@ import CheckIcon from "@mui/icons-material/Check";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { useTranslation } from "react-i18next";
 import type { AppDispatch } from "../store";
-import type { Message } from "../store/slices/chatSlice";
-import { submitResponseFeedback } from "../store/thunks/feedbackThunks";
-import { deleteMessage } from "../store/slices/chatSlice";
+import { Message } from "../store/slices/chatSlice";
+import { submitResponseFeedback, clearResponseFeedback } from "../store/thunks/feedbackThunks";
 import { sendAssistantMessage } from "../store/thunks/assistantThunks";
 
 interface ResponseButtonsProps {
@@ -58,9 +57,9 @@ interface ResponseButtonsProps {
   messages: Message[];
   /** The session this message belongs to, forwarded to sendAssistantMessage on regenerate. */
   sessionId: string;
+  /** The feedback state for this message, retrieved from the Redux store. */
+  feedback?: "liked" | "disliked";
 }
-
-type FeedbackState = "none" | "liked" | "disliked";
 
 const COPY_RESET_MS = 3000;
 
@@ -75,7 +74,7 @@ const visuallyHiddenSx = {
 } as const;
 
 const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
-  ({ isHovering, isMostRecent, text, messageId, isStreaming, messages, sessionId }) => {
+  ({ isHovering, isMostRecent, text, messageId, isStreaming, messages, sessionId, feedback }) => {
     const { t } = useTranslation("playground");
     const dispatch = useDispatch<AppDispatch>();
     const theme = useTheme();
@@ -110,7 +109,7 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
 
     const [isCopied, setIsCopied] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
-    const [feedbackState, setFeedbackState] = useState<FeedbackState>("none");
+
     // Guards against a double-dispatch on rapid taps: once regenerate fires we
     // block re-entry until the component unmounts (which happens after deleteMessage).
     const isRegeneratingRef = useRef(false);
@@ -173,7 +172,6 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
       // All validation passed — lock before dispatching so only one regenerate
       // can fire per component lifetime (ref resets naturally on unmount).
       isRegeneratingRef.current = true;
-      dispatch(deleteMessage(messageId));
 
       void dispatch(
         sendAssistantMessage({
@@ -181,6 +179,7 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
           content: userMessage.content,
           attachments: userMessage.attachments,
           skipUserMessage: true,
+          deleteMessageId: messageId,
         }),
       );
     }, [dispatch, messageId, messages, sessionId]);
@@ -188,23 +187,23 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
     // Like and dislike are mutually exclusive in the UI. When switching from one
     // to the other, the new feedback is submitted; the server records both events.
     const handleLike = useCallback(() => {
-      const next: FeedbackState = feedbackState === "liked" ? "none" : "liked";
-      setFeedbackState(next);
-      if (next !== "none") {
+      if (feedback === "liked") {
+        dispatch(clearResponseFeedback(messageId));
+      } else {
         dispatch(submitResponseFeedback(messageId, true));
       }
-    }, [dispatch, feedbackState, messageId]);
+    }, [dispatch, feedback, messageId]);
 
     const handleDislike = useCallback(() => {
-      const next: FeedbackState = feedbackState === "disliked" ? "none" : "disliked";
-      setFeedbackState(next);
-      if (next !== "none") {
+      if (feedback === "disliked") {
+        dispatch(clearResponseFeedback(messageId));
+      } else {
         dispatch(submitResponseFeedback(messageId, false));
       }
-    }, [dispatch, feedbackState, messageId]);
+    }, [dispatch, feedback, messageId]);
 
-    const isLiked = feedbackState === "liked";
-    const isDisliked = feedbackState === "disliked";
+    const isLiked = feedback === "liked";
+    const isDisliked = feedback === "disliked";
 
     return (
       // role="group" gives screen-reader users context that these buttons belong together (WCAG 1.3.1)
@@ -217,7 +216,7 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
         onFocus={handleFocus}
         onBlur={handleBlur}
         sx={{
-          display: "inline-flex",
+          display: isVisible ? "inline-flex" : "none",
           alignItems: "center",
           mt: 0.5,
           // Prevent ghost hover highlights on invisible buttons (WCAG 2.1.1)

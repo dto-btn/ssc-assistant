@@ -7,6 +7,7 @@
  */
 import {
   addMessage,
+  deleteMessage,
   updateMessageContent,
   setSessionLoading,
   setAssistantResponsePhase,
@@ -452,6 +453,12 @@ export interface SendAssistantMessageArgs {
    * the existing turn stays visible and no duplicate is created.
    */
   skipUserMessage?: boolean;
+  /**
+   * Optional message ID to delete before adding the next assistant turn.
+   * Used by regenerate to ensure the old message is only removed if auth
+   * checks pass and the new request proceeds.
+   */
+  deleteMessageId?: string;
 }
 
 /**
@@ -469,6 +476,7 @@ export const sendAssistantMessage = ({
   attachments,
   provider = 'azure-openai', // Default provider
   skipUserMessage = false,
+  deleteMessageId,
 }: SendAssistantMessageArgs): AppThunk<Promise<void>> => async (
   dispatch,
   getState
@@ -517,6 +525,12 @@ export const sendAssistantMessage = ({
     const existingSessionMessages = getState().chat.messages.filter(
       (message) => message.sessionId === sessionId
     );
+
+    // If a deleteMessageId is provided (e.g. for regenerate), remove the old
+    // message now that auth checks have passed and we are ready to proceed.
+    if (deleteMessageId) {
+      dispatch(deleteMessage(deleteMessageId));
+    }
 
     // Add the user message and an empty assistant placeholder synchronously,
     // BEFORE any await. This ensures activeAssistantMessageId in ChatMessages

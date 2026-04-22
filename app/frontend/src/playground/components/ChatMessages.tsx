@@ -307,6 +307,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                           isStreaming={shouldPulseAssistantIcon}
                           messages={messages}
                           sessionId={sessionId}
+                          feedback={message.feedback}
                         />
                       )}
                     </Box>
