@@ -7,22 +7,23 @@
  *
  * - Copy: writes the message text to the clipboard and shows a brief
  *   confirmation icon for 3 seconds.
- * - Regenerate: removes the current assistant + preceding user message pair and
- *   calls sendAssistantMessage to get a fresh response. All three Redux
- *   dispatches (delete × 2, sendAssistantMessage's sync setIsLoading +
- *   setPhase) are batched by React 18 into a single render, so the UI jumps
- *   directly from the old response to the loading state with no flicker.
+ * - Regenerate: deletes the stale assistant message and re-sends via
+ *   `sendAssistantMessage`. The user message is kept visible (`skipUserMessage: true`
+ *   prevents a duplicate). Synchronous dispatches are batched by React 18 so
+ *   the UI transitions directly to the loading state with no intermediate flash.
  * - Like / Dislike: immediately submits feedback via `submitResponseFeedback`
  *   (no modal). The pressed button stays visually active; clicking the same
- *   button again deselects it. Like and dislike are mutually exclusive.
+ *   button again deselects it. Like and dislike are mutually exclusive in the
+ *   UI; the server records all submitted feedback events.
  *
  * On desktop the buttons are shown when the parent message is hovered or
- * focused. On touch devices (`isMobile`) they are always visible because
- * hover events are unreliable on touchscreens.
+ * focused. On small/touch-screen devices (`isSmallScreen`) they are always
+ * visible because hover events are unreliable on touchscreens.
  */
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { alpha } from "@mui/material/styles";
 import { Tooltip, Box, IconButton, useTheme, useMediaQuery } from "@mui/material";
 import ThumbUpAltOutlinedIcon from "@mui/icons-material/ThumbUpAltOutlined";
 import ThumbDownAltOutlinedIcon from "@mui/icons-material/ThumbDownAltOutlined";
@@ -31,7 +32,6 @@ import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { CopyToClipboard } from "react-copy-to-clipboard";
 import { useTranslation } from "react-i18next";
 import type { AppDispatch, RootState } from "../store";
 import { submitResponseFeedback } from "../store/thunks/feedbackThunks";
@@ -54,34 +54,16 @@ interface ResponseButtonsProps {
 
 type FeedbackState = "none" | "liked" | "disliked";
 
-const BRAND_COLOR = "#4b3e99";
 const COPY_RESET_MS = 3000;
 
-/** sx applied to every IconButton — ensures a 44×44 touch target (WCAG 2.5.5) */
-const baseIconButtonSx = {
-  borderRadius: "6px",
-  padding: "10px",
-  minWidth: 44,
-  minHeight: 44,
-  // Custom hover background that works alongside MUI's ripple
-  "&:hover": {
-    backgroundColor: "rgba(75, 62, 153, 0.08)",
-  },
-  // Visible focus ring for keyboard navigation (WCAG 2.4.7)
-  "&.Mui-focusVisible": {
-    outline: `2px solid ${BRAND_COLOR}`,
-    outlineOffset: "2px",
-    backgroundColor: "rgba(75, 62, 153, 0.08)",
-  },
-} as const;
-
-/** Additional sx for an actively-pressed like/dislike button */
-const activeFeedbackSx = {
-  ...baseIconButtonSx,
-  backgroundColor: "rgba(75, 62, 153, 0.12)",
-  "&:hover": {
-    backgroundColor: "rgba(75, 62, 153, 0.18)",
-  },
+/** Visually-hidden style — removes an element from view while keeping it accessible to screen readers. */
+const visuallyHiddenSx = {
+  position: "absolute",
+  width: "1px",
+  height: "1px",
+  overflow: "hidden",
+  clip: "rect(0,0,0,0)",
+  whiteSpace: "nowrap",
 } as const;
 
 const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
@@ -89,8 +71,33 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
     const { t } = useTranslation("playground");
     const dispatch = useDispatch<AppDispatch>();
     const theme = useTheme();
-    // On touch devices there is no reliable hover, so always show buttons
-    const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+    // md and below covers phones and tablets where hover is unreliable
+    const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
+
+    // Source brand colour from the theme so a single-point change propagates everywhere
+    const brandColor = theme.palette.primary.main;
+
+    /** sx applied to every IconButton — ensures a 44×44 touch target (WCAG 2.5.5) */
+    const baseIconButtonSx = useMemo(() => ({
+      borderRadius: "6px",
+      padding: "10px",
+      minWidth: 44,
+      minHeight: 44,
+      "&:hover": { backgroundColor: alpha(brandColor, 0.08) },
+      // Visible focus ring for keyboard navigation (WCAG 2.4.7)
+      "&.Mui-focusVisible": {
+        outline: `2px solid ${brandColor}`,
+        outlineOffset: "2px",
+        backgroundColor: alpha(brandColor, 0.08),
+      },
+    }), [brandColor]);
+
+    /** Additional sx for an actively-pressed like/dislike button */
+    const activeFeedbackSx = useMemo(() => ({
+      ...baseIconButtonSx,
+      backgroundColor: alpha(brandColor, 0.12),
+      "&:hover": { backgroundColor: alpha(brandColor, 0.18) },
+    }), [baseIconButtonSx, brandColor]);
 
     const messages = useSelector(selectMessagesBySessionId);
     const currentSessionId = useSelector(
@@ -102,9 +109,9 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
     const [feedbackState, setFeedbackState] = useState<FeedbackState>("none");
 
     // Buttons are visible when the row is hovered/focused, it is the most
-    // recent response, or we are on a touch device (no hover available).
-    const isVisible = isHovering || isMostRecent || isMobile || isFocused;
-    const iconColor = isVisible ? BRAND_COLOR : "transparent";
+    // recent response, or we are on a small/touch-screen device.
+    const isVisible = isHovering || isMostRecent || isSmallScreen || isFocused;
+    const iconColor = isVisible ? brandColor : "transparent";
 
     useEffect(() => {
       if (!isCopied) return undefined;
@@ -112,16 +119,27 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
       return () => clearTimeout(timer);
     }, [isCopied]);
 
-    const handleCopied = useCallback(() => setIsCopied(true), []);
+    const handleCopy = useCallback(() => {
+      navigator.clipboard.writeText(text)
+        .then(() => setIsCopied(true))
+        .catch(() => {
+          // Clipboard access denied or unavailable (e.g. insecure context)
+        });
+    }, [text]);
 
     const handleFocus = useCallback(() => setIsFocused(true), []);
-    const handleBlur = useCallback(() => setIsFocused(false), []);
+    // Only hide buttons when focus leaves the entire group, not when tabbing between buttons
+    const handleBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
+      if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+        setIsFocused(false);
+      }
+    }, []);
 
     /**
-     * Delete the stale assistant + user message pair and re-send via
-     * `sendAssistantMessage`. All dispatches are synchronous before any await,
-     * so React 18 batches them into one render — the UI transitions directly
-     * from the old response to the loading state with no intermediate flash.
+     * Deletes the stale assistant message and re-sends via `sendAssistantMessage`.
+     * The user message is kept visible — `skipUserMessage: true` prevents a
+     * duplicate user turn. Synchronous dispatches are batched by React 18 so
+     * the UI transitions directly to the loading state with no intermediate flash.
      */
     const handleRegenerate = useCallback(() => {
       if (!currentSessionId) return;
@@ -141,9 +159,6 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
 
       const userMessage = messages[userIdx];
 
-      // Only remove the stale assistant message — the user question stays
-      // visible. skipUserMessage tells sendAssistantMessage not to re-add it,
-      // preventing a duplicate user turn from appearing.
       dispatch(deleteMessage(messageId));
 
       void dispatch(
@@ -156,6 +171,8 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
       );
     }, [currentSessionId, dispatch, messageId, messages]);
 
+    // Like and dislike are mutually exclusive in the UI. When switching from one
+    // to the other, the new feedback is submitted; the server records both events.
     const handleLike = useCallback(() => {
       const next: FeedbackState = feedbackState === "liked" ? "none" : "liked";
       setFeedbackState(next);
@@ -176,31 +193,40 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
     const isDisliked = feedbackState === "disliked";
 
     return (
-      // aria-live="polite" announces copy-state changes to screen readers
-      // without interrupting ongoing speech (WCAG 4.1.3)
+      // role="group" gives screen-reader users context that these buttons belong together (WCAG 1.3.1)
       <Box
-        component="span"
-        aria-live="polite"
+        role="group"
+        aria-label={t("message.actions")}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         sx={{ display: "inline-flex", alignItems: "center", mt: 0.5 }}
       >
-        <CopyToClipboard text={text} onCopy={handleCopied}>
-          <Tooltip title={isCopied ? t("copy.success") : t("copy")} arrow>
-            <IconButton
-              aria-label={isCopied ? t("copy.success") : t("copy")}
-              aria-pressed={isCopied}
-              size="small"
-              sx={baseIconButtonSx}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
-            >
-              {isCopied ? (
-                <CheckIcon sx={{ fontSize: 20, color: BRAND_COLOR }} />
-              ) : (
-                <ContentCopyIcon sx={{ fontSize: 20, color: iconColor }} />
-              )}
-            </IconButton>
-          </Tooltip>
-        </CopyToClipboard>
+        {/*
+          Visually-hidden live region — announces only copy confirmations to screen
+          readers without interrupting ongoing speech (WCAG 4.1.3). Scoping it here
+          (rather than on the outer Box) prevents unrelated state changes from
+          triggering announcements.
+        */}
+        <Box component="span" aria-live="polite" aria-atomic="true" sx={visuallyHiddenSx}>
+          {isCopied ? t("copy.success") : ""}
+        </Box>
+
+        <Tooltip title={isCopied ? t("copy.success") : t("copy")} arrow>
+          <IconButton
+            aria-label={isCopied ? t("copy.success") : t("copy")}
+            size="small"
+            onClick={handleCopy}
+            tabIndex={isVisible ? 0 : -1}
+            aria-hidden={!isVisible}
+            sx={baseIconButtonSx}
+          >
+            {isCopied ? (
+              <CheckIcon sx={{ fontSize: 20, color: brandColor }} />
+            ) : (
+              <ContentCopyIcon sx={{ fontSize: 20, color: iconColor }} />
+            )}
+          </IconButton>
+        </Tooltip>
 
         {/* Regenerate — only on the most recent non-streaming response */}
         {isMostRecent && !isStreaming && (
@@ -209,9 +235,9 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
               aria-label={t("regenerate")}
               size="small"
               onClick={handleRegenerate}
+              tabIndex={isVisible ? 0 : -1}
+              aria-hidden={!isVisible}
               sx={baseIconButtonSx}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
             >
               <RefreshIcon sx={{ fontSize: 20, color: iconColor }} />
             </IconButton>
@@ -224,12 +250,12 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
             aria-pressed={isLiked}
             size="small"
             onClick={handleLike}
+            tabIndex={isVisible ? 0 : -1}
+            aria-hidden={!isVisible}
             sx={isLiked ? activeFeedbackSx : baseIconButtonSx}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
           >
             {isLiked ? (
-              <ThumbUpAltIcon sx={{ fontSize: 20, color: BRAND_COLOR }} />
+              <ThumbUpAltIcon sx={{ fontSize: 20, color: brandColor }} />
             ) : (
               <ThumbUpAltOutlinedIcon sx={{ fontSize: 20, color: iconColor }} />
             )}
@@ -242,12 +268,12 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
             aria-pressed={isDisliked}
             size="small"
             onClick={handleDislike}
+            tabIndex={isVisible ? 0 : -1}
+            aria-hidden={!isVisible}
             sx={isDisliked ? activeFeedbackSx : baseIconButtonSx}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
           >
             {isDisliked ? (
-              <ThumbDownAltIcon sx={{ fontSize: 20, color: BRAND_COLOR }} />
+              <ThumbDownAltIcon sx={{ fontSize: 20, color: brandColor }} />
             ) : (
               <ThumbDownAltOutlinedIcon sx={{ fontSize: 20, color: iconColor }} />
             )}

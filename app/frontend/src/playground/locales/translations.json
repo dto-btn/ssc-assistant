@@ -414,5 +414,9 @@
     "feedback.error": {
         "en": "Error sending feedback",
         "fr": "Erreur lors de l'envoi du retour"
+    },
+    "message.actions": {
+        "en": "Message actions",
+        "fr": "Actions du message"
     }
 }

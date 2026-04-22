@@ -460,6 +460,9 @@ export const sendAssistantMessage = ({
 ) => {
   dispatch(setIsLoading(true));
   dispatch(setAssistantResponsePhase({ sessionId, phase: "waiting-first-token" }));
+  // Tracks the placeholder message ID outside the try so the catch block can
+  // update it with the error text rather than adding a second empty assistant turn.
+  let placeholderAssistantMessageId: string | undefined;
   try {
     const { accessToken } = getState().auth;
     if (!accessToken || isTokenExpired(accessToken)) {
@@ -532,6 +535,7 @@ export const sendAssistantMessage = ({
     if (!latestAssistantMessage) {
       throw new Error("Failed to create assistant message");
     }
+    placeholderAssistantMessageId = latestAssistantMessage.id;
 
     const serversWithAuth: Tool.Mcp[] = (mcpServers || []).map((server: Tool.Mcp) => ({
       ...server,
@@ -649,9 +653,11 @@ export const sendAssistantMessage = ({
       );
     }
 
-    // Re-fetch messages (user + placeholder assistant are already in state)
+    // Re-fetch messages (user + placeholder assistant are already in state).
+    // Exclude the empty placeholder so the LLM does not receive a trailing
+    // empty assistant turn in its context window.
     const updatedSessionMessages = getState().chat.messages.filter(
-      (message) => message.sessionId === sessionId
+      (message) => message.sessionId === sessionId && message.id !== latestAssistantMessage.id
     );
 
     // Use the completion service with streaming callbacks for state management
@@ -862,13 +868,13 @@ export const sendAssistantMessage = ({
         ? error.message
         : fallbackToastMessage;
 
-    dispatch(
-      addMessage({
-        sessionId,
-        role: "assistant",
-        content: assistantErrorMessage,
-      })
-    );
+    // If a placeholder was already dispatched, reuse it for the error message
+    // to avoid a duplicate empty assistant turn above the error text.
+    if (placeholderAssistantMessageId) {
+      dispatch(updateMessageContent({ messageId: placeholderAssistantMessageId, content: assistantErrorMessage }));
+    } else {
+      dispatch(addMessage({ sessionId, role: "assistant", content: assistantErrorMessage }));
+    }
 
     dispatch(
       addToast({

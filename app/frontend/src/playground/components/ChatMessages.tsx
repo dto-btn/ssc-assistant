@@ -304,7 +304,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                           isMostRecent={message.id === activeAssistantMessageId}
                           text={message.content}
                           messageId={message.id}
-                          isStreaming={Boolean(shouldPulseAssistantIcon)}
+                          isStreaming={shouldPulseAssistantIcon}
                         />
                       )}
                     </Box>
