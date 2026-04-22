@@ -21,8 +21,8 @@
  * visible because hover events are unreliable on touchscreens.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useDispatch } from "react-redux";
 import { alpha } from "@mui/material/styles";
 import { Tooltip, Box, IconButton, useTheme, useMediaQuery } from "@mui/material";
 import ThumbUpAltOutlinedIcon from "@mui/icons-material/ThumbUpAltOutlined";
@@ -33,10 +33,10 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { useTranslation } from "react-i18next";
-import type { AppDispatch, RootState } from "../store";
+import type { AppDispatch } from "../store";
+import type { Message } from "../store/slices/chatSlice";
 import { submitResponseFeedback } from "../store/thunks/feedbackThunks";
 import { deleteMessage } from "../store/slices/chatSlice";
-import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 import { sendAssistantMessage } from "../store/thunks/assistantThunks";
 
 interface ResponseButtonsProps {
@@ -50,6 +50,14 @@ interface ResponseButtonsProps {
   messageId: string;
   /** Whether the assistant is actively streaming a response. */
   isStreaming: boolean;
+  /**
+   * The session-scoped message list, passed down from ChatMessages.
+   * Avoids re-selecting by currentSessionId from the store, which can diverge
+   * from the sessionId prop when multiple sessions are in flight.
+   */
+  messages: Message[];
+  /** The session this message belongs to, forwarded to sendAssistantMessage on regenerate. */
+  sessionId: string;
 }
 
 type FeedbackState = "none" | "liked" | "disliked";
@@ -67,7 +75,7 @@ const visuallyHiddenSx = {
 } as const;
 
 const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
-  ({ isHovering, isMostRecent, text, messageId, isStreaming }) => {
+  ({ isHovering, isMostRecent, text, messageId, isStreaming, messages, sessionId }) => {
     const { t } = useTranslation("playground");
     const dispatch = useDispatch<AppDispatch>();
     const theme = useTheme();
@@ -100,14 +108,12 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
       "&:hover": { backgroundColor: alpha(brandColor, 0.18) },
     }), [baseIconButtonSx, brandColor]);
 
-    const messages = useSelector(selectMessagesBySessionId);
-    const currentSessionId = useSelector(
-      (state: RootState) => state.sessions.currentSessionId,
-    );
-
     const [isCopied, setIsCopied] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
     const [feedbackState, setFeedbackState] = useState<FeedbackState>("none");
+    // Guards against a double-dispatch on rapid taps: once regenerate fires we
+    // block re-entry until the component unmounts (which happens after deleteMessage).
+    const isRegeneratingRef = useRef(false);
 
     // Buttons are visible when the row is hovered/focused, it is the most
     // recent response, or we are on a small/touch-screen device.
@@ -141,9 +147,13 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
      * The user message is kept visible — `skipUserMessage: true` prevents a
      * duplicate user turn. Synchronous dispatches are batched by React 18 so
      * the UI transitions directly to the loading state with no intermediate flash.
+     *
+     * `isRegeneratingRef` blocks re-entry on rapid double-taps: the render cycle
+     * gap between the first click and `isStreaming` becoming `true` is enough for
+     * a second tap to fire the handler again without the guard.
      */
     const handleRegenerate = useCallback(() => {
-      if (!currentSessionId) return;
+      if (isRegeneratingRef.current) return;
 
       const assistantIdx = messages.findIndex((m) => m.id === messageId);
       if (assistantIdx === -1) return;
@@ -160,17 +170,20 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
 
       const userMessage = messages[userIdx];
 
+      // All validation passed — lock before dispatching so only one regenerate
+      // can fire per component lifetime (ref resets naturally on unmount).
+      isRegeneratingRef.current = true;
       dispatch(deleteMessage(messageId));
 
       void dispatch(
         sendAssistantMessage({
-          sessionId: currentSessionId,
+          sessionId,
           content: userMessage.content,
           attachments: userMessage.attachments,
           skipUserMessage: true,
         }),
       );
-    }, [currentSessionId, dispatch, messageId, messages]);
+    }, [dispatch, messageId, messages, sessionId]);
 
     // Like and dislike are mutually exclusive in the UI. When switching from one
     // to the other, the new feedback is submitted; the server records both events.
