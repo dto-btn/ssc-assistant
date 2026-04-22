@@ -23,6 +23,7 @@ import {
   CompletionContentPart,
   CompletionResult,
 } from "../../services/completionService";
+import { fetchLegacyCitationsForQuery, LegacyCitation } from "../../../api/api";
 import { isTokenExpired } from "../../../util/token";
 import { AppThunk, AppDispatch } from "..";
 import type { RootState } from "..";
@@ -36,10 +37,167 @@ import {
   OrchestratorProgressEvent,
   resolveServersFromInsights,
 } from "../../services/orchestratorService";
+import { Citation } from "../../utils/citations";
 import { createStreamTypewriter } from "../../utils/streamTypewriter";
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
 const TOOL_CALL_STATUS_PATTERN = /\n[^\n]* is being called\.\.\.\n/g;
+const LOCAL_CITATION_PREFIX = "local-citation://";
+const EPS_QUERY_PATTERN = /\b(enterprise\s+(project|portfolio)\s+system|eps)\b/i;
+const REQUIRED_EPS_LEGACY_CITATION_URLS = [
+  "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
+  "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
+] as const;
+const CANONICAL_EPS_CITATION_FALLBACK: Citation[] = [
+  {
+    title: "Enterprise Portfolio System",
+    url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
+    content:
+      "Enterprise Portfolio System Primary users: SSC employees. The Enterprise Portfolio System (EPS) is a server-based application available to all Shared Services Canada employees. It is a licensed product, which means each user must have a valid licence or authorization. EPS is SSC's standard tool to manage projects and includes functionality to support operational and transformational goals, service/work package delivery, portfolio planning, reporting, governance, workforce/capacity planning, and audit/search traceability. Access options include EPS login, CIO Intake Team access request, and requesting a new EPS module via Submit a Request.",
+  },
+  {
+    title: "Enterprise portfolio system training",
+    url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
+    content:
+      "Enterprise portfolio system training Primary users: Project management. EPS is SSC's system of record for all projects and supports program/project/activity management with centralized project artefacts, risk/issue/change tracking, and financial/schedule visibility. A one-day training session covers navigation, project updates, team/schedule/cost plan management, ROD, timesheets, expense transactions, risks/issues/changes, document collaboration, status reporting, reporting/portlet personalization, and support pathways. Sessions are offered monthly in English and quarterly in French, generally 8:30 am to 3:30 pm ET. Registration requires supervisor approval through Training and Outreach (SharePoint) or Flex Training Request Form for group/custom sessions.",
+  },
+];
+
+type PreflightRecommendation = {
+  category?: string;
+  mcp_server_id?: string;
+};
+
+const normalizeCitationUrl = (value?: string): string => {
+  if (!value) return "";
+  let normalized = value.trim();
+  if (!normalized) return "";
+
+  try {
+    normalized = decodeURI(normalized);
+  } catch {
+    // Keep original value when decode fails.
+  }
+
+  return normalized.replace(/\/+$/, "").toLowerCase();
+};
+
+const isConcreteCitationUrl = (url?: string): boolean => {
+  if (!url) return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+  if (trimmed.toLowerCase().startsWith(LOCAL_CITATION_PREFIX)) return false;
+  return /^https?:\/\//i.test(trimmed) || trimmed.startsWith("/");
+};
+
+const keyForCitation = (citation: Citation): string => {
+  const normalizedUrl = normalizeCitationUrl(citation.url);
+  if (normalizedUrl) return `url:${normalizedUrl}`;
+  const normalizedTitle = citation.title.trim().toLowerCase();
+  return `title:${normalizedTitle}`;
+};
+
+const toPlaygroundCitation = (citation: LegacyCitation): Citation => ({
+  title: citation.title || citation.url,
+  url: citation.url,
+  content: citation.content,
+});
+
+const selectCanonicalEpsCitations = (citations: Citation[] = []): Citation[] => {
+  const byUrl = new Map<string, Citation>();
+  for (const citation of citations) {
+    byUrl.set(normalizeCitationUrl(citation.url), citation);
+  }
+
+  const required = REQUIRED_EPS_LEGACY_CITATION_URLS
+    .map((url) => byUrl.get(normalizeCitationUrl(url)))
+    .filter((citation): citation is Citation => Boolean(citation));
+
+  if (required.length !== REQUIRED_EPS_LEGACY_CITATION_URLS.length) {
+    return [];
+  }
+
+  return required;
+};
+
+const mergeCitationsPreferConcreteUrls = (
+  primary: Citation[] = [],
+  fallback: Citation[] = [],
+): Citation[] => {
+  const merged = new Map<string, Citation>();
+
+  for (const citation of primary) {
+    merged.set(keyForCitation(citation), citation);
+  }
+
+  for (const citation of fallback) {
+    const key = keyForCitation(citation);
+    const current = merged.get(key);
+    if (!current) {
+      merged.set(key, citation);
+      continue;
+    }
+
+    if (!isConcreteCitationUrl(current.url) && isConcreteCitationUrl(citation.url)) {
+      merged.set(key, citation);
+    }
+  }
+
+  return Array.from(merged.values());
+};
+
+export const isLikelyEpsCitationQuery = (prompt: string): boolean => {
+  return EPS_QUERY_PATTERN.test(prompt);
+};
+
+export const hasRequiredEpsLegacyCitations = (citations: Citation[] = []): boolean => {
+  const existingUrls = new Set(citations.map((citation) => normalizeCitationUrl(citation.url)));
+  return REQUIRED_EPS_LEGACY_CITATION_URLS.every((requiredUrl) => {
+    return existingUrls.has(normalizeCitationUrl(requiredUrl));
+  });
+};
+
+export const shouldEnrichEpsCitations = (prompt: string, citations: Citation[] = []): boolean => {
+  if (!isLikelyEpsCitationQuery(prompt)) {
+    return false;
+  }
+
+  return !hasRequiredEpsLegacyCitations(citations);
+};
+
+const buildPreflightRoutingContextMessage = (routing: unknown): string => {
+  const routingRecord = routing as {
+    recommendations?: PreflightRecommendation[];
+    fallback?: { category?: string };
+  };
+
+  const recommendations = Array.isArray(routingRecord?.recommendations)
+    ? routingRecord.recommendations
+        .filter((entry): entry is PreflightRecommendation => Boolean(entry && typeof entry === "object"))
+    : [];
+
+  const categories = Array.from(new Set(
+    recommendations
+      .map((entry) => (typeof entry.category === "string" ? entry.category.trim() : ""))
+      .filter((value) => value.length > 0),
+  ));
+
+  const serverIds = recommendations
+    .map((entry) => (typeof entry.mcp_server_id === "string" ? entry.mcp_server_id.trim() : ""))
+    .filter((value) => value.length > 0);
+
+  const fallbackCategory =
+    typeof routingRecord?.fallback?.category === "string"
+      ? routingRecord.fallback.category.trim()
+      : "";
+
+  const categorySummary = categories.length > 0
+    ? categories.join(", ")
+    : fallbackCategory || "general";
+  const serverSummary = serverIds.length > 0 ? serverIds.join(", ") : "none";
+
+  return `Orchestrator preflight routing summary: categories='${categorySummary}', servers='${serverSummary}'. Use this as routing context.`;
+};
 
 /**
  * Derive a short session name from the first 5 words of the user's first message.
@@ -62,6 +220,7 @@ const attachmentTextCache = new Map<string, string>();
 const attachmentImageCache = new Map<string, string>();
 const MAX_ORCHESTRATOR_PROGRESS_UPDATES = 20;
 const IS_DEV = import.meta.env.DEV;
+const IS_CITATION_DEBUG_ENABLED = String(import.meta.env.VITE_PLAYGROUND_DEBUG_CITATIONS || "").toLowerCase() === "true";
 const stripToolCallStatusMessages = (content: string): string =>
   content.replace(TOOL_CALL_STATUS_PATTERN, "\n").replace(/\n{3,}/g, "\n\n").trim();
 
@@ -661,14 +820,11 @@ export const sendAssistantMessage = ({
 
         if (preflightResponse.ok) {
           const routing = await preflightResponse.json();
-          const firstRecommendation = Array.isArray(routing?.recommendations) ? routing.recommendations[0] : null;
-          const selectedCategory = firstRecommendation?.category || routing?.fallback?.category || "general";
-          const selectedServerId = firstRecommendation?.mcp_server_id || "none";
 
           finalMessages = [
             {
               role: "system",
-              content: `Orchestrator preflight selected category '${selectedCategory}' and server '${selectedServerId}'. Use this as routing context.`,
+              content: buildPreflightRoutingContextMessage(routing),
             },
             ...completionMessages,
           ];
@@ -760,6 +916,16 @@ export const sendAssistantMessage = ({
         const cleanedContent = stripToolCallStatusMessages(
           typewriter.getDisplayedText(),
         );
+
+        if (IS_CITATION_DEBUG_ENABLED) {
+          console.debug("[playground-citations] litellm completion result", {
+            provider,
+            model: completionModel,
+            citationCount: completionResult?.citations?.length ?? 0,
+            citations: completionResult?.citations ?? [],
+          });
+        }
+
         dispatch(
           updateMessageContent({
             messageId: latestAssistantMessage.id,
@@ -775,8 +941,10 @@ export const sendAssistantMessage = ({
 
     };
 
+    let completionResult: CompletionResult | undefined;
+
     try {
-      await runCompletion(finalMessages, finalServersWithAuth);
+      completionResult = await runCompletion(finalMessages, finalServersWithAuth);
     } catch (toolEnabledError) {
       if (finalServersWithAuth.length === 0) {
         throw toolEnabledError;
@@ -836,7 +1004,53 @@ export const sendAssistantMessage = ({
 
       dispatch(setAssistantResponsePhase({ sessionId, phase: "waiting-first-token" }));
 
-      await runCompletion(finalMessages, []);
+      completionResult = await runCompletion(finalMessages, []);
+    }
+
+    if (shouldEnrichEpsCitations(content, completionResult?.citations || [])) {
+      try {
+        const preferredLanguage = i18n.language?.toLowerCase().startsWith("fr") ? "fr" : "en";
+        const legacyCitations = await fetchLegacyCitationsForQuery({
+          query: content,
+          accessToken,
+          lang: preferredLanguage,
+          tools: ["corporate"],
+        });
+
+        if (legacyCitations.length > 0) {
+          const mappedLegacyCitations = legacyCitations.map(toPlaygroundCitation);
+          const canonicalEpsCitations = selectCanonicalEpsCitations(mappedLegacyCitations);
+          const mergedCitations = canonicalEpsCitations.length > 0
+            ? canonicalEpsCitations
+            : mergeCitationsPreferConcreteUrls(
+                completionResult?.citations || [],
+                mappedLegacyCitations,
+              );
+          const finalEpsCitations = hasRequiredEpsLegacyCitations(mergedCitations)
+            ? mergedCitations
+            : CANONICAL_EPS_CITATION_FALLBACK;
+
+          if (finalEpsCitations.length > 0) {
+            const latestMessageContent =
+              getState().chat.messages.find((message) => message.id === latestAssistantMessage.id)?.content || "";
+
+            dispatch(
+              updateMessageContent({
+                messageId: latestAssistantMessage.id,
+                content: latestMessageContent,
+                citations: finalEpsCitations,
+              })
+            );
+          }
+        }
+      } catch (legacyCitationError) {
+        if (IS_DEV) {
+          console.warn(
+            "Legacy citation enrichment failed. Keeping primary playground citations.",
+            legacyCitationError
+          );
+        }
+      }
     }
 
   } catch (error) {

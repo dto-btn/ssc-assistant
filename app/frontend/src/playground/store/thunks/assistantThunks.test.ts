@@ -9,7 +9,13 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { type UnknownAction } from "@reduxjs/toolkit";
-import { deriveSessionName, sendAssistantMessage } from "./assistantThunks";
+import {
+  deriveSessionName,
+  hasRequiredEpsLegacyCitations,
+  isLikelyEpsCitationQuery,
+  sendAssistantMessage,
+  shouldEnrichEpsCitations,
+} from "./assistantThunks";
 import { renameSession, setIsSessionNew } from "../slices/sessionSlice";
 import type { RootState } from "..";
 
@@ -121,6 +127,76 @@ describe("deriveSessionName", () => {
   it("handles a sentence where 5 words fit within 20 characters", () => {
     // "a b c d e" = 9 chars — well inside the limit
     expect(deriveSessionName("a b c d e f g")).toBe("a b c d e");
+  });
+});
+
+describe("EPS citation enrichment guards", () => {
+  it("detects EPS phrasing from prompt text", () => {
+    expect(isLikelyEpsCitationQuery("What is the purpose of the Enterprise Project System (EPS)?")).toBe(true);
+    expect(isLikelyEpsCitationQuery("How to submit leave request?")).toBe(false);
+  });
+
+  it("recognizes when required legacy EPS citations are present", () => {
+    expect(
+      hasRequiredEpsLegacyCitations([
+        {
+          title: "Enterprise Portfolio System",
+          url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
+        },
+        {
+          title: "Enterprise Portfolio system training",
+          url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
+        },
+        {
+          title: "Extra citation",
+          url: "https://plus.ssc-spc.gc.ca/en/page/unrelated",
+        },
+      ])
+    ).toBe(true);
+
+    expect(
+      hasRequiredEpsLegacyCitations([
+        {
+          title: "EPS local",
+          url: "local-citation://the-enterprise-project-system-abc123",
+        },
+      ])
+    ).toBe(false);
+  });
+
+  it("requests enrichment for EPS when required URLs are missing", () => {
+    const prompt = "What is the purpose of EPS?";
+
+    expect(
+      shouldEnrichEpsCitations(prompt, [
+        {
+          title: "Project Management Operating Guide EN.pdf",
+          url: "local-citation://eps-guide-xyz",
+        },
+      ])
+    ).toBe(true);
+
+    expect(
+      shouldEnrichEpsCitations(prompt, [
+        {
+          title: "Enterprise Portfolio System",
+          url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
+        },
+        {
+          title: "Enterprise Portfolio system training",
+          url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
+        },
+      ])
+    ).toBe(false);
+
+    expect(
+      shouldEnrichEpsCitations("Tell me about leave balances", [
+        {
+          title: "Some policy",
+          url: "https://plus.ssc-spc.gc.ca/en/page/leave-policy",
+        },
+      ])
+    ).toBe(false);
   });
 });
 

@@ -54,7 +54,6 @@ const looksLikeUrlOrPath = (value: string): boolean => {
   return (
     /^https?:\/\//i.test(trimmed)
     || trimmed.startsWith("/")
-    || trimmed.startsWith("#")
     || /\.(pdf|docx?|pptx?|xlsx?|txt|md)([#?].*)?$/i.test(trimmed)
     || /[\\/]/.test(trimmed)
   );
@@ -103,7 +102,7 @@ const toSyntheticCitationUrl = (
   const slug = toSlug(primary);
   const seed = [title || "", content || "", startIndex ?? "", endIndex ?? ""].join("|");
   const token = fnv1aBase36(seed || primary);
-  return `#citation-${slug || "reference"}-${token}`;
+  return `local-citation://${slug || "reference"}-${token}`;
 };
 
 const normalizeCitationUrl = (rawUrl: string): string => {
@@ -115,7 +114,6 @@ const normalizeCitationUrl = (rawUrl: string): string => {
   if (
     /^https?:\/\//i.test(trimmed)
     || trimmed.startsWith("/")
-    || trimmed.startsWith("#")
     || /^[a-z][a-z0-9+.-]*:/i.test(trimmed)
   ) {
     return trimmed;

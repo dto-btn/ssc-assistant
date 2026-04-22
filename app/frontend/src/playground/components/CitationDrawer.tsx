@@ -63,11 +63,31 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
 
   const normalizedAssistantMessageContent = normalizeComparableText(assistantMessageContent || "");
 
+  const isInternalCitationUrl = (url: string): boolean => {
+    return url.startsWith("local-citation://");
+  };
+
   const formatSourceLabel = (url: string): string => {
-    if (url.startsWith("#citation-")) {
+    if (isInternalCitationUrl(url)) {
       return "local source reference";
     }
     return url;
+  };
+
+  const getCitationSourceTitle = (citation: Citation, group: GroupedCitation): string => {
+    const sourceTitle = citation.title?.trim() || group.title?.trim() || "";
+    if (!sourceTitle || sourceTitle === group.url) {
+      return formatSourceLabel(group.url);
+    }
+    return sourceTitle;
+  };
+
+  const getGroupDisplayTitle = (group: GroupedCitation): string => {
+    const title = group.title?.trim() || "";
+    if (!title || title === group.url) {
+      return formatSourceLabel(group.url);
+    }
+    return title;
   };
 
   const isLikelyResponseEcho = (value?: string): boolean => {
@@ -137,7 +157,7 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
       return `Source document: ${citation.title}`;
     }
 
-    return `Source location: ${group.url}`;
+    return `Source location: ${formatSourceLabel(group.url)}`;
   };
 
   const getMappedCitationNumber = (citation: Citation): number | undefined => {
@@ -255,7 +275,7 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
             }}
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle2">{group.title}</Typography>
+              <Typography variant="subtitle2">{getGroupDisplayTitle(group)}</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Typography
@@ -263,13 +283,19 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
                 sx={{ color: "text.secondary" }}
               >
                 {t("citations.source", { defaultValue: "Source:" })}{" "}
-                <Link
-                  href={encodeURI(group.url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {formatSourceLabel(group.url)}
-                </Link>
+                {isInternalCitationUrl(group.url) ? (
+                  <Typography component="span" variant="caption">
+                    {formatSourceLabel(group.url)}
+                  </Typography>
+                ) : (
+                  <Link
+                    href={encodeURI(group.url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {formatSourceLabel(group.url)}
+                  </Link>
+                )}
               </Typography>
               <Box
                 sx={{
@@ -324,7 +350,7 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
                             mb: 0.5,
                           }}
                         >
-                          {`Source: ${citation.title || group.title || group.url}`}
+                          {`Source: ${getCitationSourceTitle(citation, group)}`}
                         </Typography>
                         <Typography
                           variant="body2"

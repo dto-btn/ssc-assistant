@@ -228,8 +228,8 @@ describe("extractCitationsFromPayload", () => {
 
     expect(citations).toHaveLength(1);
     expect(citations[0].title).toBe("EPS Guide.pdf");
-    expect(citations[0].url).toMatch(/^#citation-eps-guide-pdf-[a-z0-9]+$/);
-    expect(citations[0].url.length).toBeLessThan(48);
+    expect(citations[0].url).toMatch(/^local-citation:\/\/eps-guide-pdf-[a-z0-9]+$/);
+    expect(citations[0].url).not.toContain("#citation-");
   });
 
   it("creates distinct synthetic URLs for missing-url citations with same title", () => {

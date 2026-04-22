@@ -19,6 +19,11 @@ const DEFAULT_RESPONSES_TIMEOUT_MS = 90000;
 const DEFAULT_STANDALONE_LITELLM_BASE_URL = "http://localhost:4000/v1";
 const IS_DEV = import.meta.env.DEV;
 
+const isCitationDebugEnabled = (): boolean => {
+  const override = String(import.meta.env.VITE_PLAYGROUND_DEBUG_CITATIONS || "").toLowerCase();
+  return IS_DEV || override === "true";
+};
+
 const isPlaygroundLiteLLMEnabled = (): boolean => {
   return String(import.meta.env.VITE_PLAYGROUND_USE_LITELLM || "true").toLowerCase() === "true";
 };
@@ -155,6 +160,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
 
     let fullText = currentOutput || "";
     let citations: Citation[] = [];
+    const citationDebugEnabled = isCitationDebugEnabled();
     const seenEventTypes = new Set<string>();
     const timeout = this.createTimeoutSignal(signal);
     
@@ -178,10 +184,12 @@ export class AzureOpenAIProvider implements CompletionProvider {
         const extractedFromEvent = extractCitationsFromPayload(event);
         citations = mergeCitations(citations, extractedFromEvent);
 
-        if (IS_DEV && extractedFromEvent.length > 0) {
+        if (citationDebugEnabled && extractedFromEvent.length > 0) {
           console.debug("[playground-citations] extracted from stream event", {
             eventType: eventRecord.type,
             extractedCount: extractedFromEvent.length,
+            extractedCitations: extractedFromEvent,
+            rawEvent: event,
           });
         }
 
@@ -203,17 +211,20 @@ export class AzureOpenAIProvider implements CompletionProvider {
         citations = mergeCitations(citations, extractedFromFinalResponse);
         citations = mergeCitations(citations, extractedFromFinalPayload);
 
-        if (IS_DEV && (extractedFromFinalResponse.length > 0 || extractedFromFinalPayload.length > 0)) {
+        if (citationDebugEnabled && (extractedFromFinalResponse.length > 0 || extractedFromFinalPayload.length > 0)) {
           console.debug("[playground-citations] extracted from final response", {
             extractedFromFinalResponse: extractedFromFinalResponse.length,
             extractedFromFinalPayload: extractedFromFinalPayload.length,
+            extractedCitations: mergeCitations(extractedFromFinalResponse, extractedFromFinalPayload),
+            rawFinalResponse: finalResponse,
           });
         }
       }
 
-      if (IS_DEV) {
+      if (citationDebugEnabled) {
         console.debug("[playground-citations] completion summary", {
           citationCount: citations.length,
+          citations,
           containsDocMarkers: /\[doc\d+\]/i.test(fullText),
           eventTypesSeen: Array.from(seenEventTypes),
         });
