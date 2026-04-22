@@ -87,7 +87,7 @@ export type AssistantResponsePhase = "idle" | "waiting-first-token" | "streaming
 
 interface ChatState {
   messages: Message[];
-  isLoading: boolean;
+  isLoadingBySessionId: Record<string, boolean>;
   assistantResponsePhaseBySessionId: Record<string, AssistantResponsePhase | undefined>;
   // Keyed by session id so each tab/session can show independent routing state.
   orchestratorInsightsBySessionId: Record<string, OrchestratorInsights | undefined>;
@@ -104,7 +104,7 @@ const ensureOrchestratorInsightsMap = (
 
 const initialState: ChatState = {
   messages: [],
-  isLoading: false,
+  isLoadingBySessionId: {},
   assistantResponsePhaseBySessionId: {},
   orchestratorInsightsBySessionId: {},
 };
@@ -127,10 +127,12 @@ const chatSlice = createSlice({
       state.messages = state.messages.filter(
         (message) => message.sessionId !== action.payload
       );
+      delete state.isLoadingBySessionId[action.payload];
     },
     clearAllMessages: (state) => {
       state.messages = [];
       state.orchestratorInsightsBySessionId = {};
+      state.isLoadingBySessionId = {};
     },
     updateMessageContent: (state, action: PayloadAction<{ messageId: string; content: string }>) => {
       const { messageId, content } = action.payload;
@@ -149,8 +151,16 @@ const chatSlice = createSlice({
         message.mcpAttribution = attribution;
       }
     },
-    setIsLoading: (state, action: PayloadAction<boolean>) => {
-      state.isLoading = action.payload;
+    setSessionLoading: (
+      state,
+      action: PayloadAction<{ sessionId: string; loading: boolean }>,
+    ) => {
+      const { sessionId, loading } = action.payload;
+      if (loading) {
+        state.isLoadingBySessionId[sessionId] = true;
+      } else {
+        delete state.isLoadingBySessionId[sessionId];
+      }
     },
     setAssistantResponsePhase: (
       state,
@@ -199,7 +209,7 @@ export const {
   clearAllMessages,
   updateMessageContent,
   setMessageAttribution,
-  setIsLoading,
+  setSessionLoading,
   setAssistantResponsePhase,
   clearAssistantResponsePhase,
   setOrchestratorInsights,

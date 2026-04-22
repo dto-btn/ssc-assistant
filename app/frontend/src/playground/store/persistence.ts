@@ -44,7 +44,7 @@ const migratePersistedState = (parsed: PersistedState): PersistedState => {
 
   next.chat = {
     messages: normalizePersistedMessages(chat.messages),
-    isLoading: typeof chat.isLoading === "boolean" ? chat.isLoading : false,
+    isLoadingBySessionId: {},
     assistantResponsePhaseBySessionId:
       chat.assistantResponsePhaseBySessionId && typeof chat.assistantResponsePhaseBySessionId === "object"
         ? chat.assistantResponsePhaseBySessionId

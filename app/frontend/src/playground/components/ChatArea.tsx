@@ -10,8 +10,8 @@
  */
 
 import React from "react";
-import { useSelector, useDispatch } from "react-redux";
-import type { RootState, AppDispatch } from "../store";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "../store";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
 import Citations from "./Citations";
@@ -45,20 +45,22 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 }) => {
   const { t } = useTranslation('playground');
   const dispatch = useDispatch<AppDispatch>();
-  const currentSessionId = useSelector(
-    (state: RootState) => state.sessions.currentSessionId
+  const currentSessionId = useAppSelector(
+    (state) => state.sessions.currentSessionId
   );
-  const isLoading = useSelector((state: RootState) => state.chat.isLoading);
-  const accessToken = useSelector((state: RootState) => state.auth.accessToken);
-  const syncEntries = useSelector((state: RootState) => state.sync.byId);
+  const isLoading = useAppSelector((state) =>
+    currentSessionId ? (state.chat.isLoadingBySessionId[currentSessionId] ?? false) : false
+  );
+  const accessToken = useAppSelector((state) => state.auth.accessToken);
+  const syncEntries = useAppSelector((state) => state.sync.byId);
   const rehydratedSessionsRef = React.useRef<Set<string>>(new Set());
   const rehydratingSessionsRef = React.useRef<Set<string>>(new Set());
   const hydratedArchiveVersionRef = React.useRef<Map<string, string | null>>(new Map());
   const fetchedSessionsRef = React.useRef<Set<string>>(new Set());
 
   // Use memoized selector for messages
-  const messages = useSelector(selectMessagesBySessionId);
-  const sessionFiles = useSelector(selectCurrentSessionFiles);
+  const messages = useAppSelector(selectMessagesBySessionId);
+  const sessionFiles = useAppSelector(selectCurrentSessionFiles);
   const latestRemoteArchive = React.useMemo(
     () => pickLatestArchive(sessionFiles),
     [sessionFiles]
