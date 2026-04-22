@@ -527,4 +527,41 @@ describe("ChatMessages", () => {
     expect(dialog).toHaveTextContent("Shared Source.pdf");
     expect(dialog).toHaveTextContent("Second shared excerpt.");
   });
+
+  it("masks local-citation URLs with friendly source label", async () => {
+    const user = userEvent.setup();
+
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "Please review [doc1].",
+            timestamp: 1,
+            citations: [
+              {
+                title: "local-citation://it-appears-that-the-search-d-uvdx2z",
+                url: "local-citation://it-appears-that-the-search-d-uvdx2z",
+                content: "Synthetic local reference content",
+              },
+            ],
+          },
+        ],
+        isLoading: false,
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    await user.click(screen.getByRole("button", { name: "local source reference" }));
+    expect(await screen.findByText("Source: local source reference")).toBeInTheDocument();
+    expect(screen.queryByText(/local-citation:\/\//i)).not.toBeInTheDocument();
+  });
 });

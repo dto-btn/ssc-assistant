@@ -228,6 +228,87 @@ export const completionBasic = async (request: MessageRequest, accessToken: Stri
   }
 };
 
+export interface LegacyCitation {
+  title: string;
+  url: string;
+  content?: string;
+}
+
+export const fetchLegacyCitationsForQuery = async ({
+  query,
+  accessToken,
+  lang = "en",
+  tools = ["corporate"],
+}: {
+  query: string;
+  accessToken: string;
+  lang?: string;
+  tools?: string[];
+}): Promise<LegacyCitation[]> => {
+  const trimmedToken = accessToken.trim();
+  if (!trimmedToken) {
+    throw new Error("Access token is required for legacy citation lookup.");
+  }
+
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) {
+    return [];
+  }
+
+  const request: MessageRequest = {
+    query: trimmedQuery,
+    messages: [],
+    model: "gpt-4o",
+    lang,
+    top: 5,
+    max: 10,
+    tools,
+  };
+
+  const response = await fetch("/api/1.0/completion/chat/stream", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + trimmedToken,
+    },
+    body: JSON.stringify(convertRequestForAPI(request)),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Legacy citation lookup failed (${response.status}): ${errorText}`);
+  }
+
+  const parsed = await parseMixedResponse(response);
+  const payload = parsed.json as
+    | {
+        message?: {
+          context?: {
+            citations?: Array<{
+              title?: unknown;
+              url?: unknown;
+              content?: unknown;
+            }>;
+          };
+        };
+      }
+    | null;
+
+  const rawCitations = payload?.message?.context?.citations || [];
+  return rawCitations
+    .map((citation) => {
+      const title = typeof citation.title === "string" ? citation.title.trim() : "";
+      const url = typeof citation.url === "string" ? citation.url.trim() : "";
+      const content = typeof citation.content === "string" ? citation.content : undefined;
+      return {
+        title,
+        url,
+        content,
+      } as LegacyCitation;
+    })
+    .filter((citation) => citation.url.length > 0);
+};
+
 const parseMixedResponse = async (response: Response) => {
     // Read the response as text
     const rawText = await response.text();
