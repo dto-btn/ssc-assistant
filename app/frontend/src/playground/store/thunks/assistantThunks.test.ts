@@ -13,8 +13,10 @@ import {
   deriveSessionName,
   hasRequiredEpsLegacyCitations,
   isLikelyEpsCitationQuery,
+  isLikelyPmcoeCitationQuery,
   sendAssistantMessage,
   shouldEnrichEpsCitations,
+  shouldEnrichPmcoeCitations,
 } from "./assistantThunks";
 import { renameSession, setIsSessionNew } from "../slices/sessionSlice";
 import type { RootState } from "..";
@@ -194,6 +196,40 @@ describe("EPS citation enrichment guards", () => {
         {
           title: "Some policy",
           url: "https://plus.ssc-spc.gc.ca/en/page/leave-policy",
+        },
+      ])
+    ).toBe(false);
+  });
+});
+
+describe("PMCOE citation enrichment guards", () => {
+  it("detects PMCOE/gates phrasing from prompt text", () => {
+    expect(isLikelyPmcoeCitationQuery("How do I track the progress of my project through the gates?")).toBe(true);
+    expect(isLikelyPmcoeCitationQuery("What is PMCoE's role in gate reviews?")).toBe(true);
+    expect(isLikelyPmcoeCitationQuery("How to submit leave request?")).toBe(false);
+  });
+
+  it("requests PMCOE enrichment when local synthetic citations are present", () => {
+    expect(
+      shouldEnrichPmcoeCitations("How do I track the progress of my project through the gates?", [
+        {
+          title: "Project Management Operating Guide EN.pdf",
+          url: "local-citation://project-management-operating-guide-en-pdf-abc123",
+        },
+      ])
+    ).toBe(true);
+  });
+
+  it("skips PMCOE enrichment when at least two concrete citations are already present", () => {
+    expect(
+      shouldEnrichPmcoeCitations("How do I track the progress of my project through the gates?", [
+        {
+          title: "Project Management Operating Guide EN.pdf",
+          url: "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
+        },
+        {
+          title: "Gate Governance Guide EN.pdf",
+          url: "/pmcoe-sept-2025/en/Gate Governance Guide EN.pdf",
         },
       ])
     ).toBe(false);

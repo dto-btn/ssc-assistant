@@ -21,6 +21,12 @@ export interface ProcessedCitationsResult {
 
 const DOC_REFERENCE_REGEX = /\[doc(\d+)\]/g;
 const DOC_REFERENCE_TEST_REGEX = /\[doc(\d+)\]/;
+const LOCAL_CITATION_PREFIX = "local-citation://";
+
+type IndexedCitation = {
+  citation: Citation;
+  citationIndex: number;
+};
 
 const isFiniteNumber = (value: unknown): value is number => {
   return typeof value === "number" && Number.isFinite(value);
@@ -74,37 +80,6 @@ const tryParseFiniteNumber = (value: unknown): number | undefined => {
   return undefined;
 };
 
-const toSlug = (value: string, maxLength = 28): string => {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, maxLength);
-};
-
-const fnv1aBase36 = (value: string): string => {
-  let hash = 0x811c9dc5;
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return (hash >>> 0).toString(36);
-};
-
-const toSyntheticCitationUrl = (
-  title: string | undefined,
-  content: string | undefined,
-  startIndex: number | undefined,
-  endIndex: number | undefined,
-): string => {
-  const primary = title || content || "reference";
-  const slug = toSlug(primary);
-  const seed = [title || "", content || "", startIndex ?? "", endIndex ?? ""].join("|");
-  const token = fnv1aBase36(seed || primary);
-  return `local-citation://${slug || "reference"}-${token}`;
-};
-
 const normalizeCitationUrl = (rawUrl: string): string => {
   const trimmed = rawUrl.trim();
   if (!trimmed) {
@@ -154,6 +129,25 @@ const getRecord = (value: unknown): Record<string, unknown> | undefined => {
     return undefined;
   }
   return value as Record<string, unknown>;
+};
+
+const isDisplayableCitationUrl = (url: string | undefined): boolean => {
+  if (!url) {
+    return false;
+  }
+
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  return !trimmed.toLowerCase().startsWith(LOCAL_CITATION_PREFIX);
+};
+
+const getRenderableCitationEntries = (citations: Citation[]): IndexedCitation[] => {
+  return citations
+    .map((citation, index) => ({ citation, citationIndex: index + 1 }))
+    .filter(({ citation }) => isDisplayableCitationUrl(citation.url));
 };
 
 const buildCitationFromRecord = (
@@ -214,6 +208,10 @@ const buildCitationFromRecord = (
     return undefined;
   }
 
+  if (!resolvedUrl) {
+    return undefined;
+  }
+
   const normalizedTitle = (title || "").trim().toLowerCase();
   const normalizedContent = (content || "").trim().toLowerCase();
   const looksLikeFile = Boolean(title && /(\.pdf$|\.docx?$|\.pptx?$|-pdf$|guide|manual|policy|framework|operating|process|standard)/i.test(title));
@@ -221,16 +219,10 @@ const buildCitationFromRecord = (
   const isMetadataNoiseTitle = /^(query|doc[\s_]?id|id|score|metadata|filter|filters|source id)$/i.test(normalizedTitle);
   const isMetadataNoiseContent = /^(query|doc[\s_]?id|id|score|metadata)$/i.test(normalizedContent);
 
-  // Skip obvious metadata entries that frequently appear in MCP payloads.
-  if (!resolvedUrl && isMetadataNoiseTitle && !hasMeaningfulExcerpt) {
+  if (isMetadataNoiseTitle && !hasMeaningfulExcerpt) {
     return undefined;
   }
-  if (!resolvedUrl && isMetadataNoiseContent && !looksLikeFile) {
-    return undefined;
-  }
-
-  // For missing-url citations, keep only high-confidence citation-like entries.
-  if (!resolvedUrl && !isTypedCitation && !looksLikeFile && !hasMeaningfulExcerpt) {
+  if (isMetadataNoiseContent && !looksLikeFile) {
     return undefined;
   }
 
@@ -249,11 +241,9 @@ const buildCitationFromRecord = (
     ?? tryParseFiniteNumber(record.offset_end)
     ?? tryParseFiniteNumber(record.offsetEnd);
 
-  const url = resolvedUrl || toSyntheticCitationUrl(title, content, startIndex, endIndex);
-
   return {
-    title: title || url,
-    url,
+    title: title || resolvedUrl,
+    url: resolvedUrl,
     content,
     startIndex,
     endIndex,
@@ -317,17 +307,22 @@ const collectSentenceEndPositions = (text: string): number[] => {
   return positions;
 };
 
+  const cleanupCitationSpacing = (text: string): string => {
+    return text
+      .replace(/\s+([,.;!?])/g, "$1")
+      .replace(/ {2,}/g, " ");
+  };
+
 const insertMarkersBySentence = (
   text: string,
-  citations: Citation[],
+    citationEntries: IndexedCitation[],
   citationNumberMapping: Record<number, number>,
 ): string => {
   const sentenceEnds = collectSentenceEndPositions(text);
-  const withIndices = citations.map((citation, index) => ({ citation, citationIndex: index + 1 }));
   let processedText = text;
   let offset = 0;
 
-  withIndices.forEach(({ citation, citationIndex }, idx) => {
+    citationEntries.forEach(({ citation, citationIndex }, idx) => {
     const displayNumber = citationNumberMapping[citationIndex];
     if (!displayNumber) {
       return;
@@ -458,16 +453,16 @@ const buildDocMarkerCitationMap = (
 ): { citationNumberMapping: Record<number, number>; citedCitations: Citation[] } => {
   const citationNumberMapping: Record<number, number> = {};
 
-  citations.forEach((_, index) => {
+  citations.forEach((citation, index) => {
     const docNumber = index + 1;
-    if (text.includes(`[doc${docNumber}]`)) {
+    if (isDisplayableCitationUrl(citation.url) && text.includes(`[doc${docNumber}]`)) {
       citationNumberMapping[docNumber] = Object.keys(citationNumberMapping).length + 1;
     }
   });
 
-  const citedCitations = citations.filter((_, index) => {
+  const citedCitations = citations.filter((citation, index) => {
     const docNumber = index + 1;
-    return citationNumberMapping[docNumber] !== undefined;
+    return isDisplayableCitationUrl(citation.url) && citationNumberMapping[docNumber] !== undefined;
   });
 
   return { citationNumberMapping, citedCitations };
@@ -478,7 +473,7 @@ const replaceDocReferences = (
   citations: Citation[],
   citationNumberMapping: Record<number, number>,
 ): string => {
-  return text.replace(DOC_REFERENCE_REGEX, (_, docNumberText) => {
+  const replaced = text.replace(DOC_REFERENCE_REGEX, (_, docNumberText) => {
     const docNumber = Number.parseInt(String(docNumberText), 10);
     const citation = citations[docNumber - 1];
     if (!citation?.url) {
@@ -492,13 +487,16 @@ const replaceDocReferences = (
     const encodedUrl = encodeURI(citation.url);
     return ` [${mappedNumber}](<${encodedUrl}>)`;
   });
+
+  return cleanupCitationSpacing(replaced);
 };
 
 const processAnnotationReferences = (
   text: string,
   citations: Citation[],
 ): ProcessedCitationsResult => {
-  if (!citations.length) {
+  const renderableEntries = getRenderableCitationEntries(citations);
+  if (!renderableEntries.length) {
     return {
       processedText: text,
       citedCitations: [],
@@ -507,15 +505,14 @@ const processAnnotationReferences = (
   }
 
   const citationNumberMapping: Record<number, number> = {};
-  citations.forEach((citation, index) => {
-    void citation;
-    citationNumberMapping[index + 1] = index + 1;
+  renderableEntries.forEach(({ citationIndex }, index) => {
+    citationNumberMapping[citationIndex] = index + 1;
   });
 
-  const annotations = citations
-    .map((citation, index) => ({
+  const annotations = renderableEntries
+    .map(({ citation, citationIndex }) => ({
       citation,
-      citationIndex: index + 1,
+      citationIndex,
       endIndex: inferCitationEndIndex(text, citation),
     }))
     .filter((entry): entry is { citation: Citation; citationIndex: number; endIndex: number } =>
@@ -526,8 +523,8 @@ const processAnnotationReferences = (
 
   if (!annotations.length) {
     return {
-      processedText: insertMarkersBySentence(text, citations, citationNumberMapping),
-      citedCitations: citations,
+      processedText: insertMarkersBySentence(text, renderableEntries, citationNumberMapping),
+      citedCitations: renderableEntries.map(({ citation }) => citation),
       citationNumberMapping,
     };
   }
@@ -550,7 +547,7 @@ const processAnnotationReferences = (
 
   return {
     processedText,
-    citedCitations: citations,
+    citedCitations: renderableEntries.map(({ citation }) => citation),
     citationNumberMapping,
   };
 };

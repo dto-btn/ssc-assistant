@@ -87,6 +87,25 @@ describe("processTextWithCitations", () => {
     expect(result.processedText).toContain("delivery. [2](</pmcoe/en/delivery-manual.pdf>)");
     expect(result.processedText).not.toContain("\n\n[1]");
   });
+
+  it("skips synthetic local citations while preserving numbering for concrete sources", () => {
+    const citations: Citation[] = [
+      { title: "Local reference", url: "local-citation://eps-guide-abc123" },
+      { title: "EPS Guide.pdf", url: "/pmcoe/en/eps-guide.pdf" },
+    ];
+
+    const result = processTextWithCitations(
+      "Please review [doc1] and [doc2].",
+      citations,
+    );
+
+    expect(result.processedText).not.toContain("local-citation://");
+    expect(result.processedText).toContain("[1](</pmcoe/en/eps-guide.pdf>)");
+    expect(result.processedText).not.toContain("[doc1]");
+    expect(result.processedText).not.toContain("[doc2]");
+    expect(result.citedCitations).toEqual([citations[1]]);
+    expect(result.citationNumberMapping).toEqual({ 2: 1 });
+  });
 });
 
 describe("groupCitationsByUrl", () => {
@@ -213,7 +232,7 @@ describe("extractCitationsFromPayload", () => {
     ]);
   });
 
-  it("keeps citations when URL is missing by generating a local synthetic citation URL", () => {
+  it("ignores citations when URL metadata is missing", () => {
     const citations = extractCitationsFromPayload({
       type: "response.mcp_call.completed",
       result: {
@@ -226,30 +245,7 @@ describe("extractCitationsFromPayload", () => {
       },
     });
 
-    expect(citations).toHaveLength(1);
-    expect(citations[0].title).toBe("EPS Guide.pdf");
-    expect(citations[0].url).toMatch(/^local-citation:\/\/eps-guide-pdf-[a-z0-9]+$/);
-    expect(citations[0].url).not.toContain("#citation-");
-  });
-
-  it("creates distinct synthetic URLs for missing-url citations with same title", () => {
-    const citations = extractCitationsFromPayload({
-      result: {
-        citations: [
-          {
-            title: "Policy Overview",
-            content: "First excerpt with one detail.",
-          },
-          {
-            title: "Policy Overview",
-            content: "Second excerpt with another detail.",
-          },
-        ],
-      },
-    });
-
-    expect(citations).toHaveLength(2);
-    expect(citations[0].url).not.toBe(citations[1].url);
+    expect(citations).toEqual([]);
   });
 
   it("extracts citations from JSON-string payload fields", () => {
@@ -283,7 +279,11 @@ describe("extractCitationsFromPayload", () => {
         citations: [
           { title: "query", content: "EPS guidance" },
           { title: "Doc id", content: "123456" },
-          { title: "management-operating-guide-en-pdf", content: "Meaningful excerpt from source document." },
+          {
+            title: "management-operating-guide-en-pdf",
+            source_path: "/pmcoe/en/management-operating-guide-en-pdf",
+            content: "Meaningful excerpt from source document.",
+          },
         ],
       },
     });

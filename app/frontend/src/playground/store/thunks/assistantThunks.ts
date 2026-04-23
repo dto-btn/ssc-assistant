@@ -44,6 +44,7 @@ const ATTACHMENT_TEXT_LIMIT = 12000;
 const TOOL_CALL_STATUS_PATTERN = /\n[^\n]* is being called\.\.\.\n/g;
 const LOCAL_CITATION_PREFIX = "local-citation://";
 const EPS_QUERY_PATTERN = /\b(enterprise\s+(project|portfolio)\s+system|eps)\b/i;
+const PMCOE_QUERY_PATTERN = /\b(pmcoe|project management|operating guide|gate review|through the gates?|opmca)\b/i;
 const REQUIRED_EPS_LEGACY_CITATION_URLS = [
   "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
   "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
@@ -88,6 +89,14 @@ const isConcreteCitationUrl = (url?: string): boolean => {
   if (!trimmed) return false;
   if (trimmed.toLowerCase().startsWith(LOCAL_CITATION_PREFIX)) return false;
   return /^https?:\/\//i.test(trimmed) || trimmed.startsWith("/");
+};
+
+const stripSyntheticCitationsWhenConcreteExists = (citations: Citation[] = []): Citation[] => {
+  const concrete = citations.filter((citation) => isConcreteCitationUrl(citation.url));
+  if (concrete.length === 0) {
+    return citations;
+  }
+  return concrete;
 };
 
 const keyForCitation = (citation: Citation): string => {
@@ -150,6 +159,10 @@ export const isLikelyEpsCitationQuery = (prompt: string): boolean => {
   return EPS_QUERY_PATTERN.test(prompt);
 };
 
+export const isLikelyPmcoeCitationQuery = (prompt: string): boolean => {
+  return PMCOE_QUERY_PATTERN.test(prompt);
+};
+
 export const hasRequiredEpsLegacyCitations = (citations: Citation[] = []): boolean => {
   const existingUrls = new Set(citations.map((citation) => normalizeCitationUrl(citation.url)));
   return REQUIRED_EPS_LEGACY_CITATION_URLS.every((requiredUrl) => {
@@ -163,6 +176,19 @@ export const shouldEnrichEpsCitations = (prompt: string, citations: Citation[] =
   }
 
   return !hasRequiredEpsLegacyCitations(citations);
+};
+
+export const shouldEnrichPmcoeCitations = (prompt: string, citations: Citation[] = []): boolean => {
+  if (!isLikelyPmcoeCitationQuery(prompt)) {
+    return false;
+  }
+
+  const concreteCitationCount = citations.filter((citation) => isConcreteCitationUrl(citation.url)).length;
+  const hasSyntheticLocalCitation = citations.some((citation) =>
+    citation.url.toLowerCase().startsWith(LOCAL_CITATION_PREFIX)
+  );
+
+  return hasSyntheticLocalCitation || concreteCitationCount < 2;
 };
 
 const buildPreflightRoutingContextMessage = (routing: unknown): string => {
@@ -1007,40 +1033,64 @@ export const sendAssistantMessage = ({
       completionResult = await runCompletion(finalMessages, []);
     }
 
-    if (shouldEnrichEpsCitations(content, completionResult?.citations || [])) {
+    const currentCitations = completionResult?.citations || [];
+    const shouldApplyEpsCitationEnrichment = shouldEnrichEpsCitations(content, currentCitations);
+    const shouldApplyPmcoeCitationEnrichment =
+      !shouldApplyEpsCitationEnrichment && shouldEnrichPmcoeCitations(content, currentCitations);
+
+    if (shouldApplyEpsCitationEnrichment || shouldApplyPmcoeCitationEnrichment) {
       try {
         const preferredLanguage = i18n.language?.toLowerCase().startsWith("fr") ? "fr" : "en";
         const legacyCitations = await fetchLegacyCitationsForQuery({
           query: content,
           accessToken,
           lang: preferredLanguage,
-          tools: ["corporate"],
+          tools: shouldApplyPmcoeCitationEnrichment ? ["pmcoe"] : ["corporate"],
         });
 
         if (legacyCitations.length > 0) {
           const mappedLegacyCitations = legacyCitations.map(toPlaygroundCitation);
-          const canonicalEpsCitations = selectCanonicalEpsCitations(mappedLegacyCitations);
-          const mergedCitations = canonicalEpsCitations.length > 0
-            ? canonicalEpsCitations
-            : mergeCitationsPreferConcreteUrls(
-                completionResult?.citations || [],
-                mappedLegacyCitations,
+          const latestMessageContent =
+            getState().chat.messages.find((message) => message.id === latestAssistantMessage.id)?.content || "";
+
+          if (shouldApplyEpsCitationEnrichment) {
+            const canonicalEpsCitations = selectCanonicalEpsCitations(mappedLegacyCitations);
+            const mergedCitations = canonicalEpsCitations.length > 0
+              ? canonicalEpsCitations
+              : mergeCitationsPreferConcreteUrls(
+                  currentCitations,
+                  mappedLegacyCitations,
+                );
+            const strippedMergedCitations = stripSyntheticCitationsWhenConcreteExists(mergedCitations);
+            const finalEpsCitations = hasRequiredEpsLegacyCitations(strippedMergedCitations)
+              ? strippedMergedCitations
+              : CANONICAL_EPS_CITATION_FALLBACK;
+
+            if (finalEpsCitations.length > 0) {
+              dispatch(
+                updateMessageContent({
+                  messageId: latestAssistantMessage.id,
+                  content: latestMessageContent,
+                  citations: finalEpsCitations,
+                })
               );
-          const finalEpsCitations = hasRequiredEpsLegacyCitations(mergedCitations)
-            ? mergedCitations
-            : CANONICAL_EPS_CITATION_FALLBACK;
-
-          if (finalEpsCitations.length > 0) {
-            const latestMessageContent =
-              getState().chat.messages.find((message) => message.id === latestAssistantMessage.id)?.content || "";
-
-            dispatch(
-              updateMessageContent({
-                messageId: latestAssistantMessage.id,
-                content: latestMessageContent,
-                citations: finalEpsCitations,
-              })
+            }
+          } else {
+            const mergedPmcoeCitations = mergeCitationsPreferConcreteUrls(
+              currentCitations,
+              mappedLegacyCitations,
             );
+            const finalPmcoeCitations = stripSyntheticCitationsWhenConcreteExists(mergedPmcoeCitations);
+
+            if (finalPmcoeCitations.length > 0) {
+              dispatch(
+                updateMessageContent({
+                  messageId: latestAssistantMessage.id,
+                  content: latestMessageContent,
+                  citations: finalPmcoeCitations,
+                })
+              );
+            }
           }
         }
       } catch (legacyCitationError) {

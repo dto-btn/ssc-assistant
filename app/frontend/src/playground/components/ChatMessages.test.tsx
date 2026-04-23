@@ -313,9 +313,7 @@ describe("ChatMessages", () => {
     expect(sourceLines.length).toBeGreaterThan(0);
   });
 
-  it("masks local-citation URLs with friendly source label", async () => {
-    const user = userEvent.setup();
-
+  it("omits synthetic local citations from the rendered citation UI", () => {
     renderMessages("s1", {
       chat: {
         messages: [
@@ -345,8 +343,8 @@ describe("ChatMessages", () => {
       },
     });
 
-    await user.click(screen.getByRole("button", { name: "local source reference" }));
-    expect(await screen.findByText("Source: local source reference")).toBeInTheDocument();
-    expect(screen.queryByText(/local-citation:\/\//i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /local source reference/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "1" })).not.toBeInTheDocument();
+    expect(screen.getByText("Please review.")).toBeInTheDocument();
   });
 });
