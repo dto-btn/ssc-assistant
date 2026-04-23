@@ -89,6 +89,7 @@ describe("processTextWithCitations", () => {
     expect(result.processedText).not.toContain("\n\n[1]");
   });
 
+<<<<<<< HEAD
   it("moves annotation citations outside existing markdown links", () => {
     const text = "See [SSC portal](https://example.com/portal) for details.";
     const linkTextEnd = text.indexOf("portal") + "portal".length;
@@ -150,6 +151,8 @@ describe("processTextWithCitations", () => {
     expect(result.citedCitations).toEqual(citations);
   });
 
+=======
+>>>>>>> d689cab (feat: enhance citation handling by adding PMCOE enrichment logic and updating tests)
   it("skips synthetic local citations while preserving numbering for concrete sources", () => {
     const citations: Citation[] = [
       { title: "Local reference", url: "local-citation://eps-guide-abc123" },
