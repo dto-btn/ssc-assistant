@@ -23,7 +23,6 @@ import {
   CompletionContentPart,
   CompletionResult,
 } from "../../services/completionService";
-import { fetchLegacyCitationsForQuery, LegacyCitation } from "../../../api/api";
 import { isTokenExpired } from "../../../util/token";
 import { AppThunk, AppDispatch } from "..";
 import type { RootState } from "..";
@@ -57,27 +56,6 @@ export function stopAssistantMessage(sessionId: string): void {
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
 const TOOL_CALL_STATUS_PATTERN = /\n[^\n]* is being called\.\.\.\n/g;
-const LOCAL_CITATION_PREFIX = "local-citation://";
-const EPS_QUERY_PATTERN = /\b(enterprise\s+(project|portfolio)\s+system|eps)\b/i;
-const PMCOE_QUERY_PATTERN = /\b(pmcoe|project management|operating guide|gate review|through the gates?|opmca)\b/i;
-const REQUIRED_EPS_LEGACY_CITATION_URLS = [
-  "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
-  "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
-] as const;
-const CANONICAL_EPS_CITATION_FALLBACK: Citation[] = [
-  {
-    title: "Enterprise Portfolio System",
-    url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
-    content:
-      "Enterprise Portfolio System Primary users: SSC employees. The Enterprise Portfolio System (EPS) is a server-based application available to all Shared Services Canada employees. It is a licensed product, which means each user must have a valid licence or authorization. EPS is SSC's standard tool to manage projects and includes functionality to support operational and transformational goals, service/work package delivery, portfolio planning, reporting, governance, workforce/capacity planning, and audit/search traceability. Access options include EPS login, CIO Intake Team access request, and requesting a new EPS module via Submit a Request.",
-  },
-  {
-    title: "Enterprise portfolio system training",
-    url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
-    content:
-      "Enterprise portfolio system training Primary users: Project management. EPS is SSC's system of record for all projects and supports program/project/activity management with centralized project artefacts, risk/issue/change tracking, and financial/schedule visibility. A one-day training session covers navigation, project updates, team/schedule/cost plan management, ROD, timesheets, expense transactions, risks/issues/changes, document collaboration, status reporting, reporting/portlet personalization, and support pathways. Sessions are offered monthly in English and quarterly in French, generally 8:30 am to 3:30 pm ET. Registration requires supervisor approval through Training and Outreach (SharePoint) or Flex Training Request Form for group/custom sessions.",
-  },
-];
 
 const normalizeCitationUrl = (value?: string): string => {
   if (!value) return "";
@@ -1248,7 +1226,6 @@ export const sendAssistantMessage = ({
         }
       }
     }
-
   } catch (error) {
     // If the user explicitly stopped the response, swallow the abort error
     // silently — no toast or error message should appear in the chat.

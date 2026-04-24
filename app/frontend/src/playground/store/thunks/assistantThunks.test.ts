@@ -4,12 +4,7 @@ import sessionsReducer from "../slices/sessionSlice";
 import chatReducer from "../slices/chatSlice";
 import {
   deriveSessionName,
-  hasRequiredEpsLegacyCitations,
-  isLikelyEpsCitationQuery,
-  isLikelyPmcoeCitationQuery,
   sendAssistantMessage,
-  shouldEnrichEpsCitations,
-  shouldEnrichPmcoeCitations,
 } from "./assistantThunks";
 import { completionService } from "../../services/completionService";
 import {
@@ -155,115 +150,13 @@ describe("deriveSessionName", () => {
   });
 });
 
-describe("EPS citation enrichment guards", () => {
-  it("detects EPS phrasing from prompt text", () => {
-    expect(isLikelyEpsCitationQuery("What is the purpose of the Enterprise Project System (EPS)?")).toBe(true);
-    expect(isLikelyEpsCitationQuery("How to submit leave request?")).toBe(false);
-  });
-
-  it("recognizes when required legacy EPS citations are present", () => {
-    expect(
-      hasRequiredEpsLegacyCitations([
-        {
-          title: "Enterprise Portfolio System",
-          url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
-        },
-        {
-          title: "Enterprise Portfolio system training",
-          url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
-        },
-        {
-          title: "Extra citation",
-          url: "https://plus.ssc-spc.gc.ca/en/page/unrelated",
-        },
-      ])
-    ).toBe(true);
-
-    expect(
-      hasRequiredEpsLegacyCitations([
-        {
-          title: "EPS local",
-          url: "local-citation://the-enterprise-project-system-abc123",
-        },
-      ])
-    ).toBe(false);
-  });
-
-  it("requests enrichment for EPS when required URLs are missing", () => {
-    const prompt = "What is the purpose of EPS?";
-
-    expect(
-      shouldEnrichEpsCitations(prompt, [
-        {
-          title: "Project Management Operating Guide EN.pdf",
-          url: "local-citation://eps-guide-xyz",
-        },
-      ])
-    ).toBe(true);
-
-    expect(
-      shouldEnrichEpsCitations(prompt, [
-        {
-          title: "Enterprise Portfolio System",
-          url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
-        },
-        {
-          title: "Enterprise Portfolio system training",
-          url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
-        },
-      ])
-    ).toBe(false);
-
-    expect(
-      shouldEnrichEpsCitations("Tell me about leave balances", [
-        {
-          title: "Some policy",
-          url: "https://plus.ssc-spc.gc.ca/en/page/leave-policy",
-        },
-      ])
-    ).toBe(false);
-  });
-});
-
-describe("PMCOE citation enrichment guards", () => {
-  it("detects PMCOE/gates phrasing from prompt text", () => {
-    expect(isLikelyPmcoeCitationQuery("How do I track the progress of my project through the gates?")).toBe(true);
-    expect(isLikelyPmcoeCitationQuery("What is PMCoE's role in gate reviews?")).toBe(true);
-    expect(isLikelyPmcoeCitationQuery("How to submit leave request?")).toBe(false);
-  });
-
-  it("requests PMCOE enrichment when local synthetic citations are present", () => {
-    expect(
-      shouldEnrichPmcoeCitations("How do I track the progress of my project through the gates?", [
-        {
-          title: "Project Management Operating Guide EN.pdf",
-          url: "local-citation://project-management-operating-guide-en-pdf-abc123",
-        },
-      ])
-    ).toBe(true);
-  });
-
-  it("skips PMCOE enrichment when at least two concrete citations are already present", () => {
-    expect(
-      shouldEnrichPmcoeCitations("How do I track the progress of my project through the gates?", [
-        {
-          title: "Project Management Operating Guide EN.pdf",
-          url: "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
-        },
-        {
-          title: "Gate Governance Guide EN.pdf",
-          url: "/pmcoe-sept-2025/en/Gate Governance Guide EN.pdf",
-        },
-      ])
-    ).toBe(false);
-  });
-});
-
 // ---------------------------------------------------------------------------
 // 2. sendAssistantMessage – auto-rename branch
 // ---------------------------------------------------------------------------
 
 describe("sendAssistantMessage auto-rename", () => {
+  let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", fetchMock);
@@ -271,6 +164,11 @@ describe("sendAssistantMessage auto-rename", () => {
     getOrchestratorInsightsMock.mockResolvedValue(null as any);
     resolveServersFromInsightsMock.mockReturnValue([]);
     fetchMock.mockResolvedValue({ ok: false } as any);
+    consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
   });
 
   afterEach(() => {
