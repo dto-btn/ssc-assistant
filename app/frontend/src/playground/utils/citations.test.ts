@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   extractCitationsFromPayload,
+  extractCitationsFromPayloadWithOptions,
   extractResponseCitations,
   groupCitationsByUrl,
   mergeCitations,
@@ -311,6 +312,54 @@ describe("extractCitationsFromPayload", () => {
     expect(citations[0].url).toBe("/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf");
     expect(citations[0].content).toContain("Page 71");
     expect(citations[0].content).toContain("F.1 Enterprise Portfolio System");
+  });
+
+  it("infers PMCOE source_path from file name when PMCOE routing is active", () => {
+    const citations = extractCitationsFromPayloadWithOptions(
+      {
+        type: "response.mcp_call.completed",
+        result: {
+          citations: [
+            {
+              file_name: "Project Management Operating Guide EN.pdf",
+              article: "F.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
+              page_number: 71,
+            },
+          ],
+        },
+      },
+      {
+        enablePmcoePathInference: true,
+        pmcoeContainer: "pmcoe-sept-2025",
+      },
+    );
+
+    expect(citations).toHaveLength(1);
+    expect(citations[0].title).toBe("Project Management Operating Guide EN.pdf");
+    expect(citations[0].url).toBe("/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf");
+    expect(citations[0].content).toContain("Page 71");
+  });
+
+  it("does not infer PMCOE paths when PMCOE routing is not active", () => {
+    const citations = extractCitationsFromPayloadWithOptions(
+      {
+        type: "response.mcp_call.completed",
+        result: {
+          citations: [
+            {
+              file_name: "Project Management Operating Guide EN.pdf",
+              article: "F.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
+              page_number: 71,
+            },
+          ],
+        },
+      },
+      {
+        enablePmcoePathInference: false,
+      },
+    );
+
+    expect(citations).toEqual([]);
   });
 });
 

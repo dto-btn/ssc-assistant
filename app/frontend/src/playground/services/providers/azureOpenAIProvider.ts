@@ -7,10 +7,10 @@
 
 import OpenAI from "openai";
 import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult, CompletionMessage } from "../completionService";
-import { ResponseInput } from "openai/resources/responses/responses.mjs";
+import { ResponseInput, Tool } from "openai/resources/responses/responses.mjs";
 import {
   Citation,
-  extractCitationsFromPayload,
+  extractCitationsFromPayloadWithOptions,
   extractResponseCitations,
   mergeCitations,
 } from "../../utils/citations";
@@ -50,6 +50,13 @@ const isAbortLikeError = (error: unknown): boolean => {
   const name = (value.name || "").toLowerCase();
   const message = (value.message || "").toLowerCase();
   return name.includes("abort") || message.includes("aborted") || message.includes("timeout");
+};
+
+const hasPmcoeServer = (servers: Tool.Mcp[] = []): boolean => {
+  return servers.some((server) => {
+    const haystack = `${server.server_label || ""} ${server.server_description || ""} ${server.server_url || ""}`.toLowerCase();
+    return haystack.includes("pmcoe") || haystack.includes("project-management");
+  });
 };
 
 export class AzureOpenAIProvider implements CompletionProvider {
@@ -163,6 +170,10 @@ export class AzureOpenAIProvider implements CompletionProvider {
     const citationDebugEnabled = isCitationDebugEnabled();
     const seenEventTypes = new Set<string>();
     const timeout = this.createTimeoutSignal(signal);
+    const citationExtractionOptions = {
+      enablePmcoePathInference: hasPmcoeServer(servers),
+      pmcoeContainer: String(import.meta.env.VITE_PMCOE_CONTAINER || "").trim() || undefined,
+    };
     
     try {
       const updatedMessages = this.convertMessagesToInput(messages);
@@ -183,7 +194,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
 
         // Stream annotations can arrive before finalResponse is materialized,
         // so merge citations continuously instead of relying on the final payload.
-        const extractedFromEvent = extractCitationsFromPayload(event);
+        const extractedFromEvent = extractCitationsFromPayloadWithOptions(event, citationExtractionOptions);
         citations = mergeCitations(citations, extractedFromEvent);
 
         if (citationDebugEnabled && extractedFromEvent.length > 0) {
@@ -211,7 +222,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
         // Some providers only attach complete annotation graphs on the finalized
         // response object, so merge that pass on top of stream-level extraction.
         const extractedFromFinalResponse = extractResponseCitations(finalResponse);
-        const extractedFromFinalPayload = extractCitationsFromPayload(finalResponse);
+        const extractedFromFinalPayload = extractCitationsFromPayloadWithOptions(finalResponse, citationExtractionOptions);
         citations = mergeCitations(citations, extractedFromFinalResponse);
         citations = mergeCitations(citations, extractedFromFinalPayload);
 

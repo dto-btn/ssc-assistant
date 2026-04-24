@@ -23,7 +23,6 @@ import {
   CompletionContentPart,
   CompletionResult,
 } from "../../services/completionService";
-import { fetchLegacyCitationsForQuery, LegacyCitation } from "../../../api/api";
 import { isTokenExpired } from "../../../util/token";
 import { AppThunk, AppDispatch } from "..";
 import type { RootState } from "..";
@@ -42,161 +41,10 @@ import { createStreamTypewriter } from "../../utils/streamTypewriter";
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
 const TOOL_CALL_STATUS_PATTERN = /\n[^\n]* is being called\.\.\.\n/g;
-const LOCAL_CITATION_PREFIX = "local-citation://";
-const EPS_QUERY_PATTERN = /\b(enterprise\s+(project|portfolio)\s+system|eps)\b/i;
-const PMCOE_QUERY_PATTERN = /\b(pmcoe|project management|operating guide|gate review|through the gates?|opmca)\b/i;
-const REQUIRED_EPS_LEGACY_CITATION_URLS = [
-  "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
-  "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
-] as const;
-const CANONICAL_EPS_CITATION_FALLBACK: Citation[] = [
-  {
-    title: "Enterprise Portfolio System",
-    url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
-    content:
-      "Enterprise Portfolio System Primary users: SSC employees. The Enterprise Portfolio System (EPS) is a server-based application available to all Shared Services Canada employees. It is a licensed product, which means each user must have a valid licence or authorization. EPS is SSC's standard tool to manage projects and includes functionality to support operational and transformational goals, service/work package delivery, portfolio planning, reporting, governance, workforce/capacity planning, and audit/search traceability. Access options include EPS login, CIO Intake Team access request, and requesting a new EPS module via Submit a Request.",
-  },
-  {
-    title: "Enterprise portfolio system training",
-    url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
-    content:
-      "Enterprise portfolio system training Primary users: Project management. EPS is SSC's system of record for all projects and supports program/project/activity management with centralized project artefacts, risk/issue/change tracking, and financial/schedule visibility. A one-day training session covers navigation, project updates, team/schedule/cost plan management, ROD, timesheets, expense transactions, risks/issues/changes, document collaboration, status reporting, reporting/portlet personalization, and support pathways. Sessions are offered monthly in English and quarterly in French, generally 8:30 am to 3:30 pm ET. Registration requires supervisor approval through Training and Outreach (SharePoint) or Flex Training Request Form for group/custom sessions.",
-  },
-];
 
 type PreflightRecommendation = {
   category?: string;
   mcp_server_id?: string;
-};
-
-const normalizeCitationUrl = (value?: string): string => {
-  if (!value) return "";
-  let normalized = value.trim();
-  if (!normalized) return "";
-
-  try {
-    normalized = decodeURI(normalized);
-  } catch {
-    // Keep original value when decode fails.
-  }
-
-  return normalized.replace(/\/+$/, "").toLowerCase();
-};
-
-const isConcreteCitationUrl = (url?: string): boolean => {
-  if (!url) return false;
-  const trimmed = url.trim();
-  if (!trimmed) return false;
-  if (trimmed.toLowerCase().startsWith(LOCAL_CITATION_PREFIX)) return false;
-  return /^https?:\/\//i.test(trimmed) || trimmed.startsWith("/");
-};
-
-// Once a real source URL exists, synthetic locals stop adding value and only
-// clutter the drawer/chip list.
-const stripSyntheticCitationsWhenConcreteExists = (citations: Citation[] = []): Citation[] => {
-  const concrete = citations.filter((citation) => isConcreteCitationUrl(citation.url));
-  if (concrete.length === 0) {
-    return citations;
-  }
-  return concrete;
-};
-
-const keyForCitation = (citation: Citation): string => {
-  const normalizedUrl = normalizeCitationUrl(citation.url);
-  if (normalizedUrl) return `url:${normalizedUrl}`;
-  const normalizedTitle = citation.title.trim().toLowerCase();
-  return `title:${normalizedTitle}`;
-};
-
-const toPlaygroundCitation = (citation: LegacyCitation): Citation => ({
-  title: citation.title || citation.url,
-  url: citation.url,
-  content: citation.content,
-});
-
-// EPS responses are most useful when they point to the canonical two pages,
-// even if the legacy endpoint returns extra duplicates or alternates.
-const selectCanonicalEpsCitations = (citations: Citation[] = []): Citation[] => {
-  const byUrl = new Map<string, Citation>();
-  for (const citation of citations) {
-    byUrl.set(normalizeCitationUrl(citation.url), citation);
-  }
-
-  const required = REQUIRED_EPS_LEGACY_CITATION_URLS
-    .map((url) => byUrl.get(normalizeCitationUrl(url)))
-    .filter((citation): citation is Citation => Boolean(citation));
-
-  if (required.length !== REQUIRED_EPS_LEGACY_CITATION_URLS.length) {
-    return [];
-  }
-
-  return required;
-};
-
-// Merge by logical citation identity while letting legacy URLs upgrade a
-// placeholder/local citation gathered from the primary response stream.
-const mergeCitationsPreferConcreteUrls = (
-  primary: Citation[] = [],
-  fallback: Citation[] = [],
-): Citation[] => {
-  const merged = new Map<string, Citation>();
-
-  for (const citation of primary) {
-    merged.set(keyForCitation(citation), citation);
-  }
-
-  for (const citation of fallback) {
-    const key = keyForCitation(citation);
-    const current = merged.get(key);
-    if (!current) {
-      merged.set(key, citation);
-      continue;
-    }
-
-    if (!isConcreteCitationUrl(current.url) && isConcreteCitationUrl(citation.url)) {
-      merged.set(key, citation);
-    }
-  }
-
-  return Array.from(merged.values());
-};
-
-export const isLikelyEpsCitationQuery = (prompt: string): boolean => {
-  return EPS_QUERY_PATTERN.test(prompt);
-};
-
-export const isLikelyPmcoeCitationQuery = (prompt: string): boolean => {
-  return PMCOE_QUERY_PATTERN.test(prompt);
-};
-
-export const hasRequiredEpsLegacyCitations = (citations: Citation[] = []): boolean => {
-  const existingUrls = new Set(citations.map((citation) => normalizeCitationUrl(citation.url)));
-  return REQUIRED_EPS_LEGACY_CITATION_URLS.every((requiredUrl) => {
-    return existingUrls.has(normalizeCitationUrl(requiredUrl));
-  });
-};
-
-export const shouldEnrichEpsCitations = (prompt: string, citations: Citation[] = []): boolean => {
-  if (!isLikelyEpsCitationQuery(prompt)) {
-    return false;
-  }
-
-  return !hasRequiredEpsLegacyCitations(citations);
-};
-
-export const shouldEnrichPmcoeCitations = (prompt: string, citations: Citation[] = []): boolean => {
-  if (!isLikelyPmcoeCitationQuery(prompt)) {
-    return false;
-  }
-
-  // PMCOE answers often surface one local placeholder or only a single file hit,
-  // so use the legacy endpoint when the initial citation set looks incomplete.
-  const concreteCitationCount = citations.filter((citation) => isConcreteCitationUrl(citation.url)).length;
-  const hasSyntheticLocalCitation = citations.some((citation) =>
-    citation.url.toLowerCase().startsWith(LOCAL_CITATION_PREFIX)
-  );
-
-  return hasSyntheticLocalCitation || concreteCitationCount < 2;
 };
 
 const buildPreflightRoutingContextMessage = (routing: unknown): string => {
@@ -1039,78 +887,6 @@ export const sendAssistantMessage = ({
       dispatch(setAssistantResponsePhase({ sessionId, phase: "waiting-first-token" }));
 
       completionResult = await runCompletion(finalMessages, []);
-    }
-
-    const currentCitations = completionResult?.citations || [];
-    const shouldApplyEpsCitationEnrichment = shouldEnrichEpsCitations(content, currentCitations);
-    const shouldApplyPmcoeCitationEnrichment =
-      !shouldApplyEpsCitationEnrichment && shouldEnrichPmcoeCitations(content, currentCitations);
-
-    if (shouldApplyEpsCitationEnrichment || shouldApplyPmcoeCitationEnrichment) {
-      try {
-        // Legacy chat remains the most reliable backstop for a few domain-specific
-        // corpora when the LiteLLM/Responses path omits concrete citation URLs.
-        const preferredLanguage = i18n.language?.toLowerCase().startsWith("fr") ? "fr" : "en";
-        const legacyCitations = await fetchLegacyCitationsForQuery({
-          query: content,
-          accessToken,
-          lang: preferredLanguage,
-          tools: shouldApplyPmcoeCitationEnrichment ? ["pmcoe"] : ["corporate"],
-        });
-
-        if (legacyCitations.length > 0) {
-          const mappedLegacyCitations = legacyCitations.map(toPlaygroundCitation);
-          const latestMessageContent =
-            getState().chat.messages.find((message) => message.id === latestAssistantMessage.id)?.content || "";
-
-          if (shouldApplyEpsCitationEnrichment) {
-            const canonicalEpsCitations = selectCanonicalEpsCitations(mappedLegacyCitations);
-            const mergedCitations = canonicalEpsCitations.length > 0
-              ? canonicalEpsCitations
-              : mergeCitationsPreferConcreteUrls(
-                  currentCitations,
-                  mappedLegacyCitations,
-                );
-            const strippedMergedCitations = stripSyntheticCitationsWhenConcreteExists(mergedCitations);
-            const finalEpsCitations = hasRequiredEpsLegacyCitations(strippedMergedCitations)
-              ? strippedMergedCitations
-              : CANONICAL_EPS_CITATION_FALLBACK;
-
-            if (finalEpsCitations.length > 0) {
-              dispatch(
-                updateMessageContent({
-                  messageId: latestAssistantMessage.id,
-                  content: latestMessageContent,
-                  citations: finalEpsCitations,
-                })
-              );
-            }
-          } else {
-            const mergedPmcoeCitations = mergeCitationsPreferConcreteUrls(
-              currentCitations,
-              mappedLegacyCitations,
-            );
-            const finalPmcoeCitations = stripSyntheticCitationsWhenConcreteExists(mergedPmcoeCitations);
-
-            if (finalPmcoeCitations.length > 0) {
-              dispatch(
-                updateMessageContent({
-                  messageId: latestAssistantMessage.id,
-                  content: latestMessageContent,
-                  citations: finalPmcoeCitations,
-                })
-              );
-            }
-          }
-        }
-      } catch (legacyCitationError) {
-        if (IS_DEV) {
-          console.warn(
-            "Legacy citation enrichment failed. Keeping primary playground citations.",
-            legacyCitationError
-          );
-        }
-      }
     }
 
   } catch (error) {

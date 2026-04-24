@@ -30,10 +30,19 @@ export interface ProcessedCitationsResult {
 const DOC_REFERENCE_REGEX = /\[doc(\d+)\]/g;
 const DOC_REFERENCE_TEST_REGEX = /\[doc(\d+)\]/;
 const LOCAL_CITATION_PREFIX = "local-citation://";
+const DEFAULT_PMCOE_CONTAINER = String(import.meta.env.VITE_PMCOE_CONTAINER || "pmcoe-sept-2025").trim() || "pmcoe-sept-2025";
+const PMCOE_FILE_EXTENSION_PATTERN = /\.(pdf|docx?|pptx?|xlsx?|txt|md)$/i;
+const PMCOE_HINT_PATTERN = /\b(pmcoe|pmli|project manager-led initiatives?|project management|operating guide|gate(?: review| governance)?|opmca|pgof|pcra|task financial authorization|execution stage|realization plan|enterprise portfolio system|eps)\b/i;
 
 type IndexedCitation = {
   citation: Citation;
   citationIndex: number;
+};
+
+type CitationExtractionOptions = {
+  enablePmcoePathInference?: boolean;
+  pmcoeContainer?: string;
+  preferredLanguage?: "en" | "fr";
 };
 
 const isFiniteNumber = (value: unknown): value is number => {
@@ -105,6 +114,67 @@ const normalizeCitationUrl = (rawUrl: string): string => {
   return `/${trimmed.replace(/^\/+/, "")}`;
 };
 
+const inferPmcoeLanguage = (value: string, preferredLanguage?: "en" | "fr"): "en" | "fr" => {
+  if (/(^|[\s._-])(fr|fra|french|francais|français)([\s._-]|$)/i.test(value)) {
+    return "fr";
+  }
+
+  if (/(^|[\s._-])(en|eng|english)([\s._-]|$)/i.test(value)) {
+    return "en";
+  }
+
+  return preferredLanguage === "fr" ? "fr" : "en";
+};
+
+const inferPmcoeCitationUrl = (
+  record: Record<string, unknown>,
+  title: string | undefined,
+  content: string | undefined,
+  options: CitationExtractionOptions,
+): string | undefined => {
+  if (!options.enablePmcoePathInference) {
+    return undefined;
+  }
+
+  const fileName = toStringFromKeys(record, [
+    "file_name",
+    "fileName",
+    "filename",
+    "document_title",
+    "documentTitle",
+    "title",
+    "name",
+  ]);
+
+  if (!fileName || !PMCOE_FILE_EXTENSION_PATTERN.test(fileName)) {
+    return undefined;
+  }
+
+  const hintText = [
+    fileName,
+    title,
+    content,
+    toStringFromKeys(record, ["tool_name", "toolName", "index_name", "indexName", "collection"]),
+  ]
+    .filter((value): value is string => Boolean(value && value.trim().length > 0))
+    .join(" ");
+
+  if (!PMCOE_HINT_PATTERN.test(hintText)) {
+    return undefined;
+  }
+
+  const langHint = [
+    toStringFromKeys(record, ["lang", "language", "locale", "document_language", "documentLanguage"]),
+    fileName,
+  ]
+    .filter((value): value is string => Boolean(value && value.trim().length > 0))
+    .join(" ");
+
+  const pmcoeContainer = (options.pmcoeContainer || DEFAULT_PMCOE_CONTAINER).trim() || DEFAULT_PMCOE_CONTAINER;
+  const language = inferPmcoeLanguage(langHint, options.preferredLanguage);
+  return normalizeCitationUrl(`/${pmcoeContainer}/${language}/${fileName.replace(/^\/+/, "")}`);
+};
+
 // Providers and MCP tools use different source field names; collapse them
 // into one normalized URL/path so downstream rendering stays provider-agnostic.
 const resolveCitationUrl = (record: Record<string, unknown>): string | undefined => {
@@ -169,9 +239,9 @@ const getRenderableCitationEntries = (citations: Citation[]): IndexedCitation[] 
 const buildCitationFromRecord = (
   record: Record<string, unknown>,
   inCitationContext: boolean,
+  options: CitationExtractionOptions,
 ): Citation | undefined => {
   const type = toNonEmptyString(record.type)?.toLowerCase();
-  const resolvedUrl = resolveCitationUrl(record);
 
   const title = toStringFromKeys(record, [
     "title",
@@ -217,6 +287,8 @@ const buildCitationFromRecord = (
       ? `Page ${pageNumber}\n${baseContent}`
       : baseContent)
     : undefined;
+
+  const resolvedUrl = resolveCitationUrl(record) || inferPmcoeCitationUrl(record, title, content, options);
 
   const isTypedCitation = type === "url_citation" || type === "citation";
   const isCitationLike = isTypedCitation || inCitationContext || Boolean(title) || Boolean(content) || Boolean(resolvedUrl);
@@ -419,6 +491,13 @@ const parseJsonIfPossible = (value: string): unknown | undefined => {
  * events, tool responses, or JSON-string fields.
  */
 export const extractCitationsFromPayload = (payload: unknown): Citation[] => {
+  return extractCitationsFromPayloadWithOptions(payload, {});
+};
+
+export const extractCitationsFromPayloadWithOptions = (
+  payload: unknown,
+  options: CitationExtractionOptions,
+): Citation[] => {
   const found: Citation[] = [];
   const visited = new WeakSet<object>();
 
@@ -430,7 +509,7 @@ export const extractCitationsFromPayload = (payload: unknown): Citation[] => {
       }
       visited.add(parsedObject);
 
-      const citation = buildCitationFromRecord(parsedObject, inCitationContext);
+      const citation = buildCitationFromRecord(parsedObject, inCitationContext, options);
       if (citation) {
         found.push(citation);
       }
