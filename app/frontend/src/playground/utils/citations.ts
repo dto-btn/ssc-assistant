@@ -29,21 +29,16 @@ export interface ProcessedCitationsResult {
 
 const DOC_REFERENCE_REGEX = /\[doc(\d+)\]/g;
 const DOC_REFERENCE_TEST_REGEX = /\[doc(\d+)\]/;
-<<<<<<< HEAD
 const EXPLICIT_CITATION_LINK_REGEX = /\[(\d+)\]\((<[^>\n]+>|[^)\s]+)\)/g;
 const LOCAL_CITATION_PREFIX = "local-citation://";
 const DEFAULT_PMCOE_CONTAINER = String(import.meta.env.VITE_PMCOE_CONTAINER || "pmcoe-sept-2025").trim() || "pmcoe-sept-2025";
 const PMCOE_FILE_EXTENSION_PATTERN = /\.(pdf|docx?|pptx?|xlsx?|txt|md)$/i;
 const PMCOE_HINT_PATTERN = /\b(pmcoe|pmli|project manager-led initiatives?|project management|operating guide|gate(?: review| governance)?|opmca|pgof|pcra|task financial authorization|execution stage|realization plan|enterprise portfolio system|eps)\b/i;
-=======
-const LOCAL_CITATION_PREFIX = "local-citation://";
->>>>>>> d689cab (feat: enhance citation handling by adding PMCOE enrichment logic and updating tests)
 
 type IndexedCitation = {
   citation: Citation;
   citationIndex: number;
 };
-<<<<<<< HEAD
 
 type ExplicitCitationLink = {
   displayNumber: number;
@@ -58,8 +53,6 @@ type CitationExtractionOptions = {
   pmcoeContainer?: string;
   preferredLanguage?: "en" | "fr";
 };
-=======
->>>>>>> d689cab (feat: enhance citation handling by adding PMCOE enrichment logic and updating tests)
 
 const isFiniteNumber = (value: unknown): value is number => {
   return typeof value === "number" && Number.isFinite(value);
@@ -227,11 +220,8 @@ const getRecord = (value: unknown): Record<string, unknown> | undefined => {
   return value as Record<string, unknown>;
 };
 
-<<<<<<< HEAD
 // Synthetic local references can still appear in historical payloads or tests,
 // but they are not actionable enough to show as end-user citations.
-=======
->>>>>>> d689cab (feat: enhance citation handling by adding PMCOE enrichment logic and updating tests)
 const isDisplayableCitationUrl = (url: string | undefined): boolean => {
   if (!url) {
     return false;
@@ -251,13 +241,10 @@ const getRenderableCitationEntries = (citations: Citation[]): IndexedCitation[] 
     .filter(({ citation }) => isDisplayableCitationUrl(citation.url));
 };
 
-<<<<<<< HEAD
 /**
  * Attempt to build one citation from an arbitrary record discovered while
  * walking streamed events or nested MCP payloads.
  */
-=======
->>>>>>> d689cab (feat: enhance citation handling by adding PMCOE enrichment logic and updating tests)
 const buildCitationFromRecord = (
   record: Record<string, unknown>,
   inCitationContext: boolean,
@@ -318,11 +305,8 @@ const buildCitationFromRecord = (
     return undefined;
   }
 
-<<<<<<< HEAD
   // Do not invent placeholder URLs here. Missing source paths create noisy
   // "citations" that the UI cannot open or explain meaningfully.
-=======
->>>>>>> d689cab (feat: enhance citation handling by adding PMCOE enrichment logic and updating tests)
   if (!resolvedUrl) {
     return undefined;
   }
@@ -426,7 +410,6 @@ const collectSentenceEndPositions = (text: string): number[] => {
   return positions;
 };
 
-<<<<<<< HEAD
 type ProtectedMarkdownRange = {
   start: number;
   end: number;
@@ -723,28 +706,13 @@ const processExplicitCitationLinks = (
 const insertMarkersBySentence = (
   text: string,
   citationEntries: IndexedCitation[],
-=======
-  const cleanupCitationSpacing = (text: string): string => {
-    return text
-      .replace(/\s+([,.;!?])/g, "$1")
-      .replace(/ {2,}/g, " ");
-  };
-
-const insertMarkersBySentence = (
-  text: string,
-    citationEntries: IndexedCitation[],
->>>>>>> d689cab (feat: enhance citation handling by adding PMCOE enrichment logic and updating tests)
   citationNumberMapping: Record<number, number>,
 ): string => {
   const sentenceEnds = collectSentenceEndPositions(text);
   let processedText = text;
   let offset = 0;
 
-<<<<<<< HEAD
   citationEntries.forEach(({ citation, citationIndex }, idx) => {
-=======
-    citationEntries.forEach(({ citation, citationIndex }, idx) => {
->>>>>>> d689cab (feat: enhance citation handling by adding PMCOE enrichment logic and updating tests)
     const displayNumber = citationNumberMapping[citationIndex];
     if (!displayNumber) {
       return;
@@ -955,25 +923,17 @@ const processAnnotationReferences = (
   }
 
   const citationNumberMapping: Record<number, number> = {};
-<<<<<<< HEAD
   // Keep display numbers keyed to the original citation index so grouped
   // sources and [docN] references stay stable even after filtering locals.
-=======
->>>>>>> d689cab (feat: enhance citation handling by adding PMCOE enrichment logic and updating tests)
   renderableEntries.forEach(({ citationIndex }, index) => {
     citationNumberMapping[citationIndex] = index + 1;
   });
 
-<<<<<<< HEAD
   const protectedRanges = collectProtectedMarkdownRanges(text);
-
-=======
->>>>>>> d689cab (feat: enhance citation handling by adding PMCOE enrichment logic and updating tests)
   const annotations = renderableEntries
     .map(({ citation, citationIndex }) => ({
       citation,
       citationIndex,
-<<<<<<< HEAD
       endIndex: (() => {
         const inferredEndIndex = inferCitationEndIndex(text, citation);
         if (!isFiniteNumber(inferredEndIndex)) {
@@ -982,9 +942,6 @@ const processAnnotationReferences = (
 
         return resolveSafeInsertionIndex(inferredEndIndex, protectedRanges);
       })(),
-=======
-      endIndex: inferCitationEndIndex(text, citation),
->>>>>>> d689cab (feat: enhance citation handling by adding PMCOE enrichment logic and updating tests)
     }))
     .filter((entry): entry is { citation: Citation; citationIndex: number; endIndex: number } =>
       isFiniteNumber(entry.endIndex),

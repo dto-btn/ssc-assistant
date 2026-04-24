@@ -188,8 +188,6 @@ export const shouldEnrichEpsCitations = (prompt: string, citations: Citation[] =
   return !hasRequiredEpsLegacyCitations(citations);
 };
 
-<<<<<<< HEAD
-=======
 export const shouldEnrichPmcoeCitations = (prompt: string, citations: Citation[] = []): boolean => {
   if (!isLikelyPmcoeCitationQuery(prompt)) {
     return false;
@@ -202,42 +200,6 @@ export const shouldEnrichPmcoeCitations = (prompt: string, citations: Citation[]
 
   return hasSyntheticLocalCitation || concreteCitationCount < 2;
 };
-
-const buildPreflightRoutingContextMessage = (routing: unknown): string => {
-  const routingRecord = routing as {
-    recommendations?: PreflightRecommendation[];
-    fallback?: { category?: string };
-  };
-
-  const recommendations = Array.isArray(routingRecord?.recommendations)
-    ? routingRecord.recommendations
-        .filter((entry): entry is PreflightRecommendation => Boolean(entry && typeof entry === "object"))
-    : [];
-
-  const categories = Array.from(new Set(
-    recommendations
-      .map((entry) => (typeof entry.category === "string" ? entry.category.trim() : ""))
-      .filter((value) => value.length > 0),
-  ));
-
-  const serverIds = recommendations
-    .map((entry) => (typeof entry.mcp_server_id === "string" ? entry.mcp_server_id.trim() : ""))
-    .filter((value) => value.length > 0);
-
-  const fallbackCategory =
-    typeof routingRecord?.fallback?.category === "string"
-      ? routingRecord.fallback.category.trim()
-      : "";
-
-  const categorySummary = categories.length > 0
-    ? categories.join(", ")
-    : fallbackCategory || "general";
-  const serverSummary = serverIds.length > 0 ? serverIds.join(", ") : "none";
-
-  return `Orchestrator preflight routing summary: categories='${categorySummary}', servers='${serverSummary}'. Use this as routing context.`;
-};
-
->>>>>>> d689cab (feat: enhance citation handling by adding PMCOE enrichment logic and updating tests)
 /**
  * Derive a short session name from the first 5 words of the user's first message.
  * Keeps title within 30 characters.

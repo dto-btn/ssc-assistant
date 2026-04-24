@@ -2,14 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { configureStore } from "@reduxjs/toolkit";
 import sessionsReducer from "../slices/sessionSlice";
 import chatReducer from "../slices/chatSlice";
-import { deriveSessionName, sendAssistantMessage } from "./assistantThunks";
-import { completionService } from "../../services/completionService";
 import {
-<<<<<<< HEAD
-  getOrchestratorInsights,
-  resolveServersFromInsights,
-} from "../../services/orchestratorService";
-=======
   deriveSessionName,
   hasRequiredEpsLegacyCitations,
   isLikelyEpsCitationQuery,
@@ -18,18 +11,11 @@ import {
   shouldEnrichEpsCitations,
   shouldEnrichPmcoeCitations,
 } from "./assistantThunks";
-import { renameSession, setIsSessionNew } from "../slices/sessionSlice";
-import type { RootState } from "..";
-
-// ---------------------------------------------------------------------------
-// Module mocks – stub out anything that makes real network calls or uses
-// env vars that complicate the test environment.
-// ---------------------------------------------------------------------------
-
-vi.mock("./sessionManagementThunks", () => ({
-  persistSessionRename: vi.fn(() => () => Promise.resolve()),
-}));
->>>>>>> d689cab (feat: enhance citation handling by adding PMCOE enrichment logic and updating tests)
+import { completionService } from "../../services/completionService";
+import {
+  getOrchestratorInsights,
+  resolveServersFromInsights,
+} from "../../services/orchestratorService";
 
 vi.mock("../../../util/token", () => ({
   isTokenExpired: vi.fn(() => false),
@@ -169,9 +155,6 @@ describe("deriveSessionName", () => {
   });
 });
 
-<<<<<<< HEAD
-describe("sendAssistantMessage", () => {
-=======
 describe("EPS citation enrichment guards", () => {
   it("detects EPS phrasing from prompt text", () => {
     expect(isLikelyEpsCitationQuery("What is the purpose of the Enterprise Project System (EPS)?")).toBe(true);
@@ -281,7 +264,6 @@ describe("PMCOE citation enrichment guards", () => {
 // ---------------------------------------------------------------------------
 
 describe("sendAssistantMessage auto-rename", () => {
->>>>>>> d689cab (feat: enhance citation handling by adding PMCOE enrichment logic and updating tests)
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", fetchMock);
