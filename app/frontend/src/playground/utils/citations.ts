@@ -1,3 +1,11 @@
+/**
+ * Citation utilities for Playground responses.
+ *
+ * The provider can emit citations through multiple shapes: legacy [docN]
+ * markers, Responses API annotations, and ad-hoc MCP payload objects. These
+ * helpers normalize those variants into one renderable model for inline links
+ * and the citation drawer.
+ */
 export interface Citation {
   title: string;
   url: string;
@@ -97,6 +105,8 @@ const normalizeCitationUrl = (rawUrl: string): string => {
   return `/${trimmed.replace(/^\/+/, "")}`;
 };
 
+// Providers and MCP tools use different source field names; collapse them
+// into one normalized URL/path so downstream rendering stays provider-agnostic.
 const resolveCitationUrl = (record: Record<string, unknown>): string | undefined => {
   const strictCandidate = toStringFromKeys(record, [
     "url",
@@ -131,6 +141,8 @@ const getRecord = (value: unknown): Record<string, unknown> | undefined => {
   return value as Record<string, unknown>;
 };
 
+// Synthetic local references can still appear in historical payloads or tests,
+// but they are not actionable enough to show as end-user citations.
 const isDisplayableCitationUrl = (url: string | undefined): boolean => {
   if (!url) {
     return false;
@@ -150,6 +162,10 @@ const getRenderableCitationEntries = (citations: Citation[]): IndexedCitation[] 
     .filter(({ citation }) => isDisplayableCitationUrl(citation.url));
 };
 
+/**
+ * Attempt to build one citation from an arbitrary record discovered while
+ * walking streamed events or nested MCP payloads.
+ */
 const buildCitationFromRecord = (
   record: Record<string, unknown>,
   inCitationContext: boolean,
@@ -208,6 +224,8 @@ const buildCitationFromRecord = (
     return undefined;
   }
 
+  // Do not invent placeholder URLs here. Missing source paths create noisy
+  // "citations" that the UI cannot open or explain meaningfully.
   if (!resolvedUrl) {
     return undefined;
   }
@@ -250,6 +268,10 @@ const buildCitationFromRecord = (
   };
 };
 
+/**
+ * When providers omit annotation offsets, approximate the citation anchor from
+ * the excerpt/title so inline numbering lands near the referenced sentence.
+ */
 const inferCitationEndIndex = (text: string, citation: Citation): number | undefined => {
   if (isFiniteNumber(citation.endIndex)) {
     return citation.endIndex;
@@ -307,22 +329,24 @@ const collectSentenceEndPositions = (text: string): number[] => {
   return positions;
 };
 
-  const cleanupCitationSpacing = (text: string): string => {
-    return text
-      .replace(/\s+([,.;!?])/g, "$1")
-      .replace(/ {2,}/g, " ");
-  };
+const cleanupCitationSpacing = (text: string): string => {
+  return text
+    .replace(/\s+([,.;!?])/g, "$1")
+    .replace(/ {2,}/g, " ");
+};
 
+// If we cannot place citations by offset, fall back to sentence boundaries so
+// the answer still carries ordered citations instead of losing them entirely.
 const insertMarkersBySentence = (
   text: string,
-    citationEntries: IndexedCitation[],
+  citationEntries: IndexedCitation[],
   citationNumberMapping: Record<number, number>,
 ): string => {
   const sentenceEnds = collectSentenceEndPositions(text);
   let processedText = text;
   let offset = 0;
 
-    citationEntries.forEach(({ citation, citationIndex }, idx) => {
+  citationEntries.forEach(({ citation, citationIndex }, idx) => {
     const displayNumber = citationNumberMapping[citationIndex];
     if (!displayNumber) {
       return;
@@ -390,6 +414,10 @@ const parseJsonIfPossible = (value: string): unknown | undefined => {
   }
 };
 
+/**
+ * Walk an arbitrary payload and recover any citation-like objects nested in
+ * events, tool responses, or JSON-string fields.
+ */
 export const extractCitationsFromPayload = (payload: unknown): Citation[] => {
   const found: Citation[] = [];
   const visited = new WeakSet<object>();
@@ -505,6 +533,8 @@ const processAnnotationReferences = (
   }
 
   const citationNumberMapping: Record<number, number> = {};
+  // Keep display numbers keyed to the original citation index so grouped
+  // sources and [docN] references stay stable even after filtering locals.
   renderableEntries.forEach(({ citationIndex }, index) => {
     citationNumberMapping[citationIndex] = index + 1;
   });
@@ -552,6 +582,10 @@ const processAnnotationReferences = (
   };
 };
 
+/**
+ * Convert either legacy [docN] markers or annotation-style citations into the
+ * markdown link format rendered by the Playground message bubble.
+ */
 export const processTextWithCitations = (
   text: string,
   citations: Citation[] = [],
@@ -616,6 +650,10 @@ export const groupCitationsByUrl = (
   return Array.from(groups.values()).sort((a, b) => a.displayNumber - b.displayNumber);
 };
 
+/**
+ * Extract Responses API `url_citation` annotations from a finalized response
+ * payload when the provider includes the full output graph.
+ */
 export const extractResponseCitations = (response: unknown): Citation[] => {
   if (!response || typeof response !== "object") {
     return [];

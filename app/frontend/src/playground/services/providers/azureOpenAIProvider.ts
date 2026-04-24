@@ -114,10 +114,9 @@ export class AzureOpenAIProvider implements CompletionProvider {
   }
 
   /**
-   * Convert CompletionMessage array to ResponseInput format.
-   * Key Changes: 
-   *  - type name from text & image_url to input_text & input_image
-   *  - taking nested image_url properties (url & detail) out one level
+    * Translate Playground message parts into the OpenAI Responses input shape.
+    * The Responses API uses `input_text`/`input_image` rather than the chat
+    * completion `text`/`image_url` content part names.
    */
   private convertMessagesToInput(messages: CompletionMessage[]): ResponseInput {
 
@@ -149,7 +148,8 @@ export class AzureOpenAIProvider implements CompletionProvider {
   }
 
   /**
-   * Stream chat completions, optionally executing tool calls before recursively resuming the run.
+   * Stream one Responses API completion and aggregate citations from both
+   * incremental events and the optional final response payload.
    */
   async createCompletion(
     request: CompletionRequest,
@@ -181,6 +181,8 @@ export class AzureOpenAIProvider implements CompletionProvider {
           seenEventTypes.add(eventRecord.type);
         }
 
+        // Stream annotations can arrive before finalResponse is materialized,
+        // so merge citations continuously instead of relying on the final payload.
         const extractedFromEvent = extractCitationsFromPayload(event);
         citations = mergeCitations(citations, extractedFromEvent);
 
@@ -206,6 +208,8 @@ export class AzureOpenAIProvider implements CompletionProvider {
 
       if (typeof stream.finalResponse === "function") {
         const finalResponse = await stream.finalResponse();
+        // Some providers only attach complete annotation graphs on the finalized
+        // response object, so merge that pass on top of stream-level extraction.
         const extractedFromFinalResponse = extractResponseCitations(finalResponse);
         const extractedFromFinalPayload = extractCitationsFromPayload(finalResponse);
         citations = mergeCitations(citations, extractedFromFinalResponse);

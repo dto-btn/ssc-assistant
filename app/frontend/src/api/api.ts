@@ -234,6 +234,12 @@ export interface LegacyCitation {
   content?: string;
 }
 
+/**
+ * Call the legacy streaming chat endpoint and recover only its citation block.
+ *
+ * This is used as a narrow fallback for corpora where the Playground's primary
+ * completion path still returns incomplete citation URLs.
+ */
 export const fetchLegacyCitationsForQuery = async ({
   query,
   accessToken,
@@ -309,6 +315,10 @@ export const fetchLegacyCitationsForQuery = async ({
     .filter((citation) => citation.url.length > 0);
 };
 
+  /**
+   * Parse the multipart/mixed legacy chat response separated by the
+   * `--GPT-Interaction` boundary into plain text and JSON sections.
+   */
 const parseMixedResponse = async (response: Response) => {
     // Read the response as text
     const rawText = await response.text();

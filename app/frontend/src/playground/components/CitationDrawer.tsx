@@ -122,6 +122,8 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
     return score;
   };
 
+  // Providers sometimes repeat the assistant's answer text in each citation.
+  // Prefer the richest non-echo excerpt so the drawer stays source-focused.
   const pickBestGroupSourceExcerpt = (group: GroupedCitation): string | undefined => {
     const candidates = group.citations
       .map((entry) => entry.content)

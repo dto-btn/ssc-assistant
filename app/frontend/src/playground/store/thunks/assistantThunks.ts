@@ -91,6 +91,8 @@ const isConcreteCitationUrl = (url?: string): boolean => {
   return /^https?:\/\//i.test(trimmed) || trimmed.startsWith("/");
 };
 
+// Once a real source URL exists, synthetic locals stop adding value and only
+// clutter the drawer/chip list.
 const stripSyntheticCitationsWhenConcreteExists = (citations: Citation[] = []): Citation[] => {
   const concrete = citations.filter((citation) => isConcreteCitationUrl(citation.url));
   if (concrete.length === 0) {
@@ -112,6 +114,8 @@ const toPlaygroundCitation = (citation: LegacyCitation): Citation => ({
   content: citation.content,
 });
 
+// EPS responses are most useful when they point to the canonical two pages,
+// even if the legacy endpoint returns extra duplicates or alternates.
 const selectCanonicalEpsCitations = (citations: Citation[] = []): Citation[] => {
   const byUrl = new Map<string, Citation>();
   for (const citation of citations) {
@@ -129,6 +133,8 @@ const selectCanonicalEpsCitations = (citations: Citation[] = []): Citation[] => 
   return required;
 };
 
+// Merge by logical citation identity while letting legacy URLs upgrade a
+// placeholder/local citation gathered from the primary response stream.
 const mergeCitationsPreferConcreteUrls = (
   primary: Citation[] = [],
   fallback: Citation[] = [],
@@ -183,6 +189,8 @@ export const shouldEnrichPmcoeCitations = (prompt: string, citations: Citation[]
     return false;
   }
 
+  // PMCOE answers often surface one local placeholder or only a single file hit,
+  // so use the legacy endpoint when the initial citation set looks incomplete.
   const concreteCitationCount = citations.filter((citation) => isConcreteCitationUrl(citation.url)).length;
   const hasSyntheticLocalCitation = citations.some((citation) =>
     citation.url.toLowerCase().startsWith(LOCAL_CITATION_PREFIX)
@@ -1040,6 +1048,8 @@ export const sendAssistantMessage = ({
 
     if (shouldApplyEpsCitationEnrichment || shouldApplyPmcoeCitationEnrichment) {
       try {
+        // Legacy chat remains the most reliable backstop for a few domain-specific
+        // corpora when the LiteLLM/Responses path omits concrete citation URLs.
         const preferredLanguage = i18n.language?.toLowerCase().startsWith("fr") ? "fr" : "en";
         const legacyCitations = await fetchLegacyCitationsForQuery({
           query: content,
