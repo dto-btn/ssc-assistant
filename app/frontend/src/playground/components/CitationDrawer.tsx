@@ -73,7 +73,9 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
 
   const formatSourceLabel = (url: string): string => {
     if (isInternalCitationUrl(url)) {
-      return "local source reference";
+      return t("citations.localSourceReference", {
+        defaultValue: "Local source reference",
+      });
     }
     return url;
   };
@@ -160,10 +162,16 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
     }
 
     if (citation.title && citation.title !== group.url) {
-      return `Source document: ${citation.title}`;
+      return t("citations.sourceDocument", {
+        defaultValue: "Source document: {{title}}",
+        title: citation.title,
+      });
     }
 
-    return `Source location: ${formatSourceLabel(group.url)}`;
+    return t("citations.sourceLocation", {
+      defaultValue: "Source location: {{location}}",
+      location: formatSourceLabel(group.url),
+    });
   };
 
   /**
@@ -244,7 +252,14 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
       open={open}
       onClose={onClose}
       PaperProps={{
-        sx: { width: isSmall ? "100%" : 420, maxWidth: "100%" },
+        id: "citation-drawer",
+        role: "dialog",
+        "aria-labelledby": "citation-drawer-title",
+        sx: {
+          width: isSmall ? "100%" : 420,
+          maxWidth: "100%",
+          maxHeight: isSmall ? "85vh" : "100%",
+        },
       }}
     >
       <Box
@@ -258,12 +273,14 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
           borderColor: "divider",
         }}
       >
-        <Typography variant="subtitle1">
+        <Typography id="citation-drawer-title" variant="subtitle1">
           {t("citations.drawer.title", { defaultValue: "Citations" })}
         </Typography>
         <IconButton
           id="close-citation-drawer-button"
-          aria-label={t("sidebar.close")}
+          aria-label={t("citations.drawer.close", {
+            defaultValue: "Close citations",
+          })}
           onClick={onClose}
         >
           <CloseIcon />
@@ -286,13 +303,18 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
               }
             }}
           >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle2">{getGroupDisplayTitle(group)}</Typography>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ overflowWrap: "anywhere", wordBreak: "break-word" }}
+                >
+                  {getGroupDisplayTitle(group)}
+                </Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Typography
                 variant="caption"
-                sx={{ color: "text.secondary" }}
+                  sx={{ color: "text.secondary", overflowWrap: "anywhere" }}
               >
                 {t("citations.source", { defaultValue: "Source:" })}{" "}
                 {isInternalCitationUrl(group.url) ? (
@@ -304,6 +326,11 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
                     href={encodeURI(group.url)}
                     target="_blank"
                     rel="noopener noreferrer"
+                      aria-label={t("citations.source.openExternal", {
+                        defaultValue: "Open source in a new tab: {{title}}",
+                        title: formatSourceLabel(group.url),
+                      })}
+                      sx={{ overflowWrap: "anywhere", wordBreak: "break-word" }}
                   >
                     {formatSourceLabel(group.url)}
                   </Link>
@@ -329,7 +356,8 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
                     <Fragment key={`${group.url}-${index}`}>
                       {mappedNumber !== undefined && (
                         <Typography
-                          variant="h4"
+                            component="span"
+                            variant="subtitle1"
                           sx={{
                             fontWeight: 600,
                             display: "block",
@@ -360,13 +388,16 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
                             color: "text.secondary",
                             display: "block",
                             mb: 0.5,
+                              overflowWrap: "anywhere",
+                              wordBreak: "break-word",
                           }}
                         >
-                          {`Source: ${getCitationSourceTitle(citation, group)}`}
+                            {t("citations.source", { defaultValue: "Source:" })}{" "}
+                            {getCitationSourceTitle(citation, group)}
                         </Typography>
                         <Typography
                           variant="body2"
-                          sx={{ whiteSpace: "pre-wrap" }}
+                            sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
                         >
                           {getCitationDetailText(citation, group)}
                         </Typography>

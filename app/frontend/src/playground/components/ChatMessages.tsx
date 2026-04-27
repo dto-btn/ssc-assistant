@@ -15,6 +15,7 @@ import {
   ListItem,
 } from "@mui/material";
 import ReactMarkdown, { MarkdownHooks } from "react-markdown";
+import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeMermaid from "rehype-mermaid";
 import { useTranslation } from "react-i18next";
@@ -60,11 +61,24 @@ interface AssistantMessageBubbleProps {
   resolvedAttachments: FileAttachment[];
 }
 
+const getPlainText = (children: React.ReactNode): string => {
+  return React.Children.toArray(children)
+    .map((child) => {
+      if (typeof child === "string" || typeof child === "number") {
+        return String(child);
+      }
+
+      if (React.isValidElement<{ children?: React.ReactNode }>(child)) {
+        return getPlainText(child.props.children);
+      }
+
+      return "";
+    })
+    .join("");
+};
+
 /**
- * Default markdown anchor renderer.
- *
- * Links open in a new tab by default, while plain-click citation links can
- * still be intercepted higher up to open the in-app citation drawer.
+ * Default markdown anchor renderer for non-citation links.
  */
 const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({
   children,
@@ -108,24 +122,28 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
     [processedContent, allCitations],
   );
 
-  const openCitationByUrl = useCallback(
-    (url?: string, citationNumber?: number) => {
+  const getCitationGroupByUrl = useCallback(
+    (url?: string) => {
       if (!url || !groupedCitations.length) {
-        return false;
+        return undefined;
       }
 
       const decoded = safeDecodeUri(url);
-      // Compare both decoded and encoded forms because markdown rendering may
-      // normalize hrefs differently from the source citation URL.
-      const hasCitation = groupedCitations.some(
+      return groupedCitations.find(
         (group) => safeDecodeUri(group.url) === decoded || encodeURI(group.url) === url,
       );
+    },
+    [groupedCitations],
+  );
 
-      if (!hasCitation) {
+  const openCitationByUrl = useCallback(
+    (url?: string, citationNumber?: number) => {
+      const group = getCitationGroupByUrl(url);
+      if (!group) {
         return false;
       }
 
-      setActiveCitationGroupUrl(decoded);
+      setActiveCitationGroupUrl(group.url);
       if (citationNumber !== undefined) {
         setPendingCitationNumber(citationNumber);
       } else {
@@ -134,43 +152,65 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
       setCitationDrawerOpen(true);
       return true;
     },
-    [groupedCitations],
+    [getCitationGroupByUrl],
   );
 
-  const markdownComponents = useMemo(
+  const markdownComponents = useMemo<Components>(
     () => ({
-      a: ({ ...props }) => (
-        <MarkdownLink
-          {...(props as React.ComponentPropsWithoutRef<"a">)}
-          onClick={(event) => {
-            // Preserve native browser navigation for modified clicks; only
-            // plain clicks should open the citation drawer in-app.
-            if (event.ctrlKey || event.metaKey || event.button === 1) {
-              return;
-            }
+      a: ({ children, ...props }: React.ComponentPropsWithoutRef<"a">) => {
+        const href = props.href;
+        const citationGroup = getCitationGroupByUrl(href);
+        const citedText = getPlainText(children).trim();
+        const isCitationLabel = /^\d+$/.test(citedText);
+        const citedNumber = isCitationLabel ? Number.parseInt(citedText, 10) : undefined;
 
-            const href = props.href;
-            const citedNumber = Number.parseInt(
-              (event.currentTarget.textContent || "").trim(),
-              10,
-            );
-            const hasNumber = Number.isFinite(citedNumber);
+        if (citationGroup && citedNumber !== undefined) {
+          return (
+            <Link
+              component="button"
+              type="button"
+              underline="always"
+              aria-label={t("citations.inline.openNumber", {
+                defaultValue: "Open citation {{number}} details",
+                number: citedNumber,
+              })}
+              aria-haspopup="dialog"
+              aria-controls="citation-drawer"
+              onClick={() => {
+                openCitationByUrl(href, citedNumber);
+              }}
+              sx={{
+                p: 0,
+                border: 0,
+                minWidth: 0,
+                background: "none",
+                color: "#4B3FA8",
+                font: "inherit",
+                fontWeight: 500,
+                cursor: "pointer",
+                verticalAlign: "baseline",
+              }}
+            >
+              {children}
+            </Link>
+          );
+        }
 
-            if (href && openCitationByUrl(href, hasNumber ? citedNumber : undefined)) {
-              event.preventDefault();
-            }
-
-            props.onClick?.(event);
-          }}
-        />
-      ),
+        return (
+          <MarkdownLink
+            {...(props as React.ComponentPropsWithoutRef<"a">)}
+          >
+            {children}
+          </MarkdownLink>
+        );
+      },
       code: ({ ...props }) => (
         <MarkdownCodeBlock
           {...(props as MarkdownCodeBlockProps)}
         />
       ),
     }),
-    [openCitationByUrl],
+    [getCitationGroupByUrl, openCitationByUrl, t],
   );
 
   const shouldRenderMermaid = useMemo(
@@ -264,9 +304,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
       <Citations
         groupedCitations={groupedCitations}
         onCitationClick={(group) => {
-          setActiveCitationGroupUrl(group.url);
-          setPendingCitationNumber(group.displayNumber);
-          setCitationDrawerOpen(true);
+            openCitationByUrl(group.url, group.displayNumber);
         }}
       />
       <CitationDrawer

@@ -89,6 +89,25 @@ describe("processTextWithCitations", () => {
     expect(result.processedText).not.toContain("\n\n[1]");
   });
 
+  it("moves annotation citations outside existing markdown links", () => {
+    const text = "See [SSC portal](https://example.com/portal) for details.";
+    const linkTextEnd = text.indexOf("portal") + "portal".length;
+    const citations: Citation[] = [
+      {
+        title: "Portal Source",
+        url: "https://example.com/portal",
+        endIndex: linkTextEnd,
+      },
+    ];
+
+    const result = processTextWithCitations(text, citations);
+
+    expect(result.processedText).toContain(
+      "[SSC portal](https://example.com/portal) [1](<https://example.com/portal>)",
+    );
+    expect(result.processedText).not.toContain("[SSC portal [1]");
+  });
+
   it("skips synthetic local citations while preserving numbering for concrete sources", () => {
     const citations: Citation[] = [
       { title: "Local reference", url: "local-citation://eps-guide-abc123" },

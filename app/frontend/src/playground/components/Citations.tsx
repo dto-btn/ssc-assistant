@@ -23,7 +23,9 @@ const Citations: React.FC<Props> = ({ groupedCitations, onCitationClick }) => {
       if (group.title && group.title !== group.url) {
         return group.title;
       }
-      return "local source reference";
+      return t("citations.localSourceReference", {
+        defaultValue: "Local source reference",
+      });
     }
     return group.title;
   };
@@ -45,20 +47,31 @@ const Citations: React.FC<Props> = ({ groupedCitations, onCitationClick }) => {
               id={`citation-chip-${index}`}
               key={`${group.url}-${index}`}
               label={getChipLabel(group)}
-              component={isInternalCitationUrl(group.url) ? "button" : "a"}
-              href={isInternalCitationUrl(group.url) ? undefined : encodeURI(group.url)}
-              target={isInternalCitationUrl(group.url) ? undefined : "_blank"}
+              component="button"
+              type="button"
               variant="filled"
               clickable
               color="primary"
-              onClick={(event: React.MouseEvent<HTMLElement>) => {
-                // Plain clicks open the drawer; modified clicks keep native link behavior.
-                if (event.ctrlKey || event.metaKey || event.button === 1) {
-                  return;
-                }
-
-                event.preventDefault();
+              aria-label={t("citations.chip.open", {
+                defaultValue: "Open citation details for {{title}}",
+                title: getChipLabel(group),
+              })}
+              aria-haspopup="dialog"
+              aria-controls="citation-drawer"
+              onClick={() => {
                 onCitationClick(group);
+              }}
+              sx={{
+                height: "auto",
+                maxWidth: "100%",
+                alignItems: "flex-start",
+                textAlign: "left",
+                "& .MuiChip-label": {
+                  display: "block",
+                  whiteSpace: "normal",
+                  overflowWrap: "anywhere",
+                  py: 0.75,
+                },
               }}
             />
           ))}

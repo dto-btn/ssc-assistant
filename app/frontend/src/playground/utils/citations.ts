@@ -404,6 +404,125 @@ const collectSentenceEndPositions = (text: string): number[] => {
   return positions;
 };
 
+type ProtectedMarkdownRange = {
+  start: number;
+  end: number;
+  insertionIndex: number;
+};
+
+const isEscapedCharacter = (text: string, index: number): boolean => {
+  let backslashCount = 0;
+
+  for (let cursor = index - 1; cursor >= 0 && text[cursor] === "\\"; cursor -= 1) {
+    backslashCount += 1;
+  }
+
+  return backslashCount % 2 === 1;
+};
+
+const findMatchingDelimiter = (
+  text: string,
+  startIndex: number,
+  openChar: string,
+  closeChar: string,
+): number | undefined => {
+  let depth = 0;
+
+  for (let index = startIndex; index < text.length; index += 1) {
+    const char = text[index];
+    if (char === openChar && !isEscapedCharacter(text, index)) {
+      depth += 1;
+      continue;
+    }
+
+    if (char === closeChar && !isEscapedCharacter(text, index)) {
+      depth -= 1;
+      if (depth === 0) {
+        return index;
+      }
+    }
+  }
+
+  return undefined;
+};
+
+const collectProtectedMarkdownRanges = (text: string): ProtectedMarkdownRange[] => {
+  const ranges: ProtectedMarkdownRange[] = [];
+
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+
+    if (char === "<" && !isEscapedCharacter(text, index)) {
+      const closeIndex = text.indexOf(">", index + 1);
+      if (closeIndex > index + 1) {
+        const candidate = text.slice(index + 1, closeIndex).trim();
+        if (/^(https?:\/\/|mailto:)/i.test(candidate)) {
+          ranges.push({
+            start: index,
+            end: closeIndex + 1,
+            insertionIndex: closeIndex + 1,
+          });
+          index = closeIndex;
+        }
+      }
+      continue;
+    }
+
+    if (char !== "[" || isEscapedCharacter(text, index)) {
+      continue;
+    }
+
+    const rangeStart = index > 0 && text[index - 1] === "!" && !isEscapedCharacter(text, index - 1)
+      ? index - 1
+      : index;
+    const labelEnd = findMatchingDelimiter(text, index, "[", "]");
+    if (labelEnd === undefined) {
+      continue;
+    }
+
+    const nextChar = text[labelEnd + 1];
+    if (nextChar === "(") {
+      const destinationEnd = findMatchingDelimiter(text, labelEnd + 1, "(", ")");
+      if (destinationEnd !== undefined) {
+        ranges.push({
+          start: rangeStart,
+          end: destinationEnd + 1,
+          insertionIndex: destinationEnd + 1,
+        });
+        index = destinationEnd;
+      }
+      continue;
+    }
+
+    if (nextChar === "[") {
+      const referenceEnd = findMatchingDelimiter(text, labelEnd + 1, "[", "]");
+      if (referenceEnd !== undefined) {
+        ranges.push({
+          start: rangeStart,
+          end: referenceEnd + 1,
+          insertionIndex: referenceEnd + 1,
+        });
+        index = referenceEnd;
+      }
+    }
+  }
+
+  return ranges;
+};
+
+const resolveSafeInsertionIndex = (
+  offset: number,
+  protectedRanges: ProtectedMarkdownRange[],
+): number => {
+  for (const range of protectedRanges) {
+    if (offset > range.start && offset < range.end) {
+      return range.insertionIndex;
+    }
+  }
+
+  return offset;
+};
+
 const cleanupCitationSpacing = (text: string): string => {
   return text
     .replace(/\s+([,.;!?])/g, "$1")
@@ -638,11 +757,20 @@ const processAnnotationReferences = (
     citationNumberMapping[citationIndex] = index + 1;
   });
 
+  const protectedRanges = collectProtectedMarkdownRanges(text);
+
   const annotations = renderableEntries
     .map(({ citation, citationIndex }) => ({
       citation,
       citationIndex,
-      endIndex: inferCitationEndIndex(text, citation),
+      endIndex: (() => {
+        const inferredEndIndex = inferCitationEndIndex(text, citation);
+        if (!isFiniteNumber(inferredEndIndex)) {
+          return undefined;
+        }
+
+        return resolveSafeInsertionIndex(inferredEndIndex, protectedRanges);
+      })(),
     }))
     .filter((entry): entry is { citation: Citation; citationIndex: number; endIndex: number } =>
       isFiniteNumber(entry.endIndex),

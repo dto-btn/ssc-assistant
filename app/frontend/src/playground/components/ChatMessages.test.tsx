@@ -60,6 +60,17 @@ vi.mock("rehype-mermaid", () => ({
 
 vi.mock("react-i18next", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-i18next")>();
+  const interpolate = (template: string, values?: Record<string, unknown>) => {
+    if (!values) {
+      return template;
+    }
+
+    return template.replace(/\{\{\s*([^}]+?)\s*\}\}/g, (_, key) => {
+      const value = values[key.trim()];
+      return value === undefined || value === null ? "" : String(value);
+    });
+  };
+
   return {
     ...actual,
     useTranslation: () => ({
@@ -79,7 +90,10 @@ vi.mock("react-i18next", async (importOriginal) => {
         if (key === "mcp.attribution.unknown") {
           return "Tool server";
         }
-        return (options?.defaultValue as string) ?? key;
+        if (typeof options?.defaultValue === "string") {
+          return interpolate(options.defaultValue, options);
+        }
+        return key;
       },
     }),
   };
@@ -219,10 +233,10 @@ describe("ChatMessages", () => {
       },
     });
 
-    expect(screen.getByRole("link", { name: "1" })).toHaveAttribute("href", "https://example.com/one");
-    expect(screen.getByRole("link", { name: "2" })).toHaveAttribute("href", "https://example.com/two");
-    expect(screen.getByRole("link", { name: "Citation One" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Citation Two" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open citation 1 details" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open citation 2 details" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open citation details for Citation One" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open citation details for Citation Two" })).toBeInTheDocument();
   });
 
   it("opens the citation drawer from chip clicks and inline numbered links", async () => {
@@ -257,15 +271,18 @@ describe("ChatMessages", () => {
       },
     });
 
-    await user.click(screen.getByRole("link", { name: "Citation One" }));
+    await user.click(screen.getByRole("button", { name: "Open citation details for Citation One" }));
     expect(await screen.findByText("Drawer excerpt one")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Open source in a new tab: https://example.com/one" })
+    ).toHaveAttribute("href", "https://example.com/one");
 
-    await user.click(screen.getByRole("button", { name: "sidebar.close" }));
+    await user.click(screen.getByRole("button", { name: "Close citations" }));
     await waitFor(() => {
       expect(screen.queryByText("Drawer excerpt one")).not.toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole("link", { name: "1" }));
+    await user.click(screen.getByRole("button", { name: "Open citation 1 details" }));
     expect(await screen.findByText("Drawer excerpt one")).toBeInTheDocument();
   });
 
@@ -302,12 +319,52 @@ describe("ChatMessages", () => {
       },
     });
 
-    const inlineCitation = screen.getByRole("link", { name: "1" });
-    expect(inlineCitation).toHaveAttribute("href", "https://example.com/alpha");
-    expect(screen.getByRole("link", { name: "Alpha Source" })).toBeInTheDocument();
+    const inlineCitation = screen.getByRole("button", { name: "Open citation 1 details" });
+    expect(inlineCitation).toHaveAttribute("aria-haspopup", "dialog");
+    expect(screen.getByRole("button", { name: "Open citation details for Alpha Source" })).toBeInTheDocument();
 
     await user.click(inlineCitation);
     expect(await screen.findByText("Alpha excerpt")).toBeInTheDocument();
+  });
+
+  it("keeps normal markdown links clickable when citation markers are placed after them", () => {
+    const content = "See [SSC portal](https://example.com/portal) for details.";
+    const linkTextEnd = content.indexOf("portal") + "portal".length;
+
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content,
+            timestamp: 1,
+            citations: [
+              {
+                title: "Portal Source",
+                url: "https://example.com/portal",
+                endIndex: linkTextEnd,
+              },
+            ],
+          },
+        ],
+        isLoading: false,
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    expect(screen.getByRole("link", { name: "SSC portal" })).toHaveAttribute(
+      "href",
+      "https://example.com/portal",
+    );
+    expect(screen.getByRole("button", { name: "Open citation 1 details" })).toBeInTheDocument();
   });
 
   it("shows source-like citation details in drawer instead of echoed answer text", async () => {
@@ -356,7 +413,7 @@ describe("ChatMessages", () => {
       },
     });
 
-    await user.click(screen.getByRole("link", { name: "1" }));
+    await user.click(screen.getByRole("button", { name: "Open citation 1 details" }));
     const pageMarkers = await screen.findAllByText(/Page 71 of 91/i);
     expect(pageMarkers.length).toBeGreaterThan(0);
     const sourceLines = screen.getAllByText(/Authoritative data source for all project data/i);
@@ -394,7 +451,7 @@ describe("ChatMessages", () => {
     });
 
     expect(screen.queryByRole("button", { name: /local source reference/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "1" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Open citation 1 details" })).not.toBeInTheDocument();
     expect(screen.getByText("Please review.")).toBeInTheDocument();
   });
 

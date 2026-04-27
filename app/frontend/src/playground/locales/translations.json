@@ -271,6 +271,38 @@
         "en": "Source:",
         "fr": "Source :"
     },
+    "citations.drawer.close": {
+        "en": "Close citations",
+        "fr": "Fermer les citations"
+    },
+    "citations.inline.open": {
+        "en": "Open citation details",
+        "fr": "Ouvrir les détails de la citation"
+    },
+    "citations.inline.openNumber": {
+        "en": "Open citation {{number}} details",
+        "fr": "Ouvrir les détails de la citation {{number}}"
+    },
+    "citations.chip.open": {
+        "en": "Open citation details for {{title}}",
+        "fr": "Ouvrir les détails de la citation pour {{title}}"
+    },
+    "citations.localSourceReference": {
+        "en": "Local source reference",
+        "fr": "Référence à une source locale"
+    },
+    "citations.sourceDocument": {
+        "en": "Source document: {{title}}",
+        "fr": "Document source : {{title}}"
+    },
+    "citations.sourceLocation": {
+        "en": "Source location: {{location}}",
+        "fr": "Emplacement de la source : {{location}}"
+    },
+    "citations.source.openExternal": {
+        "en": "Open source in a new tab: {{title}}",
+        "fr": "Ouvrir la source dans un nouvel onglet : {{title}}"
+    },
     "errors.deleteFailed": {
         "en": "Could not delete the chat. Please try again.",
         "fr": "Impossible de supprimer la conversation. Veuillez réessayer."
