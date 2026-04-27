@@ -29,6 +29,10 @@ interface CitationDrawerProps {
   onPendingCitationNumberChange: (value?: number) => void;
 }
 
+/**
+ * Expand grouped citations and optionally jump to the citation number that was
+ * clicked inline in the assistant response.
+ */
 const CitationDrawer: React.FC<CitationDrawerProps> = ({
   open,
   onClose,
@@ -162,6 +166,10 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
     return `Source location: ${formatSourceLabel(group.url)}`;
   };
 
+  /**
+   * Recover the display number assigned in the rendered message so drawer
+   * entries line up with inline citation markers.
+   */
   const getMappedCitationNumber = (citation: Citation): number | undefined => {
     const fullIndex = allCitations.findIndex(
       (entry) =>
@@ -221,6 +229,8 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
       return;
     }
 
+    // Accordions mount lazily, so retry once after paint when the requested
+    // citation card is not yet attached to the DOM.
     const timer = window.setTimeout(() => {
       scrollToCitation();
     }, 80);

@@ -63,6 +63,17 @@ export const BASE_MARKDOWN_SX: SxProps<Theme> = {
   "& a": {
     textUnderlineOffset: "2px",
   },
+  "& .mermaid": {
+    maxWidth: "100%",
+    overflowX: "auto",
+  },
+  "& .mermaid svg, & svg[id^='mermaid-']": {
+    width: "100% !important",
+    height: "auto !important",
+    maxWidth: "100%",
+    display: "block",
+    margin: "0 auto",
+  },
 };
 
 export const ASSISTANT_MARKDOWN_SX: SxProps<Theme> = {

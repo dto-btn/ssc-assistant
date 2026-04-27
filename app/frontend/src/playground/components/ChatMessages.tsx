@@ -14,7 +14,9 @@ import {
   List,
   ListItem,
 } from "@mui/material";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { MarkdownHooks } from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeMermaid from "rehype-mermaid";
 import { useTranslation } from "react-i18next";
 import AttachmentPreview from "./AttachmentPreview";
 import { selectSessionFilesById } from "../store/selectors/sessionFilesSelectors";
@@ -31,6 +33,20 @@ import {
   processTextWithCitations,
   safeDecodeUri,
 } from "../utils/citations";
+import type { PluggableList } from "unified";
+
+const MERMAID_FENCE_PATTERN = /(^|\n)```mermaid(?:\s|$)/i;
+
+const ASSISTANT_MARKDOWN_REMARK_PLUGINS = [remarkGfm];
+
+const ASSISTANT_MARKDOWN_REHYPE_PLUGINS: PluggableList = [
+  [
+    rehypeMermaid,
+    {
+      errorFallback: () => <div>Invalid diagram format!</div>,
+    },
+  ],
+];
 
 interface ChatMessagesProps {
   sessionId: string;
@@ -44,6 +60,12 @@ interface AssistantMessageBubbleProps {
   resolvedAttachments: FileAttachment[];
 }
 
+/**
+ * Default markdown anchor renderer.
+ *
+ * Links open in a new tab by default, while plain-click citation links can
+ * still be intercepted higher up to open the in-app citation drawer.
+ */
 const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({
   children,
   ...rest
@@ -55,6 +77,10 @@ const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({
   );
 };
 
+/**
+ * Render one assistant turn, including markdown, inline citations, grouped
+ * citation chips, and the citation detail drawer.
+ */
 const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
   message,
   pulseThisAssistantIcon,
@@ -67,7 +93,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
   const [activeCitationGroupUrl, setActiveCitationGroupUrl] = useState<string | undefined>(undefined);
   const [pendingCitationNumber, setPendingCitationNumber] = useState<number | undefined>(undefined);
 
-  const allCitations = message.citations || [];
+  const allCitations = useMemo(() => message.citations || [], [message.citations]);
   const processedContent = useMemo(
     () => processTextWithCitations(message.content, allCitations),
     [message.content, allCitations],
@@ -89,6 +115,8 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
       }
 
       const decoded = safeDecodeUri(url);
+      // Compare both decoded and encoded forms because markdown rendering may
+      // normalize hrefs differently from the source citation URL.
       const hasCitation = groupedCitations.some(
         (group) => safeDecodeUri(group.url) === decoded || encodeURI(group.url) === url,
       );
@@ -115,6 +143,8 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
         <MarkdownLink
           {...(props as React.ComponentPropsWithoutRef<"a">)}
           onClick={(event) => {
+            // Preserve native browser navigation for modified clicks; only
+            // plain clicks should open the citation drawer in-app.
             if (event.ctrlKey || event.metaKey || event.button === 1) {
               return;
             }
@@ -141,6 +171,11 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
       ),
     }),
     [openCitationByUrl],
+  );
+
+  const shouldRenderMermaid = useMemo(
+    () => MERMAID_FENCE_PATTERN.test(processedContent.processedText),
+    [processedContent.processedText],
   );
 
   return (
@@ -204,9 +239,22 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
         </Box>
         <Box sx={{ minWidth: 0, flex: 1 }}>
           <Box sx={ASSISTANT_MARKDOWN_SX}>
-            <ReactMarkdown components={markdownComponents}>
-              {processedContent.processedText}
-            </ReactMarkdown>
+            {shouldRenderMermaid ? (
+              <MarkdownHooks
+                components={markdownComponents}
+                remarkPlugins={ASSISTANT_MARKDOWN_REMARK_PLUGINS}
+                rehypePlugins={ASSISTANT_MARKDOWN_REHYPE_PLUGINS}
+              >
+                {processedContent.processedText}
+              </MarkdownHooks>
+            ) : (
+              <ReactMarkdown
+                components={markdownComponents}
+                remarkPlugins={ASSISTANT_MARKDOWN_REMARK_PLUGINS}
+              >
+                {processedContent.processedText}
+              </ReactMarkdown>
+            )}
           </Box>
           {resolvedAttachments.length > 0 && (
             <AttachmentPreview attachments={resolvedAttachments} />
@@ -284,6 +332,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
 
   useEffect(() => {
     if (scrollRef.current) {
+      // Keep the transcript pinned to the newest turn as messages stream in.
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages.length]);

@@ -8,6 +8,9 @@ interface Props {
   onCitationClick: (citation: GroupedCitation) => void;
 }
 
+/**
+ * Render grouped citation chips beneath an assistant message.
+ */
 const Citations: React.FC<Props> = ({ groupedCitations, onCitationClick }) => {
   const { t } = useTranslation("playground");
 
@@ -49,6 +52,7 @@ const Citations: React.FC<Props> = ({ groupedCitations, onCitationClick }) => {
               clickable
               color="primary"
               onClick={(event: React.MouseEvent<HTMLElement>) => {
+                // Plain clicks open the drawer; modified clicks keep native link behavior.
                 if (event.ctrlKey || event.metaKey || event.button === 1) {
                   return;
                 }

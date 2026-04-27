@@ -39,6 +39,9 @@ type IndexedCitation = {
   citationIndex: number;
 };
 
+/**
+ * Provider-specific extraction hints used while normalizing citation payloads.
+ */
 type CitationExtractionOptions = {
   enablePmcoePathInference?: boolean;
   pmcoeContainer?: string;
@@ -449,6 +452,10 @@ const citationKey = (citation: Citation): string => {
   ].join("|");
 };
 
+/**
+ * Merge citation lists, deduplicate semantically identical entries, and keep a
+ * stable order for rendering and grouping.
+ */
 export const mergeCitations = (base: Citation[], incoming: Citation[]): Citation[] => {
   const merged = new Map<string, Citation>();
 
@@ -494,6 +501,10 @@ export const extractCitationsFromPayload = (payload: unknown): Citation[] => {
   return extractCitationsFromPayloadWithOptions(payload, {});
 };
 
+/**
+ * Walk arbitrary event or tool payloads with optional provider hints such as
+ * PMCOE filename-to-path inference.
+ */
 export const extractCitationsFromPayloadWithOptions = (
   payload: unknown,
   options: CitationExtractionOptions,
@@ -517,6 +528,8 @@ export const extractCitationsFromPayloadWithOptions = (
       Object.entries(parsedObject).forEach(([key, child]) => {
         const childContext = inCitationContext || key.toLowerCase().includes("citation");
         if (typeof child === "string") {
+          // Providers and MCP tools sometimes JSON-stringify nested objects,
+          // so parse those before recursing deeper.
           const parsed = parseJsonIfPossible(child);
           if (parsed !== undefined) {
             walk(parsed, childContext);
@@ -546,6 +559,9 @@ export const extractCitationsFromPayloadWithOptions = (
   return mergeCitations([], found);
 };
 
+/**
+ * Decode URLs for comparison and display without throwing on partially encoded values.
+ */
 export const safeDecodeUri = (url: string): string => {
   try {
     return decodeURI(url);
@@ -554,6 +570,10 @@ export const safeDecodeUri = (url: string): string => {
   }
 };
 
+/**
+ * Build the display-number mapping for legacy `[docN]` references while
+ * skipping citations that should not be rendered to the end user.
+ */
 const buildDocMarkerCitationMap = (
   text: string,
   citations: Citation[],
@@ -641,6 +661,8 @@ const processAnnotationReferences = (
   const seenInsertions = new Set<string>();
   let processedText = text;
 
+  // Insert markers from right to left so earlier insertions do not shift the
+  // offsets for citations that appear later in the text.
   annotations.forEach(({ citation, citationIndex, endIndex }) => {
     const displayNumber = citationNumberMapping[citationIndex];
     const insertionKey = `${endIndex}-${displayNumber}`;
@@ -694,6 +716,10 @@ export const processTextWithCitations = (
   return processAnnotationReferences(text, citations);
 };
 
+/**
+ * Group cited entries by normalized URL so repeated excerpts from the same
+ * source collapse into one chip and one drawer section.
+ */
 export const groupCitationsByUrl = (
   citedCitations: Citation[],
   allCitations: Citation[],

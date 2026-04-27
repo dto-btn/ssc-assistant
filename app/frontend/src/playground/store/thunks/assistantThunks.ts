@@ -36,17 +36,22 @@ import {
   OrchestratorProgressEvent,
   resolveServersFromInsights,
 } from "../../services/orchestratorService";
-import { Citation } from "../../utils/citations";
 import { createStreamTypewriter } from "../../utils/streamTypewriter";
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
 const TOOL_CALL_STATUS_PATTERN = /\n[^\n]* is being called\.\.\.\n/g;
+const PLAYGROUND_CHART_SYSTEM_PROMPT_EN = "When the user asks for a chart, graph, diagram, flowchart, sequence diagram, gantt, timeline, pie chart, or a similar visual, respond with Mermaid markdown by default using a fenced ```mermaid block. Do not return Python, matplotlib, seaborn, plotly, pandas, or JavaScript chart code unless the user explicitly asks for executable code. If Mermaid cannot represent the exact chart, provide the closest Mermaid diagram and briefly state the limitation.";
+const PLAYGROUND_CHART_SYSTEM_PROMPT_FR = "Lorsque l'utilisateur demande un graphique, un diagramme, un organigramme, un diagramme de sequence, un diagramme de Gantt, une chronologie, un graphique circulaire ou un autre visuel semblable, repondez par defaut avec du Markdown Mermaid dans un bloc delimite ```mermaid. Ne retournez pas de code Python, matplotlib, seaborn, plotly, pandas ou JavaScript sauf si l'utilisateur demande explicitement du code executable. Si Mermaid ne peut pas representer exactement le visuel demande, fournissez le diagramme Mermaid le plus proche et mentionnez brievement la limite.";
 
 type PreflightRecommendation = {
   category?: string;
   mcp_server_id?: string;
 };
 
+/**
+ * Convert orchestrator preflight output into a compact routing summary that
+ * can be injected as a system message for the completion call.
+ */
 const buildPreflightRoutingContextMessage = (routing: unknown): string => {
   const routingRecord = routing as {
     recommendations?: PreflightRecommendation[];
@@ -82,6 +87,16 @@ const buildPreflightRoutingContextMessage = (routing: unknown): string => {
 };
 
 /**
+ * Prefer Mermaid-first chart answers so Playground can render visuals inline.
+ */
+const buildPlaygroundChartSystemMessage = (): CompletionMessage => ({
+  role: "system",
+  content: i18n.language?.toLowerCase().startsWith("fr")
+    ? PLAYGROUND_CHART_SYSTEM_PROMPT_FR
+    : PLAYGROUND_CHART_SYSTEM_PROMPT_EN,
+});
+
+/**
  * Derive a short session name from the first 5 words of the user's first message.
  * Keeps title within 30 characters.
  */
@@ -103,6 +118,10 @@ const attachmentImageCache = new Map<string, string>();
 const MAX_ORCHESTRATOR_PROGRESS_UPDATES = 20;
 const IS_DEV = import.meta.env.DEV;
 const IS_CITATION_DEBUG_ENABLED = String(import.meta.env.VITE_PLAYGROUND_DEBUG_CITATIONS || "").toLowerCase() === "true";
+
+/**
+ * Remove transient tool-call status placeholders once real assistant text is available.
+ */
 const stripToolCallStatusMessages = (content: string): string =>
   content.replace(TOOL_CALL_STATUS_PATTERN, "\n").replace(/\n{3,}/g, "\n\n").trim();
 
@@ -679,7 +698,8 @@ export const sendAssistantMessage = ({
       authorization: (server as Tool.Mcp & { authorization?: string }).authorization || accessToken,
     }));
 
-    let finalMessages = completionMessages;
+    const chartSystemMessage = buildPlaygroundChartSystemMessage();
+    let finalMessages = [chartSystemMessage, ...completionMessages];
     const finalServersWithAuth = routedServersWithAuth;
 
     const orchestratorServer = findOrchestratorServer(serversWithAuth);
@@ -703,11 +723,14 @@ export const sendAssistantMessage = ({
         if (preflightResponse.ok) {
           const routing = await preflightResponse.json();
 
+          // Feed the model the same routing summary the orchestrator produced
+          // without altering the user-visible chat transcript.
           finalMessages = [
             {
               role: "system",
               content: buildPreflightRoutingContextMessage(routing),
             },
+            chartSystemMessage,
             ...completionMessages,
           ];
         }
@@ -718,6 +741,10 @@ export const sendAssistantMessage = ({
 
     const completionModel = resolveCompletionModel(getState());
 
+    /**
+     * Execute one streamed completion attempt, including typewriter pacing and
+     * citation capture, for both the primary run and the no-tools retry path.
+     */
     const runCompletion = async (
       messagesForRun: CompletionMessage[],
       serversForRun: Tool.Mcp[],
@@ -823,10 +850,8 @@ export const sendAssistantMessage = ({
 
     };
 
-    let completionResult: CompletionResult | undefined;
-
     try {
-      completionResult = await runCompletion(finalMessages, finalServersWithAuth);
+      await runCompletion(finalMessages, finalServersWithAuth);
     } catch (toolEnabledError) {
       if (finalServersWithAuth.length === 0) {
         throw toolEnabledError;
@@ -886,7 +911,9 @@ export const sendAssistantMessage = ({
 
       dispatch(setAssistantResponsePhase({ sessionId, phase: "waiting-first-token" }));
 
-      completionResult = await runCompletion(finalMessages, []);
+      // Retry with the same prompts but without MCP tools so the assistant can
+      // still answer when a downstream tool call fails.
+      await runCompletion(finalMessages, []);
     }
 
   } catch (error) {

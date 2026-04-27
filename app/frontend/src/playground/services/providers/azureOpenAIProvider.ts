@@ -19,11 +19,17 @@ const DEFAULT_RESPONSES_TIMEOUT_MS = 90000;
 const DEFAULT_STANDALONE_LITELLM_BASE_URL = "http://localhost:4000/v1";
 const IS_DEV = import.meta.env.DEV;
 
+/**
+ * Enable verbose citation diagnostics in development and behind the explicit env override.
+ */
 const isCitationDebugEnabled = (): boolean => {
   const override = String(import.meta.env.VITE_PLAYGROUND_DEBUG_CITATIONS || "").toLowerCase();
   return IS_DEV || override === "true";
 };
 
+/**
+ * Feature flag for the standalone LiteLLM-backed Playground request path.
+ */
 const isPlaygroundLiteLLMEnabled = (): boolean => {
   return String(import.meta.env.VITE_PLAYGROUND_USE_LITELLM || "true").toLowerCase() === "true";
 };
@@ -52,6 +58,10 @@ const isAbortLikeError = (error: unknown): boolean => {
   return name.includes("abort") || message.includes("aborted") || message.includes("timeout");
 };
 
+/**
+ * Detect PMCOE-oriented tool routes so citation extraction can reconstruct
+ * missing blob paths from filenames when needed.
+ */
 const hasPmcoeServer = (servers: Tool.Mcp[] = []): boolean => {
   return servers.some((server) => {
     const haystack = `${server.server_label || ""} ${server.server_description || ""} ${server.server_url || ""}`.toLowerCase();
@@ -62,6 +72,10 @@ const hasPmcoeServer = (servers: Tool.Mcp[] = []): boolean => {
 export class AzureOpenAIProvider implements CompletionProvider {
   readonly name = 'azure-openai';
 
+  /**
+   * Combine the provider timeout with any caller abort signal and expose one
+   * cleanup hook so streaming requests do not leak listeners or timers.
+   */
   private createTimeoutSignal(externalSignal?: AbortSignal): { signal: AbortSignal; cleanup: () => void } {
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => controller.abort(), resolveResponsesTimeoutMs());
@@ -121,9 +135,9 @@ export class AzureOpenAIProvider implements CompletionProvider {
   }
 
   /**
-    * Translate Playground message parts into the OpenAI Responses input shape.
-    * The Responses API uses `input_text`/`input_image` rather than the chat
-    * completion `text`/`image_url` content part names.
+   * Translate Playground message parts into the OpenAI Responses input shape.
+   * The Responses API uses `input_text`/`input_image` rather than the chat
+   * completion `text`/`image_url` content part names.
    */
   private convertMessagesToInput(messages: CompletionMessage[]): ResponseInput {
 
@@ -170,6 +184,8 @@ export class AzureOpenAIProvider implements CompletionProvider {
     const citationDebugEnabled = isCitationDebugEnabled();
     const seenEventTypes = new Set<string>();
     const timeout = this.createTimeoutSignal(signal);
+    // PMCOE routes sometimes emit filenames without a concrete URL, so pass
+    // inference hints into payload-based citation extraction.
     const citationExtractionOptions = {
       enablePmcoePathInference: hasPmcoeServer(servers),
       pmcoeContainer: String(import.meta.env.VITE_PMCOE_CONTAINER || "").trim() || undefined,

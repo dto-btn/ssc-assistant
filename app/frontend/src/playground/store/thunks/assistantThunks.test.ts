@@ -7,13 +7,15 @@
  *     and is skipped on subsequent messages.
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { type UnknownAction } from "@reduxjs/toolkit";
+import { completionService } from "../../services/completionService";
+import chatReducer from "../slices/chatSlice";
 import {
   deriveSessionName,
   sendAssistantMessage,
 } from "./assistantThunks";
-import { renameSession, setIsSessionNew } from "../slices/sessionSlice";
+import sessionReducer, { renameSession, setIsSessionNew } from "../slices/sessionSlice";
 import type { RootState } from "..";
 
 // ---------------------------------------------------------------------------
@@ -51,7 +53,7 @@ vi.mock("../../api/storage", () => ({
 }));
 
 vi.mock("../../../i18n", () => ({
-  default: { t: (key: string) => key },
+  default: { t: (key: string) => key, language: "en" },
 }));
 
 // ---------------------------------------------------------------------------
@@ -86,6 +88,40 @@ function makeDispatch() {
     return action;
   });
   return { dispatch, dispatched };
+}
+
+function makeReducerBackedStore(overrides: { isNewChat: boolean; accessToken?: string | null }) {
+  let currentState = {
+    sessions: {
+      sessions: [
+        { id: "session-1", name: "Conversation 1", createdAt: Date.now(), isNewChat: overrides.isNewChat },
+      ],
+      currentSessionId: "session-1",
+    },
+    auth: { accessToken: overrides.accessToken ?? null },
+    tools: { mcpServers: [] },
+    chat: { messages: [], isLoading: false, orchestratorInsightsBySessionId: {}, assistantResponsePhaseBySessionId: {} },
+    models: { selectedModel: "" },
+  } as unknown as RootState;
+
+  const dispatched: UnknownAction[] = [];
+  const getState = () => currentState;
+  const dispatch = vi.fn((action: unknown) => {
+    if (typeof action === "function") {
+      return (action as (d: typeof dispatch, g: () => RootState) => unknown)(dispatch, getState);
+    }
+
+    const plainAction = action as UnknownAction;
+    dispatched.push(plainAction);
+    currentState = {
+      ...currentState,
+      chat: chatReducer(currentState.chat, plainAction),
+      sessions: sessionReducer(currentState.sessions, plainAction),
+    } as RootState;
+    return action;
+  });
+
+  return { dispatch, dispatched, getState };
 }
 
 // ---------------------------------------------------------------------------
@@ -140,6 +176,7 @@ describe("deriveSessionName", () => {
 
 describe("sendAssistantMessage auto-rename", () => {
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+  const mockedCreateCompletion = vi.mocked(completionService.createCompletion);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -224,6 +261,23 @@ describe("sendAssistantMessage auto-rename", () => {
 
     expect(renameAction).toBeUndefined();
     expect(newChatAction).toBeUndefined();
+  });
+
+  it("prepends a Mermaid-first system instruction for chart requests", async () => {
+    const { dispatch, getState } = makeReducerBackedStore({ isNewChat: false, accessToken: "valid-token" });
+
+    await sendAssistantMessage({
+      sessionId: "session-1",
+      content: "Make me a chart of incidents by priority.",
+    })(dispatch, getState, undefined);
+
+    expect(mockedCreateCompletion).toHaveBeenCalled();
+    const firstCall = mockedCreateCompletion.mock.calls[0]?.[0];
+    const firstMessage = firstCall?.messages?.[0];
+
+    expect(firstMessage?.role).toBe("system");
+    expect(String(firstMessage?.content)).toContain("```mermaid");
+    expect(String(firstMessage?.content).toLowerCase()).toContain("do not return python");
   });
 
   it("dispatches setIsSessionNew(false) but not renameSession when only attachments are present", async () => {
