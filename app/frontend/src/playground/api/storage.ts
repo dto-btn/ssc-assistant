@@ -69,6 +69,10 @@ function decodePathPreservingSlashes(candidate: string): string {
   }
 }
 
+/**
+ * Normalize API blob URLs or blob names into the same relative preview path
+ * shape used by the frontend preview and archive flows.
+ */
 export function normalizePreviewUrl(rawUrl?: string, blobName?: string): string | undefined {
   if (!rawUrl && !blobName) {
     return undefined;
@@ -85,6 +89,7 @@ export function normalizePreviewUrl(rawUrl?: string, blobName?: string): string 
         const parsed = new URL(trimmed);
         const path = parsed.pathname || "";
         if (path) {
+          // Strip the origin so previews continue to resolve through the app host.
           return decodePathPreservingSlashes(path.startsWith("/") ? path : `/${path}`);
         }
       } catch (error) {
@@ -111,6 +116,9 @@ export function normalizePreviewUrl(rawUrl?: string, blobName?: string): string 
   return undefined;
 }
 
+/**
+ * Normalize API casing differences into the attachment model used by Redux and the UI.
+ */
 function mapFilePayload(payload: RawFilePayload = {}): FileAttachment {
   const candidateType = asString(payload.type);
   const resolvedContentType =
@@ -315,6 +323,9 @@ export async function deleteAllRemoteSessions({
   return { deletedCount, failed, message };
 }
 
+/**
+ * Rename a stored playground session via the API.
+ */
 export async function renameRemoteSession({
   sessionId,
   name,
@@ -368,6 +379,7 @@ export async function listSessionFiles({
   const files = Array.isArray(data?.files) ? data.files : [];
   const normalizedFiles = files.map(mapFilePayload);
   const deletedRaw = Array.isArray(data?.deletedSessionIds) ? data.deletedSessionIds : [];
+  // Older payloads can repeat ids; collapse them before reconciling local state.
   const deletedSessionIdsSet = new Set<string>();
   for (const value of deletedRaw) {
     if (typeof value === "string") {

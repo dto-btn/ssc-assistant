@@ -8,6 +8,56 @@ import ChatMessages from "./ChatMessages";
 import chatReducer from "../store/slices/chatSlice";
 import sessionFilesReducer from "../store/slices/sessionFilesSlice";
 
+vi.mock("rehype-mermaid", () => ({
+  default: () => (tree: any) => {
+    const visit = (node: any, parent?: { children?: any[] }, index?: number) => {
+      if (!node || typeof node !== "object") {
+        return;
+      }
+
+      const className = Array.isArray(node.properties?.className)
+        ? node.properties?.className.join(" ")
+        : String(node.properties?.className || "");
+
+      if (
+        node.type === "element"
+        && node.tagName === "code"
+        && className.includes("language-mermaid")
+        && parent
+        && typeof index === "number"
+        && Array.isArray(parent.children)
+      ) {
+        parent.children[index] = {
+          type: "element",
+          tagName: "div",
+          properties: { className: ["mermaid"] },
+          children: [
+            {
+              type: "element",
+              tagName: "svg",
+              properties: { id: "mermaid-test-diagram" },
+              children: [],
+            },
+          ],
+        };
+        return;
+      }
+
+      if (!Array.isArray(node.children)) {
+        return;
+      }
+
+      node.children.forEach((child: any, childIndex: number) => {
+        if (child && typeof child === "object") {
+          visit(child, node, childIndex);
+        }
+      });
+    };
+
+    visit(tree);
+  },
+}));
+
 vi.mock("react-i18next", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-i18next")>();
   const interpolate = (
@@ -561,5 +611,43 @@ describe("ChatMessages", () => {
     expect(screen.queryByRole("button", { name: /local source reference/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "1" })).not.toBeInTheDocument();
     expect(screen.getByText("Please review.")).toBeInTheDocument();
+  });
+
+  it("renders mermaid diagrams instead of leaving them as fenced code", async () => {
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: [
+              "```mermaid",
+              "graph TD",
+              "  Start[Start] --> Done[Done]",
+              "```",
+            ].join("\n"),
+            timestamp: 1,
+          },
+        ],
+        isLoading: false,
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    await waitFor(() => {
+      expect(
+        document.querySelector(".mermaid svg, svg[id^='mermaid-']")
+        || screen.queryByText("Invalid diagram format!")
+      ).toBeTruthy();
+    });
+
+    expect(screen.queryByText(/graph TD/i)).not.toBeInTheDocument();
   });
 });

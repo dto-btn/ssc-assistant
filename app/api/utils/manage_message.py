@@ -11,7 +11,6 @@ from tools.pmcoe.pmcoe_prompts import (PMCOE_SYSTEM_PROMPT_EN,
                                        PMCOE_SYSTEM_PROMPT_FR)
 from utils.attachment_mapper import map_attachments
 from utils.models import AzureCognitiveSearchDataSourceConfig, MessageRequest
-from typing import List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +36,30 @@ Ensure that LaTeX output is always enclosed within triple backticks, and specifi
 \\end{equation}
 ```
 Follow this formatting strictly to ensure that all LaTeX outputs render correctly. Any deviation from this format might lead to improper display of mathematical expressions.
+"""
+
+CHART_FRAGMENT_FR = """
+Lorsque l'utilisateur demande un graphique, un diagramme, un organigramme, un diagramme de sequence, un diagramme de Gantt, une chronologie, un graphique circulaire ou un autre visuel semblable, repondez par defaut avec du Markdown Mermaid dans un bloc delimite `mermaid`.
+
+Exemple :
+```mermaid
+flowchart TD
+    A[Depart] --> B[Etape suivante]
+```
+
+Ne fournissez pas de code Python, matplotlib, seaborn, plotly, pandas ou JavaScript sauf si l'utilisateur demande explicitement du code executable. Si Mermaid ne peut pas representer exactement le visuel demande, fournissez le diagramme Mermaid le plus proche et expliquez brievement la limite.
+"""
+
+CHART_FRAGMENT_EN = """
+When the user asks for a chart, graph, diagram, flowchart, sequence diagram, gantt, timeline, pie chart, or a similar visual, respond with Mermaid markdown by default in a `mermaid` fenced code block.
+
+Example:
+```mermaid
+flowchart TD
+    A[Start] --> B[Next step]
+```
+
+Do not return Python, matplotlib, seaborn, plotly, pandas, or JavaScript chart code unless the user explicitly asks for executable code. If Mermaid cannot represent the exact visual requested, provide the closest Mermaid diagram and briefly explain the limitation.
 """
 
 # pylint: disable=line-too-long
@@ -215,9 +238,9 @@ def generate_system_prompt(message_request: MessageRequest) -> ChatCompletionSys
 
     # Add the LaTeX fragment to the system message
     if message_request.lang == 'en':
-        system_msg = system_msg + "\n\n" + LATEX_FRAGMENT_EN
+        system_msg = system_msg + "\n\n" + LATEX_FRAGMENT_EN + "\n\n" + CHART_FRAGMENT_EN
     else:
-        system_msg = system_msg + "\n\n" + LATEX_FRAGMENT_FR
+        system_msg = system_msg + "\n\n" + LATEX_FRAGMENT_FR + "\n\n" + CHART_FRAGMENT_FR
 
     # Add system message to the messages list
     return ChatCompletionSystemMessageParam(content=system_msg, role='system')
@@ -228,6 +251,7 @@ def load_messages(message_request: MessageRequest, token_limit: int = GPT4O_TOKE
     Main method responsible for loading in the messages sent to the API and making sure they are converted in something
     suitable to send to the (Azure) OpenAI API.
     """
+    _ = token_limit
     messages: List[ChatCompletionMessageParam] = []
     logger.info("in manage messages")
     # Check if the user quoted text in their query
