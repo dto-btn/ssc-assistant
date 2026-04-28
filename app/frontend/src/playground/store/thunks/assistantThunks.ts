@@ -23,6 +23,7 @@ import {
   CompletionContentPart,
   CompletionResult,
 } from "../../services/completionService";
+import { fetchLegacyCitationsForQuery, LegacyCitation } from "../../../api/api";
 import { isTokenExpired } from "../../../util/token";
 import { AppThunk, AppDispatch } from "..";
 import type { RootState } from "..";
@@ -56,6 +57,27 @@ export function stopAssistantMessage(sessionId: string): void {
 
 const ATTACHMENT_TEXT_LIMIT = 12000;
 const TOOL_CALL_STATUS_PATTERN = /\n[^\n]* is being called\.\.\.\n/g;
+const LOCAL_CITATION_PREFIX = "local-citation://";
+const EPS_QUERY_PATTERN = /\b(enterprise\s+(project|portfolio)\s+system|eps)\b/i;
+const PMCOE_QUERY_PATTERN = /\b(pmcoe|project management|operating guide|gate review|through the gates?|opmca)\b/i;
+const REQUIRED_EPS_LEGACY_CITATION_URLS = [
+  "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
+  "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
+] as const;
+const CANONICAL_EPS_CITATION_FALLBACK: Citation[] = [
+  {
+    title: "Enterprise Portfolio System",
+    url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
+    content:
+      "Enterprise Portfolio System Primary users: SSC employees. The Enterprise Portfolio System (EPS) is a server-based application available to all Shared Services Canada employees. It is a licensed product, which means each user must have a valid licence or authorization. EPS is SSC's standard tool to manage projects and includes functionality to support operational and transformational goals, service/work package delivery, portfolio planning, reporting, governance, workforce/capacity planning, and audit/search traceability. Access options include EPS login, CIO Intake Team access request, and requesting a new EPS module via Submit a Request.",
+  },
+  {
+    title: "Enterprise portfolio system training",
+    url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
+    content:
+      "Enterprise portfolio system training Primary users: Project management. EPS is SSC's system of record for all projects and supports program/project/activity management with centralized project artefacts, risk/issue/change tracking, and financial/schedule visibility. A one-day training session covers navigation, project updates, team/schedule/cost plan management, ROD, timesheets, expense transactions, risks/issues/changes, document collaboration, status reporting, reporting/portlet personalization, and support pathways. Sessions are offered monthly in English and quarterly in French, generally 8:30 am to 3:30 pm ET. Registration requires supervisor approval through Training and Outreach (SharePoint) or Flex Training Request Form for group/custom sessions.",
+  },
+];
 
 const normalizeCitationUrl = (value?: string): string => {
   if (!value) return "";
@@ -206,6 +228,7 @@ const stripToolCallStatusMessages = (content: string): string =>
 const MCP_GROUNDING_SYSTEM_PROMPT = [
   "You may receive source-bearing data from routed MCP servers.",
   "When MCP output includes source snippets, citation content, article passages, chunk text, page details, or document titles, treat that material as the primary evidence for your answer.",
+  "Do not expand acronyms, rename systems, or substitute more familiar terminology from memory when the source material provides the official wording.",
   "If explicit source wording conflicts with the user's wording or your prior knowledge, prefer the source wording, especially for official names, acronyms, and terminology.",
   "Mention returned document titles when useful, and if the source data is sparse, ambiguous, or conflicting, state that limitation instead of filling the gap with unsupported details.",
 ].join(" ");
@@ -859,12 +882,11 @@ export const sendAssistantMessage = ({
     const maybeRewriteAnswerWithCitations = async (
       draftText: string,
       citations: CompletionResult["citations"],
-      serversForRun: Tool.Mcp[],
     ): Promise<{
       content: string;
       citations: CompletionResult["citations"];
     }> => {
-      if (!draftText.trim() || serversForRun.length === 0 || !citations?.length) {
+      if (!draftText.trim() || !citations?.length) {
         return {
           content: draftText,
           citations,
@@ -1074,7 +1096,6 @@ export const sendAssistantMessage = ({
           : await maybeRewriteAnswerWithCitations(
               cleanedContent,
               completionResult?.citations,
-              serversForRun,
             );
         dispatch(
           updateMessageContent({
@@ -1191,11 +1212,15 @@ export const sendAssistantMessage = ({
               : CANONICAL_EPS_CITATION_FALLBACK;
 
             if (finalEpsCitations.length > 0) {
+              const rewrittenAnswer = await maybeRewriteAnswerWithCitations(
+                latestMessageContent,
+                finalEpsCitations,
+              );
               dispatch(
                 updateMessageContent({
                   messageId: latestAssistantMessage.id,
-                  content: latestMessageContent,
-                  citations: finalEpsCitations,
+                  content: rewrittenAnswer.content,
+                  citations: rewrittenAnswer.citations,
                 })
               );
             }
@@ -1207,11 +1232,15 @@ export const sendAssistantMessage = ({
             const finalPmcoeCitations = stripSyntheticCitationsWhenConcreteExists(mergedPmcoeCitations);
 
             if (finalPmcoeCitations.length > 0) {
+              const rewrittenAnswer = await maybeRewriteAnswerWithCitations(
+                latestMessageContent,
+                finalPmcoeCitations,
+              );
               dispatch(
                 updateMessageContent({
                   messageId: latestAssistantMessage.id,
-                  content: latestMessageContent,
-                  citations: finalPmcoeCitations,
+                  content: rewrittenAnswer.content,
+                  citations: rewrittenAnswer.citations,
                 })
               );
             }

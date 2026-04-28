@@ -4,13 +4,19 @@ import sessionsReducer from "../slices/sessionSlice";
 import chatReducer from "../slices/chatSlice";
 import {
   deriveSessionName,
+  hasRequiredEpsLegacyCitations,
+  isLikelyEpsCitationQuery,
+  isLikelyPmcoeCitationQuery,
   sendAssistantMessage,
+  shouldEnrichEpsCitations,
+  shouldEnrichPmcoeCitations,
 } from "./assistantThunks";
 import { completionService } from "../../services/completionService";
 import {
   getOrchestratorInsights,
   resolveServersFromInsights,
 } from "../../services/orchestratorService";
+import { fetchLegacyCitationsForQuery } from "../../../api/api";
 
 vi.mock("../../../util/token", () => ({
   isTokenExpired: vi.fn(() => false),
@@ -32,6 +38,10 @@ vi.mock("../../api/storage", () => ({
   fetchFileDataUrl: vi.fn(),
 }));
 
+vi.mock("../../../api/api", () => ({
+  fetchLegacyCitationsForQuery: vi.fn(async () => []),
+}));
+
 vi.mock("../../../i18n", () => ({
   default: { t: (key: string) => key },
 }));
@@ -39,6 +49,7 @@ vi.mock("../../../i18n", () => ({
 const createCompletionMock = vi.mocked(completionService.createCompletion);
 const getOrchestratorInsightsMock = vi.mocked(getOrchestratorInsights);
 const resolveServersFromInsightsMock = vi.mocked(resolveServersFromInsights);
+const fetchLegacyCitationsForQueryMock = vi.mocked(fetchLegacyCitationsForQuery);
 const fetchMock = vi.fn();
 
 const DEFAULT_COMPLETION_RESULT = {
@@ -85,7 +96,7 @@ const makeStore = ({
       auth: authReducer,
       tools: toolsReducer,
       models: modelsReducer,
-    },
+    } as any,
     preloadedState: {
       sessions: {
         sessions: [
@@ -150,6 +161,48 @@ describe("deriveSessionName", () => {
   });
 });
 
+describe("citation enrichment guards", () => {
+  it("detects EPS prompts and missing canonical EPS citations", () => {
+    expect(isLikelyEpsCitationQuery("What is the purpose of EPS?")).toBe(true);
+    expect(
+      shouldEnrichEpsCitations("What is the purpose of EPS?", [
+        {
+          title: "Project Management Operating Guide EN.pdf",
+          url: "local-citation://eps-guide-xyz",
+        },
+      ])
+    ).toBe(true);
+  });
+
+  it("recognizes when canonical EPS citations are already present", () => {
+    const citations = [
+      {
+        title: "Enterprise Portfolio System",
+        url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
+      },
+      {
+        title: "Enterprise Portfolio system training",
+        url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
+      },
+    ];
+
+    expect(hasRequiredEpsLegacyCitations(citations)).toBe(true);
+    expect(shouldEnrichEpsCitations("What is the purpose of EPS?", citations)).toBe(false);
+  });
+
+  it("detects PMCOE prompts and requests enrichment when citations are synthetic or sparse", () => {
+    expect(isLikelyPmcoeCitationQuery("How do I track the progress of my project through the gates?")).toBe(true);
+    expect(
+      shouldEnrichPmcoeCitations("How do I track the progress of my project through the gates?", [
+        {
+          title: "Project Management Operating Guide EN.pdf",
+          url: "local-citation://project-management-operating-guide-en-pdf-abc123",
+        },
+      ])
+    ).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // 2. sendAssistantMessage – auto-rename branch
 // ---------------------------------------------------------------------------
@@ -163,6 +216,7 @@ describe("sendAssistantMessage auto-rename", () => {
     createCompletionMock.mockResolvedValue(DEFAULT_COMPLETION_RESULT);
     getOrchestratorInsightsMock.mockResolvedValue(null as any);
     resolveServersFromInsightsMock.mockReturnValue([]);
+    fetchLegacyCitationsForQueryMock.mockResolvedValue([]);
     fetchMock.mockResolvedValue({ ok: false } as any);
     consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
   });
@@ -340,7 +394,7 @@ describe("sendAssistantMessage auto-rename", () => {
     expect(rewriteRequest.messages[0].content).toContain(REWRITE_PROMPT_FRAGMENT);
     expect(rewriteRequest.messages[1].content).toContain("Enterprise Portfolio System (EPS) is SSC's system of record");
 
-    const assistantMessage = store.getState().chat.messages.find((message) => message.role === "assistant");
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
     expect(assistantMessage?.content).toBe("Enterprise Portfolio System (EPS) is SSC's system of record.");
     expect(assistantMessage?.citations).toEqual([
       {
@@ -377,7 +431,75 @@ describe("sendAssistantMessage auto-rename", () => {
     );
 
     expect(createCompletionMock).toHaveBeenCalledTimes(1);
-    const assistantMessage = store.getState().chat.messages.find((message) => message.role === "assistant");
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
     expect(assistantMessage?.content).toBe("EPS is used for portfolio tracking.");
+  });
+
+  it("rewrites the stored answer when legacy citation enrichment adds source excerpts", async () => {
+    createCompletionMock
+      .mockResolvedValueOnce({
+        fullText: "EPS stands for Enterprise Project System.",
+        completed: true,
+        provider: "azure-openai",
+        citations: [
+          {
+            title: "Project Management Operating Guide EN.pdf",
+            url: "local-citation://project-management-operating-guide-en-pdf-abc123",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        fullText: "Enterprise Portfolio System (EPS) is SSC's system of record.",
+        completed: true,
+        provider: "azure-openai",
+        citations: [],
+      });
+
+    fetchLegacyCitationsForQueryMock.mockResolvedValue([
+      {
+        title: "Enterprise Portfolio System",
+        url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
+        content: "The Enterprise Portfolio System (EPS) is SSC's system of record.",
+      },
+      {
+        title: "Enterprise portfolio system training",
+        url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
+        content: "EPS is SSC's standard tool to manage projects and project reporting.",
+      },
+    ]);
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [policyServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "What is the purpose of the Enterprise Project System (EPS)?",
+      }) as any,
+    );
+
+    expect(createCompletionMock).toHaveBeenCalledTimes(2);
+
+    const rewriteRequest = createCompletionMock.mock.calls[1][0];
+    expect(rewriteRequest.servers).toEqual([]);
+    expect(rewriteRequest.messages[0].content).toContain(REWRITE_PROMPT_FRAGMENT);
+    expect(rewriteRequest.messages[1].content).toContain("Enterprise Portfolio System (EPS) is SSC's system of record");
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.content).toBe("Enterprise Portfolio System (EPS) is SSC's system of record.");
+    expect(assistantMessage?.citations).toEqual([
+      {
+        title: "Enterprise Portfolio System",
+        url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
+        content: "The Enterprise Portfolio System (EPS) is SSC's system of record.",
+      },
+      {
+        title: "Enterprise portfolio system training",
+        url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
+        content: "EPS is SSC's standard tool to manage projects and project reporting.",
+      },
+    ]);
   });
 });
