@@ -23,7 +23,6 @@ import {
   CompletionContentPart,
   CompletionResult,
 } from "../../services/completionService";
-import { fetchLegacyCitationsForQuery, LegacyCitation } from "../../../api/api";
 import { isTokenExpired } from "../../../util/token";
 import { AppThunk, AppDispatch } from "..";
 import type { RootState } from "..";
@@ -60,6 +59,8 @@ const TOOL_CALL_STATUS_PATTERN = /\n[^\n]* is being called\.\.\.\n/g;
 const LOCAL_CITATION_PREFIX = "local-citation://";
 const EPS_QUERY_PATTERN = /\b(enterprise\s+(project|portfolio)\s+system|eps)\b/i;
 const PMCOE_QUERY_PATTERN = /\b(pmcoe|project management|operating guide|gate review|through the gates?|opmca)\b/i;
+const MIN_EPS_CONCRETE_SOURCE_COUNT = 3;
+const MIN_PMCOE_CONCRETE_SOURCE_COUNT = 2;
 const REQUIRED_EPS_LEGACY_CITATION_URLS = [
   "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
   "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
@@ -80,6 +81,13 @@ const CANONICAL_EPS_CITATION_FALLBACK: Citation[] = [
 ];
 const PLAYGROUND_CHART_SYSTEM_PROMPT_EN = "When the user asks for a chart, graph, diagram, flowchart, sequence diagram, gantt, timeline, pie chart, or a similar visual, respond with Mermaid markdown by default using a fenced ```mermaid block. Do not return Python, matplotlib, seaborn, plotly, pandas, or JavaScript chart code unless the user explicitly asks for executable code. If Mermaid cannot represent the exact chart, provide the closest Mermaid diagram and briefly state the limitation.";
 const PLAYGROUND_CHART_SYSTEM_PROMPT_FR = "Lorsque l'utilisateur demande un graphique, un diagramme, un organigramme, un diagramme de sequence, un diagramme de Gantt, une chronologie, un graphique circulaire ou un autre visuel semblable, repondez par defaut avec du Markdown Mermaid dans un bloc delimite ```mermaid. Ne retournez pas de code Python, matplotlib, seaborn, plotly, pandas ou JavaScript sauf si l'utilisateur demande explicitement du code executable. Si Mermaid ne peut pas representer exactement le visuel demande, fournissez le diagramme Mermaid le plus proche et mentionnez brievement la limite.";
+const MCP_CITATION_HARVEST_SYSTEM_PROMPT = [
+  "You are gathering authoritative source material for a user request.",
+  "Use the available MCP tools to retrieve the most relevant official sources, excerpts, and citations.",
+  "Review all relevant sources returned by the MCP server before responding.",
+  "Prioritize source quality over prose quality.",
+  "Keep the answer brief and grounded in the retrieved material.",
+].join(" ");
 
 type PreflightRecommendation = {
   category?: string;
@@ -156,6 +164,37 @@ const isConcreteCitationUrl = (url?: string): boolean => {
   return /^https?:\/\//i.test(trimmed) || trimmed.startsWith("/");
 };
 
+const normalizeCitationText = (value?: string): string => {
+  if (!value) return "";
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
+};
+
+const hasCitationExcerpt = (citation: Citation): boolean => {
+  return typeof citation.content === "string" && citation.content.trim().length > 0;
+};
+
+const countDistinctConcreteSources = (citations: Citation[] = []): number => {
+  const urls = new Set(
+    citations
+      .filter((citation) => isConcreteCitationUrl(citation.url))
+      .map((citation) => normalizeCitationUrl(citation.url))
+      .filter((url) => url.length > 0),
+  );
+
+  return urls.size;
+};
+
+const countDistinctConcreteSourcesWithExcerpts = (citations: Citation[] = []): number => {
+  const urls = new Set(
+    citations
+      .filter((citation) => isConcreteCitationUrl(citation.url) && hasCitationExcerpt(citation))
+      .map((citation) => normalizeCitationUrl(citation.url))
+      .filter((url) => url.length > 0),
+  );
+
+  return urls.size;
+};
+
 const stripSyntheticCitationsWhenConcreteExists = (citations: Citation[] = []): Citation[] => {
   const concrete = citations.filter((citation) => isConcreteCitationUrl(citation.url));
   if (concrete.length === 0) {
@@ -164,18 +203,52 @@ const stripSyntheticCitationsWhenConcreteExists = (citations: Citation[] = []): 
   return concrete;
 };
 
-const keyForCitation = (citation: Citation): string => {
-  const normalizedUrl = normalizeCitationUrl(citation.url);
-  if (normalizedUrl) return `url:${normalizedUrl}`;
-  const normalizedTitle = citation.title.trim().toLowerCase();
-  return `title:${normalizedTitle}`;
+const citationsAreEquivalentForMerge = (left: Citation, right: Citation): boolean => {
+  const leftUrl = normalizeCitationUrl(left.url);
+  const rightUrl = normalizeCitationUrl(right.url);
+  const leftTitle = left.title.trim().toLowerCase();
+  const rightTitle = right.title.trim().toLowerCase();
+  const leftContent = normalizeCitationText(left.content);
+  const rightContent = normalizeCitationText(right.content);
+
+  if (leftContent && rightContent) {
+    if (leftTitle && rightTitle && leftTitle === rightTitle && leftContent === rightContent) {
+      return true;
+    }
+
+    if (leftUrl && rightUrl && leftUrl === rightUrl && leftContent === rightContent) {
+      return true;
+    }
+  }
+
+  if (!leftContent && !rightContent) {
+    if (leftUrl && rightUrl && leftUrl === rightUrl) {
+      return true;
+    }
+
+    if (leftTitle && rightTitle && leftTitle === rightTitle) {
+      return true;
+    }
+  }
+
+  return false;
 };
 
-const toPlaygroundCitation = (citation: LegacyCitation): Citation => ({
-  title: citation.title || citation.url,
-  url: citation.url,
-  content: citation.content,
-});
+const isRicherCitation = (candidate: Citation, current: Citation): boolean => {
+  const candidateConcrete = isConcreteCitationUrl(candidate.url);
+  const currentConcrete = isConcreteCitationUrl(current.url);
+  if (candidateConcrete !== currentConcrete) {
+    return candidateConcrete;
+  }
+
+  const candidateContentLength = candidate.content?.trim().length ?? 0;
+  const currentContentLength = current.content?.trim().length ?? 0;
+  if (candidateContentLength !== currentContentLength) {
+    return candidateContentLength > currentContentLength;
+  }
+
+  return false;
+};
 
 const selectCanonicalEpsCitations = (citations: Citation[] = []): Citation[] => {
   const byUrl = new Map<string, Citation>();
@@ -198,26 +271,26 @@ const mergeCitationsPreferConcreteUrls = (
   primary: Citation[] = [],
   fallback: Citation[] = [],
 ): Citation[] => {
-  const merged = new Map<string, Citation>();
+  const merged: Citation[] = [];
 
   for (const citation of primary) {
-    merged.set(keyForCitation(citation), citation);
+    merged.push(citation);
   }
 
   for (const citation of fallback) {
-    const key = keyForCitation(citation);
-    const current = merged.get(key);
-    if (!current) {
-      merged.set(key, citation);
+    const existingIndex = merged.findIndex((current) => citationsAreEquivalentForMerge(current, citation));
+    if (existingIndex < 0) {
+      merged.push(citation);
       continue;
     }
 
-    if (!isConcreteCitationUrl(current.url) && isConcreteCitationUrl(citation.url)) {
-      merged.set(key, citation);
+    const current = merged[existingIndex];
+    if (isRicherCitation(citation, current)) {
+      merged[existingIndex] = citation;
     }
   }
 
-  return Array.from(merged.values());
+  return merged;
 };
 
 export const isLikelyEpsCitationQuery = (prompt: string): boolean => {
@@ -240,7 +313,13 @@ export const shouldEnrichEpsCitations = (prompt: string, citations: Citation[] =
     return false;
   }
 
-  return !hasRequiredEpsLegacyCitations(citations);
+  const hasCanonicalEpsSources = hasRequiredEpsLegacyCitations(citations);
+  const distinctConcreteSourceCount = countDistinctConcreteSources(citations);
+  const distinctConcreteExcerptSourceCount = countDistinctConcreteSourcesWithExcerpts(citations);
+
+  return !hasCanonicalEpsSources
+    || distinctConcreteSourceCount < MIN_EPS_CONCRETE_SOURCE_COUNT
+    || distinctConcreteExcerptSourceCount < MIN_EPS_CONCRETE_SOURCE_COUNT;
 };
 
 export const shouldEnrichPmcoeCitations = (prompt: string, citations: Citation[] = []): boolean => {
@@ -248,12 +327,18 @@ export const shouldEnrichPmcoeCitations = (prompt: string, citations: Citation[]
     return false;
   }
 
-  const concreteCitationCount = citations.filter((citation) => isConcreteCitationUrl(citation.url)).length;
+  const concreteCitations = citations.filter((citation) => isConcreteCitationUrl(citation.url));
+  const concreteCitationCount = concreteCitations.length;
+  const hasConcreteExcerpts = concreteCitations.some((citation) => hasCitationExcerpt(citation));
+  const distinctConcreteSourceCount = countDistinctConcreteSources(citations);
   const hasSyntheticLocalCitation = citations.some((citation) =>
     citation.url.toLowerCase().startsWith(LOCAL_CITATION_PREFIX)
   );
 
-  return hasSyntheticLocalCitation || concreteCitationCount < 2;
+  return hasSyntheticLocalCitation
+    || concreteCitationCount < MIN_PMCOE_CONCRETE_SOURCE_COUNT
+    || distinctConcreteSourceCount < MIN_PMCOE_CONCRETE_SOURCE_COUNT
+    || !hasConcreteExcerpts;
 };
 /**
  * Derive a short session name from the first 5 words of the user's first message.
@@ -275,7 +360,6 @@ const isOrchestratorServer = (server: Tool.Mcp): boolean => {
 const attachmentTextCache = new Map<string, string>();
 const attachmentImageCache = new Map<string, string>();
 const MAX_ORCHESTRATOR_PROGRESS_UPDATES = 20;
-const MAX_GROUNDED_REWRITE_CITATIONS = 6;
 const MAX_GROUNDED_REWRITE_EXCERPT_CHARS = 700;
 const IS_DEV = import.meta.env.DEV;
 const IS_CITATION_DEBUG_ENABLED = String(import.meta.env.VITE_PLAYGROUND_DEBUG_CITATIONS || "").toLowerCase() === "true";
@@ -295,6 +379,8 @@ const MCP_GROUNDING_SYSTEM_PROMPT = [
 const MCP_GROUNDED_REWRITE_SYSTEM_PROMPT = [
   "You are revising an assistant answer using cited source excerpts returned from MCP tools.",
   "Rewrite the answer so every factual claim is supported by the provided source material.",
+  "Use all provided source excerpts, not just the first matching source.",
+  "When multiple sources add relevant details, synthesize them together in the final answer.",
   "If a source explicitly defines an acronym, official name, or term, use that exact source wording even when the user's question or the draft answer used a different term.",
   "Keep the answer concise, preserve the draft language, remove unsupported claims, and do not mention this rewrite instruction.",
   "Do not invent citation markers or new sources.",
@@ -967,7 +1053,6 @@ export const sendAssistantMessage = ({
           seenEvidence.add(evidenceKey);
           return true;
         })
-        .slice(0, MAX_GROUNDED_REWRITE_CITATIONS)
         .map((citation, index) => {
           const title = String(citation.title || citation.url || `Source ${index + 1}`).trim();
           const excerpt = truncateText(citation.content!.trim(), MAX_GROUNDED_REWRITE_EXCERPT_CHARS);
@@ -1054,6 +1139,67 @@ export const sendAssistantMessage = ({
         };
       }
     };
+
+    const harvestStandaloneCitations = async (
+      promptText: string,
+      draftText: string,
+      serversForRun: Tool.Mcp[],
+    ): Promise<Citation[]> => {
+      if (!promptText.trim() || serversForRun.length === 0) {
+        return [];
+      }
+
+      try {
+        const harvestResult = await completionService.createCompletion(
+          {
+            messages: [
+              {
+                role: "system",
+                content: MCP_CITATION_HARVEST_SYSTEM_PROMPT,
+              },
+              {
+                role: "user",
+                content: [
+                  "Retrieve authoritative source excerpts and citations for the request below.",
+                  `User request:\n${promptText.trim()}`,
+                  draftText.trim() ? `Current assistant draft:\n${draftText.trim()}` : undefined,
+                  "Use the available MCP tools. Review all relevant sources returned by the MCP server before responding.",
+                  "Return evidence from all relevant source documents, aiming for multiple distinct sources when available.",
+                  "Prefer official sources and source excerpts, and do not stop after the first matching source.",
+                ]
+                  .filter((value): value is string => Boolean(value && value.trim().length > 0))
+                  .join("\n\n"),
+              },
+            ],
+            model: completionModel,
+            provider,
+            userToken: accessToken,
+            signal: abortController.signal,
+            servers: serversForRun,
+            toolChoice: "required",
+          },
+          {
+            onChunk: () => undefined,
+            onToolCall: () => undefined,
+            onError: (error: Error) => {
+              if (!abortController.signal.aborted && IS_DEV) {
+                console.warn("Standalone citation harvest failed:", error);
+              }
+            },
+            onComplete: () => undefined,
+          }
+        );
+
+        return harvestResult.citations || [];
+      } catch (harvestError) {
+        if (!abortController.signal.aborted && IS_DEV) {
+          console.warn("Standalone citation harvest failed:", harvestError);
+        }
+
+        return [];
+      }
+    };
+
     const runCompletion = async (
       messagesForRun: CompletionMessage[],
       serversForRun: Tool.Mcp[],
@@ -1253,74 +1399,59 @@ export const sendAssistantMessage = ({
     const shouldApplyPmcoeCitationEnrichment =
       !shouldApplyEpsCitationEnrichment && shouldEnrichPmcoeCitations(content, currentCitations);
 
-    if (shouldApplyEpsCitationEnrichment || shouldApplyPmcoeCitationEnrichment) {
-      try {
-        const preferredLanguage = i18n.language?.toLowerCase().startsWith("fr") ? "fr" : "en";
-        const legacyCitations = await fetchLegacyCitationsForQuery({
-          query: content,
-          accessToken,
-          lang: preferredLanguage,
-          tools: shouldApplyPmcoeCitationEnrichment ? ["pmcoe"] : ["corporate"],
-        });
+    if (!abortController.signal.aborted && (shouldApplyEpsCitationEnrichment || shouldApplyPmcoeCitationEnrichment)) {
+      const latestMessageContent =
+        getState().chat.messages.find((message) => message.id === latestAssistantMessage.id)?.content || "";
+      const harvestedCitations = await harvestStandaloneCitations(
+        content,
+        latestMessageContent,
+        finalServersWithAuth,
+      );
 
-        if (legacyCitations.length > 0) {
-          const mappedLegacyCitations = legacyCitations.map(toPlaygroundCitation);
-          const latestMessageContent =
-            getState().chat.messages.find((message) => message.id === latestAssistantMessage.id)?.content || "";
-
-          if (shouldApplyEpsCitationEnrichment) {
-            const canonicalEpsCitations = selectCanonicalEpsCitations(mappedLegacyCitations);
-            const mergedCitations = canonicalEpsCitations.length > 0
-              ? canonicalEpsCitations
-              : mergeCitationsPreferConcreteUrls(
-                  currentCitations,
-                  mappedLegacyCitations,
-                );
-            const strippedMergedCitations = stripSyntheticCitationsWhenConcreteExists(mergedCitations);
-            const finalEpsCitations = hasRequiredEpsLegacyCitations(strippedMergedCitations)
-              ? strippedMergedCitations
-              : CANONICAL_EPS_CITATION_FALLBACK;
-
-            if (finalEpsCitations.length > 0) {
-              const rewrittenAnswer = await maybeRewriteAnswerWithCitations(
-                latestMessageContent,
-                finalEpsCitations,
-              );
-              dispatch(
-                updateMessageContent({
-                  messageId: latestAssistantMessage.id,
-                  content: rewrittenAnswer.content,
-                  citations: rewrittenAnswer.citations,
-                })
-              );
-            }
-          } else {
-            const mergedPmcoeCitations = mergeCitationsPreferConcreteUrls(
+      if (shouldApplyEpsCitationEnrichment) {
+        const canonicalEpsCitations = selectCanonicalEpsCitations(harvestedCitations);
+        const mergedCitations = canonicalEpsCitations.length > 0
+          ? canonicalEpsCitations
+          : mergeCitationsPreferConcreteUrls(
               currentCitations,
-              mappedLegacyCitations,
+              harvestedCitations,
             );
-            const finalPmcoeCitations = stripSyntheticCitationsWhenConcreteExists(mergedPmcoeCitations);
+        const strippedMergedCitations = stripSyntheticCitationsWhenConcreteExists(mergedCitations);
+        const finalEpsCitations = hasRequiredEpsLegacyCitations(strippedMergedCitations)
+          ? strippedMergedCitations
+          : CANONICAL_EPS_CITATION_FALLBACK;
 
-            if (finalPmcoeCitations.length > 0) {
-              const rewrittenAnswer = await maybeRewriteAnswerWithCitations(
-                latestMessageContent,
-                finalPmcoeCitations,
-              );
-              dispatch(
-                updateMessageContent({
-                  messageId: latestAssistantMessage.id,
-                  content: rewrittenAnswer.content,
-                  citations: rewrittenAnswer.citations,
-                })
-              );
-            }
-          }
+        if (finalEpsCitations.length > 0) {
+          const rewrittenAnswer = await maybeRewriteAnswerWithCitations(
+            latestMessageContent,
+            finalEpsCitations,
+          );
+          dispatch(
+            updateMessageContent({
+              messageId: latestAssistantMessage.id,
+              content: rewrittenAnswer.content,
+              citations: rewrittenAnswer.citations,
+            })
+          );
         }
-      } catch (legacyCitationError) {
-        if (IS_DEV) {
-          console.warn(
-            "Legacy citation enrichment failed. Keeping primary playground citations.",
-            legacyCitationError
+      } else {
+        const mergedPmcoeCitations = mergeCitationsPreferConcreteUrls(
+          currentCitations,
+          harvestedCitations,
+        );
+        const finalPmcoeCitations = stripSyntheticCitationsWhenConcreteExists(mergedPmcoeCitations);
+
+        if (finalPmcoeCitations.length > 0) {
+          const rewrittenAnswer = await maybeRewriteAnswerWithCitations(
+            latestMessageContent,
+            finalPmcoeCitations,
+          );
+          dispatch(
+            updateMessageContent({
+              messageId: latestAssistantMessage.id,
+              content: rewrittenAnswer.content,
+              citations: rewrittenAnswer.citations,
+            })
           );
         }
       }

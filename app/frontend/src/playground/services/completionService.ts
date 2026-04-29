@@ -23,6 +23,8 @@ export type CompletionMessage = Extract<
   { role: "system" | "user" | "assistant" }
 >;
 
+export type CompletionToolChoice = "auto" | "required" | "none";
+
 export interface CompletionRequest {
   messages: CompletionMessage[];
   model: string;
@@ -31,6 +33,7 @@ export interface CompletionRequest {
   signal?: AbortSignal;
   servers?: Tool.Mcp[];
   currentOutput?: string;
+  toolChoice?: CompletionToolChoice;
 }
 
 export interface StreamingCallbacks {

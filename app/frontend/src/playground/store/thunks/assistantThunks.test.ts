@@ -16,7 +16,6 @@ import {
   getOrchestratorInsights,
   resolveServersFromInsights,
 } from "../../services/orchestratorService";
-import { fetchLegacyCitationsForQuery } from "../../../api/api";
 
 vi.mock("../../../util/token", () => ({
   isTokenExpired: vi.fn(() => false),
@@ -38,10 +37,6 @@ vi.mock("../../api/storage", () => ({
   fetchFileDataUrl: vi.fn(),
 }));
 
-vi.mock("../../../api/api", () => ({
-  fetchLegacyCitationsForQuery: vi.fn(async () => []),
-}));
-
 vi.mock("../../../i18n", () => ({
   default: { t: (key: string) => key },
 }));
@@ -49,7 +44,6 @@ vi.mock("../../../i18n", () => ({
 const createCompletionMock = vi.mocked(completionService.createCompletion);
 const getOrchestratorInsightsMock = vi.mocked(getOrchestratorInsights);
 const resolveServersFromInsightsMock = vi.mocked(resolveServersFromInsights);
-const fetchLegacyCitationsForQueryMock = vi.mocked(fetchLegacyCitationsForQuery);
 const fetchMock = vi.fn();
 
 const DEFAULT_COMPLETION_RESULT = {
@@ -60,6 +54,7 @@ const DEFAULT_COMPLETION_RESULT = {
 };
 
 const GROUNDING_PROMPT_FRAGMENT = "treat that material as the primary evidence for your answer";
+const CITATION_HARVEST_PROMPT_FRAGMENT = "You are gathering authoritative source material for a user request.";
 const REWRITE_PROMPT_FRAGMENT = "You are revising an assistant answer using cited source excerpts returned from MCP tools";
 
 const orchestratorServer = {
@@ -174,7 +169,7 @@ describe("citation enrichment guards", () => {
     ).toBe(true);
   });
 
-  it("recognizes when canonical EPS citations are already present", () => {
+  it("continues EPS enrichment when only the canonical corporate sources are present", () => {
     const citations = [
       {
         title: "Enterprise Portfolio System",
@@ -187,7 +182,41 @@ describe("citation enrichment guards", () => {
     ];
 
     expect(hasRequiredEpsLegacyCitations(citations)).toBe(true);
-    expect(shouldEnrichEpsCitations("What is the purpose of EPS?", citations)).toBe(false);
+    expect(shouldEnrichEpsCitations("What is the purpose of EPS?", citations)).toBe(true);
+  });
+
+  it("continues EPS enrichment when only one concrete excerpt-bearing source is present", () => {
+    expect(
+      shouldEnrichEpsCitations("What is the purpose of EPS?", [
+        {
+          title: "Project Management Operating Guide EN.pdf",
+          url: "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
+          content: "Page 71\nF.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
+        },
+      ])
+    ).toBe(true);
+  });
+
+  it("stops EPS enrichment only when multiple distinct concrete sources are already present", () => {
+    expect(
+      shouldEnrichEpsCitations("How does EPS fit within the project management lifecycle?", [
+        {
+          title: "Enterprise Portfolio System",
+          url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
+          content: "EPS is SSC's standard tool to manage projects.",
+        },
+        {
+          title: "Enterprise Portfolio system training",
+          url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
+          content: "EPS supports project reporting and schedule updates.",
+        },
+        {
+          title: "Project Management Operating Guide EN.pdf",
+          url: "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
+          content: "Page 71\nEPS is SSC's system of record across the project lifecycle.",
+        },
+      ])
+    ).toBe(false);
   });
 
   it("detects PMCOE prompts and requests enrichment when citations are synthetic or sparse", () => {
@@ -197,6 +226,21 @@ describe("citation enrichment guards", () => {
         {
           title: "Project Management Operating Guide EN.pdf",
           url: "local-citation://project-management-operating-guide-en-pdf-abc123",
+        },
+      ])
+    ).toBe(true);
+  });
+
+  it("requests PMCOE enrichment when concrete sources do not include excerpts", () => {
+    expect(
+      shouldEnrichPmcoeCitations("How do I track the progress of my project through the gates?", [
+        {
+          title: "Project Management Operating Guide EN.pdf",
+          url: "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
+        },
+        {
+          title: "Gating quick reference.pdf",
+          url: "/pmcoe-sept-2025/en/Gating quick reference.pdf",
         },
       ])
     ).toBe(true);
@@ -216,7 +260,6 @@ describe("sendAssistantMessage auto-rename", () => {
     createCompletionMock.mockResolvedValue(DEFAULT_COMPLETION_RESULT);
     getOrchestratorInsightsMock.mockResolvedValue(null as any);
     resolveServersFromInsightsMock.mockReturnValue([]);
-    fetchLegacyCitationsForQueryMock.mockResolvedValue([]);
     fetchMock.mockResolvedValue({ ok: false } as any);
     consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
   });
@@ -354,24 +397,24 @@ describe("sendAssistantMessage auto-rename", () => {
     expect(secondRequest.servers).toEqual([]);
   });
 
-  it("rewrites MCP-backed answers against citation excerpts before storing the final response", async () => {
+  it("rewrites non-EPS MCP-backed answers against citation excerpts before storing the final response", async () => {
     createCompletionMock
       .mockResolvedValueOnce({
-        fullText: "EPS stands for Enterprise Project System.",
+        fullText: "The policy requires quarterly reporting.",
         completed: true,
         provider: "azure-openai",
         citations: [
           {
-            title: "Project Management Operating Guide EN.pdf",
-            url: "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
-            content: "Page 71\nF.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
+            title: "Policy Guide.pdf",
+            url: "/policy/Policy Guide.pdf",
+            content: "Section 4\nQuarterly reporting is mandatory for active initiatives.",
             startIndex: 0,
             endIndex: 10,
           },
         ],
       })
       .mockResolvedValueOnce({
-        fullText: "Enterprise Portfolio System (EPS) is SSC's system of record.",
+        fullText: "Quarterly reporting is mandatory for active initiatives.",
         completed: true,
         provider: "azure-openai",
         citations: [],
@@ -385,7 +428,7 @@ describe("sendAssistantMessage auto-rename", () => {
     await store.dispatch(
       sendAssistantMessage({
         sessionId: "session-1",
-        content: "What is the purpose of the Enterprise Project System (EPS)?",
+        content: "Summarize the policy guidance.",
       }) as any,
     );
 
@@ -394,20 +437,20 @@ describe("sendAssistantMessage auto-rename", () => {
     const rewriteRequest = createCompletionMock.mock.calls[1][0];
     expect(rewriteRequest.servers).toEqual([]);
     expect(rewriteRequest.messages[0].content).toContain(REWRITE_PROMPT_FRAGMENT);
-    expect(rewriteRequest.messages[1].content).toContain("Enterprise Portfolio System (EPS) is SSC's system of record");
+    expect(rewriteRequest.messages[1].content).toContain("Quarterly reporting is mandatory for active initiatives.");
 
     const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
-    expect(assistantMessage?.content).toBe("Enterprise Portfolio System (EPS) is SSC's system of record.");
+    expect(assistantMessage?.content).toBe("Quarterly reporting is mandatory for active initiatives.");
     expect(assistantMessage?.citations).toEqual([
       {
-        title: "Project Management Operating Guide EN.pdf",
-        url: "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
-        content: "Page 71\nF.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
+        title: "Policy Guide.pdf",
+        url: "/policy/Policy Guide.pdf",
+        content: "Section 4\nQuarterly reporting is mandatory for active initiatives.",
       },
     ]);
   });
 
-  it("skips the rewrite pass when citations do not include source excerpts", async () => {
+  it("falls back to canonical EPS citations when harvested excerpts are still missing", async () => {
     createCompletionMock.mockResolvedValue({
       fullText: "EPS is used for portfolio tracking.",
       completed: true,
@@ -432,12 +475,21 @@ describe("sendAssistantMessage auto-rename", () => {
       }) as any,
     );
 
-    expect(createCompletionMock).toHaveBeenCalledTimes(1);
+    expect(createCompletionMock).toHaveBeenCalledTimes(3);
+    const citationHarvestRequest = createCompletionMock.mock.calls[1][0];
+    expect(citationHarvestRequest.toolChoice).toBe("required");
+    expect(citationHarvestRequest.servers).toHaveLength(1);
+    expect(citationHarvestRequest.messages[0].content).toContain(CITATION_HARVEST_PROMPT_FRAGMENT);
+
+    const rewriteRequest = createCompletionMock.mock.calls[2][0];
+    expect(rewriteRequest.servers).toEqual([]);
+    expect(rewriteRequest.messages[0].content).toContain(REWRITE_PROMPT_FRAGMENT);
+
     const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
     expect(assistantMessage?.content).toBe("EPS is used for portfolio tracking.");
   });
 
-  it("rewrites the stored answer when legacy citation enrichment adds source excerpts", async () => {
+  it("rewrites the stored answer when standalone citation harvest adds source excerpts", async () => {
     createCompletionMock
       .mockResolvedValueOnce({
         fullText: "EPS stands for Enterprise Project System.",
@@ -454,21 +506,25 @@ describe("sendAssistantMessage auto-rename", () => {
         fullText: "Enterprise Portfolio System (EPS) is SSC's system of record.",
         completed: true,
         provider: "azure-openai",
+        citations: [
+          {
+            title: "Enterprise Portfolio System",
+            url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
+            content: "The Enterprise Portfolio System (EPS) is SSC's system of record.",
+          },
+          {
+            title: "Enterprise portfolio system training",
+            url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
+            content: "EPS is SSC's standard tool to manage projects and project reporting.",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        fullText: "Enterprise Portfolio System (EPS) is SSC's system of record.",
+        completed: true,
+        provider: "azure-openai",
         citations: [],
       });
-
-    fetchLegacyCitationsForQueryMock.mockResolvedValue([
-      {
-        title: "Enterprise Portfolio System",
-        url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
-        content: "The Enterprise Portfolio System (EPS) is SSC's system of record.",
-      },
-      {
-        title: "Enterprise portfolio system training",
-        url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
-        content: "EPS is SSC's standard tool to manage projects and project reporting.",
-      },
-    ]);
 
     const store = makeStore({
       isNewChat: false,
@@ -482,12 +538,18 @@ describe("sendAssistantMessage auto-rename", () => {
       }) as any,
     );
 
-    expect(createCompletionMock).toHaveBeenCalledTimes(2);
+    expect(createCompletionMock).toHaveBeenCalledTimes(3);
 
-    const rewriteRequest = createCompletionMock.mock.calls[1][0];
+    const citationHarvestRequest = createCompletionMock.mock.calls[1][0];
+    expect(citationHarvestRequest.toolChoice).toBe("required");
+    expect(citationHarvestRequest.servers).toHaveLength(1);
+    expect(citationHarvestRequest.messages[0].content).toContain(CITATION_HARVEST_PROMPT_FRAGMENT);
+
+    const rewriteRequest = createCompletionMock.mock.calls[2][0];
     expect(rewriteRequest.servers).toEqual([]);
     expect(rewriteRequest.messages[0].content).toContain(REWRITE_PROMPT_FRAGMENT);
     expect(rewriteRequest.messages[1].content).toContain("Enterprise Portfolio System (EPS) is SSC's system of record");
+    expect(rewriteRequest.messages[1].content).toContain("EPS is SSC's standard tool to manage projects and project reporting.");
 
     const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
     expect(assistantMessage?.content).toBe("Enterprise Portfolio System (EPS) is SSC's system of record.");
@@ -501,6 +563,76 @@ describe("sendAssistantMessage auto-rename", () => {
         title: "Enterprise portfolio system training",
         url: "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
         content: "EPS is SSC's standard tool to manage projects and project reporting.",
+      },
+    ]);
+  });
+
+  it("preserves multiple excerpts from the same harvested PMCOE source during rewrite", async () => {
+    createCompletionMock
+      .mockResolvedValueOnce({
+        fullText: "Follow the operating guide.",
+        completed: true,
+        provider: "azure-openai",
+        citations: [
+          {
+            title: "Project Management Operating Guide EN.pdf",
+            url: "local-citation://project-management-operating-guide-en-pdf-abc123",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        fullText: "Follow the operating guide.",
+        completed: true,
+        provider: "azure-openai",
+        citations: [
+          {
+            title: "Project Management Operating Guide EN.pdf",
+            url: "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
+            content: "Page 10\nGate reviews track readiness, risks, and required approvals.",
+          },
+          {
+            title: "Project Management Operating Guide EN.pdf",
+            url: "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
+            content: "Page 11\nProject teams should keep schedule, cost, and artefact updates current before each gate.",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        fullText: "Track readiness, approvals, and project updates through each gate.",
+        completed: true,
+        provider: "azure-openai",
+        citations: [],
+      });
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [policyServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "How do I track the progress of my project through the gates?",
+      }) as any,
+    );
+
+    expect(createCompletionMock).toHaveBeenCalledTimes(3);
+
+    const rewriteRequest = createCompletionMock.mock.calls[2][0];
+    expect(rewriteRequest.messages[1].content).toContain("Gate reviews track readiness, risks, and required approvals.");
+    expect(rewriteRequest.messages[1].content).toContain("Project teams should keep schedule, cost, and artefact updates current before each gate.");
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.citations).toEqual([
+      {
+        title: "Project Management Operating Guide EN.pdf",
+        url: "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
+        content: "Page 10\nGate reviews track readiness, risks, and required approvals.",
+      },
+      {
+        title: "Project Management Operating Guide EN.pdf",
+        url: "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
+        content: "Page 11\nProject teams should keep schedule, cost, and artefact updates current before each gate.",
       },
     ]);
   });
