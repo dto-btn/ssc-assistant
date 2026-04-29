@@ -11,6 +11,7 @@ from tools.pmcoe.pmcoe_prompts import (PMCOE_SYSTEM_PROMPT_EN,
                                        PMCOE_SYSTEM_PROMPT_FR)
 from utils.attachment_mapper import map_attachments
 from utils.models import AzureCognitiveSearchDataSourceConfig, MessageRequest
+from typing import List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 

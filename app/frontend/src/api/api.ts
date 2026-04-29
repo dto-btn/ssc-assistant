@@ -228,10 +228,6 @@ export const completionBasic = async (request: MessageRequest, accessToken: Stri
   }
 };
 
-  /**
-   * Parse the multipart/mixed legacy chat response separated by the
-   * `--GPT-Interaction` boundary into plain text and JSON sections.
-   */
 const parseMixedResponse = async (response: Response) => {
     // Read the response as text
     const rawText = await response.text();
