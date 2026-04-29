@@ -64,12 +64,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     [sessionFiles]
   );
 
-  // Create a single reversed view to avoid repeated copying/reversal.
-  const reversedMessages = React.useMemo(
-    () => [...messages].reverse(),
-    [messages]
-  );
-
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isMobileSidebarOpen = useAppSelector((state) => state.ui.isMobileSidebarOpen);

@@ -597,7 +597,7 @@ describe("ChatMessages", () => {
             ],
           },
         ],
-        isLoading: false,
+        isLoadingBySessionId: {},
         assistantResponsePhaseBySessionId: {
           s1: "idle",
         },
@@ -630,7 +630,7 @@ describe("ChatMessages", () => {
             timestamp: 1,
           },
         ],
-        isLoading: false,
+        isLoadingBySessionId: {},
         assistantResponsePhaseBySessionId: {
           s1: "idle",
         },
