@@ -307,7 +307,9 @@ describe("sendAssistantMessage auto-rename", () => {
     const request = createCompletionMock.mock.calls[0][0];
     expect(request.messages[0].content).toContain(GROUNDING_PROMPT_FRAGMENT);
     expect(request.messages[1]).toMatchObject({ role: "system" });
-    expect(request.messages[1].content).toContain("Orchestrator preflight selected category 'policy'");
+    expect(request.messages[1].content).toContain("Orchestrator preflight routing summary");
+    expect(request.messages[1].content).toContain("categories='policy'");
+    expect(request.messages[1].content).toContain("servers='policy-server'");
   });
 
   it("does not add the grounding prompt when no MCP servers are routed", async () => {

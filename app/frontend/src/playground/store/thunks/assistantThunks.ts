@@ -78,6 +78,61 @@ const CANONICAL_EPS_CITATION_FALLBACK: Citation[] = [
       "Enterprise portfolio system training Primary users: Project management. EPS is SSC's system of record for all projects and supports program/project/activity management with centralized project artefacts, risk/issue/change tracking, and financial/schedule visibility. A one-day training session covers navigation, project updates, team/schedule/cost plan management, ROD, timesheets, expense transactions, risks/issues/changes, document collaboration, status reporting, reporting/portlet personalization, and support pathways. Sessions are offered monthly in English and quarterly in French, generally 8:30 am to 3:30 pm ET. Registration requires supervisor approval through Training and Outreach (SharePoint) or Flex Training Request Form for group/custom sessions.",
   },
 ];
+const PLAYGROUND_CHART_SYSTEM_PROMPT_EN = "When the user asks for a chart, graph, diagram, flowchart, sequence diagram, gantt, timeline, pie chart, or a similar visual, respond with Mermaid markdown by default using a fenced ```mermaid block. Do not return Python, matplotlib, seaborn, plotly, pandas, or JavaScript chart code unless the user explicitly asks for executable code. If Mermaid cannot represent the exact chart, provide the closest Mermaid diagram and briefly state the limitation.";
+const PLAYGROUND_CHART_SYSTEM_PROMPT_FR = "Lorsque l'utilisateur demande un graphique, un diagramme, un organigramme, un diagramme de sequence, un diagramme de Gantt, une chronologie, un graphique circulaire ou un autre visuel semblable, repondez par defaut avec du Markdown Mermaid dans un bloc delimite ```mermaid. Ne retournez pas de code Python, matplotlib, seaborn, plotly, pandas ou JavaScript sauf si l'utilisateur demande explicitement du code executable. Si Mermaid ne peut pas representer exactement le visuel demande, fournissez le diagramme Mermaid le plus proche et mentionnez brievement la limite.";
+
+type PreflightRecommendation = {
+  category?: string;
+  mcp_server_id?: string;
+};
+
+/**
+ * Convert orchestrator preflight output into a compact routing summary that
+ * can be injected as a system message for the completion call.
+ */
+const buildPreflightRoutingContextMessage = (routing: unknown): string => {
+  const routingRecord = routing as {
+    recommendations?: PreflightRecommendation[];
+    fallback?: { category?: string };
+  };
+
+  const recommendations = Array.isArray(routingRecord?.recommendations)
+    ? routingRecord.recommendations
+        .filter((entry): entry is PreflightRecommendation => Boolean(entry && typeof entry === "object"))
+    : [];
+
+  const categories = Array.from(new Set(
+    recommendations
+      .map((entry) => (typeof entry.category === "string" ? entry.category.trim() : ""))
+      .filter((value) => value.length > 0),
+  ));
+
+  const serverIds = recommendations
+    .map((entry) => (typeof entry.mcp_server_id === "string" ? entry.mcp_server_id.trim() : ""))
+    .filter((value) => value.length > 0);
+
+  const fallbackCategory =
+    typeof routingRecord?.fallback?.category === "string"
+      ? routingRecord.fallback.category.trim()
+      : "";
+
+  const categorySummary = categories.length > 0
+    ? categories.join(", ")
+    : fallbackCategory || "general";
+  const serverSummary = serverIds.length > 0 ? serverIds.join(", ") : "none";
+
+  return `Orchestrator preflight routing summary: categories='${categorySummary}', servers='${serverSummary}'. Use this as routing context.`;
+};
+
+/**
+ * Prefer Mermaid-first chart answers so Playground can render visuals inline.
+ */
+const buildPlaygroundChartSystemMessage = (): CompletionMessage => ({
+  role: "system",
+  content: i18n.language?.toLowerCase().startsWith("fr")
+    ? PLAYGROUND_CHART_SYSTEM_PROMPT_FR
+    : PLAYGROUND_CHART_SYSTEM_PROMPT_EN,
+});
 
 const normalizeCitationUrl = (value?: string): string => {
   if (!value) return "";
@@ -223,6 +278,11 @@ const MAX_ORCHESTRATOR_PROGRESS_UPDATES = 20;
 const MAX_GROUNDED_REWRITE_CITATIONS = 6;
 const MAX_GROUNDED_REWRITE_EXCERPT_CHARS = 700;
 const IS_DEV = import.meta.env.DEV;
+const IS_CITATION_DEBUG_ENABLED = String(import.meta.env.VITE_PLAYGROUND_DEBUG_CITATIONS || "").toLowerCase() === "true";
+
+/**
+ * Remove transient tool-call status placeholders once real assistant text is available.
+ */
 const stripToolCallStatusMessages = (content: string): string =>
   content.replace(TOOL_CALL_STATUS_PATTERN, "\n").replace(/\n{3,}/g, "\n\n").trim();
 const MCP_GROUNDING_SYSTEM_PROMPT = [
@@ -832,11 +892,14 @@ export const sendAssistantMessage = ({
       authorization: (server as Tool.Mcp & { authorization?: string }).authorization || accessToken,
     }));
 
+    const chartSystemMessage = buildPlaygroundChartSystemMessage();
     const finalServersWithAuth = routedServersWithAuth;
     const groundingSystemMessage = buildMcpGroundingSystemMessage(finalServersWithAuth);
-    let finalMessages = groundingSystemMessage
-      ? [groundingSystemMessage, ...completionMessages]
-      : completionMessages;
+    let finalMessages = [
+      ...(groundingSystemMessage ? [groundingSystemMessage] : []),
+      chartSystemMessage,
+      ...completionMessages,
+    ];
 
     const orchestratorServer = findOrchestratorServer(serversWithAuth);
     const orchestratorServerUrl = orchestratorServer?.server_url;
@@ -858,17 +921,16 @@ export const sendAssistantMessage = ({
 
         if (preflightResponse.ok) {
           const routing = await preflightResponse.json();
-          const firstRecommendation = Array.isArray(routing?.recommendations) ? routing.recommendations[0] : null;
-          const selectedCategory = firstRecommendation?.category || routing?.fallback?.category || "general";
-          const selectedServerId = firstRecommendation?.mcp_server_id || "none";
-          const routingContextMessage: CompletionMessage = {
-            role: "system",
-            content: `Orchestrator preflight selected category '${selectedCategory}' and server '${selectedServerId}'. Use this as routing context.`,
-          };
 
+          // Feed the model the same routing summary the orchestrator produced
+          // without altering the user-visible chat transcript.
           finalMessages = [
             ...(groundingSystemMessage ? [groundingSystemMessage] : []),
-            routingContextMessage,
+            {
+              role: "system",
+              content: buildPreflightRoutingContextMessage(routing),
+            },
+            chartSystemMessage,
             ...completionMessages,
           ];
         }
@@ -992,7 +1054,6 @@ export const sendAssistantMessage = ({
         };
       }
     };
-
     const runCompletion = async (
       messagesForRun: CompletionMessage[],
       serversForRun: Tool.Mcp[],
@@ -1082,6 +1143,15 @@ export const sendAssistantMessage = ({
           ? streamedContent
           : (completionResult?.fullText || streamedContent);
         const cleanedContent = stripToolCallStatusMessages(resolvedContent);
+
+        if (IS_CITATION_DEBUG_ENABLED) {
+          console.debug("[playground-citations] litellm completion result", {
+            provider,
+            model: completionModel,
+            citationCount: completionResult?.citations?.length ?? 0,
+            citations: completionResult?.citations ?? [],
+          });
+        }
 
         // Append a stop marker so the user knows the response was cut short.
         const stopMarker = `\n\n*${i18n.t("playground:assistant.stopped")}*`;
