@@ -65,6 +65,11 @@ const REQUIRED_EPS_LEGACY_CITATION_URLS = [
   "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system",
   "https://plus.ssc-spc.gc.ca/en/page/enterprise-portfolio-system-training",
 ] as const;
+/**
+ * Static EPS fallback citations are used only when enrichment cannot recover
+ * enough authoritative concrete sources. Keep this synchronized with the
+ * approved source-of-truth content pipeline.
+ */
 const CANONICAL_EPS_CITATION_FALLBACK: Citation[] = [
   {
     title: "Enterprise Portfolio System",
@@ -1391,6 +1396,8 @@ export const sendAssistantMessage = ({
 
       dispatch(setAssistantResponsePhase({ sessionId, phase: "waiting-first-token" }));
 
+      // Mark this turn as completed without tools so downstream enrichment
+      // does not re-trigger the same failing MCP routes.
       completionResult = await runCompletion(finalMessages, []);
     }
 
@@ -1402,6 +1409,8 @@ export const sendAssistantMessage = ({
     if (!abortController.signal.aborted && (shouldApplyEpsCitationEnrichment || shouldApplyPmcoeCitationEnrichment)) {
       const latestMessageContent =
         getState().chat.messages.find((message) => message.id === latestAssistantMessage.id)?.content || "";
+      // Harvest only from the server set used by the successful completion path
+      // to avoid repeated MCP failures and extra latency.
       const harvestedCitations = await harvestStandaloneCitations(
         content,
         latestMessageContent,

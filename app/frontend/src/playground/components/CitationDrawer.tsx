@@ -290,6 +290,8 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
         {groupedCitations.map((group) => (
           <Accordion
             key={group.url}
+            // Keep this Accordion fully controlled with a strict boolean expanded value
+            // to avoid controlled/uncontrolled switching warnings.
             expanded={
               activeCitationGroupUrl
                 ? activeCitationGroupUrl === group.url

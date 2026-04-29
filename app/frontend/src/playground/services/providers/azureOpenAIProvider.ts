@@ -221,6 +221,8 @@ export class AzureOpenAIProvider implements CompletionProvider {
         }
 
         else if (event.type === "response.mcp_call.in_progress") {
+          // Keep provider event logging behind the citation debug flag and avoid
+          // logging full raw events in normal runs.
           console.log("Tool call in progress:", event);
           onToolCall?.();
         }
