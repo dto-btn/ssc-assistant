@@ -11,6 +11,7 @@ import type {
 } from "openai/resources/chat/completions";
 import { AzureOpenAIProvider } from "./providers/azureOpenAIProvider";
 import { Tool } from "openai/resources/responses/responses.mjs";
+import { Citation } from "../utils/citations";
 
 export type CompletionContentPart = Extract<
   ChatCompletionContentPart,
@@ -22,6 +23,8 @@ export type CompletionMessage = Extract<
   { role: "system" | "user" | "assistant" }
 >;
 
+export type CompletionToolChoice = "auto" | "required" | "none";
+
 export interface CompletionRequest {
   messages: CompletionMessage[];
   model: string;
@@ -30,6 +33,7 @@ export interface CompletionRequest {
   signal?: AbortSignal;
   servers?: Tool.Mcp[];
   currentOutput?: string;
+  toolChoice?: CompletionToolChoice;
 }
 
 export interface StreamingCallbacks {
@@ -43,6 +47,7 @@ export interface CompletionResult {
   fullText: string;
   completed: boolean;
   provider: string;
+  citations?: Citation[];
 }
 
 /**
