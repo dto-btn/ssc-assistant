@@ -251,6 +251,8 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
       anchor={isSmall ? "bottom" : "right"}
       open={open}
       onClose={onClose}
+      ModalProps={{ keepMounted: true }}
+      transitionDuration={0}
       PaperProps={{
         id: "citation-drawer",
         role: "dialog",

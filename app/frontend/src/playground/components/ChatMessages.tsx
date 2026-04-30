@@ -28,6 +28,7 @@ import Citations from "./Citations";
 import CitationDrawer from "./CitationDrawer";
 import McpAttributionPill from "./McpAttributionPill";
 import MarkdownCodeBlock, { type MarkdownCodeBlockProps } from "./MarkdownCodeBlock";
+import ResponseButtons from "./ResponseButtons";
 import { ASSISTANT_MARKDOWN_SX, USER_MARKDOWN_SX } from "./chatMessageStyles";
 import assistantLogo from "../../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { selectSessionFilesById } from "../store/selectors/sessionFilesSelectors";
@@ -52,6 +53,10 @@ interface AssistantMessageBubbleProps {
   hasMermaidFence: boolean;
   isActiveStreamingAssistantMessage: boolean;
   isShowingMermaidCode: boolean;
+  isHovering: boolean;
+  isMostRecent: boolean;
+  sessionId: string;
+  messages: Message[];
   onToggleMermaidCodeView: () => void;
   remarkPlugins: Pluggable[];
   rehypePlugins: Pluggable[];
@@ -93,6 +98,10 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
   hasMermaidFence,
   isActiveStreamingAssistantMessage,
   isShowingMermaidCode,
+  isHovering,
+  isMostRecent,
+  sessionId,
+  messages,
   onToggleMermaidCodeView,
   remarkPlugins,
   rehypePlugins,
@@ -326,6 +335,18 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
           {resolvedAttachments.length > 0 && (
             <AttachmentPreview attachments={resolvedAttachments} />
           )}
+          {!isActiveStreamingAssistantMessage && (
+            <ResponseButtons
+              isHovering={isHovering}
+              isMostRecent={isMostRecent}
+              text={message.content}
+              messageId={message.id}
+              isStreaming={pulseThisAssistantIcon}
+              messages={messages}
+              sessionId={sessionId}
+              feedback={message.feedback}
+            />
+          )}
         </Box>
       </Box>
       <Citations
@@ -356,6 +377,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   const { t } = useTranslation("playground");
   const [mermaidCodeViewByMessageId, setMermaidCodeViewByMessageId] =
     useState<Record<string, boolean>>({});
+  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
 
   const markdownComponents = useMemo(
     () => ({
@@ -520,6 +542,8 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
             <ListItem
               key={message.id}
               alignItems="flex-start"
+              onMouseEnter={() => setHoveredMessageId(message.id)}
+              onMouseLeave={() => setHoveredMessageId(null)}
               sx={{
                 px: 0,
                 py: 1,
@@ -537,6 +561,10 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                   hasMermaidFence={hasMermaidFence}
                   isActiveStreamingAssistantMessage={isActiveStreamingAssistantMessage}
                   isShowingMermaidCode={isShowingMermaidCode}
+                  isHovering={hoveredMessageId === message.id}
+                  isMostRecent={message.id === activeAssistantMessageId}
+                  sessionId={sessionId}
+                  messages={messages}
                   onToggleMermaidCodeView={() => toggleMermaidCodeView(message.id)}
                   remarkPlugins={remarkPlugins}
                   rehypePlugins={messageRehypePlugins}

@@ -23,6 +23,13 @@ export interface Message {
   attachments?: FileAttachment[];
   citations?: Citation[];
   mcpAttribution?: MessageMcpAttribution;
+  /**
+   * User feedback for this message.
+   * - 'liked': Message received a thumbs-up.
+   * - 'disliked': Message received a thumbs-down.
+   * - undefined: No feedback provided.
+   */
+  feedback?: "liked" | "disliked";
 }
 
 export interface MessageMcpAttributionServer {
@@ -145,6 +152,26 @@ const chatSlice = createSlice({
         }
       }
     },
+    setMessageAttribution: (
+      state,
+      action: PayloadAction<{ messageId: string; attribution: MessageMcpAttribution | undefined }>,
+    ) => {
+      const { messageId, attribution } = action.payload;
+      const message = state.messages.find((msg) => msg.id === messageId);
+      if (message) {
+        message.mcpAttribution = attribution;
+      }
+    },
+    setMessageFeedback: (
+      state,
+      action: PayloadAction<{ messageId: string; feedback: "liked" | "disliked" | undefined }>,
+    ) => {
+      const { messageId, feedback } = action.payload;
+      const message = state.messages.find((msg) => msg.id === messageId);
+      if (message) {
+        message.feedback = feedback;
+      }
+    },
     setSessionLoading: (
       state,
       action: PayloadAction<{ sessionId: string; loading: boolean }>,
@@ -202,6 +229,8 @@ export const {
   clearSessionMessages,
   clearAllMessages,
   updateMessageContent,
+  setMessageAttribution,
+  setMessageFeedback,
   setSessionLoading,
   setAssistantResponsePhase,
   clearAssistantResponsePhase,

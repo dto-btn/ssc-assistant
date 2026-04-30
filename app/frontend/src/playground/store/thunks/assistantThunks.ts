@@ -7,10 +7,12 @@
  */
 import {
   addMessage,
+  deleteMessage,
   updateMessageContent,
   setSessionLoading,
   setAssistantResponsePhase,
   setOrchestratorInsights,
+  setMessageAttribution,
   Message,
   MessageMcpAttribution,
   OrchestratorInsights,
@@ -804,6 +806,18 @@ export interface SendAssistantMessageArgs {
   content: string;
   attachments?: FileAttachment[];
   provider?: 'azure-openai' | 'aws-bedrock'; // Future provider selection
+  /**
+   * When `true`, skip adding the user message to the store before sending.
+   * Use this when the user message is already present (e.g. regenerate), so
+   * the existing turn stays visible and no duplicate is created.
+   */
+  skipUserMessage?: boolean;
+  /**
+   * Optional message ID to delete before adding the next assistant turn.
+   * Used by regenerate to ensure the old message is only removed if auth
+   * checks pass and the new request proceeds.
+   */
+  deleteMessageId?: string;
 }
 
 type ResolvedAssistantAnswer = {
@@ -831,6 +845,8 @@ export const sendAssistantMessage = ({
   content,
   attachments,
   provider = 'azure-openai', // Default provider
+  skipUserMessage = false,
+  deleteMessageId,
 }: SendAssistantMessageArgs): AppThunk<Promise<void>> => async (
   dispatch,
   getState
@@ -839,6 +855,9 @@ export const sendAssistantMessage = ({
   dispatch(setAssistantResponsePhase({ sessionId, phase: "waiting-first-token" }));
   const abortController = new AbortController();
   sessionAbortControllers.set(sessionId, abortController);
+  // Tracks the placeholder message ID outside the try so the catch block can
+  // update it with the error text rather than adding a second empty assistant turn.
+  let placeholderAssistantMessageId: string | undefined;
   try {
     const { accessToken } = getState().auth;
     if (!accessToken || isTokenExpired(accessToken)) {
@@ -876,6 +895,48 @@ export const sendAssistantMessage = ({
     const existingSessionMessages = getState().chat.messages.filter(
       (message) => message.sessionId === sessionId
     );
+
+    // If a deleteMessageId is provided (e.g. for regenerate), remove the old
+    // message now that auth checks have passed and we are ready to proceed.
+    if (deleteMessageId) {
+      dispatch(deleteMessage(deleteMessageId));
+    }
+
+    // Add the user message and an empty assistant placeholder synchronously,
+    // BEFORE any await. This ensures activeAssistantMessageId in ChatMessages
+    // immediately points to the new placeholder, so the "thinking" label
+    // appears on the correct (new) message row rather than the previous one.
+    if (!skipUserMessage) {
+      dispatch(
+        addMessage({
+          sessionId,
+          role: "user",
+          content,
+          attachments,
+        })
+      );
+    }
+
+    dispatch(
+      addMessage({
+        sessionId,
+        role: "assistant",
+        content: "",
+      })
+    );
+
+    // Capture the id of the placeholder assistant message we just added so
+    // we can target it for content updates and attribution once routing resolves.
+    const placeholderAssistantMessages = getState().chat.messages.filter(
+      (m) => m.sessionId === sessionId && m.role === "assistant"
+    );
+    const latestAssistantMessage =
+      placeholderAssistantMessages[placeholderAssistantMessages.length - 1];
+
+    if (!latestAssistantMessage) {
+      throw new Error("Failed to create assistant message");
+    }
+    placeholderAssistantMessageId = latestAssistantMessage.id;
 
     const serversWithAuth: Tool.Mcp[] = (mcpServers || []).map((server: Tool.Mcp) => ({
       ...server,
@@ -982,38 +1043,23 @@ export const sendAssistantMessage = ({
 
     dispatch(setOrchestratorInsights({ sessionId, insights: insightsWithSelection }));
 
-    // Add user message to state
-    dispatch(
-      addMessage({
-        sessionId,
-        role: "user",
-        content,
-        attachments,
-      })
-    );
-
-    // Add empty assistant message to state
-    dispatch(
-      addMessage({
-        sessionId,
-        role: "assistant",
-        content: "",
-        mcpAttribution: assistantMcpAttribution,
-      })
-    );
-
-    // Re-fetch messages to include the newly added assistant message
-    const updatedSessionMessages = getState().chat.messages.filter(
-      (message) => message.sessionId === sessionId
-    );
-    const assistantMessages = updatedSessionMessages.filter(
-      (message) => message.role === "assistant"
-    );
-    const latestAssistantMessage = assistantMessages[assistantMessages.length - 1];
-
-    if (!latestAssistantMessage) {
-      throw new Error("Failed to create assistant message");
+    // Now that routing is resolved, apply the MCP attribution to the placeholder
+    // assistant message that was already added before the orchestrator await.
+    if (assistantMcpAttribution) {
+      dispatch(
+        setMessageAttribution({
+          messageId: latestAssistantMessage.id,
+          attribution: assistantMcpAttribution,
+        })
+      );
     }
+
+    // Re-fetch messages (user + placeholder assistant are already in state).
+    // Exclude the empty placeholder so the LLM does not receive a trailing
+    // empty assistant turn in its context window.
+    const updatedSessionMessages = getState().chat.messages.filter(
+      (message) => message.sessionId === sessionId && message.id !== latestAssistantMessage.id
+    );
 
     // Use the completion service with streaming callbacks for state management
     const completionMessages = await mapMessagesForCompletion(updatedSessionMessages, dispatchForAttachments, getState);
@@ -1536,13 +1582,13 @@ export const sendAssistantMessage = ({
         ? error.message
         : fallbackToastMessage;
 
-    dispatch(
-      addMessage({
-        sessionId,
-        role: "assistant",
-        content: assistantErrorMessage,
-      })
-    );
+    // If a placeholder was already dispatched, reuse it for the error message
+    // to avoid a duplicate empty assistant turn above the error text.
+    if (placeholderAssistantMessageId) {
+      dispatch(updateMessageContent({ messageId: placeholderAssistantMessageId, content: assistantErrorMessage }));
+    } else {
+      dispatch(addMessage({ sessionId, role: "assistant", content: assistantErrorMessage }));
+    }
 
     dispatch(
       addToast({
