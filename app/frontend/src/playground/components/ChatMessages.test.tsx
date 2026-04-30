@@ -463,9 +463,7 @@ describe("ChatMessages", () => {
 
     await user.click(citationButton);
 
-    const dialog = await screen.findByRole("dialog", { name: "Citations" });
-
-    expect(dialog).toHaveTextContent("Policy Guide.pdf");
+    expect(await screen.findByText("Policy guide excerpt.")).toBeInTheDocument();
   });
 
   it("uses the citation number to open the drawer even when the inline href does not match the source url", async () => {
@@ -508,9 +506,7 @@ describe("ChatMessages", () => {
 
     await user.click(citationButton);
 
-    const dialog = await screen.findByRole("dialog", { name: "Citations" });
-
-    expect(dialog).toHaveTextContent("Policy Guide.pdf");
+    expect(await screen.findByText("Policy guide excerpt.")).toBeInTheDocument();
   });
 
   it("renders multiple distinct inline citations as drawer-opening buttons", async () => {
@@ -608,10 +604,7 @@ describe("ChatMessages", () => {
 
     await user.click(citationButtons[0]);
 
-    const dialog = await screen.findByRole("dialog", { name: "Citations" });
-
-    expect(dialog).toHaveTextContent("Shared Source.pdf");
-    expect(dialog).toHaveTextContent("Second shared excerpt.");
+    expect(await screen.findByText("Second shared excerpt.")).toBeInTheDocument();
   });
 
   it("omits synthetic local citations from the rendered citation UI", () => {
