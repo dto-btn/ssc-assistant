@@ -1,3 +1,4 @@
+import { waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { configureStore } from "@reduxjs/toolkit";
 import sessionsReducer from "../slices/sessionSlice";
@@ -8,10 +9,11 @@ import {
   isLikelyEpsCitationQuery,
   isLikelyPmcoeCitationQuery,
   sendAssistantMessage,
+  stopAssistantMessage,
   shouldEnrichEpsCitations,
   shouldEnrichPmcoeCitations,
 } from "./assistantThunks";
-import { completionService } from "../../services/completionService";
+import { completionService, type CompletionResult } from "../../services/completionService";
 import {
   getOrchestratorInsights,
   resolveServersFromInsights,
@@ -115,6 +117,15 @@ const countGroundingMessages = (messages: Array<{ role: string; content?: unknow
       && typeof message.content === "string"
       && message.content.includes(GROUNDING_PROMPT_FRAGMENT),
   ).length;
+};
+
+const hasPreflightRoutingMessage = (messages: Array<{ role: string; content?: unknown }>): boolean => {
+  return messages.some(
+    (message) =>
+      message.role === "system"
+      && typeof message.content === "string"
+      && message.content.includes("Orchestrator preflight routing summary"),
+  );
 };
 
 describe("deriveSessionName", () => {
@@ -369,14 +380,27 @@ describe("sendAssistantMessage auto-rename", () => {
     expect(countGroundingMessages(request.messages as Array<{ role: string; content?: unknown }>)).toBe(0);
   });
 
-  it("reuses exactly one grounding message when retrying without MCP tools", async () => {
+  it("removes MCP-specific system context when retrying without MCP tools", async () => {
     createCompletionMock
       .mockRejectedValueOnce(new Error("Tool failure"))
       .mockResolvedValueOnce(DEFAULT_COMPLETION_RESULT);
+    getOrchestratorInsightsMock.mockResolvedValue({
+      category: "policy",
+      recommendations: [],
+      source: "orchestrator",
+      timestamp: new Date().toISOString(),
+    } as any);
+    resolveServersFromInsightsMock.mockReturnValue([policyServer as any]);
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        recommendations: [{ category: "policy", mcp_server_id: "policy-server" }],
+      }),
+    } as any);
 
     const store = makeStore({
       isNewChat: false,
-      mcpServers: [policyServer],
+      mcpServers: [orchestratorServer, policyServer],
     });
 
     await store.dispatch(
@@ -392,9 +416,142 @@ describe("sendAssistantMessage auto-rename", () => {
     const secondRequest = createCompletionMock.mock.calls[1][0];
 
     expect(countGroundingMessages(firstRequest.messages as Array<{ role: string; content?: unknown }>)).toBe(1);
-    expect(countGroundingMessages(secondRequest.messages as Array<{ role: string; content?: unknown }>)).toBe(1);
+    expect(hasPreflightRoutingMessage(firstRequest.messages as Array<{ role: string; content?: unknown }>)).toBe(true);
+    expect(countGroundingMessages(secondRequest.messages as Array<{ role: string; content?: unknown }>)).toBe(0);
+    expect(hasPreflightRoutingMessage(secondRequest.messages as Array<{ role: string; content?: unknown }>)).toBe(false);
     expect(firstRequest.servers).toHaveLength(1);
     expect(secondRequest.servers).toEqual([]);
+  });
+
+  it("does not re-enter MCP citation harvest after a no-tools retry succeeds", async () => {
+    createCompletionMock
+      .mockRejectedValueOnce(new Error("Tool failure"))
+      .mockResolvedValueOnce({
+        fullText: "EPS is used for portfolio tracking.",
+        completed: true,
+        provider: "azure-openai",
+        citations: [],
+      })
+      .mockResolvedValueOnce({
+        fullText: "EPS is used for portfolio tracking.",
+        completed: true,
+        provider: "azure-openai",
+        citations: [],
+      });
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [policyServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "What is EPS?",
+      }) as any,
+    );
+
+    expect(createCompletionMock).toHaveBeenCalledTimes(3);
+
+    const retryRequest = createCompletionMock.mock.calls[1][0];
+    const postRetryRequest = createCompletionMock.mock.calls[2][0];
+
+    expect(retryRequest.servers).toEqual([]);
+    expect(postRetryRequest.servers).toEqual([]);
+    expect(postRetryRequest.toolChoice).toBeUndefined();
+    expect(postRetryRequest.messages[0].content).toContain(REWRITE_PROMPT_FRAGMENT);
+    expect(
+      createCompletionMock.mock.calls.some(([request]) => request.toolChoice === "required")
+    ).toBe(false);
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.content).toBe("EPS is used for portfolio tracking.");
+  });
+
+  it("keeps streamed draft text hidden while the answer is still drafting", async () => {
+    let releaseCompletion: (() => void) | undefined;
+
+    createCompletionMock.mockImplementationOnce(async (_request, callbacks) => {
+      callbacks?.onChunk?.("Hidden ");
+      callbacks?.onChunk?.("draft");
+
+      await new Promise<void>((resolve) => {
+        releaseCompletion = resolve;
+      });
+
+      return {
+        fullText: "Hidden draft",
+        completed: true,
+        provider: "azure-openai",
+        citations: [],
+      };
+    });
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [policyServer],
+    });
+
+    const dispatchPromise = store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Summarize the policy guidance.",
+      }) as any,
+    );
+
+    await waitFor(() => {
+      expect(store.getState().chat.assistantResponsePhaseBySessionId["session-1"]).toBe("drafting");
+    });
+
+    const draftingMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(draftingMessage?.content).toBe("");
+
+    releaseCompletion?.();
+    await dispatchPromise;
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.content).toBe("Hidden draft");
+  });
+
+  it("reveals the buffered partial answer with a stopped marker when aborted", async () => {
+    createCompletionMock.mockImplementationOnce((request, callbacks) => {
+      callbacks?.onChunk?.("Partial answer");
+
+      return new Promise<CompletionResult>((_resolve, reject) => {
+        request.signal?.addEventListener(
+          "abort",
+          () => reject(new Error("aborted")),
+          { once: true },
+        );
+      });
+    });
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [policyServer],
+    });
+
+    const dispatchPromise = store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Summarize the policy guidance.",
+      }) as any,
+    );
+
+    await waitFor(() => {
+      expect(store.getState().chat.assistantResponsePhaseBySessionId["session-1"]).toBe("drafting");
+    });
+
+    expect(
+      store.getState().chat.messages.find((message: any) => message.role === "assistant")?.content,
+    ).toBe("");
+
+    stopAssistantMessage("session-1");
+    await dispatchPromise;
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.content).toBe("Partial answer\n\n*playground:assistant.stopped*");
+    expect(store.getState().chat.assistantResponsePhaseBySessionId["session-1"]).toBe("idle");
   });
 
   it("rewrites non-EPS MCP-backed answers against citation excerpts before storing the final response", async () => {

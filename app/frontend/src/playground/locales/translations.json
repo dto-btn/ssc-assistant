@@ -247,6 +247,10 @@
         "en": "Assistant is thinking...",
         "fr": "L'assistant réfléchit..."
     },
+    "assistant.drafting": {
+        "en": "Assistant is drafting...",
+        "fr": "L'assistant rédige..."
+    },
     "assistant.streaming": {
         "en": "Assistant is responding.",
         "fr": "L'assistant répond."

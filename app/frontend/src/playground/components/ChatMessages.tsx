@@ -47,7 +47,7 @@ interface ChatMessagesProps {
 interface AssistantMessageBubbleProps {
   message: Message;
   pulseThisAssistantIcon: boolean;
-  shouldShowThinkingLabel: boolean;
+  assistantStatusLabel?: string;
   liveAttribution?: MessageMcpAttribution;
   hasMermaidFence: boolean;
   isActiveStreamingAssistantMessage: boolean;
@@ -88,7 +88,7 @@ const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({
 const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
   message,
   pulseThisAssistantIcon,
-  shouldShowThinkingLabel,
+  assistantStatusLabel,
   liveAttribution,
   hasMermaidFence,
   isActiveStreamingAssistantMessage,
@@ -277,7 +277,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
               },
             }}
           />
-          {pulseThisAssistantIcon && shouldShowThinkingLabel && (
+          {pulseThisAssistantIcon && assistantStatusLabel && (
             <Box
               component="span"
               role="status"
@@ -289,7 +289,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
                 whiteSpace: "nowrap",
               }}
             >
-              {t("assistant.waiting")}
+              {assistantStatusLabel}
             </Box>
           )}
         </Box>
@@ -395,9 +395,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
 
   const shouldPulseAssistantIcon =
     assistantResponsePhase === "waiting-first-token"
+    || assistantResponsePhase === "drafting"
     || assistantResponsePhase === "streaming";
-  const shouldShowThinkingLabel =
-    assistantResponsePhase === "waiting-first-token";
+  const assistantStatusLabel = assistantResponsePhase === "waiting-first-token"
+    ? t("assistant.waiting")
+    : assistantResponsePhase === "drafting"
+      ? t("assistant.drafting")
+      : undefined;
   const mermaidErrorText = t("assistant.mermaid.error");
 
   const baseRehypePlugins = useMemo<Pluggable[]>(() => [rehypeHighlight], []);
@@ -528,7 +532,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                 <AssistantMessageBubble
                   message={message}
                   pulseThisAssistantIcon={pulseThisAssistantIcon}
-                  shouldShowThinkingLabel={shouldShowThinkingLabel}
+                  assistantStatusLabel={assistantStatusLabel}
                   liveAttribution={liveAttribution}
                   hasMermaidFence={hasMermaidFence}
                   isActiveStreamingAssistantMessage={isActiveStreamingAssistantMessage}

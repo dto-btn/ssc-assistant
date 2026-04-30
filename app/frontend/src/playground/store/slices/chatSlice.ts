@@ -84,7 +84,7 @@ export interface OrchestratorInsights {
   error?: string;
 }
 
-export type AssistantResponsePhase = "idle" | "waiting-first-token" | "streaming";
+export type AssistantResponsePhase = "idle" | "waiting-first-token" | "drafting" | "streaming";
 
 interface ChatState {
   messages: Message[];

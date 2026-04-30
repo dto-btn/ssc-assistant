@@ -366,6 +366,11 @@ const attachmentTextCache = new Map<string, string>();
 const attachmentImageCache = new Map<string, string>();
 const MAX_ORCHESTRATOR_PROGRESS_UPDATES = 20;
 const MAX_GROUNDED_REWRITE_EXCERPT_CHARS = 700;
+const FINAL_REVEAL_TICK_MS = 25;
+const FINAL_REVEAL_CHARS_PER_TICK = 10;
+const FINAL_REVEAL_BURST_MULTIPLIER = 3;
+const FINAL_REVEAL_MAX_BUFFERED_CHARS = 360;
+const FINAL_REVEAL_MAX_WAIT_MS = 4500;
 const IS_DEV = import.meta.env.DEV;
 const IS_CITATION_DEBUG_ENABLED = String(import.meta.env.VITE_PLAYGROUND_DEBUG_CITATIONS || "").toLowerCase() === "true";
 
@@ -421,6 +426,31 @@ const buildMcpGroundingSystemMessage = (
     role: "system",
     content: MCP_GROUNDING_SYSTEM_PROMPT,
   };
+};
+
+/**
+ * Include MCP-only system context only for runs that still have routed tools.
+ */
+const buildCompletionMessagesForRun = ({
+  baseMessages,
+  routedServers,
+  preflightRoutingContextMessage,
+}: {
+  baseMessages: CompletionMessage[];
+  routedServers: Tool.Mcp[];
+  preflightRoutingContextMessage?: CompletionMessage;
+}): CompletionMessage[] => {
+  if (routedServers.length === 0) {
+    return baseMessages;
+  }
+
+  const groundingSystemMessage = buildMcpGroundingSystemMessage(routedServers);
+
+  return [
+    ...(groundingSystemMessage ? [groundingSystemMessage] : []),
+    ...(preflightRoutingContextMessage ? [preflightRoutingContextMessage] : []),
+    ...baseMessages,
+  ];
 };
 
 /**
@@ -776,6 +806,17 @@ export interface SendAssistantMessageArgs {
   provider?: 'azure-openai' | 'aws-bedrock'; // Future provider selection
 }
 
+type ResolvedAssistantAnswer = {
+  content: string;
+  citations: CompletionResult["citations"];
+};
+
+type BufferedCompletionRun = {
+  completionResult?: CompletionResult;
+  resolvedAnswer: ResolvedAssistantAnswer;
+  wasAborted: boolean;
+};
+
 /**
  * Primary chat execution thunk for one user turn.
  *
@@ -783,7 +824,7 @@ export interface SendAssistantMessageArgs {
  * 1) Validate auth and discover orchestrator server.
  * 2) Ask orchestrator to classify and select downstream MCP servers.
  * 3) Build completion messages (including attachment hydration).
- * 4) Stream model output and keep Redux message content in sync.
+ * 4) Buffer streamed draft output, stabilize citations, then reveal one final answer.
  */
 export const sendAssistantMessage = ({
   sessionId,
@@ -985,12 +1026,11 @@ export const sendAssistantMessage = ({
 
     const chartSystemMessage = buildPlaygroundChartSystemMessage();
     const finalServersWithAuth = routedServersWithAuth;
-    const groundingSystemMessage = buildMcpGroundingSystemMessage(finalServersWithAuth);
-    let finalMessages = [
-      ...(groundingSystemMessage ? [groundingSystemMessage] : []),
+    const baseCompletionMessages = [
       chartSystemMessage,
       ...completionMessages,
     ];
+    let preflightRoutingContextMessage: CompletionMessage | undefined;
 
     const orchestratorServer = findOrchestratorServer(serversWithAuth);
     const orchestratorServerUrl = orchestratorServer?.server_url;
@@ -1013,22 +1053,23 @@ export const sendAssistantMessage = ({
         if (preflightResponse.ok) {
           const routing = await preflightResponse.json();
 
-          // Feed the model the same routing summary the orchestrator produced
-          // without altering the user-visible chat transcript.
-          finalMessages = [
-            ...(groundingSystemMessage ? [groundingSystemMessage] : []),
-            {
-              role: "system",
-              content: buildPreflightRoutingContextMessage(routing),
-            },
-            chartSystemMessage,
-            ...completionMessages,
-          ];
+          preflightRoutingContextMessage = {
+            role: "system",
+            content: buildPreflightRoutingContextMessage(routing),
+          };
         }
       } catch (preflightError) {
         console.warn("Orchestrator preflight failed, continuing without preflight", preflightError);
       }
     }
+
+    const buildMessagesForRun = (serversForRun: Tool.Mcp[]): CompletionMessage[] => {
+      return buildCompletionMessagesForRun({
+        baseMessages: baseCompletionMessages,
+        routedServers: serversForRun,
+        preflightRoutingContextMessage,
+      });
+    };
 
     const completionModel = resolveCompletionModel(getState());
 
@@ -1145,6 +1186,54 @@ export const sendAssistantMessage = ({
       }
     };
 
+    const revealAssistantAnswer = async (
+      answer: ResolvedAssistantAnswer,
+      options?: { immediate?: boolean },
+    ): Promise<void> => {
+      if (options?.immediate || !answer.content.trim()) {
+        dispatch(
+          updateMessageContent({
+            messageId: latestAssistantMessage.id,
+            content: answer.content,
+            citations: answer.citations,
+          })
+        );
+        return;
+      }
+
+      dispatch(setAssistantResponsePhase({ sessionId, phase: "streaming" }));
+
+      const revealTypewriter = createStreamTypewriter({
+        tickMs: FINAL_REVEAL_TICK_MS,
+        charsPerTick: FINAL_REVEAL_CHARS_PER_TICK,
+        burstMultiplier: FINAL_REVEAL_BURST_MULTIPLIER,
+        maxBufferedChars: FINAL_REVEAL_MAX_BUFFERED_CHARS,
+        onUpdate: (nextText) => {
+          dispatch(
+            updateMessageContent({
+              messageId: latestAssistantMessage.id,
+              content: nextText,
+              citations: answer.citations,
+            })
+          );
+        },
+      });
+
+      try {
+        revealTypewriter.enqueue(answer.content);
+        await revealTypewriter.complete({ maxWaitMs: FINAL_REVEAL_MAX_WAIT_MS });
+        dispatch(
+          updateMessageContent({
+            messageId: latestAssistantMessage.id,
+            content: answer.content,
+            citations: answer.citations,
+          })
+        );
+      } finally {
+        revealTypewriter.stop();
+      }
+    };
+
     const harvestStandaloneCitations = async (
       promptText: string,
       draftText: string,
@@ -1208,25 +1297,10 @@ export const sendAssistantMessage = ({
     const runCompletion = async (
       messagesForRun: CompletionMessage[],
       serversForRun: Tool.Mcp[],
-    ): Promise<CompletionResult | undefined> => {
+    ): Promise<BufferedCompletionRun> => {
       // One execution path used for both primary run and no-tools retry.
       let receivedFirstChunk = false;
-      let pendingToolCallStatusText = "";
-
-      const typewriter = createStreamTypewriter({
-        tickMs: 20,
-        charsPerTick: 4,
-        burstMultiplier: 2,
-        maxBufferedChars: 900,
-        onUpdate: (nextText) => {
-          dispatch(
-            updateMessageContent({
-              messageId: latestAssistantMessage.id,
-              content: nextText,
-            })
-          );
-        },
-      });
+      let bufferedDraftText = "";
 
       let completionResult: CompletionResult | undefined;
 
@@ -1242,35 +1316,13 @@ export const sendAssistantMessage = ({
           },
           {
             onChunk: (chunk: string) => {
-              if (!receivedFirstChunk && pendingToolCallStatusText) {
-                // Clear transient tool-call status before typed response starts.
-                pendingToolCallStatusText = "";
-                dispatch(
-                  updateMessageContent({
-                    messageId: latestAssistantMessage.id,
-                    content: "",
-                  })
-                );
-              }
-
-              typewriter.enqueue(chunk);
+              bufferedDraftText += chunk;
               if (!receivedFirstChunk) {
                 receivedFirstChunk = true;
-                dispatch(setAssistantResponsePhase({ sessionId, phase: "streaming" }));
+                dispatch(setAssistantResponsePhase({ sessionId, phase: "drafting" }));
               }
             },
-            onToolCall: (toolName?: string) => {
-              const toolCallMessage = `\n${toolName ?? "A tool"} is being called...\n`;
-              if (!receivedFirstChunk) {
-                pendingToolCallStatusText += toolCallMessage;
-                dispatch(
-                  updateMessageContent({
-                    messageId: latestAssistantMessage.id,
-                    content: pendingToolCallStatusText,
-                  })
-                );
-              }
-            },
+            onToolCall: () => undefined,
             onError: (error: Error) => {
               // Abort errors are expected (user clicked Stop) — don't log them.
               if (abortController.signal.aborted) return;
@@ -1281,62 +1333,70 @@ export const sendAssistantMessage = ({
             onComplete: () => undefined,
           }
         );
-      } finally {
-        const wasAborted = abortController.signal.aborted;
-
-        if (!wasAborted) {
-          // Let the buffer drain with pacing to avoid end-of-stream "content dump".
-          await typewriter.complete({ maxWaitMs: 5000 });
+      } catch (error) {
+        if (!abortController.signal.aborted) {
+          throw error;
         }
-
-        const streamedContent = typewriter.getDisplayedText();
-        const resolvedContent = streamedContent.trim().length > 0
-          ? streamedContent
-          : (completionResult?.fullText || streamedContent);
-        const cleanedContent = stripToolCallStatusMessages(resolvedContent);
-
-        if (IS_CITATION_DEBUG_ENABLED) {
-          console.debug("[playground-citations] litellm completion result", {
-            provider,
-            model: completionModel,
-            citationCount: completionResult?.citations?.length ?? 0,
-            citations: completionResult?.citations ?? [],
-          });
-        }
-
-        // Append a stop marker so the user knows the response was cut short.
-        const stopMarker = `\n\n*${i18n.t("playground:assistant.stopped")}*`;
-        const finalContent = wasAborted
-          ? (cleanedContent.length > 0 ? cleanedContent + stopMarker : stopMarker.trimStart())
-          : cleanedContent;
-        const rewrittenAnswer = wasAborted
-          ? {
-              content: finalContent,
-              citations: completionResult?.citations,
-            }
-          : await maybeRewriteAnswerWithCitations(
-              cleanedContent,
-              completionResult?.citations,
-            );
-        dispatch(
-          updateMessageContent({
-            messageId: latestAssistantMessage.id,
-            content: rewrittenAnswer.content,
-            citations: rewrittenAnswer.citations,
-          })
-        );
-
-        typewriter.stop();
       }
 
-      return completionResult;
+      const wasAborted = abortController.signal.aborted;
+      const resolvedContent = bufferedDraftText.trim().length > 0
+        ? bufferedDraftText
+        : (completionResult?.fullText || bufferedDraftText);
+      const cleanedContent = stripToolCallStatusMessages(resolvedContent);
+
+      if (!receivedFirstChunk && !wasAborted && cleanedContent.trim().length > 0) {
+        dispatch(setAssistantResponsePhase({ sessionId, phase: "drafting" }));
+      }
+
+      if (IS_CITATION_DEBUG_ENABLED) {
+        console.debug("[playground-citations] litellm completion result", {
+          provider,
+          model: completionModel,
+          citationCount: completionResult?.citations?.length ?? 0,
+          citations: completionResult?.citations ?? [],
+        });
+      }
+
+      // Append a stop marker so the user knows the response was cut short.
+      const stopMarker = `\n\n*${i18n.t("playground:assistant.stopped")}*`;
+      const finalContent = wasAborted
+        ? (cleanedContent.length > 0 ? cleanedContent + stopMarker : stopMarker.trimStart())
+        : cleanedContent;
+      const rewrittenAnswer = wasAborted
+        ? {
+            content: finalContent,
+            citations: completionResult?.citations,
+          }
+        : await maybeRewriteAnswerWithCitations(
+            cleanedContent,
+            completionResult?.citations,
+          );
+
+      return {
+        completionResult,
+        resolvedAnswer: rewrittenAnswer,
+        wasAborted,
+      };
 
     };
 
     let completionResult: CompletionResult | undefined;
+    let finalAssistantAnswer: ResolvedAssistantAnswer = {
+      content: "",
+      citations: [],
+    };
+    let completionWasAborted = false;
+    let successfulCompletionServers = finalServersWithAuth;
 
     try {
-      completionResult = await runCompletion(finalMessages, finalServersWithAuth);
+      const initialCompletion = await runCompletion(
+        buildMessagesForRun(successfulCompletionServers),
+        successfulCompletionServers,
+      );
+      completionResult = initialCompletion.completionResult;
+      finalAssistantAnswer = initialCompletion.resolvedAnswer;
+      completionWasAborted = initialCompletion.wasAborted;
     } catch (toolEnabledError) {
       if (finalServersWithAuth.length === 0 || abortController.signal.aborted) {
         throw toolEnabledError;
@@ -1396,25 +1456,31 @@ export const sendAssistantMessage = ({
 
       dispatch(setAssistantResponsePhase({ sessionId, phase: "waiting-first-token" }));
 
-      // Mark this turn as completed without tools so downstream enrichment
-      // does not re-trigger the same failing MCP routes.
-      completionResult = await runCompletion(finalMessages, []);
+      successfulCompletionServers = [];
+      // Carry the successful server set forward so downstream enrichment
+      // does not re-enter the same failing MCP routes after the fallback.
+      const fallbackCompletion = await runCompletion(
+        buildMessagesForRun(successfulCompletionServers),
+        successfulCompletionServers,
+      );
+      completionResult = fallbackCompletion.completionResult;
+      finalAssistantAnswer = fallbackCompletion.resolvedAnswer;
+      completionWasAborted = fallbackCompletion.wasAborted;
     }
 
-    const currentCitations = completionResult?.citations || [];
+    const currentCitations = finalAssistantAnswer.citations || completionResult?.citations || [];
     const shouldApplyEpsCitationEnrichment = shouldEnrichEpsCitations(content, currentCitations);
     const shouldApplyPmcoeCitationEnrichment =
       !shouldApplyEpsCitationEnrichment && shouldEnrichPmcoeCitations(content, currentCitations);
 
-    if (!abortController.signal.aborted && (shouldApplyEpsCitationEnrichment || shouldApplyPmcoeCitationEnrichment)) {
-      const latestMessageContent =
-        getState().chat.messages.find((message) => message.id === latestAssistantMessage.id)?.content || "";
+    if (!completionWasAborted && (shouldApplyEpsCitationEnrichment || shouldApplyPmcoeCitationEnrichment)) {
+      const latestMessageContent = finalAssistantAnswer.content;
       // Harvest only from the server set used by the successful completion path
       // to avoid repeated MCP failures and extra latency.
       const harvestedCitations = await harvestStandaloneCitations(
         content,
         latestMessageContent,
-        finalServersWithAuth,
+        successfulCompletionServers,
       );
 
       if (shouldApplyEpsCitationEnrichment) {
@@ -1431,16 +1497,9 @@ export const sendAssistantMessage = ({
           : CANONICAL_EPS_CITATION_FALLBACK;
 
         if (finalEpsCitations.length > 0) {
-          const rewrittenAnswer = await maybeRewriteAnswerWithCitations(
+          finalAssistantAnswer = await maybeRewriteAnswerWithCitations(
             latestMessageContent,
             finalEpsCitations,
-          );
-          dispatch(
-            updateMessageContent({
-              messageId: latestAssistantMessage.id,
-              content: rewrittenAnswer.content,
-              citations: rewrittenAnswer.citations,
-            })
           );
         }
       } else {
@@ -1451,20 +1510,15 @@ export const sendAssistantMessage = ({
         const finalPmcoeCitations = stripSyntheticCitationsWhenConcreteExists(mergedPmcoeCitations);
 
         if (finalPmcoeCitations.length > 0) {
-          const rewrittenAnswer = await maybeRewriteAnswerWithCitations(
+          finalAssistantAnswer = await maybeRewriteAnswerWithCitations(
             latestMessageContent,
             finalPmcoeCitations,
-          );
-          dispatch(
-            updateMessageContent({
-              messageId: latestAssistantMessage.id,
-              content: rewrittenAnswer.content,
-              citations: rewrittenAnswer.citations,
-            })
           );
         }
       }
     }
+
+    await revealAssistantAnswer(finalAssistantAnswer, { immediate: completionWasAborted });
   } catch (error) {
     // If the user explicitly stopped the response, swallow the abort error
     // silently — no toast or error message should appear in the chat.

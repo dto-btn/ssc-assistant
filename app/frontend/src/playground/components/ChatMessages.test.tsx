@@ -81,6 +81,9 @@ vi.mock("react-i18next", async (importOriginal) => {
         if (key === "assistant.waiting") {
           return "Assistant is thinking...";
         }
+        if (key === "assistant.drafting") {
+          return "Assistant is drafting...";
+        }
         if (key === "assistant.streaming") {
           return "Assistant is responding.";
         }
@@ -153,6 +156,33 @@ describe("ChatMessages", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent("Assistant is thinking...");
     expect(screen.queryByText("Assistant is responding.")).not.toBeInTheDocument();
+  });
+
+  it("renders drafting status text while the final answer is still hidden", () => {
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "",
+            timestamp: 1,
+          },
+        ],
+        isLoadingBySessionId: { s1: true },
+        assistantResponsePhaseBySessionId: {
+          s1: "drafting",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    expect(screen.getByRole("status")).toHaveTextContent("Assistant is drafting...");
+    expect(screen.queryByText("Assistant is thinking...")).not.toBeInTheDocument();
   });
 
   it("does not render helper status text while streaming", () => {
