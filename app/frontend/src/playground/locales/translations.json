@@ -164,7 +164,7 @@
         "fr": "Comment suivre l’avancement de mon projet à travers les portes ?"
     },
     "suggestions.pmcoe.q12": {
-        "en": "What is the purpose of the Enterprise Project System (EPS)?",
+        "en": "What is the purpose of the Enterprise Portfolio System (EPS)?",
         "fr": "Quel est le but du système SPE ?"
     },
     "suggestions.pmcoe.q13": {
@@ -247,6 +247,10 @@
         "en": "Assistant is thinking...",
         "fr": "L'assistant réfléchit..."
     },
+    "assistant.drafting": {
+        "en": "Assistant is drafting...",
+        "fr": "L'assistant rédige..."
+    },
     "assistant.streaming": {
         "en": "Assistant is responding.",
         "fr": "L'assistant répond."
@@ -278,6 +282,50 @@
     "assistant.label": {
         "en": "Assistant",
         "fr": "Assistant"
+    },
+    "citations.label": {
+        "en": "Citation(s):",
+        "fr": "Citation(s) :"
+    },
+    "citations.drawer.title": {
+        "en": "Citations",
+        "fr": "Citations"
+    },
+    "citations.source": {
+        "en": "Source:",
+        "fr": "Source :"
+    },
+    "citations.drawer.close": {
+        "en": "Close citations",
+        "fr": "Fermer les citations"
+    },
+    "citations.inline.open": {
+        "en": "Open citation details",
+        "fr": "Ouvrir les détails de la citation"
+    },
+    "citations.inline.openNumber": {
+        "en": "Open citation {{number}} details",
+        "fr": "Ouvrir les détails de la citation {{number}}"
+    },
+    "citations.chip.open": {
+        "en": "Open citation details for {{title}}",
+        "fr": "Ouvrir les détails de la citation pour {{title}}"
+    },
+    "citations.localSourceReference": {
+        "en": "Local source reference",
+        "fr": "Référence à une source locale"
+    },
+    "citations.sourceDocument": {
+        "en": "Source document: {{title}}",
+        "fr": "Document source : {{title}}"
+    },
+    "citations.sourceLocation": {
+        "en": "Source location: {{location}}",
+        "fr": "Emplacement de la source : {{location}}"
+    },
+    "citations.source.openExternal": {
+        "en": "Open source in a new tab: {{title}}",
+        "fr": "Ouvrir la source dans un nouvel onglet : {{title}}"
     },
     "errors.deleteFailed": {
         "en": "Could not delete the chat. Please try again.",
@@ -382,5 +430,45 @@
     "close": {
         "en": "Close",
         "fr": "Fermer"
+    },
+    "copy": {
+        "en": "Copy",
+        "fr": "Copier"
+    },
+    "copy.success": {
+        "en": "Copied!",
+        "fr": "Copié !"
+    },
+    "regenerate": {
+        "en": "Regenerate",
+        "fr": "Régénérer"
+    },
+    "good.response": {
+        "en": "Good response",
+        "fr": "Bonne réponse"
+    },
+    "bad.response": {
+        "en": "Bad response",
+        "fr": "Mauvaise réponse"
+    },
+    "feedback.liked": {
+        "en": "User liked this response",
+        "fr": "L'utilisateur a aimé cette réponse"
+    },
+    "feedback.disliked": {
+        "en": "User disliked this response",
+        "fr": "L'utilisateur n'a pas aimé cette réponse"
+    },
+    "feedback.success": {
+        "en": "Feedback submitted, thank you!",
+        "fr": "Retour soumis, merci !"
+    },
+    "feedback.error": {
+        "en": "Error sending feedback",
+        "fr": "Erreur lors de l'envoi du retour"
+    },
+    "message.actions": {
+        "en": "Message actions",
+        "fr": "Actions du message"
     }
 }

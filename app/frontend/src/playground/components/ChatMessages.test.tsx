@@ -1,21 +1,89 @@
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import ChatMessages from "./ChatMessages";
 import chatReducer from "../store/slices/chatSlice";
+import sessionReducer from "../store/slices/sessionSlice";
 import sessionFilesReducer from "../store/slices/sessionFilesSlice";
+
+vi.mock("rehype-mermaid", () => ({
+  default: () => (tree: any) => {
+    const visit = (node: any, parent?: { children?: any[] }, index?: number) => {
+      if (!node || typeof node !== "object") {
+        return;
+      }
+
+      const className = Array.isArray(node.properties?.className)
+        ? node.properties?.className.join(" ")
+        : String(node.properties?.className || "");
+
+      if (
+        node.type === "element"
+        && node.tagName === "code"
+        && className.includes("language-mermaid")
+        && parent
+        && typeof index === "number"
+        && Array.isArray(parent.children)
+      ) {
+        parent.children[index] = {
+          type: "element",
+          tagName: "div",
+          properties: { className: ["mermaid"] },
+          children: [
+            {
+              type: "element",
+              tagName: "svg",
+              properties: { id: "mermaid-test-diagram" },
+              children: [],
+            },
+          ],
+        };
+        return;
+      }
+
+      if (!Array.isArray(node.children)) {
+        return;
+      }
+
+      node.children.forEach((child: any, childIndex: number) => {
+        if (child && typeof child === "object") {
+          visit(child, node, childIndex);
+        }
+      });
+    };
+
+    visit(tree);
+  },
+}));
 
 vi.mock("react-i18next", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-i18next")>();
+  const interpolate = (
+    template: string,
+    options?: Record<string, unknown>
+  ): string => {
+    if (!options) {
+      return template;
+    }
+
+    return template.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key: string) => {
+      const value = options[key];
+      return value === undefined ? `{{${key}}}` : String(value);
+    });
+  };
+
   return {
     ...actual,
     useTranslation: () => ({
       t: (key: string, options?: Record<string, unknown>) => {
         if (key === "assistant.waiting") {
           return "Assistant is thinking...";
+        }
+        if (key === "assistant.drafting") {
+          return "Assistant is drafting...";
         }
         if (key === "assistant.streaming") {
           return "Assistant is responding.";
@@ -29,7 +97,9 @@ vi.mock("react-i18next", async (importOriginal) => {
         if (key === "mcp.attribution.unknown") {
           return "Tool server";
         }
-        return (options?.defaultValue as string) ?? key;
+
+        const defaultValue = (options?.defaultValue as string | undefined) ?? key;
+        return interpolate(defaultValue, options);
       },
     }),
   };
@@ -37,6 +107,7 @@ vi.mock("react-i18next", async (importOriginal) => {
 
 type TestStoreState = {
   chat: ReturnType<typeof chatReducer>;
+  sessions?: ReturnType<typeof sessionReducer>;
   sessionFiles: ReturnType<typeof sessionFilesReducer>;
 };
 
@@ -44,9 +115,13 @@ function renderMessages(sessionId: string, preloadedState: TestStoreState) {
   const store = configureStore({
     reducer: {
       chat: chatReducer,
+      sessions: sessionReducer,
       sessionFiles: sessionFilesReducer,
     },
-    preloadedState,
+    preloadedState: {
+      sessions: { sessions: [], currentSessionId: sessionId },
+      ...preloadedState,
+    },
   });
 
   const renderResult = render(
@@ -87,6 +162,33 @@ describe("ChatMessages", () => {
 
     expect(screen.getByRole("status")).toHaveTextContent("Assistant is thinking...");
     expect(screen.queryByText("Assistant is responding.")).not.toBeInTheDocument();
+  });
+
+  it("renders drafting status text while the final answer is still hidden", () => {
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "",
+            timestamp: 1,
+          },
+        ],
+        isLoadingBySessionId: { s1: true },
+        assistantResponsePhaseBySessionId: {
+          s1: "drafting",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    expect(screen.getByRole("status")).toHaveTextContent("Assistant is drafting...");
+    expect(screen.queryByText("Assistant is thinking...")).not.toBeInTheDocument();
   });
 
   it("does not render helper status text while streaming", () => {
@@ -321,5 +423,260 @@ describe("ChatMessages", () => {
     );
 
     expect(screen.getAllByRole("button", { name: "assistant.mermaid.viewCode" })).toHaveLength(1);
+  });
+
+  it("opens the citation drawer when an inline citation number is clicked", async () => {
+    const user = userEvent.setup();
+
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "Please review [doc1] for the policy details.",
+            timestamp: 1,
+            citations: [
+              {
+                title: "Policy Guide.pdf",
+                url: "https://example.com/policy guide.pdf",
+                content: "Policy guide excerpt.",
+              },
+            ],
+          },
+        ],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    const citationButton = await screen.findByRole("button", {
+      name: "Open citation 1 details",
+    });
+
+    await user.click(citationButton);
+
+    expect(await screen.findByText("Policy guide excerpt.")).toBeInTheDocument();
+  });
+
+  it("uses the citation number to open the drawer even when the inline href does not match the source url", async () => {
+    const user = userEvent.setup();
+
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "Please review [1](https://example.com/mismatched-link) for the policy details.",
+            timestamp: 1,
+            citations: [
+              {
+                title: "Policy Guide.pdf",
+                url: "https://example.com/policy guide.pdf",
+                content: "Policy guide excerpt.",
+              },
+            ],
+          },
+        ],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    const citationButton = await screen.findByRole("button", {
+      name: "Open citation 1 details",
+    });
+
+    expect(screen.queryByRole("link", { name: "1" })).not.toBeInTheDocument();
+
+    await user.click(citationButton);
+
+    expect(await screen.findByText("Policy guide excerpt.")).toBeInTheDocument();
+  });
+
+  it("renders multiple distinct inline citations as drawer-opening buttons", async () => {
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "Please review [doc1] and [doc2] for the policy details.",
+            timestamp: 1,
+            citations: [
+              {
+                title: "Policy Guide.pdf",
+                url: "https://example.com/policy-guide.pdf",
+                content: "Policy guide excerpt.",
+              },
+              {
+                title: "Procedure Manual.pdf",
+                url: "https://example.com/procedure-manual.pdf",
+                content: "Procedure manual excerpt.",
+              },
+            ],
+          },
+        ],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    const firstCitationButton = await screen.findByRole("button", {
+      name: "Open citation 1 details",
+    });
+    const secondCitationButton = await screen.findByRole("button", {
+      name: "Open citation 2 details",
+    });
+
+    expect(screen.queryByRole("link", { name: "1" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "2" })).not.toBeInTheDocument();
+    expect(firstCitationButton).toBeInTheDocument();
+    expect(secondCitationButton).toBeInTheDocument();
+  });
+
+  it("renders later explicit inline citation links as drawer-opening buttons even when they share the same source url", async () => {
+    const user = userEvent.setup();
+
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "Please review [1](https://example.com/shared.pdf) and [2](https://example.com/shared.pdf).",
+            timestamp: 1,
+            citations: [
+              {
+                title: "Shared Source.pdf",
+                url: "https://example.com/shared.pdf",
+                content: "First shared excerpt.",
+              },
+              {
+                title: "Shared Source.pdf",
+                url: "https://example.com/shared.pdf",
+                content: "Second shared excerpt.",
+              },
+            ],
+          },
+        ],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    const citationButtons = await screen.findAllByRole("button", {
+      name: "Open citation 2 details",
+    });
+
+    expect(screen.queryByRole("link", { name: "2" })).not.toBeInTheDocument();
+
+    expect(citationButtons).toHaveLength(1);
+
+    await user.click(citationButtons[0]);
+
+    expect(await screen.findByText("Second shared excerpt.")).toBeInTheDocument();
+  });
+
+  it("omits synthetic local citations from the rendered citation UI", () => {
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "Please review [doc1].",
+            timestamp: 1,
+            citations: [
+              {
+                title: "local-citation://it-appears-that-the-search-d-uvdx2z",
+                url: "local-citation://it-appears-that-the-search-d-uvdx2z",
+                content: "Synthetic local reference content",
+              },
+            ],
+          },
+        ],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    expect(screen.queryByRole("button", { name: /local source reference/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "1" })).not.toBeInTheDocument();
+    expect(screen.getByText("Please review.")).toBeInTheDocument();
+  });
+
+  it("renders mermaid diagrams instead of leaving them as fenced code", async () => {
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: [
+              "```mermaid",
+              "graph TD",
+              "  Start[Start] --> Done[Done]",
+              "```",
+            ].join("\n"),
+            timestamp: 1,
+          },
+        ],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    await waitFor(() => {
+      expect(
+        document.querySelector(".mermaid svg, svg[id^='mermaid-']")
+        || screen.queryByText("Invalid diagram format!")
+      ).toBeTruthy();
+    });
+
+    expect(screen.queryByText(/graph TD/i)).not.toBeInTheDocument();
   });
 });

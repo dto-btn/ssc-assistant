@@ -12,6 +12,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
 import { FileAttachment } from "../../types";
+import { Citation } from "../../utils/citations";
 
 export interface Message {
   id: string;
@@ -20,8 +21,15 @@ export interface Message {
   content: string;
   timestamp: number;
   attachments?: FileAttachment[];
-  citations?: { title: string; url: string }[];
+  citations?: Citation[];
   mcpAttribution?: MessageMcpAttribution;
+  /**
+   * User feedback for this message.
+   * - 'liked': Message received a thumbs-up.
+   * - 'disliked': Message received a thumbs-down.
+   * - undefined: No feedback provided.
+   */
+  feedback?: "liked" | "disliked";
 }
 
 export interface MessageMcpAttributionServer {
@@ -83,7 +91,7 @@ export interface OrchestratorInsights {
   error?: string;
 }
 
-export type AssistantResponsePhase = "idle" | "waiting-first-token" | "streaming";
+export type AssistantResponsePhase = "idle" | "waiting-first-token" | "drafting" | "streaming";
 
 interface ChatState {
   messages: Message[];
@@ -134,11 +142,34 @@ const chatSlice = createSlice({
       state.orchestratorInsightsBySessionId = {};
       state.isLoadingBySessionId = {};
     },
-    updateMessageContent: (state, action: PayloadAction<{ messageId: string; content: string }>) => {
-      const { messageId, content } = action.payload;
+    updateMessageContent: (state, action: PayloadAction<{ messageId: string; content: string; citations?: Citation[] }>) => {
+      const { messageId, content, citations } = action.payload;
       const message = state.messages.find(msg => msg.id === messageId);
       if (message) {
         message.content = content;
+        if (citations !== undefined) {
+          message.citations = citations;
+        }
+      }
+    },
+    setMessageAttribution: (
+      state,
+      action: PayloadAction<{ messageId: string; attribution: MessageMcpAttribution | undefined }>,
+    ) => {
+      const { messageId, attribution } = action.payload;
+      const message = state.messages.find((msg) => msg.id === messageId);
+      if (message) {
+        message.mcpAttribution = attribution;
+      }
+    },
+    setMessageFeedback: (
+      state,
+      action: PayloadAction<{ messageId: string; feedback: "liked" | "disliked" | undefined }>,
+    ) => {
+      const { messageId, feedback } = action.payload;
+      const message = state.messages.find((msg) => msg.id === messageId);
+      if (message) {
+        message.feedback = feedback;
       }
     },
     setSessionLoading: (
@@ -198,6 +229,8 @@ export const {
   clearSessionMessages,
   clearAllMessages,
   updateMessageContent,
+  setMessageAttribution,
+  setMessageFeedback,
   setSessionLoading,
   setAssistantResponsePhase,
   clearAssistantResponsePhase,
