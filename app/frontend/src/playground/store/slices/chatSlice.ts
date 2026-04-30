@@ -12,6 +12,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { v4 as uuidv4 } from "uuid";
 import { FileAttachment } from "../../types";
+import { Citation } from "../../utils/citations";
 
 export interface Message {
   id: string;
@@ -20,7 +21,7 @@ export interface Message {
   content: string;
   timestamp: number;
   attachments?: FileAttachment[];
-  citations?: { title: string; url: string }[];
+  citations?: Citation[];
   mcpAttribution?: MessageMcpAttribution;
   /**
    * User feedback for this message.
@@ -90,7 +91,7 @@ export interface OrchestratorInsights {
   error?: string;
 }
 
-export type AssistantResponsePhase = "idle" | "waiting-first-token" | "streaming";
+export type AssistantResponsePhase = "idle" | "waiting-first-token" | "drafting" | "streaming";
 
 interface ChatState {
   messages: Message[];
@@ -141,11 +142,14 @@ const chatSlice = createSlice({
       state.orchestratorInsightsBySessionId = {};
       state.isLoadingBySessionId = {};
     },
-    updateMessageContent: (state, action: PayloadAction<{ messageId: string; content: string }>) => {
-      const { messageId, content } = action.payload;
+    updateMessageContent: (state, action: PayloadAction<{ messageId: string; content: string; citations?: Citation[] }>) => {
+      const { messageId, content, citations } = action.payload;
       const message = state.messages.find(msg => msg.id === messageId);
       if (message) {
         message.content = content;
+        if (citations !== undefined) {
+          message.citations = citations;
+        }
       }
     },
     setMessageAttribution: (
