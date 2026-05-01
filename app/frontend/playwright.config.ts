@@ -74,7 +74,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: `VITE_PLAYGROUND_ON=true VITE_E2E_BYPASS_AUTH=true VITE_E2E_ACCESS_TOKEN=${e2eAccessToken} VITE_DISABLED_FEATURES= PORT=8080 npm run dev`,
+    command: `VITE_PLAYGROUND_ON=true VITE_E2E_BYPASS_AUTH=true VITE_E2E_ACCESS_TOKEN=${e2eAccessToken} VITE_DISABLED_FEATURES= VITE_API_BACKEND=http://dummy-backend VITE_API_KEY=dummy PORT=8080 npm run dev`,
     url: 'http://localhost:8080',
     reuseExistingServer: !process.env.CI,
   },
