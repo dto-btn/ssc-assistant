@@ -15,7 +15,10 @@ interface AppProps {
   instance: PublicClientApplication;
 }
 
-const isE2EAuthBypassEnabled = import.meta.env.VITE_E2E_BYPASS_AUTH === "true";
+const isPlaygroundE2EAuthBypassEnabled =
+  import.meta.env.DEV &&
+  import.meta.env.VITE_E2E_BYPASS_AUTH === "true" &&
+  window.location.pathname.startsWith("/playground");
 
 export const App = ({ instance }: AppProps) => {
   return (
@@ -26,7 +29,7 @@ export const App = ({ instance }: AppProps) => {
       <CssBaseline />
       <AppErrorBoundary>
         <MsalProvider instance={instance}>
-          {isE2EAuthBypassEnabled ? (
+          {isPlaygroundE2EAuthBypassEnabled ? (
             <AppRoutes />
           ) : (
             <>

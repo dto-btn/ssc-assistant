@@ -87,4 +87,22 @@ test('stops a streamed response in progress', async ({ playground, mockPlaygroun
 
   await expect(playground.page.getByLabel('Send')).toBeVisible();
   await expect(playground.page.getByText(slowResponseText)).toHaveCount(0);
+  await expect(playground.page.getByText('Response stopped by user.')).toBeVisible();
+});
+
+/**
+ * Verifies that a streamed completion failure surfaces both the inline
+ * assistant fallback message and the corresponding error toast.
+ */
+test('shows a visible error when the streamed response fails', async ({ playground, mockPlayground }) => {
+  for (let index = 0; index < 8; index += 1) {
+    await mockPlayground.queueAssistantResponse({
+      text: '',
+      errorMessage: 'Mock streaming failure from the Playwright harness.',
+    });
+  }
+
+  await playground.sendMessage('Trigger a mocked stream failure.');
+
+  await expect(playground.page.getByText('Sorry, I encountered an error while processing your request. Please try again.')).toBeVisible();
 });

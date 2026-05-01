@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const e2eAccessToken = 'eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjQxMDAwMDAwMDAsIm5hbWUiOiJwbGF5d3JpZ2h0LWUyZS10b2tlbiJ9.signature';
+const e2ePort = 4173;
 
 /**
  * Read environment variables from file.
@@ -28,7 +29,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
-    baseURL: 'http://localhost:8080',
+    baseURL: `http://localhost:${e2ePort}`,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -74,8 +75,8 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: `VITE_PLAYGROUND_ON=true VITE_E2E_BYPASS_AUTH=true VITE_E2E_ACCESS_TOKEN=${e2eAccessToken} VITE_DISABLED_FEATURES= VITE_API_BACKEND=http://dummy-backend VITE_API_KEY=dummy PORT=8080 npm run dev`,
-    url: 'http://localhost:8080',
-    reuseExistingServer: !process.env.CI,
+    command: `VITE_PLAYGROUND_ON=true VITE_E2E_BYPASS_AUTH=true VITE_E2E_ACCESS_TOKEN=${e2eAccessToken} VITE_DISABLED_FEATURES= VITE_API_BACKEND=http://dummy-backend VITE_API_KEY=dummy PORT=${e2ePort} npm run dev`,
+    url: `http://localhost:${e2ePort}`,
+    reuseExistingServer: false,
   },
 });
