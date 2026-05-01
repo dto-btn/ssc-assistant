@@ -20,6 +20,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "types": [
+      "node",
       "vite/client",
       "@testing-library/jest-dom"
     ]

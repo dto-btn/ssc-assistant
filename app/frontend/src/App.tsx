@@ -15,6 +15,8 @@ interface AppProps {
   instance: PublicClientApplication;
 }
 
+const isE2EAuthBypassEnabled = import.meta.env.VITE_E2E_BYPASS_AUTH === "true";
+
 export const App = ({ instance }: AppProps) => {
   return (
     <>
@@ -24,12 +26,18 @@ export const App = ({ instance }: AppProps) => {
       <CssBaseline />
       <AppErrorBoundary>
         <MsalProvider instance={instance}>
-          <UnauthenticatedTemplate>
-            <ConnectingScreen />
-          </UnauthenticatedTemplate>
-          <AuthenticatedTemplate>
+          {isE2EAuthBypassEnabled ? (
             <AppRoutes />
-          </AuthenticatedTemplate>
+          ) : (
+            <>
+              <UnauthenticatedTemplate>
+                <ConnectingScreen />
+              </UnauthenticatedTemplate>
+              <AuthenticatedTemplate>
+                <AppRoutes />
+              </AuthenticatedTemplate>
+            </>
+          )}
         </MsalProvider>
       </AppErrorBoundary>
       <AppSnackbars />

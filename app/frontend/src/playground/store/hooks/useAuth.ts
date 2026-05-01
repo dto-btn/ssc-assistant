@@ -14,6 +14,12 @@ import { isTokenExpired } from '../../../util/token';
 import type { RootState } from '../index';
 import { fetchProfilePicture } from '../../services/graphService';
 
+const isE2EAuthBypassEnabled = import.meta.env.VITE_E2E_BYPASS_AUTH === 'true';
+const e2eAccessToken = String(
+  import.meta.env.VITE_E2E_ACCESS_TOKEN ||
+    'eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjQxMDAwMDAwMDAsIm5hbWUiOiJwbGF5d3JpZ2h0LWUyZS10b2tlbiJ9.signature',
+).trim();
+
 // You'll need to import this from your app's auth configuration
 interface ApiUseConfig {
   scopes: string[];
@@ -27,6 +33,16 @@ export function useAuth(apiUse: ApiUseConfig) {
 
   // Get token on initial load
   useEffect(() => {
+    if (isE2EAuthBypassEnabled) {
+      dispatch(setAccessToken({
+        token: e2eAccessToken,
+        expiresOn: Date.now() + 60 * 60 * 1000,
+      }));
+      dispatch(setGraphData(null));
+      dispatch(setProfilePictureUrl(''));
+      return undefined;
+    }
+
     const getInitialToken = async () => {
       try {
         const account = instance.getActiveAccount();
@@ -68,6 +84,14 @@ export function useAuth(apiUse: ApiUseConfig) {
 
   // Function to get a valid token
   const getValidToken = useCallback(async (): Promise<string> => {
+    if (isE2EAuthBypassEnabled) {
+      dispatch(setAccessToken({
+        token: e2eAccessToken,
+        expiresOn: Date.now() + 60 * 60 * 1000,
+      }));
+      return e2eAccessToken;
+    }
+
     try {
       const account = instance.getActiveAccount();
       if (!account) {
@@ -105,11 +129,27 @@ export function useAuth(apiUse: ApiUseConfig) {
 
   // Function to manually refresh token
   const refreshToken = useCallback(async (): Promise<void> => {
+    if (isE2EAuthBypassEnabled) {
+      dispatch(setAccessToken({
+        token: e2eAccessToken,
+        expiresOn: Date.now() + 60 * 60 * 1000,
+      }));
+      return;
+    }
+
     await getValidToken();
-  }, [getValidToken]);
+  }, [dispatch, getValidToken]);
 
   // Function to clear token
   const clearToken = useCallback(() => {
+    if (isE2EAuthBypassEnabled) {
+      dispatch(setAccessToken({
+        token: e2eAccessToken,
+        expiresOn: Date.now() + 60 * 60 * 1000,
+      }));
+      return;
+    }
+
     dispatch(clearAccessToken());
   }, [dispatch]);
 
