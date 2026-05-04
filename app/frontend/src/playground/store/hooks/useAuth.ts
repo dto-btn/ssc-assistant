@@ -47,8 +47,6 @@ export function useAuth(apiUse: ApiUseConfig) {
         token: e2eAccessToken,
         expiresOn: Date.now() + 60 * 60 * 1000,
       }));
-      dispatch(setGraphData(null));
-      dispatch(setProfilePictureUrl(''));
       return undefined;
     }
 

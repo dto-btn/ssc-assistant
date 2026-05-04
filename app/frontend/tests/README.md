@@ -42,3 +42,42 @@ npm run test:e2e
 # OR directly via playwright
 npx playwright test
 ```
+
+Run a specific spec file:
+
+```sh
+npx playwright test tests/e2e/playground-chat.spec.ts
+```
+
+Run one test by name:
+
+```sh
+npx playwright test -g "supports copy and feedback actions on assistant responses"
+```
+
+Run a specific project/browser:
+
+```sh
+npx playwright test --project=chromium
+npx playwright test tests/e2e/playground-mobile.spec.ts --project="Mobile Safari"
+```
+
+Useful combinations:
+
+```sh
+# One spec in one browser
+npx playwright test tests/e2e/playground-session.spec.ts --project=firefox
+
+# One named test in headed mode
+npx playwright test -g "streams typed prompts into assistant messages" --headed
+```
+
+Watch the browser while the test runs:
+
+```sh
+# Open a visible browser window during the run
+npx playwright test --headed
+
+# Open the Playwright inspector and step through the test interactively
+npx playwright test --debug
+```
