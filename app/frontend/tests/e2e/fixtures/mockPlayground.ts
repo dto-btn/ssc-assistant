@@ -41,6 +41,7 @@ declare global {
   interface Window {
     __SSC_PLAYGROUND_E2E__?: {
       responseQueue: MockStreamResponse[];
+      persistentResponse: MockStreamResponse | null;
       clipboardText: string;
       defaultChunkDelayMs: number;
     };
@@ -271,6 +272,7 @@ export class MockPlaygroundApi {
     await this.page.addInitScript(({ defaultChunkDelayMs, defaultAssistantResponse }) => {
       const state = {
         responseQueue: [] as Array<{ text: string; chunkDelayMs?: number; chunkSize?: number; errorMessage?: string }>,
+        persistentResponse: null as { text: string; chunkDelayMs?: number; chunkSize?: number; errorMessage?: string } | null,
         clipboardText: '',
         defaultChunkDelayMs,
       };
@@ -428,7 +430,7 @@ export class MockPlaygroundApi {
           return originalFetch(input, init);
         }
 
-        const scenario = state.responseQueue.shift() ?? { text: defaultAssistantResponse };
+        const scenario = state.responseQueue.shift() ?? state.persistentResponse ?? { text: defaultAssistantResponse };
         if (scenario.errorMessage) {
           throw new Error(scenario.errorMessage);
         }
@@ -504,6 +506,17 @@ export class MockPlaygroundApi {
   async queueAssistantResponse(response: MockStreamResponse): Promise<void> {
     await this.page.evaluate((queuedResponse) => {
       window.__SSC_PLAYGROUND_E2E__?.responseQueue.push(queuedResponse);
+    }, response);
+  }
+
+  /**
+   * Configure the fallback streamed response used when the queue is empty.
+   */
+  async setPersistentAssistantResponse(response: MockStreamResponse | null): Promise<void> {
+    await this.page.evaluate((persistentResponse) => {
+      if (window.__SSC_PLAYGROUND_E2E__) {
+        window.__SSC_PLAYGROUND_E2E__.persistentResponse = persistentResponse;
+      }
     }, response);
   }
 

@@ -15,12 +15,18 @@ interface AppProps {
   instance: PublicClientApplication;
 }
 
-const isPlaygroundE2EAuthBypassEnabled =
-  import.meta.env.DEV &&
-  import.meta.env.VITE_E2E_BYPASS_AUTH === "true" &&
-  window.location.pathname.startsWith("/playground");
+const shouldBypassPlaygroundAuth = (): boolean => {
+  return (
+    import.meta.env.DEV &&
+    import.meta.env.VITE_E2E_BYPASS_AUTH === "true" &&
+    typeof window !== "undefined" &&
+    window.location.pathname.startsWith("/playground")
+  );
+};
 
 export const App = ({ instance }: AppProps) => {
+  const isPlaygroundE2EAuthBypassEnabled = shouldBypassPlaygroundAuth();
+
   return (
     <>
       {/* Skip link for keyboard users to jump to the chat ask input */}

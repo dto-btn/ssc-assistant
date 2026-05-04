@@ -91,16 +91,14 @@ test('stops a streamed response in progress', async ({ playground, mockPlaygroun
 });
 
 /**
- * Verifies that a streamed completion failure surfaces both the inline
- * assistant fallback message and the corresponding error toast.
+ * Verifies that a streamed completion failure surfaces the inline assistant
+ * fallback message after the provider exhausts its retries.
  */
 test('shows a visible error when the streamed response fails', async ({ playground, mockPlayground }) => {
-  for (let index = 0; index < 8; index += 1) {
-    await mockPlayground.queueAssistantResponse({
-      text: '',
-      errorMessage: 'Mock streaming failure from the Playwright harness.',
-    });
-  }
+  await mockPlayground.setPersistentAssistantResponse({
+    text: '',
+    errorMessage: 'Mock streaming failure from the Playwright harness.',
+  });
 
   await playground.sendMessage('Trigger a mocked stream failure.');
 
