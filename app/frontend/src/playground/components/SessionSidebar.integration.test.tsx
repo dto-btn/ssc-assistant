@@ -1,8 +1,12 @@
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+
+const loadMoreSessionsFromStorageMock = vi.hoisted(() =>
+  vi.fn(() => ({ type: "sessions/loadMoreMock" })),
+);
 
 vi.mock("react-i18next", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-i18next")>();
@@ -22,6 +26,10 @@ import SessionSidebar from "./SessionSidebar";
 import sessionReducer from "../store/slices/sessionSlice";
 import uiReducer, { toggleSidebarCollapsed } from "../store/slices/uiSlice";
 
+vi.mock("../store/thunks/sessionBootstrapThunks", () => ({
+  loadMoreSessionsFromStorage: loadMoreSessionsFromStorageMock,
+}));
+
 vi.mock("./SessionRenameDialog", () => ({
   default: () => null,
 }));
@@ -37,6 +45,15 @@ vi.mock("./ProfileMenu/ProfileMenu", () => ({
 type TestStoreState = {
   sessions: ReturnType<typeof sessionReducer>;
   ui: ReturnType<typeof uiReducer>;
+};
+
+const defaultRemoteSessionPaging = {
+  isInitialLoading: false,
+  isLoadingMore: false,
+  hasMore: false,
+  nextOffset: 0,
+  pageSize: 25,
+  hasLoadedInitialPage: false,
 };
 
 /**
@@ -70,6 +87,7 @@ describe("SessionSidebar responsive behavior", () => {
       sessions: {
         sessions: [],
         currentSessionId: null,
+        remoteSessionPaging: defaultRemoteSessionPaging,
       },
       ui: {
         isSidebarCollapsed: true,
@@ -91,6 +109,7 @@ describe("SessionSidebar responsive behavior", () => {
       sessions: {
         sessions: [],
         currentSessionId: null,
+        remoteSessionPaging: defaultRemoteSessionPaging,
       },
       ui: {
         isSidebarCollapsed: false,
@@ -101,7 +120,9 @@ describe("SessionSidebar responsive behavior", () => {
 
     expect(screen.getByRole("heading", { name: "chats" })).toBeInTheDocument();
 
-    store.dispatch(toggleSidebarCollapsed());
+    act(() => {
+      store.dispatch(toggleSidebarCollapsed());
+    });
 
     await waitFor(() => {
       expect(screen.queryByRole("heading", { name: "chats" })).not.toBeInTheDocument();
@@ -132,6 +153,7 @@ describe("SessionSidebar responsive behavior", () => {
           },
         ],
         currentSessionId: "s1",
+        remoteSessionPaging: defaultRemoteSessionPaging,
       },
       ui: {
         isSidebarCollapsed: false,
@@ -173,6 +195,7 @@ describe("SessionSidebar responsive behavior", () => {
             },
           ],
           currentSessionId: "s1",
+          remoteSessionPaging: defaultRemoteSessionPaging,
         },
         ui: {
           isSidebarCollapsed: false,
@@ -205,6 +228,7 @@ describe("SessionSidebar responsive behavior", () => {
           },
         ],
         currentSessionId: "s1",
+        remoteSessionPaging: defaultRemoteSessionPaging,
       },
       ui: {
         isSidebarCollapsed: false,
@@ -218,5 +242,68 @@ describe("SessionSidebar responsive behavior", () => {
     await waitFor(() => {
       expect((document.activeElement as HTMLElement | null)?.id).toBe("new-chat-button");
     });
+  });
+
+  it("shows a load-more control when more remote sessions are available", async () => {
+    const user = userEvent.setup();
+
+    renderSidebar(false, {
+      sessions: {
+        sessions: [
+          {
+            id: "s1",
+            name: "Session 1",
+            createdAt: 1,
+            isNewChat: false,
+          },
+        ],
+        currentSessionId: "s1",
+        remoteSessionPaging: {
+          ...defaultRemoteSessionPaging,
+          hasMore: true,
+          nextOffset: 25,
+          hasLoadedInitialPage: true,
+        },
+      },
+      ui: {
+        isSidebarCollapsed: false,
+        isMobileSidebarOpen: false,
+        isDeletingAllChats: false,
+      },
+    });
+
+    await user.click(screen.getByRole("button", { name: "sidebar.more" }));
+
+    expect(loadMoreSessionsFromStorageMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows a waiting label while more sessions are loading", () => {
+    renderSidebar(false, {
+      sessions: {
+        sessions: [
+          {
+            id: "s1",
+            name: "Session 1",
+            createdAt: 1,
+            isNewChat: false,
+          },
+        ],
+        currentSessionId: "s1",
+        remoteSessionPaging: {
+          ...defaultRemoteSessionPaging,
+          hasMore: true,
+          isLoadingMore: true,
+          nextOffset: 25,
+          hasLoadedInitialPage: true,
+        },
+      },
+      ui: {
+        isSidebarCollapsed: false,
+        isMobileSidebarOpen: false,
+        isDeletingAllChats: false,
+      },
+    });
+
+    expect(screen.getByRole("button", { name: "sidebar.loading.more" })).toHaveAttribute("aria-disabled", "true");
   });
 });

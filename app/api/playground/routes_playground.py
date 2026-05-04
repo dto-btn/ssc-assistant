@@ -74,6 +74,7 @@ SUPPORTED_EXTENSIONS = {
 TEXT_MIME_PREFIX = "text/"
 IMAGE_MIME_PREFIX = "image/"
 DELETED_FLAG_VALUE = "true"
+DEFAULT_SESSION_PAGE_SIZE = 25
 
 
 def _is_marked_deleted(metadata: Optional[Dict[str, Any]]) -> bool:
@@ -93,6 +94,16 @@ def _normalize_extension(filename: str) -> Optional[str]:
     if last_dot == -1:
         return None
     return filename[last_dot:].lower()
+
+
+def _parse_timestamp(value: Optional[str]) -> float:
+    if not value:
+        return 0.0
+    try:
+        normalized = value.replace("Z", "+00:00")
+        return datetime.fromisoformat(normalized).timestamp()
+    except ValueError:
+        return 0.0
 
 
 # Keep attachment policy identical to the main app's extractor for `files` uploads.
@@ -327,6 +338,10 @@ def files_for_session(query: PlaygroundSessionFilesQuery):
         return {"message": _public_error_message(exc)}, exc.status_code
 
     session_id = query.sessionId
+    requested_limit = query.limit if isinstance(query.limit, int) else None
+    requested_offset = query.offset if isinstance(query.offset, int) else None
+    limit = DEFAULT_SESSION_PAGE_SIZE if requested_limit is None else max(requested_limit, 0)
+    offset = 0 if requested_offset is None else max(requested_offset, 0)
 
     try:
         oid = _get_authenticated_oid()
@@ -338,6 +353,8 @@ def files_for_session(query: PlaygroundSessionFilesQuery):
         container_client = _get_container_client()
         blob_list = container_client.list_blobs(name_starts_with=f"{oid}/", include=["metadata"])
         files: List[Dict[str, Any]] = []
+        grouped_files: Dict[str, List[Dict[str, Any]]] = {}
+        session_latest_activity: Dict[str, float] = {}
         session_activity: Dict[str, Dict[str, int]] = {}
 
         # Track per-session activity so the frontend can learn which sessions disappeared remotely.
@@ -361,30 +378,60 @@ def files_for_session(query: PlaygroundSessionFilesQuery):
             stats = _stats_for(session_from_meta)
             if stats is not None:
                 stats["active"] += 1
-            if session_id and session_from_meta != session_id:
-                continue
             content_type = None
             content_settings = getattr(blob, "content_settings", None)
             if content_settings:
                 content_type = getattr(content_settings, "content_type", None)
-            # Mirror the frontend's ``FileAttachment`` shape so responses hydrate Redux as-is.
-            files.append(
-                {
-                    "name": blob.name,
-                    "url": f"{container_client.url}/{blob.name}",
-                    "blobName": blob.name,
-                    "size": getattr(blob, "size", None),
-                    "contentType": content_type,
-                    "originalName": meta.get("originalname"),
-                    "uploadedAt": meta.get("uploadedat"),
-                    "sessionId": meta.get("sessionid"),
-                    "category": meta.get("category"),
-                    "metadataType": meta.get("type"),
-                    "sessionName": meta.get("sessionname"),
-                    "lastUpdated": meta.get("lastupdated"),
-                }
+            if session_id and session_from_meta != session_id:
+                continue
+            file_payload = {
+                "name": blob.name,
+                "url": f"{container_client.url}/{blob.name}",
+                "blobName": blob.name,
+                "size": getattr(blob, "size", None),
+                "contentType": content_type,
+                "originalName": meta.get("originalname"),
+                "uploadedAt": meta.get("uploadedat"),
+                "sessionId": meta.get("sessionid"),
+                "category": meta.get("category"),
+                "metadataType": meta.get("type"),
+                "sessionName": meta.get("sessionname"),
+                "lastUpdated": meta.get("lastupdated"),
+            }
+            if session_id:
+                files.append(file_payload)
+                continue
+            if not session_from_meta:
+                continue
+            grouped_files.setdefault(session_from_meta, []).append(file_payload)
+            latest_activity = _parse_timestamp(meta.get("lastupdated"))
+            if latest_activity <= 0:
+                latest_activity = _parse_timestamp(meta.get("uploadedat"))
+            session_latest_activity[session_from_meta] = max(
+                session_latest_activity.get(session_from_meta, 0.0),
+                latest_activity,
             )
-        response: Dict[str, Any] = {"files": files}
+
+        has_more = False
+        next_offset = None
+        if not session_id:
+            ordered_session_ids = sorted(
+                grouped_files.keys(),
+                key=lambda value: (session_latest_activity.get(value, 0.0), value),
+                reverse=True,
+            )
+            paged_session_ids = ordered_session_ids[offset: offset + limit] if limit > 0 else []
+            for selected_session_id in paged_session_ids:
+                files.extend(grouped_files.get(selected_session_id, []))
+            has_more = offset + len(paged_session_ids) < len(ordered_session_ids)
+            if has_more:
+                next_offset = offset + len(paged_session_ids)
+
+        response: Dict[str, Any] = {
+            "files": files,
+            "hasMore": has_more,
+            "nextOffset": next_offset,
+        }
         deleted_sessions = sorted(
             session
             for session, stats in session_activity.items()
