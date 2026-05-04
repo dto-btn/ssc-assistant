@@ -123,6 +123,14 @@
         "en": "Switch to light mode",
         "fr": "Passer en mode clair"
     },
+    "sidebar.more": {
+        "en": "More...",
+        "fr": "Plus..."
+    },
+    "sidebar.loading.more": {
+        "en": "Loading more...",
+        "fr": "Chargement en cours..."
+    },
     "delete.conversation": {
         "en": "Delete Conversation",
         "fr": "Supprimer la conversation"

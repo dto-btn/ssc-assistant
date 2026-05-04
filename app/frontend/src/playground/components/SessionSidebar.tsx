@@ -16,6 +16,7 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import {
   Chip,
+  CircularProgress,
   Divider,
   List,
   ListItem,
@@ -45,6 +46,7 @@ import SyncStatusIndicator from "./SyncStatusIndicator";
 import ProfileMenu from "./ProfileMenu/ProfileMenu";
 import { deleteSession as deleteSessionThunk, persistSessionRename } from "../store/thunks/sessionManagementThunks";
 import { closeMobileSidebar } from "../store/slices/uiSlice";
+import { loadMoreSessionsFromStorage } from "../store/thunks/sessionBootstrapThunks";
 
 /**
  * Sidebar for listing and managing Playground chat sessions.
@@ -64,6 +66,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
   const sessions = useAppSelector((state) => state.sessions.sessions);
   const sessionsNewestFirst = useAppSelector(selectSessionsNewestFirst);
   const currentSessionId = useAppSelector((state) => state.sessions.currentSessionId);
+  const remoteSessionPaging = useAppSelector((state) => state.sessions.remoteSessionPaging);
   const isSidebarCollapsed = useAppSelector(
     (state) => state.ui.isSidebarCollapsed
   );
@@ -197,6 +200,8 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
   }, [selectedSessionId]);
 
   const moreMenuOpen = Boolean(moreMenuAnchor);
+  const showLoadMoreButton = remoteSessionPaging.hasMore;
+  const isLoadingMoreSessions = remoteSessionPaging.isLoadingMore;
 
   const sidebarTitleId = "playground-session-sidebar-title";
 
@@ -361,6 +366,25 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
             </IconButton>
           </ListItem>
         ))}
+
+        {showLoadMoreButton && (
+          <ListItem disablePadding>
+            <ListItemButton
+              id="load-more-sessions-button"
+              disabled={isLoadingMoreSessions}
+              onClick={() => {
+                void dispatch(loadMoreSessionsFromStorage());
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: "0px", mr: "10px" }}>
+                {isLoadingMoreSessions ? <CircularProgress size={16} /> : <MoreHorizIcon fontSize="small" />}
+              </ListItemIcon>
+              <ListItemText
+                primary={isLoadingMoreSessions ? t("sidebar.loading.more") : t("sidebar.more")}
+              />
+            </ListItemButton>
+          </ListItem>
+        )}
 
         <Menu
           id="session-menu"
