@@ -148,8 +148,6 @@ export interface ListSessionFilesResult {
   files: FileAttachment[];
   deletedSessionIds: string[];
   sessionDeleted: boolean;
-  hasMore: boolean;
-  nextOffset: number | null;
 }
 
 /**
@@ -361,30 +359,14 @@ export async function renameRemoteSession({
 export async function listSessionFiles({
   accessToken,
   sessionId,
-  limit,
-  offset,
 }: {
   accessToken: string;
   sessionId?: string;
-  limit?: number;
-  offset?: number;
 }): Promise<ListSessionFilesResult> {
   if (!accessToken?.trim()) throw new Error("accessToken is required");
 
-  const params = new URLSearchParams();
-  if (sessionId) {
-    params.set("sessionId", sessionId);
-  }
-  if (typeof limit === "number" && Number.isFinite(limit)) {
-    params.set("limit", String(limit));
-  }
-  if (typeof offset === "number" && Number.isFinite(offset)) {
-    params.set("offset", String(offset));
-  }
-
-  const queryString = params.toString();
-  const url = queryString
-    ? `${FILES_FOR_SESSION_ENDPOINT}?${queryString}`
+  const url = sessionId
+    ? `${FILES_FOR_SESSION_ENDPOINT}?sessionId=${encodeURIComponent(sessionId)}`
     : FILES_FOR_SESSION_ENDPOINT;
 
   const response = await fetch(url, {
@@ -409,9 +391,7 @@ export async function listSessionFiles({
   }
   const deletedSessionIds = Array.from(deletedSessionIdsSet);
   const sessionDeleted = data?.sessionDeleted === true;
-  const hasMore = data?.hasMore === true;
-  const nextOffset = typeof data?.nextOffset === "number" ? data.nextOffset : null;
-  return { files: normalizedFiles, deletedSessionIds, sessionDeleted, hasMore, nextOffset };
+  return { files: normalizedFiles, deletedSessionIds, sessionDeleted };
 }
 
 /**

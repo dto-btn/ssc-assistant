@@ -102,8 +102,6 @@ class FilePayload:
 class PlaygroundSessionFilesQuery:
     """Query payload for listing attachments tied to a specific session."""
     sessionId: Optional[str] = field(default=None)
-    limit: Optional[int] = field(default=None)
-    offset: Optional[int] = field(default=None)
 
 
 @dataclass
@@ -129,8 +127,6 @@ class PlaygroundFilesResponse:
     files: List[PlaygroundFileMetadata]
     deletedSessionIds: List[str] = field(default_factory=list)
     sessionDeleted: bool = False
-    hasMore: bool = False
-    nextOffset: Optional[int] = None
 
 
 @dataclass

@@ -115,14 +115,6 @@
         "en": "Close chat sessions",
         "fr": "Fermer les sessions de conversation"
     },
-    "sidebar.more": {
-        "en": "More...",
-        "fr": "Plus..."
-    },
-    "sidebar.loading.more": {
-        "en": "Loading more...",
-        "fr": "Chargement en cours..."
-    },
     "delete.conversation": {
         "en": "Delete Conversation",
         "fr": "Supprimer la conversation"

@@ -6,18 +6,10 @@
  * requiring an existing local session record.
  */
 
-import { fetchFileDataUrl, listSessionFiles, type ListSessionFilesResult } from "../../api/storage";
+import { fetchFileDataUrl, listSessionFiles } from "../../api/storage";
 import type { AppThunk } from "..";
 import type { Session } from "../slices/sessionSlice";
-import {
-  addRecoveredSessions,
-  failRemoteSessionPaging,
-  finishRemoteSessionPaging,
-  renameSession,
-  setCurrentSession,
-  startRemoteSessionBootstrap,
-  startRemoteSessionLoadMore,
-} from "../slices/sessionSlice";
+import { addSession, renameSession, setCurrentSession } from "../slices/sessionSlice";
 import { setSessionFiles } from "../slices/sessionFilesSlice";
 import { hydrateSessionMessages, type Message } from "../slices/chatSlice";
 import type { FileAttachment } from "../../types";
@@ -28,8 +20,6 @@ import {
   pickLatestArchive,
 } from "../../utils/archives";
 import { applyRemoteSessionDeletion } from "./sessionManagementThunks";
-
-const SESSION_PAGE_SIZE = 25;
 
 export interface SessionRehydrationResult {
   restored: boolean;
@@ -177,24 +167,34 @@ const buildRecoveredName = (sessionId: string, uploadedAtMs: number, providedNam
   return `Recovered chat ${sessionId.slice(0, 8)}`;
 };
 
-const reconcileRemoteSessionDeletions = (
-  dispatch: Parameters<AppThunk>[0],
-  deletedSessionIds: string[],
-) => {
-  deletedSessionIds.forEach((sessionId) => {
-    if (sessionId) {
-      void dispatch(applyRemoteSessionDeletion(sessionId, { silent: true }));
-    }
-  });
-};
+/**
+ * Discover remote sessions during startup and queue rehydration jobs for each one.
+ */
+export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async (dispatch, getState) => {
+  const state = getState();
+  const accessToken = state.auth.accessToken;
+  if (!accessToken?.trim()) {
+    return;
+  }
 
-const processRemoteSessionPage = (
-  dispatch: Parameters<AppThunk>[0],
-  getState: Parameters<AppThunk>[1],
-  files: FileAttachment[],
-): { newlyAddedSessions: Session[] } => {
+  let files: FileAttachment[];
+  try {
+    const result = await listSessionFiles({ accessToken });
+    files = result.files;
+    if (result.deletedSessionIds.length) {
+      result.deletedSessionIds.forEach((sessionId) => {
+        if (sessionId) {
+          void dispatch(applyRemoteSessionDeletion(sessionId, { silent: true }));
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Failed to enumerate remote session files", error);
+    return;
+  }
+
   if (!files.length) {
-    return { newlyAddedSessions: [] };
+    return;
   }
 
   const grouped = new Map<string, { files: FileAttachment[]; latestTimestamp: number; sessionName?: string | null }>();
@@ -220,11 +220,14 @@ const processRemoteSessionPage = (
   }
 
   if (!grouped.size) {
-    return { newlyAddedSessions: [] };
+    return;
   }
 
-  const existingSessions = new Map(getState().sessions.sessions.map((session) => [session.id, session]));
+  //new session = fetched sessions from blob storage
+  //existing sessions = cached from local store
+  const existingSessions = new Map(state.sessions.sessions.map((session) => [session.id, session]));
   const newSessions: Session[] = [];
+
   const restorationTargets: string[] = [];
 
   grouped.forEach((value, sessionId) => {
@@ -237,6 +240,7 @@ const processRemoteSessionPage = (
     const trimmedRemoteName = value.sessionName?.trim();
     if (existing) {
       if (trimmedRemoteName && trimmedRemoteName.length && existing.name !== trimmedRemoteName) {
+        // Align any locally cached session titles with the latest metadata recovered from blob storage.
         dispatch(
           renameSession({
             id: sessionId,
@@ -258,93 +262,22 @@ const processRemoteSessionPage = (
     });
   });
 
-  if (newSessions.length) {
-    newSessions.sort((a, b) => a.createdAt - b.createdAt);
-    dispatch(addRecoveredSessions(newSessions));
+  if (!newSessions.length) {
+    restorationTargets.forEach((sessionId) => {
+      void dispatch(rehydrateSessionFromArchive(sessionId));
+    });
+    return;
+  }
+
+  newSessions.sort((a, b) => a.createdAt - b.createdAt);
+  newSessions.forEach((session) => dispatch(addSession(session)));
+
+  const newestSessionId = newSessions[newSessions.length - 1]?.id;
+  if (newestSessionId) {
+    dispatch(setCurrentSession(newestSessionId));
   }
 
   restorationTargets.forEach((sessionId) => {
     void dispatch(rehydrateSessionFromArchive(sessionId));
   });
-
-  return { newlyAddedSessions: newSessions };
-};
-
-const completeRemoteSessionPage = (
-  dispatch: Parameters<AppThunk>[0],
-  result: ListSessionFilesResult,
-  pageSize: number,
-  options?: { hasLoadedInitialPage?: boolean },
-) => {
-  dispatch(
-    finishRemoteSessionPaging({
-      hasMore: result.hasMore,
-      nextOffset: result.nextOffset,
-      pageSize,
-      hasLoadedInitialPage: options?.hasLoadedInitialPage,
-    }),
-  );
-};
-
-/**
- * Discover remote sessions during startup and queue rehydration jobs for each one.
- */
-export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async (dispatch, getState) => {
-  const state = getState();
-  const accessToken = state.auth.accessToken;
-  if (!accessToken?.trim()) {
-    return;
-  }
-
-  const pageSize = state.sessions.remoteSessionPaging?.pageSize ?? SESSION_PAGE_SIZE;
-  dispatch(startRemoteSessionBootstrap());
-
-  try {
-    const result = await listSessionFiles({ accessToken, limit: pageSize, offset: 0 });
-    reconcileRemoteSessionDeletions(dispatch, result.deletedSessionIds);
-    const { newlyAddedSessions } = processRemoteSessionPage(dispatch, getState, result.files);
-
-    const currentSessionId = getState().sessions.currentSessionId;
-    if (!currentSessionId && newlyAddedSessions.length) {
-      const newestSessionId = newlyAddedSessions[newlyAddedSessions.length - 1]?.id;
-      if (newestSessionId) {
-        dispatch(setCurrentSession(newestSessionId));
-      }
-    }
-
-    completeRemoteSessionPage(dispatch, result, pageSize, { hasLoadedInitialPage: true });
-  } catch (error) {
-    console.error("Failed to enumerate remote session files", error);
-    dispatch(failRemoteSessionPaging());
-    return;
-  }
-};
-
-/**
- * Fetch the next page of remote sessions and append them to the sidebar.
- */
-export const loadMoreSessionsFromStorage = (): AppThunk<Promise<void>> => async (dispatch, getState) => {
-  const state = getState();
-  const accessToken = state.auth.accessToken;
-  const paging = state.sessions.remoteSessionPaging;
-  if (!accessToken?.trim() || !paging?.hasMore || paging.isLoadingMore || paging.isInitialLoading) {
-    return;
-  }
-
-  dispatch(startRemoteSessionLoadMore());
-
-  try {
-    const result = await listSessionFiles({
-      accessToken,
-      limit: paging.pageSize,
-      offset: paging.nextOffset,
-    });
-    reconcileRemoteSessionDeletions(dispatch, result.deletedSessionIds);
-    processRemoteSessionPage(dispatch, getState, result.files);
-    completeRemoteSessionPage(dispatch, result, paging.pageSize);
-  } catch (error) {
-    console.error("Failed to load more remote session files", error);
-    dispatch(failRemoteSessionPaging());
-    return;
-  }
 };
