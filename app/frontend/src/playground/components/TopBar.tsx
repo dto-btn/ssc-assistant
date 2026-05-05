@@ -145,7 +145,6 @@ const TopBar: React.FC<TopBarProps> = ({
                   },
                 }}
                 aria-label={themeMode === "dark" ? t("theme.switch.light") : t("theme.switch.dark")}
-                title={themeMode === "dark" ? t("theme.switch.light") : t("theme.switch.dark")}
               >
                 {themeMode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
               </IconButton>
@@ -222,7 +221,6 @@ const TopBar: React.FC<TopBarProps> = ({
                   },
                 }}
                 aria-label={themeMode === "dark" ? t("theme.switch.light") : t("theme.switch.dark")}
-                title={themeMode === "dark" ? t("theme.switch.light") : t("theme.switch.dark")}
               >
                 {themeMode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
               </IconButton>
