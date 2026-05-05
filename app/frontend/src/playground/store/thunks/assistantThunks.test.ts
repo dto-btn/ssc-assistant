@@ -56,6 +56,7 @@ const DEFAULT_COMPLETION_RESULT = {
 };
 
 const GROUNDING_PROMPT_FRAGMENT = "treat that material as the primary evidence for your answer";
+const BITS_FILTER_PROMPT_FRAGMENT = "apply all explicit user constraints as retrieval filters";
 const CITATION_HARVEST_PROMPT_FRAGMENT = "You are gathering authoritative source material for a user request.";
 const REWRITE_PROMPT_FRAGMENT = "You are revising an assistant answer using cited source excerpts returned from MCP tools";
 
@@ -69,6 +70,12 @@ const policyServer = {
   server_label: "policy-server",
   server_description: "Policy content MCP",
   server_url: "https://example.com/policy/mcp",
+};
+
+const bitsServer = {
+  server_label: "bits_mcp",
+  server_description: "Business request and change-request workflows",
+  server_url: "https://example.com/bits/mcp",
 };
 
 type MakeStoreOptions = {
@@ -329,6 +336,72 @@ describe("sendAssistantMessage auto-rename", () => {
     expect(request.messages[0]).toMatchObject({ role: "system" });
     expect(request.messages[0].content).toContain(GROUNDING_PROMPT_FRAGMENT);
     expect(countGroundingMessages(request.messages as Array<{ role: string; content?: unknown }>)).toBe(1);
+  });
+
+  it("injects the BITS filter-enforcement system prompt when a bits server is routed", async () => {
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [bitsServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Give me a pie chart of BA OPI that worked on BRs for March for ESDC high priority only.",
+      }) as any,
+    );
+
+    const request = createCompletionMock.mock.calls[0][0];
+    const systemMessages = (request.messages as Array<{ role: string; content?: unknown }>).filter(
+      (message) => message.role === "system" && typeof message.content === "string"
+    );
+
+    expect(
+      systemMessages.some((message) =>
+        String(message.content).includes(BITS_FILTER_PROMPT_FRAGMENT)
+      )
+    ).toBe(true);
+  });
+
+  it("injects inferred BITS query filters from the user prompt", async () => {
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [bitsServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Give me a pie chart of BA OPI that worked on BRs for the month of March for the client ESDC for brs of high priority only.",
+      }) as any,
+    );
+
+    const request = createCompletionMock.mock.calls[0][0];
+    const systemMessages = (request.messages as Array<{ role: string; content?: unknown }>)
+      .filter((message) => message.role === "system" && typeof message.content === "string")
+      .map((message) => String(message.content));
+
+    expect(systemMessages.some((content) => content.includes("Date Submited (SUBMIT_DATE) >="))).toBe(true);
+    expect(systemMessages.some((content) => content.includes("Date Submited (SUBMIT_DATE) <="))).toBe(true);
+    expect(systemMessages.some((content) => content.includes("Client Name candidate: ESDC"))).toBe(true);
+    expect(systemMessages.some((content) => content.includes("Priority (PRIORITY_EN) = High"))).toBe(true);
+  });
+
+  it("requires tool usage for BITS-routed completion runs", async () => {
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [bitsServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Show BA OPI distribution for ESDC high priority BRs in March",
+      }) as any,
+    );
+
+    const request = createCompletionMock.mock.calls[0][0];
+    expect(request.toolChoice).toBe("required");
   });
 
   it("orders the grounding system message before preflight routing context", async () => {

@@ -123,6 +123,7 @@ export const BASE_MARKDOWN_SX: SxProps<Theme> = {
   "& .mermaid": {
     maxWidth: "100%",
     overflowX: "auto",
+    paddingInline: "0.5rem",
   },
   "& .mermaid svg, & svg[id^='mermaid-']": {
     width: "100% !important",
@@ -130,6 +131,7 @@ export const BASE_MARKDOWN_SX: SxProps<Theme> = {
     maxWidth: "100%",
     display: "block",
     margin: "0 auto",
+    overflow: "visible",
     minHeight: { xs: "200px", md: "400px" },
   },
 };

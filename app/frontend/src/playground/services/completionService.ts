@@ -48,6 +48,13 @@ export interface CompletionResult {
   completed: boolean;
   provider: string;
   citations?: Citation[];
+  mcpToolOutputs?: CompletionMcpToolOutput[];
+}
+
+export interface CompletionMcpToolOutput {
+  toolName: string;
+  serverLabel?: string;
+  output: string;
 }
 
 /**
