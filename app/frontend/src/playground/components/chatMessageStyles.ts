@@ -83,6 +83,24 @@ export const ASSISTANT_MARKDOWN_SX: SxProps<Theme> = {
     color: "#4B3FA8",
     fontWeight: 500,
   },
+  "& .mermaid .nodeLabel, & .mermaid .nodeLabel *, & .mermaid .label, & .mermaid .label *, & svg[id^='mermaid-'] .nodeLabel, & svg[id^='mermaid-'] .nodeLabel *, & svg[id^='mermaid-'] .label, & svg[id^='mermaid-'] .label *": {
+    color: (theme) =>
+      theme.palette.mode === "dark"
+        ? "#121212 !important"
+        : "inherit",
+  },
+  "& .mermaid .nodeLabel text, & .mermaid .nodeLabel tspan, & .mermaid .label text, & .mermaid .label tspan, & svg[id^='mermaid-'] .nodeLabel text, & svg[id^='mermaid-'] .nodeLabel tspan, & svg[id^='mermaid-'] .label text, & svg[id^='mermaid-'] .label tspan": {
+    fill: (theme) =>
+      theme.palette.mode === "dark"
+        ? "#121212 !important"
+        : "inherit",
+  },
+  "& .mermaid .pieTitleText, & .mermaid .legend text, & svg[id^='mermaid-'] .pieTitleText, & svg[id^='mermaid-'] .legend text": {
+    fill: (theme) =>
+      theme.palette.mode === "dark"
+        ? `${theme.palette.text.primary} !important`
+        : "inherit",
+  },
 };
 
 export const USER_MARKDOWN_SX: SxProps<Theme> = {

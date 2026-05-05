@@ -115,6 +115,14 @@
         "en": "Close chat sessions",
         "fr": "Fermer les sessions de conversation"
     },
+    "theme.switch.dark": {
+        "en": "Switch to dark mode",
+        "fr": "Passer en mode sombre"
+    },
+    "theme.switch.light": {
+        "en": "Switch to light mode",
+        "fr": "Passer en mode clair"
+    },
     "delete.conversation": {
         "en": "Delete Conversation",
         "fr": "Supprimer la conversation"

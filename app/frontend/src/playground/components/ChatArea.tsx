@@ -28,6 +28,7 @@ import { sendAssistantMessage } from "../store/thunks/assistantThunks";
 import OrchestratorDebugPanel from "./OrchestratorDebugPanel";
 import TopBar from "./TopBar";
 import { useAppSelector } from "../store/hooks";
+import type { PaletteMode } from "@mui/material";
 
 /**
  * Optional controls passed from layout so ChatArea can reopen a hidden sidebar.
@@ -35,11 +36,15 @@ import { useAppSelector } from "../store/hooks";
 interface ChatAreaProps {
   onOpenSidebar?: () => void;
   isSidebarOpen?: boolean;
+  themeMode: PaletteMode;
+  onToggleTheme: () => void;
 }
 
 const ChatArea: React.FC<ChatAreaProps> = ({
   onOpenSidebar,
   isSidebarOpen,
+  themeMode,
+  onToggleTheme,
 }) => {
   const { t } = useTranslation('playground');
   const dispatch = useDispatch<AppDispatch>();
@@ -80,6 +85,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             isSidebarOpen={isSidebarOpen}
             isMobile={isMobile}
             isMobileSidebarOpen={isMobileSidebarOpen}
+            themeMode={themeMode}
+            onToggleTheme={onToggleTheme}
           />
         </Box>
       </Box>

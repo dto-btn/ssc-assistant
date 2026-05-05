@@ -33,7 +33,21 @@ const FeedbackForm: React.FC = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>{t("cancel")}</Button>
+          <Button
+            variant="outlined"
+            color="inherit"
+            sx={{
+              color: "text.primary",
+              borderColor: "divider",
+              "&:hover": {
+                borderColor: "text.secondary",
+                bgcolor: "action.hover",
+              },
+            }}
+            onClick={() => setOpen(false)}
+          >
+            {t("cancel")}
+          </Button>
           <Button
             variant="contained"
             onClick={() => {

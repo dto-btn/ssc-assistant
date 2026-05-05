@@ -61,7 +61,22 @@ export const FeedbackForm = () => {
         />
       </DialogContent>
       <DialogActions>
-        <Button id="feedback-cancel-button" onClick={() => close()}>{t("cancel")}</Button>
+        <Button
+          id="feedback-cancel-button"
+          variant="outlined"
+          color="inherit"
+          sx={{
+            color: "text.primary",
+            borderColor: "divider",
+            "&:hover": {
+              borderColor: "text.secondary",
+              bgcolor: "action.hover",
+            },
+          }}
+          onClick={() => close()}
+        >
+          {t("cancel")}
+        </Button>
         <Button
           id="feedback-submit-button"
           style={{ backgroundColor: "#4b3e99", color: "white" }}
