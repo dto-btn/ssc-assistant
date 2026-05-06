@@ -31,6 +31,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
   const { t } = useTranslation();
   const theme = useTheme();
   const [tabIndex, setTabIndex] = React.useState(0);
+  // Card cells prefer raw values over "key: value" labels for nested one-field objects.
   const toCardDisplayValue = (value: unknown) =>
     toDisplayValue(value, { flattenSingleEntryObject: false });
 

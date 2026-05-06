@@ -29,6 +29,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
     return data.map((row) => {
       const normalizedRow: Record<string, unknown> = {};
       Object.entries(row).forEach(([key, value]) => {
+        // Preserve nulls so DataGrid can treat empty values as blank cells.
         normalizedRow[key] = toDisplayValue(value, { nullValue: null });
       });
       return normalizedRow as unknown as BusinessRequest;
@@ -272,6 +273,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
     ];
 
     const columnVisibilityModel: { [key: string]: boolean } = {};
+    // Honor server-selected fields first, then fall back to a curated compact default set.
     const fieldsToShow = requestedFields.length > 0 ? requestedFields : fallbackVisibleFields;
     for (const field of allFields) {
       columnVisibilityModel[field] = fieldsToShow.includes(field);

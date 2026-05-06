@@ -493,6 +493,9 @@ const hasBrArtifactKeys = (value: unknown): value is {
   );
 };
 
+/**
+ * Walk arbitrary tool payload shapes to find the first BITS artifact envelope.
+ */
 const findBrArtifactPayload = (value: unknown): {
   br?: unknown;
   BR?: unknown;
@@ -560,6 +563,10 @@ const isLikelyBrRow = (value: unknown): value is Record<string, unknown> => {
   );
 };
 
+/**
+ * Parse structured BITS artifacts from MCP tool output text.
+ * Supports raw row arrays and wrapped payloads (`br`, `metadata`, `brquery`, `brselect`).
+ */
 const parseBitsArtifactsFromToolOutput = (
   toolOutput: string,
 ): PlaygroundBrArtifacts | undefined => {
@@ -627,6 +634,9 @@ const parseBitsArtifactsFromToolOutput = (
   return artifacts;
 };
 
+/**
+ * Merge incremental tool payloads while preserving prior context across retries/chunks.
+ */
 const mergeBitsArtifacts = (
   current: PlaygroundBrArtifacts,
   incoming: PlaygroundBrArtifacts,
@@ -645,6 +655,7 @@ const mergeBitsArtifacts = (
 };
 
 const hasBitsServer = (servers: Tool.Mcp[] = []): boolean => {
+  // Broad matching keeps compatibility with server naming variations in different envs.
   return servers.some((server) => {
     const haystack = `${server.server_label || ""} ${server.server_description || ""} ${server.server_url || ""}`.toLowerCase();
     return haystack.includes("bits") || haystack.includes("business-request") || haystack.includes("br");
@@ -675,7 +686,7 @@ const inferBitsFilterHintsFromPrompt = (promptText: string): string[] => {
     }
   }
 
-  const clientMatch = promptText.match(/\bclient\b\s+([A-Za-z0-9][A-Za-z0-9 '&()\-\.]{1,100}?)(?=(?:\s+for\s+brs?|\s+for\s+the\s+month|\s+with\s+|\s+of\s+|\s+that\s+|\s+priority|\s+only|[,.;]|$))/i);
+  const clientMatch = promptText.match(/\bclient\b\s+([A-Za-z0-9][A-Za-z0-9 '&().-]{1,100}?)(?=(?:\s+for\s+brs?|\s+for\s+the\s+month|\s+with\s+|\s+of\s+|\s+that\s+|\s+priority|\s+only|[,.;]|$))/i);
   if (clientMatch) {
     const clientCandidate = clientMatch[1].trim();
     if (clientCandidate.length > 0) {

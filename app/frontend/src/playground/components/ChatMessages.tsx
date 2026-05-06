@@ -265,6 +265,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
       return undefined;
     }
 
+    // Lightweight heuristic extraction to show likely filters when tool metadata is missing.
     const queryFilters: BrQueryFilter[] = [];
 
     const monthMatch = sourcePrompt.match(/\b(january|february|march|april|may|june|july|august|september|october|november|december)\b(?:\s+(\d{4}))?/i);
@@ -346,6 +347,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
 
     const addRow = (row: Record<string, string | number>) => {
       const key = JSON.stringify(row);
+      // Deduplicate syntactically repeated lines so the table mirrors unique diagram facts.
       if (!seen.has(key)) {
         seen.add(key);
         rows.push({ id: `${rows.length + 1}`, ...row });
