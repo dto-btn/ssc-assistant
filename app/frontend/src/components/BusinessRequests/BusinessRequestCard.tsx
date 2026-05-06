@@ -16,39 +16,12 @@ import {
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { DateDisplay } from "./subcomponents/DateDisplay";
+import { toDisplayValue } from "../../utils/displayValue";
 
 interface BusinessRequestProps {
   data: BusinessRequest;
   lang: string;
 }
-
-/**
- * Safely convert any value to a string for rendering.
- * Handles objects, arrays, and primitives without throwing React errors.
- */
-const toDisplayValue = (value: unknown): string => {
-  if (typeof value === "string") {
-    return value;
-  }
-
-  if (value === null || value === undefined) {
-    return "";
-  }
-
-  if (typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
-
-  if (Array.isArray(value)) {
-    return value.map((item) => toDisplayValue(item)).join(", ");
-  }
-
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return String(value);
-  }
-};
 
 const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
   data,
@@ -58,6 +31,8 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
   const { t } = useTranslation();
   const theme = useTheme();
   const [tabIndex, setTabIndex] = React.useState(0);
+  const toCardDisplayValue = (value: unknown) =>
+    toDisplayValue(value, { flattenSingleEntryObject: false });
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabIndex(newValue);
@@ -73,7 +48,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
           <Link
             id="BITS-PROD-link"
             href={`https://bitsprod.ssc-spc.gc.ca/BR/${data.BR_NMBR}`}
-            rel="noopener"
+            rel="noopener noreferrer"
             target="_blank"
           >
             BR # {data.BR_NMBR}
@@ -101,7 +76,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                     <strong>{t("LEAD_PRODUCT")}</strong>
                   </TableCell>
                   <TableCell>
-                    {toDisplayValue(isEnglish ? data.LEAD_PRODUCT_EN : data.LEAD_PRODUCT_FR)}
+                    {toCardDisplayValue(isEnglish ? data.LEAD_PRODUCT_EN : data.LEAD_PRODUCT_FR)}
                   </TableCell>
                 </TableRow>
                 <TableRow>
@@ -109,7 +84,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                     <strong>{t("PRODUCTS")}</strong>
                   </TableCell>
                   <TableCell>
-                    {toDisplayValue(isEnglish ? data.PRODUCTS_EN : data.PRODUCTS_FR)}
+                    {toCardDisplayValue(isEnglish ? data.PRODUCTS_EN : data.PRODUCTS_FR)}
                   </TableCell>
                 </TableRow>
                 <TableRow>
@@ -117,7 +92,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                     <strong>{t("br.type")}</strong>
                   </TableCell>
                   <TableCell>
-                    {toDisplayValue(isEnglish ? data.BR_TYPE_EN : data.BR_TYPE_FR)}
+                    {toCardDisplayValue(isEnglish ? data.BR_TYPE_EN : data.BR_TYPE_FR)}
                   </TableCell>
                 </TableRow>
                 <TableRow>
@@ -125,7 +100,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                     <strong>{t("status")}</strong>
                   </TableCell>
                   <TableCell>
-                    {toDisplayValue(isEnglish ? data.BITS_STATUS_EN : data.BITS_STATUS_FR)}
+                    {toCardDisplayValue(isEnglish ? data.BITS_STATUS_EN : data.BITS_STATUS_FR)}
                   </TableCell>
                 </TableRow>
                 <TableRow>
@@ -133,7 +108,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                     <strong>{t("PHASE")}</strong>
                   </TableCell>
                   <TableCell>
-                    {toDisplayValue(isEnglish ? data.PHASE_EN : data.PHASE_FR)}
+                    {toCardDisplayValue(isEnglish ? data.PHASE_EN : data.PHASE_FR)}
                   </TableCell>
                 </TableRow>
                 <TableRow>
@@ -141,7 +116,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                     <strong>{t("priority")}</strong>
                   </TableCell>
                   <TableCell>
-                    {toDisplayValue(isEnglish ? data.PRIORITY_EN : data.PRIORITY_FR)}
+                    {toCardDisplayValue(isEnglish ? data.PRIORITY_EN : data.PRIORITY_FR)}
                   </TableCell>
                 </TableRow>
                 <TableRow>
@@ -149,7 +124,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                     <strong>{t("client.name")}</strong>
                   </TableCell>
                   <TableCell>
-                    {toDisplayValue(isEnglish
+                    {toCardDisplayValue(isEnglish
                       ? data.RPT_GC_ORG_NAME_EN
                       : data.RPT_GC_ORG_NAME_FR)}
                   </TableCell>
@@ -159,7 +134,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                     <strong>{t("client.subgroup")}</strong>
                   </TableCell>
                   <TableCell>
-                    {toDisplayValue(isEnglish ? data.CLIENT_SUBGRP_EN : data.CLIENT_SUBGRP_FR)}
+                    {toCardDisplayValue(isEnglish ? data.CLIENT_SUBGRP_EN : data.CLIENT_SUBGRP_FR)}
                   </TableCell>
                 </TableRow>
                 <TableRow>
@@ -167,7 +142,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                     <strong>{t("complexity")}</strong>
                   </TableCell>
                   <TableCell>
-                    {toDisplayValue(isEnglish ? data.CPLX_EN : data.CPLX_FR)}
+                    {toCardDisplayValue(isEnglish ? data.CPLX_EN : data.CPLX_FR)}
                   </TableCell>
                 </TableRow>
                 <TableRow>
@@ -175,7 +150,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                     <strong>{t("scope")}</strong>
                   </TableCell>
                   <TableCell>
-                    {toDisplayValue(isEnglish ? data.SCOPE_EN : data.SCOPE_FR)}
+                    {toCardDisplayValue(isEnglish ? data.SCOPE_EN : data.SCOPE_FR)}
                   </TableCell>
                 </TableRow>
                 <TableRow>
@@ -183,7 +158,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                     <strong>{t("GCIT_PRIORITY")}</strong>
                   </TableCell>
                   <TableCell>
-                    {toDisplayValue(isEnglish ? data.GCIT_PRIORITY_EN : data.GCIT_PRIORITY_FR)}
+                    {toCardDisplayValue(isEnglish ? data.GCIT_PRIORITY_EN : data.GCIT_PRIORITY_FR)}
                   </TableCell>
                 </TableRow>
                 <TableRow>
@@ -191,26 +166,26 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                     <strong>{t("GCIT_CAT")}</strong>
                   </TableCell>
                   <TableCell>
-                    {toDisplayValue(isEnglish ? data.GCIT_CAT_EN : data.GCIT_CAT_FR)}
+                    {toCardDisplayValue(isEnglish ? data.GCIT_CAT_EN : data.GCIT_CAT_FR)}
                   </TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>
                     <strong>{t("IO_ID")}</strong>
                   </TableCell>
-                  <TableCell>{toDisplayValue(data.IO_ID)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.IO_ID)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>
                     <strong>{t("EPS_NMBR")}</strong>
                   </TableCell>
-                  <TableCell>{toDisplayValue(data.EPS_NMBR)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.EPS_NMBR)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>
                     <strong>{t("ECD_NMBR")}</strong>
                   </TableCell>
-                  <TableCell>{toDisplayValue(data.ECD_NMBR)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.ECD_NMBR)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>
@@ -218,7 +193,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                   </TableCell>
                   <TableCell>
                     {(() => {
-                      const safeBrs = toDisplayValue(data.ASSOC_BRS);
+                      const safeBrs = toCardDisplayValue(data.ASSOC_BRS);
                       return (
                         data.ASSOC_BRS &&
                         typeof data.ASSOC_BRS === "string" &&
@@ -228,7 +203,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                               <Link
                                 className={`BITS-PROD-BR-${br.trim()}-link`}
                                 href={`https://bitsprod.ssc-spc.gc.ca/BR/${br.trim()}`}
-                                rel="noopener"
+                                rel="noopener noreferrer"
                                 target="_blank"
                               >
                                 {br.trim()}
@@ -240,7 +215,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
                           <Link
                             className={`BITS-PROD-BR-${safeBrs}-link`}
                             href={`https://bitsprod.ssc-spc.gc.ca/BR/${safeBrs}`}
-                            rel="noopener"
+                            rel="noopener noreferrer"
                             target="_blank"
                           >
                             {safeBrs}
@@ -324,67 +299,67 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
               <TableBody>
                 <TableRow>
                   <TableCell>{t("BR_OWNER")}</TableCell>
-                  <TableCell>{toDisplayValue(data.BR_OWNER)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.BR_OWNER)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>{t("ACC_MANAGER_OPI")}</TableCell>
-                  <TableCell>{toDisplayValue(data.ACC_MANAGER_OPI)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.ACC_MANAGER_OPI)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>{t("AGR_OPI")}</TableCell>
-                  <TableCell>{toDisplayValue(data.AGR_OPI)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.AGR_OPI)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>{t("BA_OPI")}</TableCell>
-                  <TableCell>{toDisplayValue(data.BA_OPI)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.BA_OPI)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>{t("BA_PRICING_OPI")}</TableCell>
-                  <TableCell>{toDisplayValue(data.BA_PRICING_OPI)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.BA_PRICING_OPI)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>{t("BA_PRICING_TL")}</TableCell>
-                  <TableCell>{toDisplayValue(data.BA_PRICING_TL)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.BA_PRICING_TL)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>{t("BA_TL")}</TableCell>
-                  <TableCell>{toDisplayValue(data.BA_TL)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.BA_TL)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>{t("CSM_DIRECTOR")}</TableCell>
-                  <TableCell>{toDisplayValue(data.CSM_DIRECTOR)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.CSM_DIRECTOR)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>{t("EAOPI")}</TableCell>
-                  <TableCell>{toDisplayValue(data.EAOPI)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.EAOPI)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>{t("PM_OPI")}</TableCell>
-                  <TableCell>{toDisplayValue(data.PM_OPI)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.PM_OPI)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>{t("QA_OPI")}</TableCell>
-                  <TableCell>{toDisplayValue(data.QA_OPI)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.QA_OPI)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>{t("SDM_TL_OPI")}</TableCell>
-                  <TableCell>{toDisplayValue(data.SDM_TL_OPI)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.SDM_TL_OPI)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>{t("TEAMLEADER")}</TableCell>
-                  <TableCell>{toDisplayValue(data.TEAMLEADER)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.TEAMLEADER)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>{t("WIO_OPI")}</TableCell>
-                  <TableCell>{toDisplayValue(data.WIO_OPI)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.WIO_OPI)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>{t("PROD_OPI")}</TableCell>
-                  <TableCell>{toDisplayValue(data.PROD_OPI)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.PROD_OPI)}</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell>{t("SOLN_OPI")}</TableCell>
-                  <TableCell>{toDisplayValue(data.SOLN_OPI)}</TableCell>
+                  <TableCell>{toCardDisplayValue(data.SOLN_OPI)}</TableCell>
                 </TableRow>
               </TableBody>
             </Table>

@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from "react";
-import { Box, Link, Paper, TableContainer, useTheme, Modal, Button } from "@mui/material";
+import { Box, Link, Paper, TableContainer, Typography, useTheme, Modal, Button } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { formatDate } from "../../components/BusinessRequests/subcomponents/DateDisplay";
 import BusinessRequestCard from "../../components/BusinessRequests/BusinessRequestCard";
 import { transformToBusinessRequest } from "../../util/bits_utils";
+import { toDisplayValue } from "../../utils/displayValue";
 
 interface BusinessRequestTableProps {
   data: Array<BusinessRequest>;
@@ -12,40 +13,6 @@ interface BusinessRequestTableProps {
   show_fields: string[];
   brRequest?: BusinessRequest;
 }
-
-const toDisplayValue = (value: unknown): string | number | null => {
-  if (typeof value === "string" || typeof value === "number") {
-    return value;
-  }
-
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  if (typeof value === "boolean") {
-    return value ? "true" : "false";
-  }
-
-  if (Array.isArray(value)) {
-    return value.map((item) => String(toDisplayValue(item) ?? "")).join(", ");
-  }
-
-  if (typeof value === "object") {
-    const entries = Object.entries(value as Record<string, unknown>);
-    if (entries.length === 1) {
-      const [key, nested] = entries[0];
-      return `${key}: ${String(toDisplayValue(nested) ?? "")}`;
-    }
-
-    try {
-      return JSON.stringify(value);
-    } catch {
-      return String(value);
-    }
-  }
-
-  return String(value);
-};
 
 const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
   data,
@@ -62,7 +29,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
     return data.map((row) => {
       const normalizedRow: Record<string, unknown> = {};
       Object.entries(row).forEach(([key, value]) => {
-        normalizedRow[key] = toDisplayValue(value);
+        normalizedRow[key] = toDisplayValue(value, { nullValue: null });
       });
       return normalizedRow as unknown as BusinessRequest;
     });
@@ -110,11 +77,14 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
       renderCell: (params) => (
         <Link
           className="br-table-link"
+          component="button"
+          type="button"
+          aria-label={t("br.open.details", { br: params.value })}
           onClick={(event) => {
             event.stopPropagation();
             handlePopupOpen(params.value);
           }}
-          style={{ cursor: "pointer" }}
+          sx={{ cursor: "pointer", background: "none", border: 0, p: 0 }}
         >
           #{params.value}
         </Link>
@@ -234,8 +204,8 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
     },
   ];
 
-  const paginationModel = { page: 0, pageSize: 10 };
-  const fallbackVisibleFields = [
+  const paginationModel = useMemo(() => ({ page: 0, pageSize: 10 }), []);
+  const fallbackVisibleFields = useMemo(() => [
     "BR_NMBR",
     "BR_SHORT_TITLE",
     isEnglish ? "RPT_GC_ORG_NAME_EN" : "RPT_GC_ORG_NAME_FR",
@@ -243,12 +213,13 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
     isEnglish ? "BITS_STATUS_EN" : "BITS_STATUS_FR",
     isEnglish ? "PRIORITY_EN" : "PRIORITY_FR",
     "SUBMIT_DATE",
-  ];
-  const requestedFields = Array.isArray(show_fields)
-    ? show_fields.filter((field) => typeof field === "string")
-    : [];
+  ], [isEnglish]);
+  const requestedFields = useMemo(
+    () => Array.isArray(show_fields) ? show_fields.filter((field) => typeof field === "string") : [],
+    [show_fields]
+  );
 
-  const getColumnVisibilityModel = () => {
+  const columnVisibilityModel = useMemo(() => {
     const allFields = [
       "LEAD_PRODUCT_EN",
       "LEAD_PRODUCT_FR",
@@ -306,7 +277,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
       columnVisibilityModel[field] = fieldsToShow.includes(field);
     }
     return columnVisibilityModel;
-  };
+  }, [requestedFields, fallbackVisibleFields]);
 
   return (
     <Box>
@@ -324,7 +295,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
               paginationModel,
             },
             columns: {
-              columnVisibilityModel: getColumnVisibilityModel(),
+              columnVisibilityModel: columnVisibilityModel,
             },
           }}
           pageSizeOptions={[5, 10]}
@@ -343,14 +314,21 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
           }}
         />
       </TableContainer>
-      <Modal open={open} onClose={handlePopupClose}>
+      <Modal
+        open={open}
+        onClose={handlePopupClose}
+        aria-labelledby="br-modal-title"
+        aria-describedby="br-modal-content"
+      >
         <Box
+          role="dialog"
+          aria-modal="true"
           sx={{
             bgcolor: theme.palette.background.paper,
             borderRadius: 3,
             boxShadow: 24,
             p: 4,
-            minWidth: 400,
+            minWidth: "min(400px, 90vw)",
             maxWidth: 600,
             width: "90vw",
             maxHeight: "95vh",
@@ -364,8 +342,16 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
             border: "1px solid " + theme.palette.divider,
           }}
         >
+          <Typography
+            id="br-modal-title"
+            variant="h6"
+            component="h2"
+            sx={{ width: "100%", mb: 1 }}
+          >
+            {t("br.modal.title")}
+          </Typography>
           {brData && (
-            <Box sx={{ width: "100%", overflow: "auto", maxHeight: "70vh" }}>
+            <Box id="br-modal-content" sx={{ width: "100%", overflow: "auto", maxHeight: "70vh" }}>
               <BusinessRequestCard
                 key={brData.BR_NMBR}
                 data={brData}

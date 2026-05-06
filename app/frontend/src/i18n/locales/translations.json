@@ -1042,5 +1042,25 @@
     "new.conversation.pmcoe": {
         "en": "PMCoE Agent",
         "fr": "Agent CEGP"
+    },
+    "br.query.parameters": {
+        "en": "Query Parameters",
+        "fr": "Paramètres de requête"
+    },
+    "mermaid.chart.data": {
+        "en": "Chart Data",
+        "fr": "Données du graphique"
+    },
+    "br.modal.title": {
+        "en": "Business Request Details",
+        "fr": "Détails de la demande d'affaires"
+    },
+    "br.open.details": {
+        "en": "Open business request #{{br}} details",
+        "fr": "Ouvrir les détails de la demande d'affaires no {{br}}"
+    },
+    "loading": {
+        "en": "Loading...",
+        "fr": "Chargement..."
     }
 }
