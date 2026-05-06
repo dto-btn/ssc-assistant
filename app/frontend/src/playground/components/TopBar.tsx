@@ -85,7 +85,14 @@ const TopBar: React.FC<TopBarProps> = ({
                 aria-label={isSidebarOpen ? t("sidebar.collapse", { ns: "playground" }) : t("sidebar.open", { ns: "playground" })}
                 aria-expanded={isSidebarOpen}
                 aria-controls="playground-session-sidebar"
-                sx={{ color: "white" }}
+                sx={{
+                  color: "white",
+                  "&:focus-visible": {
+                    outline: "2px solid",
+                    outlineColor: "primary.main",
+                    outlineOffset: "2px",
+                  },
+                }}
               >
                 {isSidebarOpen ? <MenuOpenIcon /> : <MenuIcon />}
               </IconButton>
@@ -125,7 +132,14 @@ const TopBar: React.FC<TopBarProps> = ({
               <IconButton
                 onClick={onToggleSidebar}
                 aria-label={t("sidebar.close", { ns: "playground" })}
-                sx={{ color: "white" }}
+                sx={{
+                  color: "white",
+                  "&:focus-visible": {
+                    outline: "2px solid",
+                    outlineColor: "primary.main",
+                    outlineOffset: "2px",
+                  },
+                }}
               >
                 <CloseIcon />
               </IconButton>
@@ -142,6 +156,11 @@ const TopBar: React.FC<TopBarProps> = ({
                   minHeight: "44px",
                   "&:hover": {
                     bgcolor: "rgba(255, 255, 255, 0.1)",
+                  },
+                  "&:focus-visible": {
+                    outline: "2px solid",
+                    outlineColor: "primary.main",
+                    outlineOffset: "2px",
                   },
                 }}
                 aria-label={themeMode === "dark" ? t("theme.switch.light") : t("theme.switch.dark")}
@@ -184,6 +203,11 @@ const TopBar: React.FC<TopBarProps> = ({
                 bgcolor: themeMode === "dark" ? "#2d3347" : "#f5f5f5",
                 color: themeMode === "dark" ? "#ffffff" : "#2e3470",
               },
+              "&:focus-visible": {
+                outline: "2px solid",
+                outlineColor: "primary.main",
+                outlineOffset: "2px",
+              },
             }}
           >
             <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>
@@ -202,6 +226,11 @@ const TopBar: React.FC<TopBarProps> = ({
               "&:hover": {
                 bgcolor: "rgba(255, 255, 255, 0.1)",
               },
+              "&:focus-visible": {
+                outline: "2px solid",
+                outlineColor: "primary.main",
+                outlineOffset: "2px",
+              },
             }}
             aria-label={i18n.language === "en" ? "Passer au français" : "Switch to English"}
           >
@@ -218,6 +247,11 @@ const TopBar: React.FC<TopBarProps> = ({
                   minHeight: "44px",
                   "&:hover": {
                     bgcolor: "rgba(255, 255, 255, 0.1)",
+                  },
+                  "&:focus-visible": {
+                    outline: "2px solid",
+                    outlineColor: "primary.main",
+                    outlineOffset: "2px",
                   },
                 }}
                 aria-label={themeMode === "dark" ? t("theme.switch.light") : t("theme.switch.dark")}

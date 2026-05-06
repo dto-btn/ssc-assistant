@@ -1,20 +1,33 @@
 import { SxProps, Theme } from "@mui/material/styles";
 
-const BASE_CODE_SX = {
+const BASE_CODE_SX: SxProps<Theme> = {
   fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
   fontSize: "0.88em",
   px: 0.5,
   py: 0.2,
   borderRadius: "6px",
-  bgcolor: "rgba(0,0,0,0.06)",
+  bgcolor: (theme) =>
+    theme.palette.mode === "dark"
+      ? "rgba(255,255,255,0.10)"
+      : "rgba(0,0,0,0.06)",
+  color: "text.primary",
 };
 
-const BASE_PRE_SX = {
+const BASE_PRE_SX: SxProps<Theme> = {
   my: 1.25,
   p: 1.25,
   borderRadius: "10px",
   overflowX: "auto",
-  bgcolor: "rgba(0,0,0,0.06)",
+  bgcolor: (theme) =>
+    theme.palette.mode === "dark"
+      ? "#161b22"
+      : "rgba(0,0,0,0.06)",
+  border: "1px solid",
+  borderColor: (theme) =>
+    theme.palette.mode === "dark"
+      ? "rgba(255,255,255,0.14)"
+      : "rgba(0,0,0,0.08)",
+  color: "text.primary",
 };
 
 const BASE_BLOCKQUOTE_SX = {
@@ -51,6 +64,50 @@ export const BASE_MARKDOWN_SX: SxProps<Theme> = {
     p: 0,
     borderRadius: 0,
     fontSize: "0.86em",
+    color: "inherit",
+  },
+  "& .hljs": {
+    backgroundColor: "transparent !important",
+    color: (theme) =>
+      theme.palette.mode === "dark"
+        ? "#e6edf3"
+        : "#24292f",
+  },
+  "& .hljs-comment, & .hljs-quote": {
+    color: (theme) =>
+      theme.palette.mode === "dark"
+        ? "#8b949e"
+        : "#6e7781",
+  },
+  "& .hljs-keyword, & .hljs-selector-tag, & .hljs-subst": {
+    color: (theme) =>
+      theme.palette.mode === "dark"
+        ? "#ff7b72"
+        : "#cf222e",
+  },
+  "& .hljs-string, & .hljs-doctag, & .hljs-title.class_, & .hljs-section, & .hljs-regexp": {
+    color: (theme) =>
+      theme.palette.mode === "dark"
+        ? "#a5d6ff"
+        : "#0a3069",
+  },
+  "& .hljs-number, & .hljs-literal, & .hljs-variable, & .hljs-template-variable, & .hljs-tag .hljs-attr": {
+    color: (theme) =>
+      theme.palette.mode === "dark"
+        ? "#79c0ff"
+        : "#0550ae",
+  },
+  "& .hljs-title, & .hljs-function .hljs-title, & .hljs-attr, & .hljs-attribute": {
+    color: (theme) =>
+      theme.palette.mode === "dark"
+        ? "#d2a8ff"
+        : "#8250df",
+  },
+  "& .hljs-built_in, & .hljs-type, & .hljs-class .hljs-title": {
+    color: (theme) =>
+      theme.palette.mode === "dark"
+        ? "#ffa657"
+        : "#953800",
   },
   "& blockquote": BASE_BLOCKQUOTE_SX,
   "& table": {
@@ -86,13 +143,13 @@ export const ASSISTANT_MARKDOWN_SX: SxProps<Theme> = {
   "& .mermaid .nodeLabel, & .mermaid .nodeLabel *, & .mermaid .label, & .mermaid .label *, & svg[id^='mermaid-'] .nodeLabel, & svg[id^='mermaid-'] .nodeLabel *, & svg[id^='mermaid-'] .label, & svg[id^='mermaid-'] .label *": {
     color: (theme) =>
       theme.palette.mode === "dark"
-        ? "#121212 !important"
+        ? theme.palette.text.primary
         : "inherit",
   },
   "& .mermaid .nodeLabel text, & .mermaid .nodeLabel tspan, & .mermaid .label text, & .mermaid .label tspan, & svg[id^='mermaid-'] .nodeLabel text, & svg[id^='mermaid-'] .nodeLabel tspan, & svg[id^='mermaid-'] .label text, & svg[id^='mermaid-'] .label tspan": {
     fill: (theme) =>
       theme.palette.mode === "dark"
-        ? "#121212 !important"
+        ? theme.palette.text.primary
         : "inherit",
   },
   "& .mermaid .pieTitleText, & .mermaid .legend text, & svg[id^='mermaid-'] .pieTitleText, & svg[id^='mermaid-'] .legend text": {

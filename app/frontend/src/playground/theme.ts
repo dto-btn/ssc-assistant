@@ -1,6 +1,17 @@
 import { createTheme, type PaletteMode } from "@mui/material";
 
 const LIGHT_BACKGROUND_COLOR = "#f5f5f5";
+const DEFAULT_SHADOWS = createTheme().shadows;
+
+const getShadows = (mode: PaletteMode) => {
+  if (mode !== "dark") {
+    return DEFAULT_SHADOWS;
+  }
+
+  return DEFAULT_SHADOWS.map((shadow, index) =>
+    index === 0 ? shadow : "0px 2px 8px rgba(0,0,0,0.45)"
+  ) as typeof DEFAULT_SHADOWS;
+};
 
 export const createAppTheme = (mode: PaletteMode) =>
   createTheme({
@@ -9,6 +20,7 @@ export const createAppTheme = (mode: PaletteMode) =>
       primary: {
         main: "#4b3e99" /* SSC's official colour code I found using our chatbot! XD */,
         light: "#5848B1",
+        dark: "#3d305a",
       },
       secondary: {
         main: "#f33aea",
@@ -49,6 +61,30 @@ export const createAppTheme = (mode: PaletteMode) =>
       h6: {
         fontSize: "1rem",
         fontWeight: 700,
+      },
+    },
+    shadows: getShadows(mode),
+    components: {
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            textTransform: "none",
+            "&:focus-visible": {
+              outline: "2px solid",
+              outlineOffset: "2px",
+            },
+          },
+        },
+      },
+      MuiIconButton: {
+        styleOverrides: {
+          root: {
+            "&:focus-visible": {
+              outline: "2px solid",
+              outlineOffset: "2px",
+            },
+          },
+        },
       },
     },
   });

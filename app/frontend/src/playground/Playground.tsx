@@ -14,7 +14,7 @@ import { store } from "./store";
 import PlaygroundRoot from "./components/PlaygroundRoot";
 import ToastContainer from "./components/ToastContainer";
 import { createAppTheme } from "./theme";
-import { setThemeMode, initializeThemeFromSystemPreference } from "./store/slices/themeSlice";
+import { setThemeMode, initializeThemeFromSystemPreference, loadThemeFromStorage } from "./store/slices/themeSlice";
 import type { RootState, AppDispatch } from "./store";
 
 function PlaygroundAppInner() {
@@ -24,10 +24,17 @@ function PlaygroundAppInner() {
     noSsr: true,
   });
 
-  // Initialize from system preference on first load
+  // Initialize from localStorage on first load, then fall back to system preference
   useEffect(() => {
     if (userPreference === null) {
-      dispatch(initializeThemeFromSystemPreference(systemPrefersDark));
+      // Try to load from localStorage first
+      const saved = localStorage.getItem("ssc-theme-preference");
+      if (saved === "light" || saved === "dark") {
+        dispatch(loadThemeFromStorage());
+      } else {
+        // Fall back to system preference if no saved preference
+        dispatch(initializeThemeFromSystemPreference(systemPrefersDark));
+      }
     }
   }, [systemPrefersDark, userPreference, dispatch]);
 

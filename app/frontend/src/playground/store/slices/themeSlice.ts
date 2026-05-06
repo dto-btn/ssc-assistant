@@ -19,14 +19,23 @@ const themeSlice = createSlice({
     setThemeMode: (state, action: PayloadAction<PaletteMode>) => {
       state.mode = action.payload;
       state.userPreference = action.payload as "light" | "dark";
+      // Persist to localStorage
+      localStorage.setItem("ssc-theme-preference", action.payload);
     },
     initializeThemeFromSystemPreference: (state, action: PayloadAction<boolean>) => {
       if (state.userPreference === null) {
         state.mode = action.payload ? "dark" : "light";
       }
     },
+    loadThemeFromStorage: (state) => {
+      const saved = localStorage.getItem("ssc-theme-preference");
+      if (saved === "light" || saved === "dark") {
+        state.mode = saved;
+        state.userPreference = saved;
+      }
+    },
   },
 });
 
-export const { setThemeMode, initializeThemeFromSystemPreference } = themeSlice.actions;
+export const { setThemeMode, initializeThemeFromSystemPreference, loadThemeFromStorage } = themeSlice.actions;
 export default themeSlice.reducer;

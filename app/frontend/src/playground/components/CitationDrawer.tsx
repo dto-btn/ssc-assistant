@@ -378,12 +378,12 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
                           borderRadius: 1,
                           bgcolor: (theme) =>
                             theme.palette.mode === "dark"
-                              ? "rgba(255,255,255,0.06)"
+                              ? "rgba(255,255,255,0.10)"
                               : "#f4f1ff",
                           border: (theme) =>
                             `1px solid ${
                               theme.palette.mode === "dark"
-                                ? "rgba(255,255,255,0.16)"
+                                ? "rgba(255,255,255,0.20)"
                                 : "#e1dbff"
                             }`,
                           scrollMarginTop: 80,

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Box, IconButton, Tooltip } from "@mui/material";
+import { Box, IconButton, Tooltip, useTheme } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
 import { useTranslation } from "react-i18next";
@@ -27,6 +27,7 @@ const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
   ...rest
 }) => {
   const { t } = useTranslation("playground");
+  const theme = useTheme();
   const [isCopied, setIsCopied] = useState(false);
   const codeText = useMemo(() => extractNodeText(children).replace(/\n$/, ""), [children]);
   const isLikelyBlockCode = Boolean(className?.includes("language-")) || codeText.includes("\n");
@@ -67,10 +68,23 @@ const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
             position: "absolute",
             top: 8,
             right: 8,
-            bgcolor: "rgba(255,255,255,0.86)",
-            border: "1px solid rgba(0,0,0,0.12)",
+            bgcolor:
+              theme.palette.mode === "dark"
+                ? "rgba(22,27,34,0.92)"
+                : "rgba(255,255,255,0.86)",
+            color: theme.palette.text.primary,
+            border: "1px solid",
+            borderColor:
+              theme.palette.mode === "dark"
+                ? "rgba(255,255,255,0.16)"
+                : "rgba(0,0,0,0.12)",
             zIndex: 1,
-            "&:hover": { bgcolor: "rgba(255,255,255,0.96)" },
+            "&:hover": {
+              bgcolor:
+                theme.palette.mode === "dark"
+                  ? "rgba(32,39,49,0.98)"
+                  : "rgba(255,255,255,0.96)",
+            },
           }}
         >
           {isCopied ? <CheckIcon fontSize="inherit" /> : <ContentCopyIcon fontSize="inherit" />}
