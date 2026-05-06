@@ -15,7 +15,7 @@ import React, {
   useState,
 } from "react";
 import { useSelector } from "react-redux";
-import { Box, Button, Chip, List, ListItem, Paper, Stack, Typography } from "@mui/material";
+import { Box, Button, Chip, CircularProgress, List, ListItem, Paper, Stack, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import Link from "@mui/material/Link";
 import { MarkdownHooks } from "react-markdown";
@@ -339,7 +339,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
 
     const normalizeNodeToken = (value: string): string => {
       return value
-        .replace(/[\[\](){}]/g, "")
+        .replace(/[()[\]{}]/g, "")
         .replace(/^"|"$/g, "")
         .trim();
     };
@@ -662,7 +662,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
           )}
           {brData && brData.length > 1 && (
             <Box sx={{ mt: 1 }}>
-              <Suspense fallback={null}>
+              <Suspense fallback={<Box role="status" aria-live="polite" sx={{ display: "flex", justifyContent: "center", py: 2 }}><CircularProgress size={24} /><Box component="span" sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap" }}>{t("loading")}</Box></Box>}>
                 <BusinessRequestTable
                   data={brData}
                   lang={i18n.language}
@@ -680,7 +680,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
             </Box>
           )}
           {(!brData || brData.length === 0) && fallbackMermaidRows.length > 0 && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<Box role="status" aria-live="polite" sx={{ display: "flex", justifyContent: "center", py: 2 }}><CircularProgress size={24} /><Box component="span" sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap" }}>{t("loading")}</Box></Box>}>
               <MermaidDataGrid rows={fallbackMermaidRows} />
             </Suspense>
           )}
@@ -693,7 +693,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
             <Box sx={{ mt: 1 }}>
               <Paper sx={{ backgroundColor: "white", padding: 1, width: "100%" }} elevation={1}>
                 <Typography variant="caption" gutterBottom sx={{ display: "block", mb: 1 }}>
-                  Query Parameters:
+                  {t("br.query.parameters")}
                 </Typography>
                 <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                   {displayedBrQuery.query_filters?.map((filter, index) => (

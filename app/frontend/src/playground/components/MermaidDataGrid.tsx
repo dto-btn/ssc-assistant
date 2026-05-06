@@ -1,6 +1,8 @@
 import React, { useMemo } from "react";
 import { Box, Paper, Typography } from "@mui/material";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import { useTranslation } from "react-i18next";
+import { toDisplayValue } from "../../utils/displayValue";
 
 export interface MermaidDataGridRow {
   id: string;
@@ -11,43 +13,8 @@ interface MermaidDataGridProps {
   rows: MermaidDataGridRow[];
 }
 
-const toDisplayValue = (value: unknown): string | number => {
-  if (typeof value === "string" || typeof value === "number") {
-    return value;
-  }
-
-  if (value === null || value === undefined) {
-    return "";
-  }
-
-  if (typeof value === "boolean") {
-    return value ? "true" : "false";
-  }
-
-  if (Array.isArray(value)) {
-    const normalized = value.map((item) => toDisplayValue(item));
-    return normalized.join(", ");
-  }
-
-  if (typeof value === "object") {
-    const entries = Object.entries(value as Record<string, unknown>);
-    if (entries.length === 1) {
-      const [key, nestedValue] = entries[0];
-      const renderedNestedValue = toDisplayValue(nestedValue);
-      return `${key}: ${String(renderedNestedValue)}`;
-    }
-
-    try {
-      return JSON.stringify(value);
-    } catch {
-      return String(value);
-    }
-  }
-
-  return String(value);
-};
-
 const MermaidDataGrid: React.FC<MermaidDataGridProps> = ({ rows }) => {
+  const { t } = useTranslation();
   const normalizedRows = useMemo(() => {
     return rows.map((row) => {
       const normalizedRow: MermaidDataGridRow = { id: String(row.id) };
@@ -92,7 +59,7 @@ const MermaidDataGrid: React.FC<MermaidDataGridProps> = ({ rows }) => {
   return (
     <Box sx={{ mt: 1 }}>
       <Typography variant="caption" sx={{ display: "block", mb: 0.75 }}>
-        Chart Data
+        {t("mermaid.chart.data")}
       </Typography>
       <Paper sx={{ width: "100%", minHeight: 280 }} elevation={1}>
         <DataGrid
