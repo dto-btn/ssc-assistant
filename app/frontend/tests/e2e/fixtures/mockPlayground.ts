@@ -45,6 +45,7 @@ declare global {
       clipboardText: string;
       defaultChunkDelayMs: number;
     };
+    __sscBuildAssistantStream?: (response: MockStreamResponse) => Promise<string[]>;
   }
 }
 
@@ -269,6 +270,8 @@ export class MockPlaygroundApi {
    * Install all browser-level mocks required by the playground e2e suite.
    */
   async install(): Promise<void> {
+    await this.page.exposeFunction('__sscBuildAssistantStream', (response: MockStreamResponse) => buildAssistantStream(response));
+
     await this.page.addInitScript(({ defaultChunkDelayMs, defaultAssistantResponse }) => {
       const state = {
         responseQueue: [] as Array<{ text: string; chunkDelayMs?: number; chunkSize?: number; errorMessage?: string }>,
@@ -296,129 +299,6 @@ export class MockPlaygroundApi {
 
       const originalFetch = window.fetch.bind(window);
 
-      const splitTextIntoChunks = (text: string, chunkSize: number) => {
-        const chunks: string[] = [];
-        for (let index = 0; index < text.length; index += chunkSize) {
-          chunks.push(text.slice(index, index + chunkSize));
-        }
-        return chunks.length > 0 ? chunks : [''];
-      };
-
-      const toSse = (payload: unknown) => `data: ${JSON.stringify(payload)}\n\n`;
-
-      const buildStreamEvents = (responseText: string, chunkSize: number) => {
-        const responseId = `resp_${Math.random().toString(36).slice(2, 10)}`;
-        const createdAt = Math.floor(Date.now() / 1000);
-        const completedResponse = {
-          id: responseId,
-          object: 'response',
-          created_at: createdAt,
-          status: 'completed',
-          error: null,
-          incomplete_details: null,
-          instructions: null,
-          max_output_tokens: null,
-          model: 'gpt-4.1-mini',
-          output: [
-            {
-              id: `${responseId}-message`,
-              type: 'message',
-              status: 'completed',
-              role: 'assistant',
-              content: [
-                {
-                  type: 'output_text',
-                  text: responseText,
-                  annotations: [],
-                },
-              ],
-            },
-          ],
-          parallel_tool_calls: false,
-          temperature: 1,
-          tool_choice: 'auto',
-          tools: [],
-          top_p: 1,
-          background: false,
-          conversation: null,
-          metadata: null,
-          previous_response_id: null,
-          reasoning: { effort: null, summary: null },
-          text: { format: { type: 'text' } },
-          truncation: 'disabled',
-          usage: {
-            input_tokens: 12,
-            input_tokens_details: { cached_tokens: 0 },
-            output_tokens: Math.max(1, responseText.length),
-            output_tokens_details: { reasoning_tokens: 0 },
-            total_tokens: 12 + Math.max(1, responseText.length),
-          },
-          user: null,
-        };
-
-        let sequenceNumber = 1;
-        const events = [
-          toSse({
-            type: 'response.created',
-            sequence_number: sequenceNumber++,
-            response: {
-              ...completedResponse,
-              status: 'in_progress',
-              output: [],
-              usage: null,
-            },
-          }),
-          toSse({
-            type: 'response.output_item.added',
-            sequence_number: sequenceNumber++,
-            output_index: 0,
-            item: {
-              id: `${responseId}-message`,
-              type: 'message',
-              status: 'in_progress',
-              role: 'assistant',
-              content: [],
-            },
-          }),
-          toSse({
-            type: 'response.content_part.added',
-            sequence_number: sequenceNumber++,
-            output_index: 0,
-            content_index: 0,
-            item_id: `${responseId}-message`,
-            part: {
-              type: 'output_text',
-              text: '',
-              annotations: [],
-            },
-          }),
-        ];
-
-        for (const chunk of splitTextIntoChunks(responseText, chunkSize)) {
-          events.push(
-            toSse({
-              type: 'response.output_text.delta',
-              sequence_number: sequenceNumber++,
-              output_index: 0,
-              content_index: 0,
-              item_id: `${responseId}-message`,
-              delta: chunk,
-            }),
-          );
-        }
-
-        events.push(
-          toSse({
-            type: 'response.completed',
-            sequence_number: sequenceNumber++,
-            response: completedResponse,
-          }),
-        );
-        events.push('data: [DONE]\n\n');
-
-        return events;
-      };
-
       window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = typeof input === 'string'
           ? input
@@ -436,7 +316,7 @@ export class MockPlaygroundApi {
         }
 
         const chunkDelayMs = scenario.chunkDelayMs ?? state.defaultChunkDelayMs;
-        const chunks = buildStreamEvents(scenario.text, scenario.chunkSize ?? 14);
+        const chunks = await window.__sscBuildAssistantStream?.(scenario) ?? [];
         const encoder = new TextEncoder();
         const signal = init?.signal ?? (input instanceof Request ? input.signal : undefined);
 
