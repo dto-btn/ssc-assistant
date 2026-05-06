@@ -15,9 +15,13 @@ import { FileAttachment } from "../../types";
 import { Citation } from "../../utils/citations";
 
 export interface PlaygroundBrArtifacts {
+  // Raw rows returned by BITS tooling, consumed by BR card/table components.
   brData?: Record<string, unknown>[];
+  // Structured query metadata to display inferred/applied filters in UI.
   brQuery?: Record<string, unknown>;
+  // Explicit field selection returned by tool output for DataGrid visibility.
   brSelectFields?: { fields: string[] };
+  // Execution stats payload (rows, timing, extraction date).
   brMetadata?: Record<string, unknown>;
 }
 
@@ -177,6 +181,7 @@ const chatSlice = createSlice({
       const { messageId, brArtifacts } = action.payload;
       const message = state.messages.find((msg) => msg.id === messageId);
       if (message) {
+        // Optional assignment allows callers to clear artifacts by passing undefined.
         message.brArtifacts = brArtifacts;
       }
     },

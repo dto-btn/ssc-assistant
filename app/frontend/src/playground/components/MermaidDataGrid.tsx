@@ -22,6 +22,7 @@ const MermaidDataGrid: React.FC<MermaidDataGridProps> = ({ rows }) => {
         if (key === "id") {
           return;
         }
+        // Normalize mixed Mermaid-derived values into predictable grid-safe primitives.
         normalizedRow[key] = toDisplayValue(value);
       });
       return normalizedRow;

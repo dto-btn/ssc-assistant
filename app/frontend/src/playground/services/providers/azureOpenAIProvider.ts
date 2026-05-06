@@ -67,6 +67,7 @@ const hasPmcoeServer = (servers: Tool.Mcp[] = []): boolean => {
 };
 
 const toSerializableToolOutput = (value: unknown): string | undefined => {
+  // Keep payloads deterministic for Redux/state snapshots and debug surfaces.
   if (typeof value === "string") {
     return value;
   }
@@ -106,6 +107,7 @@ const extractMcpToolOutputs = (value: unknown): NonNullable<CompletionResult["mc
     const type = typeof record.type === "string" ? record.type : undefined;
     const status = typeof record.status === "string" ? record.status : undefined;
     const output = record.output;
+    // Capture both completed calls and partial payloads that already include output.
     if (type === "mcp_call" && (status === "completed" || output !== undefined)) {
       const serializedOutput = toSerializableToolOutput(output);
       if (serializedOutput) {
@@ -140,6 +142,7 @@ const mergeMcpToolOutputs = (
     return current;
   }
 
+  // Stable dedupe key keeps repeated event/finalResponse emissions from duplicating cards.
   const seen = new Set(current.map((item) => `${item.toolName}|${item.serverLabel || ""}|${item.output}`));
   const merged = [...current];
 

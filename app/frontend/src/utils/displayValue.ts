@@ -1,10 +1,13 @@
 export interface DisplayValueOptions {
+  // Value returned when payload is null/undefined (e.g., null for DataGrid empty cells).
   nullValue?: string | number | null;
+  // When true, { key: value } renders as "key: value" for compact single-field payloads.
   flattenSingleEntryObject?: boolean;
 }
 
 /**
  * Normalizes unknown payload values into render-safe primitives for table/card cells.
+ * Keeps the return type limited to primitives React/DataGrid can render consistently.
  */
 export const toDisplayValue = (
   value: unknown,
@@ -28,6 +31,7 @@ export const toDisplayValue = (
   }
 
   if (Array.isArray(value)) {
+    // Force empty items to "" during array flattening to avoid "null" string artifacts.
     return value
       .map((item) => String(toDisplayValue(item, { ...options, nullValue: "" }) ?? ""))
       .join(", ");
