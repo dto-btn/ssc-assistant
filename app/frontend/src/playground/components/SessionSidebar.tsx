@@ -8,6 +8,7 @@
 
 import React, { useCallback, useState } from "react";
 import { List as ListWindow, RowComponentProps } from "react-window";
+import useMeasure from "react-use-measure";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   addSession,
@@ -200,6 +201,8 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
 
   const sidebarTitleId = "playground-session-sidebar-title";
 
+  const [containerRef, { height: containerHeight }] = useMeasure();
+
   const chatItemRender = ({ index, style }: RowComponentProps) => {
     const session = sessionsNewestFirst[index];
 
@@ -367,14 +370,16 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           <Chip label={t("chats")} size="small" sx={{ backgroundColor: "transparent" }} />
         </Divider>
 
-        <Box sx={{ flexGrow: 1, minHeight: 0 }}>
-          <ListWindow
-            rowHeight={52}
-            rowCount={sessionsNewestFirst.length}
-            rowComponent={chatItemRender}
-            rowProps={{}}
-            style={{ width: LEFT_MENU_EXPANDED_WIDTH, height: 500 }}
-          />
+        <Box ref={containerRef} sx={{ flexGrow: 1, minHeight: 0 }}>
+          {containerHeight > 0 && (
+            <ListWindow
+              rowHeight={52}
+              rowCount={sessionsNewestFirst.length}
+              rowComponent={chatItemRender}
+              rowProps={{}}
+              style={{ width: LEFT_MENU_EXPANDED_WIDTH, height: containerHeight }}
+            />
+          )}
         </Box>
 
         <Menu
