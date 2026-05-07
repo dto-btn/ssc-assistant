@@ -7,6 +7,7 @@
  */
 
 import React, { useCallback, useState } from "react";
+import { List as ListWindow, RowComponentProps } from "react-window";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   addSession,
@@ -35,7 +36,6 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import CloseIcon from "@mui/icons-material/Close";
-import type { Session } from "../store/slices/sessionSlice";
 import { useTranslation } from 'react-i18next';
 import { LEFT_MENU_EXPANDED_WIDTH } from "../constants";
 import SessionRenameDialog from "./SessionRenameDialog";
@@ -198,6 +198,93 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
 
   const sidebarTitleId = "playground-session-sidebar-title";
 
+  const chatItemRender = ({ index, style }: RowComponentProps) => {
+    const session = sessionsNewestFirst[index];
+
+    return (
+      <ListItem
+        key={session.id}
+        style={style}
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          p: "2px 0px",
+          backgroundColor:
+            session.id === currentSessionId ? "action.selected" : "transparent",
+          "&:hover": {
+            backgroundColor: "action.hover",
+          },
+          transition: "none",
+          "& .more-button": {
+            opacity: 1,
+            color: "text.disabled",
+            transition: "opacity 0.15s ease-in-out",
+          },
+          "&:hover .more-button, &:focus-within .more-button": {
+            opacity: 1,
+            color: "text.primary",
+          },
+        }}
+      >
+        <ListItemButton
+          id={`session-button-${session.id}`}
+          disableRipple
+          sx={{
+            padding: "5px 10px",
+            "&:hover": { backgroundColor: "transparent" },
+          }}
+          onClick={() => {
+            dispatch(setCurrentSession(session.id));
+            if (isMobile) {
+              // Match native drawer UX: selecting an item dismisses the drawer.
+              dispatch(closeMobileSidebar());
+            }
+          }}
+          aria-current={session.id === currentSessionId ? "page" : undefined}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%", minWidth: 0 }}>
+            <Typography
+              noWrap
+              sx={{ flexGrow: 1, overflow: "hidden", textOverflow: "ellipsis" }}
+            >
+              {session.name}
+            </Typography>
+            <SyncStatusIndicator sessionId={session.id} variant="icon" />
+          </Box>
+        </ListItemButton>
+
+        <IconButton
+          id={`session-options-button-${session.id}`}
+          className="more-button"
+          onClick={(event) => handleMoreMenuClick(event, session.id)}
+          aria-label={t('options')}
+          aria-controls={moreMenuOpen ? "session-menu" : undefined}
+          aria-expanded={moreMenuOpen && selectedSessionId === session.id ? "true" : undefined}
+          aria-haspopup="true"
+          sx={{
+            minWidth: 44,
+            minHeight: 44,
+            mr: "10px",
+            color: "inherit",
+            "&:hover": { backgroundColor: "transparent" },
+          }}
+        >
+          <Tooltip
+            title={t('options')}
+            placement="top"
+            slotProps={{
+              popper: {
+                modifiers: [{ name: "offset", options: { offset: [0, 5] } }],
+              },
+            }}
+          >
+            <MoreHorizIcon />
+          </Tooltip>
+        </IconButton>
+      </ListItem>
+    );
+  };
+
   const sidebarContent = (
     <Box
       component="nav"
@@ -238,7 +325,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         )}
       </Box>
 
-      <List id="playground-session-sidebar" aria-labelledby={sidebarTitleId}>
+      <List id="playground-session-sidebar" aria-labelledby={sidebarTitleId} sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
         <ListItem key="newChat" disablePadding>
           <ListItemButton id="new-chat-button" onClick={handleNewSession}>
             <ListItemIcon sx={{ minWidth: "0px", mr: "10px" }}>
@@ -256,87 +343,15 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           <Chip label={t("chats")} size="small" sx={{ backgroundColor: "transparent" }} />
         </Divider>
 
-        {sessionsNewestFirst.map((session: Session) => (
-          <ListItem
-            key={session.id}
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              p: "2px 0px",
-              backgroundColor:
-                session.id === currentSessionId ? "action.selected" : "transparent",
-              "&:hover": {
-                backgroundColor: "action.hover",
-              },
-              transition: "none",
-              "& .more-button": {
-                opacity: 1,
-                color: "text.disabled",
-                transition: "opacity 0.15s ease-in-out",
-              },
-              "&:hover .more-button, &:focus-within .more-button": {
-                opacity: 1,
-                color: "text.primary",
-              },
-            }}
-          >
-            <ListItemButton
-              id={`session-button-${session.id}`}
-              disableRipple
-              sx={{
-                padding: "5px 10px",
-                "&:hover": { backgroundColor: "transparent" },
-              }}
-              onClick={() => {
-                dispatch(setCurrentSession(session.id));
-                if (isMobile) {
-                  // Match native drawer UX: selecting an item dismisses the drawer.
-                  dispatch(closeMobileSidebar());
-                }
-              }}
-              aria-current={session.id === currentSessionId ? "page" : undefined}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%", minWidth: 0 }}>
-                <Typography
-                  noWrap
-                  sx={{ flexGrow: 1, overflow: "hidden", textOverflow: "ellipsis" }}
-                >
-                  {session.name}
-                </Typography>
-                <SyncStatusIndicator sessionId={session.id} variant="icon" />
-              </Box>
-            </ListItemButton>
-
-            <IconButton
-              id={`session-options-button-${session.id}`}
-              className="more-button"
-              onClick={(event) => handleMoreMenuClick(event, session.id)}
-              aria-label={t('options')}
-              aria-controls={moreMenuOpen ? "session-menu" : undefined}
-              aria-expanded={moreMenuOpen && selectedSessionId === session.id ? "true" : undefined}
-              aria-haspopup="true"
-              sx={{
-                minWidth: 44,
-                minHeight: 44,
-                mr: "10px",
-                color: "inherit",
-                "&:hover": { backgroundColor: "transparent" },
-              }}
-            >
-              <Tooltip
-                title={t('options')}
-                placement="top"
-                slotProps={{
-                  popper: {
-                    modifiers: [{ name: "offset", options: { offset: [0, 5] } }],
-                  },
-                }}
-              >
-                <MoreHorizIcon />
-              </Tooltip>
-            </IconButton>
-          </ListItem>
-        ))}
+        <Box sx={{ flexGrow: 1, minHeight: 0 }}>
+          <ListWindow
+            rowHeight={52}
+            rowCount={sessionsNewestFirst.length}
+            rowComponent={chatItemRender}
+            rowProps={{}}
+            style={{ width: LEFT_MENU_EXPANDED_WIDTH, height: 500 }}
+          />
+        </Box>
 
         <Menu
           id="session-menu"
