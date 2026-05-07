@@ -400,20 +400,47 @@ const BITS_FILTER_ENFORCEMENT_SYSTEM_PROMPT = [
 
 const MONTH_INDEX_BY_NAME: Record<string, number> = {
   january: 0,
+  janvier: 0,
   february: 1,
+  fevrier: 1,
   march: 2,
+  mars: 2,
   april: 3,
+  avril: 3,
   may: 4,
+  mai: 4,
   june: 5,
+  juin: 5,
   july: 6,
+  juillet: 6,
   august: 7,
+  aout: 7,
   september: 8,
+  septembre: 8,
   october: 9,
+  octobre: 9,
   november: 10,
+  novembre: 10,
   december: 11,
+  decembre: 11,
 };
 
-const MONTH_NAMES_PATTERN = "january|february|march|april|may|june|july|august|september|october|november|december";
+const MONTH_NAMES_PATTERN = "january|janvier|february|fevrier|march|mars|april|avril|may|mai|june|juin|july|juillet|august|aout|september|septembre|october|octobre|november|novembre|december|decembre";
+const PRIORITY_NORMALIZATION_MAP: Record<string, "High" | "Medium" | "Low"> = {
+  high: "High",
+  eleve: "High",
+  elevee: "High",
+  medium: "Medium",
+  moyenne: "Medium",
+  low: "Low",
+  basse: "Low",
+  faible: "Low",
+};
+
+const normalizePromptForInference = (value: string): string => {
+  // Normalize accents and casing so French and English phrasing share one parser path.
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+};
 const MCP_GROUNDED_REWRITE_SYSTEM_PROMPT = [
   "You are revising an assistant answer using cited source excerpts returned from MCP tools.",
   "Rewrite the answer so every factual claim is supported by the provided source material.",
@@ -680,8 +707,9 @@ const formatIsoDate = (date: Date): string => {
 
 const inferBitsFilterHintsFromPrompt = (promptText: string): string[] => {
   const hints: string[] = [];
+  const normalizedPrompt = normalizePromptForInference(promptText);
 
-  const monthMatch = promptText.match(new RegExp(`\\b(${MONTH_NAMES_PATTERN})\\b(?:\\s+(\\d{4}))?`, "i"));
+  const monthMatch = normalizedPrompt.match(new RegExp(`\\b(${MONTH_NAMES_PATTERN})\\b(?:\\s+(\\d{4}))?`));
   if (monthMatch) {
     const monthName = monthMatch[1].toLowerCase();
     const monthIndex = MONTH_INDEX_BY_NAME[monthName];
@@ -695,18 +723,30 @@ const inferBitsFilterHintsFromPrompt = (promptText: string): string[] => {
     }
   }
 
-  const clientMatch = promptText.match(/\bclient\b\s+([A-Za-z0-9][A-Za-z0-9 '&().-]{1,100}?)(?=(?:\s+for\s+brs?|\s+for\s+the\s+month|\s+with\s+|\s+of\s+|\s+that\s+|\s+priority|\s+only|[,.;]|$))/i);
+  const clientMatch = normalizedPrompt.match(/\bclient\b\s+([a-z0-9][a-z0-9 '&().-]{1,100}?)(?=(?:\s+for\s+brs?|\s+for\s+the\s+month|\s+with\s+|\s+of\s+|\s+that\s+|\s+priority|\s+only|\s+pour\s+(?:les?\s+)?(?:do|brs?)|\s+pour\s+le\s+mois|\s+avec\s+|\s+de\s+|\s+qui\s+|\s+priorite|\s+seulement|[,.;]|$))/);
   if (clientMatch) {
-    const clientCandidate = clientMatch[1].trim();
+    const fullMatch = clientMatch[0] || "";
+    const normalizedClientCandidate = clientMatch[1] || "";
+    const fullMatchStart = clientMatch.index ?? -1;
+    const candidateOffset = fullMatchStart >= 0 ? fullMatch.indexOf(normalizedClientCandidate) : -1;
+    const candidateStart = fullMatchStart >= 0 && candidateOffset >= 0 ? fullMatchStart + candidateOffset : -1;
+    const candidateEnd = candidateStart >= 0 ? candidateStart + normalizedClientCandidate.length : -1;
+
+    const clientCandidate = (
+      candidateStart >= 0 && candidateEnd > candidateStart
+        ? promptText.slice(candidateStart, candidateEnd)
+        : normalizedClientCandidate
+    ).trim();
+
     if (clientCandidate.length > 0) {
       hints.push(`Client Name candidate: ${clientCandidate} (resolve acronym/alias using get_organization_names before querying RPT_GC_ORG_NAME_EN/FR)`);
     }
   }
 
-  const priorityMatch = promptText.match(/\b(high|medium|low)\s+priority\b|\bpriority\b\s*(?:is|=)?\s*(high|medium|low)\b/i);
+  const priorityMatch = normalizedPrompt.match(/\b(high|medium|low|elevee|eleve|moyenne|basse|faible)\s+(?:priority|priorite)\b|\b(?:priority|priorite)\b\s*(?:is|est|=)?\s*(high|medium|low|elevee|eleve|moyenne|basse|faible)\b/);
   const priorityRaw = (priorityMatch?.[1] || priorityMatch?.[2] || "").toLowerCase();
-  if (priorityRaw) {
-    const normalizedPriority = `${priorityRaw.charAt(0).toUpperCase()}${priorityRaw.slice(1)}`;
+  const normalizedPriority = PRIORITY_NORMALIZATION_MAP[priorityRaw];
+  if (normalizedPriority) {
     hints.push(`Priority (PRIORITY_EN) = ${normalizedPriority}`);
   }
 

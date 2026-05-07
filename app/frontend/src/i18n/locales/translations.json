@@ -1047,6 +1047,14 @@
         "en": "Query Parameters",
         "fr": "Paramètres de requête"
     },
+    "br.query.status": {
+        "en": "Status",
+        "fr": "Statut"
+    },
+    "br.query.statuses": {
+        "en": "Statuses",
+        "fr": "Statuts"
+    },
     "mermaid.chart.data": {
         "en": "Chart Data",
         "fr": "Données du graphique"

@@ -9,6 +9,8 @@ import chatReducer from "../store/slices/chatSlice";
 import sessionReducer from "../store/slices/sessionSlice";
 import sessionFilesReducer from "../store/slices/sessionFilesSlice";
 
+let mockLanguage = "en";
+
 vi.mock("rehype-mermaid", () => ({
   default: () => (tree: any) => {
     const visit = (node: any, parent?: { children?: any[] }, index?: number) => {
@@ -97,12 +99,21 @@ vi.mock("react-i18next", async (importOriginal) => {
         if (key === "mcp.attribution.unknown") {
           return "Tool server";
         }
+        if (key === "br.query.parameters") {
+          return mockLanguage.startsWith("fr") ? "Paramètres de requête" : "Query Parameters";
+        }
+        if (key === "br.query.status") {
+          return mockLanguage.startsWith("fr") ? "Statut" : "Status";
+        }
+        if (key === "br.query.statuses") {
+          return mockLanguage.startsWith("fr") ? "Statuts" : "Statuses";
+        }
 
         const defaultValue = (options?.defaultValue as string | undefined) ?? key;
         return interpolate(defaultValue, options);
       },
       i18n: {
-        language: "en",
+        language: mockLanguage,
       },
     }),
   };
@@ -140,6 +151,53 @@ function renderMessages(sessionId: string, preloadedState: TestStoreState) {
 }
 
 describe("ChatMessages", () => {
+  it("renders localized query status chips and infers French fallback filters", async () => {
+    mockLanguage = "fr";
+
+    try {
+      renderMessages("s1", {
+        chat: {
+          messages: [
+            {
+              id: "u1",
+              sessionId: "s1",
+              role: "user",
+              content: "Trouver les DO soumises au cours des 3 dernieres semaines provenant du client SPAC pour les DO de priorite elevee seulement.",
+              timestamp: 1,
+            },
+            {
+              id: "a1",
+              sessionId: "s1",
+              role: "assistant",
+              content: "Resultats trouves.",
+              timestamp: 2,
+              brArtifacts: {
+                brQuery: {
+                  status: "Open",
+                  statuses: ["Open", "Closed"],
+                },
+              },
+            },
+          ],
+          isLoadingBySessionId: {},
+          assistantResponsePhaseBySessionId: {
+            s1: "idle",
+          },
+          orchestratorInsightsBySessionId: {},
+        },
+        sessionFiles: {
+          bySessionId: {},
+        },
+      });
+
+      expect(await screen.findByText(/Date de soumission \(SUBMIT_DATE\) >= \d{4}-\d{2}-\d{2}/i)).toBeInTheDocument();
+      expect(screen.getByText("Statut: Open")).toBeInTheDocument();
+      expect(screen.getByText("Statuts: Open, Closed")).toBeInTheDocument();
+    } finally {
+      mockLanguage = "en";
+    }
+  });
+
   it("renders waiting status text as an aria-live status message", () => {
     renderMessages("s1", {
       chat: {
@@ -194,7 +252,7 @@ describe("ChatMessages", () => {
     expect(screen.queryByText("Assistant is thinking...")).not.toBeInTheDocument();
   });
 
-  it("does not render helper status text while streaming", () => {
+  it("streams content without a status label during the streaming phase", () => {
     renderMessages("s1", {
       chat: {
         messages: [
@@ -217,8 +275,57 @@ describe("ChatMessages", () => {
       },
     });
 
-    expect(screen.queryByText("Assistant is responding.")).not.toBeInTheDocument();
+    // No status label during streaming — the pulsing icon is the visual signal.
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    // Content streams in (typewriter effect).
     expect(screen.getByText("Hello there")).toBeInTheDocument();
+  });
+
+  it("hides BR data grid while streaming but shows streaming text", async () => {
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "| Name | Value |\n| --- | --- |\n| Speed | Fast |",
+            timestamp: 1,
+            brArtifacts: {
+              brData: [
+                {
+                  BR_NMBR: "1001",
+                  BR_SHORT_TITLE: "Identity sync issue",
+                  BITS_STATUS_EN: "Open",
+                },
+                {
+                  BR_NMBR: "1002",
+                  BR_SHORT_TITLE: "Network access request",
+                  BITS_STATUS_EN: "Closed",
+                },
+              ],
+            },
+          },
+        ],
+        isLoadingBySessionId: { s1: true },
+        assistantResponsePhaseBySessionId: {
+          s1: "streaming",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    // No status label during streaming.
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    // MUI DataGrid (role="grid") is suppressed during streaming — no snap transition.
+    // BR artifact rows should not appear (they live inside the DataGrid).
+    expect(screen.queryByText("Identity sync issue")).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole("grid")).not.toBeInTheDocument();
+    });
   });
 
   it("renders mcp attribution chip for assistant responses with routing metadata", () => {
@@ -320,6 +427,48 @@ describe("ChatMessages", () => {
 
     await waitFor(() => {
       expect(screen.queryByText("RAW_BR_MARKDOWN_SHOULD_HIDE")).not.toBeInTheDocument();
+    });
+  });
+
+  it("does not render the mermaid toggle when a BR data grid is shown", async () => {
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "```mermaid\ngraph TD\n  A-->B\n```",
+            timestamp: 1,
+            brArtifacts: {
+              brData: [
+                {
+                  BR_NMBR: "1001",
+                  BR_SHORT_TITLE: "Identity sync issue",
+                  BITS_STATUS_EN: "Open",
+                },
+                {
+                  BR_NMBR: "1002",
+                  BR_SHORT_TITLE: "Network access request",
+                  BITS_STATUS_EN: "Closed",
+                },
+              ],
+            },
+          },
+        ],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "assistant.mermaid.viewCode" })).not.toBeInTheDocument();
     });
   });
 
@@ -480,6 +629,34 @@ describe("ChatMessages", () => {
 
     await user.click(toggleButton);
     expect(screen.getByRole("button", { name: "assistant.mermaid.viewDiagram" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("does not render the mermaid toggle when a mermaid data grid fallback is shown", async () => {
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "```mermaid\npie\n  \"Open\": 2\n  \"Closed\": 3\n```",
+            timestamp: 1,
+          },
+        ],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "assistant.mermaid.viewCode" })).not.toBeInTheDocument();
+    });
   });
 
   it("keeps a single mermaid toggle after rerender with unchanged state", async () => {
