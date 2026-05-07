@@ -101,6 +101,9 @@ vi.mock("react-i18next", async (importOriginal) => {
         const defaultValue = (options?.defaultValue as string | undefined) ?? key;
         return interpolate(defaultValue, options);
       },
+      i18n: {
+        language: "en",
+      },
     }),
   };
 });
@@ -276,6 +279,94 @@ describe("ChatMessages", () => {
     expect(screen.getByRole("columnheader", { name: "Name" })).toHaveAttribute("scope", "col");
     expect(screen.getByText("Speed")).toBeInTheDocument();
     expect(screen.getByText("Fast")).toBeInTheDocument();
+  });
+
+  it("hides raw assistant markdown when multi-row BR artifacts are present", async () => {
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "RAW_BR_MARKDOWN_SHOULD_HIDE",
+            timestamp: 1,
+            brArtifacts: {
+              brData: [
+                {
+                  BR_NMBR: "1001",
+                  BR_SHORT_TITLE: "Identity sync issue",
+                  BITS_STATUS_EN: "Open",
+                },
+                {
+                  BR_NMBR: "1002",
+                  BR_SHORT_TITLE: "Network access request",
+                  BITS_STATUS_EN: "Closed",
+                },
+              ],
+            },
+          },
+        ],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText("RAW_BR_MARKDOWN_SHOULD_HIDE")).not.toBeInTheDocument();
+    });
+  });
+
+  it("adds inferred SUBMIT_DATE filter to displayed query parameters for relative week prompts", async () => {
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "u1",
+            sessionId: "s1",
+            role: "user",
+            content: "Find all BRs submitted in the last 3 weeks from client PSPC",
+            timestamp: 1,
+          },
+          {
+            id: "a1",
+            sessionId: "s1",
+            role: "assistant",
+            content: "Found BRs.",
+            timestamp: 2,
+            brArtifacts: {
+              brQuery: {
+                query_filters: [
+                  {
+                    name: "RPT_GC_ORG_NAME_EN",
+                    en: "Client Name",
+                    fr: "Nom du client",
+                    operator: "=",
+                    value: "Public Services and Procurement Canada",
+                  },
+                ],
+              },
+            },
+          },
+        ],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {
+          s1: "idle",
+        },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    expect(await screen.findByText(/\(SUBMIT_DATE\) >= \d{4}-\d{2}-\d{2}/i)).toBeInTheDocument();
   });
 
   it("keeps code block copy action available for assistant markdown", async () => {

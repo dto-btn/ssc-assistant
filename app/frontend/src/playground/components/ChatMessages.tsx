@@ -254,11 +254,9 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
     return query as BrQuery;
   }, [message.brArtifacts?.brQuery]);
 
-  const fallbackBrQuery = useMemo(() => {
-    if (brQuery) {
-      return undefined;
-    }
+  const shouldHideAssistantMarkdownForBrTable = Boolean(brData && brData.length > 1);
 
+  const fallbackBrQuery = useMemo(() => {
     const sourcePrompt = regenerateSourceMessage?.content;
 
     if (!sourcePrompt) {
@@ -289,6 +287,22 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
           fr: "Date de soumission",
           operator: "<=",
           value: formatIsoDate(end),
+        });
+      }
+    }
+
+    const relativeWeeksMatch = sourcePrompt.match(/\b(?:last|past)\s+(\d+)\s+weeks?\b/i);
+    if (relativeWeeksMatch) {
+      const weeks = Number.parseInt(relativeWeeksMatch[1], 10);
+      if (Number.isFinite(weeks) && weeks > 0) {
+        const start = new Date();
+        start.setUTCDate(start.getUTCDate() - (weeks * 7));
+        queryFilters.push({
+          name: "SUBMIT_DATE",
+          en: "Date Submitted",
+          fr: "Date de soumission",
+          operator: ">=",
+          value: formatIsoDate(start),
         });
       }
     }
@@ -325,9 +339,43 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
     }
 
     return { query_filters: queryFilters } as BrQuery;
-  }, [brQuery, regenerateSourceMessage?.content]);
+  }, [regenerateSourceMessage?.content]);
 
-  const displayedBrQuery = brQuery || fallbackBrQuery;
+  const displayedBrQuery = useMemo(() => {
+    if (!brQuery && !fallbackBrQuery) {
+      return undefined;
+    }
+
+    const combinedFilters: BrQueryFilter[] = [];
+    const seen = new Set<string>();
+    const appendFilters = (filters: BrQueryFilter[] | undefined) => {
+      if (!filters) {
+        return;
+      }
+      for (const filter of filters) {
+        const key = `${filter.name}|${filter.operator || "="}|${String(filter.value ?? "")}`;
+        if (seen.has(key)) {
+          continue;
+        }
+        seen.add(key);
+        combinedFilters.push(filter);
+      }
+    };
+
+    appendFilters(brQuery?.query_filters);
+    appendFilters(fallbackBrQuery?.query_filters);
+
+    const mergedQuery: BrQuery = {
+      ...(brQuery || {}),
+      ...(fallbackBrQuery || {}),
+    };
+
+    if (combinedFilters.length > 0) {
+      mergedQuery.query_filters = combinedFilters;
+    }
+
+    return mergedQuery;
+  }, [brQuery, fallbackBrQuery]);
 
   const fallbackMermaidRows = useMemo(() => {
     if ((brData && brData.length > 0) || !hasMermaidFence) {
@@ -650,15 +698,17 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
               </Button>
             </Box>
           )}
-          <Box sx={ASSISTANT_MARKDOWN_SX}>
-            <MarkdownHooks
-              components={markdownComponents}
-              remarkPlugins={remarkPlugins}
-              rehypePlugins={rehypePlugins}
-            >
-              {processedContent.processedText}
-            </MarkdownHooks>
-          </Box>
+          {!shouldHideAssistantMarkdownForBrTable && (
+            <Box sx={ASSISTANT_MARKDOWN_SX}>
+              <MarkdownHooks
+                components={markdownComponents}
+                remarkPlugins={remarkPlugins}
+                rehypePlugins={rehypePlugins}
+              >
+                {processedContent.processedText}
+              </MarkdownHooks>
+            </Box>
+          )}
           {resolvedAttachments.length > 0 && (
             <AttachmentPreview attachments={resolvedAttachments} />
           )}
