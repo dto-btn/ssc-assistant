@@ -428,6 +428,10 @@ const BITS_TOOL_NAMES = new Set([
   "search_requests",
   "get_request_status",
   "create_request",
+  "search_business_requests",
+  "get_br_page",
+  "valid_search_fields",
+  "get_organization_names",
 ]);
 
 const tryParseJson = (value: string): unknown => {
@@ -468,6 +472,7 @@ const tryParseJson = (value: string): unknown => {
 const hasBrArtifactKeys = (value: unknown): value is {
   br?: unknown;
   BR?: unknown;
+  results?: unknown;
   metadata?: unknown;
   meta?: unknown;
   brquery?: unknown;
@@ -483,6 +488,7 @@ const hasBrArtifactKeys = (value: unknown): value is {
   return (
     Object.prototype.hasOwnProperty.call(record, "br")
     || Object.prototype.hasOwnProperty.call(record, "BR")
+    || Object.prototype.hasOwnProperty.call(record, "results")
     || Object.prototype.hasOwnProperty.call(record, "metadata")
     || Object.prototype.hasOwnProperty.call(record, "meta")
     || Object.prototype.hasOwnProperty.call(record, "brquery")
@@ -498,6 +504,7 @@ const hasBrArtifactKeys = (value: unknown): value is {
 const findBrArtifactPayload = (value: unknown): {
   br?: unknown;
   BR?: unknown;
+  results?: unknown;
   metadata?: unknown;
   meta?: unknown;
   brquery?: unknown;
@@ -595,15 +602,18 @@ const parseBitsArtifactsFromToolOutput = (
   }
 
   const artifactPayloadRecord = artifactPayload as Record<string, unknown>;
-  const brCandidate = getRecordValue(artifactPayloadRecord, ["br", "BR", "rows", "data"]);
+  const brCandidate = getRecordValue(artifactPayloadRecord, ["br", "BR", "rows", "data", "results"]);
   const metadataCandidate = getRecordValue(artifactPayloadRecord, ["metadata", "meta"]);
   const brQueryCandidate = getRecordValue(artifactPayloadRecord, ["brquery", "brQuery"]);
   const brSelectCandidate = getRecordValue(artifactPayloadRecord, ["brselect", "brSelect"]);
 
   if (Array.isArray(brCandidate)) {
-    artifacts.brData = brCandidate.filter(
-      (entry): entry is Record<string, unknown> => Boolean(entry && typeof entry === "object")
+    const rows = brCandidate.filter(
+      (entry): entry is Record<string, unknown> => isLikelyBrRow(entry)
     );
+    if (rows.length > 0) {
+      artifacts.brData = rows;
+    }
   }
 
   if (metadataCandidate && typeof metadataCandidate === "object") {
@@ -1908,7 +1918,13 @@ export const sendAssistantMessage = ({
       .filter((toolOutput) => {
         const toolName = toolOutput.toolName.toLowerCase();
         const serverLabel = String(toolOutput.serverLabel || "").toLowerCase();
-        return BITS_TOOL_NAMES.has(toolName) || serverLabel.includes("bits") || toolOutput.output.includes("\"br\"");
+        return (
+          BITS_TOOL_NAMES.has(toolName)
+          || serverLabel.includes("bits")
+          || toolOutput.output.includes("\"br\"")
+          || toolOutput.output.includes("\"results\"")
+          || toolOutput.output.includes("\"BR_NMBR\"")
+        );
       })
       .map((toolOutput) => parseBitsArtifactsFromToolOutput(toolOutput.output))
       .filter((artifacts): artifacts is PlaygroundBrArtifacts => Boolean(artifacts))

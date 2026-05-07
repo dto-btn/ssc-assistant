@@ -866,4 +866,152 @@ describe("sendAssistantMessage auto-rename", () => {
       },
     ]);
   });
+
+  it("extracts BR rows from get_br_page results payloads", async () => {
+    createCompletionMock.mockResolvedValueOnce({
+      fullText: "Found BR results.",
+      completed: true,
+      provider: "azure-openai",
+      citations: [],
+      mcpToolOutputs: [
+        {
+          toolName: "get_br_page",
+          output: JSON.stringify({
+            results: [
+              {
+                BR_NMBR: "BR-1001",
+                BR_SHORT_TITLE: "Identity sync issue",
+                BITS_STATUS_EN: "Open",
+              },
+              {
+                BR_NMBR: "BR-1002",
+                BR_SHORT_TITLE: "Network access request",
+                BITS_STATUS_EN: "Closed",
+              },
+            ],
+          }),
+        },
+      ],
+    });
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [bitsServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Find BRs for the client PSPC.",
+      }) as any,
+    );
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.brArtifacts?.brData).toHaveLength(2);
+    expect(assistantMessage?.brArtifacts?.brData?.[0]).toMatchObject({
+      BR_NMBR: "BR-1001",
+      BR_SHORT_TITLE: "Identity sync issue",
+    });
+  });
+
+  it("merges metadata from search output with rows from subsequent get_br_page output", async () => {
+    createCompletionMock.mockResolvedValueOnce({
+      fullText: "Found BR results.",
+      completed: true,
+      provider: "azure-openai",
+      citations: [],
+      mcpToolOutputs: [
+        {
+          toolName: "search_business_requests",
+          output: JSON.stringify({
+            metadata: {
+              results: 750,
+              total_rows: 1310,
+            },
+            brquery: {
+              RPT_GC_ORG_NAME_EN: "Public Services and Procurement Canada",
+            },
+            brselect: {
+              fields: ["BR_NMBR", "BR_SHORT_TITLE"],
+            },
+          }),
+        },
+        {
+          toolName: "get_br_page",
+          output: JSON.stringify({
+            results: [
+              {
+                BR_NMBR: "BR-2001",
+                BR_SHORT_TITLE: "Migrate legacy service",
+                SUBMIT_DATE: "2026-04-10",
+              },
+              {
+                BR_NMBR: "BR-2002",
+                BR_SHORT_TITLE: "Upgrade firewall policy",
+                SUBMIT_DATE: "2026-04-12",
+              },
+            ],
+          }),
+        },
+      ],
+    });
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [bitsServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Find BRs submitted in the last 3 weeks for PSPC.",
+      }) as any,
+    );
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.brArtifacts?.brData).toHaveLength(2);
+    expect(assistantMessage?.brArtifacts?.brMetadata).toMatchObject({
+      results: 750,
+      total_rows: 1310,
+    });
+    expect(assistantMessage?.brArtifacts?.brQuery).toMatchObject({
+      RPT_GC_ORG_NAME_EN: "Public Services and Procurement Canada",
+    });
+    expect(assistantMessage?.brArtifacts?.brSelectFields?.fields).toEqual(["BR_NMBR", "BR_SHORT_TITLE"]);
+  });
+
+  it("ignores non-BR results arrays", async () => {
+    createCompletionMock.mockResolvedValueOnce({
+      fullText: "Found results.",
+      completed: true,
+      provider: "azure-openai",
+      citations: [],
+      mcpToolOutputs: [
+        {
+          toolName: "get_br_page",
+          output: JSON.stringify({
+            results: [
+              { foo: "bar" },
+              { hello: "world" },
+            ],
+          }),
+        },
+      ],
+    });
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [bitsServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Find BRs.",
+      }) as any,
+    );
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.brArtifacts).toBeUndefined();
+  });
 });
