@@ -68,6 +68,8 @@ interface AssistantMessageBubbleProps {
   liveAttribution?: MessageMcpAttribution;
   hasMermaidFence: boolean;
   isActiveStreamingAssistantMessage: boolean;
+  /** True only during waiting-first-token and drafting phases — hides the full body. */
+  isPreStreamingPhase?: boolean;
   isShowingMermaidCode: boolean;
   isHovering: boolean;
   isMostRecent: boolean;
@@ -110,17 +112,35 @@ interface BrQuery {
 
 const MONTH_INDEX_BY_NAME: Record<string, number> = {
   january: 0,
+  janvier: 0,
   february: 1,
+  fevrier: 1,
   march: 2,
   april: 3,
+  avril: 3,
   may: 4,
+  mai: 4,
   june: 5,
+  juin: 5,
   july: 6,
+  juillet: 6,
   august: 7,
+  aout: 7,
   september: 8,
+  septembre: 8,
   october: 9,
+  octobre: 9,
   november: 10,
+  novembre: 10,
   december: 11,
+  decembre: 11,
+};
+
+const normalizeForMatching = (value: string): string => {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 };
 
 const formatIsoDate = (date: Date): string => {
@@ -163,6 +183,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
   liveAttribution,
   hasMermaidFence,
   isActiveStreamingAssistantMessage,
+  isPreStreamingPhase = false,
   isShowingMermaidCode,
   isHovering,
   isMostRecent,
@@ -209,6 +230,23 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
     );
   }, [message.brArtifacts?.brData]);
 
+  // Diagnostic: log if brArtifacts exist but brData is undefined (edge case)
+  if (
+    process.env.NODE_ENV === "development"
+    && message.brArtifacts
+    && !brData
+    && message.role === "assistant"
+  ) {
+    console.warn(
+      "[ChatMessages] Message has brArtifacts but brData is undefined:",
+      {
+        messageId: message.id,
+        brArtifactsKeys: Object.keys(message.brArtifacts),
+        brDataRaw: message.brArtifacts.brData,
+      }
+    );
+  }
+
   const brMetadata = useMemo(() => {
     const metadata = message.brArtifacts?.brMetadata;
     if (!metadata) {
@@ -254,7 +292,10 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
     return query as BrQuery;
   }, [message.brArtifacts?.brQuery]);
 
-  const shouldHideAssistantMarkdownForBrTable = Boolean(brData && brData.length > 1);
+  // Hide markdown only when the grid is the final presentation AND streaming has finished.
+  const shouldHideAssistantMarkdownForBrTable =
+    Boolean(brData && brData.length > 1) && !isActiveStreamingAssistantMessage;
+  const isFrench = i18n.language.toLowerCase().startsWith("fr");
 
   const fallbackBrQuery = useMemo(() => {
     const sourcePrompt = regenerateSourceMessage?.content;
@@ -265,8 +306,9 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
 
     // Lightweight heuristic extraction to show likely filters when tool metadata is missing.
     const queryFilters: BrQueryFilter[] = [];
+    const normalizedPrompt = normalizeForMatching(sourcePrompt);
 
-    const monthMatch = sourcePrompt.match(/\b(january|february|march|april|may|june|july|august|september|october|november|december)\b(?:\s+(\d{4}))?/i);
+    const monthMatch = normalizedPrompt.match(/\b(january|janvier|february|fevrier|march|april|avril|may|mai|june|juin|july|juillet|august|aout|september|septembre|october|octobre|november|novembre|december|decembre)\b(?:\s+(\d{4}))?/i);
     if (monthMatch) {
       const monthName = monthMatch[1].toLowerCase();
       const monthIndex = MONTH_INDEX_BY_NAME[monthName];
@@ -291,9 +333,9 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
       }
     }
 
-    const relativeWeeksMatch = sourcePrompt.match(/\b(?:last|past)\s+(\d+)\s+weeks?\b/i);
+    const relativeWeeksMatch = normalizedPrompt.match(/\b(?:last|past)\s+(\d+)\s+weeks?\b|\b(?:au\s+cours\s+des?|dans\s+les?)\s+(\d+)\s+dernieres?\s+semaines?\b|\b(\d+)\s+dernieres?\s+semaines?\b/i);
     if (relativeWeeksMatch) {
-      const weeks = Number.parseInt(relativeWeeksMatch[1], 10);
+      const weeks = Number.parseInt(relativeWeeksMatch[1] || relativeWeeksMatch[2] || relativeWeeksMatch[3], 10);
       if (Number.isFinite(weeks) && weeks > 0) {
         const start = new Date();
         start.setUTCDate(start.getUTCDate() - (weeks * 7));
@@ -307,7 +349,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
       }
     }
 
-    const clientMatch = sourcePrompt.match(/\bclient\b\s+([A-Za-z0-9][A-Za-z0-9 '&().-]{1,100}?)(?=(?:\s+for\s+brs?|\s+for\s+the\s+month|\s+with\s+|\s+of\s+|\s+that\s+|\s+priority|\s+only|[,.;]|$))/i);
+    const clientMatch = sourcePrompt.match(/\bclient\b\s+([A-Za-z0-9][A-Za-z0-9 '&().-]{1,100}?)(?=(?:\s+for\s+brs?|\s+for\s+the\s+month|\s+with\s+|\s+of\s+|\s+that\s+|\s+priority|\s+only|\s+pour\s+les?\s+d[oa]|\s+pour\s+le\s+mois|\s+de\s+priorit[ée]|\s+seulement|\s+provenant\s+du|\s+au\s+cours\s+des?|[,.;]|$))/i);
     if (clientMatch) {
       const clientCandidate = clientMatch[1].trim();
       if (clientCandidate.length > 0) {
@@ -321,14 +363,21 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
       }
     }
 
-    const priorityMatch = sourcePrompt.match(/\b(high|medium|low)\s+priority\b|\bpriority\b\s*(?:is|=)?\s*(high|medium|low)\b/i);
-    const priorityRaw = (priorityMatch?.[1] || priorityMatch?.[2] || "").toLowerCase();
-    if (priorityRaw) {
-      const normalizedPriority = `${priorityRaw.charAt(0).toUpperCase()}${priorityRaw.slice(1)}`;
+    const priorityMatch = normalizedPrompt.match(/\b(high|medium|low)\s+priority\b|\bpriority\b\s*(?:is|=)?\s*(high|medium|low)\b|\bpriorite\b\s*(?:est|=|de)?\s*(elevee|moyenne|faible)\b|\bpriorite\s+(elevee|moyenne|faible)\b/i);
+    const priorityRaw = (priorityMatch?.[1] || priorityMatch?.[2] || priorityMatch?.[3] || priorityMatch?.[4] || "").toLowerCase();
+    const normalizedPriority = ({
+      high: "High",
+      medium: "Medium",
+      low: "Low",
+      elevee: "High",
+      moyenne: "Medium",
+      faible: "Low",
+    } as Record<string, string>)[priorityRaw];
+    if (normalizedPriority) {
       queryFilters.push({
         name: "PRIORITY_EN",
         en: "Priority",
-        fr: "Priorite",
+        fr: "Priorité",
         operator: "=",
         value: normalizedPriority,
       });
@@ -494,6 +543,15 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
 
     return rows;
   }, [brData, hasMermaidFence, processedContent.processedText]);
+
+  const shouldShowMermaidToggle =
+    hasMermaidFence
+    && !isActiveStreamingAssistantMessage
+    && !shouldHideAssistantMarkdownForBrTable
+    && fallbackMermaidRows.length === 0;
+  // Only blank the body during pre-streaming phases (waiting / drafting).
+  // During the streaming phase the markdown streams naturally (typewriter effect).
+  const shouldHideAssistantBodyWhileStreaming = isPreStreamingPhase;
 
   const getCitationGroupByNumber = useCallback(
     (citationNumber?: number) => {
@@ -666,116 +724,120 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
           )}
         </Box>
         <Box sx={{ minWidth: 0, flex: 1 }}>
-          {hasMermaidFence && !isActiveStreamingAssistantMessage && (
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 0.5 }}>
-              <Button
-                size="small"
-                variant="contained"
-                onClick={onToggleMermaidCodeView}
-                aria-pressed={isShowingMermaidCode}
-                sx={{
-                  minWidth: 0,
-                  px: 1,
-                  py: 0.25,
-                  textTransform: "none",
-                  fontSize: "0.78rem",
-                  borderRadius: 999,
-                  backgroundColor:
-                    theme.palette.mode === "dark" ? "rgba(120, 132, 180, 0.22)" : "rgba(75, 62, 153, 0.08)",
-                  color:
-                    theme.palette.mode === "dark" ? theme.palette.common.white : theme.palette.primary.main,
-                  boxShadow: "none",
-                  "&:hover": {
-                    backgroundColor:
-                      theme.palette.mode === "dark" ? "rgba(140, 152, 201, 0.32)" : "rgba(75, 62, 153, 0.14)",
-                    boxShadow: "none",
-                  },
-                }}
-              >
-                {isShowingMermaidCode
-                  ? t("assistant.mermaid.viewDiagram")
-                  : t("assistant.mermaid.viewCode")}
-              </Button>
-            </Box>
-          )}
-          {!shouldHideAssistantMarkdownForBrTable && (
-            <Box sx={ASSISTANT_MARKDOWN_SX}>
-              <MarkdownHooks
-                components={markdownComponents}
-                remarkPlugins={remarkPlugins}
-                rehypePlugins={rehypePlugins}
-              >
-                {processedContent.processedText}
-              </MarkdownHooks>
-            </Box>
-          )}
-          {resolvedAttachments.length > 0 && (
-            <AttachmentPreview attachments={resolvedAttachments} />
-          )}
-          {brData && brData.length > 1 && (
-            <Box sx={{ mt: 1 }}>
-              <Suspense fallback={<Box role="status" aria-live="polite" sx={{ display: "flex", justifyContent: "center", py: 2 }}><CircularProgress size={24} /><Box component="span" sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap" }}>{t("loading")}</Box></Box>}>
-                <BusinessRequestTable
-                  data={brData}
-                  lang={i18n.language}
-                  show_fields={brSelectFields}
-                />
-              </Suspense>
-            </Box>
-          )}
-          {brData && brData.length === 1 && (
-            <Box sx={{ mt: 1 }}>
-              <BusinessRequestCard
-                data={brData[0]}
-                lang={i18n.language}
-              />
-            </Box>
-          )}
-          {(!brData || brData.length === 0) && fallbackMermaidRows.length > 0 && (
-            <Suspense fallback={<Box role="status" aria-live="polite" sx={{ display: "flex", justifyContent: "center", py: 2 }}><CircularProgress size={24} /><Box component="span" sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap" }}>{t("loading")}</Box></Box>}>
-              <MermaidDataGrid rows={fallbackMermaidRows} />
-            </Suspense>
-          )}
-          {brMetadata && (
-            <Box sx={{ mt: 1 }}>
-              <BusinessRequestMetadata metadata={brMetadata} />
-            </Box>
-          )}
-          {displayedBrQuery && (
-            <Box sx={{ mt: 1 }}>
-              <Paper sx={{ backgroundColor: "white", padding: 1, width: "100%" }} elevation={1}>
-                <Typography variant="caption" gutterBottom sx={{ display: "block", mb: 1 }}>
-                  {t("br.query.parameters")}
-                </Typography>
-                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-                  {displayedBrQuery.query_filters?.map((filter, index) => (
-                    <Chip
-                      key={`query-filter-${index}`}
-                      label={`${i18n.language === "en" ? (filter.en || filter.name) : (filter.fr || filter.name)} (${filter.name}) ${filter.operator || "="} ${String(filter.value ?? "")}`}
-                      size="small"
-                      variant="outlined"
-                      color="primary"
+          {!shouldHideAssistantBodyWhileStreaming && (
+            <>
+              {shouldShowMermaidToggle && (
+                <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 0.5 }}>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    onClick={onToggleMermaidCodeView}
+                    aria-pressed={isShowingMermaidCode}
+                    sx={{
+                      minWidth: 0,
+                      px: 1,
+                      py: 0.25,
+                      textTransform: "none",
+                      fontSize: "0.78rem",
+                      borderRadius: 999,
+                      backgroundColor:
+                        theme.palette.mode === "dark" ? "rgba(120, 132, 180, 0.22)" : "rgba(75, 62, 153, 0.08)",
+                      color:
+                        theme.palette.mode === "dark" ? theme.palette.common.white : theme.palette.primary.main,
+                      boxShadow: "none",
+                      "&:hover": {
+                        backgroundColor:
+                          theme.palette.mode === "dark" ? "rgba(140, 152, 201, 0.32)" : "rgba(75, 62, 153, 0.14)",
+                        boxShadow: "none",
+                      },
+                    }}
+                  >
+                    {isShowingMermaidCode
+                      ? t("assistant.mermaid.viewDiagram")
+                      : t("assistant.mermaid.viewCode")}
+                  </Button>
+                </Box>
+              )}
+              {!shouldHideAssistantMarkdownForBrTable && (
+                <Box sx={ASSISTANT_MARKDOWN_SX}>
+                  <MarkdownHooks
+                    components={markdownComponents}
+                    remarkPlugins={remarkPlugins}
+                    rehypePlugins={rehypePlugins}
+                  >
+                    {processedContent.processedText}
+                  </MarkdownHooks>
+                </Box>
+              )}
+              {resolvedAttachments.length > 0 && (
+                <AttachmentPreview attachments={resolvedAttachments} />
+              )}
+              {brData && brData.length > 1 && !isActiveStreamingAssistantMessage && (
+                <Box sx={{ mt: 1 }}>
+                  <Suspense fallback={<Box role="status" aria-live="polite" sx={{ display: "flex", justifyContent: "center", py: 2 }}><CircularProgress size={24} /><Box component="span" sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap" }}>{t("loading")}</Box></Box>}>
+                    <BusinessRequestTable
+                      data={brData}
+                      lang={i18n.language}
+                      show_fields={brSelectFields}
                     />
-                  ))}
-                  {displayedBrQuery.status && (
-                    <Chip
-                      label={`Status: ${displayedBrQuery.status}`}
-                      size="small"
-                      variant="outlined"
-                      color="secondary"
-                    />
-                  )}
-                  {displayedBrQuery.statuses && Array.isArray(displayedBrQuery.statuses) && displayedBrQuery.statuses.length > 0 && (
-                    <Chip
-                      label={`Statuses: ${displayedBrQuery.statuses.join(", ")}`}
-                      size="small"
-                      variant="outlined"
-                      color="secondary"
-                    />
-                  )}
-                </Stack>
-              </Paper>
-            </Box>
+                  </Suspense>
+                </Box>
+              )}
+              {brData && brData.length === 1 && !isActiveStreamingAssistantMessage && (
+                <Box sx={{ mt: 1 }}>
+                  <BusinessRequestCard
+                    data={brData[0]}
+                    lang={i18n.language}
+                  />
+                </Box>
+              )}
+              {(!brData || brData.length === 0) && fallbackMermaidRows.length > 0 && !isActiveStreamingAssistantMessage && (
+                <Suspense fallback={<Box role="status" aria-live="polite" sx={{ display: "flex", justifyContent: "center", py: 2 }}><CircularProgress size={24} /><Box component="span" sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap" }}>{t("loading")}</Box></Box>}>
+                  <MermaidDataGrid rows={fallbackMermaidRows} />
+                </Suspense>
+              )}
+              {brMetadata && !isActiveStreamingAssistantMessage && (
+                <Box sx={{ mt: 1 }}>
+                  <BusinessRequestMetadata metadata={brMetadata} />
+                </Box>
+              )}
+              {displayedBrQuery && !isActiveStreamingAssistantMessage && (
+                <Box sx={{ mt: 1 }}>
+                  <Paper sx={{ backgroundColor: "white", padding: 1, width: "100%" }} elevation={1}>
+                    <Typography variant="caption" gutterBottom sx={{ display: "block", mb: 1 }}>
+                      {t("br.query.parameters")}
+                    </Typography>
+                    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                      {displayedBrQuery.query_filters?.map((filter, index) => (
+                        <Chip
+                          key={`query-filter-${index}`}
+                          label={`${isFrench ? (filter.fr || filter.name) : (filter.en || filter.name)} (${filter.name}) ${filter.operator || "="} ${String(filter.value ?? "")}`}
+                          size="small"
+                          variant="outlined"
+                          color="primary"
+                        />
+                      ))}
+                      {displayedBrQuery.status && (
+                        <Chip
+                          label={`${t("br.query.status", { defaultValue: "Status" })}: ${displayedBrQuery.status}`}
+                          size="small"
+                          variant="outlined"
+                          color="secondary"
+                        />
+                      )}
+                      {displayedBrQuery.statuses && Array.isArray(displayedBrQuery.statuses) && displayedBrQuery.statuses.length > 0 && (
+                        <Chip
+                          label={`${t("br.query.statuses", { defaultValue: "Statuses" })}: ${displayedBrQuery.statuses.join(", ")}`}
+                          size="small"
+                          variant="outlined"
+                          color="secondary"
+                        />
+                      )}
+                    </Stack>
+                  </Paper>
+                </Box>
+              )}
+            </>
           )}
           {!isActiveStreamingAssistantMessage && (
             <ResponseButtons
@@ -791,30 +853,33 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
           )}
         </Box>
       </Box>
-      <Citations
-        groupedCitations={groupedCitations}
-        onCitationClick={(group) => {
-          setActiveCitationGroupUrl(group.url);
-          setPendingCitationNumber(group.displayNumber);
-          setCitationDrawerOpen(true);
-        }}
-      />
-      <CitationDrawer
-        open={isCitationDrawerOpen}
-        onClose={() => setCitationDrawerOpen(false)}
-        groupedCitations={groupedCitations}
-        allCitations={allCitations}
-        citationNumberMapping={processedContent.citationNumberMapping}
-        assistantMessageContent={message.content}
-        activeCitationGroupUrl={activeCitationGroupUrl}
-        onActiveCitationGroupUrlChange={setActiveCitationGroupUrl}
-        pendingCitationNumber={pendingCitationNumber}
-        onPendingCitationNumberChange={setPendingCitationNumber}
-      />
+      {!isActiveStreamingAssistantMessage && (
+        <>
+          <Citations
+            groupedCitations={groupedCitations}
+            onCitationClick={(group) => {
+              setActiveCitationGroupUrl(group.url);
+              setPendingCitationNumber(group.displayNumber);
+              setCitationDrawerOpen(true);
+            }}
+          />
+          <CitationDrawer
+            open={isCitationDrawerOpen}
+            onClose={() => setCitationDrawerOpen(false)}
+            groupedCitations={groupedCitations}
+            allCitations={allCitations}
+            citationNumberMapping={processedContent.citationNumberMapping}
+            assistantMessageContent={message.content}
+            activeCitationGroupUrl={activeCitationGroupUrl}
+            onActiveCitationGroupUrlChange={setActiveCitationGroupUrl}
+            pendingCitationNumber={pendingCitationNumber}
+            onPendingCitationNumberChange={setPendingCitationNumber}
+          />
+        </>
+      )}
     </Box>
   );
 });
-
 const resolveAttachmentsForMessage = (
   attachments: FileAttachment[] | undefined,
   sessionFilesByBlobName: Map<string, FileAttachment>,
