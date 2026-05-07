@@ -12,6 +12,7 @@ import {
   ThunkAction,
   UnknownAction,
 } from "@reduxjs/toolkit";
+import throttle from "lodash.throttle";
 import chatReducer from "./slices/chatSlice";
 import sessionReducer from "./slices/sessionSlice";
 import toolReducer from "./slices/toolSlice";
@@ -57,8 +58,12 @@ export const store = configureStore({
     getDefaultMiddleware().concat(archiverMiddleware, outboxMiddleware),
 });
 
+const throttledSaveState = throttle((state: RootState) => {
+  saveChatState(state);
+}, 2000);
+
 store.subscribe(() => {
-  saveChatState(store.getState());
+  throttledSaveState(store.getState());
 });
 
 const initialStateSnapshot = store.getState();
