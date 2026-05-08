@@ -1014,4 +1014,123 @@ describe("sendAssistantMessage auto-rename", () => {
     const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
     expect(assistantMessage?.brArtifacts).toBeUndefined();
   });
+
+  it("ignores BITS field-definition results that are not BR rows", async () => {
+    createCompletionMock.mockResolvedValueOnce({
+      fullText: "You can ask about status, timelines, and owners.",
+      completed: true,
+      provider: "azure-openai",
+      citations: [],
+      mcpToolOutputs: [
+        {
+          toolName: "valid_search_fields",
+          output: JSON.stringify({
+            results: [
+              { BR_NMBR: "Business Request Number" },
+              { SUBMIT_DATE: "Date submitted" },
+            ],
+          }),
+        },
+      ],
+    });
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [bitsServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "What kind of questions can I ask about Business Requests (BR)?",
+      }) as any,
+    );
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.content).toContain("status");
+    expect(assistantMessage?.brArtifacts).toBeUndefined();
+  });
+
+  it("does not attach BR artifacts from valid_search_fields even with BR-like keys", async () => {
+    createCompletionMock.mockResolvedValueOnce({
+      fullText: "You can ask by status, date range, client, or priority.",
+      completed: true,
+      provider: "azure-openai",
+      citations: [],
+      mcpToolOutputs: [
+        {
+          toolName: "valid_search_fields",
+          output: JSON.stringify({
+            results: [
+              {
+                BR_NMBR: "Business Request Number",
+                BR_SHORT_TITLE: "Title",
+                BITS_STATUS_EN: "Status",
+              },
+            ],
+          }),
+        },
+      ],
+    });
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [bitsServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "What kind of questions can I ask about Business Requests (BR)?",
+      }) as any,
+    );
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.content).toContain("status");
+    expect(assistantMessage?.brArtifacts).toBeUndefined();
+  });
+
+  it("does not attach BR artifacts for BR guidance prompts even when rows are returned", async () => {
+    createCompletionMock.mockResolvedValueOnce({
+      fullText: "You can ask about status, timelines, priorities, and client-specific requests.",
+      completed: true,
+      provider: "azure-openai",
+      citations: [],
+      mcpToolOutputs: [
+        {
+          toolName: "search_business_requests",
+          output: JSON.stringify({
+            results: [
+              {
+                BR_NMBR: "BR-3001",
+                BR_SHORT_TITLE: "Sample BR one",
+                BITS_STATUS_EN: "Open",
+              },
+              {
+                BR_NMBR: "BR-3002",
+                BR_SHORT_TITLE: "Sample BR two",
+                BITS_STATUS_EN: "Closed",
+              },
+            ],
+          }),
+        },
+      ],
+    });
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [bitsServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "What kind of questions can I ask about Business Requests (BR)?",
+      }) as any,
+    );
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.content).toContain("status");
+    expect(assistantMessage?.brArtifacts).toBeUndefined();
+  });
 });

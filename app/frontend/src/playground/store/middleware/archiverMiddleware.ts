@@ -9,7 +9,7 @@ import {
   markSessionSynced,
   markSessionError,
 } from "../slices/syncSlice";
-import { uploadEncodedFile } from "../../api/storage";
+import { isRetriableUploadError, uploadEncodedFile } from "../../api/storage";
 import { removeSession, renameSession } from "../slices/sessionSlice";
 import { rehydrateSessionFromArchive, SessionRehydrationResult } from "../thunks/sessionBootstrapThunks";
 import { selectHasMessagesForSession, selectMessagesForSession } from "../selectors/chatSelectors";
@@ -120,7 +120,9 @@ async function doArchive(sessionId: string, store: PlaygroundStoreApi) {
       },
     });
   } catch (error) {
-    queueArchive();
+    if (isRetriableUploadError(error)) {
+      queueArchive();
+    }
     store.dispatch(
       markSessionError({
         sessionId,
