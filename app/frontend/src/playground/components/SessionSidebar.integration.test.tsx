@@ -4,19 +4,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("react-i18next", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("react-i18next")>();
-  return {
-    ...actual,
-    useTranslation: () => ({
-      t: (key: string) => key,
-    }),
-    initReactI18next: {
-      type: '3rdParty',
-      init: vi.fn(),
-    }
-  };
-});
+vi.mock("react-use-measure", () => ({
+  default: () => [vi.fn(), { height: 500 }],
+}));
 
 import SessionSidebar from "./SessionSidebar";
 import sessionReducer from "../store/slices/sessionSlice";
@@ -79,7 +69,7 @@ describe("SessionSidebar responsive behavior", () => {
     });
 
     // Check for "chats" header using the more specific heading role
-    expect(screen.queryByRole("heading", { name: "chats" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Chats" })).not.toBeInTheDocument();
   });
 
   /**
@@ -99,12 +89,12 @@ describe("SessionSidebar responsive behavior", () => {
       },
     });
 
-    expect(screen.getByRole("heading", { name: "chats" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Chats" })).toBeInTheDocument();
 
     store.dispatch(toggleSidebarCollapsed());
 
     await waitFor(() => {
-      expect(screen.queryByRole("heading", { name: "chats" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Chats" })).not.toBeInTheDocument();
     });
   });
 
@@ -181,7 +171,7 @@ describe("SessionSidebar responsive behavior", () => {
         },
       });
 
-      await user.click(screen.getByRole("button", { name: "sidebar.close" }));
+      await user.click(screen.getByRole("button", { name: "Close chat sessions" }));
 
       await waitFor(() => {
         expect(document.activeElement).toBe(opener);
@@ -213,7 +203,7 @@ describe("SessionSidebar responsive behavior", () => {
       },
     });
 
-    await user.click(screen.getByRole("button", { name: "sidebar.close" }));
+    await user.click(screen.getByRole("button", { name: "Close chat sessions" }));
 
     await waitFor(() => {
       expect((document.activeElement as HTMLElement | null)?.id).toBe("new-chat-button");
