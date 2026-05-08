@@ -14,6 +14,7 @@ import React, {
 } from "react";
 import { useSelector } from "react-redux";
 import { Box, Button, List, ListItem } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import Link from "@mui/material/Link";
 import { MarkdownHooks } from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -109,6 +110,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
   resolvedAttachments,
 }) => {
   const { t } = useTranslation("playground");
+  const theme = useTheme();
   const [isCitationDrawerOpen, setCitationDrawerOpen] = useState(false);
   const [activeCitationGroupUrl, setActiveCitationGroupUrl] = useState<
     string | undefined
@@ -308,14 +310,26 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
             <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 0.5 }}>
               <Button
                 size="small"
-                variant="text"
+                variant="contained"
                 onClick={onToggleMermaidCodeView}
                 aria-pressed={isShowingMermaidCode}
                 sx={{
                   minWidth: 0,
-                  px: 0.5,
+                  px: 1,
+                  py: 0.25,
                   textTransform: "none",
                   fontSize: "0.78rem",
+                  borderRadius: 999,
+                  backgroundColor:
+                    theme.palette.mode === "dark" ? "rgba(120, 132, 180, 0.22)" : "rgba(75, 62, 153, 0.08)",
+                  color:
+                    theme.palette.mode === "dark" ? theme.palette.common.white : theme.palette.primary.main,
+                  boxShadow: "none",
+                  "&:hover": {
+                    backgroundColor:
+                      theme.palette.mode === "dark" ? "rgba(140, 152, 201, 0.32)" : "rgba(75, 62, 153, 0.14)",
+                    boxShadow: "none",
+                  },
                 }}
               >
                 {isShowingMermaidCode
@@ -376,47 +390,86 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   const { t } = useTranslation("playground");
+  const theme = useTheme();
   const [mermaidCodeViewByMessageId, setMermaidCodeViewByMessageId] =
     useState<Record<string, boolean>>({});
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
 
-  // Inject mermaid styles to override approve/reject box text color
   useEffect(() => {
-    const styleId = "mermaid-override-styles";
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement("style");
+    const styleId = "mermaid-browser-dark-overrides";
+    let style = document.getElementById(styleId) as HTMLStyleElement | null;
+
+    if (!style) {
+      style = document.createElement("style");
       style.id = styleId;
-      style.innerHTML = `
-        .mermaid .nodeLabel,
-        .mermaid .nodeLabel *,
-        .mermaid .label,
-        .mermaid .label *,
-        .mermaid .edgeLabel,
-        .mermaid .edgeLabel *,
-        svg[id^='mermaid-'] .nodeLabel,
-        svg[id^='mermaid-'] .nodeLabel *,
-        svg[id^='mermaid-'] .label,
-        svg[id^='mermaid-'] .label *,
-        svg[id^='mermaid-'] .edgeLabel,
-        svg[id^='mermaid-'] .edgeLabel * {
-          fill: #000000 !important;
-          color: #000000 !important;
-        }
-        .mermaid text,
-        .mermaid tspan,
-        .mermaid foreignObject,
-        .mermaid foreignObject *,
-        svg[id^='mermaid-'] text,
-        svg[id^='mermaid-'] tspan,
-        svg[id^='mermaid-'] foreignObject,
-        svg[id^='mermaid-'] foreignObject * {
-          fill: #000000 !important;
-          color: #000000 !important;
-        }
-      `;
       document.head.appendChild(style);
     }
-  }, []);
+
+    if (theme.palette.mode !== "dark") {
+      style.innerHTML = "";
+      return;
+    }
+
+    style.innerHTML = `
+      svg[id*='mermaid'] rect[fill='#ececff' i],
+      svg[id*='mermaid'] polygon[fill='#ececff' i],
+      svg[id*='mermaid'] circle[fill='#ececff' i],
+      svg[id*='mermaid'] ellipse[fill='#ececff' i],
+      svg[id*='mermaid'] path[fill='#ececff' i],
+      svg[id*='mermaid'] .node rect,
+      svg[id*='mermaid'] .node polygon,
+      svg[id*='mermaid'] .node circle,
+      svg[id*='mermaid'] .node ellipse,
+      svg[id*='mermaid'] .node path {
+        fill: #24304d !important;
+        stroke: #d6deff !important;
+      }
+
+      svg[id*='mermaid'] text,
+      svg[id*='mermaid'] tspan,
+      svg[id*='mermaid'] .label,
+      svg[id*='mermaid'] .label *,
+      svg[id*='mermaid'] .nodeLabel,
+      svg[id*='mermaid'] .nodeLabel * {
+        fill: #f4f7ff !important;
+        color: #f4f7ff !important;
+      }
+
+      svg[id*='mermaid'] .edgePath .path,
+      svg[id*='mermaid'] .flowchart-link,
+      svg[id*='mermaid'] .edge-thickness-normal,
+      svg[id*='mermaid'] .edge-thickness-thick {
+        stroke: #d6deff !important;
+        fill: none !important;
+      }
+
+      svg[id*='mermaid'] .arrowheadPath {
+        fill: #d6deff !important;
+        stroke: #d6deff !important;
+      }
+
+      svg[id*='mermaid'] .edgeLabel rect,
+      svg[id*='mermaid'] rect.edgeLabel {
+        fill: #314063 !important;
+        stroke: #d6deff !important;
+        stroke-width: 1px !important;
+      }
+
+      svg[id*='mermaid'] .edgeLabel,
+      svg[id*='mermaid'] .edgeLabel *,
+      svg[id*='mermaid'] .edgeLabel text,
+      svg[id*='mermaid'] .edgeLabel tspan {
+        fill: #f8faff !important;
+        color: #f8faff !important;
+        font-weight: 700 !important;
+      }
+
+      svg[id*='mermaid'] foreignObject div,
+      svg[id*='mermaid'] foreignObject span {
+        color: #f8faff !important;
+      }
+    `;
+  }, [theme.palette.mode]);
 
   const markdownComponents = useMemo(
     () => ({
@@ -472,6 +525,83 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
     () => [
       rehypeMermaid,
       {
+        strategy: "inline-svg",
+        mermaidConfig: {
+          theme: theme.palette.mode === "dark" ? "dark" : "default",
+          themeVariables:
+            theme.palette.mode === "dark"
+              ? {
+                  background: "#1a1e29",
+                  mainBkg: "#24304d",
+                  secondBkg: "#1f2a44",
+                  tertiaryColor: "#1f2757",
+                  primaryColor: "#24304d",
+                  primaryTextColor: "#f4f7ff",
+                  secondaryTextColor: "#e7ecff",
+                  tertiaryTextColor: "#f4f7ff",
+                  textColor: "#f4f7ff",
+                  lineColor: "#d6deff",
+                  arrowheadColor: "#d6deff",
+                  edgeLabelBackground: "#314063",
+                  nodeBorder: "#d6deff",
+                }
+              : {
+                  background: "#f5f5f5",
+                  mainBkg: "#ffffff",
+                  secondBkg: "#f5f7ff",
+                  tertiaryColor: "#e9edff",
+                  primaryColor: "#ffffff",
+                  primaryTextColor: "#11131a",
+                  secondaryTextColor: "#11131a",
+                  tertiaryTextColor: "#11131a",
+                  textColor: "#11131a",
+                  lineColor: "#4b3e99",
+                  arrowheadColor: "#4b3e99",
+                  edgeLabelBackground: "#eef2ff",
+                  nodeBorder: "#4b3e99",
+                },
+          themeCSS:
+            theme.palette.mode === "dark"
+              ? `
+                  .edgeLabel rect {
+                    fill: #314063 !important;
+                    stroke: #d6deff !important;
+                    stroke-width: 1px !important;
+                  }
+                  .edgeLabel text,
+                  .edgeLabel tspan {
+                    fill: #f8faff !important;
+                    font-weight: 600 !important;
+                  }
+                  .edgePath .path,
+                  .flowchart-link {
+                    stroke: #d6deff !important;
+                    fill: none !important;
+                  }
+                  .arrowheadPath {
+                    fill: #d6deff !important;
+                    stroke: #d6deff !important;
+                  }
+                  .node rect,
+                  .node polygon,
+                  .node circle,
+                  .node ellipse,
+                  .node path {
+                    fill: #24304d !important;
+                    stroke: #d6deff !important;
+                  }
+                  .nodeLabel,
+                  .nodeLabel *,
+                  .label,
+                  .label *,
+                  text,
+                  tspan {
+                    fill: #f4f7ff !important;
+                    color: #f4f7ff !important;
+                  }
+                `
+              : undefined,
+        },
         errorFallback: (): ElementContent => ({
           type: "element",
           tagName: "div",
@@ -483,7 +613,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
         }),
       },
     ],
-    [mermaidErrorText]
+    [mermaidErrorText, theme.palette.mode]
   );
 
   const rehypePluginsWithMermaid = useMemo<Pluggable[]>(

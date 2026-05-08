@@ -183,11 +183,12 @@ const TopBar: React.FC<TopBarProps> = ({
             }}
             startIcon={<img src={TopmenuMicrosofTeamsIcon} alt="" style={{ width: "1.1rem" }} />}
             sx={{
-              bgcolor: themeMode === "dark" ? "#23283a" : "white",
-              color: themeMode === "dark" ? "#e7e9f2" : "#3f479a",
+              bgcolor: themeMode === "dark" ? "#eef2ff" : "white",
+              color: themeMode === "dark" ? "#1f2757" : "#3f479a",
               textTransform: "none",
               fontWeight: "bold",
               lineHeight: 1.2,
+              border: themeMode === "dark" ? "1px solid rgba(255,255,255,0.14)" : "1px solid transparent",
               borderRadius: "8px",
               padding: { xs: "4px 8px", sm: "6px 16px" },
               fontSize: { xs: "0.75rem", sm: "0.875rem" },
@@ -200,8 +201,8 @@ const TopBar: React.FC<TopBarProps> = ({
                 display: "none"
               },
               "&:hover": {
-                bgcolor: themeMode === "dark" ? "#2d3347" : "#f5f5f5",
-                color: themeMode === "dark" ? "#ffffff" : "#2e3470",
+                bgcolor: themeMode === "dark" ? "#ffffff" : "#f5f5f5",
+                color: themeMode === "dark" ? "#19214d" : "#2e3470",
               },
               "&:focus-visible": {
                 outline: "2px solid",

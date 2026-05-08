@@ -552,9 +552,17 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
           onClick={isLoading ? onStop : handleSend}
           disabled={isUploading || (!isLoading && !canSend)}
           sx={{
-            '&:hover': { backgroundColor: 'rgba(0,0,0,0.08)' },
+            color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.primary.main,
+            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(120, 132, 180, 0.22)' : 'transparent',
             minWidth: 44,
             minHeight: 44,
+            '&:hover': {
+              backgroundColor:
+                theme.palette.mode === 'dark' ? 'rgba(140, 152, 201, 0.32)' : 'rgba(0,0,0,0.08)',
+            },
+            '&.Mui-disabled': {
+              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'transparent',
+            },
             '&:focus-visible': {
               outline: `3px solid ${theme.palette.primary.main}`,
               outlineOffset: 3,
@@ -589,11 +597,11 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
                 }}
               />
               <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <StopCircleIcon sx={{ color: 'primary.main' }} />
+                <StopCircleIcon sx={{ color: theme.palette.mode === 'dark' ? 'common.white' : 'primary.main' }} />
               </Box>
             </Box>
           ) : (
-            <SendIcon sx={{ color: 'primary.main' }} aria-hidden="true" />
+            <SendIcon sx={{ color: theme.palette.mode === 'dark' ? 'common.white' : 'primary.main' }} aria-hidden="true" />
           )}
         </IconButton>
         {/*

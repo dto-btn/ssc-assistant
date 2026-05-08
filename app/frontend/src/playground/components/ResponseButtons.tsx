@@ -84,6 +84,9 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
 
     // Source brand colour from the theme so a single-point change propagates everywhere
     const brandColor = theme.palette.primary.main;
+    const buttonColor = theme.palette.mode === "dark" ? theme.palette.common.white : brandColor;
+    const buttonBg = theme.palette.mode === "dark" ? alpha("#aab6ff", 0.18) : "transparent";
+    const buttonHoverBg = theme.palette.mode === "dark" ? alpha("#c2ccff", 0.28) : alpha(brandColor, 0.08);
 
     /** sx applied to every IconButton — ensures a 44×44 touch target (WCAG 2.5.5) */
     const baseIconButtonSx = useMemo(() => ({
@@ -91,21 +94,25 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
       padding: "10px",
       minWidth: 44,
       minHeight: 44,
-      "&:hover": { backgroundColor: alpha(brandColor, 0.08) },
+      backgroundColor: buttonBg,
+      color: buttonColor,
+      "&:hover": { backgroundColor: buttonHoverBg },
       // Visible focus ring for keyboard navigation (WCAG 2.4.7)
       "&.Mui-focusVisible": {
         outline: `2px solid ${brandColor}`,
         outlineOffset: "2px",
-        backgroundColor: alpha(brandColor, 0.08),
+        backgroundColor: buttonHoverBg,
       },
-    }), [brandColor]);
+    }), [brandColor, buttonBg, buttonColor, buttonHoverBg]);
 
     /** Additional sx for an actively-pressed like/dislike button */
     const activeFeedbackSx = useMemo(() => ({
       ...baseIconButtonSx,
-      backgroundColor: alpha(brandColor, 0.12),
-      "&:hover": { backgroundColor: alpha(brandColor, 0.18) },
-    }), [baseIconButtonSx, brandColor]);
+      backgroundColor: theme.palette.mode === "dark" ? alpha("#d7deff", 0.32) : alpha(brandColor, 0.12),
+      "&:hover": {
+        backgroundColor: theme.palette.mode === "dark" ? alpha("#d7deff", 0.4) : alpha(brandColor, 0.18),
+      },
+    }), [baseIconButtonSx, brandColor, theme.palette.mode]);
 
     const [isCopied, setIsCopied] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
@@ -117,7 +124,7 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
     // Buttons are visible when the row is hovered/focused, it is the most
     // recent response, or we are on a small/touch-screen device.
     const isVisible = isHovering || isMostRecent || isSmallScreen || isFocused;
-    const iconColor = isVisible ? brandColor : "transparent";
+    const iconColor = isVisible ? buttonColor : "transparent";
 
     useEffect(() => {
       if (!isCopied) return undefined;

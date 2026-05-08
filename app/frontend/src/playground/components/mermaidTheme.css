@@ -1,26 +1,5 @@
 /* Mermaid Theme Support */
 
-/* Ensure text is dark/black for contrast against light backgrounds */
-.mermaid text,
-.mermaid tspan {
-  fill: #000000 !important;
-}
-
-.mermaid .nodeLabel,
-.mermaid .label {
-  color: #000000 !important;
-  fill: #000000 !important;
-}
-
-.mermaid .pieTitleText,
-.mermaid .legend text {
-  fill: #000000 !important;
-}
-
-.mermaid .edgeLabel {
-  fill: #000000 !important;
-}
-
 /* Responsive diagram sizing */
 .mermaid {
   display: flex;
