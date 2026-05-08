@@ -441,6 +441,14 @@ const normalizePromptForInference = (value: string): string => {
   // Normalize accents and casing so French and English phrasing share one parser path.
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 };
+
+const isBrGuidancePrompt = (promptText: string): boolean => {
+  const normalized = normalizePromptForInference(promptText);
+  return (
+    /\b(what kind of questions|what questions can i ask|what can i ask|example questions|sample questions|how can i ask)\b/.test(normalized)
+    || /\b(quels? types? de questions|quelles? questions puis-je poser|que puis-je demander|exemples? de questions|comment poser)\b/.test(normalized)
+  );
+};
 const MCP_GROUNDED_REWRITE_SYSTEM_PROMPT = [
   "You are revising an assistant answer using cited source excerpts returned from MCP tools.",
   "Rewrite the answer so every factual claim is supported by the provided source material.",
@@ -457,6 +465,11 @@ const BITS_TOOL_NAMES = new Set([
   "create_request",
   "search_business_requests",
   "get_br_page",
+  "valid_search_fields",
+  "get_organization_names",
+]);
+
+const BITS_NON_RESULT_TOOL_NAMES = new Set([
   "valid_search_fields",
   "get_organization_names",
 ]);
@@ -588,12 +601,31 @@ const isLikelyBrRow = (value: unknown): value is Record<string, unknown> => {
   }
 
   const record = value as Record<string, unknown>;
-  return (
-    Object.prototype.hasOwnProperty.call(record, "BR_NMBR")
-    || Object.prototype.hasOwnProperty.call(record, "BR_SHORT_TITLE")
-    || Object.prototype.hasOwnProperty.call(record, "BITS_STATUS_EN")
-    || Object.prototype.hasOwnProperty.call(record, "SUBMIT_DATE")
-  );
+  // Require a BR identifier plus at least one row-like detail field.
+  // This avoids false positives from field-definition payloads such as
+  // { BR_NMBR: "Business Request Number" }.
+  if (!Object.prototype.hasOwnProperty.call(record, "BR_NMBR")) {
+    return false;
+  }
+
+  const brNumber = record.BR_NMBR;
+  const hasScalarBrNumber = typeof brNumber === "string" || typeof brNumber === "number";
+  if (!hasScalarBrNumber) {
+    return false;
+  }
+
+  const detailKeys = [
+    "BR_SHORT_TITLE",
+    "BITS_STATUS_EN",
+    "BITS_STATUS_FR",
+    "SUBMIT_DATE",
+    "RPT_GC_ORG_NAME_EN",
+    "RPT_GC_ORG_NAME_FR",
+    "PRIORITY_EN",
+    "PRIORITY_FR",
+  ];
+
+  return detailKeys.some((key) => Object.prototype.hasOwnProperty.call(record, key));
 };
 
 /**
@@ -705,9 +737,11 @@ const formatIsoDate = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-const inferBitsFilterHintsFromPrompt = (promptText: string): string[] => {
+const inferBitsFilterHintsFromPrompt = (promptText: string, isFrench: boolean): string[] => {
   const hints: string[] = [];
   const normalizedPrompt = normalizePromptForInference(promptText);
+  const clientField = isFrench ? "RPT_GC_ORG_NAME_FR" : "RPT_GC_ORG_NAME_EN";
+  const priorityField = isFrench ? "PRIORITY_FR" : "PRIORITY_EN";
 
   const monthMatch = normalizedPrompt.match(new RegExp(`\\b(${MONTH_NAMES_PATTERN})\\b(?:\\s+(\\d{4}))?`));
   if (monthMatch) {
@@ -739,7 +773,7 @@ const inferBitsFilterHintsFromPrompt = (promptText: string): string[] => {
     ).trim();
 
     if (clientCandidate.length > 0) {
-      hints.push(`Client Name candidate: ${clientCandidate} (resolve acronym/alias using get_organization_names before querying RPT_GC_ORG_NAME_EN/FR)`);
+      hints.push(`Client Name candidate: ${clientCandidate} (resolve acronym/alias using get_organization_names before querying ${clientField})`);
     }
   }
 
@@ -747,7 +781,7 @@ const inferBitsFilterHintsFromPrompt = (promptText: string): string[] => {
   const priorityRaw = (priorityMatch?.[1] || priorityMatch?.[2] || "").toLowerCase();
   const normalizedPriority = PRIORITY_NORMALIZATION_MAP[priorityRaw];
   if (normalizedPriority) {
-    hints.push(`Priority (PRIORITY_EN) = ${normalizedPriority}`);
+    hints.push(`Priority (${priorityField}) = ${normalizedPriority}`);
   }
 
   return hints;
@@ -797,7 +831,10 @@ const buildBitsFilterSystemMessage = (
     return undefined;
   }
 
-  const inferredHints = inferBitsFilterHintsFromPrompt(userPrompt);
+  const inferredHints = inferBitsFilterHintsFromPrompt(
+    userPrompt,
+    i18n.language?.toLowerCase().startsWith("fr") ?? false,
+  );
   const hintsBlock = inferredHints.length > 0
     ? `\nInferred query filters from the current user request (apply unless user corrects them):\n${inferredHints.map((hint) => `- ${hint}`).join("\n")}`
     : "";
@@ -1958,6 +1995,13 @@ export const sendAssistantMessage = ({
       .filter((toolOutput) => {
         const toolName = toolOutput.toolName.toLowerCase();
         const serverLabel = String(toolOutput.serverLabel || "").toLowerCase();
+
+        // Ignore helper/metadata tools that can return schema-like payloads.
+        // Those payloads are not BR result rows and should never trigger the grid UI.
+        if (BITS_NON_RESULT_TOOL_NAMES.has(toolName)) {
+          return false;
+        }
+
         return (
           BITS_TOOL_NAMES.has(toolName)
           || serverLabel.includes("bits")
@@ -1976,7 +2020,12 @@ export const sendAssistantMessage = ({
         return mergeBitsArtifacts(accumulator, artifacts);
       }, undefined);
 
-    if (bitsArtifacts) {
+    // Guidance/example prompts should remain narrative. Some tool chains can
+    // still emit BR result payloads opportunistically; suppress grid artifacts
+    // for those intents to avoid replacing the assistant explanation.
+    const allowBrArtifactsForPrompt = !isBrGuidancePrompt(content);
+
+    if (bitsArtifacts && allowBrArtifactsForPrompt) {
       dispatch(
         setMessageBrArtifacts({
           messageId: latestAssistantMessage.id,

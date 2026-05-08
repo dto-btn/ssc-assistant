@@ -42,7 +42,7 @@ import { createPortal } from "react-dom";
  */
 import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { uploadEncodedFile } from "../api/storage";
+import { isRetriableUploadError, uploadEncodedFile } from "../api/storage";
 import { addUserFileToOutbox } from "../store/slices/outboxSlice";
 import { upsertSessionFile } from "../store/slices/sessionFilesSlice";
 import { FileAttachment } from "../types";
@@ -358,7 +358,8 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
         }
 
         if (failedUploads.length) {
-          failedUploads.forEach(({ file, dataUrl, metadata }) =>
+          const retriableFailures = failedUploads.filter(({ error }) => isRetriableUploadError(error));
+          retriableFailures.forEach(({ file, dataUrl, metadata }) =>
             dispatch(
               addUserFileToOutbox({
                 originalName: file.name,
@@ -368,10 +369,13 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
               })
             )
           );
+
           const failureMessage =
-            failedUploads.length === attachments.length
-              ? t("errors.uploadFailed", { defaultValue: "Failed to upload files. They were queued for retry." })
-              : t("errors.partialUpload", { defaultValue: "Some files failed to upload and were queued for retry." });
+            retriableFailures.length === 0
+              ? t("errors.uploadFailed", { defaultValue: "Failed to upload files." })
+              : failedUploads.length === attachments.length
+                ? t("errors.uploadFailed", { defaultValue: "Failed to upload files. They were queued for retry." })
+                : t("errors.partialUpload", { defaultValue: "Some files failed to upload and were queued for retry." });
           dispatch(addToast({ message: failureMessage, isError: true }));
         }
 

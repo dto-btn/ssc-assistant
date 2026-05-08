@@ -347,7 +347,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
       const clientCandidate = clientMatch[1].trim();
       if (clientCandidate.length > 0) {
         queryFilters.push({
-          name: "RPT_GC_ORG_NAME_EN",
+          name: isFrench ? "RPT_GC_ORG_NAME_FR" : "RPT_GC_ORG_NAME_EN",
           en: "Client Name",
           fr: "Nom du client",
           operator: "=",
@@ -368,7 +368,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
     } as Record<string, string>)[priorityRaw];
     if (normalizedPriority) {
       queryFilters.push({
-        name: "PRIORITY_EN",
+        name: isFrench ? "PRIORITY_FR" : "PRIORITY_EN",
         en: "Priority",
         fr: "Priorité",
         operator: "=",
@@ -381,7 +381,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
     }
 
     return { query_filters: queryFilters } as BrQuery;
-  }, [message.id, messages]);
+  }, [isFrench, message.id, messages]);
 
   const displayedBrQuery = useMemo(() => {
     if (!brQuery && !fallbackBrQuery) {

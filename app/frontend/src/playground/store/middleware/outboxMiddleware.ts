@@ -1,7 +1,7 @@
 import { Middleware, MiddlewareAPI, Dispatch, UnknownAction } from "@reduxjs/toolkit";
 import { RootState } from "..";
 import { removeOutboxItem, OutboxItem } from "../slices/outboxSlice";
-import { uploadEncodedFile } from "../../api/storage";
+import { isRetriableUploadError, uploadEncodedFile } from "../../api/storage";
 import {
   markSessionError,
   markSessionSynced,
@@ -14,7 +14,7 @@ let isFlushing = false; // Serialize retries so multiple actions don't re-upload
  * Attempt to send a queued upload using the current auth token; returns early
  * when offline or unauthenticated so the item can be retried later.
  */
-type FlushResult = "success" | "skip" | "failed";
+type FlushResult = "success" | "skip" | "failed" | "drop";
 
 async function flushItem(
   item: OutboxItem,
@@ -26,18 +26,22 @@ async function flushItem(
   }
 
   if (item.kind === "user-file") {
-    await uploadEncodedFile({
-      encodedFile: item.dataUrl,
-      originalName: item.originalName,
-      accessToken: token,
-      sessionId: item.sessionId,
-      category: "files",
-      metadata: {
-        type: "user-file",
-        ...(item.metadata ?? {}),
-      },
-    });
-    return "success";
+    try {
+      await uploadEncodedFile({
+        encodedFile: item.dataUrl,
+        originalName: item.originalName,
+        accessToken: token,
+        sessionId: item.sessionId,
+        category: "files",
+        metadata: {
+          type: "user-file",
+          ...(item.metadata ?? {}),
+        },
+      });
+      return "success";
+    } catch (error) {
+      return isRetriableUploadError(error) ? "failed" : "drop";
+    }
   }
 
   if (item.kind === "chat-archive") {
@@ -61,13 +65,14 @@ async function flushItem(
       store.dispatch(markSessionSynced({ sessionId: item.sessionId }));
       return "success";
     } catch (error) {
+      const retriable = isRetriableUploadError(error);
       store.dispatch(
         markSessionError({
           sessionId: item.sessionId,
           error: error instanceof Error ? error.message : undefined,
         })
       );
-      return "failed";
+      return retriable ? "failed" : "drop";
     }
   }
 
@@ -93,6 +98,10 @@ export const outboxMiddleware: Middleware<UnknownAction, RootState> = (store: Mi
           try {
             const outcome = await flushItem(item, store);
             if (outcome === "success") {
+              store.dispatch(removeOutboxItem(item.id));
+              progressed = true;
+            }
+            if (outcome === "drop") {
               store.dispatch(removeOutboxItem(item.id));
               progressed = true;
             }
