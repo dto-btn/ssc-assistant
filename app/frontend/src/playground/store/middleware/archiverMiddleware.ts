@@ -10,7 +10,7 @@ import {
   markSessionError,
 } from "../slices/syncSlice";
 import { isRetriableUploadError, uploadEncodedFile } from "../../api/storage";
-import { removeSession, renameSession } from "../slices/sessionSlice";
+import { clearAllSessions, removeSession, renameSession } from "../slices/sessionSlice";
 import { rehydrateSessionFromArchive, SessionRehydrationResult } from "../thunks/sessionBootstrapThunks";
 
 /**
@@ -25,6 +25,22 @@ const IDLE_MS_BEFORE_ARCHIVE = 60_000; // 1 minute idle
 type SessionTimers = Record<string, ReturnType<typeof setTimeout> | undefined>;
 const timers: SessionTimers = {};
 const lastArchivedSignature: Record<string, string | undefined> = {};
+
+function clearAllArchiveTracking(): void {
+  Object.values(timers).forEach((timer) => {
+    if (timer) {
+      clearTimeout(timer);
+    }
+  });
+
+  Object.keys(timers).forEach((sessionId) => {
+    delete timers[sessionId];
+  });
+
+  Object.keys(lastArchivedSignature).forEach((sessionId) => {
+    delete lastArchivedSignature[sessionId];
+  });
+}
 
 /**
  * Debounce archival so idle sessions eventually flush to storage even without hitting the threshold.
@@ -195,6 +211,10 @@ export const archiverMiddleware: Middleware<unknown, RootState, PlaygroundDispat
       delete timers[sessionId];
     }
     delete lastArchivedSignature[sessionId];
+  }
+
+  if (clearAllSessions.match(action)) {
+    clearAllArchiveTracking();
   }
 
   return result;
