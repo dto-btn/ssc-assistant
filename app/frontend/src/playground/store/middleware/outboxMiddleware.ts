@@ -9,6 +9,7 @@ import {
 } from "../slices/syncSlice";
 
 let isFlushing = false; // Serialize retries so multiple actions don't re-upload the same item concurrently.
+let isFlushQueued = false; // Prevent a microtask per action from piling up during high-frequency updates.
 
 /**
  * Attempt to send a queued upload using the current auth token; returns early
@@ -81,9 +82,16 @@ async function flushItem(
 
 export const outboxMiddleware: Middleware<UnknownAction, RootState> = (store: MiddlewareAPI<Dispatch<UnknownAction>, RootState>) => next => (action) => {
   const result = next(action);
-  // After any action, attempt to flush a small number of items asynchronously
+  // Schedule at most one pending flush attempt while actions are flowing.
+  if (isFlushQueued) {
+    return result;
+  }
+
+  isFlushQueued = true;
   queueMicrotask(async () => {
+    isFlushQueued = false;
     if (isFlushing) return;
+
     isFlushing = true;
     try {
       let keepFlushing = true;
