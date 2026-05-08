@@ -10,6 +10,21 @@ const CHAT_KEY = "playground_chat_state";
 
 type PersistedState = Record<string, unknown>;
 
+const PERSISTED_SLICE_KEYS = [
+  "chat",
+  "sessions",
+  "tools",
+  "models",
+  "quoted",
+  "user",
+  "outbox",
+  "sessionFiles",
+  "sync",
+  "ui",
+] as const;
+
+type PersistedSliceKey = (typeof PERSISTED_SLICE_KEYS)[number];
+
 /**
  * Drops malformed persisted message entries so hydration cannot crash reducers.
  */
@@ -69,14 +84,40 @@ const migratePersistedState = (parsed: PersistedState): PersistedState => {
 /**
  * Persists redux state to localStorage while excluding sensitive auth data.
  */
+export function createPersistableState(state: unknown): PersistedState {
+  const source = (state as Record<string, unknown>) || {};
+  const nextState: PersistedState = {};
+
+  PERSISTED_SLICE_KEYS.forEach((key: PersistedSliceKey) => {
+    if (key in source) {
+      nextState[key] = source[key];
+    }
+  });
+
+  return nextState;
+}
+
+/**
+ * Shallowly compares projected persisted slices so the store can skip work
+ * when only transient branches changed.
+ */
+export function hasPersistableStateChanged(
+  previousState: PersistedState | undefined,
+  nextState: PersistedState,
+): boolean {
+  if (!previousState) {
+    return true;
+  }
+
+  return PERSISTED_SLICE_KEYS.some((key) => previousState[key] !== nextState[key]);
+}
+
+/**
+ * Persists a pre-projected durable playground state snapshot.
+ */
 export function saveChatState(state: unknown) {
   try {
-    // Do not persist auth tokens
-    const s = (state as Record<string, unknown>) || {};
-    // Omit 'auth' key when persisting
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { auth, ...rest } = s;
-    localStorage.setItem(CHAT_KEY, JSON.stringify(rest));
+    localStorage.setItem(CHAT_KEY, JSON.stringify(createPersistableState(state)));
   } catch {
     // ignore persistence errors (quota/unavailable)
   }

@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { loadChatState } from "./persistence";
+import {
+  createPersistableState,
+  hasPersistableStateChanged,
+  loadChatState,
+  saveChatState,
+} from "./persistence";
 
 /**
  * Verifies persistence migration keeps durable preferences and resets transient UI state.
@@ -67,5 +72,39 @@ describe("playground persistence migration", () => {
     expect(state.chat.isLoadingBySessionId).toEqual({});
     expect(state.ui.isSidebarCollapsed).toBe(false);
     expect(state.ui.isMobileSidebarOpen).toBe(false);
+  });
+
+  it("persists only durable slices and omits transient auth and toast state", () => {
+    saveChatState({
+      chat: { messages: [] },
+      sessions: { sessions: [], currentSessionId: null },
+      ui: { isSidebarCollapsed: true },
+      auth: { accessToken: "secret" },
+      toast: { message: "saved" },
+    });
+
+    expect(JSON.parse(localStorage.getItem("playground_chat_state") || "{}"))
+      .toEqual({
+        chat: { messages: [] },
+        sessions: { sessions: [], currentSessionId: null },
+        ui: { isSidebarCollapsed: true },
+      });
+  });
+
+  it("detects when only transient slices changed so persistence can be skipped", () => {
+    const previous = createPersistableState({
+      chat: { messages: [] },
+      sessions: { sessions: [], currentSessionId: null },
+      ui: { isSidebarCollapsed: false },
+    });
+
+    const next = createPersistableState({
+      chat: previous.chat,
+      sessions: previous.sessions,
+      ui: previous.ui,
+      toast: { message: "transient" },
+    });
+
+    expect(hasPersistableStateChanged(previous, next)).toBe(false);
   });
 });

@@ -23,7 +23,12 @@ import authReducer from "./slices/authSlice";
 import { archiverMiddleware, requestArchive } from "./middleware/archiverMiddleware";
 import { outboxMiddleware } from "./middleware/outboxMiddleware";
 import userReducer from "./slices/userSlice";
-import { saveChatState, loadChatState } from "./persistence";
+import {
+  createPersistableState,
+  hasPersistableStateChanged,
+  saveChatState,
+  loadChatState,
+} from "./persistence";
 import outboxReducer from "./slices/outboxSlice";
 import sessionFilesReducer from "./slices/sessionFilesSlice";
 import syncReducer from "./slices/syncSlice";
@@ -64,8 +69,18 @@ const throttledSaveState = throttle((state: RootState) => {
   saveChatState(state);
 }, 2000);
 
+let lastPersistedState = createPersistableState(store.getState());
+
 store.subscribe(() => {
-  throttledSaveState(store.getState());
+  const state = store.getState();
+  const nextPersistedState = createPersistableState(state);
+
+  if (!hasPersistableStateChanged(lastPersistedState, nextPersistedState)) {
+    return;
+  }
+
+  lastPersistedState = nextPersistedState;
+  throttledSaveState(state);
 });
 
 const initialStateSnapshot = store.getState();

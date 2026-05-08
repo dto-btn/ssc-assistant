@@ -263,9 +263,6 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
   });
 
   if (!newSessions.length) {
-    restorationTargets.forEach((sessionId) => {
-      void dispatch(rehydrateSessionFromArchive(sessionId));
-    });
     return;
   }
 
@@ -276,8 +273,4 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
   if (newestSessionId) {
     dispatch(setCurrentSession(newestSessionId));
   }
-
-  restorationTargets.forEach((sessionId) => {
-    void dispatch(rehydrateSessionFromArchive(sessionId));
-  });
 };
