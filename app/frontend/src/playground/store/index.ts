@@ -9,6 +9,7 @@
 import {
   configureStore,
   combineReducers,
+  Middleware,
   ThunkAction,
   UnknownAction,
 } from "@reduxjs/toolkit";
@@ -28,6 +29,7 @@ import {
   hasPersistableStateChanged,
   saveChatState,
   loadChatState,
+  shouldPersistAction,
 } from "./persistence";
 import outboxReducer from "./slices/outboxSlice";
 import sessionFilesReducer from "./slices/sessionFilesSlice";
@@ -55,12 +57,20 @@ export type RootState = ReturnType<typeof rootReducer>;
 // Use Partial<RootState> for the preloaded state
 const preloadedState = loadChatState() as Partial<RootState>;
 
+let lastActionType: string | undefined;
+
+const persistenceTrackerMiddleware: Middleware<unknown, RootState> = () => (next) => (action) => {
+  const actionType = (action as { type?: unknown }).type;
+  lastActionType = typeof actionType === "string" ? actionType : undefined;
+  return next(action);
+};
+
 export const store = configureStore({
   reducer: rootReducer,
   preloadedState,
   middleware: (getDefaultMiddleware) =>
     // Persist chat archives and queued uploads by enriching the default stack.
-    getDefaultMiddleware().concat(archiverMiddleware, outboxMiddleware),
+    getDefaultMiddleware().concat(persistenceTrackerMiddleware, archiverMiddleware, outboxMiddleware),
 });
 
 const throttledSaveState = throttle((state: RootState) => {
@@ -70,6 +80,10 @@ const throttledSaveState = throttle((state: RootState) => {
 let lastPersistedState = createPersistableState(store.getState());
 
 store.subscribe(() => {
+  if (!shouldPersistAction(lastActionType)) {
+    return;
+  }
+
   const state = store.getState();
   const nextPersistedState = createPersistableState(state);
 

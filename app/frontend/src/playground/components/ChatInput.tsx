@@ -92,9 +92,14 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
     completed: 0,
     total: 0,
   });
+  const isUploadingRef = useRef(false);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const dragDepthRef = useRef(0);
   const accessToken = useAppSelector((state: RootState) => state.auth.accessToken);
+
+  useEffect(() => {
+    isUploadingRef.current = isUploading;
+  }, [isUploading]);
 
   /**
    * Upper bound for message length enforced client-side. Keep this aligned with
@@ -135,7 +140,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
    * @param fileList - A FileList from input/drag events, or an array of Files from paste handlers.
    */
   const handleFiles = useCallback((incoming: FileList | File[]) => {
-    if (isUploading) return;
+    if (isUploadingRef.current) return;
     // Normalize the input into a File[]
     const files = Array.isArray(incoming) ? incoming : Array.from(incoming);
     if (!files.length) return;
@@ -185,7 +190,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
       }
       return next;
     });
-  }, [dispatch, t, isUploading]);
+  }, [dispatch, t]);
 
   /**
    * Intercepts paste events to capture pasted file data (e.g., screenshots) as

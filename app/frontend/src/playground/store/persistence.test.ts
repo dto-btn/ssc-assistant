@@ -5,6 +5,7 @@ import {
   hasPersistableStateChanged,
   loadChatState,
   saveChatState,
+  shouldPersistAction,
 } from "./persistence";
 
 /**
@@ -106,5 +107,12 @@ describe("playground persistence migration", () => {
     });
 
     expect(hasPersistableStateChanged(previous, next)).toBe(false);
+  });
+
+  it("only schedules persistence for actions from persisted slices", () => {
+    expect(shouldPersistAction("chat/addMessage")).toBe(true);
+    expect(shouldPersistAction("ui/setSidebarCollapsed")).toBe(true);
+    expect(shouldPersistAction("toast/addToast")).toBe(false);
+    expect(shouldPersistAction(undefined)).toBe(false);
   });
 });
