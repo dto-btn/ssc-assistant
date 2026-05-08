@@ -20,6 +20,7 @@ import {
   pickLatestArchive,
 } from "../../utils/archives";
 import { applyRemoteSessionDeletion } from "./sessionManagementThunks";
+import { selectHasMessagesForSession } from "../selectors/chatSelectors";
 
 export interface SessionRehydrationResult {
   restored: boolean;
@@ -60,7 +61,7 @@ export const rehydrateSessionFromArchive = (
       return { restored: false, hasArchive: false, latestVersion: null };
     }
 
-    const hasExistingMessages = state.chat.messages.some((message) => message.sessionId === sessionId);
+    const hasExistingMessages = selectHasMessagesForSession(state, sessionId);
     const shouldSkipHydration = hasExistingMessages && !options?.force;
     if (shouldSkipHydration) {
       const cachedFiles = state.sessionFiles.bySessionId?.[sessionId] ?? [];

@@ -25,6 +25,19 @@ const PERSISTED_SLICE_KEYS = [
 
 type PersistedSliceKey = (typeof PERSISTED_SLICE_KEYS)[number];
 
+const PERSISTED_ACTION_PREFIXES = [
+  "chat/",
+  "sessions/",
+  "tools/",
+  "models/",
+  "quoted/",
+  "user/",
+  "outbox/",
+  "sessionFiles/",
+  "sync/",
+  "ui/",
+] as const;
+
 /**
  * Drops malformed persisted message entries so hydration cannot crash reducers.
  */
@@ -89,13 +102,55 @@ export function createPersistableState(state: unknown): PersistedState {
   const nextState: PersistedState = {};
 
   PERSISTED_SLICE_KEYS.forEach((key: PersistedSliceKey) => {
-    if (key in source) {
-      nextState[key] = source[key];
+    if (!(key in source)) {
+      return;
     }
+
+    if (key === "chat") {
+      const chat = source.chat as Record<string, unknown> | undefined;
+      nextState.chat = {
+        messages: chat?.messages,
+        assistantResponsePhaseBySessionId: chat?.assistantResponsePhaseBySessionId,
+        orchestratorInsightsBySessionId: chat?.orchestratorInsightsBySessionId,
+      };
+      return;
+    }
+
+    if (key === "ui") {
+      const ui = source.ui as Record<string, unknown> | undefined;
+      nextState.ui = {
+        isSidebarCollapsed: ui?.isSidebarCollapsed,
+      };
+      return;
+    }
+
+    nextState[key] = source[key];
   });
 
   return nextState;
 }
+
+const hasPersistedChatChanged = (
+  previousChat: PersistedState["chat"],
+  nextChat: PersistedState["chat"],
+): boolean => {
+  const previous = (previousChat as Record<string, unknown> | undefined) ?? {};
+  const next = (nextChat as Record<string, unknown> | undefined) ?? {};
+
+  return previous.messages !== next.messages
+    || previous.assistantResponsePhaseBySessionId !== next.assistantResponsePhaseBySessionId
+    || previous.orchestratorInsightsBySessionId !== next.orchestratorInsightsBySessionId;
+};
+
+const hasPersistedUiChanged = (
+  previousUi: PersistedState["ui"],
+  nextUi: PersistedState["ui"],
+): boolean => {
+  const previous = (previousUi as Record<string, unknown> | undefined) ?? {};
+  const next = (nextUi as Record<string, unknown> | undefined) ?? {};
+
+  return previous.isSidebarCollapsed !== next.isSidebarCollapsed;
+};
 
 /**
  * Shallowly compares projected persisted slices so the store can skip work
@@ -109,7 +164,25 @@ export function hasPersistableStateChanged(
     return true;
   }
 
-  return PERSISTED_SLICE_KEYS.some((key) => previousState[key] !== nextState[key]);
+  return PERSISTED_SLICE_KEYS.some((key) => {
+    if (key === "chat") {
+      return hasPersistedChatChanged(previousState.chat, nextState.chat);
+    }
+
+    if (key === "ui") {
+      return hasPersistedUiChanged(previousState.ui, nextState.ui);
+    }
+
+    return previousState[key] !== nextState[key];
+  });
+}
+
+export function shouldPersistAction(actionType: string | undefined): boolean {
+  if (!actionType) {
+    return false;
+  }
+
+  return PERSISTED_ACTION_PREFIXES.some((prefix) => actionType.startsWith(prefix));
 }
 
 /**

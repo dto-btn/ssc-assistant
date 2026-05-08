@@ -49,12 +49,8 @@ interface ResponseButtonsProps {
   messageId: string;
   /** Whether the assistant is actively streaming a response. */
   isStreaming: boolean;
-  /**
-   * The session-scoped message list, passed down from ChatMessages.
-   * Avoids re-selecting by currentSessionId from the store, which can diverge
-   * from the sessionId prop when multiple sessions are in flight.
-   */
-  messages: Message[];
+  /** Closest preceding user message used to replay the turn on regenerate. */
+  regenerateSourceMessage?: Pick<Message, "content" | "attachments">;
   /** The session this message belongs to, forwarded to sendAssistantMessage on regenerate. */
   sessionId: string;
   /** The feedback state for this message, retrieved from the Redux store. */
@@ -74,7 +70,7 @@ const visuallyHiddenSx = {
 } as const;
 
 const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
-  ({ isHovering, isMostRecent, text, messageId, isStreaming, messages, sessionId, feedback }) => {
+  ({ isHovering, isMostRecent, text, messageId, isStreaming, regenerateSourceMessage, sessionId, feedback }) => {
     const { t } = useTranslation("playground");
     const dispatch = useDispatch<AppDispatch>();
     const theme = useTheme();
@@ -159,22 +155,7 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
      * a second tap to fire the handler again without the guard.
      */
     const handleRegenerate = useCallback(() => {
-      if (isRegeneratingRef.current) return;
-
-      const assistantIdx = messages.findIndex((m) => m.id === messageId);
-      if (assistantIdx === -1) return;
-
-      // Find the closest user message above this assistant turn.
-      let userIdx = -1;
-      for (let i = assistantIdx - 1; i >= 0; i--) {
-        if (messages[i].role === "user") {
-          userIdx = i;
-          break;
-        }
-      }
-      if (userIdx === -1) return;
-
-      const userMessage = messages[userIdx];
+      if (isRegeneratingRef.current || !regenerateSourceMessage) return;
 
       // All validation passed — lock before dispatching so only one regenerate
       // can fire per component lifetime (ref resets naturally on unmount).
@@ -183,13 +164,13 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
       void dispatch(
         sendAssistantMessage({
           sessionId,
-          content: userMessage.content,
-          attachments: userMessage.attachments,
+          content: regenerateSourceMessage.content,
+          attachments: regenerateSourceMessage.attachments,
           skipUserMessage: true,
           deleteMessageId: messageId,
         }),
       );
-    }, [dispatch, messageId, messages, sessionId]);
+    }, [dispatch, messageId, regenerateSourceMessage, sessionId]);
 
     // Like and dislike are mutually exclusive in the UI. When switching from one
     // to the other, the new feedback is submitted; the server records both events.
