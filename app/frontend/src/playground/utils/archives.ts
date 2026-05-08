@@ -189,6 +189,11 @@ export function normalizeArchiveMessage(candidate: unknown, sessionId: string): 
     : undefined;
   const mcpAttribution = normalizeMessageMcpAttribution(record.mcpAttribution);
 
+  const brArtifacts =
+    record.brArtifacts && typeof record.brArtifacts === "object" && !Array.isArray(record.brArtifacts)
+      ? (record.brArtifacts as Message["brArtifacts"])
+      : undefined;
+
   return {
     id,
     sessionId,
@@ -198,5 +203,6 @@ export function normalizeArchiveMessage(candidate: unknown, sessionId: string): 
     attachments,
     citations,
     mcpAttribution,
+    brArtifacts,
   };
 }

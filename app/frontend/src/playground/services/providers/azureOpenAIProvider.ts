@@ -66,6 +66,104 @@ const hasPmcoeServer = (servers: Tool.Mcp[] = []): boolean => {
   });
 };
 
+const toSerializableToolOutput = (value: unknown): string | undefined => {
+  // Keep payloads deterministic for Redux/state snapshots and debug surfaces.
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+};
+
+const extractMcpToolOutputs = (value: unknown): NonNullable<CompletionResult["mcpToolOutputs"]> => {
+  const collected: NonNullable<CompletionResult["mcpToolOutputs"]> = [];
+  const seenObjects = new WeakSet<object>();
+
+  const visit = (node: unknown): void => {
+    if (!node) {
+      return;
+    }
+
+    if (Array.isArray(node)) {
+      for (const item of node) {
+        visit(item);
+      }
+      return;
+    }
+
+    if (typeof node !== "object") {
+      return;
+    }
+
+    // Defensive: streamed SDK payloads can reuse object references across branches.
+    if (seenObjects.has(node as object)) {
+      return;
+    }
+    seenObjects.add(node as object);
+
+    const record = node as Record<string, unknown>;
+
+    const type = typeof record.type === "string" ? record.type : undefined;
+    const status = typeof record.status === "string" ? record.status : undefined;
+    const output = record.output;
+    // Capture both completed calls and partial payloads that already include output.
+    if (type === "mcp_call" && (status === "completed" || output !== undefined)) {
+      const serializedOutput = toSerializableToolOutput(output);
+      if (serializedOutput) {
+        collected.push({
+          toolName:
+            (typeof record.name === "string" && record.name)
+            || (typeof record.tool_name === "string" && record.tool_name)
+            || "unknown_mcp_tool",
+          serverLabel:
+            (typeof record.server_label === "string" && record.server_label)
+            || (typeof record.serverLabel === "string" && record.serverLabel)
+            || undefined,
+          output: serializedOutput,
+        });
+      }
+    }
+
+    for (const nested of Object.values(record)) {
+      visit(nested);
+    }
+  };
+
+  visit(value);
+  return collected;
+};
+
+const mergeMcpToolOutputs = (
+  current: NonNullable<CompletionResult["mcpToolOutputs"]>,
+  incoming: NonNullable<CompletionResult["mcpToolOutputs"]>,
+): NonNullable<CompletionResult["mcpToolOutputs"]> => {
+  if (incoming.length === 0) {
+    return current;
+  }
+
+  // Stable dedupe key keeps repeated event/finalResponse emissions from duplicating cards.
+  const seen = new Set(current.map((item) => `${item.toolName}|${item.serverLabel || ""}|${item.output}`));
+  const merged = [...current];
+
+  for (const item of incoming) {
+    const key = `${item.toolName}|${item.serverLabel || ""}|${item.output}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      merged.push(item);
+    }
+  }
+
+  return merged;
+};
+
 export class AzureOpenAIProvider implements CompletionProvider {
   readonly name = 'azure-openai';
 
@@ -174,6 +272,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
 
     let fullText = currentOutput || "";
     let citations: Citation[] = [];
+    let mcpToolOutputs: CompletionResult["mcpToolOutputs"] = [];
     const citationDebugEnabled = isCitationDebugEnabled();
     const seenEventTypes = new Set<string>();
     const timeout = this.createTimeoutSignal(signal);
@@ -205,6 +304,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
         // so merge citations continuously instead of relying on the final payload.
         const extractedFromEvent = extractCitationsFromPayloadWithOptions(event, citationExtractionOptions);
         citations = mergeCitations(citations, extractedFromEvent);
+        mcpToolOutputs = mergeMcpToolOutputs(mcpToolOutputs, extractMcpToolOutputs(event));
 
         if (citationDebugEnabled && extractedFromEvent.length > 0) {
           console.debug("[playground-citations] extracted from stream event", {
@@ -230,6 +330,8 @@ export class AzureOpenAIProvider implements CompletionProvider {
 
       if (typeof stream.finalResponse === "function") {
         const finalResponse = await stream.finalResponse();
+        mcpToolOutputs = mergeMcpToolOutputs(mcpToolOutputs, extractMcpToolOutputs(finalResponse));
+
         // Some providers only attach complete annotation graphs on the finalized
         // response object, so merge that pass on top of stream-level extraction.
         const extractedFromFinalResponse = extractResponseCitations(finalResponse);
@@ -263,6 +365,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
         completed: true,
         provider: this.name,
         citations,
+        mcpToolOutputs,
       };
     } catch (error) {
       // If the user explicitly aborted (Stop button), propagate the original

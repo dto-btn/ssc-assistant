@@ -7,6 +7,8 @@
  */
 
 const CHAT_KEY = "playground_chat_state";
+const MAX_PERSISTED_MESSAGES = 250;
+const MAX_PERSISTED_CONTENT_CHARS = 20_000;
 
 type PersistedState = Record<string, unknown>;
 
@@ -38,6 +40,52 @@ const PERSISTED_ACTION_PREFIXES = [
   "ui/",
 ] as const;
 
+const asRecord = (value: unknown): Record<string, unknown> =>
+  (value && typeof value === "object") ? (value as Record<string, unknown>) : {};
+
+const isPersistableMessage = (message: unknown): message is Record<string, unknown> => {
+  if (!message || typeof message !== "object") {
+    return false;
+  }
+
+  const record = message as Record<string, unknown>;
+  return (
+    typeof record.id === "string"
+    && typeof record.sessionId === "string"
+    && (record.role === "user" || record.role === "assistant" || record.role === "system")
+    && typeof record.content === "string"
+    && typeof record.timestamp === "number"
+  );
+};
+
+const trimMessagesForPersistence = (messages: unknown): unknown[] => {
+  if (
+    Array.isArray(messages)
+    && messages.length <= MAX_PERSISTED_MESSAGES
+    && messages.every(
+      (message) => isPersistableMessage(message)
+        && message.content.length <= MAX_PERSISTED_CONTENT_CHARS
+    )
+  ) {
+    return messages;
+  }
+
+  const normalized = normalizePersistedMessages(messages);
+  const recent = normalized.slice(-MAX_PERSISTED_MESSAGES);
+
+  return recent.map((entry) => {
+    const record = entry as Record<string, unknown>;
+    const content = typeof record.content === "string"
+      ? record.content.slice(0, MAX_PERSISTED_CONTENT_CHARS)
+      : "";
+
+    return {
+      ...record,
+      content,
+    };
+  });
+};
+
 /**
  * Drops malformed persisted message entries so hydration cannot crash reducers.
  */
@@ -46,20 +94,7 @@ const normalizePersistedMessages = (messages: unknown): unknown[] => {
     return [];
   }
 
-  return messages.filter((message) => {
-    if (!message || typeof message !== "object") {
-      return false;
-    }
-
-    const record = message as Record<string, unknown>;
-    return (
-      typeof record.id === "string"
-      && typeof record.sessionId === "string"
-      && (record.role === "user" || record.role === "assistant" || record.role === "system")
-      && typeof record.content === "string"
-      && typeof record.timestamp === "number"
-    );
-  });
+  return messages.filter(isPersistableMessage);
 };
 
 /**
@@ -98,7 +133,7 @@ const migratePersistedState = (parsed: PersistedState): PersistedState => {
  * Persists redux state to localStorage while excluding sensitive auth data.
  */
 export function createPersistableState(state: unknown): PersistedState {
-  const source = (state as Record<string, unknown>) || {};
+  const source = asRecord(state);
   const nextState: PersistedState = {};
 
   PERSISTED_SLICE_KEYS.forEach((key: PersistedSliceKey) => {
@@ -107,19 +142,36 @@ export function createPersistableState(state: unknown): PersistedState {
     }
 
     if (key === "chat") {
-      const chat = source.chat as Record<string, unknown> | undefined;
+      const chat = asRecord(source.chat);
+      const nextChat: Record<string, unknown> = {
+        messages: trimMessagesForPersistence(chat.messages),
+      };
+
+      if (
+        chat.assistantResponsePhaseBySessionId
+        && typeof chat.assistantResponsePhaseBySessionId === "object"
+      ) {
+        nextChat.assistantResponsePhaseBySessionId = chat.assistantResponsePhaseBySessionId;
+      }
+
+      if (
+        chat.orchestratorInsightsBySessionId
+        && typeof chat.orchestratorInsightsBySessionId === "object"
+      ) {
+        nextChat.orchestratorInsightsBySessionId = chat.orchestratorInsightsBySessionId;
+      }
+
       nextState.chat = {
-        messages: chat?.messages,
-        assistantResponsePhaseBySessionId: chat?.assistantResponsePhaseBySessionId,
-        orchestratorInsightsBySessionId: chat?.orchestratorInsightsBySessionId,
+        ...nextChat,
       };
       return;
     }
 
     if (key === "ui") {
-      const ui = source.ui as Record<string, unknown> | undefined;
+      const ui = asRecord(source.ui);
       nextState.ui = {
-        isSidebarCollapsed: ui?.isSidebarCollapsed,
+        isSidebarCollapsed:
+          typeof ui.isSidebarCollapsed === "boolean" ? ui.isSidebarCollapsed : false,
       };
       return;
     }

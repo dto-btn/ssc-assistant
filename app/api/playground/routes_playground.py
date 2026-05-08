@@ -1,10 +1,12 @@
 import base64
 import uuid
 import concurrent.futures
+import re
+import unicodedata
 from datetime import datetime
 from typing import Dict, Any, Optional, Tuple, List, Type, TypeVar
 import logging
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote, unquote
 from werkzeug.utils import secure_filename
 import mimetypes
 
@@ -12,7 +14,7 @@ from utils.auth import auth, user_ad
 from utils.azure_clients import get_blob_service_client
 from utils.file_manager import FileManager
 from apiflask import APIBlueprint
-from azure.core.exceptions import AzureError, ResourceExistsError, ResourceNotFoundError
+from azure.core.exceptions import AzureError, HttpResponseError, ResourceExistsError, ResourceNotFoundError
 from azure.storage.blob import ContentSettings, BlobClient, ContainerClient
 from utils.models import (
     PlaygroundSessionFilesQuery,
@@ -74,6 +76,8 @@ SUPPORTED_EXTENSIONS = {
 TEXT_MIME_PREFIX = "text/"
 IMAGE_MIME_PREFIX = "image/"
 DELETED_FLAG_VALUE = "true"
+METADATA_KEY_MAX_LENGTH = 128
+_METADATA_KEY_INVALID_CHARS = re.compile(r"[^a-z0-9_]")
 
 
 def _is_marked_deleted(metadata: Optional[Dict[str, Any]]) -> bool:
@@ -178,6 +182,51 @@ def _sanitize_blob_name(blob_name: str) -> Optional[str]:
     if not cleaned or ".." in cleaned.split("/") or "\\" in cleaned:
         return None
     return cleaned
+
+
+def _sanitize_metadata_key(raw_key: str) -> Optional[str]:
+    """Return an Azure-safe metadata key (ASCII letters/digits/underscore)."""
+    normalized = unicodedata.normalize("NFKD", raw_key).encode("ascii", "ignore").decode("ascii")
+    normalized = normalized.strip().lower().replace("-", "_").replace(" ", "_")
+    normalized = _METADATA_KEY_INVALID_CHARS.sub("_", normalized).strip("_")
+    if not normalized:
+        return None
+    if not (normalized[0].isalpha() or normalized[0] == "_"):
+        normalized = f"meta_{normalized}"
+    return normalized[:METADATA_KEY_MAX_LENGTH]
+
+
+def _encode_metadata_value(value: Any) -> str:
+    """Encode metadata values to ASCII so Blob Storage accepts them reliably."""
+    text = str(value)
+    if all(32 <= ord(char) <= 126 for char in text):
+        return text
+    return quote(text, safe="")
+
+
+def _decode_metadata_value(value: Optional[Any]) -> Optional[str]:
+    """Decode percent-encoded metadata values for API responses."""
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        return str(value)
+    return unquote(value)
+
+
+def _normalize_blob_metadata(raw_metadata: Optional[Dict[str, Any]]) -> Dict[str, str]:
+    """Normalize metadata to Azure-safe key/value pairs."""
+    if not raw_metadata:
+        return {}
+
+    normalized: Dict[str, str] = {}
+    for key, value in raw_metadata.items():
+        if value is None:
+            continue
+        safe_key = _sanitize_metadata_key(str(key))
+        if not safe_key:
+            continue
+        normalized[safe_key] = _encode_metadata_value(value)
+    return normalized
 
 
 def _blob_name_from_url(file_url: str, container_client: ContainerClient) -> Optional[str]:
@@ -375,12 +424,12 @@ def files_for_session(query: PlaygroundSessionFilesQuery):
                     "blobName": blob.name,
                     "size": getattr(blob, "size", None),
                     "contentType": content_type,
-                    "originalName": meta.get("originalname"),
+                    "originalName": _decode_metadata_value(meta.get("originalname")),
                     "uploadedAt": meta.get("uploadedat"),
                     "sessionId": meta.get("sessionid"),
                     "category": meta.get("category"),
                     "metadataType": meta.get("type"),
-                    "sessionName": meta.get("sessionname"),
+                    "sessionName": _decode_metadata_value(meta.get("sessionname")),
                     "lastUpdated": meta.get("lastupdated"),
                 }
             )
@@ -486,9 +535,10 @@ def upload_file(upload_request: PlaygroundUploadRequest):
     for key, value in extra_metadata.items():
         if value is None:
             continue
-        metadata[str(key).lower()] = str(value)
+        metadata[str(key).lower()] = value
 
     metadata["lastupdated"] = uploaded_at
+    metadata = _normalize_blob_metadata(metadata)
 
     try:
         container_client = _get_container_client()
@@ -514,6 +564,15 @@ def upload_file(upload_request: PlaygroundUploadRequest):
             content_settings=content_settings,
         )
         blob_url = blob_client.url
+    except HttpResponseError as exc:
+        if getattr(exc, "error_code", None) == "InvalidMetadata":
+            logger.warning(
+                "Upload rejected due to invalid metadata",
+                extra={"oid": oid, "blob_name": blob_name, "metadata_keys": sorted(metadata.keys())},
+            )
+            return {"message": "Upload failed: invalid metadata"}, 400
+        logger.exception("Failed to upload blob for oid %s", oid)
+        return {"message": "Upload failed"}, 500
     except AzureError:
         logger.exception("Failed to upload blob for oid %s", oid)
         return {"message": "Upload failed"}, 500
@@ -595,8 +654,8 @@ def rename_session(session_id: str, payload: PlaygroundRenameSessionRequest):
             continue
 
         # Store a normalized name + timestamp so other browser tabs notice the rename on refresh.
-        normalized_metadata = {str(k).lower(): str(v) for k, v in metadata.items() if v is not None}
-        normalized_metadata["sessionname"] = new_name
+        normalized_metadata = _normalize_blob_metadata(metadata)
+        normalized_metadata["sessionname"] = _encode_metadata_value(new_name)
         normalized_metadata["lastupdated"] = timestamp
 
         blob_client = container_client.get_blob_client(blob.name)
@@ -662,7 +721,7 @@ def delete_session(session_id: str):
             continue
         if _is_marked_deleted(metadata):
             continue
-        metadata = {str(k).lower(): str(v) for k, v in metadata.items() if v is not None}
+        metadata = _normalize_blob_metadata(metadata)
         metadata["deleted"] = DELETED_FLAG_VALUE
         metadata["deletedat"] = timestamp
         metadata["lastupdated"] = timestamp
@@ -729,7 +788,7 @@ def delete_all_sessions():
         if _is_marked_deleted(metadata):
             return None  # Already deleted
             
-        metadata = {str(k).lower(): str(v) for k, v in metadata.items() if v is not None}
+        metadata = _normalize_blob_metadata(metadata)
         metadata["deleted"] = DELETED_FLAG_VALUE
         metadata["deletedat"] = timestamp
         metadata["lastupdated"] = timestamp

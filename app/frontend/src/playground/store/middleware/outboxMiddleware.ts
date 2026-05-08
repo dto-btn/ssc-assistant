@@ -1,7 +1,7 @@
 import { Middleware, MiddlewareAPI, Dispatch, UnknownAction } from "@reduxjs/toolkit";
 import { RootState } from "..";
 import { removeOutboxItem, OutboxItem } from "../slices/outboxSlice";
-import { uploadEncodedFile } from "../../api/storage";
+import { isRetriableUploadError, uploadEncodedFile } from "../../api/storage";
 import {
   markSessionError,
   markSessionSynced,
@@ -9,12 +9,13 @@ import {
 } from "../slices/syncSlice";
 
 let isFlushing = false; // Serialize retries so multiple actions don't re-upload the same item concurrently.
+let isFlushQueued = false; // Prevent a microtask per action from piling up during high-frequency updates.
 
 /**
  * Attempt to send a queued upload using the current auth token; returns early
  * when offline or unauthenticated so the item can be retried later.
  */
-type FlushResult = "success" | "skip" | "failed";
+type FlushResult = "success" | "skip" | "failed" | "drop";
 
 async function flushItem(
   item: OutboxItem,
@@ -26,18 +27,22 @@ async function flushItem(
   }
 
   if (item.kind === "user-file") {
-    await uploadEncodedFile({
-      encodedFile: item.dataUrl,
-      originalName: item.originalName,
-      accessToken: token,
-      sessionId: item.sessionId,
-      category: "files",
-      metadata: {
-        type: "user-file",
-        ...(item.metadata ?? {}),
-      },
-    });
-    return "success";
+    try {
+      await uploadEncodedFile({
+        encodedFile: item.dataUrl,
+        originalName: item.originalName,
+        accessToken: token,
+        sessionId: item.sessionId,
+        category: "files",
+        metadata: {
+          type: "user-file",
+          ...(item.metadata ?? {}),
+        },
+      });
+      return "success";
+    } catch (error) {
+      return isRetriableUploadError(error) ? "failed" : "drop";
+    }
   }
 
   if (item.kind === "chat-archive") {
@@ -61,13 +66,14 @@ async function flushItem(
       store.dispatch(markSessionSynced({ sessionId: item.sessionId }));
       return "success";
     } catch (error) {
+      const retriable = isRetriableUploadError(error);
       store.dispatch(
         markSessionError({
           sessionId: item.sessionId,
           error: error instanceof Error ? error.message : undefined,
         })
       );
-      return "failed";
+      return retriable ? "failed" : "drop";
     }
   }
 
@@ -76,9 +82,16 @@ async function flushItem(
 
 export const outboxMiddleware: Middleware<UnknownAction, RootState> = (store: MiddlewareAPI<Dispatch<UnknownAction>, RootState>) => next => (action) => {
   const result = next(action);
-  // After any action, attempt to flush a small number of items asynchronously
+  // Schedule at most one pending flush attempt while actions are flowing.
+  if (isFlushQueued) {
+    return result;
+  }
+
+  isFlushQueued = true;
   queueMicrotask(async () => {
+    isFlushQueued = false;
     if (isFlushing) return;
+
     isFlushing = true;
     try {
       let keepFlushing = true;
@@ -93,6 +106,10 @@ export const outboxMiddleware: Middleware<UnknownAction, RootState> = (store: Mi
           try {
             const outcome = await flushItem(item, store);
             if (outcome === "success") {
+              store.dispatch(removeOutboxItem(item.id));
+              progressed = true;
+            }
+            if (outcome === "drop") {
               store.dispatch(removeOutboxItem(item.id));
               progressed = true;
             }
