@@ -64,7 +64,7 @@ const trimMessagesForPersistence = (messages: unknown): unknown[] => {
     && messages.length <= MAX_PERSISTED_MESSAGES
     && messages.every(
       (message) => isPersistableMessage(message)
-        && message.content.length <= MAX_PERSISTED_CONTENT_CHARS
+        && (message as Record<string, any>).content.length <= MAX_PERSISTED_CONTENT_CHARS
     )
   ) {
     return messages;
