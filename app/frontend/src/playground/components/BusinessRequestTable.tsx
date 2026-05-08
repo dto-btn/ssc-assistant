@@ -49,10 +49,12 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
   };
 
   const fetchBRData = async (BR: string) => {
-    if (!/^\d+$/.test(BR)) {
+    // Accept UI-facing BR variants (e.g. "BR-1234", "#1234") but call the API with digits only.
+    const normalizedBr = String(BR).trim().replace(/^#?BR[-\s]?/i, "");
+    if (!/^\d+$/.test(normalizedBr)) {
       throw new Error("BR must be all numbers.");
     }
-    const response = await fetch(`api/1.0/bits/br/${encodeURIComponent(BR)}`, {
+    const response = await fetch(`api/1.0/bits/br/${encodeURIComponent(normalizedBr)}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
