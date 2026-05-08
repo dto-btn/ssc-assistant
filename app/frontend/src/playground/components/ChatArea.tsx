@@ -14,7 +14,7 @@ import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../store";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
-import { Box, Typography, useTheme, useMediaQuery } from "@mui/material";
+import { Box, Typography, useTheme, useMediaQuery, CircularProgress } from "@mui/material";
 import Suggestions from "./Suggestions";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 import { selectCurrentSessionFiles } from "../store/selectors/sessionFilesSelectors";
@@ -64,6 +64,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   // Use memoized selector for messages
   const messages = useAppSelector(selectMessagesBySessionId);
   const sessionFiles = useAppSelector(selectCurrentSessionFiles);
+  const isNewChat = useAppSelector((state) => 
+    state.sessions.sessions.find(s => s.id === currentSessionId)?.isNewChat ?? false
+  );
   const latestRemoteArchive = React.useMemo(
     () => pickLatestArchive(sessionFiles),
     [sessionFiles]
@@ -231,6 +234,25 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         {renderHeader()}
         <Box flex={1} display="flex" alignItems="center" justifyContent="center">
           {t("select.or.create.session")}
+        </Box>
+      </Box>
+    );
+  }
+
+  // Hydration state check:
+  // If we have messages, always show messages.
+  // If no messages but it's an old chat that hasn't finished hydrating yet, show a loader.
+  const isHydrating = !isNewChat && messages.length === 0 && !rehydratedSessionsRef.current.has(currentSessionId);
+
+  if (isHydrating) {
+    return (
+      <Box flex={1} display="flex" flexDirection="column" height="100dvh">
+        {renderHeader()}
+        <Box flex={1} display="flex" flexDirection="column" alignItems="center" justifyContent="center">
+          <CircularProgress size={40} sx={{ mb: 2 }} />
+          <Typography variant="body1" color="text.secondary">
+            {t("loading.chat", { defaultValue: "Restoring chat history..." })}
+          </Typography>
         </Box>
       </Box>
     );
