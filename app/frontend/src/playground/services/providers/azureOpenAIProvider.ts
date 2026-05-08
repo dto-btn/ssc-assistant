@@ -85,6 +85,7 @@ const toSerializableToolOutput = (value: unknown): string | undefined => {
 
 const extractMcpToolOutputs = (value: unknown): NonNullable<CompletionResult["mcpToolOutputs"]> => {
   const collected: NonNullable<CompletionResult["mcpToolOutputs"]> = [];
+  const seenObjects = new WeakSet<object>();
 
   const visit = (node: unknown): void => {
     if (!node) {
@@ -101,6 +102,12 @@ const extractMcpToolOutputs = (value: unknown): NonNullable<CompletionResult["mc
     if (typeof node !== "object") {
       return;
     }
+
+    // Defensive: streamed SDK payloads can reuse object references across branches.
+    if (seenObjects.has(node as object)) {
+      return;
+    }
+    seenObjects.add(node as object);
 
     const record = node as Record<string, unknown>;
 

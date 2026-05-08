@@ -414,9 +414,10 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
     appendFilters(brQuery?.query_filters);
     appendFilters(fallbackBrQuery?.query_filters);
 
+    // Preserve explicit tool metadata when available; use fallback only to fill missing fields.
     const mergedQuery: BrQuery = {
-      ...(brQuery || {}),
       ...(fallbackBrQuery || {}),
+      ...(brQuery || {}),
     };
 
     if (combinedFilters.length > 0) {
