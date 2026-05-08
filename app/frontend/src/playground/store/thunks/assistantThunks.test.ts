@@ -56,6 +56,7 @@ const DEFAULT_COMPLETION_RESULT = {
 };
 
 const GROUNDING_PROMPT_FRAGMENT = "treat that material as the primary evidence for your answer";
+const BITS_FILTER_PROMPT_FRAGMENT = "apply all explicit user constraints as retrieval filters";
 const CITATION_HARVEST_PROMPT_FRAGMENT = "You are gathering authoritative source material for a user request.";
 const REWRITE_PROMPT_FRAGMENT = "You are revising an assistant answer using cited source excerpts returned from MCP tools";
 
@@ -69,6 +70,12 @@ const policyServer = {
   server_label: "policy-server",
   server_description: "Policy content MCP",
   server_url: "https://example.com/policy/mcp",
+};
+
+const bitsServer = {
+  server_label: "bits_mcp",
+  server_description: "Business request and change-request workflows",
+  server_url: "https://example.com/bits/mcp",
 };
 
 type MakeStoreOptions = {
@@ -329,6 +336,72 @@ describe("sendAssistantMessage auto-rename", () => {
     expect(request.messages[0]).toMatchObject({ role: "system" });
     expect(request.messages[0].content).toContain(GROUNDING_PROMPT_FRAGMENT);
     expect(countGroundingMessages(request.messages as Array<{ role: string; content?: unknown }>)).toBe(1);
+  });
+
+  it("injects the BITS filter-enforcement system prompt when a bits server is routed", async () => {
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [bitsServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Give me a pie chart of BA OPI that worked on BRs for March for ESDC high priority only.",
+      }) as any,
+    );
+
+    const request = createCompletionMock.mock.calls[0][0];
+    const systemMessages = (request.messages as Array<{ role: string; content?: unknown }>).filter(
+      (message) => message.role === "system" && typeof message.content === "string"
+    );
+
+    expect(
+      systemMessages.some((message) =>
+        String(message.content).includes(BITS_FILTER_PROMPT_FRAGMENT)
+      )
+    ).toBe(true);
+  });
+
+  it("injects inferred BITS query filters from the user prompt", async () => {
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [bitsServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Give me a pie chart of BA OPI that worked on BRs for the month of March for the client ESDC for brs of high priority only.",
+      }) as any,
+    );
+
+    const request = createCompletionMock.mock.calls[0][0];
+    const systemMessages = (request.messages as Array<{ role: string; content?: unknown }>)
+      .filter((message) => message.role === "system" && typeof message.content === "string")
+      .map((message) => String(message.content));
+
+    expect(systemMessages.some((content) => content.includes("Date Submited (SUBMIT_DATE) >="))).toBe(true);
+    expect(systemMessages.some((content) => content.includes("Date Submited (SUBMIT_DATE) <="))).toBe(true);
+    expect(systemMessages.some((content) => content.includes("Client Name candidate: ESDC"))).toBe(true);
+    expect(systemMessages.some((content) => content.includes("Priority (PRIORITY_EN) = High"))).toBe(true);
+  });
+
+  it("requires tool usage for BITS-routed completion runs", async () => {
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [bitsServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Show BA OPI distribution for ESDC high priority BRs in March",
+      }) as any,
+    );
+
+    const request = createCompletionMock.mock.calls[0][0];
+    expect(request.toolChoice).toBe("required");
   });
 
   it("orders the grounding system message before preflight routing context", async () => {
@@ -792,5 +865,272 @@ describe("sendAssistantMessage auto-rename", () => {
         content: "Page 11\nProject teams should keep schedule, cost, and artefact updates current before each gate.",
       },
     ]);
+  });
+
+  it("extracts BR rows from get_br_page results payloads", async () => {
+    createCompletionMock.mockResolvedValueOnce({
+      fullText: "Found BR results.",
+      completed: true,
+      provider: "azure-openai",
+      citations: [],
+      mcpToolOutputs: [
+        {
+          toolName: "get_br_page",
+          output: JSON.stringify({
+            results: [
+              {
+                BR_NMBR: "BR-1001",
+                BR_SHORT_TITLE: "Identity sync issue",
+                BITS_STATUS_EN: "Open",
+              },
+              {
+                BR_NMBR: "BR-1002",
+                BR_SHORT_TITLE: "Network access request",
+                BITS_STATUS_EN: "Closed",
+              },
+            ],
+          }),
+        },
+      ],
+    });
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [bitsServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Find BRs for the client PSPC.",
+      }) as any,
+    );
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.brArtifacts?.brData).toHaveLength(2);
+    expect(assistantMessage?.brArtifacts?.brData?.[0]).toMatchObject({
+      BR_NMBR: "BR-1001",
+      BR_SHORT_TITLE: "Identity sync issue",
+    });
+  });
+
+  it("merges metadata from search output with rows from subsequent get_br_page output", async () => {
+    createCompletionMock.mockResolvedValueOnce({
+      fullText: "Found BR results.",
+      completed: true,
+      provider: "azure-openai",
+      citations: [],
+      mcpToolOutputs: [
+        {
+          toolName: "search_business_requests",
+          output: JSON.stringify({
+            metadata: {
+              results: 750,
+              total_rows: 1310,
+            },
+            brquery: {
+              RPT_GC_ORG_NAME_EN: "Public Services and Procurement Canada",
+            },
+            brselect: {
+              fields: ["BR_NMBR", "BR_SHORT_TITLE"],
+            },
+          }),
+        },
+        {
+          toolName: "get_br_page",
+          output: JSON.stringify({
+            results: [
+              {
+                BR_NMBR: "BR-2001",
+                BR_SHORT_TITLE: "Migrate legacy service",
+                SUBMIT_DATE: "2026-04-10",
+              },
+              {
+                BR_NMBR: "BR-2002",
+                BR_SHORT_TITLE: "Upgrade firewall policy",
+                SUBMIT_DATE: "2026-04-12",
+              },
+            ],
+          }),
+        },
+      ],
+    });
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [bitsServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Find BRs submitted in the last 3 weeks for PSPC.",
+      }) as any,
+    );
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.brArtifacts?.brData).toHaveLength(2);
+    expect(assistantMessage?.brArtifacts?.brMetadata).toMatchObject({
+      results: 750,
+      total_rows: 1310,
+    });
+    expect(assistantMessage?.brArtifacts?.brQuery).toMatchObject({
+      RPT_GC_ORG_NAME_EN: "Public Services and Procurement Canada",
+    });
+    expect(assistantMessage?.brArtifacts?.brSelectFields?.fields).toEqual(["BR_NMBR", "BR_SHORT_TITLE"]);
+  });
+
+  it("ignores non-BR results arrays", async () => {
+    createCompletionMock.mockResolvedValueOnce({
+      fullText: "Found results.",
+      completed: true,
+      provider: "azure-openai",
+      citations: [],
+      mcpToolOutputs: [
+        {
+          toolName: "get_br_page",
+          output: JSON.stringify({
+            results: [
+              { foo: "bar" },
+              { hello: "world" },
+            ],
+          }),
+        },
+      ],
+    });
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [bitsServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Find BRs.",
+      }) as any,
+    );
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.brArtifacts).toBeUndefined();
+  });
+
+  it("ignores BITS field-definition results that are not BR rows", async () => {
+    createCompletionMock.mockResolvedValueOnce({
+      fullText: "You can ask about status, timelines, and owners.",
+      completed: true,
+      provider: "azure-openai",
+      citations: [],
+      mcpToolOutputs: [
+        {
+          toolName: "valid_search_fields",
+          output: JSON.stringify({
+            results: [
+              { BR_NMBR: "Business Request Number" },
+              { SUBMIT_DATE: "Date submitted" },
+            ],
+          }),
+        },
+      ],
+    });
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [bitsServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "What kind of questions can I ask about Business Requests (BR)?",
+      }) as any,
+    );
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.content).toContain("status");
+    expect(assistantMessage?.brArtifacts).toBeUndefined();
+  });
+
+  it("does not attach BR artifacts from valid_search_fields even with BR-like keys", async () => {
+    createCompletionMock.mockResolvedValueOnce({
+      fullText: "You can ask by status, date range, client, or priority.",
+      completed: true,
+      provider: "azure-openai",
+      citations: [],
+      mcpToolOutputs: [
+        {
+          toolName: "valid_search_fields",
+          output: JSON.stringify({
+            results: [
+              {
+                BR_NMBR: "Business Request Number",
+                BR_SHORT_TITLE: "Title",
+                BITS_STATUS_EN: "Status",
+              },
+            ],
+          }),
+        },
+      ],
+    });
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [bitsServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "What kind of questions can I ask about Business Requests (BR)?",
+      }) as any,
+    );
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.content).toContain("status");
+    expect(assistantMessage?.brArtifacts).toBeUndefined();
+  });
+
+  it("does not attach BR artifacts for BR guidance prompts even when rows are returned", async () => {
+    createCompletionMock.mockResolvedValueOnce({
+      fullText: "You can ask about status, timelines, priorities, and client-specific requests.",
+      completed: true,
+      provider: "azure-openai",
+      citations: [],
+      mcpToolOutputs: [
+        {
+          toolName: "search_business_requests",
+          output: JSON.stringify({
+            results: [
+              {
+                BR_NMBR: "BR-3001",
+                BR_SHORT_TITLE: "Sample BR one",
+                BITS_STATUS_EN: "Open",
+              },
+              {
+                BR_NMBR: "BR-3002",
+                BR_SHORT_TITLE: "Sample BR two",
+                BITS_STATUS_EN: "Closed",
+              },
+            ],
+          }),
+        },
+      ],
+    });
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [bitsServer],
+    });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "What kind of questions can I ask about Business Requests (BR)?",
+      }) as any,
+    );
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.content).toContain("status");
+    expect(assistantMessage?.brArtifacts).toBeUndefined();
   });
 });

@@ -14,6 +14,17 @@ import { v4 as uuidv4 } from "uuid";
 import { FileAttachment } from "../../types";
 import { Citation } from "../../utils/citations";
 
+export interface PlaygroundBrArtifacts {
+  // Raw rows returned by BITS tooling, consumed by BR card/table components.
+  brData?: Record<string, unknown>[];
+  // Structured query metadata to display inferred/applied filters in UI.
+  brQuery?: Record<string, unknown>;
+  // Explicit field selection returned by tool output for DataGrid visibility.
+  brSelectFields?: { fields: string[] };
+  // Execution stats payload (rows, timing, extraction date).
+  brMetadata?: Record<string, unknown>;
+}
+
 export interface Message {
   id: string;
   sessionId: string;
@@ -23,6 +34,7 @@ export interface Message {
   attachments?: FileAttachment[];
   citations?: Citation[];
   mcpAttribution?: MessageMcpAttribution;
+  brArtifacts?: PlaygroundBrArtifacts;
   /**
    * User feedback for this message.
    * - 'liked': Message received a thumbs-up.
@@ -162,6 +174,17 @@ const chatSlice = createSlice({
         message.mcpAttribution = attribution;
       }
     },
+    setMessageBrArtifacts: (
+      state,
+      action: PayloadAction<{ messageId: string; brArtifacts: PlaygroundBrArtifacts | undefined }>,
+    ) => {
+      const { messageId, brArtifacts } = action.payload;
+      const message = state.messages.find((msg) => msg.id === messageId);
+      if (message) {
+        // Optional assignment allows callers to clear artifacts by passing undefined.
+        message.brArtifacts = brArtifacts;
+      }
+    },
     setMessageFeedback: (
       state,
       action: PayloadAction<{ messageId: string; feedback: "liked" | "disliked" | undefined }>,
@@ -230,6 +253,7 @@ export const {
   clearAllMessages,
   updateMessageContent,
   setMessageAttribution,
+  setMessageBrArtifacts,
   setMessageFeedback,
   setSessionLoading,
   setAssistantResponsePhase,

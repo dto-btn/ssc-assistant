@@ -467,6 +467,18 @@
         "en": "Error sending feedback",
         "fr": "Erreur lors de l'envoi du retour"
     },
+    "br.query.parameters": {
+        "en": "Query Parameters",
+        "fr": "Paramètres de requête"
+    },
+    "br.query.status": {
+        "en": "Status",
+        "fr": "Statut"
+    },
+    "br.query.statuses": {
+        "en": "Statuses",
+        "fr": "Statuts"
+    },
     "message.actions": {
         "en": "Message actions",
         "fr": "Actions du message"
