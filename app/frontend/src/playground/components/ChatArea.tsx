@@ -60,6 +60,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const rehydratingSessionsRef = React.useRef<Set<string>>(new Set());
   const hydratedArchiveVersionRef = React.useRef<Map<string, string | null>>(new Map());
   const fetchedSessionsRef = React.useRef<Set<string>>(new Set());
+  const [rehydratedSessionIds, setRehydratedSessionIds] = React.useState<Record<string, boolean>>({});
 
   // Use memoized selector for messages
   const messages = useAppSelector(selectMessagesBySessionId);
@@ -67,6 +68,30 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const isNewChat = useAppSelector((state) => 
     state.sessions.sessions.find(s => s.id === currentSessionId)?.isNewChat ?? false
   );
+  const markSessionRehydrated = React.useCallback((sessionId: string) => {
+    if (rehydratedSessionsRef.current.has(sessionId)) {
+      return;
+    }
+
+    rehydratedSessionsRef.current.add(sessionId);
+    setRehydratedSessionIds((previous) => (
+      previous[sessionId]
+        ? previous
+        : { ...previous, [sessionId]: true }
+    ));
+  }, []);
+  const clearSessionRehydrated = React.useCallback((sessionId: string) => {
+    rehydratedSessionsRef.current.delete(sessionId);
+    setRehydratedSessionIds((previous) => {
+      if (!previous[sessionId]) {
+        return previous;
+      }
+
+      const next = { ...previous };
+      delete next[sessionId];
+      return next;
+    });
+  }, []);
   const latestRemoteArchive = React.useMemo(
     () => pickLatestArchive(sessionFiles),
     [sessionFiles]
@@ -127,7 +152,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             });
         }
         if (result.sessionDeleted) {
-          rehydratedSessionsRef.current.delete(currentSessionId);
+          clearSessionRehydrated(currentSessionId);
           rehydratingSessionsRef.current.delete(currentSessionId);
           hydratedArchiveVersionRef.current.delete(currentSessionId);
           fetchedSessionsRef.current.delete(currentSessionId);
@@ -141,7 +166,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         fetchedSessionsRef.current.add(currentSessionId);
         const hydratedVersion = hydratedArchiveVersionRef.current.get(currentSessionId) ?? null;
         if (hydratedVersion !== latestVersion) {
-          rehydratedSessionsRef.current.delete(currentSessionId);
+          clearSessionRehydrated(currentSessionId);
         }
         console.debug("Loaded session files", {
           sessionId: currentSessionId,
@@ -158,7 +183,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [currentSessionId, accessToken, dispatch]);
+  }, [accessToken, clearSessionRehydrated, currentSessionId, dispatch]);
 
   const currentSyncStatus = currentSessionId ? syncEntries[currentSessionId]?.status : undefined;
 
@@ -207,12 +232,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
         if (result?.restored) {
           hydratedArchiveVersionRef.current.set(currentSessionId, latestVersion);
-          rehydratedSessionsRef.current.add(currentSessionId);
+          markSessionRehydrated(currentSessionId);
         } else if (!(result?.hasArchive ?? false)) {
           hydratedArchiveVersionRef.current.set(currentSessionId, null);
-          rehydratedSessionsRef.current.add(currentSessionId);
+          markSessionRehydrated(currentSessionId);
         } else if (latestVersion === hydratedVersion) {
-          rehydratedSessionsRef.current.add(currentSessionId);
+          markSessionRehydrated(currentSessionId);
         }
       } catch (error) {
         if (!cancelled) {
@@ -226,7 +251,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [currentSessionId, currentSyncStatus, dispatch, messages.length, latestRemoteArchive]);
+  }, [currentSessionId, currentSyncStatus, dispatch, latestRemoteArchive, markSessionRehydrated, messages.length]);
 
   if (!currentSessionId) {
     return (
@@ -242,7 +267,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   // Hydration state check:
   // If we have messages, always show messages.
   // If no messages but it's an old chat that hasn't finished hydrating yet, show a loader.
-  const isHydrating = !isNewChat && messages.length === 0 && !rehydratedSessionsRef.current.has(currentSessionId);
+  const isHydrating =
+    Boolean(accessToken)
+    && !isNewChat
+    && messages.length === 0
+    && !rehydratedSessionIds[currentSessionId];
 
   if (isHydrating) {
     return (
