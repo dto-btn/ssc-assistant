@@ -48,6 +48,16 @@ export interface CompletionResult {
   completed: boolean;
   provider: string;
   citations?: Citation[];
+  mcpToolOutputs?: CompletionMcpToolOutput[];
+}
+
+export interface CompletionMcpToolOutput {
+  // Tool identifier emitted by Responses API MCP event payloads.
+  toolName: string;
+  // Optional server label when available in stream/final payload metadata.
+  serverLabel?: string;
+  // Serialized output to keep Redux payload transport-safe and inspectable.
+  output: string;
 }
 
 /**

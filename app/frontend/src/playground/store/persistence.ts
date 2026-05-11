@@ -7,8 +7,63 @@
  */
 
 const CHAT_KEY = "playground_chat_state";
+const MAX_PERSISTED_MESSAGES = 250;
+const MAX_PERSISTED_CONTENT_CHARS = 20_000;
 
 type PersistedState = Record<string, unknown>;
+
+const asRecord = (value: unknown): Record<string, unknown> =>
+  (value && typeof value === "object") ? (value as Record<string, unknown>) : {};
+
+const trimMessagesForPersistence = (messages: unknown): unknown[] => {
+  const normalized = normalizePersistedMessages(messages);
+  const recent = normalized.slice(-MAX_PERSISTED_MESSAGES);
+
+  return recent.map((entry) => {
+    const record = entry as Record<string, unknown>;
+    const content = typeof record.content === "string"
+      ? record.content.slice(0, MAX_PERSISTED_CONTENT_CHARS)
+      : "";
+
+    return {
+      ...record,
+      content,
+    };
+  });
+};
+
+const buildPersistedSnapshot = (state: Record<string, unknown>): PersistedState => {
+  // Persist only lightweight state needed to restore UX; skip heavy/sensitive slices.
+  const chat = asRecord(state.chat);
+  const ui = asRecord(state.ui);
+
+  return {
+    chat: {
+      messages: trimMessagesForPersistence(chat.messages),
+      assistantResponsePhaseBySessionId:
+        chat.assistantResponsePhaseBySessionId && typeof chat.assistantResponsePhaseBySessionId === "object"
+          ? chat.assistantResponsePhaseBySessionId
+          : {},
+      orchestratorInsightsBySessionId:
+        chat.orchestratorInsightsBySessionId && typeof chat.orchestratorInsightsBySessionId === "object"
+          ? chat.orchestratorInsightsBySessionId
+          : {},
+      isLoadingBySessionId: {},
+    },
+    sessions: asRecord(state.sessions),
+    tools: asRecord(state.tools),
+    models: asRecord(state.models),
+    quoted: asRecord(state.quoted),
+    sessionFiles: asRecord(state.sessionFiles),
+    sync: asRecord(state.sync),
+    ui: {
+      isSidebarCollapsed:
+        typeof ui.isSidebarCollapsed === "boolean" ? ui.isSidebarCollapsed : false,
+      isMobileSidebarOpen: false,
+      isDeletingAllChats: false,
+    },
+  };
+};
 
 /**
  * Drops malformed persisted message entries so hydration cannot crash reducers.
@@ -71,12 +126,8 @@ const migratePersistedState = (parsed: PersistedState): PersistedState => {
  */
 export function saveChatState(state: unknown) {
   try {
-    // Do not persist auth tokens
-    const s = (state as Record<string, unknown>) || {};
-    // Omit 'auth' key when persisting
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { auth, ...rest } = s;
-    localStorage.setItem(CHAT_KEY, JSON.stringify(rest));
+    const source = (state as Record<string, unknown>) || {};
+    localStorage.setItem(CHAT_KEY, JSON.stringify(buildPersistedSnapshot(source)));
   } catch {
     // ignore persistence errors (quota/unavailable)
   }

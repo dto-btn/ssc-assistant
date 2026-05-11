@@ -14,20 +14,48 @@ interface Props {
 const Citations: React.FC<Props> = ({ groupedCitations, onCitationClick }) => {
   const { t } = useTranslation("playground");
 
+  const toSafeText = (value: unknown): string => {
+    if (typeof value === "string") {
+      return value;
+    }
+
+    if (value === null || value === undefined) {
+      return "";
+    }
+
+    if (typeof value === "number" || typeof value === "boolean") {
+      return String(value);
+    }
+
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  };
+
   const isInternalCitationUrl = (url: string): boolean => {
     return url.startsWith("local-citation://");
   };
 
   const getChipLabel = (group: GroupedCitation): string => {
-    if (isInternalCitationUrl(group.url)) {
-      if (group.title && group.title !== group.url) {
-        return group.title;
+    const safeTitle = toSafeText(group.title).trim();
+    const safeUrl = toSafeText(group.url).trim();
+
+    if (isInternalCitationUrl(safeUrl)) {
+      if (safeTitle && safeTitle !== safeUrl) {
+        return safeTitle;
       }
       return t("citations.localSourceReference", {
         defaultValue: "Local source reference",
       });
     }
-    return group.title;
+
+    if (safeTitle) {
+      return safeTitle;
+    }
+
+    return safeUrl;
   };
 
   if (!groupedCitations || groupedCitations.length === 0) {

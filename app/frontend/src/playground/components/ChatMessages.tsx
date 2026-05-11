@@ -8,12 +8,14 @@
 import React, {
   useCallback,
   useEffect,
+  lazy,
   useMemo,
   useRef,
+  Suspense,
   useState,
 } from "react";
 import { useSelector } from "react-redux";
-import { Box, Button, List, ListItem } from "@mui/material";
+import { Box, Button, Chip, CircularProgress, List, ListItem, Paper, Stack, Typography } from "@mui/material";
 import Link from "@mui/material/Link";
 import { MarkdownHooks } from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -24,6 +26,8 @@ import type { ElementContent } from "hast";
 import type { Pluggable } from "unified";
 import type { RootState } from "../store";
 import AttachmentPreview from "./AttachmentPreview";
+import BusinessRequestCard from "../../components/BusinessRequests/BusinessRequestCard";
+import BusinessRequestMetadata from "../../components/BusinessRequests/BusinessRequestMetadata";
 import Citations from "./Citations";
 import CitationDrawer from "./CitationDrawer";
 import McpAttributionPill from "./McpAttributionPill";
@@ -39,7 +43,16 @@ import {
   processTextWithCitations,
   safeDecodeUri,
 } from "../utils/citations";
+import { transformToBusinessRequest } from "../../util/bits_utils";
 import "highlight.js/styles/github.css";
+
+const BusinessRequestTable = lazy(
+  () => import("./BusinessRequestTable")
+);
+
+const MermaidDataGrid = lazy(
+  () => import("./MermaidDataGrid")
+);
 
 interface ChatMessagesProps {
   sessionId: string;
@@ -52,6 +65,8 @@ interface AssistantMessageBubbleProps {
   liveAttribution?: MessageMcpAttribution;
   hasMermaidFence: boolean;
   isActiveStreamingAssistantMessage: boolean;
+  /** True only during waiting-first-token and drafting phases — hides the full body. */
+  isPreStreamingPhase: boolean;
   isShowingMermaidCode: boolean;
   isHovering: boolean;
   isMostRecent: boolean;
@@ -62,6 +77,60 @@ interface AssistantMessageBubbleProps {
   rehypePlugins: Pluggable[];
   resolvedAttachments: FileAttachment[];
 }
+
+interface BrQueryFilter {
+  name: string;
+  en?: string;
+  fr?: string;
+  operator?: string;
+  value?: string | number;
+}
+
+interface BrQuery {
+  query_filters?: BrQueryFilter[];
+  status?: string;
+  statuses?: string[];
+}
+
+const MONTH_INDEX_BY_NAME: Record<string, number> = {
+  january: 0,
+  janvier: 0,
+  february: 1,
+  fevrier: 1,
+  march: 2,
+  april: 3,
+  avril: 3,
+  may: 4,
+  mai: 4,
+  june: 5,
+  juin: 5,
+  july: 6,
+  juillet: 6,
+  august: 7,
+  aout: 7,
+  september: 8,
+  septembre: 8,
+  october: 9,
+  octobre: 9,
+  november: 10,
+  novembre: 10,
+  december: 11,
+  decembre: 11,
+};
+
+const normalizeForMatching = (value: string): string => {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+};
+
+const formatIsoDate = (date: Date): string => {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 const getPlainText = (children: React.ReactNode): string => {
   return React.Children.toArray(children)
@@ -97,6 +166,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
   liveAttribution,
   hasMermaidFence,
   isActiveStreamingAssistantMessage,
+  isPreStreamingPhase,
   isShowingMermaidCode,
   isHovering,
   isMostRecent,
@@ -107,7 +177,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
   rehypePlugins,
   resolvedAttachments,
 }) => {
-  const { t } = useTranslation("playground");
+  const { t, i18n } = useTranslation("playground");
   const [isCitationDrawerOpen, setCitationDrawerOpen] = useState(false);
   const [activeCitationGroupUrl, setActiveCitationGroupUrl] = useState<
     string | undefined
@@ -116,7 +186,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
     number | undefined
   >(undefined);
 
-  const allCitations = message.citations || [];
+  const allCitations = useMemo(() => message.citations ?? [], [message.citations]);
   const processedContent = useMemo(
     () => processTextWithCitations(message.content, allCitations),
     [message.content, allCitations]
@@ -131,6 +201,351 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
       ),
     [processedContent, allCitations]
   );
+
+  const brData = useMemo(() => {
+    if (!message.brArtifacts?.brData?.length) {
+      return undefined;
+    }
+
+    return message.brArtifacts.brData.map((item) =>
+      transformToBusinessRequest(item)
+    );
+  }, [message.brArtifacts?.brData]);
+
+  // Diagnostic: log if brArtifacts exist but brData is undefined (edge case)
+  if (
+    process.env.NODE_ENV === "development"
+    && message.brArtifacts
+    && !brData
+    && message.role === "assistant"
+  ) {
+    console.warn(
+      "[ChatMessages] Message has brArtifacts but brData is undefined:",
+      {
+        messageId: message.id,
+        brArtifactsKeys: Object.keys(message.brArtifacts),
+        brDataRaw: message.brArtifacts.brData,
+      }
+    );
+  }
+
+  const brMetadata = useMemo(() => {
+    const metadata = message.brArtifacts?.brMetadata;
+    if (!metadata) {
+      return undefined;
+    }
+
+    const executionTime = Number(metadata.execution_time);
+    const results = Number(metadata.results);
+    const totalRows = Number(metadata.total_rows);
+    const extractionDate = metadata.extraction_date;
+
+    if (!Number.isFinite(executionTime) || !Number.isFinite(results) || !Number.isFinite(totalRows)) {
+      return undefined;
+    }
+
+    if (typeof extractionDate !== "string") {
+      return undefined;
+    }
+
+    return {
+      execution_time: executionTime,
+      results,
+      total_rows: totalRows,
+      extraction_date: extractionDate,
+    } as BrMetadata;
+  }, [message.brArtifacts?.brMetadata]);
+
+  const brSelectFields = useMemo(() => {
+    const fields = message.brArtifacts?.brSelectFields?.fields;
+    if (!fields || !Array.isArray(fields)) {
+      return [];
+    }
+
+    return fields;
+  }, [message.brArtifacts?.brSelectFields?.fields]);
+
+  const brQuery = useMemo(() => {
+    const query = message.brArtifacts?.brQuery;
+    if (!query || typeof query !== "object") {
+      return undefined;
+    }
+
+    return query as BrQuery;
+  }, [message.brArtifacts?.brQuery]);
+
+  // Hide markdown only when the grid is the final presentation AND streaming has finished.
+  const shouldHideAssistantMarkdownForBrTable =
+    Boolean(brData && brData.length > 1) && !isActiveStreamingAssistantMessage;
+  const isFrench = i18n.language.toLowerCase().startsWith("fr");
+
+  const fallbackBrQuery = useMemo(() => {
+    const assistantMessageIndex = messages.findIndex((entry) => entry.id === message.id);
+    if (assistantMessageIndex <= 0) {
+      return undefined;
+    }
+
+    let sourcePrompt: string | undefined;
+    for (let index = assistantMessageIndex - 1; index >= 0; index -= 1) {
+      if (messages[index].role === "user") {
+        sourcePrompt = messages[index].content;
+        break;
+      }
+    }
+
+    if (!sourcePrompt) {
+      return undefined;
+    }
+
+    // Lightweight heuristic extraction to show likely filters when tool metadata is missing.
+    const queryFilters: BrQueryFilter[] = [];
+    const normalizedPrompt = normalizeForMatching(sourcePrompt);
+
+    const monthMatch = normalizedPrompt.match(/\b(january|janvier|february|fevrier|march|april|avril|may|mai|june|juin|july|juillet|august|aout|september|septembre|october|octobre|november|novembre|december|decembre)\b(?:\s+(\d{4}))?/i);
+    if (monthMatch) {
+      const monthName = monthMatch[1].toLowerCase();
+      const monthIndex = MONTH_INDEX_BY_NAME[monthName];
+      const requestedYear = monthMatch[2] ? Number.parseInt(monthMatch[2], 10) : new Date().getUTCFullYear();
+      if (Number.isInteger(monthIndex) && Number.isFinite(requestedYear)) {
+        const start = new Date(Date.UTC(requestedYear, monthIndex, 1));
+        const end = new Date(Date.UTC(requestedYear, monthIndex + 1, 0));
+        queryFilters.push({
+          name: "SUBMIT_DATE",
+          en: "Date Submitted",
+          fr: "Date de soumission",
+          operator: ">=",
+          value: formatIsoDate(start),
+        });
+        queryFilters.push({
+          name: "SUBMIT_DATE",
+          en: "Date Submitted",
+          fr: "Date de soumission",
+          operator: "<=",
+          value: formatIsoDate(end),
+        });
+      }
+    }
+
+    const relativeWeeksMatch = normalizedPrompt.match(/\b(?:last|past)\s+(\d+)\s+weeks?\b|\b(?:au\s+cours\s+des?|dans\s+les?)\s+(\d+)\s+dernieres?\s+semaines?\b|\b(\d+)\s+dernieres?\s+semaines?\b/i);
+    if (relativeWeeksMatch) {
+      const weeks = Number.parseInt(relativeWeeksMatch[1] || relativeWeeksMatch[2] || relativeWeeksMatch[3], 10);
+      if (Number.isFinite(weeks) && weeks > 0) {
+        const start = new Date();
+        start.setUTCDate(start.getUTCDate() - (weeks * 7));
+        queryFilters.push({
+          name: "SUBMIT_DATE",
+          en: "Date Submitted",
+          fr: "Date de soumission",
+          operator: ">=",
+          value: formatIsoDate(start),
+        });
+      }
+    }
+
+    const clientMatch = sourcePrompt.match(/\bclient\b\s+([A-Za-z0-9][A-Za-z0-9 '&().-]{1,100}?)(?=(?:\s+for\s+brs?|\s+for\s+the\s+month|\s+with\s+|\s+of\s+|\s+that\s+|\s+priority|\s+only|\s+pour\s+les?\s+d[oa]|\s+pour\s+le\s+mois|\s+de\s+priorit[ée]|\s+seulement|\s+provenant\s+du|\s+au\s+cours\s+des?|[,.;]|$))/i);
+    if (clientMatch) {
+      const clientCandidate = clientMatch[1].trim();
+      if (clientCandidate.length > 0) {
+        queryFilters.push({
+          name: isFrench ? "RPT_GC_ORG_NAME_FR" : "RPT_GC_ORG_NAME_EN",
+          en: "Client Name",
+          fr: "Nom du client",
+          operator: "=",
+          value: clientCandidate,
+        });
+      }
+    }
+
+    const priorityMatch = normalizedPrompt.match(/\b(high|medium|low)\s+priority\b|\bpriority\b\s*(?:is|=)?\s*(high|medium|low)\b|\bpriorite\b\s*(?:est|=|de)?\s*(elevee|moyenne|faible)\b|\bpriorite\s+(elevee|moyenne|faible)\b/i);
+    const priorityRaw = (priorityMatch?.[1] || priorityMatch?.[2] || priorityMatch?.[3] || priorityMatch?.[4] || "").toLowerCase();
+    const normalizedPriority = ({
+      high: "High",
+      medium: "Medium",
+      low: "Low",
+      elevee: "High",
+      moyenne: "Medium",
+      faible: "Low",
+    } as Record<string, string>)[priorityRaw];
+    if (normalizedPriority) {
+      queryFilters.push({
+        name: isFrench ? "PRIORITY_FR" : "PRIORITY_EN",
+        en: "Priority",
+        fr: "Priorité",
+        operator: "=",
+        value: normalizedPriority,
+      });
+    }
+
+    if (queryFilters.length === 0) {
+      return undefined;
+    }
+
+    return { query_filters: queryFilters } as BrQuery;
+  }, [isFrench, message.id, messages]);
+
+  const displayedBrQuery = useMemo(() => {
+    if (!brQuery && !fallbackBrQuery) {
+      return undefined;
+    }
+
+    const combinedFilters: BrQueryFilter[] = [];
+    const seen = new Set<string>();
+    const appendFilters = (filters: BrQueryFilter[] | undefined) => {
+      if (!filters) {
+        return;
+      }
+      for (const filter of filters) {
+        const key = `${filter.name}|${filter.operator || "="}|${String(filter.value ?? "")}`;
+        if (seen.has(key)) {
+          continue;
+        }
+        seen.add(key);
+        combinedFilters.push(filter);
+      }
+    };
+
+    appendFilters(brQuery?.query_filters);
+    appendFilters(fallbackBrQuery?.query_filters);
+
+    // Preserve explicit tool metadata when available; use fallback only to fill missing fields.
+    const mergedQuery: BrQuery = {
+      ...(fallbackBrQuery || {}),
+      ...(brQuery || {}),
+    };
+
+    if (combinedFilters.length > 0) {
+      mergedQuery.query_filters = combinedFilters;
+    }
+
+    return mergedQuery;
+  }, [brQuery, fallbackBrQuery]);
+
+  const fallbackMermaidRows = useMemo(() => {
+    if ((brData && brData.length > 0) || !hasMermaidFence) {
+      return [] as Array<{ id: string; [key: string]: string | number }>;
+    }
+
+    const text = processedContent.processedText || "";
+    const rows: Array<{ id: string; [key: string]: string | number }> = [];
+    const seen = new Set<string>();
+
+    const normalizeNodeToken = (value: string): string => {
+      return value
+        .replace(/[()[\]{}]/g, "")
+        .replace(/^"|"$/g, "")
+        .trim();
+    };
+
+    const addRow = (row: Record<string, string | number>) => {
+      const key = JSON.stringify(row);
+      // Deduplicate syntactically repeated lines so the table mirrors unique diagram facts.
+      if (!seen.has(key)) {
+        seen.add(key);
+        rows.push({ id: `${rows.length + 1}`, ...row });
+      }
+    };
+
+    const addRowsFromLines = (lines: string[]) => {
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) {
+          continue;
+        }
+
+        // Ignore Mermaid block headers/directives that are not data rows.
+        if (/^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|mindmap|timeline|gitGraph|xychart-beta)\b/i.test(line)) {
+          continue;
+        }
+
+        const pieLineMatch = line.match(/^"(.+?)"\s*:\s*(-?\d+(?:\.\d+)?)$/);
+        if (pieLineMatch) {
+          addRow({ type: "metric", label: pieLineMatch[1].trim(), value: Number(pieLineMatch[2]) });
+          continue;
+        }
+
+        const bulletCountMatch = line.match(/^(?:[-*]|\d+\.)\s*(.+?)\s*:\s*(-?\d+(?:\.\d+)?)\s*(?:brs?)?\s*$/i);
+        if (bulletCountMatch) {
+          addRow({ type: "metric", label: bulletCountMatch[1].trim(), value: Number(bulletCountMatch[2]) });
+          continue;
+        }
+
+        const plainCountMatch = line.match(/^(.+?)\s*:\s*(-?\d+(?:\.\d+)?)\s*(?:brs?)?\s*$/i);
+        if (plainCountMatch) {
+          addRow({ type: "metric", label: plainCountMatch[1].trim(), value: Number(plainCountMatch[2]) });
+          continue;
+        }
+
+        const sequenceMatch = line.match(/^(.+?)\s*(->>|-->>|->|-->|=>|==>|--x|--o)\s*(.+?)\s*:\s*(.+)$/);
+        if (sequenceMatch) {
+          addRow({
+            type: "interaction",
+            source: normalizeNodeToken(sequenceMatch[1]),
+            relation: sequenceMatch[2],
+            target: normalizeNodeToken(sequenceMatch[3]),
+            message: sequenceMatch[4].trim(),
+          });
+          continue;
+        }
+
+        const labeledEdgeMatch = line.match(/^(.+?)\s*(-->|---|-.->|==>|===|<--|<-->)\|(.+?)\|\s*(.+)$/);
+        if (labeledEdgeMatch) {
+          addRow({
+            type: "edge",
+            source: normalizeNodeToken(labeledEdgeMatch[1]),
+            relation: labeledEdgeMatch[2],
+            label: labeledEdgeMatch[3].trim(),
+            target: normalizeNodeToken(labeledEdgeMatch[4]),
+          });
+          continue;
+        }
+
+        const edgeMatch = line.match(/^(.+?)\s*(-->|---|-.->|==>|===|<--|<-->)\s*(.+)$/);
+        if (edgeMatch) {
+          addRow({
+            type: "edge",
+            source: normalizeNodeToken(edgeMatch[1]),
+            relation: edgeMatch[2],
+            target: normalizeNodeToken(edgeMatch[3]),
+          });
+          continue;
+        }
+      }
+    };
+
+    const mermaidBlockMatch = text.match(/```mermaid\s*([\s\S]*?)```/i);
+    if (mermaidBlockMatch) {
+      addRowsFromLines(mermaidBlockMatch[1].split("\n"));
+    }
+
+    if (rows.length < 2) {
+      return [] as Array<{ id: string; [key: string]: string | number }>;
+    }
+
+    const structureCounts = new Map<string, number>();
+    rows.forEach((row) => {
+      const shape = Object.keys(row)
+        .filter((key) => key !== "id")
+        .sort()
+        .join("|");
+      structureCounts.set(shape, (structureCounts.get(shape) || 0) + 1);
+    });
+
+    const hasRepeatingStructure = Array.from(structureCounts.values()).some((count) => count > 1);
+    if (!hasRepeatingStructure) {
+      return [] as Array<{ id: string; [key: string]: string | number }>;
+    }
+
+    return rows;
+  }, [brData, hasMermaidFence, processedContent.processedText]);
+
+  const shouldShowMermaidToggle =
+    hasMermaidFence
+    && !isActiveStreamingAssistantMessage
+    && !shouldHideAssistantMarkdownForBrTable
+    && fallbackMermaidRows.length === 0;
+  // Only blank the body during pre-streaming phases (waiting / drafting).
+  // During the streaming phase the markdown streams naturally (typewriter effect).
+  const shouldHideAssistantBodyWhileStreaming = isPreStreamingPhase;
 
   const getCitationGroupByNumber = useCallback(
     (citationNumber?: number) => {
@@ -303,37 +718,108 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
           )}
         </Box>
         <Box sx={{ minWidth: 0, flex: 1 }}>
-          {hasMermaidFence && !isActiveStreamingAssistantMessage && (
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 0.5 }}>
-              <Button
-                size="small"
-                variant="text"
-                onClick={onToggleMermaidCodeView}
-                aria-pressed={isShowingMermaidCode}
-                sx={{
-                  minWidth: 0,
-                  px: 0.5,
-                  textTransform: "none",
-                  fontSize: "0.78rem",
-                }}
-              >
-                {isShowingMermaidCode
-                  ? t("assistant.mermaid.viewDiagram")
-                  : t("assistant.mermaid.viewCode")}
-              </Button>
-            </Box>
-          )}
-          <Box sx={ASSISTANT_MARKDOWN_SX}>
-            <MarkdownHooks
-              components={markdownComponents}
-              remarkPlugins={remarkPlugins}
-              rehypePlugins={rehypePlugins}
-            >
-              {processedContent.processedText}
-            </MarkdownHooks>
-          </Box>
-          {resolvedAttachments.length > 0 && (
-            <AttachmentPreview attachments={resolvedAttachments} />
+          {!shouldHideAssistantBodyWhileStreaming && (
+            <>
+              {shouldShowMermaidToggle && (
+                <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 0.5 }}>
+                  <Button
+                    size="small"
+                    variant="text"
+                    onClick={onToggleMermaidCodeView}
+                    aria-pressed={isShowingMermaidCode}
+                    sx={{
+                      minWidth: 0,
+                      px: 0.5,
+                      textTransform: "none",
+                      fontSize: "0.78rem",
+                    }}
+                  >
+                    {isShowingMermaidCode
+                      ? t("assistant.mermaid.viewDiagram")
+                      : t("assistant.mermaid.viewCode")}
+                  </Button>
+                </Box>
+              )}
+              {!shouldHideAssistantMarkdownForBrTable && (
+                <Box sx={ASSISTANT_MARKDOWN_SX}>
+                  <MarkdownHooks
+                    components={markdownComponents}
+                    remarkPlugins={remarkPlugins}
+                    rehypePlugins={rehypePlugins}
+                  >
+                    {processedContent.processedText}
+                  </MarkdownHooks>
+                </Box>
+              )}
+              {resolvedAttachments.length > 0 && (
+                <AttachmentPreview attachments={resolvedAttachments} />
+              )}
+              {brData && brData.length > 1 && !isActiveStreamingAssistantMessage && (
+                <Box sx={{ mt: 1 }}>
+                  <Suspense fallback={<Box role="status" aria-live="polite" sx={{ display: "flex", justifyContent: "center", py: 2 }}><CircularProgress size={24} /><Box component="span" sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap" }}>{t("loading")}</Box></Box>}>
+                    <BusinessRequestTable
+                      data={brData}
+                      lang={i18n.language}
+                      show_fields={brSelectFields}
+                    />
+                  </Suspense>
+                </Box>
+              )}
+              {brData && brData.length === 1 && !isActiveStreamingAssistantMessage && (
+                <Box sx={{ mt: 1 }}>
+                  <BusinessRequestCard
+                    data={brData[0]}
+                    lang={i18n.language}
+                  />
+                </Box>
+              )}
+              {(!brData || brData.length === 0) && fallbackMermaidRows.length > 0 && !isActiveStreamingAssistantMessage && (
+                <Suspense fallback={<Box role="status" aria-live="polite" sx={{ display: "flex", justifyContent: "center", py: 2 }}><CircularProgress size={24} /><Box component="span" sx={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap" }}>{t("loading")}</Box></Box>}>
+                  <MermaidDataGrid rows={fallbackMermaidRows} />
+                </Suspense>
+              )}
+              {brMetadata && !isActiveStreamingAssistantMessage && (
+                <Box sx={{ mt: 1 }}>
+                  <BusinessRequestMetadata metadata={brMetadata} />
+                </Box>
+              )}
+              {displayedBrQuery && !isActiveStreamingAssistantMessage && (
+                <Box sx={{ mt: 1 }}>
+                  <Paper sx={{ backgroundColor: "white", padding: 1, width: "100%" }} elevation={1}>
+                    <Typography variant="caption" gutterBottom sx={{ display: "block", mb: 1 }}>
+                      {t("br.query.parameters")}
+                    </Typography>
+                    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                      {displayedBrQuery.query_filters?.map((filter, index) => (
+                        <Chip
+                          key={`query-filter-${index}`}
+                          label={`${isFrench ? (filter.fr || filter.name) : (filter.en || filter.name)} (${filter.name}) ${filter.operator || "="} ${String(filter.value ?? "")}`}
+                          size="small"
+                          variant="outlined"
+                          color="primary"
+                        />
+                      ))}
+                      {displayedBrQuery.status && (
+                        <Chip
+                          label={`${t("br.query.status", { defaultValue: "Status" })}: ${displayedBrQuery.status}`}
+                          size="small"
+                          variant="outlined"
+                          color="secondary"
+                        />
+                      )}
+                      {displayedBrQuery.statuses && Array.isArray(displayedBrQuery.statuses) && displayedBrQuery.statuses.length > 0 && (
+                        <Chip
+                          label={`${t("br.query.statuses", { defaultValue: "Statuses" })}: ${displayedBrQuery.statuses.join(", ")}`}
+                          size="small"
+                          variant="outlined"
+                          color="secondary"
+                        />
+                      )}
+                    </Stack>
+                  </Paper>
+                </Box>
+              )}
+            </>
           )}
           {!isActiveStreamingAssistantMessage && (
             <ResponseButtons
@@ -349,26 +835,30 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
           )}
         </Box>
       </Box>
-      <Citations
-        groupedCitations={groupedCitations}
-        onCitationClick={(group) => {
-          setActiveCitationGroupUrl(group.url);
-          setPendingCitationNumber(group.displayNumber);
-          setCitationDrawerOpen(true);
-        }}
-      />
-      <CitationDrawer
-        open={isCitationDrawerOpen}
-        onClose={() => setCitationDrawerOpen(false)}
-        groupedCitations={groupedCitations}
-        allCitations={allCitations}
-        citationNumberMapping={processedContent.citationNumberMapping}
-        assistantMessageContent={message.content}
-        activeCitationGroupUrl={activeCitationGroupUrl}
-        onActiveCitationGroupUrlChange={setActiveCitationGroupUrl}
-        pendingCitationNumber={pendingCitationNumber}
-        onPendingCitationNumberChange={setPendingCitationNumber}
-      />
+      {!isActiveStreamingAssistantMessage && (
+        <>
+          <Citations
+            groupedCitations={groupedCitations}
+            onCitationClick={(group) => {
+              setActiveCitationGroupUrl(group.url);
+              setPendingCitationNumber(group.displayNumber);
+              setCitationDrawerOpen(true);
+            }}
+          />
+          <CitationDrawer
+            open={isCitationDrawerOpen}
+            onClose={() => setCitationDrawerOpen(false)}
+            groupedCitations={groupedCitations}
+            allCitations={allCitations}
+            citationNumberMapping={processedContent.citationNumberMapping}
+            assistantMessageContent={message.content}
+            activeCitationGroupUrl={activeCitationGroupUrl}
+            onActiveCitationGroupUrlChange={setActiveCitationGroupUrl}
+            pendingCitationNumber={pendingCitationNumber}
+            onPendingCitationNumberChange={setPendingCitationNumber}
+          />
+        </>
+      )}
     </Box>
   );
 };
@@ -518,6 +1008,11 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
               && message.id === activeAssistantMessageId
               && shouldPulseAssistantIcon
           );
+          const isPreStreamingPhase = Boolean(
+            isAssistantMessage
+              && message.id === activeAssistantMessageId
+              && (assistantResponsePhase === "waiting-first-token" || assistantResponsePhase === "drafting")
+          );
           const hasMermaidFence = /```\s*mermaid\b/i.test(message.content);
           const isShowingMermaidCode = Boolean(
             mermaidCodeViewByMessageId[message.id]
@@ -560,6 +1055,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                   liveAttribution={liveAttribution}
                   hasMermaidFence={hasMermaidFence}
                   isActiveStreamingAssistantMessage={isActiveStreamingAssistantMessage}
+                  isPreStreamingPhase={isPreStreamingPhase}
                   isShowingMermaidCode={isShowingMermaidCode}
                   isHovering={hoveredMessageId === message.id}
                   isMostRecent={message.id === activeAssistantMessageId}

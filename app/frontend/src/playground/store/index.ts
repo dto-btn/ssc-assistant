@@ -57,8 +57,18 @@ export const store = configureStore({
     getDefaultMiddleware().concat(archiverMiddleware, outboxMiddleware),
 });
 
+const PERSIST_DEBOUNCE_MS = 500;
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
+
 store.subscribe(() => {
-  saveChatState(store.getState());
+  if (persistTimer !== null) {
+    clearTimeout(persistTimer);
+  }
+
+  persistTimer = setTimeout(() => {
+    saveChatState(store.getState());
+    persistTimer = null;
+  }, PERSIST_DEBOUNCE_MS);
 });
 
 const initialStateSnapshot = store.getState();

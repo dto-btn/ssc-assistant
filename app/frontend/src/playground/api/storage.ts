@@ -10,6 +10,19 @@ const sessionDeleteEndpoint = (sessionId: string) => `${sessionsEndpoint}/${enco
 
 type MetadataRecord = Record<string, string | number | boolean | null | undefined>;
 
+export class PlaygroundApiError extends Error {
+  status: number;
+  responseText: string;
+
+  constructor(status: number, responseText: string) {
+    const normalizedText = responseText.trim();
+    super(normalizedText || `Request failed (${status})`);
+    this.name = "PlaygroundApiError";
+    this.status = status;
+    this.responseText = normalizedText;
+  }
+}
+
 /**
  * Read the MIME type from a ``data:`` URL so uploads inherit the browser-provided hint.
  */
@@ -156,9 +169,23 @@ export interface ListSessionFilesResult {
 async function handleJsonResponse(response: Response) {
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || `Request failed (${response.status})`);
+    throw new PlaygroundApiError(response.status, text);
   }
   return response.json();
+}
+
+/**
+ * Decide whether a failed upload is worth retrying automatically.
+ */
+export function isRetriableUploadError(error: unknown): boolean {
+  if (error instanceof PlaygroundApiError) {
+    return error.status === 401 || error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500;
+  }
+  // Browser/network failures surface as TypeError from fetch.
+  if (error instanceof TypeError) {
+    return true;
+  }
+  return true;
 }
 
 export interface UploadEncodedFileParams {
