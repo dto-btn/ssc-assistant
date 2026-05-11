@@ -7,16 +7,25 @@
  * state and handlers from the playground store.
  */
 // React import intentionally omitted; use named imports where required.
+import type { PropsWithChildren } from "react";
 import { Provider } from "react-redux";
 import { store } from "./store";
 import PlaygroundRoot from "./components/PlaygroundRoot";
 import ToastContainer from "./components/ToastContainer";
 
-export default function PlaygroundApp() {
+export function PlaygroundProviders({ children }: PropsWithChildren) {
   return (
     <Provider store={store}>
-      <PlaygroundRoot />
+      {children}
       <ToastContainer />
     </Provider>
+  );
+}
+
+export default function PlaygroundApp() {
+  return (
+    <PlaygroundProviders>
+      <PlaygroundRoot />
+    </PlaygroundProviders>
   );
 }

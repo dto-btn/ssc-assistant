@@ -11,17 +11,17 @@ This directory currently documents the Playwright end-to-end coverage for the pl
 
 ## Shared Test Infrastructure
 
-- `e2e/fixtures/mockPlayground.ts`: deterministic browser-level mocks for auth bypass, playground API requests, feedback, uploads, archived sessions, and streamed assistant responses. It supports "persistent responses" to test error handling across multiple retries.
+- `e2e/fixtures/mockPlayground.ts`: deterministic browser-level mocks for playground API requests, feedback, uploads, archived sessions, and streamed assistant responses. It supports "persistent responses" to test error handling across multiple retries.
 - `e2e/fixtures/playground.ts`: shared Playwright fixtures that wire the mock layer and page object into each test.
 - `e2e/pages/PlaygroundPage.ts`: page object used by the specs for common playground interactions.
 
-## Auth Bypass and Security
+## Auth Setup
 
-To facilitate testing without a live MSAL flow, the application supports an E2E auth bypass.
+Playwright uses a dedicated test entrypoint instead of branching through the normal runtime auth flow.
 
-- **Enable**: Set `VITE_E2E_BYPASS_AUTH=true` in the environment.
-- **Scope**: The bypass is strictly limited to `DEV` environments where the URL path starts with `/playground`.
-- **Mechanism**: Forces the frontend to skip MSAL redirects and injects a mock bearer token into all API requests within the playground context.
+- **Entrypoint**: `playground.e2e.html` renders the playground directly for the E2E harness.
+- **Token**: Set `PLAYWRIGHT_E2E_ACCESS_TOKEN` before running Playwright. The config passes it through as `VITE_E2E_ACCESS_TOKEN` to seed the playground store.
+- **Scope**: This token path exists only in the Playwright entrypoint and does not change the normal MSAL-backed application flow.
 
 ## Browser Coverage
 
@@ -38,6 +38,7 @@ The suite runs against:
 From `app/frontend`:
 
 ```sh
+export PLAYWRIGHT_E2E_ACCESS_TOKEN="$(node -e 'const encode = (value) => Buffer.from(JSON.stringify(value)).toString("base64url"); process.stdout.write(`${encode({ alg: "HS256", typ: "JWT" })}.${encode({ exp: 4102444800, name: "playwright-e2e-token" })}.signature`)')"
 npm run test:e2e
 # OR directly via playwright
 npx playwright test

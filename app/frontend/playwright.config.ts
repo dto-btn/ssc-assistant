@@ -1,7 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const e2eAccessToken = 'eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjQxMDAwMDAwMDAsIm5hbWUiOiJwbGF5d3JpZ2h0LWUyZS10b2tlbiJ9.signature';
 const e2ePort = 4173;
+const e2eAccessToken = process.env.PLAYWRIGHT_E2E_ACCESS_TOKEN?.trim();
+
+if (!e2eAccessToken) {
+  throw new Error('PLAYWRIGHT_E2E_ACCESS_TOKEN is required for Playwright E2E runs.');
+}
 
 /**
  * Read environment variables from file.
@@ -75,7 +79,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: `VITE_PLAYGROUND_ON=true VITE_E2E_BYPASS_AUTH=true VITE_E2E_ACCESS_TOKEN=${e2eAccessToken} VITE_DISABLED_FEATURES= VITE_API_BACKEND=http://dummy-backend VITE_API_KEY=dummy PORT=${e2ePort} npm run dev`,
+    command: `VITE_PLAYGROUND_ON=true VITE_E2E_ACCESS_TOKEN=${e2eAccessToken} VITE_DISABLED_FEATURES= VITE_API_BACKEND=http://dummy-backend VITE_API_KEY=dummy PORT=${e2ePort} npm run dev`,
     url: `http://localhost:${e2ePort}`,
     reuseExistingServer: false,
   },

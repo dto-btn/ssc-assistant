@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
 /**
- * Lightweight page object for the `/playground` route.
+ * Lightweight page object for the Playwright playground entrypoint.
  */
 export class PlaygroundPage {
   readonly page: Page;
@@ -15,7 +15,7 @@ export class PlaygroundPage {
    * Navigate to the playground route and wait for the shell to stabilize.
    */
   async goto(): Promise<void> {
-    await this.page.goto('/playground');
+    await this.page.goto('/playground.e2e.html');
     await expect(this.page.getByRole('heading', { name: 'SSC Assistant' })).toBeVisible();
   }
 

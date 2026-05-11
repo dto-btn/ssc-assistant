@@ -15,18 +15,7 @@ interface AppProps {
   instance: PublicClientApplication;
 }
 
-const shouldBypassPlaygroundAuth = (): boolean => {
-  return (
-    import.meta.env.DEV &&
-    import.meta.env.VITE_E2E_BYPASS_AUTH === "true" &&
-    typeof window !== "undefined" &&
-    window.location.pathname.startsWith("/playground")
-  );
-};
-
 export const App = ({ instance }: AppProps) => {
-  const isPlaygroundE2EAuthBypassEnabled = shouldBypassPlaygroundAuth();
-
   return (
     <>
       {/* Skip link for keyboard users to jump to the chat ask input */}
@@ -35,18 +24,12 @@ export const App = ({ instance }: AppProps) => {
       <CssBaseline />
       <AppErrorBoundary>
         <MsalProvider instance={instance}>
-          {isPlaygroundE2EAuthBypassEnabled ? (
+          <UnauthenticatedTemplate>
+            <ConnectingScreen />
+          </UnauthenticatedTemplate>
+          <AuthenticatedTemplate>
             <AppRoutes />
-          ) : (
-            <>
-              <UnauthenticatedTemplate>
-                <ConnectingScreen />
-              </UnauthenticatedTemplate>
-              <AuthenticatedTemplate>
-                <AppRoutes />
-              </AuthenticatedTemplate>
-            </>
-          )}
+          </AuthenticatedTemplate>
         </MsalProvider>
       </AppErrorBoundary>
       <AppSnackbars />
