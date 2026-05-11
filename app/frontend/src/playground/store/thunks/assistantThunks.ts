@@ -1670,6 +1670,22 @@ export const sendAssistantMessage = ({
         return;
       }
 
+      const buildStoppedContent = (content: string): string => {
+        const stopMarker = `\n\n*${i18n.t("playground:assistant.stopped")}*`;
+        return content.length > 0 ? content + stopMarker : stopMarker.trimStart();
+      };
+
+      if (abortController.signal.aborted) {
+        dispatch(
+          updateMessageContent({
+            messageId: latestAssistantMessage.id,
+            content: buildStoppedContent(""),
+            citations: answer.citations,
+          })
+        );
+        return;
+      }
+
       dispatch(setAssistantResponsePhase({ sessionId, phase: "streaming" }));
 
       const revealTypewriter = createStreamTypewriter({
@@ -1687,18 +1703,29 @@ export const sendAssistantMessage = ({
           );
         },
       });
+      let wasAbortedDuringReveal = false;
+      const handleAbortDuringReveal = (): void => {
+        wasAbortedDuringReveal = true;
+        revealTypewriter.stop();
+      };
+
+      abortController.signal.addEventListener("abort", handleAbortDuringReveal, { once: true });
 
       try {
         revealTypewriter.enqueue(answer.content);
         await revealTypewriter.complete({ maxWaitMs: FINAL_REVEAL_MAX_WAIT_MS });
+        const revealedContent = revealTypewriter.getDisplayedText();
         dispatch(
           updateMessageContent({
             messageId: latestAssistantMessage.id,
-            content: answer.content,
+            content: wasAbortedDuringReveal
+              ? buildStoppedContent(revealedContent)
+              : answer.content,
             citations: answer.citations,
           })
         );
       } finally {
+        abortController.signal.removeEventListener("abort", handleAbortDuringReveal);
         revealTypewriter.stop();
       }
     };
@@ -1828,10 +1855,12 @@ export const sendAssistantMessage = ({
         });
       }
 
-      // Append a stop marker so the user knows the response was cut short.
-      const stopMarker = `\n\n*${i18n.t("playground:assistant.stopped")}*`;
+      const buildStoppedContent = (content: string): string => {
+        const stopMarker = `\n\n*${i18n.t("playground:assistant.stopped")}*`;
+        return content.length > 0 ? content + stopMarker : stopMarker.trimStart();
+      };
       const finalContent = wasAborted
-        ? (cleanedContent.length > 0 ? cleanedContent + stopMarker : stopMarker.trimStart())
+        ? buildStoppedContent(cleanedContent)
         : cleanedContent;
       const rewrittenAnswer = wasAborted
         ? {

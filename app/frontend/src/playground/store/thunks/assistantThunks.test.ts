@@ -627,6 +627,73 @@ describe("sendAssistantMessage auto-rename", () => {
     expect(store.getState().chat.assistantResponsePhaseBySessionId["session-1"]).toBe("idle");
   });
 
+  it("stops the local reveal phase after drafting has completed", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(window, "matchMedia").mockImplementation(
+      ((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })) as unknown as typeof window.matchMedia,
+    );
+
+    createCompletionMock.mockResolvedValueOnce({
+      fullText: "This answer keeps revealing after drafting completes.",
+      completed: true,
+      provider: "azure-openai",
+      citations: [],
+    });
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [policyServer],
+    });
+
+    try {
+      const flushMicrotasks = async (iterations = 8): Promise<void> => {
+        for (let index = 0; index < iterations; index += 1) {
+          await Promise.resolve();
+        }
+      };
+
+      const dispatchPromise = store.dispatch(
+        sendAssistantMessage({
+          sessionId: "session-1",
+          content: "Summarize the policy guidance.",
+        }) as any,
+      );
+
+      await flushMicrotasks();
+
+      expect(store.getState().chat.assistantResponsePhaseBySessionId["session-1"]).toBe("streaming");
+
+      await vi.advanceTimersByTimeAsync(50);
+
+      const partiallyRevealedContent = store
+        .getState()
+        .chat.messages.find((message: any) => message.role === "assistant")?.content;
+
+      expect(partiallyRevealedContent).toBeTruthy();
+      expect(partiallyRevealedContent).not.toBe("This answer keeps revealing after drafting completes.");
+
+      stopAssistantMessage("session-1");
+
+      await vi.runAllTimersAsync();
+      await dispatchPromise;
+
+      const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+      expect(assistantMessage?.content).toBe(`${partiallyRevealedContent}\n\n*playground:assistant.stopped*`);
+      expect(store.getState().chat.assistantResponsePhaseBySessionId["session-1"]).toBe("idle");
+    } finally {
+      vi.useRealTimers();
+    }
+  }, 15000);
+
   it("rewrites non-EPS MCP-backed answers against citation excerpts before storing the final response", async () => {
     createCompletionMock
       .mockResolvedValueOnce({
