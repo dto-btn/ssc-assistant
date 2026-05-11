@@ -1,6 +1,6 @@
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -91,7 +91,9 @@ describe("SessionSidebar responsive behavior", () => {
 
     expect(screen.getByRole("heading", { name: "Chats" })).toBeInTheDocument();
 
-    store.dispatch(toggleSidebarCollapsed());
+    act(() => {
+      store.dispatch(toggleSidebarCollapsed());
+    });
 
     await waitFor(() => {
       expect(screen.queryByRole("heading", { name: "Chats" })).not.toBeInTheDocument();
@@ -135,6 +137,36 @@ describe("SessionSidebar responsive behavior", () => {
     await waitFor(() => {
       expect(store.getState().ui.isMobileSidebarOpen).toBe(false);
     });
+  });
+
+  it("renders virtualized session rows with list semantics", () => {
+    renderSidebar(false, {
+      sessions: {
+        sessions: [
+          {
+            id: "s1",
+            name: "Session 1",
+            createdAt: 1,
+            isNewChat: false,
+          },
+          {
+            id: "s2",
+            name: "Session 2",
+            createdAt: 2,
+            isNewChat: false,
+          },
+        ],
+        currentSessionId: "s1",
+      },
+      ui: {
+        isSidebarCollapsed: false,
+        isMobileSidebarOpen: false,
+        isDeletingAllChats: false,
+      },
+    });
+
+    const sessionList = screen.getByRole("list", { name: "Chats" });
+    expect(within(sessionList).getAllByRole("listitem")).toHaveLength(2);
   });
 
   /**

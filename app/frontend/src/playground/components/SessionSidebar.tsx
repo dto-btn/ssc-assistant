@@ -19,7 +19,6 @@ import { v4 as uuidv4 } from "uuid";
 import {
   Chip,
   Divider,
-  List,
   ListItem,
   ListItemText,
   Box,
@@ -201,14 +200,18 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
 
   const [containerRef, { height: containerHeight }] = useMeasure();
 
-  const chatItemRender = ({ index, style }: RowComponentProps) => {
+  const chatItemRender = useCallback(({ index, style, ariaAttributes }: RowComponentProps) => {
     const session = sessionsNewestFirst[index];
 
     return (
       <ListItem
         key={session.id}
+        component="li"
+        disablePadding
         style={style}
+        {...ariaAttributes}
         sx={{
+          listStyle: "none",
           display: "flex",
           flexDirection: "row",
           p: "2px 0px",
@@ -286,7 +289,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         </IconButton>
       </ListItem>
     );
-  };
+  }, [currentSessionId, dispatch, handleMoreMenuClick, isMobile, moreMenuOpen, selectedSessionId, sessionsNewestFirst, t]);
 
   const sidebarContent = (
     <Box
@@ -328,8 +331,8 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         )}
       </Box>
 
-      <List id="playground-session-sidebar" aria-labelledby={sidebarTitleId} sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
-        <ListItem key="newChat" disablePadding>
+      <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
+        <Box key="newChat">
           <ListItemButton id="new-chat-button" onClick={handleNewSession}>
             <ListItemIcon sx={{ minWidth: "0px", mr: "10px" }}>
               <AddCommentIcon fontSize="small" color="primary" />
@@ -340,7 +343,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
               aria-label={t("new")}
             />
           </ListItemButton>
-        </ListItem>
+        </Box>
 
         <Divider sx={{ my: 1 }}>
           <Chip label={t("chats")} size="small" sx={{ backgroundColor: "transparent" }} />
@@ -349,11 +352,13 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         <Box ref={containerRef} sx={{ flexGrow: 1, minHeight: 0 }}>
           {containerHeight > 0 && (
             <ListWindow
+              aria-labelledby={sidebarTitleId}
               rowHeight={52}
               rowCount={sessionsNewestFirst.length}
               rowComponent={chatItemRender}
               rowProps={{}}
-              style={{ width: LEFT_MENU_EXPANDED_WIDTH, height: containerHeight }}
+              tagName="ul"
+              style={{ width: LEFT_MENU_EXPANDED_WIDTH, height: containerHeight, listStyle: "none", padding: 0, margin: 0 }}
             />
           )}
         </Box>
@@ -377,7 +382,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
             <Typography>{t("rename")}</Typography>
           </MenuItem>
         </Menu>
-      </List>
+      </Box>
 
       <SessionRenameDialog
         open={renameDialogOpen}
