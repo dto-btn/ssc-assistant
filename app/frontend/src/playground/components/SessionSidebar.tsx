@@ -8,6 +8,7 @@
 
 import React, { useCallback, useState } from "react";
 import { List as ListWindow, RowComponentProps } from "react-window";
+import type { ListImperativeAPI } from "react-window";
 import useMeasure from "react-use-measure";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
@@ -199,9 +200,78 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
   const sidebarTitleId = "playground-session-sidebar-title";
 
   const [containerRef, { height: containerHeight }] = useMeasure();
+  const listRef = React.useRef<ListImperativeAPI | null>(null);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const sessionOrderKey = sessionsNewestFirst.map((session) => session.id).join("|");
+
+  const activateSession = useCallback((sessionId: string) => {
+    dispatch(setCurrentSession(sessionId));
+    if (isMobile) {
+      // Match native drawer UX: selecting an item dismisses the drawer.
+      dispatch(closeMobileSidebar());
+    }
+  }, [dispatch, isMobile]);
+
+  React.useEffect(() => {
+    if (!sessionsNewestFirst.length) {
+      setActiveIndex(-1);
+      return;
+    }
+
+    const currentIndex = currentSessionId
+      ? sessionsNewestFirst.findIndex((session) => session.id === currentSessionId)
+      : -1;
+
+    setActiveIndex(currentIndex >= 0 ? currentIndex : 0);
+  }, [currentSessionId, sessionOrderKey, sessionsNewestFirst]);
+
+  React.useEffect(() => {
+    if (activeIndex < 0) {
+      return;
+    }
+
+    listRef.current?.scrollToRow({ align: "smart", index: activeIndex });
+  }, [activeIndex, listRef]);
+
+  const handleSessionListKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!sessionsNewestFirst.length) {
+      return;
+    }
+
+    switch (event.key) {
+      case "ArrowDown":
+        event.preventDefault();
+        setActiveIndex((previous) => Math.min(previous + 1, sessionsNewestFirst.length - 1));
+        return;
+      case "ArrowUp":
+        event.preventDefault();
+        setActiveIndex((previous) => Math.max(previous - 1, 0));
+        return;
+      case "Home":
+        event.preventDefault();
+        setActiveIndex(0);
+        return;
+      case "End":
+        event.preventDefault();
+        setActiveIndex(sessionsNewestFirst.length - 1);
+        return;
+      case "Enter":
+      case " ": {
+        event.preventDefault();
+        const activeSession = activeIndex >= 0 ? sessionsNewestFirst[activeIndex] : undefined;
+        if (activeSession) {
+          activateSession(activeSession.id);
+        }
+        return;
+      }
+      default:
+        return;
+    }
+  }, [activeIndex, activateSession, sessionsNewestFirst]);
 
   const chatItemRender = useCallback(({ index, style, ariaAttributes }: RowComponentProps) => {
     const session = sessionsNewestFirst[index];
+    const isActiveOption = index === activeIndex;
 
     return (
       <ListItem
@@ -209,12 +279,17 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         component="li"
         disablePadding
         style={style}
-        {...ariaAttributes}
+        aria-posinset={ariaAttributes["aria-posinset"]}
+        aria-setsize={ariaAttributes["aria-setsize"]}
+        role="presentation"
         sx={{
           listStyle: "none",
           display: "flex",
           flexDirection: "row",
           p: "2px 0px",
+          outline: isActiveOption ? "2px solid" : "2px solid transparent",
+          outlineColor: isActiveOption ? "primary.main" : "transparent",
+          outlineOffset: -2,
           backgroundColor:
             session.id === currentSessionId ? "action.selected" : "transparent",
           "&:hover": {
@@ -235,18 +310,15 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         <ListItemButton
           id={`session-button-${session.id}`}
           disableRipple
+          role="option"
+          tabIndex={-1}
           sx={{
             padding: "5px 10px",
             "&:hover": { backgroundColor: "transparent" },
           }}
-          onClick={() => {
-            dispatch(setCurrentSession(session.id));
-            if (isMobile) {
-              // Match native drawer UX: selecting an item dismisses the drawer.
-              dispatch(closeMobileSidebar());
-            }
-          }}
+          onClick={() => activateSession(session.id)}
           aria-current={session.id === currentSessionId ? "page" : undefined}
+          aria-selected={session.id === currentSessionId}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%", minWidth: 0 }}>
             <Typography
@@ -289,7 +361,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         </IconButton>
       </ListItem>
     );
-  }, [currentSessionId, dispatch, handleMoreMenuClick, isMobile, moreMenuOpen, selectedSessionId, sessionsNewestFirst, t]);
+  }, [activeIndex, activateSession, currentSessionId, handleMoreMenuClick, moreMenuOpen, selectedSessionId, sessionsNewestFirst, t]);
 
   const sidebarContent = (
     <Box
@@ -352,11 +424,24 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         <Box ref={containerRef} sx={{ flexGrow: 1, minHeight: 0 }}>
           {containerHeight > 0 && (
             <ListWindow
+              aria-activedescendant={
+                activeIndex >= 0 ? `session-button-${sessionsNewestFirst[activeIndex]?.id}` : undefined
+              }
               aria-labelledby={sidebarTitleId}
+              listRef={listRef}
+              onFocus={() => {
+                if (activeIndex < 0 && sessionsNewestFirst.length > 0) {
+                  setActiveIndex(0);
+                }
+              }}
+              onKeyDown={handleSessionListKeyDown}
+              overscanCount={5}
+              role="listbox"
               rowHeight={52}
               rowCount={sessionsNewestFirst.length}
               rowComponent={chatItemRender}
               rowProps={{}}
+              tabIndex={0}
               tagName="ul"
               style={{ width: LEFT_MENU_EXPANDED_WIDTH, height: containerHeight, listStyle: "none", padding: 0, margin: 0 }}
             />

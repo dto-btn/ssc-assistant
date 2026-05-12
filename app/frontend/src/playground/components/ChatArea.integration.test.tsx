@@ -135,9 +135,16 @@ describe("ChatArea hydration state", () => {
   it("stops showing the restoring loader when rehydration resolves without an archive", async () => {
     renderChatArea({ accessToken: "token" });
 
+    const status = screen.getByRole("status");
+
+    expect(status).toHaveAttribute("aria-live", "polite");
+    expect(status).toHaveAttribute("aria-atomic", "true");
+    expect(status).toHaveAttribute("aria-busy", "true");
+    expect(status).toHaveTextContent("Restoring chat history...");
     expect(screen.getByRole("progressbar")).toBeInTheDocument();
 
     await waitFor(() => {
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
       expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
     });
 
