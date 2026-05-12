@@ -1,22 +1,12 @@
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("react-i18next", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("react-i18next")>();
-  return {
-    ...actual,
-    useTranslation: () => ({
-      t: (key: string) => key,
-    }),
-    initReactI18next: {
-      type: '3rdParty',
-      init: vi.fn(),
-    }
-  };
-});
+vi.mock("react-use-measure", () => ({
+  default: () => [vi.fn(), { height: 500 }],
+}));
 
 import SessionSidebar from "./SessionSidebar";
 import sessionReducer from "../store/slices/sessionSlice";
@@ -79,7 +69,7 @@ describe("SessionSidebar responsive behavior", () => {
     });
 
     // Check for "chats" header using the more specific heading role
-    expect(screen.queryByRole("heading", { name: "chats" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Chats" })).not.toBeInTheDocument();
   });
 
   /**
@@ -99,12 +89,14 @@ describe("SessionSidebar responsive behavior", () => {
       },
     });
 
-    expect(screen.getByRole("heading", { name: "chats" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Chats" })).toBeInTheDocument();
 
-    store.dispatch(toggleSidebarCollapsed());
+    act(() => {
+      store.dispatch(toggleSidebarCollapsed());
+    });
 
     await waitFor(() => {
-      expect(screen.queryByRole("heading", { name: "chats" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Chats" })).not.toBeInTheDocument();
     });
   });
 
@@ -140,10 +132,92 @@ describe("SessionSidebar responsive behavior", () => {
       },
     });
 
-    await user.click(screen.getByRole("button", { name: "Session 2" }));
+    await user.click(screen.getByRole("option", { name: "Session 2" }));
 
     await waitFor(() => {
       expect(store.getState().ui.isMobileSidebarOpen).toBe(false);
+    });
+  });
+
+  it("renders virtualized session options with listbox semantics", () => {
+    renderSidebar(false, {
+      sessions: {
+        sessions: [
+          {
+            id: "s1",
+            name: "Session 1",
+            createdAt: 1,
+            isNewChat: false,
+          },
+          {
+            id: "s2",
+            name: "Session 2",
+            createdAt: 2,
+            isNewChat: false,
+          },
+        ],
+        currentSessionId: "s1",
+      },
+      ui: {
+        isSidebarCollapsed: false,
+        isMobileSidebarOpen: false,
+        isDeletingAllChats: false,
+      },
+    });
+
+    const sessionList = screen.getByRole("listbox", { name: "Chats" });
+    expect(within(sessionList).getAllByRole("option")).toHaveLength(2);
+  });
+
+  it("supports keyboard navigation and selection across the virtualized list", async () => {
+    const user = userEvent.setup();
+
+    const store = renderSidebar(false, {
+      sessions: {
+        sessions: [
+          {
+            id: "s1",
+            name: "Session 1",
+            createdAt: 1,
+            isNewChat: false,
+          },
+          {
+            id: "s2",
+            name: "Session 2",
+            createdAt: 2,
+            isNewChat: false,
+          },
+          {
+            id: "s3",
+            name: "Session 3",
+            createdAt: 3,
+            isNewChat: false,
+          },
+        ],
+        currentSessionId: "s3",
+      },
+      ui: {
+        isSidebarCollapsed: false,
+        isMobileSidebarOpen: false,
+        isDeletingAllChats: false,
+      },
+    });
+
+    const sessionList = screen.getByRole("listbox", { name: "Chats" });
+    sessionList.focus();
+
+    expect(sessionList).toHaveAttribute("aria-activedescendant", "session-button-s3");
+
+    await user.keyboard("{ArrowDown}");
+
+    await waitFor(() => {
+      expect(sessionList).toHaveAttribute("aria-activedescendant", "session-button-s2");
+    });
+
+    await user.keyboard("{Enter}");
+
+    await waitFor(() => {
+      expect(store.getState().sessions.currentSessionId).toBe("s2");
     });
   });
 
@@ -181,7 +255,7 @@ describe("SessionSidebar responsive behavior", () => {
         },
       });
 
-      await user.click(screen.getByRole("button", { name: "sidebar.close" }));
+      await user.click(screen.getByRole("button", { name: "Close chat sessions" }));
 
       await waitFor(() => {
         expect(document.activeElement).toBe(opener);
@@ -213,7 +287,7 @@ describe("SessionSidebar responsive behavior", () => {
       },
     });
 
-    await user.click(screen.getByRole("button", { name: "sidebar.close" }));
+    await user.click(screen.getByRole("button", { name: "Close chat sessions" }));
 
     await waitFor(() => {
       expect((document.activeElement as HTMLElement | null)?.id).toBe("new-chat-button");

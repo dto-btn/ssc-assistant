@@ -12,10 +12,64 @@ const MAX_PERSISTED_CONTENT_CHARS = 20_000;
 
 type PersistedState = Record<string, unknown>;
 
+const PERSISTED_SLICE_KEYS = [
+  "chat",
+  "sessions",
+  "tools",
+  "models",
+  "quoted",
+  "user",
+  "outbox",
+  "sessionFiles",
+  "sync",
+  "ui",
+] as const;
+
+type PersistedSliceKey = (typeof PERSISTED_SLICE_KEYS)[number];
+
+const PERSISTED_ACTION_PREFIXES = [
+  "chat/",
+  "sessions/",
+  "tools/",
+  "models/",
+  "quoted/",
+  "user/",
+  "outbox/",
+  "sessionFiles/",
+  "sync/",
+  "ui/",
+] as const;
+
 const asRecord = (value: unknown): Record<string, unknown> =>
   (value && typeof value === "object") ? (value as Record<string, unknown>) : {};
 
+const isPersistableMessage = (message: unknown): message is Record<string, unknown> => {
+  if (!message || typeof message !== "object") {
+    return false;
+  }
+
+  const record = message as Record<string, unknown>;
+  return (
+    typeof record.id === "string"
+    && typeof record.sessionId === "string"
+    && (record.role === "user" || record.role === "assistant" || record.role === "system")
+    && typeof record.content === "string"
+    && typeof record.timestamp === "number"
+  );
+};
+
 const trimMessagesForPersistence = (messages: unknown): unknown[] => {
+  if (
+    Array.isArray(messages)
+    && messages.length <= MAX_PERSISTED_MESSAGES
+    && messages.every(
+      (message) => isPersistableMessage(message)
+        && (message as Record<string, any>).content.length <= MAX_PERSISTED_CONTENT_CHARS
+    )
+  ) {
+    return messages;
+  }
+
   const normalized = normalizePersistedMessages(messages);
   const recent = normalized.slice(-MAX_PERSISTED_MESSAGES);
 
@@ -32,39 +86,6 @@ const trimMessagesForPersistence = (messages: unknown): unknown[] => {
   });
 };
 
-const buildPersistedSnapshot = (state: Record<string, unknown>): PersistedState => {
-  // Persist only lightweight state needed to restore UX; skip heavy/sensitive slices.
-  const chat = asRecord(state.chat);
-  const ui = asRecord(state.ui);
-
-  return {
-    chat: {
-      messages: trimMessagesForPersistence(chat.messages),
-      assistantResponsePhaseBySessionId:
-        chat.assistantResponsePhaseBySessionId && typeof chat.assistantResponsePhaseBySessionId === "object"
-          ? chat.assistantResponsePhaseBySessionId
-          : {},
-      orchestratorInsightsBySessionId:
-        chat.orchestratorInsightsBySessionId && typeof chat.orchestratorInsightsBySessionId === "object"
-          ? chat.orchestratorInsightsBySessionId
-          : {},
-      isLoadingBySessionId: {},
-    },
-    sessions: asRecord(state.sessions),
-    tools: asRecord(state.tools),
-    models: asRecord(state.models),
-    quoted: asRecord(state.quoted),
-    sessionFiles: asRecord(state.sessionFiles),
-    sync: asRecord(state.sync),
-    ui: {
-      isSidebarCollapsed:
-        typeof ui.isSidebarCollapsed === "boolean" ? ui.isSidebarCollapsed : false,
-      isMobileSidebarOpen: false,
-      isDeletingAllChats: false,
-    },
-  };
-};
-
 /**
  * Drops malformed persisted message entries so hydration cannot crash reducers.
  */
@@ -73,20 +94,7 @@ const normalizePersistedMessages = (messages: unknown): unknown[] => {
     return [];
   }
 
-  return messages.filter((message) => {
-    if (!message || typeof message !== "object") {
-      return false;
-    }
-
-    const record = message as Record<string, unknown>;
-    return (
-      typeof record.id === "string"
-      && typeof record.sessionId === "string"
-      && (record.role === "user" || record.role === "assistant" || record.role === "system")
-      && typeof record.content === "string"
-      && typeof record.timestamp === "number"
-    );
-  });
+  return messages.filter(isPersistableMessage);
 };
 
 /**
@@ -124,10 +132,117 @@ const migratePersistedState = (parsed: PersistedState): PersistedState => {
 /**
  * Persists redux state to localStorage while excluding sensitive auth data.
  */
+export function createPersistableState(state: unknown): PersistedState {
+  const source = asRecord(state);
+  const nextState: PersistedState = {};
+
+  PERSISTED_SLICE_KEYS.forEach((key: PersistedSliceKey) => {
+    if (!(key in source)) {
+      return;
+    }
+
+    if (key === "chat") {
+      const chat = asRecord(source.chat);
+      const nextChat: Record<string, unknown> = {
+        messages: trimMessagesForPersistence(chat.messages),
+      };
+
+      if (
+        chat.assistantResponsePhaseBySessionId
+        && typeof chat.assistantResponsePhaseBySessionId === "object"
+      ) {
+        nextChat.assistantResponsePhaseBySessionId = chat.assistantResponsePhaseBySessionId;
+      }
+
+      if (
+        chat.orchestratorInsightsBySessionId
+        && typeof chat.orchestratorInsightsBySessionId === "object"
+      ) {
+        nextChat.orchestratorInsightsBySessionId = chat.orchestratorInsightsBySessionId;
+      }
+
+      nextState.chat = {
+        ...nextChat,
+      };
+      return;
+    }
+
+    if (key === "ui") {
+      const ui = asRecord(source.ui);
+      nextState.ui = {
+        isSidebarCollapsed:
+          typeof ui.isSidebarCollapsed === "boolean" ? ui.isSidebarCollapsed : false,
+      };
+      return;
+    }
+
+    nextState[key] = source[key];
+  });
+
+  return nextState;
+}
+
+const hasPersistedChatChanged = (
+  previousChat: PersistedState["chat"],
+  nextChat: PersistedState["chat"],
+): boolean => {
+  const previous = (previousChat as Record<string, unknown> | undefined) ?? {};
+  const next = (nextChat as Record<string, unknown> | undefined) ?? {};
+
+  return previous.messages !== next.messages
+    || previous.assistantResponsePhaseBySessionId !== next.assistantResponsePhaseBySessionId
+    || previous.orchestratorInsightsBySessionId !== next.orchestratorInsightsBySessionId;
+};
+
+const hasPersistedUiChanged = (
+  previousUi: PersistedState["ui"],
+  nextUi: PersistedState["ui"],
+): boolean => {
+  const previous = (previousUi as Record<string, unknown> | undefined) ?? {};
+  const next = (nextUi as Record<string, unknown> | undefined) ?? {};
+
+  return previous.isSidebarCollapsed !== next.isSidebarCollapsed;
+};
+
+/**
+ * Shallowly compares projected persisted slices so the store can skip work
+ * when only transient branches changed.
+ */
+export function hasPersistableStateChanged(
+  previousState: PersistedState | undefined,
+  nextState: PersistedState,
+): boolean {
+  if (!previousState) {
+    return true;
+  }
+
+  return PERSISTED_SLICE_KEYS.some((key) => {
+    if (key === "chat") {
+      return hasPersistedChatChanged(previousState.chat, nextState.chat);
+    }
+
+    if (key === "ui") {
+      return hasPersistedUiChanged(previousState.ui, nextState.ui);
+    }
+
+    return previousState[key] !== nextState[key];
+  });
+}
+
+export function shouldPersistAction(actionType: string | undefined): boolean {
+  if (!actionType) {
+    return false;
+  }
+
+  return PERSISTED_ACTION_PREFIXES.some((prefix) => actionType.startsWith(prefix));
+}
+
+/**
+ * Persists a pre-projected durable playground state snapshot.
+ */
 export function saveChatState(state: unknown) {
   try {
-    const source = (state as Record<string, unknown>) || {};
-    localStorage.setItem(CHAT_KEY, JSON.stringify(buildPersistedSnapshot(source)));
+    localStorage.setItem(CHAT_KEY, JSON.stringify(createPersistableState(state)));
   } catch {
     // ignore persistence errors (quota/unavailable)
   }

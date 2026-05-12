@@ -12,6 +12,7 @@ import {
 import { isRetriableUploadError, uploadEncodedFile } from "../../api/storage";
 import { clearAllSessions, removeSession, renameSession } from "../slices/sessionSlice";
 import { rehydrateSessionFromArchive, SessionRehydrationResult } from "../thunks/sessionBootstrapThunks";
+import { selectHasMessagesForSession, selectMessagesForSession } from "../selectors/chatSelectors";
 
 /**
  * External trigger used by UI/actions that want to force an immediate archive run.
@@ -68,7 +69,7 @@ async function doArchive(sessionId: string, store: PlaygroundStoreApi) {
   const accessToken = state.auth?.accessToken ?? null;
   const sessionRecord = state.sessions.sessions.find((session) => session.id === sessionId);
 
-  const messages = state.chat.messages.filter(m => m.sessionId === sessionId);
+  const messages = selectMessagesForSession(state, sessionId);
   const hasQueuedArchive = store
     .getState()
     .outbox.items.some((item) => item.kind === "chat-archive" && item.sessionId === sessionId);
@@ -160,7 +161,7 @@ export const archiverMiddleware: Middleware<unknown, RootState, PlaygroundDispat
   if (addMessage.match(action)) {
     const { sessionId } = action.payload;
     const state: RootState = store.getState();
-    const messages = state.chat.messages.filter(m => m.sessionId === sessionId);
+    const messages = selectMessagesForSession(state, sessionId);
 
     store.dispatch(markSessionDirty({ sessionId }));
 
@@ -183,7 +184,7 @@ export const archiverMiddleware: Middleware<unknown, RootState, PlaygroundDispat
     const { id: sessionId } = action.payload;
     if (sessionId) {
       const state: RootState = store.getState();
-      const hasMessages = state.chat.messages.some((message) => message.sessionId === sessionId);
+      const hasMessages = selectHasMessagesForSession(state, sessionId);
       if (hasMessages) {
         // A name change should be reflected in the persisted archive immediately so
         // other browsers learn about it on refresh.

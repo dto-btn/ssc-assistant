@@ -20,6 +20,7 @@ import {
   pickLatestArchive,
 } from "../../utils/archives";
 import { applyRemoteSessionDeletion } from "./sessionManagementThunks";
+import { selectHasMessagesForSession } from "../selectors/chatSelectors";
 
 export interface SessionRehydrationResult {
   restored: boolean;
@@ -60,7 +61,7 @@ export const rehydrateSessionFromArchive = (
       return { restored: false, hasArchive: false, latestVersion: null };
     }
 
-    const hasExistingMessages = state.chat.messages.some((message) => message.sessionId === sessionId);
+    const hasExistingMessages = selectHasMessagesForSession(state, sessionId);
     const shouldSkipHydration = hasExistingMessages && !options?.force;
     if (shouldSkipHydration) {
       const cachedFiles = state.sessionFiles.bySessionId?.[sessionId] ?? [];
@@ -228,13 +229,10 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
   const existingSessions = new Map(state.sessions.sessions.map((session) => [session.id, session]));
   const newSessions: Session[] = [];
 
-  const restorationTargets: string[] = [];
-
   grouped.forEach((value, sessionId) => {
     if (value.files.length === 0) {
       return;
     }
-    restorationTargets.push(sessionId);
     dispatch(setSessionFiles({ sessionId, files: value.files }));
     const existing = existingSessions.get(sessionId);
     const trimmedRemoteName = value.sessionName?.trim();
@@ -263,9 +261,6 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
   });
 
   if (!newSessions.length) {
-    restorationTargets.forEach((sessionId) => {
-      void dispatch(rehydrateSessionFromArchive(sessionId));
-    });
     return;
   }
 
@@ -276,8 +271,4 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
   if (newestSessionId) {
     dispatch(setCurrentSession(newestSessionId));
   }
-
-  restorationTargets.forEach((sessionId) => {
-    void dispatch(rehydrateSessionFromArchive(sessionId));
-  });
 };
