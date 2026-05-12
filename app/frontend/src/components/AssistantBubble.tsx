@@ -17,6 +17,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { MarkdownHooks } from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -76,6 +77,7 @@ export const AssistantBubble = ({
   handleBookReservation,
 }: AssistantBubbleProps) => {
   const { t, i18n } = useTranslation();
+  const theme = useTheme();
   const [processedContent, setProcessedContent] = useState({
     processedText: "",
     citedCitations: [] as Citation[],
@@ -493,6 +495,52 @@ export const AssistantBubble = ({
                     [
                       rehypeMermaid,
                       {
+                        mermaidConfig: {
+                          theme: theme.palette.mode === "dark" ? "dark" : "default",
+                          themeVariables:
+                            theme.palette.mode === "dark"
+                              ? {
+                                  background: "#1a1e29",
+                                  mainBkg: "#24304d",
+                                  secondBkg: "#1f2a44",
+                                  tertiaryColor: "#1f2757",
+                                  primaryColor: "#24304d",
+                                  primaryTextColor: "#f4f7ff",
+                                  secondaryTextColor: "#e7ecff",
+                                  tertiaryTextColor: "#f4f7ff",
+                                  textColor: "#f4f7ff",
+                                  lineColor: "#d6deff",
+                                  arrowheadColor: "#d6deff",
+                                  edgeLabelBackground: "#2b3c61",
+                                  nodeBorder: "#d6deff",
+                                }
+                              : {
+                                  edgeLabelBackground: "#eef2ff",
+                                },
+                          themeCSS:
+                            theme.palette.mode === "dark"
+                              ? `
+                                  .edgeLabel rect,
+                                  rect.edgeLabel {
+                                    fill: #2b3c61 !important;
+                                    stroke: #d6deff !important;
+                                    stroke-width: 1px !important;
+                                  }
+                                  .edgeLabel,
+                                  .edgeLabel *,
+                                  .edgeLabel text,
+                                  .edgeLabel tspan {
+                                    fill: #000000 !important;
+                                    color: #000000 !important;
+                                    font-weight: 700 !important;
+                                  }
+                                  .edgeLabel foreignObject div,
+                                  .edgeLabel foreignObject span {
+                                    color: #000000 !important;
+                                  }
+                                `
+                              : undefined,
+                        },
                         // Ensure the fallback actually renders
                         errorFallback: () => <div>Invalid diagram format!</div>,
                       },

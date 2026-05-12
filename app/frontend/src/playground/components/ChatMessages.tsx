@@ -450,7 +450,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
 
       svg[id*='mermaid'] .edgeLabel rect,
       svg[id*='mermaid'] rect.edgeLabel {
-        fill: #1f2a44 !important;
+        fill: #2b3c61 !important;
         stroke: #d6deff !important;
         stroke-width: 1px !important;
       }
@@ -459,9 +459,14 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
       svg[id*='mermaid'] .edgeLabel *,
       svg[id*='mermaid'] .edgeLabel text,
       svg[id*='mermaid'] .edgeLabel tspan {
-        fill: #f8faff !important;
-        color: #f8faff !important;
+        fill: #000000 !important;
+        color: #000000 !important;
         font-weight: 700 !important;
+      }
+
+      svg[id*='mermaid'] .edgeLabel foreignObject div,
+      svg[id*='mermaid'] .edgeLabel foreignObject span {
+        color: #000000 !important;
       }
 
       svg[id*='mermaid'] foreignObject div,
@@ -469,17 +474,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
         color: #f8faff !important;
       }
 
-      svg[id*='mermaid'] .edgeLabel foreignObject div,
-      svg[id*='mermaid'] .edgeLabel foreignObject span,
-      svg[id*='mermaid'] .edgeLabel .label foreignObject div,
-      svg[id*='mermaid'] .edgeLabel .label foreignObject span {
-        background: #1f2a44 !important;
-        color: #ffffff !important;
-        border: 1px solid #d6deff !important;
-        border-radius: 4px !important;
-        font-weight: 700 !important;
-        opacity: 1 !important;
-      }
     `;
   }, [theme.palette.mode]);
 
@@ -554,7 +548,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                   textColor: "#f4f7ff",
                   lineColor: "#d6deff",
                   arrowheadColor: "#d6deff",
-                  edgeLabelBackground: "#1f2a44",
+                  edgeLabelBackground: "#2b3c61",
                   nodeBorder: "#d6deff",
                 }
               : {
@@ -575,26 +569,22 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
           themeCSS:
             theme.palette.mode === "dark"
               ? `
-                  .edgeLabel rect {
-                    fill: #1f2a44 !important;
+                  .edgeLabel rect,
+                  rect.edgeLabel {
+                    fill: #2b3c61 !important;
                     stroke: #d6deff !important;
                     stroke-width: 1px !important;
                   }
-                  .edgeLabel foreignObject div,
-                  .edgeLabel foreignObject span,
-                  .edgeLabel .label foreignObject div,
-                  .edgeLabel .label foreignObject span {
-                    background: #1f2a44 !important;
-                    color: #ffffff !important;
-                    border: 1px solid #d6deff !important;
-                    border-radius: 4px !important;
-                    font-weight: 700 !important;
-                    opacity: 1 !important;
-                  }
                   .edgeLabel text,
                   .edgeLabel tspan {
-                    fill: #f8faff !important;
+                    fill: #000000 !important;
                     font-weight: 600 !important;
+                  }
+                  .edgeLabel,
+                  .edgeLabel *,
+                  .edgeLabel foreignObject div,
+                  .edgeLabel foreignObject span {
+                    color: #000000 !important;
                   }
                   .edgePath .path,
                   .flowchart-link {
