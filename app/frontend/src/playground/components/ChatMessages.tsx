@@ -450,7 +450,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
 
       svg[id*='mermaid'] .edgeLabel rect,
       svg[id*='mermaid'] rect.edgeLabel {
-        fill: #314063 !important;
+        fill: #1f2a44 !important;
         stroke: #d6deff !important;
         stroke-width: 1px !important;
       }
@@ -467,6 +467,18 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
       svg[id*='mermaid'] foreignObject div,
       svg[id*='mermaid'] foreignObject span {
         color: #f8faff !important;
+      }
+
+      svg[id*='mermaid'] .edgeLabel foreignObject div,
+      svg[id*='mermaid'] .edgeLabel foreignObject span,
+      svg[id*='mermaid'] .edgeLabel .label foreignObject div,
+      svg[id*='mermaid'] .edgeLabel .label foreignObject span {
+        background: #1f2a44 !important;
+        color: #ffffff !important;
+        border: 1px solid #d6deff !important;
+        border-radius: 4px !important;
+        font-weight: 700 !important;
+        opacity: 1 !important;
       }
     `;
   }, [theme.palette.mode]);
@@ -542,7 +554,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
                   textColor: "#f4f7ff",
                   lineColor: "#d6deff",
                   arrowheadColor: "#d6deff",
-                  edgeLabelBackground: "#314063",
+                  edgeLabelBackground: "#1f2a44",
                   nodeBorder: "#d6deff",
                 }
               : {
@@ -564,9 +576,20 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
             theme.palette.mode === "dark"
               ? `
                   .edgeLabel rect {
-                    fill: #314063 !important;
+                    fill: #1f2a44 !important;
                     stroke: #d6deff !important;
                     stroke-width: 1px !important;
+                  }
+                  .edgeLabel foreignObject div,
+                  .edgeLabel foreignObject span,
+                  .edgeLabel .label foreignObject div,
+                  .edgeLabel .label foreignObject span {
+                    background: #1f2a44 !important;
+                    color: #ffffff !important;
+                    border: 1px solid #d6deff !important;
+                    border-radius: 4px !important;
+                    font-weight: 700 !important;
+                    opacity: 1 !important;
                   }
                   .edgeLabel text,
                   .edgeLabel tspan {
