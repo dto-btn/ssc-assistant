@@ -44,7 +44,8 @@ jobs:
       run: npx playwright install-deps
     - name: Generate Playwright test token
       run: |
-        echo "PLAYWRIGHT_E2E_ACCESS_TOKEN=$(node -e \"const encode = (value) => Buffer.from(JSON.stringify(value)).toString('base64url'); process.stdout.write(encode({ alg: 'HS256', typ: 'JWT' }) + '.' + encode({ exp: 4102444800, name: 'playwright-e2e-token' }) + '.signature');\")" >> $GITHUB_ENV
+        TOKEN=$(node -e "const encode = (v) => Buffer.from(JSON.stringify(v)).toString('base64url'); console.log(encode({ alg: 'HS256', typ: 'JWT' }) + '.' + encode({ exp: 4102444800, name: 'playwright-e2e-token' }) + '.signature');")
+        echo "PLAYWRIGHT_E2E_ACCESS_TOKEN=$TOKEN" >> $GITHUB_ENV
     - name: Run Playwright tests
       run: npx playwright test
     - uses: actions/upload-artifact@v4
