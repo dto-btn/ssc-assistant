@@ -55,10 +55,10 @@ describe("ResponseButtons", () => {
     text: "Assistant response",
     messageId: "m1",
     isStreaming: false,
-    messages: [
-      { id: "u1", role: "user" as const, content: "Hello", sessionId: "s1", timestamp: 1 },
-      { id: "m1", role: "assistant" as const, content: "Assistant response", sessionId: "s1", timestamp: 2 },
-    ],
+    regenerateSourceMessage: {
+      content: "Hello",
+      attachments: undefined,
+    },
     sessionId: "s1",
   };
 
@@ -129,6 +129,17 @@ describe("ResponseButtons", () => {
     const dislikeBtn = screen.getByLabelText("bad.response");
     fireEvent.click(dislikeBtn);
     expect(submitResponseFeedback).toHaveBeenCalledWith("m1", false);
+  });
+
+  it("does not dispatch regenerate without a matching user turn", () => {
+    renderWithProviders(
+      <ResponseButtons {...defaultProps} regenerateSourceMessage={undefined} />
+    );
+
+    const regenBtn = screen.getByLabelText("regenerate");
+    fireEvent.click(regenBtn);
+
+    expect(sendAssistantMessage).not.toHaveBeenCalled();
   });
 
   it("triggers clearResponseFeedback when clicking an already active feedback button", () => {

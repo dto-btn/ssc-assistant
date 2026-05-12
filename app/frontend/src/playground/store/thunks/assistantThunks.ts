@@ -42,6 +42,7 @@ import {
 } from "../../services/orchestratorService";
 import { Citation } from "../../utils/citations";
 import { createStreamTypewriter } from "../../utils/streamTypewriter";
+import { selectMessagesForSession } from "../selectors/chatSelectors";
 
 /**
  * Per-session AbortControllers for in-flight streaming requests.
@@ -1315,9 +1316,7 @@ export const sendAssistantMessage = ({
 
     const dispatchForAttachments = dispatch as AppDispatch;
     const { mcpServers } = getState().tools;
-    const existingSessionMessages = getState().chat.messages.filter(
-      (message) => message.sessionId === sessionId
-    );
+    const existingSessionMessages = selectMessagesForSession(getState(), sessionId);
 
     // If a deleteMessageId is provided (e.g. for regenerate), remove the old
     // message now that auth checks have passed and we are ready to proceed.
@@ -1350,8 +1349,8 @@ export const sendAssistantMessage = ({
 
     // Capture the id of the placeholder assistant message we just added so
     // we can target it for content updates and attribution once routing resolves.
-    const placeholderAssistantMessages = getState().chat.messages.filter(
-      (m) => m.sessionId === sessionId && m.role === "assistant"
+    const placeholderAssistantMessages = selectMessagesForSession(getState(), sessionId).filter(
+      (message) => message.role === "assistant"
     );
     const latestAssistantMessage =
       placeholderAssistantMessages[placeholderAssistantMessages.length - 1];
@@ -1480,8 +1479,8 @@ export const sendAssistantMessage = ({
     // Re-fetch messages (user + placeholder assistant are already in state).
     // Exclude the empty placeholder so the LLM does not receive a trailing
     // empty assistant turn in its context window.
-    const updatedSessionMessages = getState().chat.messages.filter(
-      (message) => message.sessionId === sessionId && message.id !== latestAssistantMessage.id
+    const updatedSessionMessages = selectMessagesForSession(getState(), sessionId).filter(
+      (message) => message.id !== latestAssistantMessage.id
     );
 
     // Use the completion service with streaming callbacks for state management
@@ -1671,6 +1670,22 @@ export const sendAssistantMessage = ({
         return;
       }
 
+      const buildStoppedContent = (content: string): string => {
+        const stopMarker = `\n\n*${i18n.t("playground:assistant.stopped")}*`;
+        return content.length > 0 ? content + stopMarker : stopMarker.trimStart();
+      };
+
+      if (abortController.signal.aborted) {
+        dispatch(
+          updateMessageContent({
+            messageId: latestAssistantMessage.id,
+            content: buildStoppedContent(""),
+            citations: answer.citations,
+          })
+        );
+        return;
+      }
+
       dispatch(setAssistantResponsePhase({ sessionId, phase: "streaming" }));
 
       const revealTypewriter = createStreamTypewriter({
@@ -1688,18 +1703,29 @@ export const sendAssistantMessage = ({
           );
         },
       });
+      let wasAbortedDuringReveal = false;
+      const handleAbortDuringReveal = (): void => {
+        wasAbortedDuringReveal = true;
+        revealTypewriter.stop();
+      };
+
+      abortController.signal.addEventListener("abort", handleAbortDuringReveal, { once: true });
 
       try {
         revealTypewriter.enqueue(answer.content);
         await revealTypewriter.complete({ maxWaitMs: FINAL_REVEAL_MAX_WAIT_MS });
+        const revealedContent = revealTypewriter.getDisplayedText();
         dispatch(
           updateMessageContent({
             messageId: latestAssistantMessage.id,
-            content: answer.content,
+            content: wasAbortedDuringReveal
+              ? buildStoppedContent(revealedContent)
+              : answer.content,
             citations: answer.citations,
           })
         );
       } finally {
+        abortController.signal.removeEventListener("abort", handleAbortDuringReveal);
         revealTypewriter.stop();
       }
     };
@@ -1829,10 +1855,12 @@ export const sendAssistantMessage = ({
         });
       }
 
-      // Append a stop marker so the user knows the response was cut short.
-      const stopMarker = `\n\n*${i18n.t("playground:assistant.stopped")}*`;
+      const buildStoppedContent = (content: string): string => {
+        const stopMarker = `\n\n*${i18n.t("playground:assistant.stopped")}*`;
+        return content.length > 0 ? content + stopMarker : stopMarker.trimStart();
+      };
       const finalContent = wasAborted
-        ? (cleanedContent.length > 0 ? cleanedContent + stopMarker : stopMarker.trimStart())
+        ? buildStoppedContent(cleanedContent)
         : cleanedContent;
       const rewrittenAnswer = wasAborted
         ? {

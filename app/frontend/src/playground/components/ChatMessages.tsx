@@ -43,6 +43,7 @@ import {
   processTextWithCitations,
   safeDecodeUri,
 } from "../utils/citations";
+import { selectMessagesForSession } from "../store/selectors/chatSelectors";
 import { transformToBusinessRequest } from "../../util/bits_utils";
 import "highlight.js/styles/github.css";
 
@@ -70,12 +71,35 @@ interface AssistantMessageBubbleProps {
   isShowingMermaidCode: boolean;
   isHovering: boolean;
   isMostRecent: boolean;
+  regenerateSourceMessage?: Pick<Message, "content" | "attachments">;
   sessionId: string;
-  messages: Message[];
   onToggleMermaidCodeView: () => void;
   remarkPlugins: Pluggable[];
   rehypePlugins: Pluggable[];
   resolvedAttachments: FileAttachment[];
+}
+
+interface ChatMessageRowProps {
+  message: Message;
+  pulseThisAssistantIcon: boolean;
+  assistantStatusLabel?: string;
+  isPreStreamingPhase: boolean;
+  isMostRecent: boolean;
+  regenerateSourceMessage?: Pick<Message, "content" | "attachments">;
+  isShowingMermaidCode: boolean;
+  onToggleMermaidCodeView: (messageId: string) => void;
+  remarkPlugins: Pluggable[];
+  baseRehypePlugins: Pluggable[];
+  rehypePluginsWithMermaid: Pluggable[];
+  sessionId: string;
+  sessionFilesByBlobName: Map<string, FileAttachment>;
+}
+
+interface BrMetadata {
+  execution_time: number;
+  results: number;
+  total_rows: number;
+  extraction_date: string;
 }
 
 interface BrQueryFilter {
@@ -131,7 +155,6 @@ const formatIsoDate = (date: Date): string => {
   const day = String(date.getUTCDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 };
-
 const getPlainText = (children: React.ReactNode): string => {
   return React.Children.toArray(children)
     .map((child) => {
@@ -159,7 +182,7 @@ const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({
   );
 };
 
-const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
+const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo(({
   message,
   pulseThisAssistantIcon,
   assistantStatusLabel,
@@ -170,8 +193,8 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
   isShowingMermaidCode,
   isHovering,
   isMostRecent,
+  regenerateSourceMessage,
   sessionId,
-  messages,
   onToggleMermaidCodeView,
   remarkPlugins,
   rehypePlugins,
@@ -280,18 +303,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
   const isFrench = i18n.language.toLowerCase().startsWith("fr");
 
   const fallbackBrQuery = useMemo(() => {
-    const assistantMessageIndex = messages.findIndex((entry) => entry.id === message.id);
-    if (assistantMessageIndex <= 0) {
-      return undefined;
-    }
-
-    let sourcePrompt: string | undefined;
-    for (let index = assistantMessageIndex - 1; index >= 0; index -= 1) {
-      if (messages[index].role === "user") {
-        sourcePrompt = messages[index].content;
-        break;
-      }
-    }
+    const sourcePrompt = regenerateSourceMessage?.content;
 
     if (!sourcePrompt) {
       return undefined;
@@ -381,7 +393,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
     }
 
     return { query_filters: queryFilters } as BrQuery;
-  }, [isFrench, message.id, messages]);
+  }, [isFrench, regenerateSourceMessage?.content]);
 
   const displayedBrQuery = useMemo(() => {
     if (!brQuery && !fallbackBrQuery) {
@@ -828,7 +840,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
               text={message.content}
               messageId={message.id}
               isStreaming={pulseThisAssistantIcon}
-              messages={messages}
+              regenerateSourceMessage={regenerateSourceMessage}
               sessionId={sessionId}
               feedback={message.feedback}
             />
@@ -861,14 +873,72 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = ({
       )}
     </Box>
   );
+});
+
+const resolveAttachmentsForMessage = (
+  attachments: FileAttachment[] | undefined,
+  sessionFilesByBlobName: Map<string, FileAttachment>,
+): FileAttachment[] => {
+  if (!attachments || attachments.length === 0) {
+    return [];
+  }
+
+  if (!sessionFilesByBlobName.size) {
+    return attachments;
+  }
+
+  return attachments.map((attachment) => {
+    if (!attachment.blobName) {
+      return attachment;
+    }
+
+    const resolvedAttachment = sessionFilesByBlobName.get(attachment.blobName);
+    return resolvedAttachment ? { ...resolvedAttachment, ...attachment } : attachment;
+  });
 };
 
-const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
-  const { t } = useTranslation("playground");
-  const [mermaidCodeViewByMessageId, setMermaidCodeViewByMessageId] =
-    useState<Record<string, boolean>>({});
-  const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
+const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
+  message,
+  pulseThisAssistantIcon,
+  assistantStatusLabel,
+  isPreStreamingPhase,
+  isMostRecent,
+  regenerateSourceMessage,
+  isShowingMermaidCode,
+  onToggleMermaidCodeView,
+  remarkPlugins,
+  baseRehypePlugins,
+  rehypePluginsWithMermaid,
+  sessionId,
+  sessionFilesByBlobName,
+}) => {
+  const [isHovering, setIsHovering] = useState(false);
 
+  const isUserMessage = message.role === "user";
+  const isAssistantMessage = message.role === "assistant";
+  const hasMermaidFence = /```\s*mermaid\b/i.test(message.content);
+  const isActiveStreamingAssistantMessage = Boolean(
+    isAssistantMessage && isMostRecent && pulseThisAssistantIcon
+  );
+  const shouldRenderMermaid =
+    isAssistantMessage
+    && hasMermaidFence
+    && !isActiveStreamingAssistantMessage
+    && !isShowingMermaidCode;
+  const messageRehypePlugins =
+    !isAssistantMessage || !shouldRenderMermaid
+      ? baseRehypePlugins
+      : rehypePluginsWithMermaid;
+  const liveAttribution =
+    isAssistantMessage
+    && message.mcpAttribution?.source === "live"
+    && message.mcpAttribution.servers.length > 0
+      ? message.mcpAttribution
+      : undefined;
+  const resolvedAttachments = useMemo(
+    () => resolveAttachmentsForMessage(message.attachments as FileAttachment[] | undefined, sessionFilesByBlobName),
+    [message.attachments, sessionFilesByBlobName]
+  );
   const markdownComponents = useMemo(
     () => ({
       a: ({ ...props }: React.ComponentPropsWithoutRef<"a">) => (
@@ -886,15 +956,78 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
     []
   );
 
-  const allMessages = useSelector((state: RootState) => state.chat.messages);
+  return (
+    <ListItem
+      key={message.id}
+      alignItems="flex-start"
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+      sx={{
+        px: 0,
+        py: 1,
+        width: "100%",
+        maxWidth: { xs: "100%", md: "980px" },
+        justifyContent: isUserMessage ? "flex-end" : "flex-start",
+      }}
+    >
+      {isAssistantMessage ? (
+        <AssistantMessageBubble
+          message={message}
+          pulseThisAssistantIcon={pulseThisAssistantIcon}
+          assistantStatusLabel={assistantStatusLabel}
+          liveAttribution={liveAttribution}
+          hasMermaidFence={hasMermaidFence}
+          isActiveStreamingAssistantMessage={isActiveStreamingAssistantMessage}
+          isPreStreamingPhase={isPreStreamingPhase}
+          isShowingMermaidCode={isShowingMermaidCode}
+          isHovering={isHovering}
+          isMostRecent={isMostRecent}
+          regenerateSourceMessage={regenerateSourceMessage}
+          sessionId={sessionId}
+          onToggleMermaidCodeView={() => onToggleMermaidCodeView(message.id)}
+          remarkPlugins={remarkPlugins}
+          rehypePlugins={messageRehypePlugins}
+          resolvedAttachments={resolvedAttachments}
+        />
+      ) : (
+        <Box
+          sx={{
+            minWidth: 0,
+            width: "fit-content",
+            maxWidth: "88%",
+            px: 1.5,
+            py: 1.1,
+            bgcolor: "#4B3FA8",
+            color: "#FFFFFF",
+            borderRadius: "16px 4px 16px 16px",
+          }}
+        >
+          <Box sx={USER_MARKDOWN_SX}>
+            <MarkdownHooks
+              components={markdownComponents}
+              remarkPlugins={remarkPlugins}
+              rehypePlugins={messageRehypePlugins}
+            >
+              {message.content}
+            </MarkdownHooks>
+          </Box>
+          {resolvedAttachments.length > 0 && (
+            <AttachmentPreview attachments={resolvedAttachments} />
+          )}
+        </Box>
+      )}
+    </ListItem>
+  );
+});
+
+const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
+  const { t } = useTranslation("playground");
+  const [mermaidCodeViewByMessageId, setMermaidCodeViewByMessageId] =
+    useState<Record<string, boolean>>({});
   const assistantResponsePhase = useSelector(
     (state: RootState) => state.chat.assistantResponsePhaseBySessionId[sessionId]
   );
-
-  const messages = useMemo(
-    () => allMessages.filter((message) => message.sessionId === sessionId),
-    [allMessages, sessionId]
-  );
+  const messages = useSelector((state: RootState) => selectMessagesForSession(state, sessionId));
 
   const activeAssistantMessageId = useMemo(() => {
     for (let index = messages.length - 1; index >= 0; index -= 1) {
@@ -945,28 +1078,32 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const sessionFiles = useSelector(selectSessionFilesById(sessionId));
 
-  const resolveAttachments = useCallback(
-    (attachments?: FileAttachment[]): FileAttachment[] => {
-      if (!attachments || attachments.length === 0) {
-        return [];
-      }
-      if (!sessionFiles.length) {
-        return attachments;
-      }
-
-      return attachments.map((attachment) => {
-        if (!attachment.blobName) {
-          return attachment;
-        }
-
-        const match = sessionFiles.find(
-          (file) => file.blobName === attachment.blobName
-        );
-        return match ? { ...match, ...attachment } : attachment;
-      });
-    },
+  const sessionFilesByBlobName = useMemo(
+    () => new Map(
+      sessionFiles
+        .filter((file) => Boolean(file.blobName))
+        .map((file) => [file.blobName as string, file])
+    ),
     [sessionFiles]
   );
+
+  const regenerateSourceByAssistantId = useMemo(() => {
+    let latestUserMessage: Message | undefined;
+    const sourceByAssistantId: Record<string, Message | undefined> = {};
+
+    messages.forEach((message) => {
+      if (message.role === "user") {
+        latestUserMessage = message;
+        return;
+      }
+
+      if (message.role === "assistant") {
+        sourceByAssistantId[message.id] = latestUserMessage;
+      }
+    });
+
+    return sourceByAssistantId;
+  }, [messages]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -992,108 +1129,35 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
         }}
       >
         {messages.map((message: Message) => {
-          const isUserMessage = message.role === "user";
           const isAssistantMessage = message.role === "assistant";
           const pulseThisAssistantIcon = Boolean(
             isAssistantMessage
               && shouldPulseAssistantIcon
               && message.id === activeAssistantMessageId
           );
-          const hasLiveAttribution =
-            isAssistantMessage
-            && message.mcpAttribution?.source === "live"
-            && message.mcpAttribution.servers.length > 0;
-          const isActiveStreamingAssistantMessage = Boolean(
-            isAssistantMessage
-              && message.id === activeAssistantMessageId
-              && shouldPulseAssistantIcon
-          );
           const isPreStreamingPhase = Boolean(
             isAssistantMessage
               && message.id === activeAssistantMessageId
               && (assistantResponsePhase === "waiting-first-token" || assistantResponsePhase === "drafting")
           );
-          const hasMermaidFence = /```\s*mermaid\b/i.test(message.content);
-          const isShowingMermaidCode = Boolean(
-            mermaidCodeViewByMessageId[message.id]
-          );
-          const shouldRenderMermaid =
-            isAssistantMessage
-            && hasMermaidFence
-            && !isActiveStreamingAssistantMessage
-            && !isShowingMermaidCode;
-          const messageRehypePlugins =
-            !isAssistantMessage || !shouldRenderMermaid
-              ? baseRehypePlugins
-              : rehypePluginsWithMermaid;
-          const liveAttribution = hasLiveAttribution
-            ? message.mcpAttribution
-            : undefined;
-          const resolvedAttachments = resolveAttachments(
-            message.attachments as FileAttachment[] | undefined
-          );
 
           return (
-            <ListItem
+            <ChatMessageRow
               key={message.id}
-              alignItems="flex-start"
-              onMouseEnter={() => setHoveredMessageId(message.id)}
-              onMouseLeave={() => setHoveredMessageId(null)}
-              sx={{
-                px: 0,
-                py: 1,
-                width: "100%",
-                maxWidth: { xs: "100%", md: "980px" },
-                justifyContent: isUserMessage ? "flex-end" : "flex-start",
-              }}
-            >
-              {isAssistantMessage ? (
-                <AssistantMessageBubble
-                  message={message}
-                  pulseThisAssistantIcon={pulseThisAssistantIcon}
-                  assistantStatusLabel={assistantStatusLabel}
-                  liveAttribution={liveAttribution}
-                  hasMermaidFence={hasMermaidFence}
-                  isActiveStreamingAssistantMessage={isActiveStreamingAssistantMessage}
-                  isPreStreamingPhase={isPreStreamingPhase}
-                  isShowingMermaidCode={isShowingMermaidCode}
-                  isHovering={hoveredMessageId === message.id}
-                  isMostRecent={message.id === activeAssistantMessageId}
-                  sessionId={sessionId}
-                  messages={messages}
-                  onToggleMermaidCodeView={() => toggleMermaidCodeView(message.id)}
-                  remarkPlugins={remarkPlugins}
-                  rehypePlugins={messageRehypePlugins}
-                  resolvedAttachments={resolvedAttachments}
-                />
-              ) : (
-                <Box
-                  sx={{
-                    minWidth: 0,
-                    width: "fit-content",
-                    maxWidth: "88%",
-                    px: 1.5,
-                    py: 1.1,
-                    bgcolor: "#4B3FA8",
-                    color: "#FFFFFF",
-                    borderRadius: "16px 4px 16px 16px",
-                  }}
-                >
-                  <Box sx={USER_MARKDOWN_SX}>
-                    <MarkdownHooks
-                      components={markdownComponents}
-                      remarkPlugins={remarkPlugins}
-                      rehypePlugins={messageRehypePlugins}
-                    >
-                      {message.content}
-                    </MarkdownHooks>
-                  </Box>
-                  {resolvedAttachments.length > 0 && (
-                    <AttachmentPreview attachments={resolvedAttachments} />
-                  )}
-                </Box>
-              )}
-            </ListItem>
+              message={message}
+              pulseThisAssistantIcon={pulseThisAssistantIcon}
+              assistantStatusLabel={assistantStatusLabel}
+              isPreStreamingPhase={isPreStreamingPhase}
+              isMostRecent={message.id === activeAssistantMessageId}
+              regenerateSourceMessage={regenerateSourceByAssistantId[message.id]}
+              isShowingMermaidCode={Boolean(mermaidCodeViewByMessageId[message.id])}
+              onToggleMermaidCodeView={toggleMermaidCodeView}
+              remarkPlugins={remarkPlugins}
+              baseRehypePlugins={baseRehypePlugins}
+              rehypePluginsWithMermaid={rehypePluginsWithMermaid}
+              sessionId={sessionId}
+              sessionFilesByBlobName={sessionFilesByBlobName}
+            />
           );
         })}
       </List>

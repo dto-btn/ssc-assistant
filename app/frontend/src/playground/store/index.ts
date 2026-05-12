@@ -9,9 +9,11 @@
 import {
   configureStore,
   combineReducers,
+  Middleware,
   ThunkAction,
   UnknownAction,
 } from "@reduxjs/toolkit";
+import throttle from "lodash.throttle";
 import chatReducer from "./slices/chatSlice";
 import sessionReducer from "./slices/sessionSlice";
 import toolReducer from "./slices/toolSlice";
@@ -22,7 +24,13 @@ import authReducer from "./slices/authSlice";
 import { archiverMiddleware, requestArchive } from "./middleware/archiverMiddleware";
 import { outboxMiddleware } from "./middleware/outboxMiddleware";
 import userReducer from "./slices/userSlice";
-import { saveChatState, loadChatState } from "./persistence";
+import {
+  createPersistableState,
+  hasPersistableStateChanged,
+  saveChatState,
+  loadChatState,
+  shouldPersistAction,
+} from "./persistence";
 import outboxReducer from "./slices/outboxSlice";
 import sessionFilesReducer from "./slices/sessionFilesSlice";
 import syncReducer from "./slices/syncSlice";
@@ -49,26 +57,42 @@ export type RootState = ReturnType<typeof rootReducer>;
 // Use Partial<RootState> for the preloaded state
 const preloadedState = loadChatState() as Partial<RootState>;
 
+let lastActionType: string | undefined;
+
+const persistenceTrackerMiddleware: Middleware<unknown, RootState> = () => (next) => (action) => {
+  const actionType = (action as { type?: unknown }).type;
+  lastActionType = typeof actionType === "string" ? actionType : undefined;
+  return next(action);
+};
+
 export const store = configureStore({
   reducer: rootReducer,
   preloadedState,
   middleware: (getDefaultMiddleware) =>
     // Persist chat archives and queued uploads by enriching the default stack.
-    getDefaultMiddleware().concat(archiverMiddleware, outboxMiddleware),
+    getDefaultMiddleware().concat(persistenceTrackerMiddleware, archiverMiddleware, outboxMiddleware),
 });
 
-const PERSIST_DEBOUNCE_MS = 500;
-let persistTimer: ReturnType<typeof setTimeout> | null = null;
+const throttledSaveState = throttle((state: RootState) => {
+  saveChatState(state);
+}, 2000);
+
+let lastPersistedState = createPersistableState(store.getState());
 
 store.subscribe(() => {
-  if (persistTimer !== null) {
-    clearTimeout(persistTimer);
+  if (!shouldPersistAction(lastActionType)) {
+    return;
   }
 
-  persistTimer = setTimeout(() => {
-    saveChatState(store.getState());
-    persistTimer = null;
-  }, PERSIST_DEBOUNCE_MS);
+  const state = store.getState();
+  const nextPersistedState = createPersistableState(state);
+
+  if (!hasPersistableStateChanged(lastPersistedState, nextPersistedState)) {
+    return;
+  }
+
+  lastPersistedState = nextPersistedState;
+  throttledSaveState(state);
 });
 
 const initialStateSnapshot = store.getState();
