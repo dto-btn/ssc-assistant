@@ -272,14 +272,25 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     && !isNewChat
     && messages.length === 0
     && !rehydratedSessionIds[currentSessionId];
+  const hydrationStatusMessageId = "chat-hydration-status-message";
 
   if (isHydrating) {
     return (
       <Box flex={1} display="flex" flexDirection="column" height="100dvh">
         {renderHeader()}
-        <Box flex={1} display="flex" flexDirection="column" alignItems="center" justifyContent="center">
-          <CircularProgress size={40} sx={{ mb: 2 }} />
-          <Typography variant="body1" color="text.secondary">
+        <Box
+          flex={1}
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          aria-busy="true"
+        >
+          <CircularProgress size={40} sx={{ mb: 2 }} aria-describedby={hydrationStatusMessageId} />
+          <Typography id={hydrationStatusMessageId} variant="body1" color="text.secondary">
             {t("loading.chat", { defaultValue: "Restoring chat history..." })}
           </Typography>
         </Box>

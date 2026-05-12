@@ -229,13 +229,10 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
   const existingSessions = new Map(state.sessions.sessions.map((session) => [session.id, session]));
   const newSessions: Session[] = [];
 
-  const restorationTargets: string[] = [];
-
   grouped.forEach((value, sessionId) => {
     if (value.files.length === 0) {
       return;
     }
-    restorationTargets.push(sessionId);
     dispatch(setSessionFiles({ sessionId, files: value.files }));
     const existing = existingSessions.get(sessionId);
     const trimmedRemoteName = value.sessionName?.trim();

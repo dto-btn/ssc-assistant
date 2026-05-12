@@ -132,14 +132,14 @@ describe("SessionSidebar responsive behavior", () => {
       },
     });
 
-    await user.click(screen.getByRole("button", { name: "Session 2" }));
+    await user.click(screen.getByRole("option", { name: "Session 2" }));
 
     await waitFor(() => {
       expect(store.getState().ui.isMobileSidebarOpen).toBe(false);
     });
   });
 
-  it("renders virtualized session rows with list semantics", () => {
+  it("renders virtualized session options with listbox semantics", () => {
     renderSidebar(false, {
       sessions: {
         sessions: [
@@ -165,8 +165,60 @@ describe("SessionSidebar responsive behavior", () => {
       },
     });
 
-    const sessionList = screen.getByRole("list", { name: "Chats" });
-    expect(within(sessionList).getAllByRole("listitem")).toHaveLength(2);
+    const sessionList = screen.getByRole("listbox", { name: "Chats" });
+    expect(within(sessionList).getAllByRole("option")).toHaveLength(2);
+  });
+
+  it("supports keyboard navigation and selection across the virtualized list", async () => {
+    const user = userEvent.setup();
+
+    const store = renderSidebar(false, {
+      sessions: {
+        sessions: [
+          {
+            id: "s1",
+            name: "Session 1",
+            createdAt: 1,
+            isNewChat: false,
+          },
+          {
+            id: "s2",
+            name: "Session 2",
+            createdAt: 2,
+            isNewChat: false,
+          },
+          {
+            id: "s3",
+            name: "Session 3",
+            createdAt: 3,
+            isNewChat: false,
+          },
+        ],
+        currentSessionId: "s3",
+      },
+      ui: {
+        isSidebarCollapsed: false,
+        isMobileSidebarOpen: false,
+        isDeletingAllChats: false,
+      },
+    });
+
+    const sessionList = screen.getByRole("listbox", { name: "Chats" });
+    sessionList.focus();
+
+    expect(sessionList).toHaveAttribute("aria-activedescendant", "session-button-s3");
+
+    await user.keyboard("{ArrowDown}");
+
+    await waitFor(() => {
+      expect(sessionList).toHaveAttribute("aria-activedescendant", "session-button-s2");
+    });
+
+    await user.keyboard("{Enter}");
+
+    await waitFor(() => {
+      expect(store.getState().sessions.currentSessionId).toBe("s2");
+    });
   });
 
   /**
