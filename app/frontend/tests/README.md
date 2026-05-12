@@ -4,6 +4,7 @@ This directory currently documents the Playwright end-to-end coverage for the pl
 
 ## Current E2E Coverage
 
+- `e2e/playground-accessibility.spec.ts`: verifies axe-based accessibility coverage, keyboard-only chat creation, and reflow checks at 320px plus a 200%-zoom-equivalent viewport.
 - `e2e/playground-shell.spec.ts`: verifies the playground shell renders, a new chat can be created, and the desktop sidebar toggle works.
 - `e2e/playground-chat.spec.ts`: verifies typed prompts, suggestion-card prompts, regenerate, copy, feedback, and stop-generation behavior.
 - `e2e/playground-session.spec.ts`: verifies archived session rehydration, rename/delete flows, and attachment handling for supported and unsupported files.

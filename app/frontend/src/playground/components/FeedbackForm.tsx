@@ -17,7 +17,24 @@ const FeedbackForm: React.FC = () => {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)} sx={{ position: "fixed", right: 16, bottom: 16, zIndex: 2000 }}>
+      <Button
+        variant="contained"
+        disableElevation
+        onClick={() => setOpen(true)}
+        sx={{
+          position: "fixed",
+          right: 16,
+          bottom: 16,
+          zIndex: 2000,
+          minWidth: 44,
+          minHeight: 44,
+          bgcolor: "primary.dark",
+          color: "primary.contrastText",
+          "&:hover": {
+            bgcolor: "primary.main",
+          },
+        }}
+      >
         {t("feedback")}
       </Button>
       <Dialog open={open} onClose={() => setOpen(false)}>
