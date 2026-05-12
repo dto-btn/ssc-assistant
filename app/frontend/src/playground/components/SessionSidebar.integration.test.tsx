@@ -132,14 +132,16 @@ describe("SessionSidebar responsive behavior", () => {
       },
     });
 
-    await user.click(screen.getByRole("option", { name: "Session 2" }));
+    const session2Item = screen.getByRole("listitem", { name: "Session 2" });
+    const session2Button = within(session2Item).getByRole("button", { name: /Session 2/i });
+    await user.click(session2Button);
 
     await waitFor(() => {
       expect(store.getState().ui.isMobileSidebarOpen).toBe(false);
     });
   });
 
-  it("renders virtualized session options with listbox semantics", () => {
+  it("renders virtualized session options with native list semantics", () => {
     renderSidebar(false, {
       sessions: {
         sessions: [
@@ -165,8 +167,8 @@ describe("SessionSidebar responsive behavior", () => {
       },
     });
 
-    const sessionList = screen.getByRole("listbox", { name: "Chats" });
-    expect(within(sessionList).getAllByRole("option")).toHaveLength(2);
+    const sessionList = screen.getByRole("list", { name: "Chats" });
+    expect(within(sessionList).getAllByRole("listitem")).toHaveLength(2);
   });
 
   it("supports keyboard navigation and selection across the virtualized list", async () => {
@@ -203,7 +205,7 @@ describe("SessionSidebar responsive behavior", () => {
       },
     });
 
-    const sessionList = screen.getByRole("listbox", { name: "Chats" });
+    const sessionList = screen.getByRole("list", { name: "Chats" });
     sessionList.focus();
 
     expect(sessionList).toHaveAttribute("aria-activedescendant", "session-button-s3");
