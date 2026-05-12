@@ -70,7 +70,11 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobil
                 aria-label={isSidebarOpen ? t("sidebar.collapse", { ns: "playground" }) : t("sidebar.open", { ns: "playground" })}
                 aria-expanded={isSidebarOpen}
                 aria-controls="playground-session-sidebar"
-                sx={{ color: "white" }}
+                sx={{
+                  color: "white",
+                  minWidth: 44,
+                  minHeight: 44,
+                }}
               >
                 {isSidebarOpen ? <MenuOpenIcon /> : <MenuIcon />}
               </IconButton>
@@ -110,7 +114,11 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobil
               <IconButton
                 onClick={onToggleSidebar}
                 aria-label={t("sidebar.close", { ns: "playground" })}
-                sx={{ color: "white" }}
+                sx={{
+                  color: "white",
+                  minWidth: 44,
+                  minHeight: 44,
+                }}
               >
                 <CloseIcon />
               </IconButton>

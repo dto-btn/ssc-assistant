@@ -65,3 +65,22 @@ export async function expectNoHorizontalOverflow(page: Page, scopeName: string):
     `${scopeName} should reflow without horizontal scrolling.`,
   ).toBeLessThanOrEqual(metrics.clientWidth + 1);
 }
+
+/**
+ * Assert that a primary interactive control meets the minimum touch target size.
+ */
+export async function expectMinimumTouchTargetSize(
+  locator: Locator,
+  controlName: string,
+  minimumSize = 44,
+): Promise<void> {
+  await expect(locator, `${controlName} should be visible before size checks.`).toBeVisible();
+
+  const bounds = await locator.boundingBox();
+  expect(bounds, `${controlName} should have a measurable bounding box.`).not.toBeNull();
+
+  expect(bounds!.width, `${controlName} should be at least ${minimumSize}px wide.`)
+    .toBeGreaterThanOrEqual(minimumSize);
+  expect(bounds!.height, `${controlName} should be at least ${minimumSize}px tall.`)
+    .toBeGreaterThanOrEqual(minimumSize);
+}
