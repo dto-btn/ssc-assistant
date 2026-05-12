@@ -376,8 +376,16 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
                           mb: 1.5,
                           p: 1.5,
                           borderRadius: 1,
-                          bgcolor: "#f4f1ff",
-                          border: "1px solid #e1dbff",
+                          bgcolor: (theme) =>
+                            theme.palette.mode === "dark"
+                              ? "rgba(255,255,255,0.10)"
+                              : "#f4f1ff",
+                          border: (theme) =>
+                            `1px solid ${
+                              theme.palette.mode === "dark"
+                                ? "rgba(255,255,255,0.20)"
+                                : "#e1dbff"
+                            }`,
                           scrollMarginTop: 80,
                         }}
                         id={
@@ -401,7 +409,11 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
                         </Typography>
                         <Typography
                           variant="body2"
-                          sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
+                          sx={{
+                            color: "text.primary",
+                            whiteSpace: "pre-wrap",
+                            overflowWrap: "anywhere",
+                          }}
                         >
                           {getCitationDetailText(citation, group)}
                         </Typography>

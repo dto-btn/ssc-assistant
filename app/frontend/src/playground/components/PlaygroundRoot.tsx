@@ -7,6 +7,7 @@
 
 import React from "react";
 import { Box, useMediaQuery, useTheme } from "@mui/material";
+import type { PaletteMode } from "@mui/material";
 import SessionSidebar from "./SessionSidebar";
 import ChatArea from "./ChatArea";
 import FeedbackForm from "./FeedbackForm";
@@ -25,7 +26,15 @@ import {
 /**
  * Top-level layout controller for playground sidebar behavior across breakpoints.
  */
-const PlaygroundRoot: React.FC = () => {
+interface PlaygroundRootProps {
+  themeMode: PaletteMode;
+  onToggleTheme: () => void;
+}
+
+const PlaygroundRoot: React.FC<PlaygroundRootProps> = ({
+  themeMode,
+  onToggleTheme,
+}) => {
   // Initialize authentication and get token on app load
   useAuth(apiUse);
 
@@ -57,6 +66,8 @@ const PlaygroundRoot: React.FC = () => {
       <SessionSidebar isMobile={isMobile} />
       <ChatArea
         isSidebarOpen={isMobile ? isMobileSidebarOpen : !isSidebarCollapsed}
+        themeMode={themeMode}
+        onToggleTheme={onToggleTheme}
         onOpenSidebar={() => {
           if (isMobile) {
             dispatch(isMobileSidebarOpen ? closeMobileSidebar() : openMobileSidebar());

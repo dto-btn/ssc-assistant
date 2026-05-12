@@ -127,7 +127,7 @@ describe("Suggestions Integration", () => {
     const user = userEvent.setup();
     render(
       <Provider store={store as any}>
-        <ChatArea />
+        <ChatArea themeMode="light" onToggleTheme={() => {}} />
       </Provider>
     );
 

@@ -43,7 +43,12 @@ function renderTopBar(isSidebarOpen: boolean, onToggle?: () => void) {
 
   render(
     <Provider store={store as never}>
-      <TopBar isSidebarOpen={isSidebarOpen} onToggleSidebar={onToggle} />
+      <TopBar
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={onToggle}
+        themeMode="light"
+        onToggleTheme={() => {}}
+      />
     </Provider>
   );
 

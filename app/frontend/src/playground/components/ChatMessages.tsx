@@ -45,6 +45,7 @@ import {
 } from "../utils/citations";
 import { transformToBusinessRequest } from "../../util/bits_utils";
 import "highlight.js/styles/github.css";
+import "./mermaidTheme.css";
 
 const BusinessRequestTable = lazy(
   () => import("./BusinessRequestTable")
@@ -868,6 +869,44 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   const [mermaidCodeViewByMessageId, setMermaidCodeViewByMessageId] =
     useState<Record<string, boolean>>({});
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
+
+  // Inject mermaid styles to override approve/reject box text color
+  useEffect(() => {
+    const styleId = "mermaid-override-styles";
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement("style");
+      style.id = styleId;
+      style.innerHTML = `
+        .mermaid .nodeLabel,
+        .mermaid .nodeLabel *,
+        .mermaid .label,
+        .mermaid .label *,
+        .mermaid .edgeLabel,
+        .mermaid .edgeLabel *,
+        svg[id^='mermaid-'] .nodeLabel,
+        svg[id^='mermaid-'] .nodeLabel *,
+        svg[id^='mermaid-'] .label,
+        svg[id^='mermaid-'] .label *,
+        svg[id^='mermaid-'] .edgeLabel,
+        svg[id^='mermaid-'] .edgeLabel * {
+          fill: #000000 !important;
+          color: #000000 !important;
+        }
+        .mermaid text,
+        .mermaid tspan,
+        .mermaid foreignObject,
+        .mermaid foreignObject *,
+        svg[id^='mermaid-'] text,
+        svg[id^='mermaid-'] tspan,
+        svg[id^='mermaid-'] foreignObject,
+        svg[id^='mermaid-'] foreignObject * {
+          fill: #000000 !important;
+          color: #000000 !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
 
   const markdownComponents = useMemo(
     () => ({
