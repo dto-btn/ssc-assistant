@@ -41,6 +41,7 @@ import { useTranslation } from 'react-i18next';
 import { LEFT_MENU_EXPANDED_WIDTH } from "../constants";
 import SessionRenameDialog from "./SessionRenameDialog";
 import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
+import { selectIsSessionWaitingById } from "../store/selectors/chatSelectors";
 import SyncStatusIndicator from "./SyncStatusIndicator";
 import ProfileMenu from "./ProfileMenu/ProfileMenu";
 import { deleteSession as deleteSessionThunk, persistSessionRename } from "../store/thunks/sessionManagementThunks";
@@ -62,6 +63,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
   const { t } = useTranslation('playground');
   const sessions = useAppSelector((state) => state.sessions.sessions);
   const sessionsNewestFirst = useAppSelector(selectSessionsNewestFirst);
+  const isSessionWaitingById = useAppSelector(selectIsSessionWaitingById);
   const currentSessionId = useAppSelector((state) => state.sessions.currentSessionId);
   const isSidebarCollapsed = useAppSelector(
     (state) => state.ui.isSidebarCollapsed
@@ -272,6 +274,8 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
   const chatItemRender = useCallback(({ index, style }: RowComponentProps) => {
     const session = sessionsNewestFirst[index];
     const isActiveOption = index === activeIndex;
+    const isWaitingForAssistant = Boolean(isSessionWaitingById[session.id]);
+    const waitingDescriptionId = `session-waiting-status-${session.id}`;
 
     return (
       <ListItem
@@ -315,14 +319,73 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           }}
           onClick={() => activateSession(session.id)}
           aria-current={session.id === currentSessionId ? "page" : undefined}
+          aria-selected={session.id === currentSessionId}
+          aria-describedby={isWaitingForAssistant ? waitingDescriptionId : undefined}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%", minWidth: 0 }}>
             <Typography
+              data-testid={`session-title-${session.id}`}
+              data-waiting-for-response={isWaitingForAssistant ? "true" : "false"}
               noWrap
-              sx={{ flexGrow: 1, overflow: "hidden", textOverflow: "ellipsis" }}
+              sx={{
+                flexGrow: 1,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                fontWeight: isWaitingForAssistant ? 700 : 400,
+                transition: "font-weight 0.15s ease-in-out",
+              }}
             >
               {session.name}
             </Typography>
+            {isWaitingForAssistant && (
+              <Box
+                component="span"
+                id={waitingDescriptionId}
+                sx={{
+                  position: "absolute",
+                  width: 1,
+                  height: 1,
+                  p: 0,
+                  m: -1,
+                  overflow: "hidden",
+                  clip: "rect(0 0 0 0)",
+                  whiteSpace: "nowrap",
+                  border: 0,
+                }}
+              >
+                {t("sidebar.waitingForResponse")}
+              </Box>
+            )}
+            {isWaitingForAssistant && (
+              <Tooltip title={t("sidebar.waitingForResponse")} placement="top">
+                <Box
+                  component="span"
+                  aria-label={t("sidebar.waitingForResponse")}
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    minWidth: 8,
+                    minHeight: 8,
+                    flexShrink: 0,
+                    boxSizing: "border-box",
+                    borderRadius: "50%",
+                    backgroundColor: "info.main",
+                    display: "inline-block",
+                    boxShadow: "0 0 0 0 rgba(2, 136, 209, 0.7)",
+                    animation: "session-waiting-pulse 1.5s ease-in-out infinite",
+                    "@keyframes session-waiting-pulse": {
+                      "0%": { boxShadow: "0 0 0 0 rgba(2, 136, 209, 0.45)" },
+                      "70%": { boxShadow: "0 0 0 6px rgba(2, 136, 209, 0)" },
+                      "100%": { boxShadow: "0 0 0 0 rgba(2, 136, 209, 0)" },
+                    },
+                    "@media (prefers-reduced-motion: reduce)": {
+                      animation: "none",
+                      boxShadow: "none",
+                    },
+                  }}
+                />
+              </Tooltip>
+            )}
             <SyncStatusIndicator sessionId={session.id} variant="icon" />
           </Box>
         </ListItemButton>
@@ -357,7 +420,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         </IconButton>
       </ListItem>
     );
-  }, [activeIndex, activateSession, currentSessionId, handleMoreMenuClick, moreMenuOpen, selectedSessionId, sessionsNewestFirst, t]);
+  }, [activeIndex, activateSession, currentSessionId, handleMoreMenuClick, isSessionWaitingById, moreMenuOpen, selectedSessionId, sessionsNewestFirst, t]);
 
   const sidebarContent = (
     <Box

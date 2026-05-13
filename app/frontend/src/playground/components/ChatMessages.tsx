@@ -553,8 +553,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
   const shouldShowMermaidToggle =
     hasMermaidFence
     && !isActiveStreamingAssistantMessage
-    && !shouldHideAssistantMarkdownForBrTable
-    && fallbackMermaidRows.length === 0;
+    && !shouldHideAssistantMarkdownForBrTable;
   // Only blank the body during pre-streaming phases (waiting / drafting).
   // During the streaming phase the markdown streams naturally (typewriter effect).
   const shouldHideAssistantBodyWhileStreaming = isPreStreamingPhase;
