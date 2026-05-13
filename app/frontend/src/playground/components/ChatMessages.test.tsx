@@ -631,7 +631,7 @@ describe("ChatMessages", () => {
     expect(screen.getByRole("button", { name: "assistant.mermaid.viewDiagram" })).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("does not render the mermaid toggle when a mermaid data grid fallback is shown", async () => {
+  it("keeps the mermaid toggle when a mermaid data grid fallback is shown", async () => {
     renderMessages("s1", {
       chat: {
         messages: [
@@ -654,9 +654,7 @@ describe("ChatMessages", () => {
       },
     });
 
-    await waitFor(() => {
-      expect(screen.queryByRole("button", { name: "assistant.mermaid.viewCode" })).not.toBeInTheDocument();
-    });
+    expect(await screen.findByRole("button", { name: "assistant.mermaid.viewCode" })).toBeInTheDocument();
   });
 
   it("keeps a single mermaid toggle after rerender with unchanged state", async () => {
