@@ -33,6 +33,27 @@ describe("playground persistence migration", () => {
     expect(state.ui.isMobileSidebarOpen).toBe(false);
   });
 
+  it("resets persisted assistant response phases during hydration", () => {
+    localStorage.setItem(
+      "playground_chat_state",
+      JSON.stringify({
+        chat: {
+          messages: [],
+          assistantResponsePhaseBySessionId: {
+            s1: "streaming",
+            s2: "drafting",
+          },
+        },
+      })
+    );
+
+    const state = loadChatState() as {
+      chat: { assistantResponsePhaseBySessionId: Record<string, unknown> };
+    };
+
+    expect(state.chat.assistantResponsePhaseBySessionId).toEqual({});
+  });
+
   it("defaults ui state when missing in legacy payload", () => {
     localStorage.setItem(
       "playground_chat_state",
@@ -90,6 +111,19 @@ describe("playground persistence migration", () => {
         sessions: { sessions: [], currentSessionId: null },
         ui: { isSidebarCollapsed: true },
       });
+  });
+
+  it("does not persist assistant response phase", () => {
+    saveChatState({
+      chat: {
+        messages: [],
+        assistantResponsePhaseBySessionId: { s1: "streaming" },
+      },
+    });
+
+    const persisted = JSON.parse(localStorage.getItem("playground_chat_state") || "{}");
+
+    expect(persisted.chat).toEqual({ messages: [] });
   });
 
   it("detects when only transient slices changed so persistence can be skipped", () => {
