@@ -108,10 +108,8 @@ const migratePersistedState = (parsed: PersistedState): PersistedState => {
   next.chat = {
     messages: normalizePersistedMessages(chat.messages),
     isLoadingBySessionId: {},
-    assistantResponsePhaseBySessionId:
-      chat.assistantResponsePhaseBySessionId && typeof chat.assistantResponsePhaseBySessionId === "object"
-        ? chat.assistantResponsePhaseBySessionId
-        : {},
+    // Response phase is transient runtime state and must not survive reloads.
+    assistantResponsePhaseBySessionId: {},
     orchestratorInsightsBySessionId:
       chat.orchestratorInsightsBySessionId && typeof chat.orchestratorInsightsBySessionId === "object"
         ? chat.orchestratorInsightsBySessionId
@@ -146,13 +144,6 @@ export function createPersistableState(state: unknown): PersistedState {
       const nextChat: Record<string, unknown> = {
         messages: trimMessagesForPersistence(chat.messages),
       };
-
-      if (
-        chat.assistantResponsePhaseBySessionId
-        && typeof chat.assistantResponsePhaseBySessionId === "object"
-      ) {
-        nextChat.assistantResponsePhaseBySessionId = chat.assistantResponsePhaseBySessionId;
-      }
 
       if (
         chat.orchestratorInsightsBySessionId
@@ -190,7 +181,6 @@ const hasPersistedChatChanged = (
   const next = (nextChat as Record<string, unknown> | undefined) ?? {};
 
   return previous.messages !== next.messages
-    || previous.assistantResponsePhaseBySessionId !== next.assistantResponsePhaseBySessionId
     || previous.orchestratorInsightsBySessionId !== next.orchestratorInsightsBySessionId;
 };
 

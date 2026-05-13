@@ -115,6 +115,10 @@
         "en": "Close chat sessions",
         "fr": "Fermer les sessions de conversation"
     },
+    "sidebar.waitingForResponse": {
+        "en": "Waiting for AI response",
+        "fr": "En attente d'une réponse de l'IA"
+    },
     "delete.conversation": {
         "en": "Delete Conversation",
         "fr": "Supprimer la conversation"

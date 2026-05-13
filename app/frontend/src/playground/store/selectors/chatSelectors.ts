@@ -7,12 +7,20 @@
 
 import { createSelector } from "reselect";
 import { RootState } from "../../store";
-import type { Message } from "../slices/chatSlice";
+import type { AssistantResponsePhase, Message } from "../slices/chatSlice";
 
 // Input selectors
 const selectMessages = (state: RootState) => state.chat.messages;
 const selectCurrentSessionId = (state: RootState) =>
   state.sessions.currentSessionId;
+const selectSessionLoadingById = (state: RootState) => state.chat.isLoadingBySessionId;
+const selectAssistantResponsePhaseBySessionId = (state: RootState) => state.chat.assistantResponsePhaseBySessionId;
+
+const WAITING_ASSISTANT_PHASES: ReadonlySet<AssistantResponsePhase> = new Set([
+  "waiting-first-token",
+  "drafting",
+  "streaming",
+]);
 
 const EMPTY_MESSAGES: Message[] = [];
 const sessionMessagesCache = new WeakMap<Message[], Map<string, Message[]>>();
@@ -55,4 +63,55 @@ export const selectHasMessagesForSession = (
 export const selectMessagesBySessionId = createSelector(
   [selectMessages, selectCurrentSessionId],
   (messages, currentSessionId) => getCachedSessionMessages(messages, currentSessionId)
+);
+
+export const selectAssistantResponsePhaseForSession = (
+  state: RootState,
+  sessionId: string | null | undefined,
+): AssistantResponsePhase => {
+  if (!sessionId) {
+    return "idle";
+  }
+
+  return state.chat.assistantResponsePhaseBySessionId[sessionId] ?? "idle";
+};
+
+export const selectIsSessionWaitingForAssistant = createSelector(
+  [
+    selectSessionLoadingById,
+    selectAssistantResponsePhaseBySessionId,
+    (_: RootState, sessionId: string | null | undefined) => sessionId,
+  ],
+  (loadingBySessionId, phaseBySessionId, sessionId): boolean => {
+    if (!sessionId) {
+      return false;
+    }
+
+    if (Boolean(loadingBySessionId[sessionId])) {
+      return true;
+    }
+
+    const phase = phaseBySessionId[sessionId] ?? "idle";
+    return WAITING_ASSISTANT_PHASES.has(phase);
+  }
+);
+
+export const selectIsSessionWaitingById = createSelector(
+  [selectSessionLoadingById, selectAssistantResponsePhaseBySessionId],
+  (loadingBySessionId, phaseBySessionId): Record<string, boolean> => {
+    const sessionIds = new Set([
+      ...Object.keys(loadingBySessionId),
+      ...Object.keys(phaseBySessionId),
+    ]);
+
+    const waitingBySessionId: Record<string, boolean> = {};
+
+    sessionIds.forEach((sessionId) => {
+      const isLoading = Boolean(loadingBySessionId[sessionId]);
+      const phase = phaseBySessionId[sessionId] ?? "idle";
+      waitingBySessionId[sessionId] = isLoading || WAITING_ASSISTANT_PHASES.has(phase);
+    });
+
+    return waitingBySessionId;
+  }
 );

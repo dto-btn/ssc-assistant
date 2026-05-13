@@ -9,6 +9,7 @@ vi.mock("react-use-measure", () => ({
 }));
 
 import SessionSidebar from "./SessionSidebar";
+import chatReducer from "../store/slices/chatSlice";
 import sessionReducer from "../store/slices/sessionSlice";
 import uiReducer, { toggleSidebarCollapsed } from "../store/slices/uiSlice";
 
@@ -25,6 +26,7 @@ vi.mock("./ProfileMenu/ProfileMenu", () => ({
 }));
 
 type TestStoreState = {
+  chat: ReturnType<typeof chatReducer>;
   sessions: ReturnType<typeof sessionReducer>;
   ui: ReturnType<typeof uiReducer>;
 };
@@ -33,12 +35,46 @@ type TestStoreState = {
  * Creates a minimal Redux harness for rendering SessionSidebar in isolation.
  */
 function renderSidebar(isMobile: boolean, preloadedState?: TestStoreState) {
+  const defaultState: TestStoreState = {
+    chat: {
+      messages: [],
+      isLoadingBySessionId: {},
+      assistantResponsePhaseBySessionId: {},
+      orchestratorInsightsBySessionId: {},
+    },
+    sessions: {
+      sessions: [],
+      currentSessionId: null,
+    },
+    ui: {
+      isSidebarCollapsed: false,
+      isMobileSidebarOpen: false,
+      isDeletingAllChats: false,
+    },
+  };
+
   const store = configureStore({
     reducer: {
+      chat: chatReducer,
       sessions: sessionReducer,
       ui: uiReducer,
     },
-    preloadedState,
+    preloadedState: {
+      ...defaultState,
+      ...preloadedState,
+      chat: {
+        ...defaultState.chat,
+        ...(preloadedState?.chat ?? {}),
+      },
+      sessions: {
+        ...defaultState.sessions,
+        ...(preloadedState?.sessions ?? {}),
+      },
+      ui: {
+        ...defaultState.ui,
+        ...(preloadedState?.ui ?? {}),
+      },
+    },
   });
 
   render(
@@ -57,6 +93,12 @@ describe("SessionSidebar responsive behavior", () => {
    */
   it("hides desktop sidebar when collapsed", () => {
     renderSidebar(false, {
+      chat: {
+        messages: [],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {},
+        orchestratorInsightsBySessionId: {},
+      },
       sessions: {
         sessions: [],
         currentSessionId: null,
@@ -78,6 +120,12 @@ describe("SessionSidebar responsive behavior", () => {
    */
   it("reacts to sidebar collapse state change", async () => {
     const store = renderSidebar(false, {
+      chat: {
+        messages: [],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {},
+        orchestratorInsightsBySessionId: {},
+      },
       sessions: {
         sessions: [],
         currentSessionId: null,
@@ -108,6 +156,12 @@ describe("SessionSidebar responsive behavior", () => {
     const user = userEvent.setup();
 
     const store = renderSidebar(true, {
+      chat: {
+        messages: [],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {},
+        orchestratorInsightsBySessionId: {},
+      },
       sessions: {
         sessions: [
           {
@@ -141,6 +195,12 @@ describe("SessionSidebar responsive behavior", () => {
 
   it("renders virtualized session options with listbox semantics", () => {
     renderSidebar(false, {
+      chat: {
+        messages: [],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {},
+        orchestratorInsightsBySessionId: {},
+      },
       sessions: {
         sessions: [
           {
@@ -173,6 +233,12 @@ describe("SessionSidebar responsive behavior", () => {
     const user = userEvent.setup();
 
     const store = renderSidebar(false, {
+      chat: {
+        messages: [],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {},
+        orchestratorInsightsBySessionId: {},
+      },
       sessions: {
         sessions: [
           {
@@ -237,6 +303,12 @@ describe("SessionSidebar responsive behavior", () => {
 
     try {
       renderSidebar(true, {
+        chat: {
+          messages: [],
+          isLoadingBySessionId: {},
+          assistantResponsePhaseBySessionId: {},
+          orchestratorInsightsBySessionId: {},
+        },
         sessions: {
           sessions: [
             {
@@ -269,6 +341,12 @@ describe("SessionSidebar responsive behavior", () => {
     const user = userEvent.setup();
 
     renderSidebar(true, {
+      chat: {
+        messages: [],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {},
+        orchestratorInsightsBySessionId: {},
+      },
       sessions: {
         sessions: [
           {
@@ -292,5 +370,61 @@ describe("SessionSidebar responsive behavior", () => {
     await waitFor(() => {
       expect((document.activeElement as HTMLElement | null)?.id).toBe("new-chat-button");
     });
+  });
+
+  it("marks waiting sessions in the title attributes", () => {
+    renderSidebar(false, {
+      chat: {
+        messages: [],
+        isLoadingBySessionId: { s1: true },
+        assistantResponsePhaseBySessionId: { s2: "drafting" },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessions: {
+        sessions: [
+          {
+            id: "s1",
+            name: "Session 1",
+            createdAt: 1,
+            isNewChat: false,
+          },
+          {
+            id: "s2",
+            name: "Session 2",
+            createdAt: 2,
+            isNewChat: false,
+          },
+          {
+            id: "s3",
+            name: "Session 3",
+            createdAt: 3,
+            isNewChat: false,
+          },
+        ],
+        currentSessionId: "s3",
+      },
+      ui: {
+        isSidebarCollapsed: false,
+        isMobileSidebarOpen: false,
+        isDeletingAllChats: false,
+      },
+    });
+
+    expect(screen.getByTestId("session-title-s1")).toHaveAttribute("data-waiting-for-response", "true");
+    expect(screen.getByTestId("session-title-s2")).toHaveAttribute("data-waiting-for-response", "true");
+    expect(screen.getByTestId("session-title-s3")).toHaveAttribute("data-waiting-for-response", "false");
+
+    expect(document.getElementById("session-button-s1")).toHaveAttribute(
+      "aria-describedby",
+      "session-waiting-status-s1"
+    );
+    expect(document.getElementById("session-button-s2")).toHaveAttribute(
+      "aria-describedby",
+      "session-waiting-status-s2"
+    );
+    expect(document.getElementById("session-button-s3")).not.toHaveAttribute("aria-describedby");
+
+    expect(document.getElementById("session-waiting-status-s1")).toHaveTextContent("Waiting for AI response");
+    expect(document.getElementById("session-waiting-status-s2")).toHaveTextContent("Waiting for AI response");
   });
 });
