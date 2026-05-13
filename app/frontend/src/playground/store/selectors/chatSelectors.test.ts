@@ -9,14 +9,15 @@ import {
 const makeState = (overrides?: {
   isLoadingBySessionId?: Record<string, boolean>;
   assistantResponsePhaseBySessionId?: Record<string, "idle" | "waiting-first-token" | "drafting" | "streaming" | undefined>;
-}) => ({
-  chat: {
-    messages: [],
-    isLoadingBySessionId: overrides?.isLoadingBySessionId ?? {},
-    assistantResponsePhaseBySessionId: overrides?.assistantResponsePhaseBySessionId ?? {},
-    orchestratorInsightsBySessionId: {},
-  },
-}) as RootState;
+}): RootState =>
+  ({
+    chat: {
+      messages: [],
+      isLoadingBySessionId: overrides?.isLoadingBySessionId ?? {},
+      assistantResponsePhaseBySessionId: overrides?.assistantResponsePhaseBySessionId ?? {},
+      orchestratorInsightsBySessionId: {},
+    },
+  }) as unknown as RootState;
 
 describe("chatSelectors waiting state", () => {
   it("returns idle phase when no session is provided", () => {
