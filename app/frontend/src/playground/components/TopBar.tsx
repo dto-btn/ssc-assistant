@@ -1,9 +1,12 @@
 import React from "react";
 import { AppBar, Toolbar, Typography, Box, useTheme, Tooltip, IconButton, Button } from "@mui/material";
+import type { PaletteMode } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import MenuIcon from "@mui/icons-material/Menu";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import CloseIcon from "@mui/icons-material/Close";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+import LightModeIcon from "@mui/icons-material/LightMode";
 import logo from "../../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { DevBanner } from "./DevBanner";
 import TopmenuMicrosofTeamsIcon from "./TopmenuMicrosofTeamsIcon.svg";
@@ -18,9 +21,18 @@ interface TopBarProps {
   isSidebarOpen?: boolean;
   isMobile?: boolean;
   isMobileSidebarOpen?: boolean;
+  themeMode: PaletteMode;
+  onToggleTheme: () => void;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobile, isMobileSidebarOpen }) => {
+const TopBar: React.FC<TopBarProps> = ({
+  onToggleSidebar,
+  isSidebarOpen,
+  isMobile,
+  isMobileSidebarOpen,
+  themeMode,
+  onToggleTheme,
+}) => {
   const { t, i18n } = useTranslation(["playground", "translations"]);
   const theme = useTheme();
 
@@ -33,7 +45,7 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobil
     <AppBar
       position="static"
       sx={{
-        backgroundColor: "white",
+        backgroundColor: "background.paper",
         backgroundImage: "none",
         boxShadow: "none",
         borderBottom: "1px solid",
@@ -42,7 +54,10 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobil
     >
       <Toolbar
         sx={{
-          background: `linear-gradient(45deg, #222, ${theme.palette.primary.main})`,
+          background:
+            themeMode === "dark"
+              ? `linear-gradient(45deg, #12141b, ${theme.palette.primary.dark})`
+              : `linear-gradient(45deg, #222, ${theme.palette.primary.main})`,
           height: 60,
           minHeight: 60,
           display: "flex",
@@ -70,7 +85,14 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobil
                 aria-label={isSidebarOpen ? t("sidebar.collapse", { ns: "playground" }) : t("sidebar.open", { ns: "playground" })}
                 aria-expanded={isSidebarOpen}
                 aria-controls="playground-session-sidebar"
-                sx={{ color: "white" }}
+                sx={{
+                  color: "white",
+                  "&:focus-visible": {
+                    outline: "2px solid",
+                    outlineColor: "primary.main",
+                    outlineOffset: "2px",
+                  },
+                }}
               >
                 {isSidebarOpen ? <MenuOpenIcon /> : <MenuIcon />}
               </IconButton>
@@ -110,12 +132,44 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobil
               <IconButton
                 onClick={onToggleSidebar}
                 aria-label={t("sidebar.close", { ns: "playground" })}
-                sx={{ color: "white" }}
+                sx={{
+                  color: "white",
+                  "&:focus-visible": {
+                    outline: "2px solid",
+                    outlineColor: "primary.main",
+                    outlineOffset: "2px",
+                  },
+                }}
               >
                 <CloseIcon />
               </IconButton>
             </Tooltip>
           )}
+
+          {isMobile && (
+            <Tooltip title={themeMode === "dark" ? t("theme.switch.light") : t("theme.switch.dark")}>
+              <IconButton
+                onClick={onToggleTheme}
+                sx={{
+                  color: "white",
+                  minWidth: "44px",
+                  minHeight: "44px",
+                  "&:hover": {
+                    bgcolor: "rgba(255, 255, 255, 0.1)",
+                  },
+                  "&:focus-visible": {
+                    outline: "2px solid",
+                    outlineColor: "primary.main",
+                    outlineOffset: "2px",
+                  },
+                }}
+                aria-label={themeMode === "dark" ? t("theme.switch.light") : t("theme.switch.dark")}
+              >
+                {themeMode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
+              </IconButton>
+            </Tooltip>
+          )}
+
           <Button
             variant="contained"
             disableElevation
@@ -129,11 +183,12 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobil
             }}
             startIcon={<img src={TopmenuMicrosofTeamsIcon} alt="" style={{ width: "1.1rem" }} />}
             sx={{
-              bgcolor: "white",
-              color: "#3f479a",
+              bgcolor: themeMode === "dark" ? "#eef2ff" : "white",
+              color: themeMode === "dark" ? "#1f2757" : "#3f479a",
               textTransform: "none",
               fontWeight: "bold",
               lineHeight: 1.2,
+              border: themeMode === "dark" ? "1px solid rgba(255,255,255,0.14)" : "1px solid transparent",
               borderRadius: "8px",
               padding: { xs: "4px 8px", sm: "6px 16px" },
               fontSize: { xs: "0.75rem", sm: "0.875rem" },
@@ -146,8 +201,13 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobil
                 display: "none"
               },
               "&:hover": {
-                bgcolor: "#f5f5f5",
-                color: "#2e3470",
+                bgcolor: themeMode === "dark" ? "#ffffff" : "#f5f5f5",
+                color: themeMode === "dark" ? "#19214d" : "#2e3470",
+              },
+              "&:focus-visible": {
+                outline: "2px solid",
+                outlineColor: "primary.main",
+                outlineOffset: "2px",
               },
             }}
           >
@@ -167,11 +227,40 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobil
               "&:hover": {
                 bgcolor: "rgba(255, 255, 255, 0.1)",
               },
+              "&:focus-visible": {
+                outline: "2px solid",
+                outlineColor: "primary.main",
+                outlineOffset: "2px",
+              },
             }}
             aria-label={i18n.language === "en" ? "Passer au français" : "Switch to English"}
           >
             {(i18n.language || "en").toUpperCase()}
           </Button>
+
+          {!isMobile && (
+            <Tooltip title={themeMode === "dark" ? t("theme.switch.light") : t("theme.switch.dark")}>
+              <IconButton
+                onClick={onToggleTheme}
+                sx={{
+                  color: "white",
+                  minWidth: "44px",
+                  minHeight: "44px",
+                  "&:hover": {
+                    bgcolor: "rgba(255, 255, 255, 0.1)",
+                  },
+                  "&:focus-visible": {
+                    outline: "2px solid",
+                    outlineColor: "primary.main",
+                    outlineOffset: "2px",
+                  },
+                }}
+                aria-label={themeMode === "dark" ? t("theme.switch.light") : t("theme.switch.dark")}
+              >
+                {themeMode === "dark" ? <LightModeIcon /> : <DarkModeIcon />}
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       </Toolbar>
     </AppBar>

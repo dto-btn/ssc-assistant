@@ -12,6 +12,7 @@
 import React from "react";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../store";
+import type { PaletteMode } from "@mui/material";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
 import { Box, Typography, useTheme, useMediaQuery, CircularProgress } from "@mui/material";
@@ -35,11 +36,15 @@ import { useAppSelector } from "../store/hooks";
 interface ChatAreaProps {
   onOpenSidebar?: () => void;
   isSidebarOpen?: boolean;
+  themeMode?: PaletteMode;
+  onToggleTheme?: () => void;
 }
 
 const ChatArea: React.FC<ChatAreaProps> = ({
   onOpenSidebar,
   isSidebarOpen,
+  themeMode,
+  onToggleTheme,
 }) => {
   const { t } = useTranslation('playground');
   const dispatch = useDispatch<AppDispatch>();
@@ -108,6 +113,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             isSidebarOpen={isSidebarOpen}
             isMobile={isMobile}
             isMobileSidebarOpen={isMobileSidebarOpen}
+            themeMode={themeMode ?? theme.palette.mode}
+            onToggleTheme={onToggleTheme ?? (() => {})}
           />
         </Box>
       </Box>

@@ -15,7 +15,7 @@ import React, {
   useState,
 } from "react";
 import { useSelector } from "react-redux";
-import { Box, Button, Chip, CircularProgress, List, ListItem, Paper, Stack, Typography } from "@mui/material";
+import { Box, Button, Chip, CircularProgress, List, ListItem, Paper, Stack, Typography, useTheme } from "@mui/material";
 import Link from "@mui/material/Link";
 import { MarkdownHooks } from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -46,6 +46,7 @@ import {
 import { selectMessagesForSession } from "../store/selectors/chatSelectors";
 import { transformToBusinessRequest } from "../../util/bits_utils";
 import "highlight.js/styles/github.css";
+import "./mermaidTheme.css";
 
 const BusinessRequestTable = lazy(
   () => import("./BusinessRequestTable")
@@ -1022,6 +1023,8 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   const { t } = useTranslation("playground");
+  const theme = useTheme();
+  const paletteMode = theme.palette.mode;
   const [mermaidCodeViewByMessageId, setMermaidCodeViewByMessageId] =
     useState<Record<string, boolean>>({});
   const assistantResponsePhase = useSelector(
@@ -1056,6 +1059,29 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
     () => [
       rehypeMermaid,
       {
+        mermaidConfig: {
+          theme: paletteMode === "dark" ? "dark" : "default",
+          themeVariables:
+            paletteMode === "dark"
+              ? {
+                  background: "#1a1e29",
+                  mainBkg: "#24304d",
+                  secondBkg: "#1f2a44",
+                  tertiaryColor: "#1f2757",
+                  primaryColor: "#24304d",
+                  primaryTextColor: "#f4f7ff",
+                  secondaryTextColor: "#e7ecff",
+                  tertiaryTextColor: "#f4f7ff",
+                  textColor: "#f4f7ff",
+                  lineColor: "#d6deff",
+                  arrowheadColor: "#d6deff",
+                  edgeLabelBackground: "#2b3c61",
+                  nodeBorder: "#d6deff",
+                }
+              : {
+                  edgeLabelBackground: "#eef2ff",
+                },
+        },
         errorFallback: (): ElementContent => ({
           type: "element",
           tagName: "div",
@@ -1067,7 +1093,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
         }),
       },
     ],
-    [mermaidErrorText]
+    [mermaidErrorText, paletteMode]
   );
 
   const rehypePluginsWithMermaid = useMemo<Pluggable[]>(

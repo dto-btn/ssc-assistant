@@ -1,0 +1,14 @@
+/* Mermaid Theme Support */
+
+/* Responsive diagram sizing */
+.mermaid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1rem 0;
+}
+
+svg[id^="mermaid-"] {
+  max-width: 100%;
+  height: auto;
+}

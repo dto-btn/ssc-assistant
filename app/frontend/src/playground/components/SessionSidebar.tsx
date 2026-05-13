@@ -31,6 +31,7 @@ import {
   MenuItem,
   Tooltip,
   Drawer,
+  useTheme,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -60,6 +61,7 @@ interface SessionSidebarProps {
 
 const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
   const { t } = useTranslation('playground');
+  const theme = useTheme();
   const sessions = useAppSelector((state) => state.sessions.sessions);
   const sessionsNewestFirst = useAppSelector(selectSessionsNewestFirst);
   const currentSessionId = useAppSelector((state) => state.sessions.currentSessionId);
@@ -405,14 +407,36 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
 
       <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
         <Box key="newChat">
-          <ListItemButton id="new-chat-button" onClick={handleNewSession}>
+          <ListItemButton
+            id="new-chat-button"
+            onClick={handleNewSession}
+            sx={{
+              borderRadius: 1.5,
+              mx: 1,
+              backgroundColor:
+                theme.palette.mode === "dark" ? "rgba(120, 132, 180, 0.18)" : "transparent",
+              "&:hover": {
+                backgroundColor:
+                  theme.palette.mode === "dark" ? "rgba(140, 152, 201, 0.28)" : "action.hover",
+              },
+            }}
+          >
             <ListItemIcon sx={{ minWidth: "0px", mr: "10px" }}>
-              <AddCommentIcon fontSize="small" color="primary" />
+              <AddCommentIcon
+                fontSize="small"
+                sx={{ color: theme.palette.mode === "dark" ? theme.palette.common.white : theme.palette.primary.main }}
+              />
             </ListItemIcon>
             <ListItemText
               primary={t("new")}
               aria-description={t("select.or.create.session")}
               aria-label={t("new")}
+              primaryTypographyProps={{
+                sx: {
+                  color: theme.palette.mode === "dark" ? theme.palette.common.white : undefined,
+                  fontWeight: theme.palette.mode === "dark" ? 600 : undefined,
+                },
+              }}
             />
           </ListItemButton>
         </Box>

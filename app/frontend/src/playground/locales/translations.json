@@ -479,6 +479,14 @@
         "en": "Statuses",
         "fr": "Statuts"
     },
+    "theme.switch.dark": {
+        "en": "Switch to dark mode",
+        "fr": "Passer au mode sombre"
+    },
+    "theme.switch.light": {
+        "en": "Switch to light mode",
+        "fr": "Passer au mode clair"
+    },
     "message.actions": {
         "en": "Message actions",
         "fr": "Actions du message"
