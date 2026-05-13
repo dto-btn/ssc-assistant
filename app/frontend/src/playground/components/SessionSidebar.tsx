@@ -271,7 +271,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
     }
   }, [activeIndex, activateSession, sessionsNewestFirst]);
 
-  const chatItemRender = useCallback(({ index, style, ariaAttributes }: RowComponentProps) => {
+  const chatItemRender = useCallback(({ index, style }: RowComponentProps) => {
     const session = sessionsNewestFirst[index];
     const isActiveOption = index === activeIndex;
     const isWaitingForAssistant = Boolean(isSessionWaitingById[session.id]);
@@ -281,11 +281,9 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
       <ListItem
         key={session.id}
         component="li"
+        aria-label={session.name}
         disablePadding
         style={style}
-        aria-posinset={ariaAttributes["aria-posinset"]}
-        aria-setsize={ariaAttributes["aria-setsize"]}
-        role="presentation"
         sx={{
           listStyle: "none",
           display: "flex",
@@ -314,7 +312,6 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         <ListItemButton
           id={`session-button-${session.id}`}
           disableRipple
-          role="option"
           tabIndex={-1}
           sx={{
             padding: "5px 10px",
@@ -322,7 +319,6 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           }}
           onClick={() => activateSession(session.id)}
           aria-current={session.id === currentSessionId ? "page" : undefined}
-          aria-selected={session.id === currentSessionId}
           aria-describedby={isWaitingForAssistant ? waitingDescriptionId : undefined}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%", minWidth: 0 }}>
@@ -428,6 +424,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
   const sidebarContent = (
     <Box
       component="nav"
+      id="playground-session-sidebar"
       aria-label={t("sidebar.navigation")}
       sx={{
         width: LEFT_MENU_EXPANDED_WIDTH,
@@ -479,16 +476,15 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           </ListItemButton>
         </Box>
 
-        <Divider sx={{ my: 1 }}>
-          <Chip label={t("chats")} size="small" sx={{ backgroundColor: "transparent" }} />
-        </Divider>
+        <ListItem component="div" sx={{ py: 1 }}>
+          <Divider sx={{ width: "100%" }}>
+            <Chip label={t("chats")} size="small" sx={{ backgroundColor: "transparent" }} />
+          </Divider>
+        </ListItem>
 
         <Box ref={containerRef} sx={{ flexGrow: 1, minHeight: 0 }}>
           {containerHeight > 0 && (
             <ListWindow
-              aria-activedescendant={
-                activeIndex >= 0 ? `session-button-${sessionsNewestFirst[activeIndex]?.id}` : undefined
-              }
               aria-labelledby={sidebarTitleId}
               listRef={listRef}
               onFocus={() => {
@@ -498,7 +494,6 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
               }}
               onKeyDown={handleSessionListKeyDown}
               overscanCount={5}
-              role="listbox"
               rowHeight={52}
               rowCount={sessionsNewestFirst.length}
               rowComponent={chatItemRender}

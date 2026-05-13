@@ -186,14 +186,16 @@ describe("SessionSidebar responsive behavior", () => {
       },
     });
 
-    await user.click(screen.getByRole("option", { name: "Session 2" }));
+    const session2Item = screen.getByRole("listitem", { name: "Session 2" });
+    const session2Button = within(session2Item).getByRole("button", { name: /Session 2/i });
+    await user.click(session2Button);
 
     await waitFor(() => {
       expect(store.getState().ui.isMobileSidebarOpen).toBe(false);
     });
   });
 
-  it("renders virtualized session options with listbox semantics", () => {
+  it("renders virtualized session options with native list semantics", () => {
     renderSidebar(false, {
       chat: {
         messages: [],
@@ -225,8 +227,8 @@ describe("SessionSidebar responsive behavior", () => {
       },
     });
 
-    const sessionList = screen.getByRole("listbox", { name: "Chats" });
-    expect(within(sessionList).getAllByRole("option")).toHaveLength(2);
+    const sessionList = screen.getByRole("list", { name: "Chats" });
+    expect(within(sessionList).getAllByRole("listitem")).toHaveLength(2);
   });
 
   it("supports keyboard navigation and selection across the virtualized list", async () => {
@@ -269,16 +271,14 @@ describe("SessionSidebar responsive behavior", () => {
       },
     });
 
-    const sessionList = screen.getByRole("listbox", { name: "Chats" });
+    const sessionList = screen.getByRole("list", { name: "Chats" });
     sessionList.focus();
 
-    expect(sessionList).toHaveAttribute("aria-activedescendant", "session-button-s3");
+    expect(sessionList).not.toHaveAttribute("aria-activedescendant");
 
     await user.keyboard("{ArrowDown}");
 
-    await waitFor(() => {
-      expect(sessionList).toHaveAttribute("aria-activedescendant", "session-button-s2");
-    });
+    expect(sessionList).not.toHaveAttribute("aria-activedescendant");
 
     await user.keyboard("{Enter}");
 
@@ -418,11 +418,14 @@ describe("SessionSidebar responsive behavior", () => {
       "aria-describedby",
       "session-waiting-status-s1"
     );
+    expect(document.getElementById("session-button-s1")).not.toHaveAttribute("aria-current");
     expect(document.getElementById("session-button-s2")).toHaveAttribute(
       "aria-describedby",
       "session-waiting-status-s2"
     );
+    expect(document.getElementById("session-button-s2")).not.toHaveAttribute("aria-current");
     expect(document.getElementById("session-button-s3")).not.toHaveAttribute("aria-describedby");
+    expect(document.getElementById("session-button-s3")).toHaveAttribute("aria-current", "page");
 
     expect(document.getElementById("session-waiting-status-s1")).toHaveTextContent("Waiting for AI response");
     expect(document.getElementById("session-waiting-status-s2")).toHaveTextContent("Waiting for AI response");

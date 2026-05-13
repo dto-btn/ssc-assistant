@@ -25,10 +25,7 @@ import {
 /**
  * Top-level layout controller for playground sidebar behavior across breakpoints.
  */
-const PlaygroundRoot: React.FC = () => {
-  // Initialize authentication and get token on app load
-  useAuth(apiUse);
-
+export const PlaygroundShell: React.FC = () => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -68,6 +65,13 @@ const PlaygroundRoot: React.FC = () => {
       {isFeatureEnabled("FeedbackForm") && <FeedbackForm />}
     </Box>
   );
+};
+
+const PlaygroundRoot: React.FC = () => {
+  // Initialize authentication and get token on app load.
+  useAuth(apiUse);
+
+  return <PlaygroundShell />;
 };
 
 export default PlaygroundRoot;

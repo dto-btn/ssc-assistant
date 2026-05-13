@@ -250,7 +250,13 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     return (
       <Box flex={1} display="flex" flexDirection="column" height="100dvh">
         {renderHeader()}
-        <Box flex={1} display="flex" alignItems="center" justifyContent="center">
+        <Box
+          component="main"
+          flex={1}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
           {t("select.or.create.session")}
         </Box>
       </Box>
@@ -272,6 +278,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       <Box flex={1} display="flex" flexDirection="column" height="100dvh">
         {renderHeader()}
         <Box
+          component="main"
           flex={1}
           display="flex"
           flexDirection="column"
@@ -294,6 +301,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   if (messages.length === 0) {
     return (
       <Box
+        component="main"
         flex={1}
         display="flex"
         flexDirection="column"
@@ -301,7 +309,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       >
         {renderHeader()}
         <Box flex={1} display="flex" flexDirection="column" alignItems="center" justifyContent="center" p={{ xs: 2, sm: 4, md: 6 }}>
-          <Typography variant="h3" gutterBottom>
+          <Typography component="h2" variant="h3" gutterBottom>
             {t("how.can.i.help")}
           </Typography>
           <Typography
@@ -333,9 +341,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   return (
     <Box flex={1} display="flex" flexDirection="column" height="100dvh">
       {renderHeader()}
-      <ChatMessages sessionId={currentSessionId} />
-      <OrchestratorDebugPanel sessionId={currentSessionId} />
-      <ChatInput sessionId={currentSessionId} />
+      <Box component="main" display="flex" flexDirection="column" flex={1} minHeight={0}>
+        <ChatMessages sessionId={currentSessionId} />
+        <OrchestratorDebugPanel sessionId={currentSessionId} />
+        <ChatInput sessionId={currentSessionId} />
+      </Box>
     </Box>
   );
 };

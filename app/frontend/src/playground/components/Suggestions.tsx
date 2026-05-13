@@ -184,8 +184,8 @@ const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
                       label={t(`suggestions.categories.${card.category}`)}
                       size="small"
                       sx={{
-                        backgroundColor: `${card.color}15`,
-                        color: card.color,
+                        backgroundColor: card.color,
+                        color: "#fff",
                         fontWeight: "bold",
                         fontSize: "0.75rem",
                         textTransform: "uppercase",
