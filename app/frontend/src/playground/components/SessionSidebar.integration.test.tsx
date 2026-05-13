@@ -418,11 +418,14 @@ describe("SessionSidebar responsive behavior", () => {
       "aria-describedby",
       "session-waiting-status-s1"
     );
+    expect(document.getElementById("session-button-s1")).not.toHaveAttribute("aria-current");
     expect(document.getElementById("session-button-s2")).toHaveAttribute(
       "aria-describedby",
       "session-waiting-status-s2"
     );
+    expect(document.getElementById("session-button-s2")).not.toHaveAttribute("aria-current");
     expect(document.getElementById("session-button-s3")).not.toHaveAttribute("aria-describedby");
+    expect(document.getElementById("session-button-s3")).toHaveAttribute("aria-current", "page");
 
     expect(document.getElementById("session-waiting-status-s1")).toHaveTextContent("Waiting for AI response");
     expect(document.getElementById("session-waiting-status-s2")).toHaveTextContent("Waiting for AI response");

@@ -319,7 +319,6 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           }}
           onClick={() => activateSession(session.id)}
           aria-current={session.id === currentSessionId ? "page" : undefined}
-          aria-selected={session.id === currentSessionId}
           aria-describedby={isWaitingForAssistant ? waitingDescriptionId : undefined}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%", minWidth: 0 }}>
