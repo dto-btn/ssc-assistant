@@ -424,11 +424,6 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           {containerHeight > 0 && (
             <ListWindow
               aria-labelledby={sidebarTitleId}
-              aria-activedescendant={
-                activeIndex >= 0
-                  ? `session-button-${sessionsNewestFirst[activeIndex]?.id}`
-                  : undefined
-              }
               listRef={listRef}
               onFocus={() => {
                 if (activeIndex < 0 && sessionsNewestFirst.length > 0) {

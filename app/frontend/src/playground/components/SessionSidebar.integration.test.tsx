@@ -208,13 +208,11 @@ describe("SessionSidebar responsive behavior", () => {
     const sessionList = screen.getByRole("list", { name: "Chats" });
     sessionList.focus();
 
-    expect(sessionList).toHaveAttribute("aria-activedescendant", "session-button-s3");
+    expect(sessionList).not.toHaveAttribute("aria-activedescendant");
 
     await user.keyboard("{ArrowDown}");
 
-    await waitFor(() => {
-      expect(sessionList).toHaveAttribute("aria-activedescendant", "session-button-s2");
-    });
+    expect(sessionList).not.toHaveAttribute("aria-activedescendant");
 
     await user.keyboard("{Enter}");
 
