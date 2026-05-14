@@ -1482,9 +1482,30 @@ export const sendAssistantMessage = ({
     const updatedSessionMessages = selectMessagesForSession(getState(), sessionId).filter(
       (message) => message.id !== latestAssistantMessage.id
     );
+    
+    const messageLimit = 10;
+
+    let finalSessionMessages = updatedSessionMessages;
+
+    if (updatedSessionMessages.length > messageLimit) {
+      const systemMessages = updatedSessionMessages.filter((message) => message.role === "system");
+      const nonSystemMessages = updatedSessionMessages.filter((message) => message.role !== "system");
+      const remainingSlots = Math.max(messageLimit - systemMessages.length, 0);
+
+      finalSessionMessages = [...systemMessages, ...nonSystemMessages.slice(-remainingSlots)];
+
+      dispatch(
+          addToast({
+            message: i18n.t("playground:assistant.contextTruncated.toast", {
+              count: messageLimit,
+            }),
+            isError: false,
+          })
+        );
+    }
 
     // Use the completion service with streaming callbacks for state management
-    const completionMessages = await mapMessagesForCompletion(updatedSessionMessages, dispatchForAttachments, getState);
+    const completionMessages = await mapMessagesForCompletion(finalSessionMessages, dispatchForAttachments, getState);
 
     // Ensure every routed MCP server carries an auth token for downstream calls.
     const routedServersWithAuth: Tool.Mcp[] = routedServers.map((server) => ({

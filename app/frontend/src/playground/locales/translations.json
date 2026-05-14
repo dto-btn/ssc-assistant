@@ -486,5 +486,9 @@
     "message.actions": {
         "en": "Message actions",
         "fr": "Actions du message"
+    },
+    "assistant.contextTruncated.toast": {
+        "en": "Context truncated. Only the last {{count}} message(s) were included in the response.",
+        "fr": "Contexte tronqué. Seul le(s) dernier(s) {{count}} message(s) ont été inclus dans la réponse."
     }
 }
