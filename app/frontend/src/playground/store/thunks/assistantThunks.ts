@@ -1483,16 +1483,13 @@ export const sendAssistantMessage = ({
       (message) => message.id !== latestAssistantMessage.id
     );
     
+    // Only allow for the last 10 messages to be sent to the LLM (including system messages) to prevent context overflow
     const messageLimit = 10;
 
     let finalSessionMessages = updatedSessionMessages;
 
     if (updatedSessionMessages.length > messageLimit) {
-      const systemMessages = updatedSessionMessages.filter((message) => message.role === "system");
-      const nonSystemMessages = updatedSessionMessages.filter((message) => message.role !== "system");
-      const remainingSlots = Math.max(messageLimit - systemMessages.length, 0);
-
-      finalSessionMessages = [...systemMessages, ...nonSystemMessages.slice(-remainingSlots)];
+      finalSessionMessages = updatedSessionMessages.slice(-messageLimit);
 
       dispatch(
           addToast({
