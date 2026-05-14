@@ -19,7 +19,7 @@ import Suggestions from "./Suggestions";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 import { selectCurrentSessionFiles } from "../store/selectors/sessionFilesSelectors";
 import { useTranslation } from 'react-i18next';
-import { listSessionFiles } from "../api/storage";
+import { fetchFileDataUrl, listSessionFiles } from "../api/storage";
 import { setSessionFiles } from "../store/slices/sessionFilesSlice";
 import { rehydrateSessionFromArchive } from "../store/thunks/sessionBootstrapThunks";
 import { pickLatestArchive } from "../utils/archives";
@@ -28,6 +28,16 @@ import { sendAssistantMessage } from "../store/thunks/assistantThunks";
 import OrchestratorDebugPanel from "./OrchestratorDebugPanel";
 import TopBar from "./TopBar";
 import { useAppSelector } from "../store/hooks";
+import {
+  buildSessionExportDocument,
+  downloadSessionExportJson,
+  downloadSessionExportPdf,
+  downloadSessionExportWord,
+  type AttachmentExportData,
+  type PlaygroundExportFormat,
+  type SessionExportAttachment,
+} from "../export/sessionExport";
+import { addToast } from "../store/slices/toastSlice";
 
 /**
  * Optional controls passed from layout so ChatArea can reopen a hidden sidebar.
@@ -60,9 +70,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   // Use memoized selector for messages
   const messages = useAppSelector(selectMessagesBySessionId);
   const sessionFiles = useAppSelector(selectCurrentSessionFiles);
+  const sessions = useAppSelector((state) => state.sessions.sessions);
   const isNewChat = useAppSelector((state) => 
     state.sessions.sessions.find(s => s.id === currentSessionId)?.isNewChat ?? false
   );
+  const [isExporting, setIsExporting] = React.useState(false);
   const markSessionRehydrated = React.useCallback((sessionId: string) => {
     if (rehydratedSessionsRef.current.has(sessionId)) {
       return;
@@ -108,11 +120,106 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             isSidebarOpen={isSidebarOpen}
             isMobile={isMobile}
             isMobileSidebarOpen={isMobileSidebarOpen}
+            onExport={handleExport}
+            isExportDisabled={!currentSessionId}
+            isExporting={isExporting}
           />
         </Box>
       </Box>
     );
   };
+
+  const handleExport = React.useCallback(async (format: PlaygroundExportFormat) => {
+    if (!currentSessionId) {
+      dispatch(addToast({
+        message: t("export.disabled.noSession", {
+          defaultValue: "Select a chat to export",
+        }),
+        isError: true,
+      }));
+      return;
+    }
+
+    const activeSession = sessions.find((session) => session.id === currentSessionId);
+    if (!activeSession) {
+      dispatch(addToast({
+        message: t("export.failed", {
+          defaultValue: "Could not export this chat.",
+        }),
+        isError: true,
+      }));
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const exportDocument = buildSessionExportDocument({
+        session: activeSession,
+        messages,
+        sessionFiles,
+      });
+
+      const resolveAttachmentData = async (
+        attachment: SessionExportAttachment,
+      ): Promise<AttachmentExportData | null> => {
+        if (!accessToken?.trim()) {
+          return null;
+        }
+
+        try {
+          const result = await fetchFileDataUrl({
+            fileUrl: attachment.url || undefined,
+            blobName: attachment.blobName || undefined,
+            fileType: attachment.contentType || undefined,
+            accessToken,
+          });
+
+          const base64 = result.dataUrl.split(",")[1] || "";
+          if (!base64) {
+            return null;
+          }
+
+          const binary = atob(base64);
+          const bytes = new Uint8Array(binary.length);
+          for (let index = 0; index < binary.length; index += 1) {
+            bytes[index] = binary.charCodeAt(index);
+          }
+
+          return {
+            bytes,
+            contentType: result.contentType || attachment.contentType || "application/octet-stream",
+          };
+        } catch {
+          return null;
+        }
+      };
+
+      if (format === "json") {
+        downloadSessionExportJson(activeSession.name, exportDocument);
+      } else if (format === "pdf") {
+        await downloadSessionExportPdf(activeSession.name, exportDocument, resolveAttachmentData);
+      } else {
+        await downloadSessionExportWord(activeSession.name, exportDocument);
+      }
+
+      dispatch(addToast({
+        message: t(`export.success.${format}`, {
+          defaultValue: `Chat exported as ${format.toUpperCase()}.`,
+        }),
+        isError: false,
+      }));
+    } catch (error) {
+      console.error("Failed to export session", error);
+      dispatch(addToast({
+        message: t("export.failed", {
+          defaultValue: "Could not export this chat.",
+        }),
+        isError: true,
+      }));
+    } finally {
+      setIsExporting(false);
+    }
+  }, [accessToken, currentSessionId, dispatch, messages, sessionFiles, sessions, t]);
 
   /**
    * Convert a canned suggestion into a user turn for quick-start prompts.
