@@ -488,7 +488,7 @@
         "fr": "Actions du message"
     },
     "assistant.contextTruncated.toast": {
-        "en": "Context truncated. Only the last {{count}} message(s) were included in the response.",
-        "fr": "Contexte tronqué. Seul le(s) dernier(s) {{count}} message(s) ont été inclus dans la réponse."
+        "en": "Context truncated. Switching to a new conversation is recommended.",
+        "fr": "Contexte tronqué. Il est recommandé de passer à une nouvelle conversation."
     }
 }

@@ -15,6 +15,14 @@ const ToastContainer: React.FC = () => {
   const toasts = useSelector((state: RootState) => state.toast.toasts);
   const dispatch = useDispatch();
 
+  const getSeverity = (toast: { severity?: "success" | "warning" | "error"; isError?: boolean }) => {
+    if (toast.severity) {
+      return toast.severity;
+    }
+
+    return toast.isError ? "error" : "success";
+  };
+
   return (
     <>
       {toasts.map((toast) => (
@@ -27,7 +35,7 @@ const ToastContainer: React.FC = () => {
         >
           <Alert
             onClose={() => dispatch(removeToast(toast.id))}
-            severity={toast.isError ? "error" : "success"}
+            severity={getSeverity(toast)}
             sx={{ width: "100%" }}
           >
             {toast.message}

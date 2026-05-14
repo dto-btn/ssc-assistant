@@ -1492,12 +1492,11 @@ export const sendAssistantMessage = ({
       finalSessionMessages = updatedSessionMessages.slice(-messageLimit);
 
       dispatch(
-          addToast({
-            message: i18n.t("playground:assistant.contextTruncated.toast", {
-              count: messageLimit,
-            }),
-            isError: false,
-          })
+        addToast({
+          message: i18n.t("playground:assistant.contextTruncated.toast"),
+          severity: "warning",
+          isError: false,
+        })
         );
     }
 
