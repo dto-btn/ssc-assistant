@@ -354,7 +354,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
   if (!currentSessionId) {
     return (
-      <Box flex={1} display="flex" flexDirection="column" height="100dvh">
+      <Box flex={1} display="flex" flexDirection="column" height="100dvh" minWidth={0}>
         {renderHeader()}
         <Box
           component="main"
@@ -362,6 +362,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           display="flex"
           alignItems="center"
           justifyContent="center"
+          minWidth={0}
         >
           {t("select.or.create.session")}
         </Box>
@@ -381,7 +382,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
   if (isHydrating) {
     return (
-      <Box flex={1} display="flex" flexDirection="column" height="100dvh">
+      <Box flex={1} display="flex" flexDirection="column" height="100dvh" minWidth={0}>
         {renderHeader()}
         <Box
           component="main"
@@ -394,6 +395,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           aria-live="polite"
           aria-atomic="true"
           aria-busy="true"
+          minWidth={0}
         >
           <CircularProgress size={40} sx={{ mb: 2 }} aria-describedby={hydrationStatusMessageId} />
           <Typography id={hydrationStatusMessageId} variant="body1" color="text.secondary">
@@ -412,9 +414,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         display="flex"
         flexDirection="column"
         height="100dvh"
+        minWidth={0}
       >
         {renderHeader()}
-        <Box flex={1} display="flex" flexDirection="column" alignItems="center" justifyContent="center" p={{ xs: 2, sm: 4, md: 6 }}>
+        <Box flex={1} display="flex" flexDirection="column" alignItems="center" justifyContent="center" p={{ xs: 2, sm: 4, md: 6 }} minWidth={0}>
           <Typography component="h2" variant="h3" gutterBottom>
             {t("how.can.i.help")}
           </Typography>
@@ -445,9 +448,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   }
 
   return (
-    <Box flex={1} display="flex" flexDirection="column" height="100dvh">
+    <Box flex={1} display="flex" flexDirection="column" height="100dvh" minWidth={0}>
       {renderHeader()}
-      <Box component="main" display="flex" flexDirection="column" flex={1} minHeight={0}>
+      <Box component="main" display="flex" flexDirection="column" flex={1} minHeight={0} minWidth={0}>
         <ChatMessages sessionId={currentSessionId} />
         <OrchestratorDebugPanel sessionId={currentSessionId} />
         <ChatInput sessionId={currentSessionId} />
