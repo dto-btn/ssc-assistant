@@ -527,6 +527,42 @@
         "en": "Unable to export chat history",
         "fr": "Impossible d'exporter l'historique de discussion"
     },
+    "export.label": {
+        "en": "Export",
+        "fr": "Exporter"
+    },
+    "export.option.json": {
+        "en": "Export as JSON",
+        "fr": "Exporter en JSON"
+    },
+    "export.option.pdf": {
+        "en": "Export as PDF",
+        "fr": "Exporter en PDF"
+    },
+    "export.option.word": {
+        "en": "Export as Word (.docx)",
+        "fr": "Exporter en Word (.docx)"
+    },
+    "export.disabled.noSession": {
+        "en": "Select a chat to export",
+        "fr": "Sélectionnez une conversation à exporter"
+    },
+    "export.success.json": {
+        "en": "Chat exported as JSON.",
+        "fr": "Conversation exportée en JSON."
+    },
+    "export.success.pdf": {
+        "en": "Chat exported as PDF.",
+        "fr": "Conversation exportée en PDF."
+    },
+    "export.success.word": {
+        "en": "Chat exported as Word (.docx).",
+        "fr": "Conversation exportée en Word (.docx)."
+    },
+    "export.failed": {
+        "en": "Could not export this chat.",
+        "fr": "Impossible d'exporter cette conversation."
+    },
     "settings.delete.all.conversations": {
         "en": "Delete all conversations",
         "fr": "Supprimer toutes les conversations"

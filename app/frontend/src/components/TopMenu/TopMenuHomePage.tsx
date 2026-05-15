@@ -1,10 +1,16 @@
 import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import React from "react";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import Tooltip from "@mui/material/Tooltip";
+import IconButton from "@mui/material/IconButton";
 import { TopMenuFrame } from "./subcomponents/TopMenuFrame";
 import TopmenuMicrosofTeamsIcon from "./TopmenuMicrosofTeamsIcon.svg";
 import { ProfileMenuButton } from "./subcomponents/ProfileMenuButton";
 import { TopMenuItem } from "./subcomponents/TopMenuItem";
+import type { PlaygroundExportFormat } from "../../playground/export/sessionExport";
 
 interface TopMenuHomePageProps {
   childrenLeftOfLogo?: React.ReactNode;
@@ -15,6 +21,9 @@ interface TopMenuHomePageProps {
   selectedModel: string;
   handleSelectedModelChanged: (modelName: string) => void;
   logout: () => void;
+  onExport?: (format: PlaygroundExportFormat) => void;
+  isExportDisabled?: boolean;
+  isExporting?: boolean;
 }
 
 
@@ -24,9 +33,27 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({
   handleUpdateEnabledTools,
   selectedModel,
   handleSelectedModelChanged,
-  logout
+  logout,
+  onExport,
+  isExportDisabled,
+  isExporting,
 }) => {
   const { t } = useTranslation();
+  const [exportAnchor, setExportAnchor] = React.useState<HTMLElement | null>(null);
+  const isExportMenuOpen = Boolean(exportAnchor);
+
+  const openExportMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setExportAnchor(event.currentTarget);
+  };
+
+  const closeExportMenu = () => {
+    setExportAnchor(null);
+  };
+
+  const handleExportSelect = (format: PlaygroundExportFormat) => {
+    closeExportMenu();
+    onExport?.(format);
+  };
 
   return (
     <TopMenuFrame
@@ -55,8 +82,46 @@ export const TopMenuHomePage: React.FC<TopMenuHomePageProps> = (({
             marginLeft: "auto", // make it float to the right
             display: "flex",
             gap: "1rem",
+            alignItems: "center",
           }}
         >
+          <Tooltip
+            title={
+              isExportDisabled
+                ? t("export.disabled.noSession")
+                : t("export.label")
+            }
+          >
+            <span>
+              <IconButton
+                id="legacy-export-button"
+                aria-label={t("export.label")}
+                aria-controls={isExportMenuOpen ? "legacy-export-menu" : undefined}
+                aria-haspopup="menu"
+                aria-expanded={isExportMenuOpen}
+                onClick={openExportMenu}
+                disabled={Boolean(isExportDisabled || isExporting)}
+                sx={{
+                  color: "white",
+                  minWidth: 44,
+                  minHeight: 44,
+                }}
+              >
+                <FileDownloadIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Menu
+            id="legacy-export-menu"
+            anchorEl={exportAnchor}
+            open={isExportMenuOpen}
+            onClose={closeExportMenu}
+            MenuListProps={{ "aria-label": t("export.label") }}
+          >
+            <MenuItem onClick={() => handleExportSelect("json")}>{t("export.option.json")}</MenuItem>
+            <MenuItem onClick={() => handleExportSelect("pdf")}>{t("export.option.pdf")}</MenuItem>
+            <MenuItem onClick={() => handleExportSelect("word")}>{t("export.option.word")}</MenuItem>
+          </Menu>
           <TopMenuItem item={{
             id: "topmenu-join-teams",
             icon: <img src={TopmenuMicrosofTeamsIcon} alt="Teams" style={{ width: "1.1rem" }} />,

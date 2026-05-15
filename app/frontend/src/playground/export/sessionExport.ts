@@ -347,6 +347,75 @@ export const extractMermaidDataRows = (value: string): SessionExportDataRow[] =>
   return rows;
 };
 
+const toExportCellValue = (value: unknown): string | number => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof value === "boolean") {
+    return value ? "true" : "false";
+  }
+
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+};
+
+const extractBrArtifactRows = (message: ExportableMessage): SessionExportDataRow[] => {
+  const brData = message.brArtifacts?.brData;
+  if (!Array.isArray(brData) || brData.length === 0) {
+    return [];
+  }
+
+  return brData.map((row, rowIndex) => {
+    const mappedRow: SessionExportDataRow = { id: String(rowIndex + 1) };
+    Object.entries(row).forEach(([key, value]) => {
+      mappedRow[key] = toExportCellValue(value);
+    });
+    return mappedRow;
+  });
+};
+
+const mergeDataRows = (
+  primaryRows: SessionExportDataRow[],
+  secondaryRows: SessionExportDataRow[],
+): SessionExportDataRow[] => {
+  const merged: SessionExportDataRow[] = [];
+  const seen = new Set<string>();
+
+  const appendRows = (rows: SessionExportDataRow[]) => {
+    rows.forEach((row) => {
+      const dedupeKey = JSON.stringify(
+        Object.entries(row)
+          .filter(([key]) => key !== "id")
+          .sort(([left], [right]) => left.localeCompare(right)),
+      );
+
+      if (seen.has(dedupeKey)) {
+        return;
+      }
+
+      seen.add(dedupeKey);
+      merged.push({ ...row, id: String(merged.length + 1) });
+    });
+  };
+
+  appendRows(primaryRows);
+  appendRows(secondaryRows);
+
+  return merged;
+};
+
 const base64DataUrlToBytes = (dataUrl: string): Uint8Array => {
   const base64 = dataUrl.split(",", 2)[1] || "";
   const binary = atob(base64);
@@ -450,7 +519,10 @@ export const buildSessionExportDocument = ({
         })),
         attachments: dedupeAttachments(message.attachments ?? []),
         mermaidDiagrams: extractMermaidDiagrams(message.content),
-        mermaidDataRows: extractMermaidDataRows(message.content),
+        mermaidDataRows: mergeDataRows(
+          extractBrArtifactRows(message),
+          extractMermaidDataRows(message.content),
+        ),
       } satisfies SessionExportMessage;
     });
 
@@ -576,17 +648,22 @@ const createPdfTextWriter = async (pdfDoc: PDFDocument) => {
     const tableWidth = pageWidth - margin * 2;
     const minRowHeight = 18;
     const cellPadding = 4;
-    const columnWidth = tableWidth / columns.length;
+    const maxColumnsPerChunk = 6;
     const tableFontSize = 9;
     const tableLineHeight = 11;
+    const columnChunks: string[][] = [];
 
-    const splitCellText = (value: string): string[] => {
+    for (let start = 0; start < columns.length; start += maxColumnsPerChunk) {
+      columnChunks.push(columns.slice(start, start + maxColumnsPerChunk));
+    }
+
+    const splitCellText = (value: string, cellWidth: number): string[] => {
       const normalized = value.replace(/\s+/g, " ").trim();
       if (!normalized) {
         return [""];
       }
 
-      const maxWidth = Math.max(16, columnWidth - cellPadding * 2);
+      const maxWidth = Math.max(16, cellWidth - cellPadding * 2);
       const words = normalized.split(" ");
       const lines: string[] = [];
       let currentLine = "";
@@ -616,25 +693,25 @@ const createPdfTextWriter = async (pdfDoc: PDFDocument) => {
       }
     };
 
-    const drawHeader = () => {
+    const drawHeader = (chunkColumns: string[], cellWidth: number) => {
       const headerHeight = minRowHeight;
       ensureSpace(headerHeight + 6);
       page.drawRectangle({
         x: margin,
         y: cursorY - headerHeight,
-        width: tableWidth,
+        width: cellWidth * chunkColumns.length,
         height: headerHeight,
         color: rgb(0.93, 0.93, 0.93),
         borderColor: rgb(0.75, 0.75, 0.75),
         borderWidth: 1,
       });
 
-      columns.forEach((column, columnIndex) => {
-        const x = margin + columnIndex * columnWidth;
+      chunkColumns.forEach((column, columnIndex) => {
+        const x = margin + columnIndex * cellWidth;
         page.drawRectangle({
           x,
           y: cursorY - headerHeight,
-          width: columnWidth,
+          width: cellWidth,
           height: headerHeight,
           borderColor: rgb(0.75, 0.75, 0.75),
           borderWidth: 1,
@@ -651,55 +728,67 @@ const createPdfTextWriter = async (pdfDoc: PDFDocument) => {
       cursorY -= headerHeight;
     };
 
-    drawHeader();
+    columnChunks.forEach((chunkColumns, chunkIndex) => {
+      const columnWidth = tableWidth / chunkColumns.length;
 
-    rows.forEach((row, rowIndex) => {
-      const lineCounts = columns.map((column) => splitCellText(String(row[column] ?? "")).length);
-      const rowHeight = Math.max(minRowHeight, lineCounts.reduce((max, count) => Math.max(max, count), 1) * tableLineHeight + 8);
-
-      if (cursorY - rowHeight < margin) {
-        addPage();
-        drawHeader();
+      if (columnChunks.length > 1) {
+        addGap(4);
+        writeLine(
+          `Data Grid Columns ${chunkIndex * maxColumnsPerChunk + 1}-${chunkIndex * maxColumnsPerChunk + chunkColumns.length} of ${columns.length}`,
+          { bold: true },
+        );
       }
 
-      if (rowIndex % 2 === 1) {
-        page.drawRectangle({
-          x: margin,
-          y: cursorY - rowHeight,
-          width: tableWidth,
-          height: rowHeight,
-          color: rgb(0.98, 0.98, 0.98),
-        });
-      }
+      drawHeader(chunkColumns, columnWidth);
 
-      columns.forEach((column, columnIndex) => {
-        const x = margin + columnIndex * columnWidth;
-        page.drawRectangle({
-          x,
-          y: cursorY - rowHeight,
-          width: columnWidth,
-          height: rowHeight,
-          borderColor: rgb(0.82, 0.82, 0.82),
-          borderWidth: 1,
-        });
+      rows.forEach((row, rowIndex) => {
+        const lineCounts = chunkColumns.map((column) => splitCellText(String(row[column] ?? ""), columnWidth).length);
+        const rowHeight = Math.max(minRowHeight, lineCounts.reduce((max, count) => Math.max(max, count), 1) * tableLineHeight + 8);
 
-        const rawValue = row[column];
-        const lines = splitCellText(String(rawValue ?? ""));
-        lines.forEach((line, lineIndex) => {
-          page.drawText(line, {
-            x: x + cellPadding,
-            y: cursorY - rowHeight + 5 + (lines.length - lineIndex - 1) * tableLineHeight,
-            size: tableFontSize,
-            font,
-            color: rgb(0.18, 0.18, 0.18),
+        if (cursorY - rowHeight < margin) {
+          addPage();
+          drawHeader(chunkColumns, columnWidth);
+        }
+
+        if (rowIndex % 2 === 1) {
+          page.drawRectangle({
+            x: margin,
+            y: cursorY - rowHeight,
+            width: tableWidth,
+            height: rowHeight,
+            color: rgb(0.98, 0.98, 0.98),
+          });
+        }
+
+        chunkColumns.forEach((column, columnIndex) => {
+          const x = margin + columnIndex * columnWidth;
+          page.drawRectangle({
+            x,
+            y: cursorY - rowHeight,
+            width: columnWidth,
+            height: rowHeight,
+            borderColor: rgb(0.82, 0.82, 0.82),
+            borderWidth: 1,
+          });
+
+          const rawValue = row[column];
+          const lines = splitCellText(String(rawValue ?? ""), columnWidth);
+          lines.forEach((line, lineIndex) => {
+            page.drawText(line, {
+              x: x + cellPadding,
+              y: cursorY - rowHeight + 5 + (lines.length - lineIndex - 1) * tableLineHeight,
+              size: tableFontSize,
+              font,
+              color: rgb(0.18, 0.18, 0.18),
+            });
           });
         });
+
+        cursorY -= rowHeight;
       });
 
-      cursorY -= rowHeight;
+      addGap(8);
     });
-
-    addGap(8);
   };
 
   const getPageMetrics = () => ({
@@ -914,9 +1003,9 @@ const lineToDocxParagraph = (line: string): Paragraph => {
   return new Paragraph({ children: [new TextRun(trimmed)] });
 };
 
-const buildWordTable = (rows: SessionExportDataRow[]): Table | null => {
+const buildWordTableSections = (rows: SessionExportDataRow[]): Array<Paragraph | Table> => {
   if (!rows.length) {
-    return null;
+    return [];
   }
 
   const columns = Array.from(
@@ -929,31 +1018,52 @@ const buildWordTable = (rows: SessionExportDataRow[]): Table | null => {
   );
 
   if (!columns.length) {
-    return null;
+    return [];
   }
 
-  const header = new TableRow({
-    tableHeader: true,
-    children: columns.map((column) => new TableCell({
-      children: [
-        new Paragraph({ children: [new TextRun({ text: column.charAt(0).toUpperCase() + column.slice(1), bold: true })] }),
-      ],
-    })),
-  });
+  const maxColumnsPerChunk = 6;
+  const sections: Array<Paragraph | Table> = [];
 
-  const dataRows = rows.map((row) => new TableRow({
-    children: columns.map((column) => new TableCell({
-      children: [new Paragraph({ children: [new TextRun(String(row[column] ?? ""))] })],
-    })),
-  }));
+  for (let start = 0; start < columns.length; start += maxColumnsPerChunk) {
+    const chunkColumns = columns.slice(start, start + maxColumnsPerChunk);
 
-  return new Table({
-    width: {
-      size: 100,
-      type: WidthType.PERCENTAGE,
-    },
-    rows: [header, ...dataRows],
-  });
+    if (columns.length > maxColumnsPerChunk) {
+      sections.push(new Paragraph({
+        children: [
+          new TextRun({
+            text: `Columns ${start + 1}-${start + chunkColumns.length} of ${columns.length}`,
+            bold: true,
+          }),
+        ],
+      }));
+    }
+
+    const header = new TableRow({
+      tableHeader: true,
+      children: chunkColumns.map((column) => new TableCell({
+        children: [
+          new Paragraph({ children: [new TextRun({ text: column.charAt(0).toUpperCase() + column.slice(1), bold: true })] }),
+        ],
+      })),
+    });
+
+    const dataRows = rows.map((row) => new TableRow({
+      children: chunkColumns.map((column) => new TableCell({
+        children: [new Paragraph({ children: [new TextRun(String(row[column] ?? ""))] })],
+      })),
+    }));
+
+    sections.push(new Table({
+      width: {
+        size: 100,
+        type: WidthType.PERCENTAGE,
+      },
+      rows: [header, ...dataRows],
+    }));
+    sections.push(new Paragraph({ children: [new TextRun("")] }));
+  }
+
+  return sections;
 };
 
 export const downloadSessionExportWord = async (
@@ -1021,11 +1131,8 @@ export const downloadSessionExportWord = async (
 
     if (message.mermaidDataRows.length > 0) {
       documentChildren.push(new Paragraph({ heading: HeadingLevel.HEADING_3, children: [new TextRun("Data Grid")] }));
-      const table = buildWordTable(message.mermaidDataRows);
-      if (table) {
-        documentChildren.push(new Paragraph({ children: [new TextRun("")] }));
-        documentChildren.push(table);
-      }
+      const tableSections = buildWordTableSections(message.mermaidDataRows);
+      documentChildren.push(...tableSections);
     }
 
     if (message.citationGroups.length > 0) {
