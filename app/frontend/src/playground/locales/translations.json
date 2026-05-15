@@ -373,7 +373,7 @@
     },
     "disclaimer.modal.switchToEnglish": {
         "en": "ENGLISH",
-        "fr": "ANGLAIS"
+        "fr": "ENGLISH"
     },
     "auth.tokenExpired": {
         "en": "Authentication required. Please refresh the page.",
