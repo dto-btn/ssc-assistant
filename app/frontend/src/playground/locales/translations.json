@@ -376,8 +376,8 @@
         "fr": "Outil : {{primaryServer}}{{suffix}}"
     },
     "mcp.attribution.trigger": {
-        "en": "MCP servers used for this response: {{servers}}",
-        "fr": "Serveurs MCP utilisés pour cette réponse : {{servers}}"
+        "en": "Tools used for this response: {{servers}}",
+        "fr": "Outils utilisés pour cette réponse : {{servers}}"
     },
     "mcp.attribution.title": {
         "en": "MCP attribution",
