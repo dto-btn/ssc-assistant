@@ -54,7 +54,9 @@ const extractBrArtifacts = (toolsInfo?: ToolInfo[]): PlaygroundMessage["brArtifa
 
     if (Array.isArray(payload.br) && payload.br.length > 0) {
       try {
-        brData = (payload.br as Record<string, unknown>[]).map((row) => transformToBusinessRequest(row));
+        brData = (payload.br as Record<string, unknown>[]).map((row) => (
+          transformToBusinessRequest(row) as unknown as Record<string, unknown>
+        ));
       } catch {
         brData = payload.br as Record<string, unknown>[];
       }

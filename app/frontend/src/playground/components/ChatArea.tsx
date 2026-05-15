@@ -28,15 +28,7 @@ import { sendAssistantMessage } from "../store/thunks/assistantThunks";
 import OrchestratorDebugPanel from "./OrchestratorDebugPanel";
 import TopBar from "./TopBar";
 import { useAppSelector } from "../store/hooks";
-import {
-  buildSessionExportDocument,
-  downloadSessionExportJson,
-  downloadSessionExportPdf,
-  downloadSessionExportWord,
-  type AttachmentExportData,
-  type PlaygroundExportFormat,
-  type SessionExportAttachment,
-} from "../export/sessionExport";
+import type { AttachmentExportData, PlaygroundExportFormat, SessionExportAttachment } from "../export/sessionExport";
 import { addToast } from "../store/slices/toastSlice";
 
 /**
@@ -153,6 +145,13 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
     setIsExporting(true);
     try {
+      const {
+        buildSessionExportDocument,
+        downloadSessionExportJson,
+        downloadSessionExportPdf,
+        downloadSessionExportWord,
+      } = await import("../export/sessionExport");
+
       const exportDocument = buildSessionExportDocument({
         session: activeSession,
         messages,

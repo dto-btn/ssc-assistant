@@ -126,7 +126,10 @@ describe("TopBar", () => {
 
   it("disables export button when export is unavailable", () => {
     renderTopBar(true, { isExportDisabled: true });
-    expect(screen.getByRole("button", { name: "export.label" })).toBeDisabled();
+    // Uses aria-disabled so the button stays keyboard-focusable (WCAG 2.1)
+    const exportBtn = screen.getByRole("button", { name: "export.label" });
+    expect(exportBtn).toHaveAttribute("aria-disabled", "true");
+    expect(exportBtn).not.toBeDisabled();
   });
 
   /**

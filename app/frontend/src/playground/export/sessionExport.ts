@@ -201,7 +201,7 @@ const ensureMermaidInitialized = (): void => {
 
   mermaid.initialize({
     startOnLoad: false,
-    securityLevel: "loose",
+    securityLevel: "strict",
   });
 
   mermaidInitialized = true;
@@ -961,7 +961,7 @@ export const downloadSessionExportPdf = async (
     }
   }
 
-  const bytes = await pdfDoc.save();
+  const bytes = new Uint8Array(await pdfDoc.save());
   const blob = new Blob([bytes], { type: "application/pdf" });
   triggerDownload(blob, buildSessionExportFileName(sessionName, "pdf"));
 };
@@ -1119,6 +1119,7 @@ export const downloadSessionExportWord = async (
           children: [
             new ImageRun({
               data: renderedDiagram.pngBytes,
+              type: "png",
               transformation: {
                 width: Math.round(scaled.width),
                 height: Math.round(scaled.height),

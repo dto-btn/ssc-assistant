@@ -2,6 +2,7 @@
 import express from "express";
 import ViteExpress from "vite-express";
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import net from "node:net";
 import { config } from "dotenv";
 
 config();
@@ -54,6 +55,40 @@ if (blobStorageProxy) {
     app.use('/pmcoe-(dev|sept-2025|latest)/*', blobStorageProxy);
 }
 
-ViteExpress.listen(app, (Number(process.env.PORT) || 8080), () => {
-    console.log("Server is listening on: http://localhost:" + (Number(process.env.PORT) || 8080));
+const isPortAvailable = (port) => new Promise((resolve) => {
+    const server = net.createServer();
+
+    server.once("error", () => {
+        resolve(false);
+    });
+
+    server.once("listening", () => {
+        server.close(() => resolve(true));
+    });
+
+    server.listen(port, "0.0.0.0");
+});
+
+const findAvailablePort = async (startPort, maxAttempts = 20) => {
+    for (let offset = 0; offset <= maxAttempts; offset += 1) {
+        const candidate = startPort + offset;
+        // Probe ports first to avoid crashing with EADDRINUSE.
+        // eslint-disable-next-line no-await-in-loop
+        const available = await isPortAvailable(candidate);
+        if (available) {
+            return candidate;
+        }
+    }
+
+    throw new Error(`No available port found between ${startPort} and ${startPort + maxAttempts}`);
+};
+
+const requestedPort = Number(process.env.PORT) || 8080;
+const port = await findAvailablePort(requestedPort);
+if (port !== requestedPort) {
+    console.warn(`Port ${requestedPort} is in use. Falling back to ${port}.`);
+}
+
+ViteExpress.listen(app, port, () => {
+    console.log("Server is listening on: http://localhost:" + port);
 });

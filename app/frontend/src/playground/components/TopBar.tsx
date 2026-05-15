@@ -161,24 +161,27 @@ const TopBar: React.FC<TopBarProps> = ({
                 : t("export.label", { ns: "playground", defaultValue: "Export" })
             }
           >
-            <span>
-              <IconButton
-                id="playground-export-button"
-                aria-label={t("export.label", { ns: "playground", defaultValue: "Export" })}
-                aria-controls={isExportMenuOpen ? "playground-export-menu" : undefined}
-                aria-haspopup="menu"
-                aria-expanded={isExportMenuOpen}
-                onClick={openExportMenu}
-                disabled={Boolean(isExportDisabled || isExporting)}
-                sx={{
-                  color: "white",
-                  minWidth: 44,
-                  minHeight: 44,
-                }}
-              >
-                <FileDownloadIcon />
-              </IconButton>
-            </span>
+            {/* No <span> wrapper needed — aria-disabled keeps the button focusable so
+                keyboard users can tab to it, read the tooltip, and hear "dimmed" from
+                screen readers. Native `disabled` would remove it from the tab order. */}
+            <IconButton
+              id="playground-export-button"
+              aria-label={t("export.label", { ns: "playground", defaultValue: "Export" })}
+              aria-controls={isExportMenuOpen ? "playground-export-menu" : undefined}
+              aria-haspopup="menu"
+              aria-expanded={isExportMenuOpen ? true : undefined}
+              aria-disabled={Boolean(isExportDisabled || isExporting) || undefined}
+              onClick={Boolean(isExportDisabled || isExporting) ? undefined : openExportMenu}
+              sx={{
+                color: "white",
+                minWidth: 44,
+                minHeight: 44,
+                opacity: Boolean(isExportDisabled || isExporting) ? 0.4 : 1,
+                pointerEvents: "auto",
+              }}
+            >
+              <FileDownloadIcon />
+            </IconButton>
           </Tooltip>
           <Menu
             id="playground-export-menu"
