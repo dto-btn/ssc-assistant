@@ -79,6 +79,7 @@ const TopBar: React.FC<TopBarProps> = ({
           alignItems: "center",
           justifyContent: "space-between",
           px: 1,
+          minWidth: 0,
         }}
       >
         <Box
