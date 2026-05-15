@@ -376,6 +376,7 @@ const FINAL_REVEAL_CHARS_PER_TICK = 10;
 const FINAL_REVEAL_BURST_MULTIPLIER = 3;
 const FINAL_REVEAL_MAX_BUFFERED_CHARS = 360;
 const FINAL_REVEAL_MAX_WAIT_MS = 4500;
+const MAX_COMPLETION_MESSAGES = 10;
 const IS_DEV = import.meta.env.DEV;
 const IS_CITATION_DEBUG_ENABLED = String(import.meta.env.VITE_PLAYGROUND_DEBUG_CITATIONS || "").toLowerCase() === "true";
 
@@ -873,6 +874,32 @@ const buildCompletionMessagesForRun = ({
     ...(preflightRoutingContextMessage ? [preflightRoutingContextMessage] : []),
     ...baseMessages,
   ];
+};
+
+const trimCompletionMessagesToLimit = (
+  messages: CompletionMessage[],
+  maxMessages: number = MAX_COMPLETION_MESSAGES,
+): { messages: CompletionMessage[]; wasTruncated: boolean } => {
+  let leadingSystemMessageCount = 0;
+
+  while (
+    leadingSystemMessageCount < messages.length
+    && messages[leadingSystemMessageCount].role === "system"
+  ) {
+    leadingSystemMessageCount += 1;
+  }
+
+  const leadingSystemMessages = messages.slice(0, leadingSystemMessageCount);
+  const historyMessages = messages.slice(leadingSystemMessageCount);
+  const availableHistorySlots = Math.max(0, maxMessages - leadingSystemMessages.length);
+  const trimmedHistoryMessages = historyMessages.length > availableHistorySlots
+    ? historyMessages.slice(-availableHistorySlots)
+    : historyMessages;
+
+  return {
+    messages: [...leadingSystemMessages, ...trimmedHistoryMessages],
+    wasTruncated: trimmedHistoryMessages.length < historyMessages.length,
+  };
 };
 
 /**
@@ -1483,25 +1510,8 @@ export const sendAssistantMessage = ({
       (message) => message.id !== latestAssistantMessage.id
     );
     
-    // Only allow for the last 10 messages to be sent to the LLM (including system messages) to prevent context overflow
-    const messageLimit = 10;
-
-    let finalSessionMessages = updatedSessionMessages;
-
-    if (updatedSessionMessages.length > messageLimit) {
-      finalSessionMessages = updatedSessionMessages.slice(-messageLimit);
-
-      dispatch(
-        addToast({
-          message: i18n.t("playground:assistant.contextTruncated.toast"),
-          severity: "warning",
-          isError: false,
-        })
-        );
-    }
-
     // Use the completion service with streaming callbacks for state management
-    const completionMessages = await mapMessagesForCompletion(finalSessionMessages, dispatchForAttachments, getState);
+    const completionMessages = await mapMessagesForCompletion(updatedSessionMessages, dispatchForAttachments, getState);
 
     // Ensure every routed MCP server carries an auth token for downstream calls.
     const routedServersWithAuth: Tool.Mcp[] = routedServers.map((server) => ({
@@ -1548,13 +1558,17 @@ export const sendAssistantMessage = ({
       }
     }
 
-    const buildMessagesForRun = (serversForRun: Tool.Mcp[]): CompletionMessage[] => {
-      return buildCompletionMessagesForRun({
+    const buildMessagesForRun = (
+      serversForRun: Tool.Mcp[],
+    ): { messages: CompletionMessage[]; wasTruncated: boolean } => {
+      const messagesForRun = buildCompletionMessagesForRun({
         baseMessages: baseCompletionMessages,
         routedServers: serversForRun,
         preflightRoutingContextMessage,
         userPrompt: content,
       });
+
+      return trimCompletionMessagesToLimit(messagesForRun);
     };
 
     const completionModel = resolveCompletionModel(getState());
@@ -1906,8 +1920,20 @@ export const sendAssistantMessage = ({
     let successfulCompletionServers = finalServersWithAuth;
 
     try {
+      const initialRun = buildMessagesForRun(successfulCompletionServers);
+
+      if (initialRun.wasTruncated) {
+        dispatch(
+          addToast({
+            message: i18n.t("playground:assistant.contextTruncated.toast"),
+            severity: "warning",
+            isError: false,
+          })
+        );
+      }
+
       const initialCompletion = await runCompletion(
-        buildMessagesForRun(successfulCompletionServers),
+        initialRun.messages,
         successfulCompletionServers,
       );
       completionResult = initialCompletion.completionResult;
@@ -1975,8 +2001,9 @@ export const sendAssistantMessage = ({
       successfulCompletionServers = [];
       // Carry the successful server set forward so downstream enrichment
       // does not re-enter the same failing MCP routes after the fallback.
+      const fallbackRun = buildMessagesForRun(successfulCompletionServers);
       const fallbackCompletion = await runCompletion(
-        buildMessagesForRun(successfulCompletionServers),
+        fallbackRun.messages,
         successfulCompletionServers,
       );
       completionResult = fallbackCompletion.completionResult;
