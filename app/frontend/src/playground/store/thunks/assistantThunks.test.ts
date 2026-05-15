@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { configureStore } from "@reduxjs/toolkit";
 import sessionsReducer from "../slices/sessionSlice";
 import chatReducer from "../slices/chatSlice";
+import { addMessage } from "../slices/chatSlice";
 import {
   deriveSessionName,
   hasRequiredEpsLegacyCitations,
@@ -133,6 +134,21 @@ const hasPreflightRoutingMessage = (messages: Array<{ role: string; content?: un
       && typeof message.content === "string"
       && message.content.includes("Orchestrator preflight routing summary"),
   );
+};
+
+const seedSessionMessages = (
+  store: ReturnType<typeof makeStore>,
+  count: number,
+): void => {
+  for (let index = 0; index < count; index += 1) {
+    store.dispatch(
+      addMessage({
+        sessionId: "session-1",
+        role: index % 2 === 0 ? "user" : "assistant",
+        content: `Seed message ${index + 1}`,
+      })
+    );
+  }
 };
 
 describe("deriveSessionName", () => {
@@ -437,6 +453,65 @@ describe("sendAssistantMessage auto-rename", () => {
     expect(request.messages[1].content).toContain("Orchestrator preflight routing summary");
     expect(request.messages[1].content).toContain("categories='policy'");
     expect(request.messages[1].content).toContain("servers='policy-server'");
+  });
+
+  it("caps the outbound MCP-backed completion payload at 10 messages", async () => {
+    getOrchestratorInsightsMock.mockResolvedValue({
+      category: "policy",
+      recommendations: [],
+      source: "orchestrator",
+      timestamp: new Date().toISOString(),
+    } as any);
+    resolveServersFromInsightsMock.mockReturnValue([policyServer as any]);
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        recommendations: [{ category: "policy", mcp_server_id: "policy-server" }],
+      }),
+    } as any);
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [orchestratorServer, policyServer],
+    });
+    seedSessionMessages(store, 12);
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Summarize the policy guidance.",
+      }) as any,
+    );
+
+    const request = createCompletionMock.mock.calls[0][0];
+    expect(request.messages).toHaveLength(10);
+    expect(request.messages[0]).toMatchObject({ role: "system" });
+    expect(request.messages[1]).toMatchObject({ role: "system" });
+    expect(request.messages[2]).toMatchObject({ role: "system" });
+  });
+
+  it("caps the outbound fallback completion payload at 10 messages after retrying without tools", async () => {
+    createCompletionMock
+      .mockRejectedValueOnce(new Error("Tool failure"))
+      .mockResolvedValueOnce(DEFAULT_COMPLETION_RESULT as any);
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [policyServer],
+    });
+    seedSessionMessages(store, 12);
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Summarize the policy guidance.",
+      }) as any,
+    );
+
+    expect(createCompletionMock).toHaveBeenCalledTimes(2);
+    const retryRequest = createCompletionMock.mock.calls[1][0];
+    expect(retryRequest.messages).toHaveLength(10);
+    expect(retryRequest.messages[0]).toMatchObject({ role: "system" });
   });
 
   it("does not add the grounding prompt when no MCP servers are routed", async () => {
