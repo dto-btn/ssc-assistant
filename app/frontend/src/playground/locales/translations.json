@@ -339,6 +339,42 @@
         "en": "AI may make mistakes. Please validate all information before use.",
         "fr": "L'IA peut faire des erreurs. Veuillez valider toutes les informations avant utilisation."
     },
+    "disclaimer.modal.title.assistant": {
+        "en": "DISCLAIMER",
+        "fr": "AVERTISSEMENT"
+    },
+    "disclaimer.modal.assistant.body": {
+        "en": "The SSC Assistant is in pilot phase and uses Azure OpenAI. Answers may be incorrect even if they seem reliable. Just like humans, AI can make mistakes. Your feedback is important to help us improve the tool.",
+        "fr": "L’Assistant de SPC est en phase pilote et utilise Azure OpenAI. Les réponses peuvent être inexactes même si elles semblent fiables. Comme les humains, l’IA peut faire des erreurs. Vos commentaires sont importants pour nous aider à améliorer l’outil."
+    },
+    "disclaimer.modal.assistant.strong": {
+        "en": "DO NOT SEND ANY PROTECTED INFORMATION IN THE CHATBOT.",
+        "fr": "NE TRANSMETTEZ AUCUN RENSEIGNEMENT PROTÉGÉ DANS LE CLAVARDEUR."
+    },
+    "disclaimer.modal.title.br": {
+        "en": "DISCLAIMER - Business Request (BR)",
+        "fr": "AVERTISSEMENT - Demande d’affaires (DA)"
+    },
+    "disclaimer.modal.br.body": {
+        "en": "This system is currently in a testing phase, and as such, data accuracy and system functionality are continuously being improved.",
+        "fr": "Ce système est actuellement en phase d’essai; l’exactitude des données et les fonctionnalités du système sont en amélioration continue."
+    },
+    "disclaimer.modal.br.strong": {
+        "en": "Please note that the data retrieved from the Enterprise Data Repository (EDR), sourced from the Business Intake and Tracking System (BITS), may be up to 48 hours old.",
+        "fr": "Veuillez noter que les données récupérées à partir du Répertoire des données d’entreprise (RDE), alimenté par le système de Saisie et suivi des demandes d’affaires (BITS), peuvent dater de jusqu’à 48 heures."
+    },
+    "disclaimer.modal.accept": {
+        "en": "ACCEPT",
+        "fr": "ACCEPTER"
+    },
+    "disclaimer.modal.switchToFrench": {
+        "en": "FRANÇAIS",
+        "fr": "FRANÇAIS"
+    },
+    "disclaimer.modal.switchToEnglish": {
+        "en": "ENGLISH",
+        "fr": "ANGLAIS"
+    },
     "auth.tokenExpired": {
         "en": "Authentication required. Please refresh the page.",
         "fr": "Authentification requise. Veuillez actualiser la page."
