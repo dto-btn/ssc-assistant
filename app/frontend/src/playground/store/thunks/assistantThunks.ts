@@ -1558,9 +1558,10 @@ export const sendAssistantMessage = ({
       }
     }
 
-    const buildMessagesForRun = (
-      serversForRun: Tool.Mcp[],
-    ): { messages: CompletionMessage[]; wasTruncated: boolean } => {
+    const buildMessagesForRun = (serversForRun: Tool.Mcp[]): { 
+      messages: CompletionMessage[]; 
+      wasTruncated: boolean;
+    } => {
       const messagesForRun = buildCompletionMessagesForRun({
         baseMessages: baseCompletionMessages,
         routedServers: serversForRun,
