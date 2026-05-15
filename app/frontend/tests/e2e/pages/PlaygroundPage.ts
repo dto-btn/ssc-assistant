@@ -1,6 +1,13 @@
 import type { Locator, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
+const PLAYGROUND_DISCLAIMER_STORAGE_KEY = 'playground_disclaimer_state_v1';
+
+interface GotoOptions {
+  acceptDisclaimers?: boolean;
+  preserveDisclaimerState?: boolean;
+}
+
 /**
  * Lightweight page object for the Playwright playground entrypoint.
  */
@@ -14,9 +21,77 @@ export class PlaygroundPage {
   /**
    * Navigate to the playground route and wait for the shell to stabilize.
    */
-  async goto(): Promise<void> {
+  async goto(options: GotoOptions = {}): Promise<void> {
+    const {
+      acceptDisclaimers = true,
+      preserveDisclaimerState = false,
+    } = options;
+    const now = Date.now();
+
+    if (!preserveDisclaimerState) {
+      await this.page.addInitScript(
+        ([storageKey, shouldAccept, acceptedAt]) => {
+          if (!shouldAccept) {
+            localStorage.removeItem(storageKey);
+            return;
+          }
+
+          localStorage.setItem(
+            storageKey,
+            JSON.stringify({
+              assistantAcceptedAt: acceptedAt,
+              brAcceptedAt: acceptedAt,
+            }),
+          );
+        },
+        [PLAYGROUND_DISCLAIMER_STORAGE_KEY, acceptDisclaimers, now] as const,
+      );
+    }
+
     await this.page.goto('/playground.e2e.html');
-    await expect(this.page.getByRole('heading', { name: 'SSC Assistant' })).toBeVisible();
+    await expect(this.sidebarToggle()).toBeVisible();
+  }
+
+  /**
+   * Return the currently-visible disclaimer dialog (if any).
+   */
+  disclaimerDialog(): Locator {
+    return this.page.getByRole('dialog');
+  }
+
+  /**
+   * Return the disclaimer accept button.
+   */
+  disclaimerAcceptButton(): Locator {
+    return this.page.locator('#playground-accept-disclaimer-button');
+  }
+
+  /**
+   * Return the disclaimer language toggle button.
+   */
+  disclaimerLanguageButton(): Locator {
+    return this.page.locator('#playground-disclaimer-language-button');
+  }
+
+  /**
+   * Return the visible disclaimer heading.
+   */
+  disclaimerHeading(): Locator {
+    return this.page.locator('#playground-disclaimer-title');
+  }
+
+  /**
+   * Accept all currently-required disclaimers (assistant then BR).
+   */
+  async acceptAllDisclaimersIfVisible(maxAccepts = 2): Promise<void> {
+    for (let accepts = 0; accepts < maxAccepts; accepts += 1) {
+      const isVisible = await this.disclaimerAcceptButton().isVisible();
+      if (!isVisible) {
+        break;
+      }
+
+      await this.disclaimerAcceptButton().click();
+    }
   }
 
   /**
