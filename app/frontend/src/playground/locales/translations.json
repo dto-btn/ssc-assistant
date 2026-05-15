@@ -119,6 +119,42 @@
         "en": "Waiting for AI response",
         "fr": "En attente d'une réponse de l'IA"
     },
+    "export.label": {
+        "en": "Export",
+        "fr": "Exporter"
+    },
+    "export.option.json": {
+        "en": "Export as JSON",
+        "fr": "Exporter en JSON"
+    },
+    "export.option.pdf": {
+        "en": "Export as PDF",
+        "fr": "Exporter en PDF"
+    },
+    "export.option.word": {
+        "en": "Export as Word (.docx)",
+        "fr": "Exporter en Word (.docx)"
+    },
+    "export.disabled.noSession": {
+        "en": "Select a chat to export",
+        "fr": "Sélectionnez une conversation à exporter"
+    },
+    "export.success.json": {
+        "en": "Chat exported as JSON.",
+        "fr": "Conversation exportée en JSON."
+    },
+    "export.success.pdf": {
+        "en": "Chat exported as PDF.",
+        "fr": "Conversation exportée en PDF."
+    },
+    "export.success.word": {
+        "en": "Chat exported as Word (.docx).",
+        "fr": "Conversation exportée en Word (.docx)."
+    },
+    "export.failed": {
+        "en": "Could not export this chat.",
+        "fr": "Impossible d’exporter cette conversation."
+    },
     "delete.conversation": {
         "en": "Delete Conversation",
         "fr": "Supprimer la conversation"

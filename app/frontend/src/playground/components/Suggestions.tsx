@@ -124,7 +124,12 @@ const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
       }}
       aria-label={t("suggestions.aria_label", { defaultValue: "Suggested prompts" })}
     >
-      <Grid container spacing={{ xs: 1.5, sm: 2 }} justifyContent="center" sx={{ maxWidth: "1200px" }}>
+      <Grid
+        container
+        spacing={{ xs: 1.5, sm: 2 }}
+        justifyContent="center"
+        sx={{ width: "100%", maxWidth: "1200px", minWidth: 0 }}
+      >
         {shuffledSuggestions.map((card, index) => (
           <Grid item xs={12} sm={6} md={4} key={index} sx={{ display: "flex" }}>
             <Card

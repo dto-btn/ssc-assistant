@@ -4,9 +4,13 @@ import { useTranslation } from "react-i18next";
 import MenuIcon from "@mui/icons-material/Menu";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import CloseIcon from "@mui/icons-material/Close";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import logo from "../../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { DevBanner } from "./DevBanner";
 import TopmenuMicrosofTeamsIcon from "./TopmenuMicrosofTeamsIcon.svg";
+import type { PlaygroundExportFormat } from "../export/sessionExport";
 
 /**
  * TopBar component for the playground.
@@ -18,15 +22,41 @@ interface TopBarProps {
   isSidebarOpen?: boolean;
   isMobile?: boolean;
   isMobileSidebarOpen?: boolean;
+  onExport?: (format: PlaygroundExportFormat) => void;
+  isExportDisabled?: boolean;
+  isExporting?: boolean;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobile, isMobileSidebarOpen }) => {
+const TopBar: React.FC<TopBarProps> = ({
+  onToggleSidebar,
+  isSidebarOpen,
+  isMobile,
+  isMobileSidebarOpen,
+  onExport,
+  isExportDisabled,
+  isExporting,
+}) => {
   const { t, i18n } = useTranslation(["playground", "translations"]);
   const theme = useTheme();
+  const [exportAnchor, setExportAnchor] = React.useState<HTMLElement | null>(null);
+  const isExportMenuOpen = Boolean(exportAnchor);
 
   const handleLanguageToggle = () => {
     const newLang = i18n.language === "en" ? "fr" : "en";
     i18n.changeLanguage(newLang);
+  };
+
+  const openExportMenu = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setExportAnchor(event.currentTarget);
+  };
+
+  const closeExportMenu = () => {
+    setExportAnchor(null);
+  };
+
+  const handleExportSelect = (format: PlaygroundExportFormat) => {
+    closeExportMenu();
+    onExport?.(format);
   };
 
   return (
@@ -49,6 +79,7 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobil
           alignItems: "center",
           justifyContent: "space-between",
           px: 1,
+          minWidth: 0,
         }}
       >
         <Box
@@ -124,6 +155,52 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobil
               </IconButton>
             </Tooltip>
           )}
+          <Tooltip
+            title={
+              isExportDisabled
+                ? t("export.disabled.noSession", { ns: "playground", defaultValue: "Select a chat to export" })
+                : t("export.label", { ns: "playground", defaultValue: "Export" })
+            }
+          >
+            {/* No <span> wrapper needed — aria-disabled keeps the button focusable so
+                keyboard users can tab to it, read the tooltip, and hear "dimmed" from
+                screen readers. Native `disabled` would remove it from the tab order. */}
+            <IconButton
+              id="playground-export-button"
+              aria-label={t("export.label", { ns: "playground", defaultValue: "Export" })}
+              aria-controls={isExportMenuOpen ? "playground-export-menu" : undefined}
+              aria-haspopup="menu"
+              aria-expanded={isExportMenuOpen ? true : undefined}
+              aria-disabled={Boolean(isExportDisabled || isExporting) || undefined}
+              onClick={Boolean(isExportDisabled || isExporting) ? undefined : openExportMenu}
+              sx={{
+                color: "white",
+                minWidth: 44,
+                minHeight: 44,
+                opacity: Boolean(isExportDisabled || isExporting) ? 0.4 : 1,
+                pointerEvents: "auto",
+              }}
+            >
+              <FileDownloadIcon />
+            </IconButton>
+          </Tooltip>
+          <Menu
+            id="playground-export-menu"
+            anchorEl={exportAnchor}
+            open={isExportMenuOpen}
+            onClose={closeExportMenu}
+            MenuListProps={{ "aria-label": t("export.label", { ns: "playground", defaultValue: "Export" }) }}
+          >
+            <MenuItem onClick={() => handleExportSelect("json")}>
+              {t("export.option.json", { ns: "playground", defaultValue: "Export as JSON" })}
+            </MenuItem>
+            <MenuItem onClick={() => handleExportSelect("pdf")}>
+              {t("export.option.pdf", { ns: "playground", defaultValue: "Export as PDF" })}
+            </MenuItem>
+            <MenuItem onClick={() => handleExportSelect("word")}>
+              {t("export.option.word", { ns: "playground", defaultValue: "Export as Word (.docx)" })}
+            </MenuItem>
+          </Menu>
           <Button
             variant="contained"
             disableElevation
