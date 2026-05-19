@@ -7,9 +7,12 @@
 
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
+export type ToastSeverity = "success" | "warning" | "error";
+
 export interface ToastMessage {
   id: string;
   message: string;
+  severity?: ToastSeverity;
   isError?: boolean;
 }
 
