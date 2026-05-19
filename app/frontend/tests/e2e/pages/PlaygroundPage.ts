@@ -1,7 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
-
-const PLAYGROUND_DISCLAIMER_STORAGE_KEY = 'playground_disclaimer_state_v1';
+import { PLAYGROUND_DISCLAIMER_STORAGE_KEY } from '../../../src/playground/utils/disclaimerState';
 
 interface GotoOptions {
   acceptDisclaimers?: boolean;

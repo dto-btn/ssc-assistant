@@ -1,7 +1,8 @@
 import { test, expect } from './fixtures/playground';
-
-const PLAYGROUND_DISCLAIMER_STORAGE_KEY = 'playground_disclaimer_state_v1';
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+import {
+  PLAYGROUND_DISCLAIMER_STORAGE_KEY,
+  THIRTY_DAYS_MS,
+} from '../../src/playground/utils/disclaimerState';
 
 /**
  * Verify disclaimer flow appears in sequence and can be accepted end-to-end.

@@ -49,8 +49,6 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
     [state],
   );
 
-  const shouldShow = currentDisclaimer !== null;
-
   const handleAccept = () => {
     if (!currentDisclaimer) {
       return;
@@ -69,6 +67,10 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
     void i18n.changeLanguage(newLanguage);
   };
 
+  const handleMandatoryDialogClose = () => {
+    // The disclaimer must be acknowledged explicitly via the Accept button.
+  };
+
   if (!currentDisclaimer) {
     return null;
   }
@@ -78,10 +80,12 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
 
   return (
     <Dialog
-      open={shouldShow}
+      open
       fullWidth
       maxWidth="md"
       fullScreen={isSmallScreen}
+      disableEscapeKeyDown
+      onClose={handleMandatoryDialogClose}
       aria-labelledby="playground-disclaimer-title"
       aria-describedby={descriptionId}
     >
@@ -90,8 +94,8 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
         <Typography id={descriptionId} component="p" sx={{ mb: 3 }}>
           {t(contentKeys.body)}
         </Typography>
-        <Typography component="p" sx={{ fontWeight: 700 }}>
-          {t(contentKeys.strong)}
+        <Typography component="p">
+          <strong>{t(contentKeys.strong)}</strong>
         </Typography>
       </DialogContent>
       <DialogActions
@@ -100,7 +104,7 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
           px: 3,
           gap: 1,
           flexWrap: "wrap",
-          flexDirection: { xs: "column-reverse", sm: "row" },
+          flexDirection: { xs: "column", sm: "row" },
           alignItems: { xs: "stretch", sm: "center" },
           "& .MuiButton-root": {
             minHeight: 44,
@@ -108,6 +112,9 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
           },
         }}
       >
+        <Button id="playground-disclaimer-language-button" onClick={handleLanguageToggle}>
+          {i18n.language === "en" ? t("disclaimer.modal.switchToFrench") : t("disclaimer.modal.switchToEnglish")}
+        </Button>
         <Button
           id="playground-accept-disclaimer-button"
           color="primary"
@@ -115,9 +122,6 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
           onClick={handleAccept}
         >
           {t("disclaimer.modal.accept")}
-        </Button>
-        <Button id="playground-disclaimer-language-button" onClick={handleLanguageToggle}>
-          {i18n.language === "en" ? t("disclaimer.modal.switchToFrench") : t("disclaimer.modal.switchToEnglish")}
         </Button>
       </DialogActions>
     </Dialog>
