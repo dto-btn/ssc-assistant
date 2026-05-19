@@ -155,52 +155,54 @@ const TopBar: React.FC<TopBarProps> = ({
               </IconButton>
             </Tooltip>
           )}
-          <Tooltip
-            title={
-              isExportDisabled
-                ? t("export.disabled.noSession", { ns: "playground", defaultValue: "Select a chat to export" })
-                : t("export.label", { ns: "playground", defaultValue: "Export" })
-            }
-          >
-            {/* No <span> wrapper needed — aria-disabled keeps the button focusable so
-                keyboard users can tab to it, read the tooltip, and hear "dimmed" from
-                screen readers. Native `disabled` would remove it from the tab order. */}
-            <IconButton
-              id="playground-export-button"
-              aria-label={t("export.label", { ns: "playground", defaultValue: "Export" })}
-              aria-controls={isExportMenuOpen ? "playground-export-menu" : undefined}
-              aria-haspopup="menu"
-              aria-expanded={isExportMenuOpen ? true : undefined}
-              aria-disabled={Boolean(isExportDisabled || isExporting) || undefined}
-              onClick={Boolean(isExportDisabled || isExporting) ? undefined : openExportMenu}
-              sx={{
-                color: "white",
-                minWidth: 44,
-                minHeight: 44,
-                opacity: Boolean(isExportDisabled || isExporting) ? 0.4 : 1,
-                pointerEvents: "auto",
-              }}
+          <Box sx={{ display: { xs: "none", sm: "flex" } }}>
+            <Tooltip
+              title={
+                isExportDisabled
+                  ? t("export.disabled.noSession", { ns: "playground", defaultValue: "Select a chat to export" })
+                  : t("export.label", { ns: "playground", defaultValue: "Export" })
+              }
             >
-              <FileDownloadIcon />
-            </IconButton>
-          </Tooltip>
-          <Menu
-            id="playground-export-menu"
-            anchorEl={exportAnchor}
-            open={isExportMenuOpen}
-            onClose={closeExportMenu}
-            MenuListProps={{ "aria-label": t("export.label", { ns: "playground", defaultValue: "Export" }) }}
-          >
-            <MenuItem onClick={() => handleExportSelect("json")}>
-              {t("export.option.json", { ns: "playground", defaultValue: "Export as JSON" })}
-            </MenuItem>
-            <MenuItem onClick={() => handleExportSelect("pdf")}>
-              {t("export.option.pdf", { ns: "playground", defaultValue: "Export as PDF" })}
-            </MenuItem>
-            <MenuItem onClick={() => handleExportSelect("word")}>
-              {t("export.option.word", { ns: "playground", defaultValue: "Export as Word (.docx)" })}
-            </MenuItem>
-          </Menu>
+              {/* No <span> wrapper needed — aria-disabled keeps the button focusable so
+                  keyboard users can tab to it, read the tooltip, and hear "dimmed" from
+                  screen readers. Native `disabled` would remove it from the tab order. */}
+              <IconButton
+                id="playground-export-button"
+                aria-label={t("export.label", { ns: "playground", defaultValue: "Export" })}
+                aria-controls={isExportMenuOpen ? "playground-export-menu" : undefined}
+                aria-haspopup="menu"
+                aria-expanded={isExportMenuOpen ? true : undefined}
+                aria-disabled={Boolean(isExportDisabled || isExporting) || undefined}
+                onClick={Boolean(isExportDisabled || isExporting) ? undefined : openExportMenu}
+                sx={{
+                  color: "white",
+                  minWidth: 44,
+                  minHeight: 44,
+                  opacity: Boolean(isExportDisabled || isExporting) ? 0.4 : 1,
+                  pointerEvents: "auto",
+                }}
+              >
+                <FileDownloadIcon />
+              </IconButton>
+            </Tooltip>
+            <Menu
+              id="playground-export-menu"
+              anchorEl={exportAnchor}
+              open={isExportMenuOpen}
+              onClose={closeExportMenu}
+              MenuListProps={{ "aria-label": t("export.label", { ns: "playground", defaultValue: "Export" }) }}
+            >
+              <MenuItem onClick={() => handleExportSelect("json")}>
+                {t("export.option.json", { ns: "playground", defaultValue: "Export as JSON" })}
+              </MenuItem>
+              <MenuItem onClick={() => handleExportSelect("pdf")}>
+                {t("export.option.pdf", { ns: "playground", defaultValue: "Export as PDF" })}
+              </MenuItem>
+              <MenuItem onClick={() => handleExportSelect("word")}>
+                {t("export.option.word", { ns: "playground", defaultValue: "Export as Word (.docx)" })}
+              </MenuItem>
+            </Menu>
+          </Box>
           <Button
             variant="contained"
             disableElevation
