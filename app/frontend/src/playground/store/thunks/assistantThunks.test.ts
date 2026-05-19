@@ -4,7 +4,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import sessionsReducer from "../slices/sessionSlice";
 import chatReducer from "../slices/chatSlice";
 import { addMessage } from "../slices/chatSlice";
-import toastReducer from "../slices/toastSlice";
+import toastReducer, { ToastMessage } from "../slices/toastSlice";
 import {
   deriveSessionName,
   hasRequiredEpsLegacyCitations,
@@ -169,7 +169,11 @@ const seedSystemMessages = (
 };
 
 const getContextTruncationWarningToasts = (store: ReturnType<typeof makeStore>) => {
-  return store.getState().toast.toasts.filter((toast) => toast.message === "playground:assistant.contextTruncated.toast");
+  return store
+    .getState()
+    .toast
+    .toasts
+    .filter((toast: ToastMessage) => toast.message === "playground:assistant.contextTruncated.toast");
 };
 
 describe("deriveSessionName", () => {
