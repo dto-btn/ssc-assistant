@@ -17,8 +17,8 @@ jobs:
       run:
         working-directory: app/frontend
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v6
       with:
         node-version: lts/*
         cache: 'npm'
@@ -29,7 +29,7 @@ jobs:
       id: playwright-version
       run: echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_OUTPUT
     - name: Cache Playwright browsers
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: playwright-cache
       with:
         path: ~/.cache/ms-playwright
@@ -48,7 +48,7 @@ jobs:
         echo "PLAYWRIGHT_E2E_ACCESS_TOKEN=$TOKEN" >> $GITHUB_ENV
     - name: Run Playwright tests
       run: npx playwright test
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: ${{ !cancelled() }}
       with:
         name: playwright-report
