@@ -20,7 +20,7 @@ import {
   PlaygroundBrArtifacts,
 } from "../slices/chatSlice";
 import { setIsSessionNew, renameSession } from "../slices/sessionSlice";
-import { addToast } from "../slices/toastSlice";
+import { addToast, ToastSeverity } from "../slices/toastSlice";
 import {
   completionService,
   CompletionMessage,
@@ -880,6 +880,13 @@ const trimCompletionMessagesToLimit = (
   messages: CompletionMessage[],
   maxMessages: number = MAX_COMPLETION_MESSAGES,
 ): { messages: CompletionMessage[]; wasTruncated: boolean } => {
+  if (messages.length <= maxMessages) {
+    return {
+      messages,
+      wasTruncated: false,
+    };
+  }
+
   let leadingSystemMessageCount = 0;
 
   while (
@@ -891,6 +898,14 @@ const trimCompletionMessagesToLimit = (
 
   const leadingSystemMessages = messages.slice(0, leadingSystemMessageCount);
   const historyMessages = messages.slice(leadingSystemMessageCount);
+
+  if (leadingSystemMessages.length >= maxMessages) {
+    return {
+      messages: leadingSystemMessages.slice(-maxMessages),
+      wasTruncated: true,
+    };
+  }
+
   const availableHistorySlots = Math.max(0, maxMessages - leadingSystemMessages.length);
   const trimmedHistoryMessages = historyMessages.length > availableHistorySlots
     ? historyMessages.slice(-availableHistorySlots)
@@ -898,8 +913,19 @@ const trimCompletionMessagesToLimit = (
 
   return {
     messages: [...leadingSystemMessages, ...trimmedHistoryMessages],
-    wasTruncated: trimmedHistoryMessages.length < historyMessages.length,
+    wasTruncated: true,
   };
+};
+
+const hasToastWithSeverity = (
+  state: RootState,
+  message: string,
+  severity: ToastSeverity,
+): boolean => {
+  return state.toast.toasts.some((toast) => {
+    const toastSeverity: ToastSeverity = toast.severity || (toast.isError ? "error" : "success");
+    return toast.message === message && toastSeverity === severity;
+  });
 };
 
 /**
@@ -1924,13 +1950,17 @@ export const sendAssistantMessage = ({
       const initialRun = buildMessagesForRun(successfulCompletionServers);
 
       if (initialRun.wasTruncated) {
-        dispatch(
-          addToast({
-            message: i18n.t("playground:assistant.contextTruncated.toast"),
-            severity: "warning",
-            isError: false,
-          })
-        );
+        const truncationWarningMessage = i18n.t("playground:assistant.contextTruncated.toast");
+
+        if (!hasToastWithSeverity(getState(), truncationWarningMessage, "warning")) {
+          dispatch(
+            addToast({
+              message: truncationWarningMessage,
+              severity: "warning",
+              isError: false,
+            })
+          );
+        }
       }
 
       const initialCompletion = await runCompletion(

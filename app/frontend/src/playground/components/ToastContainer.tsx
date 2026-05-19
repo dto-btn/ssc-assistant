@@ -9,18 +9,28 @@ import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
 import { Snackbar, Alert } from "@mui/material";
-import { removeToast } from "../store/slices/toastSlice";
+import { removeToast, ToastMessage, ToastSeverity } from "../store/slices/toastSlice";
 
 const ToastContainer: React.FC = () => {
   const toasts = useSelector((state: RootState) => state.toast.toasts);
   const dispatch = useDispatch();
 
-  const getSeverity = (toast: { severity?: "success" | "warning" | "error"; isError?: boolean }) => {
+  const getSeverity = (toast: Pick<ToastMessage, "severity" | "isError">): ToastSeverity => {
     if (toast.severity) {
       return toast.severity;
     }
 
     return toast.isError ? "error" : "success";
+  };
+
+  const getAutoHideDuration = (toast: Pick<ToastMessage, "severity" | "isError">): number | null => {
+    const severity = getSeverity(toast);
+    if (severity === "success") {
+      return 3000;
+    }
+
+    // Keep high-signal toasts visible longer for accessibility and readability.
+    return 10000;
   };
 
   return (
@@ -29,7 +39,7 @@ const ToastContainer: React.FC = () => {
         <Snackbar
           key={toast.id}
           open
-          autoHideDuration={3000}
+          autoHideDuration={getAutoHideDuration(toast)}
           onClose={() => dispatch(removeToast(toast.id))}
           anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
         >

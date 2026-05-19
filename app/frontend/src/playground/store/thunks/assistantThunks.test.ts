@@ -4,6 +4,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import sessionsReducer from "../slices/sessionSlice";
 import chatReducer from "../slices/chatSlice";
 import { addMessage } from "../slices/chatSlice";
+import toastReducer from "../slices/toastSlice";
 import {
   deriveSessionName,
   hasRequiredEpsLegacyCitations,
@@ -98,6 +99,7 @@ const makeStore = ({
     reducer: {
       sessions: sessionsReducer,
       chat: chatReducer,
+      toast: toastReducer,
       auth: authReducer,
       tools: toolsReducer,
       models: modelsReducer,
@@ -149,6 +151,25 @@ const seedSessionMessages = (
       })
     );
   }
+};
+
+const seedSystemMessages = (
+  store: ReturnType<typeof makeStore>,
+  count: number,
+): void => {
+  for (let index = 0; index < count; index += 1) {
+    store.dispatch(
+      addMessage({
+        sessionId: "session-1",
+        role: "system",
+        content: `System seed message ${index + 1}`,
+      })
+    );
+  }
+};
+
+const getContextTruncationWarningToasts = (store: ReturnType<typeof makeStore>) => {
+  return store.getState().toast.toasts.filter((toast) => toast.message === "playground:assistant.contextTruncated.toast");
 };
 
 describe("deriveSessionName", () => {
@@ -488,6 +509,27 @@ describe("sendAssistantMessage auto-rename", () => {
     expect(request.messages[0]).toMatchObject({ role: "system" });
     expect(request.messages[1]).toMatchObject({ role: "system" });
     expect(request.messages[2]).toMatchObject({ role: "system" });
+    expect(getContextTruncationWarningToasts(store)).toHaveLength(1);
+  });
+
+  it("hard-caps outbound payload at 10 even when leading system messages exceed the limit", async () => {
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [],
+    });
+    seedSystemMessages(store, 12);
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Summarize the policy guidance.",
+      }) as any,
+    );
+
+    const request = createCompletionMock.mock.calls[0][0];
+    expect(request.messages).toHaveLength(10);
+    expect((request.messages as Array<{ role: string }>).every((message) => message.role === "system")).toBe(true);
+    expect(getContextTruncationWarningToasts(store)).toHaveLength(1);
   });
 
   it("caps the outbound fallback completion payload at 10 messages after retrying without tools", async () => {
@@ -512,6 +554,30 @@ describe("sendAssistantMessage auto-rename", () => {
     const retryRequest = createCompletionMock.mock.calls[1][0];
     expect(retryRequest.messages).toHaveLength(10);
     expect(retryRequest.messages[0]).toMatchObject({ role: "system" });
+  });
+
+  it("does not stack duplicate truncation warning toasts across repeated truncation events", async () => {
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [],
+    });
+    seedSessionMessages(store, 12);
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "First request.",
+      }) as any,
+    );
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Second request.",
+      }) as any,
+    );
+
+    expect(getContextTruncationWarningToasts(store)).toHaveLength(1);
   });
 
   it("does not add the grounding prompt when no MCP servers are routed", async () => {
