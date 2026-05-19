@@ -28,16 +28,7 @@ import { useChatService } from "../../hooks/useChatService";
 import { useApiRequestService } from "./useApiRequestService";
 import { tt } from "../../i18n/tt";
 import Suggestions from "../../components/Suggestions";
-import {
-  downloadSessionExportJson,
-  downloadSessionExportPdf,
-  downloadSessionExportWord,
-  type PlaygroundExportFormat,
-} from "../../playground/export/sessionExport";
-import {
-  buildLegacySessionExportDocument,
-  resolveLegacyAttachmentData,
-} from "../../util/legacyChatExportAdapter";
+import type { PlaygroundExportFormat } from "../../playground/export/sessionExport";
 
 const MainScreen = () => {
   const { t } = useTranslation();
@@ -234,6 +225,14 @@ const MainScreen = () => {
 
     setIsExporting(true);
     try {
+      const [
+        { downloadSessionExportJson, downloadSessionExportPdf, downloadSessionExportWord },
+        { buildLegacySessionExportDocument, resolveLegacyAttachmentData },
+      ] = await Promise.all([
+        import("../../playground/export/sessionExport"),
+        import("../../util/legacyChatExportAdapter"),
+      ]);
+
       const { sessionName, document } = buildLegacySessionExportDocument(
         currentChatHistory,
         currentChatIndex,
