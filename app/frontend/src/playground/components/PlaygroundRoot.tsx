@@ -14,6 +14,7 @@ import { useAuth } from "../store/hooks/useAuth";
 import { apiUse } from "../../authConfig";
 import isFeatureEnabled from "../FeatureGate";
 import SessionBootstrapper from "./SessionBootstrapper";
+import PlaygroundDisclaimerDialog from "./PlaygroundDisclaimerDialog";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { loadServers } from "../store/slices/toolSlice";
 import {
@@ -62,6 +63,7 @@ export const PlaygroundShell: React.FC = () => {
           }
         }}
       />
+      <PlaygroundDisclaimerDialog />
       {isFeatureEnabled("FeedbackForm") && <FeedbackForm />}
     </Box>
   );
