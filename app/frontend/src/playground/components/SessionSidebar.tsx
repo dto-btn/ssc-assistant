@@ -558,7 +558,6 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         variant="temporary"
         open={isMobileSidebarOpen}
         onClose={() => dispatch(closeMobileSidebar())}
-        ModalProps={{ keepMounted: true }}
       >
         {sidebarContent}
       </Drawer>

@@ -174,6 +174,7 @@ const TopBar: React.FC<TopBarProps> = ({
               aria-disabled={Boolean(isExportDisabled || isExporting) || undefined}
               onClick={Boolean(isExportDisabled || isExporting) ? undefined : openExportMenu}
               sx={{
+                display: { xs: "none", sm: "inline-flex" },
                 color: "white",
                 minWidth: 44,
                 minHeight: 44,

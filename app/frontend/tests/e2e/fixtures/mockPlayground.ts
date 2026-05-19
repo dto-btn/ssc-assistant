@@ -77,7 +77,12 @@ function splitText(text: string, chunkSize: number): string[] {
  * Serialize one SSE event in the format expected by the OpenAI responses client.
  */
 function formatSseEvent(payload: unknown): string {
-  return `data: ${JSON.stringify(payload)}\n\n`;
+  const eventType =
+    payload && typeof payload === 'object' && 'type' in payload && typeof (payload as { type?: unknown }).type === 'string'
+      ? (payload as { type: string }).type
+      : null;
+
+  return `${eventType ? `event: ${eventType}\n` : ''}data: ${JSON.stringify(payload)}\n\n`;
 }
 
 /**
@@ -201,6 +206,53 @@ function buildAssistantStream(response: MockStreamResponse): string[] {
 
   events.push(
     formatSseEvent({
+      type: 'response.output_text.done',
+      sequence_number: sequenceNumber++,
+      output_index: 0,
+      content_index: 0,
+      item_id: `${responseId}-message`,
+      text: response.text,
+    }),
+  );
+
+  events.push(
+    formatSseEvent({
+      type: 'response.content_part.done',
+      sequence_number: sequenceNumber++,
+      output_index: 0,
+      content_index: 0,
+      item_id: `${responseId}-message`,
+      part: {
+        type: 'output_text',
+        text: response.text,
+        annotations: [],
+      },
+    }),
+  );
+
+  events.push(
+    formatSseEvent({
+      type: 'response.output_item.done',
+      sequence_number: sequenceNumber++,
+      output_index: 0,
+      item: {
+        id: `${responseId}-message`,
+        type: 'message',
+        status: 'completed',
+        role: 'assistant',
+        content: [
+          {
+            type: 'output_text',
+            text: response.text,
+            annotations: [],
+          },
+        ],
+      },
+    }),
+  );
+
+  events.push(
+    formatSseEvent({
       type: 'response.completed',
       sequence_number: sequenceNumber++,
       response: fullResponse,
@@ -306,7 +358,8 @@ export class MockPlaygroundApi {
             ? input.toString()
             : input.url;
 
-        if (!url.includes('/v1/responses')) {
+        const isResponsesRequest = /\/responses(?:\?|$)/.test(url) || url.includes('/v1/responses');
+        if (!isResponsesRequest) {
           return originalFetch(input, init);
         }
 
@@ -371,6 +424,9 @@ export class MockPlaygroundApi {
 
     const context = this.page.context();
 
+    await context.route('**/v1/responses**', async (route) => this.handleResponsesApi(route));
+    await context.route('**/responses', async (route) => this.handleResponsesApi(route));
+    await context.route('**/responses?**', async (route) => this.handleResponsesApi(route));
     await context.route('**/api/playground/files-for-session**', async (route) => this.handleListSessionFiles(route));
     await context.route('**/api/playground/upload**', async (route) => this.handleUpload(route));
     await context.route('**/api/playground/extract-file-text**', async (route) => this.handleExtractFile(route));
@@ -378,6 +434,42 @@ export class MockPlaygroundApi {
     await context.route('**/api/playground/sessions/*/rename', async (route) => this.handleRenameSession(route));
     await context.route('**/api/playground/sessions/*', async (route) => this.handleDeleteSession(route));
     await context.route('**/api/1.0/feedback**', async (route) => this.handleFeedback(route));
+  }
+
+  /**
+   * Fulfill OpenAI-compatible Responses API calls with deterministic SSE payloads.
+   */
+  private async handleResponsesApi(route: Route): Promise<void> {
+    const requestUrl = new URL(route.request().url());
+    if (!requestUrl.pathname.endsWith('/responses') && !requestUrl.pathname.includes('/v1/responses')) {
+      await route.fallback();
+      return;
+    }
+
+    const scenario = await this.page.evaluate((defaultAssistantResponse) => {
+      const state = window.__SSC_PLAYGROUND_E2E__;
+      return state?.responseQueue.shift() ?? state?.persistentResponse ?? { text: defaultAssistantResponse };
+    }, DEFAULT_ASSISTANT_RESPONSE) as MockStreamResponse;
+
+    if (scenario.errorMessage) {
+      await route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: scenario.errorMessage }),
+      });
+      return;
+    }
+
+    const sseBody = buildAssistantStream(scenario).join('');
+    await route.fulfill({
+      status: 200,
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+      },
+      body: sseBody,
+    });
   }
 
   /**
