@@ -9,10 +9,8 @@ import React from "react";
 import { Box, useMediaQuery, useTheme } from "@mui/material";
 import SessionSidebar from "./SessionSidebar";
 import ChatArea from "./ChatArea";
-import FeedbackForm from "./FeedbackForm";
 import { useAuth } from "../store/hooks/useAuth";
 import { apiUse } from "../../authConfig";
-import isFeatureEnabled from "../FeatureGate";
 import SessionBootstrapper from "./SessionBootstrapper";
 import PlaygroundDisclaimerDialog from "./PlaygroundDisclaimerDialog";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -64,7 +62,6 @@ export const PlaygroundShell: React.FC = () => {
         }}
       />
       <PlaygroundDisclaimerDialog />
-      {isFeatureEnabled("FeedbackForm") && <FeedbackForm />}
     </Box>
   );
 };

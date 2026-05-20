@@ -7,6 +7,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import logo from "../../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { DevBanner } from "./DevBanner";
 import TopmenuMicrosofTeamsIcon from "./TopmenuMicrosofTeamsIcon.svg";
+import FeedbackForm from "./FeedbackForm";
+import isFeatureEnabled from "../FeatureGate";
 
 /**
  * TopBar component for the playground.
@@ -163,6 +165,8 @@ const TopBar: React.FC<TopBarProps> = ({ onToggleSidebar, isSidebarOpen, isMobil
               {t("button.joinchat", { ns: "translations" })}
             </Box>
           </Button>
+
+          {isFeatureEnabled("FeedbackForm") && <FeedbackForm placement="topbar" />}
 
           <Button
             onClick={handleLanguageToggle}

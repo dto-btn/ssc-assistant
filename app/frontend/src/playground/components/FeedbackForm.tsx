@@ -26,13 +26,18 @@ import ThumbUpAltOutlinedIcon from "@mui/icons-material/ThumbUpAltOutlined";
 import ThumbDownAltOutlinedIcon from "@mui/icons-material/ThumbDownAltOutlined";
 import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
 import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
+import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
 import { sendFeedback } from "../../api/api";
 import { addToast } from "../store/slices/toastSlice";
 import { AppDispatch, RootState } from "../store";
 
-const FeedbackForm: React.FC = () => {
+interface FeedbackFormProps {
+  placement?: "floating" | "topbar";
+}
+
+const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) => {
   const { t } = useTranslation("playground");
   const dispatch = useDispatch<AppDispatch>();
   const theme = useTheme();
@@ -76,18 +81,28 @@ const FeedbackForm: React.FC = () => {
         variant="contained"
         disableElevation
         onClick={() => setOpen(true)}
+        startIcon={<RateReviewOutlinedIcon sx={{ color: "currentColor" }} />}
         sx={{
-          position: "fixed",
-          right: isSmallScreen ? 12 : 16,
-          bottom: isSmallScreen ? 12 : 16,
-          zIndex: 2000,
+          ...(placement === "floating"
+            ? {
+                position: "fixed",
+                right: isSmallScreen ? 12 : 16,
+                bottom: isSmallScreen ? 12 : 16,
+                zIndex: 2000,
+              }
+            : {}),
           minWidth: isSmallScreen ? 48 : 44,
           minHeight: 44,
-          px: isSmallScreen ? 2 : 1.75,
-          bgcolor: "primary.dark",
-          color: "primary.contrastText",
+          px: placement === "topbar" ? { xs: 1.25, sm: 1.5 } : isSmallScreen ? 2 : 1.75,
+          bgcolor: placement === "topbar" ? "white" : "primary.dark",
+          color: placement === "topbar" ? "#3f479a" : "primary.contrastText",
+          textTransform: "none",
+          fontWeight: "bold",
+          borderRadius: "8px",
+          fontSize: { xs: "0.75rem", sm: "0.875rem" },
           "&:hover": {
-            bgcolor: "primary.main",
+            bgcolor: placement === "topbar" ? "#f5f5f5" : "primary.main",
+            color: placement === "topbar" ? "#2e3470" : "primary.contrastText",
           },
         }}
       >
