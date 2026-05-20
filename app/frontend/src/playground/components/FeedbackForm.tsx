@@ -42,7 +42,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) =
   const dispatch = useDispatch<AppDispatch>();
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
-  const currentSessionId = useSelector((state: RootState) => state.sessions.currentSessionId);
+  const currentSessionId = useSelector((state: RootState) => state.sessions?.currentSessionId ?? null);
 
   const [open, setOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
