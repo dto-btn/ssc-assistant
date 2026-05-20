@@ -1,6 +1,14 @@
 import { FC, useEffect } from "react";
 import { useLocation } from "react-router";
 
+/**
+ * Google Analytics integration for SPA navigation tracking.
+ *
+ * This module lazily loads the GA4 gtag script, initializes GA once,
+ * and sends manual `page_view` events whenever React Router location changes.
+ * It does not render UI; it is a side-effect-only tracker component.
+ */
+
 // Extend the browser Window type with GA fields used by this component.
 declare global {
   interface Window {
@@ -52,6 +60,12 @@ const ensureGaLoaded = (): boolean => {
   return true;
 };
 
+/**
+ * Tracks page views for the current route tree.
+ *
+ * Mount this once near the top of routing (for example in a layout that wraps
+ * all routes) so every client-side navigation produces one GA `page_view` event.
+ */
 export const GoogleAnalyticsTracker: FC = () => {
   const location = useLocation();
 
