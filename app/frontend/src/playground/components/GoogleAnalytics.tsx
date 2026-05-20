@@ -1,11 +1,10 @@
 import { FC, useEffect } from "react";
-import { useLocation } from "react-router";
 
 /**
- * Google Analytics integration for SPA navigation tracking.
+ * Google Analytics integration for playground page tracking.
  *
  * This module lazily loads the GA4 gtag script, initializes GA once,
- * and sends manual `page_view` events whenever React Router location changes.
+ * and sends one manual `page_view` event when the playground route mounts.
  * It does not render UI; it is a side-effect-only tracker component.
  */
 
@@ -56,7 +55,7 @@ const ensureGaLoaded = (): boolean => {
   // Run one-time GA initialization to avoid duplicate config calls.
   if (!window.__gaInitialized) {
     gtag("js", new Date());
-    // Disable automatic first page_view so SPA route changes are tracked consistently.
+    // Disable automatic first page_view so we control exactly when it is sent.
     gtag("config", measurementId, { send_page_view: false });
     window.__gaInitialized = true;
   }
@@ -65,14 +64,12 @@ const ensureGaLoaded = (): boolean => {
 };
 
 /**
- * Tracks page views for the current route tree.
+ * Tracks a page view when the playground route mounts.
  *
- * Mount this in the playground route so only playground navigations emit
+ * Mount this in the playground route so only playground visits emit
  * GA `page_view` events.
  */
 export const GoogleAnalyticsTracker: FC = () => {
-  const location = useLocation();
-
   useEffect(() => {
     // Exit early when GA is disabled or not configured.
     if (!ensureGaLoaded()) {
@@ -84,13 +81,12 @@ export const GoogleAnalyticsTracker: FC = () => {
       return;
     }
 
-    // Emit one manual page_view for each client-side route change.
+    // Emit one manual page_view when the playground route mounts.
     gtag("event", "page_view", {
       page_title: document.title,
       page_location: window.location.href,
     });
-    // Depend on route fields so each navigation triggers exactly one event.
-  }, [location.pathname, location.search, location.hash]);
+  }, []);
 
   return null;
 };

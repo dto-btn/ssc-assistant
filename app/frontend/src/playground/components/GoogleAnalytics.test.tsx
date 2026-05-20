@@ -52,7 +52,7 @@ describe("GoogleAnalyticsTracker", () => {
     });
   });
 
-  it("emits page_view on route changes when GA is enabled", async () => {
+  it("emits one page_view on mount when GA is enabled", async () => {
     vi.stubEnv("VITE_APP_ENV", "prod");
     vi.stubEnv("VITE_GA_MEASUREMENT_ID", "G-TEST1234");
 
@@ -86,10 +86,10 @@ describe("GoogleAnalyticsTracker", () => {
     });
 
     await waitFor(() => {
-      expect(gtagSpy).toHaveBeenCalledWith(
+      expect(gtagSpy).not.toHaveBeenCalledWith(
         "event",
         "page_view",
-        expect.not.objectContaining({ page_path: expect.anything() })
+        expect.anything()
       );
     });
   });
