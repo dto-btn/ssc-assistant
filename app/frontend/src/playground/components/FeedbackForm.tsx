@@ -93,20 +93,26 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) =
             : {}),
           minWidth: isSmallScreen ? 48 : 44,
           minHeight: 44,
-          px: placement === "topbar" ? { xs: 1.25, sm: 1.5 } : isSmallScreen ? 2 : 1.75,
+          px: placement === "topbar" ? { xs: 0, sm: 1.5 } : isSmallScreen ? 2 : 1.75,
           bgcolor: placement === "topbar" ? "white" : "primary.dark",
           color: placement === "topbar" ? "#3f479a" : "primary.contrastText",
           textTransform: "none",
           fontWeight: "bold",
           borderRadius: "8px",
           fontSize: { xs: "0.75rem", sm: "0.875rem" },
+          "& .MuiButton-startIcon": {
+            marginLeft: placement === "topbar" ? { xs: 0, sm: -0.5 } : undefined,
+            marginRight: placement === "topbar" ? { xs: 0, sm: 1 } : undefined,
+          },
           "&:hover": {
             bgcolor: placement === "topbar" ? "#f5f5f5" : "primary.main",
             color: placement === "topbar" ? "#2e3470" : "primary.contrastText",
           },
         }}
       >
-        {t("feedback")}
+        <Box component="span" sx={{ display: placement === "topbar" ? { xs: "none", sm: "inline" } : "inline" }}>
+          {t("feedback")}
+        </Box>
       </Button>
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" fullScreen={isSmallScreen}>
         <DialogTitle>{t("feedback.system.title")}</DialogTitle>
