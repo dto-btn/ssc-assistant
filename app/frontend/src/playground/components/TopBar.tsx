@@ -88,7 +88,7 @@ const TopBar: React.FC<TopBarProps> = ({
             alignItems: "center",
             gap: "0.5rem",
             userSelect: "none",
-            flexShrink: 1,
+            flex: "1 1 0%",
             minWidth: 0,
             overflow: "hidden",
           }}
@@ -139,7 +139,7 @@ const TopBar: React.FC<TopBarProps> = ({
           </Box>
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: { xs: "0.5rem", sm: "1rem" } }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: { xs: "0.5rem", sm: "1rem" }, flexShrink: 0 }}>
           {isMobile && isMobileSidebarOpen && (
             <Tooltip title={t("sidebar.close", { ns: "playground" })}>
               <IconButton

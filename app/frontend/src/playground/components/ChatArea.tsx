@@ -106,7 +106,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   const renderHeader = () => {
     return (
       <Box display="flex" alignItems="center" width="100%">
-        <Box flexGrow={1}>
+        <Box flexGrow={1} minWidth={0}>
           <TopBar 
             onToggleSidebar={onOpenSidebar} 
             isSidebarOpen={isSidebarOpen}
