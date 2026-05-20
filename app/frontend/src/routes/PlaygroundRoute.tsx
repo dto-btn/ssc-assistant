@@ -1,5 +1,6 @@
 import React from 'react';
 import Playground from '../playground/Playground';
+import { GoogleAnalyticsTracker } from '../playground/components/GoogleAnalytics';
 
 // Load environment variables from .env file
 
@@ -18,7 +19,12 @@ const PlaygroundRoute: React.FC<PlaygroundProps> = (props) => {
         return null;
     }
 
-    return <Playground {...props} />;
+    return (
+        <>
+            <GoogleAnalyticsTracker />
+            <Playground {...props} />
+        </>
+    );
 };
 
 export default PlaygroundRoute;

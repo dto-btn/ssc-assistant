@@ -13,9 +13,9 @@ import { useLocation } from "react-router";
 declare global {
   interface Window {
     // GA command queue used by gtag before/while the external script initializes.
-    dataLayer: unknown[];
+    dataLayer?: unknown[];
     // Global GA event/config function injected by the gtag script (or our local stub).
-    gtag: (...args: unknown[]) => void;
+    gtag?: (...args: unknown[]) => void;
     // App-level flag to ensure GA config runs once per page load.
     __gaInitialized?: boolean;
   }
@@ -46,16 +46,18 @@ const ensureGaLoaded = (): boolean => {
   }
 
   // Create dataLayer/gtag stubs immediately so events can be queued before script load completes.
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = window.gtag || function gtag(...args: unknown[]) {
-    window.dataLayer.push(args);
+  const dataLayer = window.dataLayer ?? [];
+  window.dataLayer = dataLayer;
+  const gtag = window.gtag ?? function gtag(...args: unknown[]) {
+    dataLayer.push(args);
   };
+  window.gtag = gtag;
 
   // Run one-time GA initialization to avoid duplicate config calls.
   if (!window.__gaInitialized) {
-    window.gtag("js", new Date());
+    gtag("js", new Date());
     // Disable automatic first page_view so SPA route changes are tracked consistently.
-    window.gtag("config", measurementId, { send_page_view: false });
+    gtag("config", measurementId, { send_page_view: false });
     window.__gaInitialized = true;
   }
 
@@ -65,8 +67,8 @@ const ensureGaLoaded = (): boolean => {
 /**
  * Tracks page views for the current route tree.
  *
- * Mount this once near the top of routing (for example in a layout that wraps
- * all routes) so every client-side navigation produces one GA `page_view` event.
+ * Mount this in the playground route so only playground navigations emit
+ * GA `page_view` events.
  */
 export const GoogleAnalyticsTracker: FC = () => {
   const location = useLocation();
@@ -77,14 +79,15 @@ export const GoogleAnalyticsTracker: FC = () => {
       return;
     }
 
-    // Build a stable SPA path that includes query string and hash fragment.
-    const pagePath = `${location.pathname}${location.search}${location.hash}`;
+    const gtag = window.gtag;
+    if (!gtag) {
+      return;
+    }
 
     // Emit one manual page_view for each client-side route change.
-    window.gtag("event", "page_view", {
+    gtag("event", "page_view", {
       page_title: document.title,
       page_location: window.location.href,
-      page_path: pagePath,
     });
     // Depend on route fields so each navigation triggers exactly one event.
   }, [location.pathname, location.search, location.hash]);
