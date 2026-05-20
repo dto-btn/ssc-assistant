@@ -23,6 +23,13 @@ interface MockStoredFile {
   extractedText?: string;
 }
 
+interface FeedbackSubmission {
+  feedback: string;
+  positive: boolean;
+  uuid: string;
+  source?: string;
+}
+
 export interface ArchivedSessionMessageSeed {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -262,6 +269,10 @@ export class MockPlaygroundApi {
 
   private readonly deletedSessionIds = new Set<string>();
 
+  private readonly feedbackSubmissions: FeedbackSubmission[] = [];
+
+  private nextFeedbackErrorStatus: number | null = null;
+
   private uploadCounter = 0;
 
   constructor(private readonly page: Page) {}
@@ -398,6 +409,20 @@ export class MockPlaygroundApi {
         window.__SSC_PLAYGROUND_E2E__.persistentResponse = persistentResponse;
       }
     }, response);
+  }
+
+  /**
+   * Return feedback submissions captured by the mock endpoint.
+   */
+  getFeedbackSubmissions(): FeedbackSubmission[] {
+    return [...this.feedbackSubmissions];
+  }
+
+  /**
+   * Force the next feedback request to fail with a specific HTTP status.
+   */
+  failNextFeedback(status = 500): void {
+    this.nextFeedbackErrorStatus = status;
   }
 
   /**
@@ -616,6 +641,21 @@ export class MockPlaygroundApi {
    * Accept feedback submissions without relying on the shared backend.
    */
   private async handleFeedback(route: Route): Promise<void> {
+    const payload = route.request().postDataJSON() as FeedbackSubmission;
+    this.feedbackSubmissions.push(payload);
+
+    if (this.nextFeedbackErrorStatus !== null) {
+      const status = this.nextFeedbackErrorStatus;
+      this.nextFeedbackErrorStatus = null;
+
+      await route.fulfill({
+        status,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: false }),
+      });
+      return;
+    }
+
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
