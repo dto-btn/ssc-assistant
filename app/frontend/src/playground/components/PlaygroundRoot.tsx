@@ -51,58 +51,64 @@ export const PlaygroundShell: React.FC = () => {
 
   return (
     <Box display="flex" height="100dvh">
-      <Box
-        component="a"
-        href="#playground-ask-question"
-        onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-          const input = document.getElementById("playground-ask-question");
-          if (input) {
+      {/* Skip link inside a nav landmark so axe's region rule is satisfied */}
+      <Box component="nav" aria-label={t("skip.nav.label", { defaultValue: "Page shortcuts" })}>
+        <Box
+          component="a"
+          href="#playground-main-content"
+          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
             e.preventDefault();
-            input.focus();
-          } else {
-            // Input not yet rendered (no active session) — focus New Chat button instead
-            e.preventDefault();
-            const newChatBtn = document.getElementById("new-chat-button");
-            newChatBtn?.focus();
-          }
-        }}
-        sx={{
-          position: "absolute",
-          left: "-9999px",
-          top: "auto",
-          width: "1px",
-          height: "1px",
-          overflow: "hidden",
-          "&:focus": {
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "auto",
-            height: "auto",
-            overflow: "visible",
-            zIndex: 9999,
-            padding: "8px 16px",
-            bgcolor: "primary.main",
-            color: "primary.contrastText",
-            fontWeight: "bold",
-            borderRadius: "0 0 4px 0",
-          },
-        }}
-      >
-        {t("skip.to.chat", { defaultValue: "Skip to chat" })}
+            // Try the chat input first; fall back to the main content wrapper
+            const target =
+              document.getElementById("playground-ask-question") ??
+              document.getElementById("playground-main-content");
+            target?.focus();
+          }}
+          sx={{
+            position: "absolute",
+            left: "-9999px",
+            top: "auto",
+            width: "1px",
+            height: "1px",
+            overflow: "hidden",
+            "&:focus": {
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "auto",
+              height: "auto",
+              overflow: "visible",
+              zIndex: 9999,
+              padding: "8px 16px",
+              bgcolor: "primary.main",
+              color: "primary.contrastText",
+              fontWeight: "bold",
+              borderRadius: "0 0 4px 0",
+            },
+          }}
+        >
+          {t("skip.to.chat", { defaultValue: "Skip to chat" })}
+        </Box>
       </Box>
       <SessionBootstrapper />
       <SessionSidebar isMobile={isMobile} />
-      <ChatArea
-        isSidebarOpen={isMobile ? isMobileSidebarOpen : !isSidebarCollapsed}
-        onOpenSidebar={() => {
-          if (isMobile) {
-            dispatch(isMobileSidebarOpen ? closeMobileSidebar() : openMobileSidebar());
-          } else {
-            dispatch(toggleSidebarCollapsed());
-          }
-        }}
-      />
+      {/* id + tabIndex={-1} give the skip link a stable, always-present focus target */}
+      <Box
+        id="playground-main-content"
+        tabIndex={-1}
+        sx={{ flex: 1, display: "flex", minWidth: 0, "&:focus": { outline: "none" } }}
+      >
+        <ChatArea
+          isSidebarOpen={isMobile ? isMobileSidebarOpen : !isSidebarCollapsed}
+          onOpenSidebar={() => {
+            if (isMobile) {
+              dispatch(isMobileSidebarOpen ? closeMobileSidebar() : openMobileSidebar());
+            } else {
+              dispatch(toggleSidebarCollapsed());
+            }
+          }}
+        />
+      </Box>
       <PlaygroundDisclaimerDialog />
     </Box>
   );
