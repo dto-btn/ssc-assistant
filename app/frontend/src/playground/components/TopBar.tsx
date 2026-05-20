@@ -13,6 +13,8 @@ import TopmenuMicrosofTeamsIcon from "./TopmenuMicrosofTeamsIcon.svg";
 import FeedbackForm from "./FeedbackForm";
 import isFeatureEnabled from "../FeatureGate";
 import type { PlaygroundExportFormat } from "../export/sessionExport";
+import FeedbackForm from "./FeedbackForm";
+import isFeatureEnabled from "../FeatureGate";
 
 /**
  * TopBar component for the playground.
