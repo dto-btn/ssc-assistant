@@ -81,6 +81,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) =
         variant="contained"
         disableElevation
         onClick={() => setOpen(true)}
+        aria-label={t("feedback")}
         startIcon={<RateReviewOutlinedIcon sx={{ color: "currentColor" }} />}
         sx={{
           ...(placement === "floating"
