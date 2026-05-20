@@ -155,7 +155,7 @@ const TopBar: React.FC<TopBarProps> = ({
               </IconButton>
             </Tooltip>
           )}
-          <Box sx={{ display: { xs: "none", sm: "flex" } }}>
+          <Box sx={{ display: "flex" }}>
             <Tooltip
               title={
                 isExportDisabled
