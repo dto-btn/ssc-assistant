@@ -281,6 +281,8 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
       <ListItem
         key={session.id}
         component="li"
+        role="option"
+        aria-selected={session.id === currentSessionId}
         aria-label={session.name}
         disablePadding
         style={style}
@@ -499,6 +501,12 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
               rowComponent={chatItemRender}
               rowProps={{}}
               tabIndex={0}
+              role="listbox"
+              aria-activedescendant={
+                activeIndex >= 0 && sessionsNewestFirst[activeIndex]
+                  ? `session-button-${sessionsNewestFirst[activeIndex].id}`
+                  : undefined
+              }
               tagName="ul"
               style={{ width: LEFT_MENU_EXPANDED_WIDTH, height: containerHeight, listStyle: "none", padding: 0, margin: 0 }}
             />

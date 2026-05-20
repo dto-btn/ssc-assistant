@@ -342,7 +342,6 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            outline: "none",
             border: "1px solid " + theme.palette.divider,
           }}
         >

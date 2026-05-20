@@ -1120,6 +1120,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   return (
     <Box ref={scrollRef} flex={1} overflow="auto" p={2}>
       <List
+        role="log"
+        aria-label={t("chat.transcript", { defaultValue: "Chat conversation" })}
+        aria-live="polite"
         sx={{
           display: "flex",
           flexDirection: "column",

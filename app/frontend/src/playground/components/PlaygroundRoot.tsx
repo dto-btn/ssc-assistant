@@ -20,12 +20,14 @@ import {
   openMobileSidebar,
   toggleSidebarCollapsed,
 } from "../store/slices/uiSlice";
+import { useTranslation } from "react-i18next";
 
 /**
  * Top-level layout controller for playground sidebar behavior across breakpoints.
  */
 export const PlaygroundShell: React.FC = () => {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation("playground");
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isMobileSidebarOpen = useAppSelector(
@@ -49,6 +51,46 @@ export const PlaygroundShell: React.FC = () => {
 
   return (
     <Box display="flex" height="100dvh">
+      <Box
+        component="a"
+        href="#playground-ask-question"
+        onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+          const input = document.getElementById("playground-ask-question");
+          if (input) {
+            e.preventDefault();
+            input.focus();
+          } else {
+            // Input not yet rendered (no active session) — focus New Chat button instead
+            e.preventDefault();
+            const newChatBtn = document.getElementById("new-chat-button");
+            newChatBtn?.focus();
+          }
+        }}
+        sx={{
+          position: "absolute",
+          left: "-9999px",
+          top: "auto",
+          width: "1px",
+          height: "1px",
+          overflow: "hidden",
+          "&:focus": {
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "auto",
+            height: "auto",
+            overflow: "visible",
+            zIndex: 9999,
+            padding: "8px 16px",
+            bgcolor: "primary.main",
+            color: "primary.contrastText",
+            fontWeight: "bold",
+            borderRadius: "0 0 4px 0",
+          },
+        }}
+      >
+        {t("skip.to.chat", { defaultValue: "Skip to chat" })}
+      </Box>
       <SessionBootstrapper />
       <SessionSidebar isMobile={isMobile} />
       <ChatArea

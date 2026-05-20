@@ -71,6 +71,7 @@ const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
             border: "1px solid rgba(0,0,0,0.12)",
             zIndex: 1,
             "&:hover": { bgcolor: "rgba(255,255,255,0.96)" },
+            "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
           }}
         >
           {isCopied ? <CheckIcon fontSize="inherit" /> : <ContentCopyIcon fontSize="inherit" />}

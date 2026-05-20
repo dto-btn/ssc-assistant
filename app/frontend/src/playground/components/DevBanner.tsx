@@ -22,6 +22,7 @@ export const DevBanner = () => {
         height: "fit-content",
         userSelect: "none",
       }}
+      role="status"
       aria-label="Development environment indicator"
     >
       DEV
