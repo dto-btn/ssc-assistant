@@ -57,13 +57,19 @@ VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 
 ### Google Analytics (GA4)
 
-GA4 tracking is enabled only in production builds when a measurement ID is configured.
+GA4 tracking is controlled by `VITE_APP_ENV` and only enabled for `prod`.
 
 ```bash
+VITE_APP_ENV=dev
 VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 
-- `VITE_GA_MEASUREMENT_ID`: Google Analytics 4 measurement ID (e.g., `G-XXXXXXXXXX`). Tracking only fires when this is set and the build is in production mode. Replace `XXXXXXXXXX` with your actual GA4 measurement ID from your Google Analytics property.
+- `VITE_APP_ENV`: deployment environment label (`dev`, `sandbox`, `uat`, `prod`).
+- `VITE_GA_MEASUREMENT_ID`: Google Analytics 4 measurement ID (e.g., `G-XXXXXXXXXX`). Replace `XXXXXXXXXX` with your actual GA4 measurement ID from your Google Analytics property.
+
+Tracking behavior:
+- `prod`: enabled when `VITE_GA_MEASUREMENT_ID` is set
+- `dev`/`sandbox`/`uat`: disabled
 
 The following `.env` settings are there to control certain components from being made available to the end-user: 
 

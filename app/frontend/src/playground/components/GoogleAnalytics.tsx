@@ -23,8 +23,10 @@ declare global {
 
 // GA4 measurement ID from Vite environment variables.
 const measurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
-// Enable analytics only in production builds when a measurement ID is configured.
-const isGaEnabled = import.meta.env.PROD && Boolean(measurementId);
+// Deployment environment label passed by build config (for example: dev, sandbox, uat, prod).
+const appEnv = (import.meta.env.VITE_APP_ENV || "").trim().toLowerCase();
+// Enable analytics only for prod deployments when a measurement ID is configured.
+const isGaEnabled = Boolean(measurementId) && appEnv === "prod";
 // DOM id used to avoid injecting duplicate GA script tags.
 const gtagScriptId = "ga4-gtag-script";
 
