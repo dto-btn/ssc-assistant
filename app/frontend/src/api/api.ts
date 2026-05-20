@@ -114,13 +114,14 @@ export async function completion({ request, updateLastMessage, accessToken, sign
   return completion;
 }
 
-export async function sendFeedback(feedback: string, isGoodResponse: boolean, uuid: string): Promise<Response> {
+export async function sendFeedback(feedback: string, isGoodResponse: boolean, uuid: string, source?: string): Promise<Response> {
   const url = "/api/1.0/feedback";
 
-  const feedbackObject = {
+  const feedbackObject: Record<string, unknown> = {
     feedback,
     positive: isGoodResponse,
-    uuid
+    uuid,
+    ...(source !== undefined && { source }),
   };
 
   const response = await fetch(url, {

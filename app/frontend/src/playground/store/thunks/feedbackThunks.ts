@@ -32,7 +32,7 @@ export const submitResponseFeedback =
 
     try {
       dispatch(setMessageFeedback({ messageId, feedback }));
-      await sendFeedback(feedbackMessage, positive, messageId);
+      await sendFeedback(feedbackMessage, positive, messageId, "playground");
       dispatch(
         addToast({
           message: i18n.t("feedback.success", { ns: "playground" }),

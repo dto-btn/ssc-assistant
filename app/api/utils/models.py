@@ -80,6 +80,7 @@ class Feedback:
     feedback: Optional[str]
     positive: bool
     uuid: str = field(default='')
+    source: Optional[str] = field(default=None)
 
 @dataclass
 class BookingConfirmation:
