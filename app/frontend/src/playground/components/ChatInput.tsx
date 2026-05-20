@@ -434,6 +434,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
   return (
     <Container
       component="footer"
+      maxWidth="md"
       sx={{
         position: "sticky",
         bottom: 0,
