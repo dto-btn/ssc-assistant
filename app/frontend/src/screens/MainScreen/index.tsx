@@ -28,6 +28,7 @@ import { useChatService } from "../../hooks/useChatService";
 import { useApiRequestService } from "./useApiRequestService";
 import { tt } from "../../i18n/tt";
 import Suggestions from "../../components/Suggestions";
+import type { PlaygroundExportFormat } from "../../playground/export/sessionExport";
 
 const MainScreen = () => {
   const { t } = useTranslation();
@@ -72,6 +73,7 @@ const MainScreen = () => {
     number | null
   >(null);
   const [showDeleteChatDialog, setShowDeleteChatDialog] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const { instance } = useMsal();
 
@@ -214,6 +216,44 @@ const MainScreen = () => {
       postLogoutRedirectUri: "/",
     });
   };
+
+  const handleExport = useCallback(async (format: PlaygroundExportFormat) => {
+    if (!currentChatHistory.chatItems.length) {
+      showSnackbar(t("export.disabled.noSession"), undefined, "error");
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const [
+        { downloadSessionExportJson, downloadSessionExportPdf, downloadSessionExportWord },
+        { buildLegacySessionExportDocument, resolveLegacyAttachmentData },
+      ] = await Promise.all([
+        import("../../playground/export/sessionExport"),
+        import("../../util/legacyChatExportAdapter"),
+      ]);
+
+      const { sessionName, document } = buildLegacySessionExportDocument(
+        currentChatHistory,
+        currentChatIndex,
+      );
+
+      if (format === "json") {
+        downloadSessionExportJson(sessionName, document);
+      } else if (format === "pdf") {
+        await downloadSessionExportPdf(sessionName, document, resolveLegacyAttachmentData);
+      } else {
+        await downloadSessionExportWord(sessionName, document);
+      }
+
+      showSnackbar(t(`export.success.${format}`), undefined, "success");
+    } catch (error) {
+      console.error("Failed to export current conversation", error);
+      showSnackbar(t("export.failed"), SNACKBAR_DEBOUNCE_KEYS.EXPORT_CHAT_ERROR, "error");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [currentChatHistory, currentChatIndex, showSnackbar, t]);
 
   // Scrolls the last updated message (if its streaming, or once done) into view
   useEffect(() => {
@@ -536,6 +576,9 @@ const MainScreen = () => {
             handleSelectedModelChanged={hanldeUpdateModelVersion}
             selectedModel={currentChatHistory.model}
             logout={handleLogout}
+            onExport={handleExport}
+            isExportDisabled={!currentChatHistory.chatItems.length}
+            isExporting={isExporting}
           />
         }
         appDrawerContents={

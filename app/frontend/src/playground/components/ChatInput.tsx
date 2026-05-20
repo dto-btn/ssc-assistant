@@ -14,7 +14,6 @@ import {
   Box,
   Paper,
   IconButton,
-  Container,
   InputBase,
   Typography,
   CircularProgress,
@@ -432,7 +431,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
   const canSend = input.trim().length > 0 || attachments.length > 0;
 
   return (
-    <Container
+    <Box
       component="footer"
       sx={{
         position: "sticky",
@@ -440,6 +439,10 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
         boxShadow: `0px -15px 20px ${theme.palette.background.default}`,
         pt: 1,
         pb: 'env(safe-area-inset-bottom)',
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "stretch",
       }}
     >
       {/* Quoted text banner */}
@@ -450,6 +453,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
           sx={{
             p: 1,
             mb: 0,
+            minWidth: 0,
             borderRadius: "30px 30px 0 0",
             borderColor: theme.palette.primary.main,
             borderWidth: "1px 1px 0 1px",
@@ -457,8 +461,8 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
             bgcolor: theme.palette.mode === 'dark' ? 'background.default' : 'grey.50',
           }}
         >
-          <Box display="flex" alignItems="center">
-            <Box flex={1} component="blockquote" sx={{ m: 0, fontStyle: 'italic' }}>{quotedText}</Box>
+          <Box display="flex" alignItems="center" minWidth={0}>
+            <Box flex={1} component="blockquote" sx={{ m: 0, fontStyle: 'italic', minWidth: 0 }}>{quotedText}</Box>
             <IconButton
               onClick={() => dispatch(clearQuotedText())}
               size="small"
@@ -475,6 +479,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
         <Paper
           sx={{
             p: "2px 4px",
+            minWidth: 0,
             display: "flex",
             alignItems: "center",
             justifyContent: "left",
@@ -517,6 +522,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
         onSubmit={(e) => { e.preventDefault(); handleSend(); }}
         sx={{
           p: "2px 5px",
+          minWidth: 0,
           display: "flex",
           alignItems: "center",
           borderRadius: attachments.length > 0 || quotedText ? "0 0 30px 30px" : "40px",
@@ -537,7 +543,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
 
         <InputBase
           inputRef={inputRef}
-          sx={{ ml: 1, flex: 1 }}
+          sx={{ ml: 1, flex: 1, minWidth: 0 }}
           placeholder={t('type.a.message', { defaultValue: 'Type a message' })}
           // Avoid conflicting tabIndex by providing a single source of truth
           inputProps={{ 'aria-label': t('type.a.message', { defaultValue: 'Type a message' }), tabIndex: 0 }}
@@ -702,7 +708,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
           {error}
         </Typography>
       )}
-    </Container>
+    </Box>
   );
 };
 

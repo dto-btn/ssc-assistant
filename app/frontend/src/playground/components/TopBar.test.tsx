@@ -34,7 +34,14 @@ vi.mock("./TopmenuMicrosofTeamsIcon.svg", () => ({
   default: "teams-icon-url"
 }));
 
-function renderTopBar(isSidebarOpen: boolean, onToggle?: () => void) {
+function renderTopBar(
+  isSidebarOpen: boolean,
+  options?: {
+    onToggle?: () => void;
+    onExport?: (format: "json" | "pdf" | "word") => void;
+    isExportDisabled?: boolean;
+  }
+) {
   const store = configureStore({
     reducer: {
       ui: uiReducer,
@@ -43,7 +50,12 @@ function renderTopBar(isSidebarOpen: boolean, onToggle?: () => void) {
 
   render(
     <Provider store={store as never}>
-      <TopBar isSidebarOpen={isSidebarOpen} onToggleSidebar={onToggle} />
+      <TopBar
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={options?.onToggle}
+        onExport={options?.onExport}
+        isExportDisabled={options?.isExportDisabled}
+      />
     </Provider>
   );
 
@@ -95,10 +107,29 @@ describe("TopBar", () => {
   it("calls onToggleSidebar when toggle button is clicked", async () => {
     const onToggle = vi.fn();
     const user = userEvent.setup();
-    renderTopBar(true, onToggle);
+    renderTopBar(true, { onToggle });
 
     await user.click(screen.getByRole("button", { name: "sidebar.collapse" }));
     expect(onToggle).toHaveBeenCalled();
+  });
+
+  it("opens export menu and calls onExport with selected format", async () => {
+    const onExport = vi.fn();
+    const user = userEvent.setup();
+    renderTopBar(true, { onExport });
+
+    await user.click(screen.getByRole("button", { name: "export.label" }));
+    await user.click(screen.getByRole("menuitem", { name: "export.option.json" }));
+
+    expect(onExport).toHaveBeenCalledWith("json");
+  });
+
+  it("disables export button when export is unavailable", () => {
+    renderTopBar(true, { isExportDisabled: true });
+    // Uses aria-disabled so the button stays keyboard-focusable (WCAG 2.1)
+    const exportBtn = screen.getByRole("button", { name: "export.label" });
+    expect(exportBtn).toHaveAttribute("aria-disabled", "true");
+    expect(exportBtn).not.toBeDisabled();
   });
 
   /**
