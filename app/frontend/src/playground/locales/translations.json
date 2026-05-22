@@ -562,5 +562,185 @@
     "assistant.contextTruncated.toast": {
         "en": "Context truncated. Switching to a new conversation is recommended.",
         "fr": "Contexte tronqué. Il est recommandé de passer à une nouvelle conversation."
+    },
+    "admin.title": {
+        "en": "Admin Dashboard",
+        "fr": "Tableau de bord administrateur"
+    },
+    "admin.close": {
+        "en": "Close dashboard",
+        "fr": "Fermer le tableau de bord"
+    },
+    "admin.no_data": {
+        "en": "No data available for the selected period.",
+        "fr": "Aucune donnée disponible pour la période sélectionnée."
+    },
+    "admin.date.range": {
+        "en": "Date range:",
+        "fr": "Plage de dates :"
+    },
+    "admin.date.start": {
+        "en": "Start",
+        "fr": "Début"
+    },
+    "admin.date.end": {
+        "en": "End",
+        "fr": "Fin"
+    },
+    "admin.date.apply": {
+        "en": "Apply",
+        "fr": "Appliquer"
+    },
+    "admin.tab.overview": {
+        "en": "Overview",
+        "fr": "Aperçu"
+    },
+    "admin.tab.tools": {
+        "en": "Tool Usage",
+        "fr": "Utilisation des outils"
+    },
+    "admin.tab.timeline": {
+        "en": "Timeline",
+        "fr": "Chronologie"
+    },
+    "admin.tab.callers": {
+        "en": "Caller Systems",
+        "fr": "Systèmes appelants"
+    },
+    "admin.tab.citations": {
+        "en": "Citations",
+        "fr": "Citations"
+    },
+    "admin.tab.admins": {
+        "en": "Admins",
+        "fr": "Administrateurs"
+    },
+    "admin.overview.total_requests": {
+        "en": "Total Requests",
+        "fr": "Requêtes totales"
+    },
+    "admin.overview.total_tokens": {
+        "en": "Total Tokens",
+        "fr": "Jetons totaux"
+    },
+    "admin.overview.total_cost": {
+        "en": "Total Cost",
+        "fr": "Coût total"
+    },
+    "admin.overview.avg_latency": {
+        "en": "Avg Latency",
+        "fr": "Latence moy."
+    },
+    "admin.overview.error_rate": {
+        "en": "Error Rate",
+        "fr": "Taux d'erreur"
+    },
+    "admin.tool_usage.title": {
+        "en": "Tool Usage Breakdown",
+        "fr": "Répartition de l'utilisation des outils"
+    },
+    "admin.tool_usage.chart_title": {
+        "en": "Total Calls by Tool",
+        "fr": "Appels totaux par outil"
+    },
+    "admin.tool_usage.tool": {
+        "en": "Tool",
+        "fr": "Outil"
+    },
+    "admin.tool_usage.conversations": {
+        "en": "Conversations",
+        "fr": "Conversations"
+    },
+    "admin.tool_usage.total_calls": {
+        "en": "Total Calls",
+        "fr": "Appels totaux"
+    },
+    "admin.tool_usage.unique_users": {
+        "en": "Unique Users",
+        "fr": "Utilisateurs uniques"
+    },
+    "admin.timeline.title": {
+        "en": "Request Timeline",
+        "fr": "Chronologie des requêtes"
+    },
+    "admin.timeline.requests": {
+        "en": "Requests",
+        "fr": "Requêtes"
+    },
+    "admin.timeline.tokens": {
+        "en": "Tokens",
+        "fr": "Jetons"
+    },
+    "admin.caller_systems.title": {
+        "en": "Caller Systems",
+        "fr": "Systèmes appelants"
+    },
+    "admin.caller_systems.chart_title": {
+        "en": "Requests by Caller",
+        "fr": "Requêtes par appelant"
+    },
+    "admin.caller_systems.system": {
+        "en": "System",
+        "fr": "Système"
+    },
+    "admin.caller_systems.component": {
+        "en": "Component",
+        "fr": "Composant"
+    },
+    "admin.caller_systems.requests": {
+        "en": "Requests",
+        "fr": "Requêtes"
+    },
+    "admin.caller_systems.tokens": {
+        "en": "Tokens",
+        "fr": "Jetons"
+    },
+    "admin.caller_systems.cost": {
+        "en": "Cost",
+        "fr": "Coût"
+    },
+    "admin.citations.title": {
+        "en": "Citation Metrics",
+        "fr": "Métriques de citations"
+    },
+    "admin.citations.annotations": {
+        "en": "Annotations",
+        "fr": "Annotations"
+    },
+    "admin.citations.url_citations": {
+        "en": "URL Citations",
+        "fr": "Citations URL"
+    },
+    "admin.citations.citation_records": {
+        "en": "Citation Records",
+        "fr": "Enregistrements de citations"
+    },
+    "admin.management.title": {
+        "en": "Admin User Management",
+        "fr": "Gestion des administrateurs"
+    },
+    "admin.management.oid": {
+        "en": "AAD Object ID (OID)",
+        "fr": "Identifiant d'objet AAD (OID)"
+    },
+    "admin.management.display_name": {
+        "en": "Display Name",
+        "fr": "Nom affiché"
+    },
+    "admin.management.email": {
+        "en": "Email",
+        "fr": "Courriel"
+    },
+    "admin.management.add": {
+        "en": "Add Admin",
+        "fr": "Ajouter un administrateur"
+    },
+    "admin.management.remove": {
+        "en": "Remove admin",
+        "fr": "Retirer l'administrateur"
+    },
+    "admin.management.empty": {
+        "en": "No admins configured yet.",
+        "fr": "Aucun administrateur configuré."
     }
 }

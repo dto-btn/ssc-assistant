@@ -37,6 +37,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import AddCommentIcon from "@mui/icons-material/AddComment";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import CloseIcon from "@mui/icons-material/Close";
+import BarChartIcon from "@mui/icons-material/BarChart";
 import { useTranslation } from 'react-i18next';
 import { LEFT_MENU_EXPANDED_WIDTH } from "../constants";
 import SessionRenameDialog from "./SessionRenameDialog";
@@ -46,6 +47,7 @@ import SyncStatusIndicator from "./SyncStatusIndicator";
 import ProfileMenu from "./ProfileMenu/ProfileMenu";
 import { deleteSession as deleteSessionThunk, persistSessionRename } from "../store/thunks/sessionManagementThunks";
 import { closeMobileSidebar } from "../store/slices/uiSlice";
+import { toggleDashboard } from "../store/slices/adminSlice";
 
 /**
  * Sidebar for listing and managing Playground chat sessions.
@@ -71,6 +73,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
   const isMobileSidebarOpen = useAppSelector(
     (state) => state.ui.isMobileSidebarOpen
   );
+  const isAdmin = useAppSelector((state) => state.admin?.isAdmin ?? false);
   const dispatch = useAppDispatch();
 
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -540,8 +543,21 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           justifyContent: "flex-start",
           px: 1,
           pb: 1,
+          gap: 1,
+          alignItems: "center",
         }}
       >
+        {isAdmin && (
+          <Tooltip title={t("admin.title")}>
+            <IconButton
+              size="small"
+              onClick={() => dispatch(toggleDashboard())}
+              aria-label={t("admin.title")}
+            >
+              <BarChartIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
         <ProfileMenu
           size="30px"
           fontSize="12px"

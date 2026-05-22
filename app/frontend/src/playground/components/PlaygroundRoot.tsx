@@ -22,6 +22,8 @@ import {
   openMobileSidebar,
   toggleSidebarCollapsed,
 } from "../store/slices/uiSlice";
+import { checkAdminStatus } from "../store/thunks/adminThunks";
+import AdminDashboard from "./AdminDashboard/AdminDashboard";
 
 /**
  * Top-level layout controller for playground sidebar behavior across breakpoints.
@@ -36,11 +38,20 @@ export const PlaygroundShell: React.FC = () => {
   const isSidebarCollapsed = useAppSelector(
     (state) => state.ui.isSidebarCollapsed
   );
+  const showDashboard = useAppSelector((state) => state.admin?.showDashboard ?? false);
+  const accessToken = useAppSelector((state) => (state as any).auth?.accessToken);
 
   // Load MCP server configuration on startup
   React.useEffect(() => {
     dispatch(loadServers());
   }, [dispatch]);
+
+  // Check admin status — re-runs when the MSAL token becomes available
+  React.useEffect(() => {
+    if (isFeatureEnabled("AdminDashboard")) {
+      dispatch(checkAdminStatus());
+    }
+  }, [dispatch, accessToken]);
 
   React.useEffect(() => {
     // Prevent a stale mobile drawer state from leaking into desktop layout.
@@ -53,16 +64,19 @@ export const PlaygroundShell: React.FC = () => {
     <Box display="flex" height="100dvh">
       <SessionBootstrapper />
       <SessionSidebar isMobile={isMobile} />
-      <ChatArea
-        isSidebarOpen={isMobile ? isMobileSidebarOpen : !isSidebarCollapsed}
-        onOpenSidebar={() => {
-          if (isMobile) {
-            dispatch(isMobileSidebarOpen ? closeMobileSidebar() : openMobileSidebar());
-          } else {
-            dispatch(toggleSidebarCollapsed());
-          }
-        }}
-      />
+      <Box sx={{ position: "relative", flex: 1, overflow: "hidden", display: "flex" }}>
+        <ChatArea
+          isSidebarOpen={isMobile ? isMobileSidebarOpen : !isSidebarCollapsed}
+          onOpenSidebar={() => {
+            if (isMobile) {
+              dispatch(isMobileSidebarOpen ? closeMobileSidebar() : openMobileSidebar());
+            } else {
+              dispatch(toggleSidebarCollapsed());
+            }
+          }}
+        />
+        {showDashboard && isFeatureEnabled("AdminDashboard") && <AdminDashboard />}
+      </Box>
       <PlaygroundDisclaimerDialog />
       {isFeatureEnabled("FeedbackForm") && <FeedbackForm />}
     </Box>
