@@ -611,6 +611,10 @@
         "en": "Citations",
         "fr": "Citations"
     },
+    "admin.tab.user_stats": {
+        "en": "User Stats",
+        "fr": "Stats utilisateurs"
+    },
     "admin.tab.admins": {
         "en": "Admins",
         "fr": "Administrateurs"
@@ -631,6 +635,18 @@
         "en": "Avg Latency",
         "fr": "Latence moy."
     },
+    "admin.overview.p50_latency": {
+        "en": "p50 Latency",
+        "fr": "Latence p50"
+    },
+    "admin.overview.p95_latency": {
+        "en": "p95 Latency",
+        "fr": "Latence p95"
+    },
+    "admin.overview.p99_latency": {
+        "en": "p99 Latency",
+        "fr": "Latence p99"
+    },
     "admin.overview.error_rate": {
         "en": "Error Rate",
         "fr": "Taux d'erreur"
@@ -642,6 +658,14 @@
     "admin.tool_usage.chart_title": {
         "en": "Total Calls by Tool",
         "fr": "Appels totaux par outil"
+    },
+    "admin.mcp_server_usage.title": {
+        "en": "MCP Server Usage",
+        "fr": "Utilisation des serveurs MCP"
+    },
+    "admin.mcp_server_usage.chart_title": {
+        "en": "Requests by MCP Server",
+        "fr": "Requêtes par serveur MCP"
     },
     "admin.tool_usage.tool": {
         "en": "Tool",
@@ -670,6 +694,10 @@
     "admin.timeline.tokens": {
         "en": "Tokens",
         "fr": "Jetons"
+    },
+    "admin.timeline.avg_latency": {
+        "en": "Avg Latency (ms)",
+        "fr": "Latence moy. (ms)"
     },
     "admin.caller_systems.title": {
         "en": "Caller Systems",
@@ -742,5 +770,53 @@
     "admin.management.empty": {
         "en": "No admins configured yet.",
         "fr": "Aucun administrateur configuré."
+    },
+    "admin.print_report": {
+        "en": "Print Report",
+        "fr": "Imprimer le rapport"
+    },
+    "admin.user_stats.title": {
+        "en": "User Statistics",
+        "fr": "Statistiques utilisateurs"
+    },
+    "admin.user_stats.no_data": {
+        "en": "No user data available for this period. User IDs are tracked once the playground sends x-user-id headers.",
+        "fr": "Aucune donnée utilisateur pour cette période. Les identifiants sont suivis dès que le playground envoie les en-têtes x-user-id."
+    },
+    "admin.user_stats.unique_users": {
+        "en": "Unique Users",
+        "fr": "Utilisateurs uniques"
+    },
+    "admin.user_stats.total_questions": {
+        "en": "Total Questions",
+        "fr": "Questions totales"
+    },
+    "admin.user_stats.total_conversations": {
+        "en": "Conversations Total",
+        "fr": "Conversations totales"
+    },
+    "admin.user_stats.most_questions_by_user": {
+        "en": "Most Questions (1 User)",
+        "fr": "Max questions (1 utilisateur)"
+    },
+    "admin.user_stats.avg_questions_per_user": {
+        "en": "Avg Questions / User",
+        "fr": "Moy. questions / utilisateur"
+    },
+    "admin.user_stats.avg_sessions_per_user": {
+        "en": "Avg Sessions / User",
+        "fr": "Moy. sessions / utilisateur"
+    },
+    "admin.user_stats.avg_convo_length": {
+        "en": "Avg Convo Length",
+        "fr": "Longueur moy. de conv."
+    },
+    "admin.user_stats.longest_convo_length": {
+        "en": "Longest Convo",
+        "fr": "Conv. la plus longue"
+    },
+    "admin.user_stats.resolution_rate": {
+        "en": "Resolution Rate",
+        "fr": "Taux de résolution"
     }
 }

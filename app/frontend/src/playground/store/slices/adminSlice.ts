@@ -14,6 +14,13 @@ export interface ToolUsageItem {
   unique_users: number;
 }
 
+export interface McpServerUsageItem {
+  server_label: string;
+  conversation_count: number;
+  total_usage_count: number;
+  unique_users: number;
+}
+
 export interface OverviewData {
   total_requests: number;
   total_tokens: number;
@@ -21,6 +28,9 @@ export interface OverviewData {
   total_output_tokens: number;
   total_cost: number;
   avg_latency_ms: number;
+  p50_latency_ms: number;
+  p95_latency_ms: number;
+  p99_latency_ms: number;
   error_count: number;
   error_rate: number;
   start_date: string;
@@ -47,6 +57,21 @@ export interface SpendTimelineItem {
   requests: number;
   tokens: number;
   cost: number;
+  avg_latency_ms: number;
+}
+
+export interface UserStatsData {
+  unique_users: number;
+  most_questions_by_user: number;
+  avg_questions_per_user: number;
+  avg_sessions_per_user: number;
+  avg_convo_length: number;
+  longest_convo_length: number;
+  total_conversations: number;
+  resolution_rate: number;
+  total_questions: number;
+  start_date: string;
+  end_date: string;
 }
 
 export interface LiteLLMSpendLog {
@@ -82,10 +107,12 @@ export interface AdminState {
   // Data
   overview: OverviewData | null;
   toolUsage: ToolUsageItem[];
+  mcpServerUsage: McpServerUsageItem[];
   callerSystems: CallerSystemItem[];
   citationTimeline: CitationTimelineItem[];
   spendLogs: LiteLLMSpendLog[];
   spendTimeline: SpendTimelineItem[];
+  userStats: UserStatsData | null;
 
   // Admin management
   adminList: AdminUser[];
@@ -114,10 +141,12 @@ const initialState: AdminState = {
 
   overview: null,
   toolUsage: [],
+  mcpServerUsage: [],
   callerSystems: [],
   citationTimeline: [],
   spendLogs: [],
   spendTimeline: [],
+  userStats: null,
 
   adminList: [],
 
@@ -150,6 +179,9 @@ const adminSlice = createSlice({
     setToolUsage(state, action: PayloadAction<ToolUsageItem[]>) {
       state.toolUsage = action.payload;
     },
+    setMcpServerUsage(state, action: PayloadAction<McpServerUsageItem[]>) {
+      state.mcpServerUsage = action.payload;
+    },
     setCallerSystems(state, action: PayloadAction<CallerSystemItem[]>) {
       state.callerSystems = action.payload;
     },
@@ -161,6 +193,9 @@ const adminSlice = createSlice({
     },
     setSpendTimeline(state, action: PayloadAction<SpendTimelineItem[]>) {
       state.spendTimeline = action.payload;
+    },
+    setUserStats(state, action: PayloadAction<UserStatsData>) {
+      state.userStats = action.payload;
     },
     setAdminList(state, action: PayloadAction<AdminUser[]>) {
       state.adminList = action.payload;
@@ -187,10 +222,12 @@ export const {
   setShowDashboard,
   setOverview,
   setToolUsage,
+  setMcpServerUsage,
   setCallerSystems,
   setCitationTimeline,
   setSpendLogs,
   setSpendTimeline,
+  setUserStats,
   setAdminList,
   setLoading,
   setError,

@@ -57,6 +57,18 @@ export async function fetchToolUsage(
   return handleResponse(res);
 }
 
+export async function fetchMcpServerUsage(
+  start: string,
+  end: string,
+  token?: string
+) {
+  const params = new URLSearchParams({ start, end });
+  const res = await fetch(`${ANALYTICS_BASE}/analytics/mcp-server-usage?${params}`, {
+    headers: getHeaders(token),
+  });
+  return handleResponse(res);
+}
+
 export async function fetchCallerSystems(
   start: string,
   end: string,
@@ -93,6 +105,19 @@ export async function fetchSpendTimeline(
     { headers: getHeaders(token) }
   );
   return handleResponse<{ timeline: any[]; start_date: string; end_date: string }>(res);
+}
+
+export async function fetchUserStats(
+  start: string,
+  end: string,
+  token?: string
+) {
+  const params = new URLSearchParams({ start, end });
+  const res = await fetch(
+    `${ANALYTICS_BASE}/analytics/user-stats?${params}`,
+    { headers: getHeaders(token) }
+  );
+  return handleResponse(res);
 }
 
 export async function fetchAdminList(token?: string) {

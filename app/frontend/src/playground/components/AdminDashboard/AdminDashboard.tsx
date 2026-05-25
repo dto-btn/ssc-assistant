@@ -16,8 +16,10 @@ import {
   IconButton,
   Divider,
   Paper,
+  Button,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import PrintIcon from "@mui/icons-material/Print";
 import { useTranslation } from "react-i18next";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { setActiveTab, setShowDashboard } from "../../store/slices/adminSlice";
@@ -30,6 +32,8 @@ import TimelineSection from "./TimelineSection";
 import CallerSystemSection from "./CallerSystemSection";
 import CitationMetrics from "./CitationMetrics";
 import AdminManagement from "./AdminManagement";
+import UserStatsSection from "./UserStatsSection";
+import PrintableReport from "./PrintableReport";
 
 interface TabPanelProps {
   value: number;
@@ -93,6 +97,15 @@ const AdminDashboard: React.FC = () => {
         </Typography>
         <Box display="flex" alignItems="center" gap={1}>
           {isLoading && <CircularProgress size={18} />}
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<PrintIcon fontSize="small" />}
+            onClick={() => window.print()}
+            aria-label={t("admin.print_report")}
+          >
+            {t("admin.print_report")}
+          </Button>
           <IconButton
             size="small"
             onClick={() => dispatch(setShowDashboard(false))}
@@ -127,7 +140,8 @@ const AdminDashboard: React.FC = () => {
         <Tab label={t("admin.tab.timeline")} id="admin-tab-2" />
         <Tab label={t("admin.tab.callers")} id="admin-tab-3" />
         <Tab label={t("admin.tab.citations")} id="admin-tab-4" />
-        <Tab label={t("admin.tab.admins")} id="admin-tab-5" />
+        <Tab label={t("admin.tab.user_stats")} id="admin-tab-5" />
+        <Tab label={t("admin.tab.admins")} id="admin-tab-6" />
       </Tabs>
 
       {/* Tab content */}
@@ -148,9 +162,14 @@ const AdminDashboard: React.FC = () => {
           <CitationMetrics />
         </TabPanel>
         <TabPanel value={activeTab} index={5}>
+          <UserStatsSection />
+        </TabPanel>
+        <TabPanel value={activeTab} index={6}>
           <AdminManagement />
         </TabPanel>
       </Box>
+      {/* Hidden print report — visible only during window.print() */}
+      <PrintableReport />
     </Paper>
   );
 };

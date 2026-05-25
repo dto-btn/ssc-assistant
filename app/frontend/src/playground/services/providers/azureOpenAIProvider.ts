@@ -207,15 +207,32 @@ export class AzureOpenAIProvider implements CompletionProvider {
   /**
    * Build an OpenAI-compatible client for standalone LiteLLM proxy.
    * Uses dedicated proxy key when configured, otherwise falls back to user token.
+   * Decodes the AAD OID from the user token JWT (no verification — tracking only)
+   * and forwards the session ID so the proxy can compute per-user/session stats.
    */
-  private createClient(userToken: string): OpenAI {
+  private createClient(userToken: string, sessionId?: string): OpenAI {
     const proxyKey = String(import.meta.env.VITE_PLAYGROUND_LITELLM_PROXY_KEY || "").trim();
     const authToken = proxyKey.length > 0 ? proxyKey : userToken.trim();
-    const defaultHeaders = {
+
+    // Extract OID from the AAD JWT payload for user-level analytics tracking.
+    let userId = "";
+    try {
+      const payload = userToken.split(".")[1];
+      if (payload) {
+        const decoded = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+        userId = decoded.oid || decoded.sub || "";
+      }
+    } catch {
+      // Non-JWT token or decoding failure — leave userId empty.
+    }
+
+    const defaultHeaders: Record<string, string> = {
       "Authorization": "Bearer " + authToken,
       "x-caller-system": "ssc-assistant",
       "x-caller-component": "ssc-assistant-playground",
     };
+    if (userId) defaultHeaders["x-user-id"] = userId;
+    if (sessionId) defaultHeaders["x-session-id"] = sessionId;
 
     return new OpenAI({
       baseURL: this.getBaseURL(),
@@ -267,7 +284,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
     request: CompletionRequest,
     callbacks: StreamingCallbacks
   ): Promise<CompletionResult> {
-    const { messages, userToken, model, signal, servers, currentOutput, toolChoice } = request;
+    const { messages, userToken, model, signal, servers, currentOutput, toolChoice, sessionId } = request;
     const { onChunk, onToolCall, onError, onComplete } = callbacks;
 
     let fullText = currentOutput || "";
@@ -286,7 +303,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
     try {
       const updatedMessages = this.convertMessagesToInput(messages);
 
-      const client = this.createClient(userToken);
+      const client = this.createClient(userToken, sessionId);
 
       const stream = await client.responses.stream({
         model: model,

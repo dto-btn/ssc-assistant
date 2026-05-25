@@ -58,6 +58,21 @@ const OverviewCards: React.FC = () => {
         loading={isLoading && !overview}
       />
       <MetricCard
+        label={t("admin.overview.p50_latency")}
+        value={overview ? `${overview.p50_latency_ms} ms` : "—"}
+        loading={isLoading && !overview}
+      />
+      <MetricCard
+        label={t("admin.overview.p95_latency")}
+        value={overview ? `${overview.p95_latency_ms} ms` : "—"}
+        loading={isLoading && !overview}
+      />
+      <MetricCard
+        label={t("admin.overview.p99_latency")}
+        value={overview ? `${overview.p99_latency_ms} ms` : "—"}
+        loading={isLoading && !overview}
+      />
+      <MetricCard
         label={t("admin.overview.error_rate")}
         value={overview ? `${overview.error_rate}%` : "—"}
         loading={isLoading && !overview}

@@ -11,10 +11,12 @@ import {
   setIsCheckingAdmin,
   setOverview,
   setToolUsage,
+  setMcpServerUsage,
   setCallerSystems,
   setCitationTimeline,
   setSpendLogs,
   setSpendTimeline,
+  setUserStats,
   setAdminList,
   setLoading,
   setError,
@@ -24,9 +26,11 @@ import {
   checkAdmin,
   fetchOverview,
   fetchToolUsage,
+  fetchMcpServerUsage,
   fetchCallerSystems,
   fetchCitations,
   fetchSpendTimeline,
+  fetchUserStats,
   fetchAdminList,
   addAdmin,
   removeAdmin,
@@ -60,14 +64,16 @@ export const loadDashboardData =
     dispatch(setError(null));
     const token = getState().auth.accessToken ?? undefined;
     try {
-      const [overview, toolUsage, callerSystems, citations, spendTimeline, spendLogs] =
+      const [overview, toolUsage, mcpServerUsage, callerSystems, citations, spendTimeline, spendLogs, userStats] =
         await Promise.allSettled([
           fetchOverview(start, end, token),
           fetchToolUsage(start, end, token),
+          fetchMcpServerUsage(start, end, token),
           fetchCallerSystems(start, end, token),
           fetchCitations(start, end, token),
           fetchSpendTimeline(start, end, token),
           fetchSpendLogs(start, end),
+          fetchUserStats(start, end, token),
         ]);
 
       if (overview.status === "fulfilled") {
@@ -75,6 +81,9 @@ export const loadDashboardData =
       }
       if (toolUsage.status === "fulfilled") {
         dispatch(setToolUsage((toolUsage.value as any).tools ?? []));
+      }
+      if (mcpServerUsage.status === "fulfilled") {
+        dispatch(setMcpServerUsage((mcpServerUsage.value as any).servers ?? []));
       }
       if (callerSystems.status === "fulfilled") {
         dispatch(setCallerSystems((callerSystems.value as any).systems ?? []));
@@ -87,6 +96,9 @@ export const loadDashboardData =
       }
       if (spendLogs.status === "fulfilled") {
         dispatch(setSpendLogs((spendLogs.value as any) ?? []));
+      }
+      if (userStats.status === "fulfilled") {
+        dispatch(setUserStats(userStats.value as any));
       }
     } catch (err: any) {
       dispatch(setError(err?.message ?? "Failed to load dashboard data"));

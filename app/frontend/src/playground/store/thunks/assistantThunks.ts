@@ -1865,6 +1865,7 @@ export const sendAssistantMessage = ({
             model: completionModel,
             provider,
             userToken: accessToken,
+            sessionId,
             servers: serversForRun,
             signal: abortController.signal,
             toolChoice: shouldRequireToolsForRun(serversForRun) ? "required" : undefined,

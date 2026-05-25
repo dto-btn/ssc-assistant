@@ -56,6 +56,15 @@ const TimelineSection: React.FC = () => {
               stroke="#9c27b0"
               dot={false}
             />
+            <Line
+              yAxisId="left"
+              type="monotone"
+              dataKey="avg_latency_ms"
+              name={t("admin.timeline.avg_latency")}
+              stroke="#e65100"
+              dot={false}
+              strokeDasharray="4 2"
+            />
           </LineChart>
         </ResponsiveContainer>
       )}

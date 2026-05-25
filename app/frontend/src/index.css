@@ -21,3 +21,18 @@
 	z-index: 10000;
 	text-decoration: none;
 }
+
+/* ==========================================
+   Print styles — show printable report only
+   ========================================== */
+@media print {
+  body > * { display: none !important; }
+  .printable-report {
+    display: block !important;
+    color: #000 !important;
+    background: #fff !important;
+    font-family: monospace !important;
+    font-size: 12pt !important;
+    padding: 1cm !important;
+  }
+}

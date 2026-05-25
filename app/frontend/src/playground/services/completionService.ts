@@ -30,6 +30,7 @@ export interface CompletionRequest {
   model: string;
   provider?: 'azure-openai' | 'aws-bedrock' | "goc-ai-platform";
   userToken: string;
+  sessionId?: string;
   signal?: AbortSignal;
   servers?: Tool.Mcp[];
   currentOutput?: string;
