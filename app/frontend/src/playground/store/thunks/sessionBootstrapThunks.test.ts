@@ -3,7 +3,10 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import sessionsReducer from "../slices/sessionSlice";
 import chatReducer from "../slices/chatSlice";
 import sessionFilesReducer from "../slices/sessionFilesSlice";
-import { bootstrapSessionsFromStorage } from "./sessionBootstrapThunks";
+import {
+  bootstrapSessionsFromStorage,
+  ensureDraftSessionSelectedOnLoad,
+} from "./sessionBootstrapThunks";
 
 vi.mock("../../api/storage", () => ({
   listSessionFiles: vi.fn(),
@@ -75,5 +78,73 @@ describe("bootstrapSessionsFromStorage", () => {
     expect(state.sessionFiles.bySessionId["session-b"]).toHaveLength(1);
     expect(state.chat.messages).toEqual([]);
     expect(fetchFileDataUrlMock).not.toHaveBeenCalled();
+  });
+
+  it("creates a new draft session when no draft exists", async () => {
+    const store = makeStore();
+
+    listSessionFilesMock.mockResolvedValue({
+      files: [
+        {
+          blobName: "session-a.chat.json",
+          url: "/files/session-a.chat.json",
+          originalName: "session-a.chat.json",
+          sessionId: "session-a",
+          sessionName: "Older chat",
+          category: "chat",
+          metadataType: "chat-archive",
+          uploadedAt: "2026-05-07T10:00:00.000Z",
+          lastUpdated: "2026-05-07T10:00:00.000Z",
+        },
+        {
+          blobName: "session-b.chat.json",
+          url: "/files/session-b.chat.json",
+          originalName: "session-b.chat.json",
+          sessionId: "session-b",
+          sessionName: "Newest chat",
+          category: "chat",
+          metadataType: "chat-archive",
+          uploadedAt: "2026-05-08T10:00:00.000Z",
+          lastUpdated: "2026-05-08T10:00:00.000Z",
+        },
+      ],
+      deletedSessionIds: [],
+      sessionDeleted: false,
+    });
+
+    await store.dispatch(bootstrapSessionsFromStorage() as never);
+    store.dispatch(ensureDraftSessionSelectedOnLoad() as never);
+
+    const state = store.getState();
+    const currentSession = state.sessions.sessions.find((session) => session.id === state.sessions.currentSessionId);
+
+    expect(state.sessions.sessions).toHaveLength(3);
+    expect(currentSession?.isNewChat).toBe(true);
+  });
+
+  it("reuses existing draft session when one already exists", () => {
+    const store = configureStore({
+      reducer: {
+        sessions: sessionsReducer,
+        chat: chatReducer,
+        sessionFiles: sessionFilesReducer,
+        auth: (state = { accessToken: "valid-token" }) => state,
+      } as const,
+      preloadedState: {
+        sessions: {
+          sessions: [
+            { id: "session-a", name: "Session A", createdAt: 1, isNewChat: false },
+            { id: "draft-1", name: "Conversation 2", createdAt: 2, isNewChat: true },
+          ],
+          currentSessionId: "session-a",
+        },
+      },
+    });
+
+    store.dispatch(ensureDraftSessionSelectedOnLoad() as never);
+
+    const state = store.getState();
+    expect(state.sessions.sessions).toHaveLength(2);
+    expect(state.sessions.currentSessionId).toBe("draft-1");
   });
 });

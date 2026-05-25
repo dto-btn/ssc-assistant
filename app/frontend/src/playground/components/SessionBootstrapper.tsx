@@ -8,7 +8,10 @@
 
 import React from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { bootstrapSessionsFromStorage } from "../store/thunks/sessionBootstrapThunks";
+import {
+  bootstrapSessionsFromStorage,
+  ensureDraftSessionSelectedOnLoad,
+} from "../store/thunks/sessionBootstrapThunks";
 
 // Toggle to enable or disable remote session bootstrapping. this will added only till the delete code is inplace
 const ENABLE_REMOTE_SESSION_BOOTSTRAP = true;
@@ -26,7 +29,14 @@ const SessionBootstrapper: React.FC = () => {
       return;
     }
     hasBootstrappedRef.current = true;
-    void dispatch(bootstrapSessionsFromStorage());
+
+    // Select or create a draft immediately so startup never lingers on the last chat.
+    dispatch(ensureDraftSessionSelectedOnLoad());
+
+    void (async () => {
+      await dispatch(bootstrapSessionsFromStorage());
+      dispatch(ensureDraftSessionSelectedOnLoad());
+    })();
   }, [accessToken, dispatch]);
 
   return null;

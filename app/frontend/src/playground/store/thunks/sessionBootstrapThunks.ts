@@ -13,6 +13,7 @@ import { addSession, renameSession, setCurrentSession } from "../slices/sessionS
 import { setSessionFiles } from "../slices/sessionFilesSlice";
 import { hydrateSessionMessages, type Message } from "../slices/chatSlice";
 import type { FileAttachment } from "../../types";
+import { v4 as uuidv4 } from "uuid";
 import {
   decodeArchiveDataUrl,
   isChatArchiveAttachment,
@@ -266,9 +267,38 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
 
   newSessions.sort((a, b) => a.createdAt - b.createdAt);
   newSessions.forEach((session) => dispatch(addSession(session)));
+};
 
-  const newestSessionId = newSessions[newSessions.length - 1]?.id;
-  if (newestSessionId) {
-    dispatch(setCurrentSession(newestSessionId));
+/**
+ * Ensures startup lands on a draft session instead of restoring the latest chat.
+ *
+ * Reuses an existing draft if present, otherwise creates one.
+ */
+export const ensureDraftSessionSelectedOnLoad = (): AppThunk<void> => (dispatch, getState) => {
+  const state = getState();
+  const sessions = state.sessions.sessions;
+  const currentSessionId = state.sessions.currentSessionId;
+
+  const activeSession = currentSessionId
+    ? sessions.find((session) => session.id === currentSessionId)
+    : undefined;
+
+  if (activeSession?.isNewChat) {
+    return;
   }
+
+  const existingDraftSession = sessions.find((session) => session.isNewChat === true);
+  if (existingDraftSession) {
+    dispatch(setCurrentSession(existingDraftSession.id));
+    return;
+  }
+
+  dispatch(
+    addSession({
+      id: uuidv4(),
+      name: `Conversation ${sessions.length + 1}`,
+      createdAt: Date.now(),
+      isNewChat: true,
+    }),
+  );
 };
