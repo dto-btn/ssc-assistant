@@ -45,6 +45,7 @@ VITE_PLAYGROUND_LITELLM_PROXY_KEY=
 VITE_LITELLM_MODEL=
 VITE_PMCOE_CONTAINER=pmcoe-sept-2025
 VITE_PLAYGROUND_ORCHESTRATOR_PREFLIGHT=true
+VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 
 - `VITE_PLAYGROUND_LITELLM_BASE_URL`: standalone LiteLLM proxy base URL (must include `/v1`).
@@ -53,6 +54,22 @@ VITE_PLAYGROUND_ORCHESTRATOR_PREFLIGHT=true
 - `VITE_PMCOE_CONTAINER`: PMCOE blob container prefix used when the current Responses/MCP payload contains a document filename but omits `source_path`.
 - If `VITE_LITELLM_MODEL` is empty, model selection follows standalone LiteLLM config defaults.
 - `VITE_PLAYGROUND_ORCHESTRATOR_PREFLIGHT`: enables the orchestrator route suggestion preflight before the completion request.
+
+### Google Analytics (GA4)
+
+GA4 tracking is controlled by `VITE_APP_ENV` and only enabled for `prod`.
+
+```bash
+VITE_APP_ENV=dev
+VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+```
+
+- `VITE_APP_ENV`: deployment environment label (`dev`, `sandbox`, `uat`, `prod`).
+- `VITE_GA_MEASUREMENT_ID`: Google Analytics 4 measurement ID (e.g., `G-XXXXXXXXXX`). Replace `XXXXXXXXXX` with your actual GA4 measurement ID from your Google Analytics property.
+
+Tracking behavior:
+- `prod`: enabled when `VITE_GA_MEASUREMENT_ID` is set
+- `dev`/`sandbox`/`uat`: disabled
 
 The following `.env` settings are there to control certain components from being made available to the end-user: 
 
