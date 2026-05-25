@@ -48,14 +48,17 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) =
   const [feedback, setFeedback] = useState("");
   const [positive, setPositive] = useState<boolean | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   const handleClose = () => {
     setOpen(false);
     setFeedback("");
     setPositive(null);
+    setHasAttemptedSubmit(false);
   };
 
   const handleSubmit = async () => {
+    setHasAttemptedSubmit(true);
     if (positive === null || !feedback.trim()) return;
 
     setIsSubmitting(true);
@@ -81,22 +84,22 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) =
         variant="contained"
         disableElevation
         onClick={() => setOpen(true)}
-        aria-label={t("feedback")}
+        aria-label={placement === "topbar" && isSmallScreen ? t("feedback") : undefined}
         startIcon={<RateReviewOutlinedIcon sx={{ color: "currentColor" }} />}
         sx={{
           ...(placement === "floating"
             ? {
                 position: "fixed",
-                right: isSmallScreen ? 12 : 16,
-                bottom: isSmallScreen ? 12 : 16,
+                right: { xs: 12, sm: 16 },
+                bottom: { xs: 12, sm: 16 },
                 zIndex: 2000,
               }
             : {}),
-          minWidth: isSmallScreen ? 48 : 44,
+          minWidth: { xs: 48, sm: 44 },
           minHeight: 44,
-          px: placement === "topbar" ? { xs: 0, sm: 1.5 } : isSmallScreen ? 2 : 1.75,
+          px: placement === "topbar" ? { xs: 0, sm: 1.5 } : { xs: 2, sm: 1.75 },
           bgcolor: placement === "topbar" ? "white" : "primary.dark",
-          color: placement === "topbar" ? "#3f479a" : "primary.contrastText",
+          color: placement === "topbar" ? "primary.main" : "primary.contrastText",
           textTransform: "none",
           fontWeight: "bold",
           borderRadius: "8px",
@@ -106,8 +109,8 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) =
             marginRight: placement === "topbar" ? { xs: 0, sm: 1 } : undefined,
           },
           "&:hover": {
-            bgcolor: placement === "topbar" ? "#f5f5f5" : "primary.main",
-            color: placement === "topbar" ? "#2e3470" : "primary.contrastText",
+            bgcolor: placement === "topbar" ? "action.hover" : "primary.main",
+            color: placement === "topbar" ? "primary.dark" : "primary.contrastText",
           },
         }}
       >
@@ -115,13 +118,20 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) =
           {t("feedback")}
         </Box>
       </Button>
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" fullScreen={isSmallScreen}>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        fullWidth
+        maxWidth="sm"
+        fullScreen={isSmallScreen}
+        aria-describedby="feedback-dialog-subtitle"
+      >
         <DialogTitle>{t("feedback.system.title")}</DialogTitle>
         <DialogContent>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
+          <Typography id="feedback-dialog-subtitle" variant="body2" color="text.secondary" gutterBottom>
             {t("feedback.system.subtitle")}
           </Typography>
-          <Typography component="label" variant="subtitle2" sx={{ display: "block", mt: 2, mb: 1 }}>
+          <Typography component="p" variant="subtitle2" sx={{ display: "block", mt: 2, mb: 1 }}>
             {t("feedback.reaction.label")}
           </Typography>
           <Box sx={{ mb: 2 }}>
@@ -156,7 +166,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) =
                 </Stack>
               </ToggleButton>
             </ToggleButtonGroup>
-            {positive === null && (
+            {hasAttemptedSubmit && positive === null && (
               <Typography variant="caption" color="error" sx={{ mt: 0.75, display: "block" }}>
                 {t("feedback.reaction.required")}
               </Typography>
@@ -170,8 +180,8 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) =
             rows={4}
             fullWidth
             required
-            error={!feedback.trim()}
-            helperText={!feedback.trim() ? t("feedback.message.required") : " "}
+            error={hasAttemptedSubmit && !feedback.trim()}
+            helperText={hasAttemptedSubmit && !feedback.trim() ? t("feedback.message.required") : " "}
           />
         </DialogContent>
         <DialogActions>
@@ -180,6 +190,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) =
             variant="contained"
             onClick={handleSubmit}
             disabled={positive === null || !feedback.trim() || isSubmitting}
+            aria-busy={isSubmitting}
           >
             {t("submit")}
           </Button>
