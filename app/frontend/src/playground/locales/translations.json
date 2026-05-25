@@ -39,6 +39,34 @@
         "en": "Feedback",
         "fr": "Retour"
     },
+    "feedback.system.title": {
+        "en": "Feedback on the system",
+        "fr": "Retour sur le système"
+    },
+    "feedback.system.subtitle": {
+        "en": "Help us improve the assistant by sharing what worked and what did not.",
+        "fr": "Aidez-nous à améliorer l'assistant en partageant ce qui a fonctionné et ce qui n'a pas fonctionné."
+    },
+    "feedback.reaction.label": {
+        "en": "Overall sentiment",
+        "fr": "Sentiment général"
+    },
+    "feedback.reaction.required": {
+        "en": "Please select like or dislike.",
+        "fr": "Veuillez sélectionner j'aime ou je n'aime pas."
+    },
+    "feedback.message.label": {
+        "en": "Message",
+        "fr": "Message"
+    },
+    "feedback.message.required": {
+        "en": "Message is required.",
+        "fr": "Le message est obligatoire."
+    },
+    "provide.feedback": {
+        "en": "Please provide feedback on the response provided",
+        "fr": "Veuillez donner votre avis sur la réponse fournie"
+    },
     "your.feedback": {
         "en": "Your feedback",
         "fr": "Votre retour"

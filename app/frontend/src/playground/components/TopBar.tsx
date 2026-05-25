@@ -10,6 +10,8 @@ import MenuItem from "@mui/material/MenuItem";
 import logo from "../../assets/SSC-Logo-Purple-Leaf-300x300.png";
 import { DevBanner } from "./DevBanner";
 import TopmenuMicrosofTeamsIcon from "./TopmenuMicrosofTeamsIcon.svg";
+import FeedbackForm from "./FeedbackForm";
+import isFeatureEnabled from "../FeatureGate";
 import type { PlaygroundExportFormat } from "../export/sessionExport";
 
 /**
@@ -242,6 +244,8 @@ const TopBar: React.FC<TopBarProps> = ({
               {t("button.joinchat", { ns: "translations" })}
             </Box>
           </Button>
+
+          {isFeatureEnabled("FeedbackForm") && <FeedbackForm placement="topbar" />}
 
           <Button
             onClick={handleLanguageToggle}

@@ -433,6 +433,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
   return (
     <Box
       component="footer"
+      maxWidth="md"
       sx={{
         position: "sticky",
         bottom: 0,
@@ -440,6 +441,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
         pt: 1,
         pb: 'env(safe-area-inset-bottom)',
         width: "100%",
+        mx: "auto",
         display: "flex",
         flexDirection: "column",
         alignItems: "stretch",
