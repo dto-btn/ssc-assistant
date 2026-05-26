@@ -66,11 +66,15 @@ export const PlaygroundShell: React.FC = () => {
           }}
           sx={{
             position: "absolute",
-            left: "-9999px",
-            top: "auto",
             width: "1px",
             height: "1px",
+            padding: 0,
+            margin: "-1px",
             overflow: "hidden",
+            clip: "rect(0 0 0 0)",
+            clipPath: "inset(50%)",
+            whiteSpace: "nowrap",
+            border: 0,
             "&:focus": {
               position: "fixed",
               top: 0,
@@ -96,7 +100,7 @@ export const PlaygroundShell: React.FC = () => {
       <Box
         id="playground-main-content"
         tabIndex={-1}
-        sx={{ flex: 1, display: "flex", minWidth: 0, "&:focus": { outline: "none" } }}
+        sx={{ flex: 1, display: "flex", minWidth: 0, "&:focus-visible": { outline: "none" } }}
       >
         <ChatArea
           isSidebarOpen={isMobile ? isMobileSidebarOpen : !isSidebarCollapsed}

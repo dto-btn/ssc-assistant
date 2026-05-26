@@ -1122,7 +1122,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
       <List
         role="log"
         aria-label={t("chat.transcript", { defaultValue: "Chat conversation" })}
-        aria-live="polite"
         sx={{
           display: "flex",
           flexDirection: "column",

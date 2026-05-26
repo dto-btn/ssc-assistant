@@ -30,7 +30,8 @@ const ToastContainer: React.FC = () => {
     }
 
     // Keep high-signal toasts visible longer for accessibility and readability.
-    return 10000;
+    // Error toasts are persistent (null) — users must dismiss them explicitly (WCAG 2.2.1).
+    return severity === "error" ? null : 10000;
   };
 
   return (
