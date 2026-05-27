@@ -166,11 +166,10 @@ export class PlaygroundPage {
    * Send a user prompt through the composer.
    */
   async sendMessage(message: string): Promise<void> {
-    await this.composer().click();
     await this.composer().fill(message);
     await expect(this.composer()).toHaveValue(message);
     await expect(this.page.getByLabel('Send')).toBeEnabled();
-    await this.page.getByLabel('Send').click();
+    await this.composer().press('Enter');
   }
 
   /**

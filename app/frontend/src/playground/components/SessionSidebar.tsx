@@ -281,9 +281,6 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
       <ListItem
         key={session.id}
         component="li"
-        role="option"
-        aria-selected={session.id === currentSessionId}
-        aria-label={session.name}
         disablePadding
         style={style}
         sx={{
@@ -487,9 +484,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         <Box ref={containerRef} sx={{ flexGrow: 1, minHeight: 0 }}>
           {containerHeight > 0 && (
             <ListWindow
-              role="listbox"
               aria-labelledby={sidebarTitleId}
-              aria-activedescendant={activeIndex >= 0 && sessionsNewestFirst[activeIndex] ? `session-button-${sessionsNewestFirst[activeIndex].id}` : undefined}
               listRef={listRef}
               onFocus={() => {
                 if (activeIndex < 0 && sessionsNewestFirst.length > 0) {
