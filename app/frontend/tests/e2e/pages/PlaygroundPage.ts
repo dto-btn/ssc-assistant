@@ -198,8 +198,20 @@ export class PlaygroundPage {
    */
   async openSessionOptions(sessionName: string): Promise<void> {
     await this.openSessionNavigation();
-    const sessionRow = this.page.getByRole('listitem').filter({ hasText: sessionName });
-    await sessionRow.getByRole('button', { name: 'Options', exact: true }).click();
+    const sessionRow = this.page.locator('li').filter({ hasText: sessionName }).first();
+    await expect(sessionRow).toBeVisible();
+
+    const optionsButton = sessionRow.locator('button[id^="session-options-button-"]').first();
+    if ((await optionsButton.count()) > 0) {
+      await optionsButton.click();
+      return;
+    }
+
+    await this.page
+      .getByRole('listitem')
+      .filter({ hasText: sessionName })
+      .getByRole('button', { name: 'Options', exact: true })
+      .click();
   }
 
   /**
