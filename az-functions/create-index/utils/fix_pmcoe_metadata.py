@@ -1,6 +1,6 @@
 import logging
 from azure.identity import DefaultAzureCredential
-from azure.storage.blob import BlobServiceClient, ContainerClient
+from azure.storage.blob import BlobServiceClient
 
 logger = logging.getLogger(__name__)
 
