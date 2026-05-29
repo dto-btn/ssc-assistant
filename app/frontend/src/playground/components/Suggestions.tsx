@@ -145,6 +145,10 @@ const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
                   transform: "translateY(-4px)",
                   boxShadow: 4,
                 },
+                "@media (prefers-reduced-motion: reduce)": {
+                  transition: "none",
+                  "&:hover": { transform: "none" },
+                },
               }}
             >
               <CardActionArea

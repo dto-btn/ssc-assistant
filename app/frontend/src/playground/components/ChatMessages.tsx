@@ -1001,6 +1001,19 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
             borderRadius: "16px 4px 16px 16px",
           }}
         >
+          <Box
+            component="span"
+            sx={{
+              position: "absolute",
+              width: "1px",
+              height: "1px",
+              overflow: "hidden",
+              clip: "rect(0,0,0,0)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {t("chat.sender.you", { defaultValue: "You" })}
+          </Box>
           <Box sx={USER_MARKDOWN_SX}>
             <MarkdownHooks
               components={markdownComponents}

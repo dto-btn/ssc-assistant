@@ -27,7 +27,13 @@ import { useTranslation } from "react-i18next";
  */
 export const PlaygroundShell: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { t } = useTranslation("playground");
+  const { t, i18n } = useTranslation("playground");
+
+  // WCAG 3.1.1 / 3.1.2 — keep the HTML lang attribute in sync with the active language
+  // so screen readers use the correct pronunciation rules after a language toggle.
+  React.useEffect(() => {
+    document.documentElement.lang = i18n.language;
+  }, [i18n.language]);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isMobileSidebarOpen = useAppSelector(

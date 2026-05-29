@@ -208,7 +208,7 @@ const TopBar: React.FC<TopBarProps> = ({
           <Button
             variant="contained"
             disableElevation
-            aria-label={t("button.joinchat", { ns: "translations" })}
+            aria-label={t("button.joinchat.newWindow", { ns: "translations", defaultValue: `${t("button.joinchat", { ns: "translations" })} (${t("opensInNewWindow", { ns: "translations", defaultValue: "opens in new window" })})` })}
             onClick={() => {
               window.open(
                 "https://teams.microsoft.com/l/channel/19%3Au1yOceUvSm8spn8ZAyma2zT90c042tzBQAwst9Gem1c1%40thread.tacv2/SSC%20Assistant?groupId=9c07bdb4-3403-464b-a1c2-91cdaf3a2496&ngc=true&allowXTenantAccess=true",

@@ -73,6 +73,8 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFiles, disabled }) => {
               }
             }}
             sx={{
+              minWidth: 44,
+              minHeight: 44,
               border: (theme) => `1px solid ${theme.palette.divider}`,
               bgcolor: (theme) => theme.palette.background.paper,
               '&:hover': {
