@@ -911,6 +911,7 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
   sessionId,
   sessionFilesByBlobName,
 }) => {
+  const { t } = useTranslation("playground");
   const [isHovering, setIsHovering] = useState(false);
 
   const isUserMessage = message.role === "user";
