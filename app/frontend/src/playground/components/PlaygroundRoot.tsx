@@ -61,15 +61,7 @@ export const PlaygroundShell: React.FC = () => {
       <Box component="nav" aria-label={t("skip.nav.label", { defaultValue: "Page shortcuts" })}>
         <Box
           component="a"
-          href="#playground-main-content"
-          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-            e.preventDefault();
-            // Try the chat input first; fall back to the main content wrapper
-            const target =
-              document.getElementById("playground-ask-question") ??
-              document.getElementById("playground-main-content");
-            target?.focus();
-          }}
+          href="#playground-ask-question"
           sx={{
             position: "absolute",
             width: "1px",
