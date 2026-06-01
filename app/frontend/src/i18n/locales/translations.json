@@ -1106,5 +1106,9 @@
     "loading": {
         "en": "Loading...",
         "fr": "Chargement..."
+    },
+    "skip.to.chat.input": {
+        "en": "Skip to chat input",
+        "fr": "Passer à la zone de saisie du clavardage"
     }
 }

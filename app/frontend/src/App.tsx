@@ -10,12 +10,14 @@ import { CssBaseline } from "@mui/material";
 import { AppRoutes } from "./routes/AppRoutes";
 import MSClarity from "./components/MSClarity";
 import { AppSnackbars } from "./components/AppSnackbar";
+import { useTranslation } from "react-i18next";
 
 interface AppProps {
   instance: PublicClientApplication;
 }
 
 export const App = ({ instance }: AppProps) => {
+  const { t } = useTranslation();
   return (
     <>
       {/* Skip link for keyboard users to jump to the chat ask input.
@@ -32,7 +34,7 @@ export const App = ({ instance }: AppProps) => {
             target.focus();
           }
         }}
-      >Skip to chat input</a>
+      >{t("skip.to.chat.input")}</a>
       <MSClarity />
       <CssBaseline />
       <AppErrorBoundary>
