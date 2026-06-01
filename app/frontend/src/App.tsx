@@ -18,8 +18,21 @@ interface AppProps {
 export const App = ({ instance }: AppProps) => {
   return (
     <>
-      {/* Skip link for keyboard users to jump to the chat ask input */}
-      <a className="skip-link" href="#ask-question">Skip to chat input</a>
+      {/* Skip link for keyboard users to jump to the chat ask input.
+          On the playground page, #playground-ask-question is used; elsewhere #ask-question. */}
+      <a
+        className="skip-link"
+        href="#ask-question"
+        onClick={(e) => {
+          const target =
+            document.getElementById("playground-ask-question") ??
+            document.getElementById("ask-question");
+          if (target) {
+            e.preventDefault();
+            target.focus();
+          }
+        }}
+      >Skip to chat input</a>
       <MSClarity />
       <CssBaseline />
       <AppErrorBoundary>

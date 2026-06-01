@@ -27,7 +27,7 @@ import { useTranslation } from "react-i18next";
  */
 export const PlaygroundShell: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { t, i18n } = useTranslation("playground");
+  const { i18n } = useTranslation("playground");
 
   // WCAG 3.1.1 / 3.1.2 — keep the HTML lang attribute in sync with the active language
   // so screen readers use the correct pronunciation rules after a language toggle.
@@ -57,48 +57,12 @@ export const PlaygroundShell: React.FC = () => {
 
   return (
     <Box display="flex" height="100dvh">
-      {/* Skip link inside a nav landmark so axe's region rule is satisfied */}
-      <Box component="nav" aria-label={t("skip.nav.label", { defaultValue: "Page shortcuts" })}>
-        <Box
-          component="a"
-          href="#playground-ask-question"
-          sx={{
-            position: "absolute",
-            width: "1px",
-            height: "1px",
-            padding: 0,
-            margin: "-1px",
-            overflow: "hidden",
-            clip: "rect(0 0 0 0)",
-            clipPath: "inset(50%)",
-            whiteSpace: "nowrap",
-            border: 0,
-            "&:focus": {
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: "auto",
-              height: "auto",
-              overflow: "visible",
-              zIndex: 9999,
-              padding: "8px 16px",
-              bgcolor: "primary.main",
-              color: "primary.contrastText",
-              fontWeight: "bold",
-              borderRadius: "0 0 4px 0",
-            },
-          }}
-        >
-          {t("skip.to.chat", { defaultValue: "Skip to chat" })}
-        </Box>
-      </Box>
       <SessionBootstrapper />
       <SessionSidebar isMobile={isMobile} />
-      {/* id + tabIndex={-1} give the skip link a stable, always-present focus target */}
       <Box
         id="playground-main-content"
         tabIndex={-1}
-        sx={{ flex: 1, display: "flex", minWidth: 0, "&:focus-visible": { outline: "none" } }}
+        sx={{ flex: 1, display: "flex", minWidth: 0 }}
       >
         <ChatArea
           isSidebarOpen={isMobile ? isMobileSidebarOpen : !isSidebarCollapsed}
