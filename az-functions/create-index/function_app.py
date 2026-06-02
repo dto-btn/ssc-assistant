@@ -51,6 +51,7 @@ async def cleanup_old_indexes_trigger(myTimer: func.TimerRequest, client) -> Non
     await client.start_new("cleanup_old_search_indexes")
     logging.info("cleanup_old_search_indexes timer trigger function executed")
 
+
 # added manual http trigger to test via curl if needed (or portal)
 @app.route(route="build-index-now")
 @app.durable_client_input(client_name="client")
