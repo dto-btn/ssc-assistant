@@ -643,6 +643,18 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
         </Box>
       </Paper>
 
+      {error && (
+        <Typography
+          id="chatinput-error"
+          role="alert"
+          variant="caption"
+          color="error"
+          sx={{ px: 2, pt: 0.5, display: 'block' }}
+        >
+          {error}
+        </Typography>
+      )}
+
       {isUploading && (
         <Box
           sx={{

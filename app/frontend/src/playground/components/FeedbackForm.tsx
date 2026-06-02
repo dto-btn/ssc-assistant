@@ -124,9 +124,10 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) =
         fullWidth
         maxWidth="sm"
         fullScreen={isSmallScreen}
+        aria-labelledby="feedback-dialog-title"
         aria-describedby="feedback-dialog-subtitle"
       >
-        <DialogTitle>{t("feedback.system.title")}</DialogTitle>
+        <DialogTitle id="feedback-dialog-title">{t("feedback.system.title")}</DialogTitle>
         <DialogContent>
           <Typography id="feedback-dialog-subtitle" variant="body2" color="text.secondary" gutterBottom>
             {t("feedback.system.subtitle")}

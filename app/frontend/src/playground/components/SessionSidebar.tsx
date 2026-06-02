@@ -75,7 +75,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
 
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [sessionToRename, setSessionToRename] = useState<string | null>(null);
-  const [moreMenuAnchor, setMoreMenuAnchor] = useState<null | HTMLElement>(null);
+  const [moreMenuPosition, setMoreMenuPosition] = useState<{ top: number; left: number } | null>(null);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const wasMobileSidebarOpenRef = React.useRef(false);
 
@@ -169,7 +169,8 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
       event: React.MouseEvent<HTMLButtonElement>,
       sessionId: string
     ) => {
-      setMoreMenuAnchor(event.currentTarget);
+      const rect = event.currentTarget.getBoundingClientRect();
+      setMoreMenuPosition({ top: rect.bottom, left: rect.left });
       setSelectedSessionId(sessionId);
     },
     []
@@ -181,7 +182,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
   const handleDeleteClicked = useCallback(() => {
     if (selectedSessionId) {
       void dispatch(deleteSessionThunk(selectedSessionId));
-      setMoreMenuAnchor(null);
+      setMoreMenuPosition(null);
       setSelectedSessionId(null);
     }
   }, [dispatch, selectedSessionId]);
@@ -194,10 +195,10 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
       setSessionToRename(selectedSessionId);
       setRenameDialogOpen(true);
     }
-    setMoreMenuAnchor(null);
+    setMoreMenuPosition(null);
   }, [selectedSessionId]);
 
-  const moreMenuOpen = Boolean(moreMenuAnchor);
+  const moreMenuOpen = Boolean(moreMenuPosition);
 
   const sidebarTitleId = "playground-session-sidebar-title";
 
@@ -259,6 +260,11 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         return;
       case "Enter":
       case " ": {
+        // If the event originated from a child interactive element (e.g., the
+        // Options "..." button), let it handle its own keyboard activation.
+        if (event.target !== event.currentTarget) {
+          return;
+        }
         event.preventDefault();
         const activeSession = activeIndex >= 0 ? sessionsNewestFirst[activeIndex] : undefined;
         if (activeSession) {
@@ -281,6 +287,8 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
       <ListItem
         key={session.id}
         component="li"
+        role="option"
+        aria-selected={session.id === currentSessionId}
         disablePadding
         style={style}
         sx={{
@@ -484,7 +492,13 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         <Box ref={containerRef} sx={{ flexGrow: 1, minHeight: 0 }}>
           {containerHeight > 0 && (
             <ListWindow
+              role="listbox"
               aria-labelledby={sidebarTitleId}
+              aria-activedescendant={
+                activeIndex >= 0 && sessionsNewestFirst[activeIndex]
+                  ? `session-button-${sessionsNewestFirst[activeIndex].id}`
+                  : undefined
+              }
               listRef={listRef}
               onFocus={() => {
                 if (activeIndex < 0 && sessionsNewestFirst.length > 0) {
@@ -510,9 +524,10 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
             "aria-label": t("options"),
             "aria-labelledby": selectedSessionId ? `session-options-button-${selectedSessionId}` : undefined,
           }}
-          anchorEl={moreMenuAnchor}
+          anchorReference="anchorPosition"
+          anchorPosition={moreMenuPosition ?? { top: 0, left: 0 }}
           open={moreMenuOpen}
-          onClose={() => setMoreMenuAnchor(null)}
+          onClose={() => setMoreMenuPosition(null)}
         >
           <MenuItem id={`delete-session-${selectedSessionId}`} onClick={handleDeleteClicked} tabIndex={0}>
             <DeleteIcon sx={{ mr: "15px" }} />
