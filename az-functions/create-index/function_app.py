@@ -39,3 +39,11 @@ async def build_index_timer_trigger(myTimer: func.TimerRequest, client) -> None:
 async def update_current_index_alias_trigger(myTimer: func.TimerRequest, client) -> None:
     instance_id = await client.start_new("update_current_index_alias")
     logging.info("update_current_index_alias function executed")
+
+# added manual http trigger to test via curl if needed (or portal)
+@app.route(route="build-index-now")
+@app.durable_client_input(client_name="client")
+async def build_index_now(req: func.HttpRequest, client):
+    instance_id = await client.start_new("build_search_index")
+    logging.info(f"Started build_search_index with instance ID = {instance_id}")
+    return client.create_check_status_response(req, instance_id)
