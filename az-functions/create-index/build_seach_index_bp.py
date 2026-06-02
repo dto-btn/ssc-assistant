@@ -33,8 +33,8 @@ key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
 alias_index_name: str   = os.getenv("ALIAS_INDEX_NAME", "current")
 
 credential = AzureKeyCredential(key)
-openai_deployment_name: str = os.getenv("OPENAI_MODEL", "gpt-4")
-openai_model: str = "gpt-4o"
+openai_deployment_name: str = os.getenv("OPENAI_DEPLOYMENT_NAME", "gpt-4")
+openai_model: str = os.getenv("OPENAI_MODEL", "gpt-4o")
 embedding_model: str = "text-embedding-ada-002"
 blob_service_client = BlobServiceClient.from_connection_string(str(blob_connection_string))
 container_name = "sscplus-index-data"
