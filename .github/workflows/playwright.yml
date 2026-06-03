@@ -58,6 +58,12 @@ jobs:
       with:
         name: node-modules
         path: app/frontend
+    - name: Ensure Playwright deps are present
+      run: |
+        if [ ! -f node_modules/@playwright/test/package.json ]; then
+          echo "@playwright/test missing after artifact restore; reinstalling deps"
+          npm ci --prefer-offline --foreground-scripts
+        fi
     - name: Get Playwright version
       id: playwright-version
       run: echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_OUTPUT
