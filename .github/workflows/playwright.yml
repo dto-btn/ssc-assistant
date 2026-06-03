@@ -22,8 +22,16 @@ jobs:
         node-version: lts/*
         cache: 'npm'
         cache-dependency-path: app/frontend/package-lock.json
+    - name: Configure npm for CI
+      run: |
+        npm config set audit false
+        npm config set fund false
+        npm config set fetch-retries 5
+        npm config set fetch-retry-maxtimeout 120000
+        npm config set fetch-retry-mintimeout 10000
+        npm config set fetch-timeout 120000
     - name: Install dependencies
-      run: npm ci --no-audit --fund=false --prefer-offline
+      run: npm ci --prefer-offline --foreground-scripts
     - name: Upload node_modules
       uses: actions/upload-artifact@v7
       with:
