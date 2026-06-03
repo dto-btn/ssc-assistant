@@ -10,41 +10,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  install:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: app/frontend
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-        cache: 'npm'
-        cache-dependency-path: app/frontend/package-lock.json
-    - name: Configure npm for CI
-      run: |
-        npm config set audit false
-        npm config set fund false
-        npm config set fetch-retries 5
-        npm config set fetch-retry-maxtimeout 120000
-        npm config set fetch-retry-mintimeout 10000
-        npm config set fetch-timeout 120000
-    - name: Install dependencies
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-      run: npm ci --prefer-offline
-    - name: Upload node_modules
-      uses: actions/upload-artifact@v7
-      with:
-        name: node-modules
-        path: app/frontend/node_modules
-        retention-days: 1
-
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
-    needs: install
     defaults:
       run:
         working-directory: app/frontend
@@ -55,19 +23,8 @@ jobs:
         node-version: lts/*
         cache: 'npm'
         cache-dependency-path: app/frontend/package-lock.json
-    - name: Download node_modules
-      uses: actions/download-artifact@v7
-      with:
-        name: node-modules
-        path: app/frontend
-    - name: Ensure Playwright deps are present
-      env:
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-      run: |
-        if [ ! -f node_modules/@playwright/test/package.json ]; then
-          echo "@playwright/test missing after artifact restore; reinstalling deps"
-          npm ci --prefer-offline
-        fi
+    - name: Install dependencies
+      run: npm ci
     - name: Get Playwright version
       id: playwright-version
       run: echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_OUTPUT

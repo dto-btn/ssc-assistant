@@ -66,6 +66,9 @@
     "zod": "^3.24.2",
     "zustand": "^5.0.3"
   },
+  "overrides": {
+    "cytoscape": "3.30.2"
+  },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",
     "@playwright/test": "^1.59.1",
