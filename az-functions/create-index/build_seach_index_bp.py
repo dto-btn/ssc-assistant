@@ -1,6 +1,7 @@
 import json  # bourne
 import logging
 import os
+from functools import lru_cache
 
 import azure.durable_functions as df
 from azure.core.credentials import AzureKeyCredential
@@ -9,12 +10,6 @@ from azure.search.documents.indexes.models import SearchAlias
 from azure.storage.blob import BlobServiceClient
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from llama_index.core import Document, StorageContext, VectorStoreIndex
-from llama_index.core.settings import Settings
-from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
-from llama_index.llms.azure_openai import AzureOpenAI
-from llama_index.vector_stores.azureaisearch import (AzureAISearchVectorStore,
-                                                     IndexManagement)
 from utils.get_download_stats import get_latest_date
 
 # Example for durable blueprint functions:
@@ -25,8 +20,8 @@ build_index_bp = df.Blueprint()
 load_dotenv()
 azure_openai_uri        = os.getenv("AZURE_OPENAI_ENDPOINT")
 api_key                 = os.getenv("AZURE_OPENAI_API_KEY")
-api_version             = os.getenv("AZURE_OPENAI_VERSION", "2023-07-01-preview")
-api_search_version      = os.getenv("AZURE_SEARCH_VERSION", "2024-05-01-preview")
+api_version             = os.getenv("AZURE_OPENAI_VERSION", "2025-01-01-preview")
+api_search_version      = os.getenv("AZURE_SEARCH_VERSION", "2026-05-01-preview")
 service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 blob_connection_string  = os.getenv("BLOB_CONNECTION_STRING")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
@@ -36,13 +31,33 @@ credential = AzureKeyCredential(key)
 openai_deployment_name: str = os.getenv("OPENAI_DEPLOYMENT_NAME", "gpt-4")
 openai_model: str = os.getenv("OPENAI_MODEL", "gpt-4o")
 embedding_model: str = "text-embedding-ada-002"
-blob_service_client = BlobServiceClient.from_connection_string(str(blob_connection_string))
 container_name = "sscplus-index-data"
+
+
+@lru_cache(maxsize=1)
+def _get_blob_service_client():
+    if not blob_connection_string:
+        raise ValueError("BLOB_CONNECTION_STRING is missing or empty.")
+    return BlobServiceClient.from_connection_string(str(blob_connection_string))
 
 
 @build_index_bp.orchestration_trigger(context_name="context")
 def build_search_index(context: df.DurableOrchestrationContext):
-    container_client = blob_service_client.get_container_client(container_name)
+    # Use a writable location in Azure Functions for nltk artifacts needed by llama_index.
+    os.environ.setdefault("NLTK_DATA", "/tmp/nltk_data")
+    os.makedirs(os.environ["NLTK_DATA"], exist_ok=True)
+
+    # Import heavy llama_index modules lazily so function discovery can complete at startup.
+    from llama_index.core import Document, StorageContext, VectorStoreIndex
+    from llama_index.core.settings import Settings
+    from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
+    from llama_index.llms.azure_openai import AzureOpenAI
+    from llama_index.vector_stores.azureaisearch import (
+        AzureAISearchVectorStore,
+        IndexManagement,
+    )
+
+    container_client = _get_blob_service_client().get_container_client(container_name)
 
     index_client = SearchIndexClient(
         endpoint=service_endpoint,
@@ -130,7 +145,7 @@ def build_search_index(context: df.DurableOrchestrationContext):
 def get_pages_as_json(path: str):
     pages = []
 
-    container_client = blob_service_client.get_container_client(container_name)
+    container_client = _get_blob_service_client().get_container_client(container_name)
     blob_list = container_client.list_blobs(name_starts_with=path)
 
     ignore_selectors = ['div.comment-login-message', 'section.block-date-modified-block']
@@ -169,7 +184,7 @@ def update_current_index_alias(context: df.DurableOrchestrationContext):
     """ this function is used to create/update an alias that is always pointed to in the SSC-Assistant, in order
         to allow us to update the indexes in the backend without having to update the backend API code.
     """
-    container_client = blob_service_client.get_container_client(container_name)
+    container_client = _get_blob_service_client().get_container_client(container_name)
     index_data_path = get_latest_date(container_client=container_client)
     index_name = index_data_path.replace("_", "-").replace(":", "-")
 
