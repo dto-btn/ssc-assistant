@@ -152,8 +152,19 @@ def _get_cleanup_candidates(index_names, retained_index_count: int):
     return matching_index_names[retained_index_count:]
 
 
+@lru_cache(maxsize=1)
+def _get_blob_service_client():
+    if not blob_connection_string:
+        raise ValueError("BLOB_CONNECTION_STRING is missing or empty.")
+    return BlobServiceClient.from_connection_string(str(blob_connection_string))
+
+
 @build_index_bp.orchestration_trigger(context_name="context")
 def build_search_index(context: df.DurableOrchestrationContext):
+    # Use a writable location in Azure Functions for nltk artifacts needed by llama_index.
+    os.environ.setdefault("NLTK_DATA", "/tmp/nltk_data")
+    os.makedirs(os.environ["NLTK_DATA"], exist_ok=True)
+
     # Import heavy llama_index modules lazily so function discovery can complete at startup.
     from llama_index.core import Document, StorageContext, VectorStoreIndex
     from llama_index.core.settings import Settings
