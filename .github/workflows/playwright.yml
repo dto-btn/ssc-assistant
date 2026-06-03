@@ -31,7 +31,7 @@ jobs:
         npm config set fetch-retry-mintimeout 10000
         npm config set fetch-timeout 120000
     - name: Install dependencies
-      run: npm ci --prefer-offline --foreground-scripts
+      run: npm ci --prefer-offline --ignore-scripts
     - name: Upload node_modules
       uses: actions/upload-artifact@v7
       with:
