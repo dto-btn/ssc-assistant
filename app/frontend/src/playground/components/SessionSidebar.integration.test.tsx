@@ -226,8 +226,8 @@ describe("SessionSidebar responsive behavior", () => {
       },
     });
 
-    const sessionList = screen.getByRole("listbox", { name: "Chats" });
-    expect(within(sessionList).getAllByRole("option")).toHaveLength(2);
+    const sessionList = screen.getByRole("list", { name: "Chats" });
+    expect(within(sessionList).getAllByRole("listitem")).toHaveLength(2);
   });
 
   it("supports keyboard navigation and selection across the virtualized list", async () => {
@@ -270,7 +270,7 @@ describe("SessionSidebar responsive behavior", () => {
       },
     });
 
-    const sessionList = screen.getByRole("listbox", { name: "Chats" });
+    const sessionList = screen.getByRole("list", { name: "Chats" });
     sessionList.focus();
 
     // Focus lands on the list container; active row is tracked visually/statefully.
