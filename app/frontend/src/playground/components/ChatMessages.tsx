@@ -959,6 +959,11 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
   return (
     <ListItem
       key={message.id}
+      role="group"
+      aria-label={isUserMessage
+        ? t("chat.sender.you", { defaultValue: "You said:" })
+        : t("chat.sender.assistant", { defaultValue: "SSC Assistant said:" })
+      }
       alignItems="flex-start"
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
@@ -1002,19 +1007,6 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
             borderRadius: "16px 4px 16px 16px",
           }}
         >
-          <Box
-            component="span"
-            sx={{
-              position: "absolute",
-              width: "1px",
-              height: "1px",
-              overflow: "hidden",
-              clip: "rect(0,0,0,0)",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {t("chat.sender.you", { defaultValue: "You" })}
-          </Box>
           <Box sx={USER_MARKDOWN_SX}>
             <MarkdownHooks
               components={markdownComponents}
@@ -1136,6 +1128,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
       <List
         role="log"
         aria-label={t("chat.transcript", { defaultValue: "Chat conversation" })}
+        aria-busy={shouldPulseAssistantIcon}
         sx={{
           display: "flex",
           flexDirection: "column",

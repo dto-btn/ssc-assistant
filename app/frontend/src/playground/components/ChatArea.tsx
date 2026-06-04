@@ -364,7 +364,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           justifyContent="center"
           minWidth={0}
         >
-          <Typography component="h1" variant="body1">
+          <Typography component="h2" variant="body1">
             {t("select.or.create.session")}
           </Typography>
         </Box>
@@ -420,7 +420,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       >
         {renderHeader()}
         <Box flex={1} display="flex" flexDirection="column" alignItems="center" justifyContent="center" p={{ xs: 2, sm: 4, md: 6 }} minWidth={0}>
-          <Typography component="h1" variant="h3" gutterBottom>
+          <Typography component="h2" variant="h3" gutterBottom>
             {t("how.can.i.help")}
           </Typography>
           <Typography

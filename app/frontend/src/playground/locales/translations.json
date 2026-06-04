@@ -590,5 +590,21 @@
     "assistant.contextTruncated.toast": {
         "en": "Context truncated. Switching to a new conversation is recommended.",
         "fr": "Contexte tronqué. Il est recommandé de passer à une nouvelle conversation."
+    },
+    "chat.transcript": {
+        "en": "Chat conversation",
+        "fr": "Conversation par clavardage"
+    },
+    "chat.sender.you": {
+        "en": "You said:",
+        "fr": "Vous avez dit :"
+    },
+    "chat.sender.assistant": {
+        "en": "SSC Assistant said:",
+        "fr": "L'assistant SSC a dit :"
+    },
+    "assistant.typing": {
+        "en": "SSC Assistant is typing",
+        "fr": "L'assistant SSC est en train d'écrire"
     }
 }
