@@ -11,3 +11,4 @@ llama-index-llms-azure-openai==0.4.2
 llama-index-embeddings-azure-openai==0.4.1
 llama-index-vector-stores-azureaisearch==0.4.5
 azure-search-documents==11.6.0b4
+azure-search-documents==11.6.0b4
