@@ -2,9 +2,12 @@ import json  # bourne
 import logging
 import os
 from functools import lru_cache
+import re
+import time
 
 import azure.durable_functions as df
 from azure.core.credentials import AzureKeyCredential
+from azure.core.exceptions import HttpResponseError
 from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.indexes.models import SearchAlias
 from azure.storage.blob import BlobServiceClient
@@ -26,12 +29,16 @@ service_endpoint        = os.getenv("AZURE_SEARCH_SERVICE_ENDPOINT", "INVALID")
 blob_connection_string  = os.getenv("BLOB_CONNECTION_STRING")
 key: str                = os.getenv("AZURE_SEARCH_ADMIN_KEY", "INVALID")
 alias_index_name: str   = os.getenv("ALIAS_INDEX_NAME", "current")
+default_retained_index_count = os.getenv("INDEX_CLEANUP_KEEP_COUNT", "10")
+index_cleanup_delete_delay_seconds = os.getenv("INDEX_CLEANUP_DELETE_DELAY_SECONDS", "2")
+index_cleanup_delete_max_retries = os.getenv("INDEX_CLEANUP_DELETE_MAX_RETRIES", "6")
 
 credential = AzureKeyCredential(key)
 openai_deployment_name: str = os.getenv("OPENAI_DEPLOYMENT_NAME", "gpt-4")
 openai_model: str = os.getenv("OPENAI_MODEL", "gpt-4o")
 embedding_model: str = "text-embedding-ada-002"
 container_name = "sscplus-index-data"
+TIMESTAMPED_INDEX_NAME_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}$")
 
 
 @lru_cache(maxsize=1)
@@ -39,6 +46,109 @@ def _get_blob_service_client():
     if not blob_connection_string:
         raise ValueError("BLOB_CONNECTION_STRING is missing or empty.")
     return BlobServiceClient.from_connection_string(str(blob_connection_string))
+
+
+def _build_index_name(index_data_path: str) -> str:
+    return index_data_path.replace("_", "-").replace(":", "-")
+
+
+def _get_retained_index_count(value=None) -> int:
+    raw_value = default_retained_index_count if value is None else value
+    try:
+        return max(0, int(raw_value))
+    except (TypeError, ValueError):
+        logging.warning(
+            "Invalid retained index count '%s'. Falling back to default '%s'.",
+            raw_value,
+            default_retained_index_count,
+        )
+        return max(0, int(default_retained_index_count))
+
+
+def _get_search_index_client() -> SearchIndexClient:
+    return SearchIndexClient(
+        endpoint=service_endpoint,
+        credential=credential,
+        api_version=api_search_version,
+    )
+
+
+def _get_float_setting(value, default_value: str) -> float:
+    try:
+        return max(0.0, float(value))
+    except (TypeError, ValueError):
+        logging.warning(
+            "Invalid float setting '%s'. Falling back to default '%s'.",
+            value,
+            default_value,
+        )
+        return max(0.0, float(default_value))
+
+
+def _get_int_setting(value, default_value: str) -> int:
+    try:
+        return max(1, int(value))
+    except (TypeError, ValueError):
+        logging.warning(
+            "Invalid integer setting '%s'. Falling back to default '%s'.",
+            value,
+            default_value,
+        )
+        return max(1, int(default_value))
+
+
+def _get_retry_after_seconds(exc: HttpResponseError):
+    response = getattr(exc, "response", None)
+    if response is None:
+        return None
+
+    retry_after = response.headers.get("Retry-After")
+    if retry_after is None:
+        return None
+
+    try:
+        return max(0.0, float(retry_after))
+    except ValueError:
+        return None
+
+
+def _delete_index_with_backoff(index_client: SearchIndexClient, index_name: str):
+    base_delay_seconds = _get_float_setting(
+        index_cleanup_delete_delay_seconds,
+        "2",
+    )
+    max_retries = _get_int_setting(index_cleanup_delete_max_retries, "6")
+
+    for attempt in range(max_retries):
+        try:
+            index_client.delete_index(index_name)
+            return
+        except HttpResponseError as exc:
+            status_code = getattr(exc, "status_code", None)
+            if status_code != 429 or attempt == max_retries - 1:
+                raise
+
+            retry_after_seconds = _get_retry_after_seconds(exc)
+            wait_seconds = retry_after_seconds
+            if wait_seconds is None:
+                wait_seconds = min(base_delay_seconds * (2 ** attempt), 60.0)
+
+            logging.warning(
+                "Azure AI Search throttled deletion of index '%s'. Retrying in %.1f seconds (attempt %s/%s).",
+                index_name,
+                wait_seconds,
+                attempt + 1,
+                max_retries,
+            )
+            time.sleep(wait_seconds)
+
+
+def _get_cleanup_candidates(index_names, retained_index_count: int):
+    matching_index_names = sorted(
+        [name for name in index_names if TIMESTAMPED_INDEX_NAME_PATTERN.fullmatch(name)],
+        reverse=True,
+    )
+    return matching_index_names[retained_index_count:]
 
 
 @build_index_bp.orchestration_trigger(context_name="context")
@@ -59,11 +169,7 @@ def build_search_index(context: df.DurableOrchestrationContext):
 
     container_client = _get_blob_service_client().get_container_client(container_name)
 
-    index_client = SearchIndexClient(
-        endpoint=service_endpoint,
-        credential=credential,
-        api_version=api_search_version
-    )
+    index_client = _get_search_index_client()
 
     metadata_fields =   {
                             "title" : "title",
@@ -75,7 +181,7 @@ def build_search_index(context: df.DurableOrchestrationContext):
                         }
 
     index_data_path = get_latest_date(container_client=container_client)
-    index_name = index_data_path.replace("_", "-").replace(":", "-")
+    index_name = _build_index_name(index_data_path)
 
     vector_store = AzureAISearchVectorStore(
         search_or_index_client=index_client,
@@ -140,6 +246,18 @@ def build_search_index(context: df.DurableOrchestrationContext):
     return f"Index created: {index_name}."
 
 
+@build_index_bp.orchestration_trigger(context_name="context")
+def cleanup_old_search_indexes(context: df.DurableOrchestrationContext):
+    payload = context.get_input() or {}
+    retained_index_count = _get_retained_index_count(payload.get("retain_count"))
+
+    cleanup_summary = yield context.call_activity(
+        "delete_old_search_indexes",
+        {"retain_count": retained_index_count},
+    )
+    return cleanup_summary
+
+
 #Activity
 @build_index_bp.activity_trigger(input_name="path")
 def get_pages_as_json(path: str):
@@ -179,6 +297,32 @@ def get_pages_as_json(path: str):
                 pages.append(page)
     return pages
 
+
+@build_index_bp.activity_trigger(input_name="payload")
+def delete_old_search_indexes(payload):
+    retained_index_count = _get_retained_index_count((payload or {}).get("retain_count"))
+    index_client = _get_search_index_client()
+    delete_delay_seconds = _get_float_setting(index_cleanup_delete_delay_seconds, "2")
+
+    index_names = list(index_client.list_index_names())
+    indexes_to_delete = _get_cleanup_candidates(index_names, retained_index_count)
+
+    for index_position, index_name in enumerate(indexes_to_delete):
+        logging.info("Deleting old Azure AI Search index '%s'.", index_name)
+        _delete_index_with_backoff(index_client, index_name)
+
+        if index_position < len(indexes_to_delete) - 1 and delete_delay_seconds > 0:
+            time.sleep(delete_delay_seconds)
+
+    cleanup_summary = {
+        "retain_count": retained_index_count,
+        "deleted_indexes": indexes_to_delete,
+        "deleted_count": len(indexes_to_delete),
+        "matched_count": len([name for name in index_names if TIMESTAMPED_INDEX_NAME_PATTERN.fullmatch(name)]),
+    }
+    logging.info("Search index cleanup summary: %s", cleanup_summary)
+    return cleanup_summary
+
 @build_index_bp.orchestration_trigger(context_name="context")
 def update_current_index_alias(context: df.DurableOrchestrationContext):
     """ this function is used to create/update an alias that is always pointed to in the SSC-Assistant, in order
@@ -186,7 +330,7 @@ def update_current_index_alias(context: df.DurableOrchestrationContext):
     """
     container_client = _get_blob_service_client().get_container_client(container_name)
     index_data_path = get_latest_date(container_client=container_client)
-    index_name = index_data_path.replace("_", "-").replace(":", "-")
+    index_name = _build_index_name(index_data_path)
 
     logging.info("Alias creation starting ...")
     new_alias = yield context.call_activity(name="update_index_alias", input_={"index_name": index_name, "alias_name": alias_index_name})
@@ -197,11 +341,7 @@ def update_current_index_alias(context: df.DurableOrchestrationContext):
 @build_index_bp.activity_trigger(input_name="payload")
 def update_index_alias(payload):
 
-    index_client = SearchIndexClient(
-        endpoint=service_endpoint,
-        credential=credential,
-        api_version=api_search_version
-    )
+    index_client = _get_search_index_client()
     logging.info(f"Inside Update Index Alias function, payload -> {payload}")
 
     alias = SearchAlias(name=payload['alias_name'], indexes=[payload['index_name']])
