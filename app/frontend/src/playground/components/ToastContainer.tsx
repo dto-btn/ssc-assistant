@@ -26,11 +26,12 @@ const ToastContainer: React.FC = () => {
   const getAutoHideDuration = (toast: Pick<ToastMessage, "severity" | "isError">): number | null => {
     const severity = getSeverity(toast);
     if (severity === "success") {
-      return 3000;
+      return 5000;
     }
 
     // Keep high-signal toasts visible longer for accessibility and readability.
-    return 10000;
+    // Error toasts are persistent (null) — users must dismiss them explicitly (WCAG 2.2.1).
+    return severity === "error" ? null : 10000;
   };
 
   return (

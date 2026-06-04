@@ -31,7 +31,7 @@ test('supports a keyboard-only new chat journey', async ({ playground, mockPlayg
 
   await playground.goto();
 
-  const newChatButton = playground.page.getByRole('button', { name: 'New' });
+  const newChatButton = playground.page.getByRole('button', { name: 'New', exact: true });
   await tabUntilFocused(playground.page, newChatButton, 'new chat button');
   await playground.page.keyboard.press('Enter');
 

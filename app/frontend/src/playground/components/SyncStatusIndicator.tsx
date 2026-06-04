@@ -94,8 +94,9 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({ sessio
           lineHeight: 0,
         }}
       >
-        <CloudQueueIcon sx={{ fontSize: 20, color: theme.palette.grey[500] }} />
+        <CloudQueueIcon aria-hidden sx={{ fontSize: 20, color: theme.palette.grey[500] }} />
         <BoltIcon
+          aria-hidden
           sx={{
             fontSize: 14,
             position: "absolute",
@@ -107,7 +108,13 @@ export const SyncStatusIndicator: React.FC<SyncStatusIndicatorProps> = ({ sessio
 
     return (
       <Tooltip title={config.tooltip || label} placement="top">
-        <Box component="span" sx={{ display: "inline-flex", alignItems: "center", ...sx }}>
+        <Box
+          component="span"
+          role="img"
+          aria-label={label}
+          tabIndex={0}
+          sx={{ display: "inline-flex", alignItems: "center", ...sx }}
+        >
           {inlineIcon}
         </Box>
       </Tooltip>

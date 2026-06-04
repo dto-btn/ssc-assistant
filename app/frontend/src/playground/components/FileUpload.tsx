@@ -56,7 +56,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFiles, disabled }) => {
           if (event.target.files) onFiles(event.target.files);
           if (inputRef.current) inputRef.current.value = "";
         }}
-        aria-hidden
+        aria-hidden="true"
         tabIndex={-1}
       />
       {/* Tooltip wraps a span to keep it enabled when the button is disabled */}
@@ -73,6 +73,8 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFiles, disabled }) => {
               }
             }}
             sx={{
+              minWidth: 44,
+              minHeight: 44,
               border: (theme) => `1px solid ${theme.palette.divider}`,
               bgcolor: (theme) => theme.palette.background.paper,
               '&:hover': {

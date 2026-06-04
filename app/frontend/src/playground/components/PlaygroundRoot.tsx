@@ -20,12 +20,20 @@ import {
   openMobileSidebar,
   toggleSidebarCollapsed,
 } from "../store/slices/uiSlice";
+import { useTranslation } from "react-i18next";
 
 /**
  * Top-level layout controller for playground sidebar behavior across breakpoints.
  */
 export const PlaygroundShell: React.FC = () => {
   const dispatch = useAppDispatch();
+  const { i18n } = useTranslation("playground");
+
+  // WCAG 3.1.1 / 3.1.2 — keep the HTML lang attribute in sync with the active language
+  // so screen readers use the correct pronunciation rules after a language toggle.
+  React.useEffect(() => {
+    document.documentElement.lang = i18n.language;
+  }, [i18n.language]);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isMobileSidebarOpen = useAppSelector(
@@ -51,16 +59,22 @@ export const PlaygroundShell: React.FC = () => {
     <Box display="flex" height="100dvh">
       <SessionBootstrapper />
       <SessionSidebar isMobile={isMobile} />
-      <ChatArea
-        isSidebarOpen={isMobile ? isMobileSidebarOpen : !isSidebarCollapsed}
-        onOpenSidebar={() => {
-          if (isMobile) {
-            dispatch(isMobileSidebarOpen ? closeMobileSidebar() : openMobileSidebar());
-          } else {
-            dispatch(toggleSidebarCollapsed());
-          }
-        }}
-      />
+      <Box
+        id="playground-main-content"
+        tabIndex={-1}
+        sx={{ flex: 1, display: "flex", minWidth: 0 }}
+      >
+        <ChatArea
+          isSidebarOpen={isMobile ? isMobileSidebarOpen : !isSidebarCollapsed}
+          onOpenSidebar={() => {
+            if (isMobile) {
+              dispatch(isMobileSidebarOpen ? closeMobileSidebar() : openMobileSidebar());
+            } else {
+              dispatch(toggleSidebarCollapsed());
+            }
+          }}
+        />
+      </Box>
       <PlaygroundDisclaimerDialog />
     </Box>
   );

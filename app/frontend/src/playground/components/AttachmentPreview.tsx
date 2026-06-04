@@ -133,6 +133,7 @@ const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ attachments }) =>
                 href={previewUrl || attachment.url}
                 download={downloadName}
                 underline="hover"
+                aria-label={`Download ${attachment.originalName || "Attachment"}`}
                 sx={{
                   display: "flex",
                   alignItems: "flex-start",

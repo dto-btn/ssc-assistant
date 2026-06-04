@@ -304,6 +304,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
           }}
           pageSizeOptions={[5, 10]}
           checkboxSelection
+          aria-label={t("br.table.label", { defaultValue: "Business requests" })}
           sx={{
             border: 0,
             backgroundColor: theme.palette.secondary.contrastText,
@@ -342,7 +343,6 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            outline: "none",
             border: "1px solid " + theme.palette.divider,
           }}
         >

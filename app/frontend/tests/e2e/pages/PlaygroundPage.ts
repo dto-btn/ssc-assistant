@@ -157,7 +157,7 @@ export class PlaygroundPage {
    */
   async startNewChat(): Promise<void> {
     await this.openSessionNavigation();
-    await this.page.getByRole('button', { name: 'New' }).click();
+    await this.page.getByRole('button', { name: 'New', exact: true }).click();
     await this.closeSessionNavigationIfNeeded();
     await expect(this.composer()).toBeVisible();
   }
@@ -166,11 +166,10 @@ export class PlaygroundPage {
    * Send a user prompt through the composer.
    */
   async sendMessage(message: string): Promise<void> {
-    await this.composer().click();
     await this.composer().fill(message);
     await expect(this.composer()).toHaveValue(message);
     await expect(this.page.getByLabel('Send')).toBeEnabled();
-    await this.page.getByLabel('Send').click();
+    await this.composer().press('Enter');
   }
 
   /**
@@ -199,8 +198,20 @@ export class PlaygroundPage {
    */
   async openSessionOptions(sessionName: string): Promise<void> {
     await this.openSessionNavigation();
-    const sessionRow = this.page.getByRole('listitem').filter({ hasText: sessionName });
-    await sessionRow.getByRole('button', { name: 'Options', exact: true }).click();
+    const sessionRow = this.page.locator('li').filter({ hasText: sessionName }).first();
+    await expect(sessionRow).toBeVisible();
+
+    const optionsButton = sessionRow.locator('button[id^="session-options-button-"]').first();
+    if ((await optionsButton.count()) > 0) {
+      await optionsButton.click();
+      return;
+    }
+
+    await this.page
+      .getByRole('listitem')
+      .filter({ hasText: sessionName })
+      .getByRole('button', { name: 'Options', exact: true })
+      .click();
   }
 
   /**

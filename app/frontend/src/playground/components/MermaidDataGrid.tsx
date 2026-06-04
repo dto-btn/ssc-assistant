@@ -59,7 +59,7 @@ const MermaidDataGrid: React.FC<MermaidDataGridProps> = ({ rows }) => {
 
   return (
     <Box sx={{ mt: 1 }}>
-      <Typography variant="caption" sx={{ display: "block", mb: 0.75 }}>
+      <Typography id="mermaid-data-grid-caption" variant="caption" sx={{ display: "block", mb: 0.75 }}>
         {t("mermaid.chart.data")}
       </Typography>
       <Paper sx={{ width: "100%", minHeight: 280 }} elevation={1}>
@@ -68,6 +68,7 @@ const MermaidDataGrid: React.FC<MermaidDataGridProps> = ({ rows }) => {
           columns={columns}
           autoHeight
           disableRowSelectionOnClick
+          aria-labelledby="mermaid-data-grid-caption"
           pageSizeOptions={[5, 10, 25]}
           initialState={{ pagination: { paginationModel: { page: 0, pageSize: 10 } } }}
           showToolbar

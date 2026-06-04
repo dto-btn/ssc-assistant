@@ -43,9 +43,9 @@ const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
     {
       titleKey: "suggestions.general.email",
       tool: "corporate",
-      icon: <EmailIcon aria-hidden="true" sx={{ color: "#5c6bc0" }} />,
+      icon: <EmailIcon aria-hidden="true" sx={{ color: "#3f51b5" }} />,
       category: "general",
-      color: "#5c6bc0", // Indigo (General)
+      color: "#3f51b5", // Indigo (General)
     },
     {
       titleKey: "suggestions.general.hire",
@@ -78,9 +78,9 @@ const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
     ...Array.from({ length: 16 }, (_, i) => ({
       titleKey: `suggestions.pmcoe.q${i + 1}`,
       tool: "pmcoe",
-      icon: <TopicIcon aria-hidden="true" sx={{ color: "#935d00" }} />,
+      icon: <TopicIcon aria-hidden="true" sx={{ color: "#7a4f00" }} />,
       category: "pmcoe" as const,
-      color: "#935d00", // Darker Gold (PMCOE)
+      color: "#7a4f00", // Darker Gold (PMCOE)
     })),
   ], []);
 
@@ -113,6 +113,7 @@ const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
 
   return (
     <Box 
+      component="section"
       sx={{ 
         width: "100%", 
         display: "flex", 
@@ -143,6 +144,10 @@ const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
                 "&:hover": {
                   transform: "translateY(-4px)",
                   boxShadow: 4,
+                },
+                "@media (prefers-reduced-motion: reduce)": {
+                  transition: "none",
+                  "&:hover": { transform: "none" },
                 },
               }}
             >

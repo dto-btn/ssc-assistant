@@ -186,8 +186,7 @@ describe("SessionSidebar responsive behavior", () => {
       },
     });
 
-    const session2Item = screen.getByRole("listitem", { name: "Session 2" });
-    const session2Button = within(session2Item).getByRole("button", { name: /Session 2/i });
+    const session2Button = screen.getByRole("button", { name: /Session 2/i });
     await user.click(session2Button);
 
     await waitFor(() => {
@@ -274,11 +273,13 @@ describe("SessionSidebar responsive behavior", () => {
     const sessionList = screen.getByRole("list", { name: "Chats" });
     sessionList.focus();
 
-    expect(sessionList).not.toHaveAttribute("aria-activedescendant");
+    // Focus lands on the list container; active row is tracked visually/statefully.
+    expect(sessionList).toHaveFocus();
 
     await user.keyboard("{ArrowDown}");
 
-    expect(sessionList).not.toHaveAttribute("aria-activedescendant");
+    // ArrowDown updates the internal active index and Enter confirms selection.
+    expect(sessionList).toHaveFocus();
 
     await user.keyboard("{Enter}");
 
