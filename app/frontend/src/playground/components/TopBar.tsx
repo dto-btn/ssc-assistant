@@ -123,7 +123,7 @@ const TopBar: React.FC<TopBarProps> = ({
           />
           <Typography
             variant="h6"
-            component="h1"
+            component="span"
             sx={{
               fontSize: { xs: "16px", sm: "20px" },
               fontWeight: "500",
