@@ -364,7 +364,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           justifyContent="center"
           minWidth={0}
         >
-          {t("select.or.create.session")}
+          <Typography component="h1" variant="body1">
+            {t("select.or.create.session")}
+          </Typography>
         </Box>
       </Box>
     );
