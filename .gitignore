@@ -33,6 +33,8 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+**/node_modules/
+
 **/.venv/*
 **/.venv_api/*
 **/.venv_func/*
