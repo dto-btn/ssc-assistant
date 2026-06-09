@@ -641,9 +641,6 @@ const MainScreen = () => {
                 quotedText={quotedText}
                 onError={handleFileUploadError}
               />
-            </Box>
-          </Box>
-        ) : (
           // If 1 chat history
           <Box
             sx={{
