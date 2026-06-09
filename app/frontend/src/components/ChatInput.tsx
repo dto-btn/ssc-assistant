@@ -66,8 +66,6 @@ export const ChatInput = ({
   const { getCurrentChatHistory } = useChatStore();
   const staticTools = getCurrentChatHistory().staticTools || [];
 
-  const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "";
-
   const sendQuestion = () => {
     if (disabled || !question.trim()) {
       return;
