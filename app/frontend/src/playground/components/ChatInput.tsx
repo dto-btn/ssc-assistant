@@ -563,8 +563,8 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
         <InputBase
           inputRef={inputRef}
           sx={{ ml: 1, flex: 1, minWidth: 0 }}
-          placeholder={t('type.a.message', { defaultValue: 'Type a message' })}
-          inputProps={{ tabIndex: 0 }}
+          // Avoid conflicting tabIndex by providing a single source of truth
+          inputProps={{ 'aria-label': t('type.a.message', { defaultValue: 'Type a message' }), tabIndex: 0 }}
           value={input}
           multiline
           maxRows={15}

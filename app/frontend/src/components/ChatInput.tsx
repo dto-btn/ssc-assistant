@@ -302,9 +302,6 @@ export const ChatInput = ({
                 tabIndex: 0,
               },
             }}
-            placeholder={`${t("ask.question")}. ${t(
-              "model.version.disclaimer"
-            )} ${modelName}.`}
             inputProps={{ "aria-label": t("ask.question"), tabIndex: 1 }}
             error={error}
             id="ask-question"
