@@ -639,12 +639,8 @@ const MainScreen = () => {
                 onSend={sendMessage}
                 onStop={stopChat}
                 quotedText={quotedText}
-                selectedModel={currentChatHistory.model}
                 onError={handleFileUploadError}
               />
-            </Box>
-          </Box>
-        ) : (
           // If 1 chat history
           <Box
             sx={{
@@ -691,7 +687,6 @@ const MainScreen = () => {
                 onSend={sendMessage}
                 onStop={stopChat}
                 quotedText={quotedText}
-                selectedModel={currentChatHistory.model}
                 onError={handleFileUploadError}
               />
             </Box>
