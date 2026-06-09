@@ -543,12 +543,27 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
           </Box>
         )}
 
+        {/* Visually-hidden label associates the input with a real <label> element
+            so screen readers announce the field correctly without a visible placeholder. */}
+        <Box
+          component="label"
+          htmlFor="playground-ask-question"
+          sx={{
+            position: "absolute",
+            width: "1px",
+            height: "1px",
+            overflow: "hidden",
+            clip: "rect(0,0,0,0)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {t('type.a.message', { defaultValue: 'Type a message' })}
+        </Box>
+
         <InputBase
           inputRef={inputRef}
           sx={{ ml: 1, flex: 1, minWidth: 0 }}
-          placeholder={t('type.a.message', { defaultValue: 'Type a message' })}
-          // Avoid conflicting tabIndex by providing a single source of truth
-          inputProps={{ 'aria-label': t('type.a.message', { defaultValue: 'Type a message' }), tabIndex: 0 }}
+          inputProps={{ tabIndex: 0 }}
           value={input}
           multiline
           maxRows={15}
