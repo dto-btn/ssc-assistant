@@ -606,5 +606,9 @@
     "assistant.typing": {
         "en": "SSC Assistant is typing",
         "fr": "L'assistant SSC est en train d'écrire"
+    },
+    "profile.icon.title": {
+        "en": "Open profile menu",
+        "fr": "Ouvrir le menu du profil"
     }
 }
