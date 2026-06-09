@@ -33,7 +33,6 @@ interface ChatInputProps {
   placeholder?: string;
   clearOnSend?: boolean;
   quotedText?: string;
-  selectedModel: string;
   onError?: (error: ToastMessage) => void;
 }
 
@@ -43,7 +42,6 @@ export const ChatInput = ({
   disabled,
   clearOnSend,
   quotedText,
-  selectedModel,
   onError,
 }: ChatInputProps) => {
   const [question, setQuestion] = useState<string>("");
