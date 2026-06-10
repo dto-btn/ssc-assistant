@@ -639,7 +639,6 @@ const MainScreen = () => {
                 onSend={sendMessage}
                 onStop={stopChat}
                 quotedText={quotedText}
-                selectedModel={currentChatHistory.model}
                 onError={handleFileUploadError}
               />
             </Box>
@@ -691,7 +690,6 @@ const MainScreen = () => {
                 onSend={sendMessage}
                 onStop={stopChat}
                 quotedText={quotedText}
-                selectedModel={currentChatHistory.model}
                 onError={handleFileUploadError}
               />
             </Box>

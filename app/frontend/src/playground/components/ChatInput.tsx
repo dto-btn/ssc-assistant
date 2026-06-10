@@ -563,6 +563,8 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
         <InputBase
           inputRef={inputRef}
           sx={{ ml: 1, flex: 1, minWidth: 0 }}
+          // The visually-hidden <label htmlFor="playground-ask-question"> above
+          // provides the accessible name, so no aria-label is needed here.
           inputProps={{ tabIndex: 0 }}
           value={input}
           multiline

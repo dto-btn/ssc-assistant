@@ -33,7 +33,6 @@ interface ChatInputProps {
   placeholder?: string;
   clearOnSend?: boolean;
   quotedText?: string;
-  selectedModel: string;
   onError?: (error: ToastMessage) => void;
 }
 
@@ -43,7 +42,6 @@ export const ChatInput = ({
   disabled,
   clearOnSend,
   quotedText,
-  selectedModel,
   onError,
 }: ChatInputProps) => {
   const [question, setQuestion] = useState<string>("");
@@ -65,8 +63,6 @@ export const ChatInput = ({
 
   const { getCurrentChatHistory } = useChatStore();
   const staticTools = getCurrentChatHistory().staticTools || [];
-
-  const modelName = selectedModel === "gpt-4o" ? "GPT-4o" : "";
 
   const sendQuestion = () => {
     if (disabled || !question.trim()) {
@@ -302,9 +298,6 @@ export const ChatInput = ({
                 tabIndex: 0,
               },
             }}
-            placeholder={`${t("ask.question")}. ${t(
-              "model.version.disclaimer"
-            )} ${modelName}.`}
             inputProps={{ "aria-label": t("ask.question"), tabIndex: 1 }}
             error={error}
             id="ask-question"
