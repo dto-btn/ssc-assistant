@@ -594,5 +594,29 @@
     "profile.icon.title": {
         "en": "Open profile menu",
         "fr": "Ouvrir le menu du profil"
+    },
+    "skip.to.main": {
+        "en": "Skip to main content",
+        "fr": "Aller au contenu principal"
+    },
+    "new.chat.aria": {
+        "en": "Start a new chat",
+        "fr": "Démarrer une nouvelle conversation"
+    },
+    "chat.sender.you": {
+        "en": "You",
+        "fr": "Vous"
+    },
+    "chat.transcript": {
+        "en": "Chat conversation",
+        "fr": "Conversation"
+    },
+    "message.label.user": {
+        "en": "Your message",
+        "fr": "Votre message"
+    },
+    "message.label.assistant": {
+        "en": "SSC Assistant's response",
+        "fr": "Réponse de l'assistant SSC"
     }
 }

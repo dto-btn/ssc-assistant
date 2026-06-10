@@ -121,9 +121,10 @@ const TopBar: React.FC<TopBarProps> = ({
             }}
             alt={t("logo.alt", { ns: "translations", defaultValue: "SSC Logo" })}
           />
+          {/* WCAG 1.3.1 — page must have exactly one h1 for heading hierarchy */}
           <Typography
             variant="h6"
-            component="span"
+            component="h1"
             sx={{
               fontSize: { xs: "16px", sm: "20px" },
               fontWeight: "500",

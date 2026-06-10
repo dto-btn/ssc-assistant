@@ -469,7 +469,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
 
       <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
         <Box key="newChat">
-          <ListItemButton id="new-chat-button" onClick={handleNewSession}>
+          <ListItemButton id="new-chat-button" onClick={handleNewSession} aria-label={t("new.chat.aria")}>
             <ListItemIcon sx={{ minWidth: "0px", mr: "10px" }}>
               <AddCommentIcon fontSize="small" color="primary" />
             </ListItemIcon>

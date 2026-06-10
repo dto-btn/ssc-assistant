@@ -86,7 +86,7 @@ test('keeps mobile controls usable across viewport changes', async ({ playground
 
   await playground.openSessionNavigation();
   await expectMinimumTouchTargetSize(
-    playground.page.getByRole('button', { name: 'New', exact: true }),
+    playground.page.getByRole('button', { name: 'Start a new chat', exact: true }),
     'new chat button',
   );
   await expectNoHorizontalOverflow(playground.page, 'mobile drawer layout');

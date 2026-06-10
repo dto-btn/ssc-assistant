@@ -673,7 +673,12 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
   );
 
   return (
-    <Box sx={{ width: { xs: "min(100%, 680px)", lg: "800px" }, maxWidth: "100%" }}>
+    // WCAG 4.1.3 — aria-busy signals to screen readers that this message is still
+    // being generated; the final content will be announced once streaming ends.
+    <Box
+      sx={{ width: { xs: "min(100%, 680px)", lg: "800px" }, maxWidth: "100%" }}
+      aria-busy={isPreStreamingPhase ? true : undefined}
+    >
       {liveAttribution && (
         <Box
           sx={{
@@ -960,6 +965,9 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
     <ListItem
       key={message.id}
       alignItems="flex-start"
+      // WCAG 1.3.1 — identify the message sender so screen readers announce
+      // who said what before reading the message content.
+      aria-label={isAssistantMessage ? t("message.label.assistant") : t("message.label.user")}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       sx={{
