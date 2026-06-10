@@ -4,6 +4,7 @@ import os
 from functools import lru_cache
 import re
 import time
+from typing import Any
 
 import azure.durable_functions as df
 from azure.core.credentials import AzureKeyCredential
@@ -153,10 +154,6 @@ def _get_cleanup_candidates(index_names, retained_index_count: int):
 
 @build_index_bp.orchestration_trigger(context_name="context")
 def build_search_index(context: df.DurableOrchestrationContext):
-    # Use a writable location in Azure Functions for nltk artifacts needed by llama_index.
-    os.environ.setdefault("NLTK_DATA", "/tmp/nltk_data")
-    os.makedirs(os.environ["NLTK_DATA"], exist_ok=True)
-
     # Import heavy llama_index modules lazily so function discovery can complete at startup.
     from llama_index.core import Document, StorageContext, VectorStoreIndex
     from llama_index.core.settings import Settings
@@ -218,7 +215,8 @@ def build_search_index(context: df.DurableOrchestrationContext):
         )
         documents.append(document)
 
-    llm = AzureOpenAI(
+    llm_class: Any = AzureOpenAI
+    llm = llm_class(
         model=openai_model,
         deployment_name=openai_deployment_name,
         api_version=api_version,
@@ -239,7 +237,7 @@ def build_search_index(context: df.DurableOrchestrationContext):
     Settings.llm = llm
     Settings.embed_model = embed_model
 
-    index = VectorStoreIndex.from_documents(
+    VectorStoreIndex.from_documents(
         documents, storage_context=storage_context
     )
 
@@ -281,13 +279,13 @@ def get_pages_as_json(path: str):
                 soup = BeautifulSoup(raw["body"], "html.parser")
                 # remove useless tags like date modified and login blocks (see example in 336 parsed data vs non parsed)
                 for selector in ignore_selectors:
-                     for s in soup.select(selector):
-                         s.decompose()
+                    for s in soup.select(selector):
+                        s.decompose()
 
                 page["body"] = ' '.join(soup.stripped_strings)
                 page["title"] = str(raw["title"]).strip()
                 page["url"] = str(raw["url"]).strip()
-                # TODO: this date will sometimes comes as "date": "2021-06-14", and sometimes as "date": "<time datetime=\"2024-06-03T12:22:33+00:00\">2024-06-03</time>"
+                # Note: this date sometimes arrives as plain text and sometimes as HTML.
                 page["date"] = str(raw["date"]).strip()
                 page["filename"] = blob_client.blob_name
                 page["nid"] = str(raw['nid']).strip()
@@ -342,7 +340,7 @@ def update_current_index_alias(context: df.DurableOrchestrationContext):
 def update_index_alias(payload):
 
     index_client = _get_search_index_client()
-    logging.info(f"Inside Update Index Alias function, payload -> {payload}")
+    logging.info("Inside Update Index Alias function, payload -> %s", payload)
 
     alias = SearchAlias(name=payload['alias_name'], indexes=[payload['index_name']])
     new_alias = index_client.create_or_update_alias(alias)
