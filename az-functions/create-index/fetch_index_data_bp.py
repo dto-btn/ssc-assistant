@@ -4,12 +4,12 @@ import json  # bourne
 import logging
 import os
 import requests
+from functools import lru_cache
 from azure.storage.blob import BlobServiceClient
 import azure.functions as func
 from azure.functions import TimerRequest
 import azure.durable_functions as df
 from tenacity import retry, stop_after_attempt, wait_fixed
-from build_seach_index_bp import build_search_index
 
 fetch_data_bp = df.Blueprint()
 
@@ -17,8 +17,14 @@ load_dotenv()
 blob_connection_string  = os.getenv("BLOB_CONNECTION_STRING")
 domain = str(os.getenv("DOMAIN_NAME"))
 
-blob_service_client = BlobServiceClient.from_connection_string(str(blob_connection_string))
 container_name = 'sscplus-index-data'
+
+
+@lru_cache(maxsize=1)
+def _get_blob_service_client():
+    if not blob_connection_string:
+        raise ValueError("BLOB_CONNECTION_STRING is missing or empty.")
+    return BlobServiceClient.from_connection_string(str(blob_connection_string))
 
 
 # Orchestrator
@@ -68,11 +74,11 @@ def get_and_save_ids(blobPath: str):
         res = requests.get(url, verify=False)
         res.raise_for_status()
 
-        container = blob_service_client.get_container_client(container_name)
+        container = _get_blob_service_client().get_container_client(container_name)
         if not container.exists():
             container.create_container()
 
-        blob_client = blob_service_client.get_blob_client(container_name, f"{blobPath}/ids.json")
+        blob_client = _get_blob_service_client().get_blob_client(container_name, f"{blobPath}/ids.json")
         blob_client.upload_blob(json.dumps(res.json()).encode('utf-8'), overwrite=True)
 
         data = res.json()
@@ -117,7 +123,7 @@ def get_and_save_pages(page: dict):
 def _get_and_save(url, blob_name):
     response = requests.get(url, verify=False)
 
-    blob_client = blob_service_client.get_blob_client(container_name, blob_name)
+    blob_client = _get_blob_service_client().get_blob_client(container_name, blob_name)
     blob_client.upload_blob(json.dumps(response.json()).encode('utf-8'), overwrite=True)
 
     return response.json()

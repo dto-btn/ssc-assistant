@@ -4,9 +4,12 @@
 
 ```bash
 cd ssc-assitant/az-functions/create-index
-source .venv_func/bin/activate #create .venv first if missing ..
+python3.12 -m venv .venv_func
+source .venv_func/bin/activate
 pip install -r requirements.txt 
 ```
+
+The Function App runtime is pinned to Python 3.12 in Terraform, so use the same version locally when validating dependency upgrades.
 
 Create a `.env` file and populate it with the necessary keys: 
 
