@@ -39,7 +39,7 @@ resource "azurerm_linux_function_app" "functions" {
     vnet_route_all_enabled = true
     application_insights_key = azurerm_application_insights.functions.instrumentation_key
     application_stack {
-      python_version = "3.11"
+      python_version = "3.12"
     }
   }
 
