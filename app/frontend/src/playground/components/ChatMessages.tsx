@@ -1140,10 +1140,18 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   }, []);
 
   return (
-    <Box ref={scrollRef} flex={1} overflow="auto" p={2}>
+    // WCAG 4.1.2 / aria-allowed-role: role="log" must be on a <div>, not a <ul>.
+    // Moving it to the scroll container (a Box/div) keeps the live-region semantics
+    // while letting <List> retain its native <ul role="list"> so <li> items stay valid.
+    <Box
+      ref={scrollRef}
+      role="log"
+      aria-label={t("chat.transcript", { defaultValue: "Chat conversation" })}
+      flex={1}
+      overflow="auto"
+      p={2}
+    >
       <List
-        role="log"
-        aria-label={t("chat.transcript", { defaultValue: "Chat conversation" })}
         sx={{
           display: "flex",
           flexDirection: "column",

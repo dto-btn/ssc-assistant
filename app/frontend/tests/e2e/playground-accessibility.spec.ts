@@ -102,11 +102,24 @@ test('has the required ARIA landmark structure', async ({ playground }, testInfo
 });
 
 /**
- * WCAG 1.3.1 — ChatArea supplies the page's h1 in both the no-session and
- * empty-chat states, so the initial page load should always expose exactly one h1.
+ * WCAG 1.3.1 — ChatArea supplies the page's h1 in all three states:
+ * no-session (select prompt), empty new chat (How can I help?), and active chat
+ * (visually-hidden "Chat conversation" heading). Verify each state.
  */
-test('has exactly one h1 heading', async ({ playground }) => {
+test('has exactly one h1 heading', async ({ playground, mockPlayground }, testInfo) => {
+  // No-session state (initial load before any session is selected).
   await playground.goto();
+  await expect(playground.page.locator('h1')).toHaveCount(1);
+
+  // Empty-chat state (new session, no messages yet).
+  await playground.startNewChat();
+  await expect(playground.page.locator('h1')).toHaveCount(1);
+
+  // Active-chat state (messages present — visually-hidden h1 takes over).
+  test.skip(isMobileProject(testInfo.project.name), 'Desktop active-chat h1 coverage.');
+  await mockPlayground.queueAssistantResponse({ text: 'h1 check response.' });
+  await playground.sendMessage('h1 check');
+  await expect(playground.page.getByText('h1 check response.')).toBeVisible({ timeout: 10_000 });
   await expect(playground.page.locator('h1')).toHaveCount(1);
 });
 
