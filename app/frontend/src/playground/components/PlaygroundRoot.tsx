@@ -88,9 +88,10 @@ export const PlaygroundShell: React.FC = () => {
       </Box>
       <SessionBootstrapper />
       <SessionSidebar isMobile={isMobile} />
-      {/* WCAG 1.3.1 — <main> landmark so screen-reader users can jump directly to chat content */}
+      {/* Skip-link target — ChatArea renders its own <main> landmark internally;
+          this div only needs tabIndex={-1} so the skip link can shift focus here
+          without adding a second <main> to the page. */}
       <Box
-        component="main"
         id="playground-main-content"
         tabIndex={-1}
         sx={{ flex: 1, display: "flex", minWidth: 0 }}

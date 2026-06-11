@@ -121,10 +121,11 @@ const TopBar: React.FC<TopBarProps> = ({
             }}
             alt={t("logo.alt", { ns: "translations", defaultValue: "SSC Logo" })}
           />
-          {/* WCAG 1.3.1 — page must have exactly one h1 for heading hierarchy */}
+          {/* WCAG 1.3.1 — ChatArea renders the page h1 (empty-state heading).
+              This label is a persistent app title for visual context only. */}
           <Typography
             variant="h6"
-            component="h1"
+            component="span"
             sx={{
               fontSize: { xs: "16px", sm: "20px" },
               fontWeight: "500",
