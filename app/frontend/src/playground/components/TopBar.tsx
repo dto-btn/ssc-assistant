@@ -262,6 +262,10 @@ const TopBar: React.FC<TopBarProps> = ({
               },
             }}
             aria-label={i18n.language === "en" ? "Passer au français" : "Switch to English"}
+            // WCAG 3.1.2 — the toggle announces the language it switches TO, so the
+            // accessible name is in the other language. Mark it with the matching lang
+            // attribute so assistive tech uses the correct pronunciation rules.
+            lang={i18n.language === "en" ? "fr" : "en"}
           >
             {(i18n.language || "en").toUpperCase()}
           </Button>

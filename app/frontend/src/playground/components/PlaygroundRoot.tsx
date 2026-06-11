@@ -34,6 +34,12 @@ export const PlaygroundShell: React.FC = () => {
   React.useEffect(() => {
     document.documentElement.lang = i18n.language;
   }, [i18n.language]);
+
+  // WCAG 2.4.2 — keep the document title descriptive and bilingual so the page is
+  // identifiable in browser tabs/history and updates when the language is toggled.
+  React.useEffect(() => {
+    document.title = t("page.title");
+  }, [t, i18n.language]);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isMobileSidebarOpen = useAppSelector(

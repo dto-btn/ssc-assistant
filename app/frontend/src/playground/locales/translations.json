@@ -1,4 +1,8 @@
 {
+    "page.title": {
+        "en": "SSC Assistant Playground",
+        "fr": "Bac à sable de l'Assistant SPC"
+    },
     "select.or.create.session": {
         "en": "Select or create a chat session to begin.",
         "fr": "Sélectionnez ou créez une session de chat pour commencer."
