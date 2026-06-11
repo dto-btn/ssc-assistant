@@ -157,7 +157,7 @@ export class PlaygroundPage {
    */
   async startNewChat(): Promise<void> {
     await this.openSessionNavigation();
-    await this.page.getByRole('button', { name: 'New', exact: true }).click();
+    await this.page.getByRole('button', { name: 'Start a new chat', exact: true }).click();
     await this.closeSessionNavigationIfNeeded();
     await expect(this.composer()).toBeVisible();
   }

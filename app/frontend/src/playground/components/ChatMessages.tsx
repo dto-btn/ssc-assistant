@@ -673,7 +673,12 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
   );
 
   return (
-    <Box sx={{ width: { xs: "min(100%, 680px)", lg: "800px" }, maxWidth: "100%" }}>
+    // WCAG 4.1.3 — aria-busy signals to screen readers that this message is still
+    // being generated; the final content will be announced once streaming ends.
+    <Box
+      sx={{ width: { xs: "min(100%, 680px)", lg: "800px" }, maxWidth: "100%" }}
+      aria-busy={isPreStreamingPhase ? true : undefined}
+    >
       {liveAttribution && (
         <Box
           sx={{
@@ -960,6 +965,9 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
     <ListItem
       key={message.id}
       alignItems="flex-start"
+      // WCAG 1.3.1 — identify the message sender so screen readers announce
+      // who said what before reading the message content.
+      aria-label={isAssistantMessage ? t("message.label.assistant") : t("message.label.user")}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       sx={{
@@ -1132,10 +1140,18 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   }, []);
 
   return (
-    <Box ref={scrollRef} flex={1} overflow="auto" p={2}>
+    // WCAG 4.1.2 / aria-allowed-role: role="log" must be on a <div>, not a <ul>.
+    // Moving it to the scroll container (a Box/div) keeps the live-region semantics
+    // while letting <List> retain its native <ul role="list"> so <li> items stay valid.
+    <Box
+      ref={scrollRef}
+      role="log"
+      aria-label={t("chat.transcript", { defaultValue: "Chat conversation" })}
+      flex={1}
+      overflow="auto"
+      p={2}
+    >
       <List
-        role="log"
-        aria-label={t("chat.transcript", { defaultValue: "Chat conversation" })}
         sx={{
           display: "flex",
           flexDirection: "column",
