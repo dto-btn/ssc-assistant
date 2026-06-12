@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import List
+from typing import Generator, List, Tuple, Union
 import uuid
 from datetime import datetime, timedelta
 from src.dao.suggestion_context.suggestion_context_dao_types import (
@@ -11,6 +11,7 @@ from src.service.suggestion_service_types import (
     SuggestRequestOpts,
     SuggestionContext,
     SuggestionContextWithSuggestionsAndId,
+    SuggestionContextWithoutSuggestions,
 )
 from utils.manage_message import SUGGEST_SYSTEM_PROMPT_EN, SUGGEST_SYSTEM_PROMPT_FR
 from utils.models import (
@@ -18,7 +19,7 @@ from utils.models import (
     MessageRequest,
     SuggestionCitationApiResponse,
 )
-from utils.openai import chat_with_data, convert_chat_with_data_response
+from utils.openai import build_completion_response, chat_with_data, convert_chat_with_data_response
 from openai.types.chat import ChatCompletion
 
 logger = logging.getLogger(__name__)
@@ -71,6 +72,130 @@ class SuggestionService:
             return self.suggestion_context_dao.insert_suggestion_context(result)
         else:
             return result
+
+    def suggest_stream(
+        self, query: str, opts: SuggestRequestOpts
+    ) -> Union[SuggestionContextWithoutSuggestions, Tuple[MessageRequest, Generator[str, None, None]]]:
+        """
+        Validate inputs and build the MessageRequest for a streaming suggestion.
+        Returns either an error dict or a tuple of (message_request, stream_generator).
+        The route layer is responsible for yielding from the generator and assembling the final response.
+        """
+        query_validation_result = self._validate_and_clean_query(query)
+        opts_validation_result = self._validate_and_clean_opts(opts)
+
+        if query_validation_result["is_valid"] is False:
+            return {"success": False, "reason": query_validation_result["reason"]}
+
+        if opts_validation_result["is_valid"] is False:
+            return {"success": False, "reason": opts_validation_result["reason"]}
+
+        cleaned_query = query_validation_result["data"]
+        cleaned_opts = opts_validation_result["data"]
+
+        message_request = self._build_message_request(cleaned_query, cleaned_opts)
+        if message_request is None:
+            return {"success": False, "reason": "INVALID_LANGUAGE"}
+
+        _, completion = chat_with_data(message_request, stream=True)
+
+        # If we get a non-streaming response back (shouldn't happen but handle it)
+        if isinstance(completion, ChatCompletion):
+            completion_response = convert_chat_with_data_response(completion, message_request.lang)
+            content = completion_response.message.content or ""
+
+            def single_chunk_gen():
+                yield content
+
+            return (message_request, single_chunk_gen())
+
+        def stream_gen():
+            for chunk in completion:
+                if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+
+        return (message_request, stream_gen())
+
+    def build_suggestion_from_streamed_content(
+        self, content: str, opts: SuggestRequestOpts, query: str, context_dict: dict | None
+    ) -> SuggestionContext:
+        """
+        After streaming is complete, build the final SuggestionContext from the accumulated content.
+        Applies the same post-processing as _perform_chat (dedupe citations, remove doc refs).
+        """
+        completion_response = build_completion_response(
+            content=content,
+            chat_completion_dict=context_dict,
+            lang=opts["language"],
+        )
+
+        # Generate list of citations
+        if getattr(completion_response.message, "context", None) is None:
+            citations: List[SuggestionCitationApiResponse] = []
+        else:
+            citations: List[SuggestionCitationApiResponse] = [
+                SuggestionCitationApiResponse(url=x.url, title=x.title)
+                for x in completion_response.message.context.citations
+            ]
+
+        # Dedupe citations
+        if completion_response.message.context and opts.get("dedupe_citations", False):
+            seen_urls = set()
+            unique_citations = []
+            for citation in citations:
+                if citation.url not in seen_urls:
+                    seen_urls.add(citation.url)
+                    unique_citations.append(
+                        SuggestionCitationApiResponse(url=citation.url, title=citation.title)
+                    )
+            citations = unique_citations
+
+        # Remove [docN] references from content
+        final_content = content
+        if opts.get("remove_citations_from_content", False):
+            pattern = r"\[doc[0-9]{0,4}\]"
+            final_content = re.sub(pattern, "", content)
+
+        result = {
+            "success": True,
+            "language": opts["language"],
+            "original_query": query,
+            "timestamp": self._format_timestamp(self._generate_datetime_object()),
+            "requester": opts["requester"],
+            "content": final_content,
+            "citations": [{"url": c.url, "title": c.title} for c in citations],
+        }
+
+        # Store the suggestion
+        return self.suggestion_context_dao.insert_suggestion_context(result)
+
+    def _build_message_request(self, query: str, opts: SuggestRequestOpts) -> MessageRequest | None:
+        """
+        Build a MessageRequest for the suggestion. Returns None if language is invalid.
+        """
+        message_request = MessageRequest(
+            query=query,
+            messages=[],
+            quotedText="",
+            model="gpt-4o",
+            top=10,
+            lang=opts["language"],
+            tools=["corporate"],
+            corporateFunction="intranet_question",
+            uuid=str(uuid.uuid4()),
+        )
+
+        if opts["language"] == "fr":
+            message_request.messages = [Message(role="system", content=SUGGEST_SYSTEM_PROMPT_FR)]
+        elif opts["language"] == "en":
+            message_request.messages = [Message(role="system", content=SUGGEST_SYSTEM_PROMPT_EN)]
+        else:
+            return None
+
+        if opts.get("system_prompt") is not None:
+            message_request.messages = [Message(role="system", content=opts["system_prompt"])]
+
+        return message_request
 
     def _validate_and_clean_query(
         self, query: str

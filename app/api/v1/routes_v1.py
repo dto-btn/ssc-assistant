@@ -479,43 +479,65 @@ def suggestion(suggestion_request: SuggestionApiRequest):
     )
     return response
 
-@api_v1.get("/stats_report/monthly")
-@api_v1.doc("Get statistical report on the usage of the chatbot")
+
+@api_v1.post("/suggest/stream")
+@api_v1.doc(
+    """Stream a suggestion response as newline-delimited JSON (NDJSON).
+    Each line is a JSON object: {"type": "content", "delta": "..."} for text chunks,
+    then a final {"type": "done", ...} with citations and metadata."""
+)
+@api_v1.input(
+    SuggestionApiRequest.Schema,  # pylint: disable=no-member # type: ignore
+    arg_name="suggestion_request",
+    examples={
+        "Streaming suggestion": {
+            "summary": "Streaming suggestion",
+            "value": {
+                "query": "What is SSC's content management system?",
+                "opts": {
+                    "language": "en",
+                    "requester": "mysscplus",
+                    "dedupe_citations": True,
+                    "remove_citations_from_content": True,
+                },
+            },
+        },
+    },
+)
 @api_v1.doc(security="ApiKeyAuth")
-# @auth.login_required(role='chat') # does this need to change?
-def generate_stats_report_monthly():
-    ctx = build_prod_context()
-    monthly_report = ctx["stats_report_service"].get_statistics_by_month_of_year()
-    return jsonify(monthly_report), 200
+@auth.login_required(role="suggest")
+@user_ad.login_required
+def suggestion_stream(suggestion_request: SuggestionApiRequest):
+    """Stream a suggestion as NDJSON: content deltas then a final done event with citations"""
+    suggestion_service = build_prod_context()["suggestion_service"]
+    result = suggestion_service.suggest_stream(
+        suggestion_request.query, suggestion_request.opts
+    )
 
+    # If validation failed, return error JSON directly
+    if isinstance(result, dict):
+        return jsonify(result), 400
 
-@api_v1.get("/stats_report/weekly")
-@api_v1.doc("Get statistical report on the usage of the chatbot")
-@api_v1.doc(security="ApiKeyAuth")
-# @auth.login_required(role='chat') # does this need to change?
-def generate_stats_report_weekly():
-    ctx = build_prod_context()
-    weekly_report = ctx["stats_report_service"].get_statistics_by_day_of_week()
-    return jsonify(weekly_report), 200
+    _, stream_generator = result
 
+    def generate():
+        content_txt = ""
+        for chunk_text in stream_generator:
+            content_txt += chunk_text
+            yield json.dumps({"type": "content", "delta": chunk_text}) + "\n"
 
-@api_v1.get("/stats_report/top_users_90_days")
-@api_v1.doc("Get statistical report on the usage of the chatbot")
-@api_v1.doc(security="ApiKeyAuth")
-# @auth.login_required(role='chat') # does this need to change?
-def generate_stats_report_top_users_90_days():
-    ctx = build_prod_context()
-    weekly_report = ctx["stats_report_service"].get_top_users_past_90_days()
-    return jsonify(weekly_report), 200
+        response = suggestion_service.build_suggestion_from_streamed_content(
+            content=content_txt,
+            opts=suggestion_request.opts,
+            query=suggestion_request.query,
+            context_dict=None,
+        )
+        yield json.dumps({"type": "done", "data": response}, default=lambda o: o.__dict__) + "\n"
 
-@api_v1.get("/stats_report/monthly_user_engagement")
-@api_v1.doc("Get statistical report on the usage of the chatbot")
-@api_v1.doc(security="ApiKeyAuth")
-# @auth.login_required(role='chat') # does this need to change?
-def generate_monthly_user_engagement_report():
-    ctx = build_prod_context()
-    weekly_report = ctx["stats_report_service"].get_monthly_user_engagement_report()
-    return jsonify(weekly_report), 200
+    return Response(
+        stream_with_context(generate()),
+        content_type="application/x-ndjson",
+    )
 
 
 @api_v1.get("/bits/br/<brnumber>")
