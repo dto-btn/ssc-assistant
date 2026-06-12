@@ -14,7 +14,6 @@ from src.service.suggestion_service_types import (
 )
 from utils.manage_message import SUGGEST_SYSTEM_PROMPT_EN, SUGGEST_SYSTEM_PROMPT_FR
 from utils.models import (
-    Citation,
     Message,
     MessageRequest,
     SuggestionCitationApiResponse,
