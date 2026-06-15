@@ -474,70 +474,60 @@ def get_suggestion_by_id():
 def suggestion(suggestion_request: SuggestionApiRequest):
     """This will receive most likely search terms and will return an AI response along with citations"""
     suggestion_service = build_prod_context()["suggestion_service"]
+
+    # If ?stream=true, stream the response as NDJSON
+    if request.args.get("stream", "").lower() == "true":
+        result = suggestion_service.validate_and_prepare_stream(
+            suggestion_request.query, suggestion_request.opts
+        )
+
+        # Validation failed — return error dict
+        if isinstance(result, dict):
+            return jsonify(result), 400
+
+        message_request = result
+        _, completion = chat_with_data(message_request, stream=True)
+
+        if isinstance(completion, ChatCompletion):
+            completion_response = convert_chat_with_data_response(completion, message_request.lang)
+            content = completion_response.message.content or ""
+            response = suggestion_service.build_suggestion_from_streamed_content(
+                content=content,
+                context_dict=None,
+                opts=suggestion_request.opts,
+                query=suggestion_request.query,
+            )
+            return jsonify(response)
+
+        def generate():
+            context = None
+            content_txt = ""
+            for chunk in completion:
+                if chunk.choices and chunk.choices[0].delta:
+                    delta_dict = chunk.choices[0].delta.model_dump()
+                    if "context" in delta_dict:
+                        context = delta_dict
+                    if chunk.choices[0].delta.content:
+                        content_txt += chunk.choices[0].delta.content
+                        yield json.dumps({"content": content_txt}) + "\n"
+
+            response = suggestion_service.build_suggestion_from_streamed_content(
+                content=content_txt,
+                context_dict=context,
+                opts=suggestion_request.opts,
+                query=suggestion_request.query,
+            )
+            yield json.dumps(response, default=lambda o: o.__dict__) + "\n"
+
+        return Response(
+            stream_with_context(generate()),
+            content_type="application/x-ndjson",
+        )
+
     response = suggestion_service.suggest(
         suggestion_request.query, suggestion_request.opts
     )
     return response
-
-
-@api_v1.post("/suggest/stream")
-@api_v1.doc(
-    """Stream a suggestion response as newline-delimited JSON (NDJSON).
-    Each line is a JSON object: {"type": "content", "delta": "..."} for text chunks,
-    then a final {"type": "done", ...} with citations and metadata."""
-)
-@api_v1.input(
-    SuggestionApiRequest.Schema,  # pylint: disable=no-member # type: ignore
-    arg_name="suggestion_request",
-    examples={
-        "Streaming suggestion": {
-            "summary": "Streaming suggestion",
-            "value": {
-                "query": "What is SSC's content management system?",
-                "opts": {
-                    "language": "en",
-                    "requester": "mysscplus",
-                    "dedupe_citations": True,
-                    "remove_citations_from_content": True,
-                },
-            },
-        },
-    },
-)
-@api_v1.doc(security="ApiKeyAuth")
-@auth.login_required(role="suggest")
-@user_ad.login_required
-def suggestion_stream(suggestion_request: SuggestionApiRequest):
-    """Stream a suggestion as NDJSON: content deltas then a final done event with citations"""
-    suggestion_service = build_prod_context()["suggestion_service"]
-    result = suggestion_service.suggest_stream(
-        suggestion_request.query, suggestion_request.opts
-    )
-
-    # If validation failed, return error JSON directly
-    if isinstance(result, dict):
-        return jsonify(result), 400
-
-    _, stream_generator = result
-
-    def generate():
-        content_txt = ""
-        for chunk_text in stream_generator:
-            content_txt += chunk_text
-            yield json.dumps({"type": "content", "delta": chunk_text}) + "\n"
-
-        response = suggestion_service.build_suggestion_from_streamed_content(
-            content=content_txt,
-            opts=suggestion_request.opts,
-            query=suggestion_request.query,
-            context_dict=None,
-        )
-        yield json.dumps({"type": "done", "data": response}, default=lambda o: o.__dict__) + "\n"
-
-    return Response(
-        stream_with_context(generate()),
-        content_type="application/x-ndjson",
-    )
 
 
 @api_v1.get("/bits/br/<brnumber>")

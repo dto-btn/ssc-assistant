@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Generator, List, Tuple, Union
+from typing import List, Union
 import uuid
 from datetime import datetime, timedelta
 from src.dao.suggestion_context.suggestion_context_dao_types import (
@@ -73,13 +73,13 @@ class SuggestionService:
         else:
             return result
 
-    def suggest_stream(
+    def validate_and_prepare_stream(
         self, query: str, opts: SuggestRequestOpts
-    ) -> Union[SuggestionContextWithoutSuggestions, Tuple[MessageRequest, Generator[str, None, None]]]:
+    ) -> Union[SuggestionContextWithoutSuggestions, MessageRequest]:
         """
-        Validate inputs and build the MessageRequest for a streaming suggestion.
-        Returns either an error dict or a tuple of (message_request, stream_generator).
-        The route layer is responsible for yielding from the generator and assembling the final response.
+        Validate inputs and build a MessageRequest for streaming.
+        Returns either an error dict (if validation fails) or a MessageRequest
+        ready to be passed to chat_with_data(stream=True) by the route layer.
         """
         query_validation_result = self._validate_and_clean_query(query)
         opts_validation_result = self._validate_and_clean_opts(opts)
@@ -97,31 +97,15 @@ class SuggestionService:
         if message_request is None:
             return {"success": False, "reason": "INVALID_LANGUAGE"}
 
-        _, completion = chat_with_data(message_request, stream=True)
-
-        # If we get a non-streaming response back (shouldn't happen but handle it)
-        if isinstance(completion, ChatCompletion):
-            completion_response = convert_chat_with_data_response(completion, message_request.lang)
-            content = completion_response.message.content or ""
-
-            def single_chunk_gen():
-                yield content
-
-            return (message_request, single_chunk_gen())
-
-        def stream_gen():
-            for chunk in completion:
-                if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
-                    yield chunk.choices[0].delta.content
-
-        return (message_request, stream_gen())
+        return message_request
 
     def build_suggestion_from_streamed_content(
-        self, content: str, opts: SuggestRequestOpts, query: str, context_dict: dict | None
+        self, content: str, context_dict: dict | None, opts: SuggestRequestOpts, query: str
     ) -> SuggestionContext:
         """
         After streaming is complete, build the final SuggestionContext from the accumulated content.
-        Applies the same post-processing as _perform_chat (dedupe citations, remove doc refs).
+        Applies the same post-processing as _perform_chat (dedupe citations, remove doc refs),
+        stores it in the DB and returns the result.
         """
         completion_response = build_completion_response(
             content=content,
@@ -129,7 +113,6 @@ class SuggestionService:
             lang=opts["language"],
         )
 
-        # Generate list of citations
         if getattr(completion_response.message, "context", None) is None:
             citations: List[SuggestionCitationApiResponse] = []
         else:
@@ -138,7 +121,6 @@ class SuggestionService:
                 for x in completion_response.message.context.citations
             ]
 
-        # Dedupe citations
         if completion_response.message.context and opts.get("dedupe_citations", False):
             seen_urls = set()
             unique_citations = []
@@ -150,7 +132,6 @@ class SuggestionService:
                     )
             citations = unique_citations
 
-        # Remove [docN] references from content
         final_content = content
         if opts.get("remove_citations_from_content", False):
             pattern = r"\[doc[0-9]{0,4}\]"
@@ -166,7 +147,6 @@ class SuggestionService:
             "citations": [{"url": c.url, "title": c.title} for c in citations],
         }
 
-        # Store the suggestion
         return self.suggestion_context_dao.insert_suggestion_context(result)
 
     def _build_message_request(self, query: str, opts: SuggestRequestOpts) -> MessageRequest | None:
