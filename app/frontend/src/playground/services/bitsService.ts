@@ -219,9 +219,11 @@ export const getBusinessRequest = async (
 ): Promise<BusinessRequestLookupResult> => {
   // Accept UI-facing BR variants but call the tool with digits only.
   const normalizedBr = String(br).trim().replace(/^#?BR[-\s]?/i, "");
-  if (!/^\d+$/.test(normalizedBr)) {
+  const brNumberMatch = normalizedBr.match(/\d+/);
+  if (!brNumberMatch) {
     throw new Error("BR must be all numbers.");
   }
+  const normalizedBrNumber = brNumberMatch[0];
 
   const endpoint = await resolveBitsEndpoint(servers, accessToken);
   const { client, transport } = await connectBitsClient(endpoint, accessToken);
@@ -230,7 +232,7 @@ export const getBusinessRequest = async (
     const toolResult = await client.callTool({
       name: BITS_TOOL_NAME,
       arguments: {
-        br_numbers: [Number(normalizedBr)],
+        br_numbers: [Number(normalizedBrNumber)],
       },
     });
 

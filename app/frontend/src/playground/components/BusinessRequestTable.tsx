@@ -39,10 +39,20 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
     });
   }, [data]);
 
-  const handlePopupOpen = (BR: string) => {
+  const handlePopupOpen = (BR: string, fallbackRow?: Record<string, unknown>) => {
+    if (fallbackRow) {
+      setBrData(transformToBusinessRequest(fallbackRow));
+      setOpen(true);
+    }
+
     fetchBRData(BR)
       .then((fetchedData) => {
-        const transformed = transformToBusinessRequest(fetchedData.br[0]);
+        const firstRecord = fetchedData.br?.[0];
+        if (!firstRecord) {
+          throw new Error(`No BR details returned for ${BR}.`);
+        }
+
+        const transformed = transformToBusinessRequest(firstRecord);
         setBrData(transformed);
         setOpen(true);
       })
@@ -77,7 +87,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
           aria-label={t("br.open.details", { br: params.value })}
           onClick={(event) => {
             event.stopPropagation();
-            handlePopupOpen(params.value);
+            handlePopupOpen(String(params.value ?? ""), params.row as Record<string, unknown>);
           }}
           sx={{ cursor: "pointer", background: "none", border: 0, p: 0 }}
         >
