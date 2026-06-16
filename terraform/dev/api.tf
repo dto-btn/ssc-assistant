@@ -74,8 +74,6 @@ resource "azurerm_linux_web_app" "api" {
     BITS_DB_PWD                   = var.bits_database_config.PASSWORD
 
     PMCOE_SEARCH_INDEX_NAME       = "pmcoe-sept-2025"
-
-    SQL_CONNECTION_STRING         = module.postgress.postgres_connection_string
   }
 
   sticky_settings { # settings that are the same regardless of deployment slot..
