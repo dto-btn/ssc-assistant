@@ -8,7 +8,7 @@
 
 import { addToast } from "../slices/toastSlice";
 import { AppThunk } from "..";
-import { sendFeedback } from "../../../api/api";
+import { sendPlaygroundFeedback } from "../../api/feedback";
 import { setMessageFeedback } from "../slices/chatSlice";
 import i18n from "../../../i18n";
 
@@ -20,7 +20,7 @@ import i18n from "../../../i18n";
  */
 export const submitResponseFeedback =
   (messageId: string, positive: boolean): AppThunk =>
-  async (dispatch) => {
+  async (dispatch, getState) => {
     const feedback = positive ? "liked" : "disliked";
 
     // feedback.liked / feedback.disliked are internal description strings sent
@@ -32,7 +32,12 @@ export const submitResponseFeedback =
 
     try {
       dispatch(setMessageFeedback({ messageId, feedback }));
-      await sendFeedback(feedbackMessage, positive, messageId, "playground");
+      await sendPlaygroundFeedback({
+        feedback: feedbackMessage,
+        positive,
+        uuid: messageId,
+        accessToken: getState().auth.accessToken ?? undefined,
+      });
       dispatch(
         addToast({
           message: i18n.t("feedback.success", { ns: "playground" }),
