@@ -25,7 +25,7 @@
       "cwd": "${workspaceFolder}/app/frontend",
       "runtimeArgs": [
         "run-script",
-        "start"
+        "dev"
       ],
       "runtimeExecutable": "npm",
       "skipFiles": [

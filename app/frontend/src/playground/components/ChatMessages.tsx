@@ -26,8 +26,8 @@ import type { ElementContent } from "hast";
 import type { Pluggable } from "unified";
 import type { RootState } from "../store";
 import AttachmentPreview from "./AttachmentPreview";
-import BusinessRequestCard from "../../components/BusinessRequests/BusinessRequestCard";
-import BusinessRequestMetadata from "../../components/BusinessRequests/BusinessRequestMetadata";
+import BusinessRequestCard from "./BusinessRequests/BusinessRequestCard";
+import BusinessRequestMetadata from "./BusinessRequests/BusinessRequestMetadata";
 import Citations from "./Citations";
 import CitationDrawer from "./CitationDrawer";
 import McpAttributionPill from "./McpAttributionPill";
@@ -44,7 +44,7 @@ import {
   safeDecodeUri,
 } from "../utils/citations";
 import { selectMessagesForSession } from "../store/selectors/chatSelectors";
-import { transformToBusinessRequest } from "../../util/bits_utils";
+import { transformToBusinessRequest } from "../utils/bits_utils";
 import "highlight.js/styles/github.css";
 
 const BusinessRequestTable = lazy(

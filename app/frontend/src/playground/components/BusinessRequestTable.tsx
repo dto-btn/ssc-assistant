@@ -2,16 +2,17 @@ import React, { useMemo, useState } from "react";
 import { Box, Link, Paper, TableContainer, Typography, useTheme, Modal, Button } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import { formatDate } from "../../components/BusinessRequests/subcomponents/DateDisplay";
-import BusinessRequestCard from "../../components/BusinessRequests/BusinessRequestCard";
-import { transformToBusinessRequest } from "../../util/bits_utils";
-import { toDisplayValue } from "../../utils/displayValue";
+import { formatDate } from "./BusinessRequests/subcomponents/DateDisplay";
+import BusinessRequestCard from "./BusinessRequests/BusinessRequestCard";
+import { transformToBusinessRequest } from "../utils/bits_utils";
+import { toDisplayValue } from "../utils/displayValue";
+import { getBusinessRequest } from "../services/bitsService";
+import { useAppSelector } from "../store/hooks";
 
 interface BusinessRequestTableProps {
   data: Array<BusinessRequest>;
   lang: string;
   show_fields: string[];
-  brRequest?: BusinessRequest;
 }
 
 const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
@@ -24,6 +25,8 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
   const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [brData, setBrData] = useState<BusinessRequest | undefined>(undefined);
+  const mcpServers = useAppSelector((state) => state.tools.mcpServers);
+  const accessToken = useAppSelector((state) => state.auth.accessToken);
 
   const normalizedRows = useMemo(() => {
     return data.map((row) => {
@@ -36,10 +39,20 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
     });
   }, [data]);
 
-  const handlePopupOpen = (BR: string) => {
+  const handlePopupOpen = (BR: string, fallbackRow?: Record<string, unknown>) => {
+    if (fallbackRow) {
+      setBrData(transformToBusinessRequest(fallbackRow));
+      setOpen(true);
+    }
+
     fetchBRData(BR)
       .then((fetchedData) => {
-        const transformed = transformToBusinessRequest(fetchedData.br[0]);
+        const firstRecord = fetchedData.br?.[0];
+        if (!firstRecord) {
+          throw new Error(`No BR details returned for ${BR}.`);
+        }
+
+        const transformed = transformToBusinessRequest(firstRecord);
         setBrData(transformed);
         setOpen(true);
       })
@@ -49,22 +62,11 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
   };
 
   const fetchBRData = async (BR: string) => {
-    // Accept UI-facing BR variants (e.g. "BR-1234", "#1234") but call the API with digits only.
-    const normalizedBr = String(BR).trim().replace(/^#?BR[-\s]?/i, "");
-    if (!/^\d+$/.test(normalizedBr)) {
-      throw new Error("BR must be all numbers.");
-    }
-    const response = await fetch(`api/1.0/bits/br/${encodeURIComponent(normalizedBr)}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
+    // Resolve BR details via the BITS MCP server (replaces the legacy api/1.0 REST call).
+    return getBusinessRequest(BR, {
+      servers: mcpServers,
+      accessToken: accessToken ?? undefined,
     });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const result = await response.json();
-    return result;
   };
 
   const handlePopupClose = () => {
@@ -85,7 +87,7 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
           aria-label={t("br.open.details", { br: params.value })}
           onClick={(event) => {
             event.stopPropagation();
-            handlePopupOpen(params.value);
+            handlePopupOpen(String(params.value ?? ""), params.row as Record<string, unknown>);
           }}
           sx={{ cursor: "pointer", background: "none", border: 0, p: 0 }}
         >

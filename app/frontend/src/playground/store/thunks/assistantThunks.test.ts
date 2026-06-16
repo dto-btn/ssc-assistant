@@ -772,6 +772,45 @@ describe("sendAssistantMessage auto-rename", () => {
     expect(store.getState().chat.assistantResponsePhaseBySessionId["session-1"]).toBe("idle");
   });
 
+  it("closes an open fenced block before appending the stopped marker when aborted", async () => {
+    createCompletionMock.mockImplementationOnce((request, callbacks) => {
+      callbacks?.onChunk?.("```mermaid\npie title March BA OPI workload\n  \"Alice\" : 4\n  \"Bob");
+
+      return new Promise<CompletionResult>((_resolve, reject) => {
+        request.signal?.addEventListener(
+          "abort",
+          () => reject(new Error("aborted")),
+          { once: true },
+        );
+      });
+    });
+
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [policyServer],
+    });
+
+    const dispatchPromise = store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Give me a pie chart of BA OPI that worked on BRs.",
+      }) as any,
+    );
+
+    await waitFor(() => {
+      expect(store.getState().chat.assistantResponsePhaseBySessionId["session-1"]).toBe("drafting");
+    });
+
+    stopAssistantMessage("session-1");
+    await dispatchPromise;
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.content).toBe(
+      "```mermaid\npie title March BA OPI workload\n  \"Alice\" : 4\n  \"Bob\n```\n\n*playground:assistant.stopped*",
+    );
+    expect(store.getState().chat.assistantResponsePhaseBySessionId["session-1"]).toBe("idle");
+  });
+
   it("stops the local reveal phase after drafting has completed", async () => {
     vi.useFakeTimers();
     vi.spyOn(window, "matchMedia").mockImplementation(
