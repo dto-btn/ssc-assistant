@@ -1,19 +1,20 @@
-import { Typography } from '@mui/material'
+import { Typography } from "@mui/material";
 
-/**
- * Note: could move this component elsewhere if needed other places
- * @param date 
- * @returns 
- */
+export const formatDate = (dateString: string): string => {
+  if (!dateString) {
+    return "";
+  }
 
-export const formatDate = (date: string): string => {
-  if(date)
-    return new Date(date).toLocaleString("en-CA", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-          });
-  else return "";
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleString("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
 };
 
 interface DateDisplayProps {
@@ -24,5 +25,6 @@ export const DateDisplay = ({ dateString }: DateDisplayProps) => {
   return (
     <Typography variant="button">
       {formatDate(dateString)}
-    </Typography>)
-}
+    </Typography>
+  );
+};

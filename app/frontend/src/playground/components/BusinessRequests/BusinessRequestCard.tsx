@@ -366,21 +366,7 @@ const BusinessRequestCard: React.FC<BusinessRequestProps> = ({
             </Table>
           )}
         </Box>
-
-        {/* <CardActions disableSpacing>
-          <ExpandMore
-            expand={expanded}
-            onClick={handleExpandClick}
-            aria-expanded={expanded}
-            aria-label="show more"
-          >
-            <ExpandMoreIcon />
-          </ExpandMore>
-        </CardActions> */}
       </CardContent>
-      {/* <Collapse in={expanded} timeout="auto" unmountOnExit>
-        <CardContent></CardContent>
-      </Collapse> */}
     </Card>
   );
 };

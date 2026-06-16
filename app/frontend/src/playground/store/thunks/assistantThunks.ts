@@ -1730,7 +1730,25 @@ export const sendAssistantMessage = ({
 
       const buildStoppedContent = (content: string): string => {
         const stopMarker = `\n\n*${i18n.t("playground:assistant.stopped")}*`;
-        return content.length > 0 ? content + stopMarker : stopMarker.trimStart();
+        const trimmedContent = content.trimEnd();
+
+        if (!trimmedContent) {
+          return stopMarker.trimStart();
+        }
+
+        let completedContent = trimmedContent;
+        const unmatchedBacktickFenceCount = (trimmedContent.match(/^```/gm) || []).length;
+        const unmatchedTildeFenceCount = (trimmedContent.match(/^~~~/gm) || []).length;
+
+        if (unmatchedBacktickFenceCount % 2 !== 0) {
+          completedContent += "\n```";
+        }
+
+        if (unmatchedTildeFenceCount % 2 !== 0) {
+          completedContent += "\n~~~";
+        }
+
+        return completedContent + stopMarker;
       };
 
       if (abortController.signal.aborted) {
@@ -1915,7 +1933,25 @@ export const sendAssistantMessage = ({
 
       const buildStoppedContent = (content: string): string => {
         const stopMarker = `\n\n*${i18n.t("playground:assistant.stopped")}*`;
-        return content.length > 0 ? content + stopMarker : stopMarker.trimStart();
+        const trimmedContent = content.trimEnd();
+
+        if (!trimmedContent) {
+          return stopMarker.trimStart();
+        }
+
+        let completedContent = trimmedContent;
+        const backtickFenceCount = (trimmedContent.match(/^```/gm) || []).length;
+        const tildeFenceCount = (trimmedContent.match(/^~~~/gm) || []).length;
+
+        if (backtickFenceCount % 2 !== 0) {
+          completedContent += "\n```";
+        }
+
+        if (tildeFenceCount % 2 !== 0) {
+          completedContent += "\n~~~";
+        }
+
+        return completedContent + stopMarker;
       };
       const finalContent = wasAborted
         ? buildStoppedContent(cleanedContent)

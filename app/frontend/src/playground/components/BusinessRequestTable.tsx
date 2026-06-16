@@ -13,7 +13,6 @@ interface BusinessRequestTableProps {
   data: Array<BusinessRequest>;
   lang: string;
   show_fields: string[];
-  brRequest?: BusinessRequest;
 }
 
 const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({

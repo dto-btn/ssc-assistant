@@ -91,6 +91,36 @@ test('stops a streamed response in progress', async ({ playground, mockPlaygroun
 });
 
 /**
+ * Verifies that stopping a streamed mermaid response mid-diagram still leaves
+ * the stopped marker visible instead of only surfacing the diagram fallback.
+ */
+test('shows stopped marker when a mermaid response is interrupted', async ({ playground, mockPlayground }) => {
+  const mermaidResponse = [
+    'Here is the requested chart:',
+    '',
+    '```mermaid',
+    'pie title March BA OPI workload',
+    '  "Alice" : 4',
+    '  "Bob" : 3',
+    '  "Charlie" : 2',
+    '```',
+  ].join('\n');
+
+  await mockPlayground.queueAssistantResponse({
+    text: mermaidResponse,
+    chunkDelayMs: 250,
+    chunkSize: 18,
+  });
+
+  await playground.sendMessage('Give me a pie chart of BA OPI that worked on BRs.');
+  await expect(playground.page.getByLabel('Stop')).toBeVisible();
+
+  await playground.page.getByLabel('Stop').click();
+
+  await expect(playground.page.getByText('Response stopped by user.')).toBeVisible();
+});
+
+/**
  * Verifies that a streamed completion failure surfaces the inline assistant
  * fallback message after the provider exhausts its retries.
  */
