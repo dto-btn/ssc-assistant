@@ -33,11 +33,6 @@ class BlobSuggestionContextDao(BaseSuggestionContextDao):
         self.container_client: ContainerClient = (
             blob_service_client.get_container_client(CONTAINER_NAME)
         )
-        # Ensure the container exists
-        try:
-            self.container_client.get_container_properties()
-        except ResourceNotFoundError:
-            self.container_client.create_container()
 
     @override
     def get_suggestion_context_by_id(
@@ -117,7 +112,7 @@ class BlobSuggestionContextDao(BaseSuggestionContextDao):
     ) -> SuggestionContextWithSuggestionsAndId:
         return SuggestionContextWithSuggestionsAndId(
             id=record["id"],
-            success=True,
+            success=record["success"],
             language=record["language"],
             original_query=record["original_query"],
             timestamp=record["timestamp"],

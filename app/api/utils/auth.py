@@ -48,7 +48,6 @@ def verify_token(token):
         # Decode the token using the same secret key and algorithm used to encode
         data = jwt.decode(token, secret, algorithms=['HS256'])
         # Store the decoded token data in the Flask's global user object
-        print(data)
         if 'roles' in data:
             user = get_or_create_user()
             user.api_key = token
