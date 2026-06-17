@@ -107,6 +107,8 @@ const TopBar: React.FC<TopBarProps> = ({
                   color: "white",
                   minWidth: 44,
                   minHeight: 44,
+                  // WCAG 2.4.7 — white ring stays visible on the dark gradient toolbar.
+                  "&:focus-visible": { outline: "2px solid #fff", outlineOffset: "2px" },
                 }}
               >
                 {isSidebarOpen ? <MenuOpenIcon /> : <MenuIcon />}
@@ -153,6 +155,8 @@ const TopBar: React.FC<TopBarProps> = ({
                   color: "white",
                   minWidth: 44,
                   minHeight: 44,
+                  // WCAG 2.4.7 — white ring stays visible on the dark gradient toolbar.
+                  "&:focus-visible": { outline: "2px solid #fff", outlineOffset: "2px" },
                 }}
               >
                 <CloseIcon />
@@ -184,6 +188,8 @@ const TopBar: React.FC<TopBarProps> = ({
                   minHeight: 44,
                   opacity: Boolean(isExportDisabled || isExporting) ? 0.4 : 1,
                   pointerEvents: "auto",
+                  // WCAG 2.4.7 — white ring stays visible on the dark gradient toolbar.
+                  "&:focus-visible": { outline: "2px solid #fff", outlineOffset: "2px" },
                 }}
               >
                 <FileDownloadIcon />
@@ -260,6 +266,8 @@ const TopBar: React.FC<TopBarProps> = ({
               "&:hover": {
                 bgcolor: "rgba(255, 255, 255, 0.1)",
               },
+              // WCAG 2.4.7 — white ring stays visible on the dark gradient toolbar.
+              "&:focus-visible": { outline: "2px solid #fff", outlineOffset: "2px" },
             }}
             aria-label={i18n.language === "en" ? "Passer au français" : "Switch to English"}
             // WCAG 3.1.2 — the toggle announces the language it switches TO, so the
