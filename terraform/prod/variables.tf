@@ -86,17 +86,6 @@ variable "clarity_token" {
     sensitive = true
 }
 
-variable "username_postgress" {
-    type = string
-    description = "value of the username for the postgress server"
-}
-
-variable "password_postgress" {
-    type = string
-    sensitive = true
-    description = "password for the username of postgress server"
-}
-
 variable "title_rename_threshold" {
     type = number
     description = "The threshold value for renaming titles."

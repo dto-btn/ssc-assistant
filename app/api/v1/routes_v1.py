@@ -474,48 +474,60 @@ def get_suggestion_by_id():
 def suggestion(suggestion_request: SuggestionApiRequest):
     """This will receive most likely search terms and will return an AI response along with citations"""
     suggestion_service = build_prod_context()["suggestion_service"]
+
+    # If ?stream=true, stream the response as NDJSON
+    if request.args.get("stream", "").lower() == "true":
+        result = suggestion_service.validate_and_prepare_stream(
+            suggestion_request.query, suggestion_request.opts
+        )
+
+        # Validation failed — return error dict
+        if isinstance(result, dict):
+            return jsonify(result), 400
+
+        message_request = result
+        _, completion = chat_with_data(message_request, stream=True)
+
+        if isinstance(completion, ChatCompletion):
+            completion_response = convert_chat_with_data_response(completion, message_request.lang)
+            content = completion_response.message.content or ""
+            response = suggestion_service.build_suggestion_from_streamed_content(
+                content=content,
+                context_dict=None,
+                opts=suggestion_request.opts,
+                query=suggestion_request.query,
+            )
+            return jsonify(response)
+
+        def generate():
+            context = None
+            content_txt = ""
+            for chunk in completion:
+                if chunk.choices and chunk.choices[0].delta:
+                    delta_dict = chunk.choices[0].delta.model_dump()
+                    if "context" in delta_dict:
+                        context = delta_dict
+                    if chunk.choices[0].delta.content:
+                        content_txt += chunk.choices[0].delta.content
+                        yield json.dumps({"content": content_txt}) + "\n"
+
+            response = suggestion_service.build_suggestion_from_streamed_content(
+                content=content_txt,
+                context_dict=context,
+                opts=suggestion_request.opts,
+                query=suggestion_request.query,
+            )
+            yield json.dumps(response, default=lambda o: o.__dict__) + "\n"
+
+        return Response(
+            stream_with_context(generate()),
+            content_type="application/x-ndjson",
+        )
+
     response = suggestion_service.suggest(
         suggestion_request.query, suggestion_request.opts
     )
     return response
-
-@api_v1.get("/stats_report/monthly")
-@api_v1.doc("Get statistical report on the usage of the chatbot")
-@api_v1.doc(security="ApiKeyAuth")
-# @auth.login_required(role='chat') # does this need to change?
-def generate_stats_report_monthly():
-    ctx = build_prod_context()
-    monthly_report = ctx["stats_report_service"].get_statistics_by_month_of_year()
-    return jsonify(monthly_report), 200
-
-
-@api_v1.get("/stats_report/weekly")
-@api_v1.doc("Get statistical report on the usage of the chatbot")
-@api_v1.doc(security="ApiKeyAuth")
-# @auth.login_required(role='chat') # does this need to change?
-def generate_stats_report_weekly():
-    ctx = build_prod_context()
-    weekly_report = ctx["stats_report_service"].get_statistics_by_day_of_week()
-    return jsonify(weekly_report), 200
-
-
-@api_v1.get("/stats_report/top_users_90_days")
-@api_v1.doc("Get statistical report on the usage of the chatbot")
-@api_v1.doc(security="ApiKeyAuth")
-# @auth.login_required(role='chat') # does this need to change?
-def generate_stats_report_top_users_90_days():
-    ctx = build_prod_context()
-    weekly_report = ctx["stats_report_service"].get_top_users_past_90_days()
-    return jsonify(weekly_report), 200
-
-@api_v1.get("/stats_report/monthly_user_engagement")
-@api_v1.doc("Get statistical report on the usage of the chatbot")
-@api_v1.doc(security="ApiKeyAuth")
-# @auth.login_required(role='chat') # does this need to change?
-def generate_monthly_user_engagement_report():
-    ctx = build_prod_context()
-    weekly_report = ctx["stats_report_service"].get_monthly_user_engagement_report()
-    return jsonify(weekly_report), 200
 
 
 @api_v1.get("/bits/br/<brnumber>")

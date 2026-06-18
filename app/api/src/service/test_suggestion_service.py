@@ -8,7 +8,7 @@ import pytest
 from openai.types.chat import ChatCompletion
 from openai.types.chat.chat_completion import Choice, ChatCompletionMessage
 from src.context.build_context import build_test_context
-from src.dao.suggestion_context.suggestion_context_dao import SuggestionContextDao
+from src.dao.suggestion_context.suggestion_context_dao_types import BaseSuggestionContextDao
 
 from src.service.suggestion_service import SuggestionService
 from utils.manage_message import SUGGEST_SYSTEM_PROMPT_EN, SUGGEST_SYSTEM_PROMPT_FR
@@ -17,7 +17,7 @@ from utils.manage_message import SUGGEST_SYSTEM_PROMPT_EN, SUGGEST_SYSTEM_PROMPT
 class LocalTestContext(TypedDict):
     # mock_suggest_table_client: MagicMock
     suggestion_service: SuggestionService
-    suggestion_context_dao: SuggestionContextDao
+    suggestion_context_dao: BaseSuggestionContextDao
 
 
 @fixture(scope="function", autouse=True)
