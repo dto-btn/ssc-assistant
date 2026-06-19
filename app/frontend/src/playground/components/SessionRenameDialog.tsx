@@ -25,8 +25,8 @@ const SessionRenameDialog: React.FC<Props> = ({ open, initialValue, onClose, onR
   }, [initialValue, open]);
 
   return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>{t("rename.conversation")}</DialogTitle>
+    <Dialog open={open} onClose={onClose} aria-labelledby="session-rename-dialog-title">
+      <DialogTitle id="session-rename-dialog-title">{t("rename.conversation")}</DialogTitle>
       <DialogContent>
         <TextField
           value={name}

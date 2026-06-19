@@ -21,6 +21,8 @@ import {
 } from "../../utils/archives";
 import { applyRemoteSessionDeletion } from "./sessionManagementThunks";
 import { selectHasMessagesForSession } from "../selectors/chatSelectors";
+import { addToast } from "../slices/toastSlice";
+import i18n from "../../../i18n";
 
 export interface SessionRehydrationResult {
   restored: boolean;
@@ -191,6 +193,10 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
     }
   } catch (error) {
     console.error("Failed to enumerate remote session files", error);
+    dispatch(addToast({
+      message: i18n.t("playground:errors.sessionFilesLoadFailed", { defaultValue: "Could not load session files. Please refresh the page." }),
+      isError: true,
+    }));
     return;
   }
 

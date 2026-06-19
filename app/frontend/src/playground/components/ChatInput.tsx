@@ -9,7 +9,7 @@
  * - Accessible controls and keyboard behavior (Enter to send, Shift+Enter newline)
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Box,
   Paper,
@@ -45,8 +45,8 @@ import { isRetriableUploadError, uploadEncodedFile } from "../api/storage";
 import { addUserFileToOutbox } from "../store/slices/outboxSlice";
 import { upsertSessionFile } from "../store/slices/sessionFilesSlice";
 import { FileAttachment } from "../types";
-// Keep attachment filtering consistent with picker hints and backend enforcement.
-import { isSupportedFile } from "../supportedFileTypes";
+import { useChatFileAttachments } from "../hooks/useChatFileAttachments";
+
 
 interface ChatInputProps {
   sessionId: string;
@@ -80,25 +80,27 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
   const quotedText = useAppSelector((state: RootState) => state.quoted.quotedText);
   const isLoading = useAppSelector((state: RootState) => state.chat.isLoadingBySessionId[sessionId] ?? false);
 
+  // File attachment state managed by dedicated hook
+  const {
+    attachments,
+    previews,
+    dragActive,
+    isUploading,
+    uploadProgress,
+    handleFiles,
+    handlePaste,
+    removeAttachment,
+    setAttachments,
+    setIsUploading,
+    setUploadProgress,
+  } = useChatFileAttachments();
+
   // Local UI state
   const [input, setInput] = useState("");
-  const [attachments, setAttachments] = useState<File[]>([]);
-  const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Track attachment uploads so users see progress before the AI response starts.
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<{ completed: number; total: number }>({
-    completed: 0,
-    total: 0,
-  });
-  const isUploadingRef = useRef(false);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
-  const dragDepthRef = useRef(0);
   const accessToken = useAppSelector((state: RootState) => state.auth.accessToken);
 
-  useEffect(() => {
-    isUploadingRef.current = isUploading;
-  }, [isUploading]);
 
   /**
    * Upper bound for message length enforced client-side. Keep this aligned with
@@ -106,24 +108,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
    */
   const MAX_INPUT_LENGTH = 24000;
 
-  /**
-   * Derived preview URLs for image attachments. Non-image files are represented
-   * by filename chips. Blob URLs are revoked when attachments/previews change
-   * or on unmount (see cleanup effect below).
-   */
-  const previews = useMemo(() => {
-    return attachments.map((file) => {
-      const isImage = file.type.startsWith("image/") || /\.(jpeg|jpg|gif|png|webp|bmp|svg)$/i.test(file.name);
-      return { file, isImage, url: isImage ? URL.createObjectURL(file) : undefined };
-    });
-  }, [attachments]);
-
-  useEffect(() => {
-    return () => {
-      // cleanup object URLs
-      previews.forEach(p => p.url && URL.revokeObjectURL(p.url));
-    };
-  }, [previews]);
 
   // Focus input when a quote is added
   useEffect(() => {
@@ -132,149 +116,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
     }
   }, [quotedText]);
 
-  /**
-   * Adds selected/dropped/pasted files to the local attachments list and shows
-   * a toast with the count. Merges with any existing attachments.
-   *
-   * @param fileList - A FileList from input/drag events, or an array of Files from paste handlers.
-   */
-  const handleFiles = useCallback((incoming: FileList | File[]) => {
-    if (isUploadingRef.current) return;
-    // Normalize the input into a File[]
-    const files = Array.isArray(incoming) ? incoming : Array.from(incoming);
-    if (!files.length) return;
-
-    // Split incoming files so we can surface a single toast for unsupported types.
-    const partitioned = files.reduce(
-      (acc, file) => {
-        if (isSupportedFile(file)) {
-          acc.supported.push(file);
-        } else {
-          acc.unsupported.push(file);
-        }
-        return acc;
-      },
-      { supported: [] as File[], unsupported: [] as File[] },
-    );
-
-    if (partitioned.unsupported.length) {
-      dispatch(
-        addToast({
-          message: t("errors.unsupportedFileType", {
-            defaultValue:
-              "Some files are not supported. Please upload PDF, Word (.doc/.docx), Excel (.xls/.xlsx), PowerPoint (.ppt/.pptx), CSV/TSV, or plain text files.",
-          }),
-          isError: true,
-        }),
-      );
-    }
-
-    if (!partitioned.supported.length) {
-      return;
-    }
-
-    setAttachments((prev) => {
-      // Deduplicate by name/size/lastModified
-      const key = (f: File) => `${f.name}|${f.size}|${f.lastModified}`;
-      const existing = new Set(prev.map(key));
-      const toAdd = partitioned.supported.filter((f) => !existing.has(key(f)));
-      const next = toAdd.length ? [...prev, ...toAdd] : prev;
-      if (toAdd.length) {
-        dispatch(
-          addToast({
-            message: `${toAdd.length} ${t('files.attached', { defaultValue: 'files attached' })}`,
-            isError: false,
-          }),
-        );
-      }
-      return next;
-    });
-  }, [dispatch, t]);
-
-  /**
-   * Intercepts paste events to capture pasted file data (e.g., screenshots) as
-   * attachments. Prevents default paste when a file is detected to avoid
-   * inserting binary data or base64 text into the input.
-   */
-  const handlePaste = useCallback((ev: React.ClipboardEvent) => {
-    const items = ev.clipboardData?.items;
-    if (!items) return;
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (item.kind === "file") {
-        const f = item.getAsFile();
-        if (f) {
-          handleFiles([f]);
-          ev.preventDefault();
-          break;
-        }
-      }
-    }
-  }, [handleFiles]);
-
-  // Drag-and-drop anywhere overlay
-  /**
-   * Window-level drag events allow dropping files anywhere. We highlight the
-   * composer with an overlay while dragging, and add dropped files to the
-   * attachments list. Event listeners are cleaned up on unmount.
-   */
-  useEffect(() => {
-    // Window-level handlers enable drag-drop anywhere on the page
-    const hasFiles = (e: DragEvent) => {
-      const types = e.dataTransfer?.types;
-      return !!types && (Array.from(types).includes('Files'));
-    };
-
-    const onDragEnter = (e: DragEvent) => {
-      if (!hasFiles(e)) return;
-      dragDepthRef.current += 1;
-      setDragActive(true);
-      e.preventDefault();
-    };
-
-    const onDragOver = (e: DragEvent) => {
-      if (!hasFiles(e)) return;
-      e.preventDefault();
-    };
-
-    const onDragLeave = (e: DragEvent) => {
-      if (!hasFiles(e)) return;
-      dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
-      if (dragDepthRef.current === 0) setDragActive(false);
-      e.preventDefault();
-    };
-
-    const onDrop = (e: DragEvent) => {
-      if (e.dataTransfer?.files?.length) {
-        handleFiles(e.dataTransfer.files);
-      }
-      dragDepthRef.current = 0;
-      setDragActive(false);
-      e.preventDefault();
-    };
-
-    window.addEventListener('dragenter', onDragEnter);
-    window.addEventListener('dragover', onDragOver);
-    window.addEventListener('dragleave', onDragLeave);
-    window.addEventListener('drop', onDrop);
-    return () => {
-      window.removeEventListener('dragenter', onDragEnter);
-      window.removeEventListener('dragover', onDragOver);
-      window.removeEventListener('dragleave', onDragLeave);
-      window.removeEventListener('drop', onDrop);
-    };
-  }, [handleFiles]);
-
-  /**
-   * Removes a single attachment at the provided index. Blob URL cleanup is
-   * handled by the previews cleanup effect.
-   *
-   * @param index - The zero-based index of the attachment to remove.
-   */
-  const removeAttachment = useCallback((index: number) => {
-    // Removal triggers preview cleanup via the previews effect above
-    setAttachments(prev => prev.filter((_, i) => i !== index));
-  }, []);
 
   /**
    * Submits the current message to the chat store including any quoted text and

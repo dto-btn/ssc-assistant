@@ -57,24 +57,25 @@ export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rej
     rawServers = JSON.parse(rawValue);
 
     // Validate and map raw server data to Tool.Mcp objects
-    toolServers = rawServers
+    toolServers = (rawServers as unknown[])
       .filter(
-        (server: any) =>
-          server &&
-          server.server_label &&
-          server.server_url &&
-          server.server_description &&
-            isValidMcpUrl(server.server_url)
+        (server): server is Record<string, unknown> =>
+          !!server &&
+          typeof server === "object" &&
+          typeof (server as Record<string, unknown>).server_label === "string" &&
+          typeof (server as Record<string, unknown>).server_url === "string" &&
+          typeof (server as Record<string, unknown>).server_description === "string" &&
+          isValidMcpUrl((server as Record<string, unknown>).server_url as string)
       )
-      .map((server: any) => ({
-        server_label: server.server_label,
-        type: 'mcp',
-        server_url: server.server_url,
-        server_description: server.server_description,
+      .map((server) => ({
+        server_label: server.server_label as string,
+        type: 'mcp' as const,
+        server_url: server.server_url as string,
+        server_description: server.server_description as string,
         // Default to never so unsupported values do not break tool execution.
-        require_approval: (server.require_approval === "always" || server.require_approval === "never") 
-          ? server.require_approval 
-          : "never",
+        require_approval: (server.require_approval === "always" || server.require_approval === "never")
+          ? server.require_approval as "always" | "never"
+          : "never" as const,
       }));
 
     return toolServers;
