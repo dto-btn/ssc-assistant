@@ -9,15 +9,21 @@
 // React import intentionally omitted; use named imports where required.
 import type { PropsWithChildren } from "react";
 import { Provider } from "react-redux";
+import { ThemeProvider } from "@mui/material/styles";
 import { store } from "./store";
+import { playgroundTheme } from "./theme";
 import PlaygroundRoot from "./components/PlaygroundRoot";
 import ToastContainer from "./components/ToastContainer";
 
 export function PlaygroundProviders({ children }: PropsWithChildren) {
   return (
     <Provider store={store}>
-      {children}
-      <ToastContainer />
+      {/* Playground-scoped theme adds consistent focus indicators (WCAG 2.4.7)
+          without affecting the legacy application's shared theme. */}
+      <ThemeProvider theme={playgroundTheme}>
+        {children}
+        <ToastContainer />
+      </ThemeProvider>
     </Provider>
   );
 }
