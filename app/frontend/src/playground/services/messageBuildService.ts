@@ -24,6 +24,7 @@
 import type { Tool } from "openai/resources/responses/responses.mjs";
 import type { CompletionMessage } from "./completionService";
 import i18n from "../../i18n";
+import { hasBitsServer, inferBitsFilterHintsFromPrompt } from "./bitsTransformService";
 
 // ---------------------------------------------------------------------------
 // Session utilities
@@ -37,7 +38,6 @@ export const deriveSessionName = (content: string): string => {
   const words = content.trim().split(/\s+/).filter(Boolean);
   return words.slice(0, 5).join(" ").slice(0, 30);
 };
-import { hasBitsServer, inferBitsFilterHintsFromPrompt } from "./bitsTransformService";
 
 // ---------------------------------------------------------------------------
 // System prompt constants

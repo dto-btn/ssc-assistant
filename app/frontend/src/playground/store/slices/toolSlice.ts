@@ -51,13 +51,10 @@ export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rej
     const rawValue = import.meta.env.VITE_MCP_SERVERS;
     if (!rawValue) return [];
 
-    let rawServers;
-    let toolServers: Tool.Mcp[] = [];
-
-    rawServers = JSON.parse(rawValue);
+    const rawServers = JSON.parse(rawValue);
 
     // Validate and map raw server data to Tool.Mcp objects
-    toolServers = (rawServers as unknown[])
+    const toolServers: Tool.Mcp[] = (rawServers as unknown[])
       .filter(
         (server): server is Record<string, unknown> =>
           !!server &&
