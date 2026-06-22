@@ -249,6 +249,30 @@ export const mergeBitsArtifacts = (
 };
 
 /**
+ * Merge enriched BR rows into the base result set, keyed on BR_NMBR.
+ *
+ * Enriched fields take precedence over base fields for the same BR number.
+ * Base rows without a matching enriched entry are preserved unchanged so that
+ * partially-enriched lists do not silently drop BRs.
+ */
+export const mergeBrDataByBrNumber = (
+  base: Record<string, unknown>[],
+  enriched: Record<string, unknown>[],
+): Record<string, unknown>[] => {
+  if (enriched.length === 0) return base;
+  const enrichedMap = new Map<string, Record<string, unknown>>();
+  for (const row of enriched) {
+    const key = String(row.BR_NMBR ?? "");
+    if (key) enrichedMap.set(key, row);
+  }
+  return base.map((row) => {
+    const key = String(row.BR_NMBR ?? "");
+    const enrichedRow = key ? enrichedMap.get(key) : undefined;
+    return enrichedRow ? { ...row, ...enrichedRow } : row;
+  });
+};
+
+/**
  * Return true when any of the routed MCP servers appears to serve BITS data.
  */
 export const hasBitsServer = (servers: Tool.Mcp[] = []): boolean =>

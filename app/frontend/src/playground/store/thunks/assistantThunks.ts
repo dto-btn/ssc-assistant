@@ -62,6 +62,7 @@ import {
   BITS_NON_RESULT_TOOL_NAMES,
   parseBitsArtifactsFromToolOutput,
   mergeBitsArtifacts,
+  mergeBrDataByBrNumber,
   hasBitsServer,
   isBrGuidancePrompt,
 } from "../../services/bitsTransformService";
@@ -1095,6 +1096,76 @@ export const sendAssistantMessage = ({
       }
     };
 
+    /**
+     * Fetch full BR details for each listed BR number by calling
+     * `get_request_status` (or equivalent) on the BITS MCP server.
+     *
+     * The initial `search_requests` response may include only a subset of
+     * fields based on what was queried. This pass fetches every available
+     * field for each BR and returns enriched rows that can be merged back
+     * into the base artifact set.
+     */
+    const enrichBrDataWithFullDetails = async (
+      brNumbers: string[],
+      bitsServers: Tool.Mcp[],
+    ): Promise<Record<string, unknown>[]> => {
+      if (brNumbers.length === 0 || bitsServers.length === 0) return [];
+
+      try {
+        const enrichResult = await completionService.createCompletion(
+          {
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a data retrieval assistant. For each BR number provided by the user, call get_request_status to retrieve the complete details. Do not summarize or add commentary — only invoke the tool for each number.",
+              },
+              {
+                role: "user",
+                content: `Retrieve full details for the following business requests: ${brNumbers.join(", ")}. Call get_request_status for each BR number.`,
+              },
+            ],
+            model: completionModel,
+            provider,
+            userToken: accessToken,
+            signal: abortController.signal,
+            servers: bitsServers,
+            toolChoice: "required",
+          },
+          {
+            onChunk: () => undefined,
+            onToolCall: () => undefined,
+            onError: (error: Error) => {
+              if (!abortController.signal.aborted && IS_DEV) {
+                console.warn("BR enrichment pass error:", error);
+              }
+            },
+            onComplete: () => undefined,
+          }
+        );
+
+        // Collect every BR row returned across all tool outputs.
+        return (enrichResult.mcpToolOutputs || [])
+          .filter((toolOutput) => {
+            const toolName = toolOutput.toolName.toLowerCase();
+            return (
+              !BITS_NON_RESULT_TOOL_NAMES.has(toolName)
+              && (BITS_TOOL_NAMES.has(toolName)
+                || toolOutput.output.includes('"BR_NMBR"'))
+            );
+          })
+          .flatMap((toolOutput) => {
+            const artifacts = parseBitsArtifactsFromToolOutput(toolOutput.output);
+            return artifacts?.brData ?? [];
+          });
+      } catch (enrichError) {
+        if (!abortController.signal.aborted && IS_DEV) {
+          console.warn("BR enrichment pass failed:", enrichError);
+        }
+        return [];
+      }
+    };
+
     const runCompletion = async (
       messagesForRun: CompletionMessage[],
       serversForRun: Tool.Mcp[],
@@ -1394,10 +1465,34 @@ export const sendAssistantMessage = ({
     const allowBrArtifactsForPrompt = !isBrGuidancePrompt(content);
 
     if (bitsArtifacts && allowBrArtifactsForPrompt) {
+      // Enrich listed BRs with full field data by fetching each BR's complete
+      // details via get_request_status. The initial search_requests output may
+      // only include the fields that were queried; this pass ensures all
+      // available fields are populated in the artifact rows.
+      let finalBitsArtifacts = bitsArtifacts;
+
+      if (!completionWasAborted && bitsArtifacts.brData && bitsArtifacts.brData.length > 0) {
+        const bitsServers = successfulCompletionServers.filter((s) => hasBitsServer([s]));
+        const brNumbers = bitsArtifacts.brData
+          .map((row) => row.BR_NMBR)
+          .filter((num): num is string | number => num !== undefined && num !== null)
+          .map((num) => String(num));
+
+        if (brNumbers.length > 0 && bitsServers.length > 0) {
+          const enrichedRows = await enrichBrDataWithFullDetails(brNumbers, bitsServers);
+          if (enrichedRows.length > 0) {
+            finalBitsArtifacts = {
+              ...bitsArtifacts,
+              brData: mergeBrDataByBrNumber(bitsArtifacts.brData, enrichedRows),
+            };
+          }
+        }
+      }
+
       dispatch(
         setMessageBrArtifacts({
           messageId: latestAssistantMessage.id,
-          brArtifacts: bitsArtifacts,
+          brArtifacts: finalBitsArtifacts,
         })
       );
     }
