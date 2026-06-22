@@ -72,9 +72,20 @@ def verify_user_access_token(token):
     """verify the access token provided in the Authorization header"""
     user = get_or_create_user()
     if os.getenv("SKIP_USER_VALIDATION", "False").lower() == "true":
-        # Tests inject fake identities, so short-circuit instead of hitting Entra ID.
-        logger.info("Skipping User Validation")
-        user.token = None
+        # Signature verification is skipped (local dev / pytest). Decode the JWT
+        # payload without verifying the signature so callers that need the OID
+        # (e.g. blob-storage isolation) still get a real identifier.  If no token
+        # is present or decoding fails, fall back to DEV_USER_OID.
+        dev_fallback_oid = os.getenv("DEV_USER_OID", "dev-local-user")
+        decoded: dict | None = None
+        if token:
+            try:
+                decoded = jwt.decode(token, options={"verify_signature": False}, algorithms=["RS256", "HS256"])
+            except Exception:  # pylint: disable=broad-except
+                pass
+        oid = (decoded or {}).get("oid") or dev_fallback_oid
+        logger.info("Skipping User Validation – resolved OID: %s", oid)
+        user.token = {"oid": oid}
         return user
     try:
         global oauth_validator  # pylint: disable=global-statement
