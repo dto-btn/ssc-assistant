@@ -45,7 +45,7 @@ import {
 } from "../utils/citations";
 import { selectMessagesForSession } from "../store/selectors/chatSelectors";
 import { transformToBusinessRequest } from "../utils/bits_utils";
-import { MONTH_INDEX_BY_NAME, MONTH_NAMES_PATTERN, MERMAID_FENCE_PATTERN } from "../constants/patterns";
+import { MONTH_INDEX_BY_NAME, MONTH_NAMES_PATTERN, MERMAID_FENCE_PATTERN, MERMAID_DIAGRAM_TYPE_PATTERN } from "../constants/patterns";
 import { normalizePromptForInference } from "../utils/promptUtils";
 import { formatIsoDate } from "../services/bitsTransformService";
 import "highlight.js/styles/github.css";
@@ -199,22 +199,25 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
     );
   }, [message.brArtifacts?.brData]);
 
-  // Diagnostic: log if brArtifacts exist but brData is undefined (edge case)
-  if (
-    process.env.NODE_ENV === "development"
-    && message.brArtifacts
-    && !brData
-    && message.role === "assistant"
-  ) {
-    console.warn(
-      "[ChatMessages] Message has brArtifacts but brData is undefined:",
-      {
-        messageId: message.id,
-        brArtifactsKeys: Object.keys(message.brArtifacts),
-        brDataRaw: message.brArtifacts.brData,
-      }
-    );
-  }
+  // Diagnostic: log if brArtifacts exist but brData is undefined (edge case).
+  // Runs in an effect to keep the render pass free of side effects.
+  useEffect(() => {
+    if (
+      process.env.NODE_ENV === "development"
+      && message.brArtifacts
+      && !brData
+      && message.role === "assistant"
+    ) {
+      console.warn(
+        "[ChatMessages] Message has brArtifacts but brData is undefined:",
+        {
+          messageId: message.id,
+          brArtifactsKeys: Object.keys(message.brArtifacts),
+          brDataRaw: message.brArtifacts.brData,
+        }
+      );
+    }
+  }, [message.brArtifacts, brData, message.role, message.id]);
 
   const brMetadata = useMemo(() => {
     const metadata = message.brArtifacts?.brMetadata;
@@ -429,7 +432,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
         }
 
         // Ignore Mermaid block headers/directives that are not data rows.
-        if (/^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|mindmap|timeline|gitGraph|xychart-beta)\b/i.test(line)) {
+        if (MERMAID_DIAGRAM_TYPE_PATTERN.test(line)) {
           continue;
         }
 

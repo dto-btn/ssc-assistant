@@ -71,7 +71,7 @@ def get_user_roles(user: User):
 def verify_user_access_token(token):
     """verify the access token provided in the Authorization header"""
     user = get_or_create_user()
-    if os.getenv("SKIP_USER_VALIDATION", "False").lower() == "true":
+    if _skip_user_validation:
         # Signature verification is skipped (local dev / pytest). Decode the JWT
         # payload without verifying the signature so callers that need the OID
         # (e.g. blob-storage isolation) still get a real identifier.  If no token
@@ -81,8 +81,8 @@ def verify_user_access_token(token):
         if token:
             try:
                 decoded = jwt.decode(token, options={"verify_signature": False}, algorithms=["RS256", "HS256"])
-            except Exception:  # pylint: disable=broad-except
-                pass
+            except jwt.PyJWTError:
+                logger.debug("Could not decode dev token; falling back to DEV_USER_OID")
         oid = (decoded or {}).get("oid") or dev_fallback_oid
         logger.info("Skipping User Validation – resolved OID: %s", oid)
         user.token = {"oid": oid}

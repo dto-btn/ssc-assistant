@@ -574,12 +574,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
         </Box>,
         document.body
       )}
-
-      {error && (
-        <Typography id="chatinput-error" variant="caption" color="error" sx={{ display: 'block', textAlign: 'center', pt: 0.5 }} aria-live="polite">
-          {error}
-        </Typography>
-      )}
     </Box>
   );
 };

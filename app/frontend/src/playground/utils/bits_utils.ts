@@ -1,5 +1,9 @@
 const s = (v: unknown): string => (typeof v === "string" ? v : String(v ?? ""));
-const n = (v: unknown): number => (typeof v === "number" ? v : Number(v));
+const n = (v: unknown): number => {
+  if (typeof v === "number") return Number.isNaN(v) ? 0 : v;
+  const parsed = Number(v);
+  return Number.isNaN(parsed) ? 0 : parsed;
+};
 
 export const transformToBusinessRequest = (data: Record<string, unknown>): BusinessRequest => {
   return {

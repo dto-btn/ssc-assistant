@@ -88,7 +88,24 @@ export function useChatFileAttachments(): UseChatFileAttachmentsReturn {
       const files = Array.isArray(incoming) ? incoming : Array.from(incoming);
       if (!files.length) return;
 
-      const partitioned = files.reduce(
+      // 100 MB hard cap — createObjectURL + base64 encoding of very large files
+      // can exhaust browser memory before the upload even begins.
+      const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024;
+      const oversized = files.filter((f) => f.size > MAX_FILE_SIZE_BYTES);
+      if (oversized.length) {
+        dispatch(
+          addToast({
+            message: t("errors.fileTooLarge", {
+              defaultValue: "One or more files exceed the 100 MB limit and were not attached.",
+            }),
+            isError: true,
+          }),
+        );
+      }
+      const withinLimit = files.filter((f) => f.size <= MAX_FILE_SIZE_BYTES);
+      if (!withinLimit.length) return;
+
+      const partitioned = withinLimit.reduce(
         (acc, file) => {
           if (isSupportedFile(file)) {
             acc.supported.push(file);
