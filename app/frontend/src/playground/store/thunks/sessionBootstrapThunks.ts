@@ -9,7 +9,7 @@
 import { fetchFileDataUrl, listSessionFiles } from "../../api/storage";
 import type { AppThunk } from "..";
 import type { Session } from "../slices/sessionSlice";
-import { addSession, renameSession, setCurrentSession } from "../slices/sessionSlice";
+import { addSession, renameSession } from "../slices/sessionSlice";
 import { setSessionFiles } from "../slices/sessionFilesSlice";
 import { hydrateSessionMessages, type Message } from "../slices/chatSlice";
 import type { FileAttachment } from "../../types";
@@ -272,9 +272,7 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
 
   newSessions.sort((a, b) => a.createdAt - b.createdAt);
   newSessions.forEach((session) => dispatch(addSession(session)));
-
-  const newestSessionId = newSessions[newSessions.length - 1]?.id;
-  if (newestSessionId) {
-    dispatch(setCurrentSession(newestSessionId));
-  }
+  // Do not auto-activate the newest recovered session — the app always opens
+  // a fresh empty conversation (see NewConversationOnOpen), and remote bootstrap
+  // should only populate the sidebar, not override the current session.
 };
