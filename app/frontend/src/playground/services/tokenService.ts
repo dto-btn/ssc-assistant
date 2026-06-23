@@ -5,7 +5,13 @@
  * Integrates with Redux store to maintain token state.
  */
 
+import { IPublicClientApplication } from "@azure/msal-browser";
 import { isTokenExpired } from "../../util/token";
+
+interface SilentRequestConfig {
+  scopes: string[];
+  [key: string]: unknown;
+}
 
 export class TokenService {
   /**
@@ -16,16 +22,16 @@ export class TokenService {
    * @returns Valid access token
    */
   static async getValidToken(
-    instance: any, // MSAL instance type
+    instance: IPublicClientApplication,
     currentToken: string | null,
-    apiUse: any // Your apiUse config
+    apiUse: SilentRequestConfig
   ): Promise<{ token: string; expiresOn?: number }> {
     // Check if token is missing or expired
     if (!currentToken || isTokenExpired(currentToken)) {
       try {
         const response = await instance.acquireTokenSilent({
           ...apiUse,
-          account: instance.getActiveAccount(),
+          account: instance.getActiveAccount() ?? undefined,
           forceRefresh: true,
         });
 

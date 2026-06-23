@@ -15,6 +15,7 @@ import EmailIcon from "@mui/icons-material/Email";
 import PersonIcon from "@mui/icons-material/Person";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import TopicIcon from "@mui/icons-material/Topic";
+import { CATEGORY_COLOR_BR } from "../theme/iconColors";
 
 interface SuggestionCard {
   titleKey: string;
@@ -57,23 +58,23 @@ const Suggestions: React.FC<Props> = ({ onSuggestionClicked, disabled }) => {
     {
       titleKey: "suggestions.business.find",
       tool: "bits",
-      icon: <ReceiptLongIcon aria-hidden="true" sx={{ color: "#8e24aa" }} />,
+      icon: <ReceiptLongIcon aria-hidden="true" sx={{ color: CATEGORY_COLOR_BR }} />,
       category: "br",
-      color: "#8e24aa", // Purple
+      color: CATEGORY_COLOR_BR, // Purple — WCAG AA compliant (#6a1b9a ~5.6:1 on white)
     },
     {
       titleKey: "suggestions.business.pspc",
       tool: "bits",
-      icon: <ReceiptLongIcon aria-hidden="true" sx={{ color: "#8e24aa" }} />,
+      icon: <ReceiptLongIcon aria-hidden="true" sx={{ color: CATEGORY_COLOR_BR }} />,
       category: "br",
-      color: "#8e24aa", // Purple
+      color: CATEGORY_COLOR_BR, // Purple — WCAG AA compliant
     },
     {
       titleKey: "suggestions.business.piechart",
       tool: "bits",
-      icon: <ReceiptLongIcon aria-hidden="true" sx={{ color: "#8e24aa" }} />,
+      icon: <ReceiptLongIcon aria-hidden="true" sx={{ color: CATEGORY_COLOR_BR }} />,
       category: "br",
-      color: "#8e24aa", // Purple
+      color: CATEGORY_COLOR_BR, // Purple — WCAG AA compliant
     },
     ...Array.from({ length: 16 }, (_, i) => ({
       titleKey: `suggestions.pmcoe.q${i + 1}`,

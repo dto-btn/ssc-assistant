@@ -30,7 +30,7 @@ export interface ProcessedCitationsResult {
 const DOC_REFERENCE_REGEX = /\[doc(\d+)\]/g;
 const DOC_REFERENCE_TEST_REGEX = /\[doc(\d+)\]/;
 const EXPLICIT_CITATION_LINK_REGEX = /\[(\d+)\]\((<[^>\n]+>|[^)\s]+)\)/g;
-const LOCAL_CITATION_PREFIX = "local-citation://";
+import { LOCAL_CITATION_PREFIX } from "../constants/patterns";
 const DEFAULT_PMCOE_CONTAINER = String(import.meta.env.VITE_PMCOE_CONTAINER || "pmcoe-sept-2025").trim() || "pmcoe-sept-2025";
 const PMCOE_FILE_EXTENSION_PATTERN = /\.(pdf|docx?|pptx?|xlsx?|txt|md)$/i;
 const PMCOE_HINT_PATTERN = /\b(pmcoe|pmli|project manager-led initiatives?|project management|operating guide|gate(?: review| governance)?|opmca|pgof|pcra|task financial authorization|execution stage|realization plan|enterprise portfolio system|eps)\b/i;

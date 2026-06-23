@@ -119,6 +119,7 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
           id="playground-accept-disclaimer-button"
           color="primary"
           variant="contained"
+          autoFocus
           onClick={handleAccept}
         >
           {t("disclaimer.modal.accept")}

@@ -9,6 +9,7 @@ import React from "react";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useMsal } from "@azure/msal-react";
+import type { SilentRequest } from "@azure/msal-browser";
 import { setAccessToken } from "./store/slices/authSlice";
 
 // Example of how to integrate with your existing auth setup
@@ -17,7 +18,7 @@ export function PlaygroundAuthProvider({
   apiUse,
 }: {
   children: React.ReactNode;
-  apiUse: any; // Your apiUse configuration
+  apiUse: SilentRequest;
 }) {
   const dispatch = useDispatch();
   const { instance } = useMsal();
@@ -31,7 +32,7 @@ export function PlaygroundAuthProvider({
       if (!token || isTokenExpired(token)) {
         const response = await instance.acquireTokenSilent({
           ...apiUse,
-          account: instance.getActiveAccount(),
+          account: instance.getActiveAccount() ?? undefined,
           forceRefresh: true,
         });
 

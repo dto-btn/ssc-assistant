@@ -49,6 +49,17 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
   const theme = useTheme();
   const isSmall = useMediaQuery(theme.breakpoints.down("md"));
   const citationScrollRef = useRef<HTMLDivElement | null>(null);
+  const triggerElementRef = useRef<HTMLElement | null>(null);
+
+  // Capture the trigger element when the drawer opens so focus can be restored on close.
+  useEffect(() => {
+    if (open) {
+      triggerElementRef.current = document.activeElement as HTMLElement;
+    } else if (triggerElementRef.current) {
+      triggerElementRef.current.focus();
+      triggerElementRef.current = null;
+    }
+  }, [open]);
 
   const normalizeUrl = (url: string): string => {
     try {

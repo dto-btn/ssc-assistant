@@ -11,6 +11,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { Tool } from "openai/resources/responses/responses.mjs";
+import { tryParseJsonObject } from "../utils/json";
 import type {
   Message,
   OrchestratorInsights,
@@ -79,54 +80,6 @@ const normalizeRecommendations = (raw: unknown): OrchestratorRecommendation[] =>
 };
 
 /**
- * Parse tool text into an object using increasingly permissive strategies.
- *
- * Some MCP servers return strict JSON, others return markdown fenced JSON,
- * and legacy servers may include explanatory prose around a JSON object.
- */
-const tryParseJson = (value: string): Record<string, unknown> | null => {
-  if (!value) return null;
-
-  const trimmed = value.trim();
-  try {
-    const parsed = JSON.parse(trimmed);
-    if (parsed && typeof parsed === "object") {
-      return parsed as Record<string, unknown>;
-    }
-  } catch {
-    // no-op
-  }
-
-  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  if (fenced?.[1]) {
-    try {
-      const parsed = JSON.parse(fenced[1]);
-      if (parsed && typeof parsed === "object") {
-        return parsed as Record<string, unknown>;
-      }
-    } catch {
-      // no-op
-    }
-  }
-
-  const start = trimmed.indexOf("{");
-  const end = trimmed.lastIndexOf("}");
-  if (start >= 0 && end > start) {
-    const candidate = trimmed.slice(start, end + 1);
-    try {
-      const parsed = JSON.parse(candidate);
-      if (parsed && typeof parsed === "object") {
-        return parsed as Record<string, unknown>;
-      }
-    } catch {
-      // no-op
-    }
-  }
-
-  return null;
-};
-
-/**
  * Enforce transport and path constraints expected by MCP streamable HTTP.
  *
  * - Requires `https://` except local development (`http://localhost|127.0.0.1`).
@@ -176,7 +129,7 @@ const extractToolPayload = (toolResult: unknown): Record<string, unknown> | null
       if (!entry || typeof entry !== "object") continue;
       const text = (entry as Record<string, unknown>).text;
       if (typeof text !== "string") continue;
-      const parsed = tryParseJson(text);
+      const parsed = tryParseJsonObject(text);
       if (parsed) {
         return parsed;
       }

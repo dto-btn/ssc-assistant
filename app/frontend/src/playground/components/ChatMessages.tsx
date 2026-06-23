@@ -45,6 +45,9 @@ import {
 } from "../utils/citations";
 import { selectMessagesForSession } from "../store/selectors/chatSelectors";
 import { transformToBusinessRequest } from "../utils/bits_utils";
+import { MONTH_INDEX_BY_NAME, MONTH_NAMES_PATTERN, MERMAID_FENCE_PATTERN, MERMAID_DIAGRAM_TYPE_PATTERN } from "../constants/patterns";
+import { normalizePromptForInference } from "../utils/promptUtils";
+import { formatIsoDate } from "../services/bitsTransformService";
 import "highlight.js/styles/github.css";
 
 const BusinessRequestTable = lazy(
@@ -116,45 +119,6 @@ interface BrQuery {
   statuses?: string[];
 }
 
-const MONTH_INDEX_BY_NAME: Record<string, number> = {
-  january: 0,
-  janvier: 0,
-  february: 1,
-  fevrier: 1,
-  march: 2,
-  april: 3,
-  avril: 3,
-  may: 4,
-  mai: 4,
-  june: 5,
-  juin: 5,
-  july: 6,
-  juillet: 6,
-  august: 7,
-  aout: 7,
-  september: 8,
-  septembre: 8,
-  october: 9,
-  octobre: 9,
-  november: 10,
-  novembre: 10,
-  december: 11,
-  decembre: 11,
-};
-
-const normalizeForMatching = (value: string): string => {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-};
-
-const formatIsoDate = (date: Date): string => {
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(date.getUTCDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
 const getPlainText = (children: React.ReactNode): string => {
   return React.Children.toArray(children)
     .map((child) => {
@@ -235,22 +199,25 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
     );
   }, [message.brArtifacts?.brData]);
 
-  // Diagnostic: log if brArtifacts exist but brData is undefined (edge case)
-  if (
-    process.env.NODE_ENV === "development"
-    && message.brArtifacts
-    && !brData
-    && message.role === "assistant"
-  ) {
-    console.warn(
-      "[ChatMessages] Message has brArtifacts but brData is undefined:",
-      {
-        messageId: message.id,
-        brArtifactsKeys: Object.keys(message.brArtifacts),
-        brDataRaw: message.brArtifacts.brData,
-      }
-    );
-  }
+  // Diagnostic: log if brArtifacts exist but brData is undefined (edge case).
+  // Runs in an effect to keep the render pass free of side effects.
+  useEffect(() => {
+    if (
+      process.env.NODE_ENV === "development"
+      && message.brArtifacts
+      && !brData
+      && message.role === "assistant"
+    ) {
+      console.warn(
+        "[ChatMessages] Message has brArtifacts but brData is undefined:",
+        {
+          messageId: message.id,
+          brArtifactsKeys: Object.keys(message.brArtifacts),
+          brDataRaw: message.brArtifacts.brData,
+        }
+      );
+    }
+  }, [message.brArtifacts, brData, message.role, message.id]);
 
   const brMetadata = useMemo(() => {
     const metadata = message.brArtifacts?.brMetadata;
@@ -311,9 +278,9 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
 
     // Lightweight heuristic extraction to show likely filters when tool metadata is missing.
     const queryFilters: BrQueryFilter[] = [];
-    const normalizedPrompt = normalizeForMatching(sourcePrompt);
+    const normalizedPrompt = normalizePromptForInference(sourcePrompt);
 
-    const monthMatch = normalizedPrompt.match(/\b(january|janvier|february|fevrier|march|april|avril|may|mai|june|juin|july|juillet|august|aout|september|septembre|october|octobre|november|novembre|december|decembre)\b(?:\s+(\d{4}))?/i);
+    const monthMatch = normalizedPrompt.match(new RegExp(`\\b(${MONTH_NAMES_PATTERN})\\b(?:\\s+(\\d{4}))?`, "i"));
     if (monthMatch) {
       const monthName = monthMatch[1].toLowerCase();
       const monthIndex = MONTH_INDEX_BY_NAME[monthName];
@@ -465,7 +432,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
         }
 
         // Ignore Mermaid block headers/directives that are not data rows.
-        if (/^(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|mindmap|timeline|gitGraph|xychart-beta)\b/i.test(line)) {
+        if (MERMAID_DIAGRAM_TYPE_PATTERN.test(line)) {
           continue;
         }
 
@@ -524,7 +491,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
       }
     };
 
-    const mermaidBlockMatch = text.match(/```mermaid\s*([\s\S]*?)```/i);
+    const mermaidBlockMatch = text.match(new RegExp(MERMAID_FENCE_PATTERN.source, "i"));
     if (mermaidBlockMatch) {
       addRowsFromLines(mermaidBlockMatch[1].split("\n"));
     }

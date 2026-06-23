@@ -11,6 +11,9 @@ import {
 let isFlushing = false; // Serialize retries so multiple actions don't re-upload the same item concurrently.
 let isFlushQueued = false; // Prevent a microtask per action from piling up during high-frequency updates.
 
+const MAX_RETRY_COUNT = 3;
+const retryCounts = new Map<string, number>();
+
 /**
  * Attempt to send a queued upload using the current auth token; returns early
  * when offline or unauthenticated so the item can be retried later.
@@ -107,11 +110,26 @@ export const outboxMiddleware: Middleware<UnknownAction, RootState> = (store: Mi
             const outcome = await flushItem(item, store);
             if (outcome === "success") {
               store.dispatch(removeOutboxItem(item.id));
+              retryCounts.delete(item.id);
               progressed = true;
             }
             if (outcome === "drop") {
               store.dispatch(removeOutboxItem(item.id));
+              retryCounts.delete(item.id);
               progressed = true;
+            }
+            if (outcome === "failed") {
+              const attempts = (retryCounts.get(item.id) ?? 0) + 1;
+              if (attempts >= MAX_RETRY_COUNT) {
+                store.dispatch(removeOutboxItem(item.id));
+                retryCounts.delete(item.id);
+                progressed = true;
+                if (item.kind === "chat-archive") {
+                  store.dispatch(markSessionError({ sessionId: item.sessionId, error: "Max retries exceeded" }));
+                }
+              } else {
+                retryCounts.set(item.id, attempts);
+              }
             }
             if (outcome === "skip") {
               keepFlushing = false;

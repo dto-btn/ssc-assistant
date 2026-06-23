@@ -16,6 +16,7 @@ import type { FileAttachment } from "../types";
 import type { Message } from "../store/slices/chatSlice";
 import type { Session } from "../store/slices/sessionSlice";
 import { groupCitationsByUrl, processTextWithCitations } from "../utils/citations";
+import { MERMAID_FENCE_PATTERN } from "../constants/patterns";
 
 type ExportableMessage = Omit<Message, "feedback">;
 
@@ -217,7 +218,7 @@ const toSlug = (value: string): string => {
 
 export const extractMermaidDiagrams = (value: string): SessionExportMermaidDiagram[] => {
   const diagrams: SessionExportMermaidDiagram[] = [];
-  const regex = /```mermaid\s*([\s\S]*?)```/gi;
+  const regex = new RegExp(MERMAID_FENCE_PATTERN.source, "gi");
   let match: RegExpExecArray | null = regex.exec(value);
 
   while (match) {
