@@ -444,7 +444,7 @@ export class MockPlaygroundApi {
     await context.route('**/api/playground/sessions', async (route) => this.handleDeleteAllSessions(route));
     await context.route('**/api/playground/sessions/*/rename', async (route) => this.handleRenameSession(route));
     await context.route('**/api/playground/sessions/*', async (route) => this.handleDeleteSession(route));
-    await context.route('**/api/1.0/feedback**', async (route) => this.handleFeedback(route));
+    await context.route('**/api/playground/feedback**', async (route) => this.handleFeedback(route));
   }
 
   /**
