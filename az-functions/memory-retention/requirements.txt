@@ -1,0 +1,4 @@
+azure-functions-core-tools
+azure-functions
+azure-data-tables>=12.5.0
+azure-identity>=1.17.0
