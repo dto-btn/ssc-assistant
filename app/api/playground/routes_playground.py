@@ -12,6 +12,7 @@ import mimetypes
 
 from utils.auth import auth, user_ad
 from utils.azure_clients import get_blob_service_client
+from utils.db import leave_feedback
 from utils.file_manager import FileManager
 from apiflask import APIBlueprint
 from azure.core.exceptions import AzureError, HttpResponseError, ResourceExistsError, ResourceNotFoundError
@@ -26,6 +27,9 @@ from utils.models import (
     PlaygroundDeleteSessionsResponse,
     PlaygroundExtractTextRequest,
     PlaygroundExtractTextResponse,
+    PlaygroundFeedbackRequest,
+    PlaygroundFeedbackResponse,
+    Feedback,
 )
 
 api_playground = APIBlueprint("api_playground", __name__, tag="Playground")
@@ -881,3 +885,36 @@ def extract_file_text(payload: PlaygroundExtractTextRequest):
         return {"error": "Failed to extract text"}, 500
 
     return {"extractedText": text}
+
+
+@api_playground.post("/feedback")
+@api_playground.doc(
+    summary="Submit playground feedback",
+    description="Stores thumbs-up/down or written feedback for the playground experience.",
+    security="ApiKeyAuth",
+)
+@api_playground.input(PlaygroundFeedbackRequest.Schema, arg_name="payload")  # type: ignore[attr-defined]
+@api_playground.output(PlaygroundFeedbackResponse.Schema)  # type: ignore[attr-defined]
+@auth.login_required(role="chat")
+@user_ad.login_required
+def submit_feedback(payload: PlaygroundFeedbackRequest):
+    """Persist playground feedback without depending on the legacy chat routes."""
+    try:
+        payload = _coerce_to_dataclass(payload, PlaygroundFeedbackRequest)
+    except PlaygroundAPIError as exc:
+        return {"message": _public_error_message(exc)}, exc.status_code
+
+    feedback = Feedback(
+        feedback=payload.feedback,
+        positive=payload.positive,
+        uuid=payload.uuid or str(uuid.uuid4()),
+        source=payload.source or "playground",
+    )
+
+    try:
+        leave_feedback(feedback)
+    except Exception:
+        logger.exception("Failed to store playground feedback")
+        return {"message": "Failed to save feedback"}, 500
+
+    return {"message": "Feedback saved!"}

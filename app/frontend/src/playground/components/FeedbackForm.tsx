@@ -29,7 +29,7 @@ import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
 import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
-import { sendFeedback } from "../../api/api";
+import { sendPlaygroundFeedback } from "../api/feedback";
 import { addToast } from "../store/slices/toastSlice";
 import { AppDispatch, RootState } from "../store";
 
@@ -43,6 +43,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) =
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const currentSessionId = useSelector((state: RootState) => state.sessions?.currentSessionId ?? null);
+  const accessToken = useSelector((state: RootState) => state.auth.accessToken);
 
   const [open, setOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
@@ -65,7 +66,12 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) =
     const uuid = currentSessionId ?? crypto.randomUUID();
 
     try {
-      await sendFeedback(feedback.trim(), positive, uuid, "playground");
+      await sendPlaygroundFeedback({
+        feedback: feedback.trim(),
+        positive,
+        uuid,
+        accessToken: accessToken ?? undefined,
+      });
       dispatch(addToast({ message: t("feedback.success"), isError: false }));
       handleClose();
     } catch (error) {

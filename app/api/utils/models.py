@@ -191,6 +191,21 @@ class PlaygroundExtractTextResponse:
 
 
 @dataclass
+class PlaygroundFeedbackRequest:
+    """Payload for playground-native feedback submissions."""
+    feedback: str
+    positive: bool
+    uuid: str = field(default='')
+    source: Optional[str] = field(default='playground')
+
+
+@dataclass
+class PlaygroundFeedbackResponse:
+    """Result of the playground feedback endpoint."""
+    message: str
+
+
+@dataclass
 class SuggestionCitationApiResponse:
     url: str
     title: str

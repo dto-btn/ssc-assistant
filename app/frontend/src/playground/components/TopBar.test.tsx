@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 
 import TopBar from "./TopBar";
 import uiReducer from "../store/slices/uiSlice";
+import authReducer from "../store/slices/authSlice";
 
 const mockChangeLanguage = vi.fn();
 
@@ -45,6 +46,7 @@ function renderTopBar(
   const store = configureStore({
     reducer: {
       ui: uiReducer,
+      auth: authReducer,
     },
   });
 
