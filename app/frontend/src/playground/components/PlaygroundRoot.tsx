@@ -12,6 +12,7 @@ import ChatArea from "./ChatArea";
 import { useAuth } from "../store/hooks/useAuth";
 import { apiUse } from "../../authConfig";
 import SessionBootstrapper from "./SessionBootstrapper";
+import NewConversationOnOpen from "./NewConversationOnOpen";
 import PlaygroundDisclaimerDialog from "./PlaygroundDisclaimerDialog";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { loadServers } from "../store/slices/toolSlice";
@@ -93,6 +94,7 @@ export const PlaygroundShell: React.FC = () => {
         {t("skip.to.main")}
       </Box>
       <SessionBootstrapper />
+      <NewConversationOnOpen />
       <SessionSidebar isMobile={isMobile} />
       {/* Skip-link target — ChatArea renders its own <main> landmark internally;
           this div only needs tabIndex={-1} so the skip link can shift focus here

@@ -12,11 +12,10 @@ import type { ListImperativeAPI } from "react-window";
 import useMeasure from "react-use-measure";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
-  addSession,
   setCurrentSession,
   renameSession,
 } from "../store/slices/sessionSlice";
-import { v4 as uuidv4 } from "uuid";
+import { startNewSession } from "../store/thunks/sessionThunks";
 import {
   Chip,
   Divider,
@@ -105,31 +104,8 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
    * case we keep the current session active to avoid creating duplicates.
    */
   const handleNewSession = useCallback(() => {
-    const activeSession = currentSessionId
-      ? sessions.find((session) => session.id === currentSessionId)
-      : undefined;
-
-    if (activeSession?.isNewChat) {
-      return;
-    }
-
-    const existingDraftSession = sessions.find(
-      (chatSession) => chatSession.isNewChat === true
-    );
-    if (existingDraftSession) {
-      dispatch(setCurrentSession(existingDraftSession.id));
-      return;
-    }
-
-    dispatch(
-      addSession({
-        id: uuidv4(),
-        name: `Conversation ${sessions.length + 1}`,
-        createdAt: Date.now(),
-        isNewChat: true,
-      })
-    );
-  }, [currentSessionId, dispatch, sessions]);
+    dispatch(startNewSession());
+  }, [dispatch]);
 
   /**
    * Resolve a session name by id.

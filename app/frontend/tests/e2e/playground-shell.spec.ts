@@ -16,10 +16,9 @@ test('renders the playground shell and creates a first chat session', async ({ p
 
   await playground.openSessionNavigation();
   await expect(playground.sessionNavigation()).toBeVisible();
-  await expect(playground.page.getByText('Select or create a chat session to begin.')).toBeVisible();
 
-  await playground.startNewChat();
-
+  // NewConversationOnOpen auto-creates a fresh session on load, so the composer
+  // and suggestion cards are visible immediately without any manual "new chat" action.
   await expect(playground.page.getByText('AI may make mistakes. Please validate all information before use.')).toBeVisible();
   await expect(playground.composer()).toBeVisible();
   await expect(playground.suggestionCards()).toHaveCount(6);
