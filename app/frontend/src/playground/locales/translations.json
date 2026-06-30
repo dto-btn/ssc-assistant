@@ -511,6 +511,66 @@
         "en": "Danger Zone",
         "fr": "Zone de danger"
     },
+    "settings.tab.general": {
+        "en": "General",
+        "fr": "Général"
+    },
+    "settings.tab.memory": {
+        "en": "Memory",
+        "fr": "Mémoire"
+    },
+    "memory.consent.title": {
+        "en": "User Memory",
+        "fr": "Mémoire utilisateur"
+    },
+    "memory.consent.description": {
+        "en": "When enabled, the assistant remembers facts about you across conversations to personalize future responses. You can view, manage, or delete your memories at any time.",
+        "fr": "Lorsqu'elle est activée, l'assistant mémorise des informations vous concernant entre les conversations pour personnaliser les réponses futures. Vous pouvez consulter, gérer ou supprimer vos souvenirs à tout moment."
+    },
+    "memory.consent.toggle": {
+        "en": "Enable memory for my account",
+        "fr": "Activer la mémoire pour mon compte"
+    },
+    "memory.graph.title": {
+        "en": "My Memory Graph",
+        "fr": "Mon graphe de mémoire"
+    },
+    "memory.graph.empty": {
+        "en": "No memories stored yet. Start a conversation and your assistant will begin learning about you.",
+        "fr": "Aucun souvenir enregistré pour l'instant. Commencez une conversation et votre assistant commencera à apprendre à vous connaître."
+    },
+    "memory.graph.hint": {
+        "en": "Click a node to select it, then delete it individually.",
+        "fr": "Cliquez sur un nœud pour le sélectionner, puis supprimez-le individuellement."
+    },
+    "memory.graph.selectedNode": {
+        "en": "Selected",
+        "fr": "Sélectionné"
+    },
+    "memory.graph.deleteNode": {
+        "en": "Delete node",
+        "fr": "Supprimer le nœud"
+    },
+    "memory.deleteAll.title": {
+        "en": "Delete All Memories",
+        "fr": "Supprimer tous les souvenirs"
+    },
+    "memory.deleteAll.description": {
+        "en": "Permanently delete all stored memories and disable memory for your account.",
+        "fr": "Supprimez définitivement tous les souvenirs enregistrés et désactivez la mémoire pour votre compte."
+    },
+    "memory.deleteAll.button": {
+        "en": "Delete All Memories",
+        "fr": "Supprimer tous les souvenirs"
+    },
+    "memory.deleteAll.confirm.title": {
+        "en": "Delete all memories?",
+        "fr": "Supprimer tous les souvenirs ?"
+    },
+    "memory.deleteAll.confirm.message": {
+        "en": "This will permanently delete all your stored memories and opt you out of memory. This action cannot be undone.",
+        "fr": "Cela supprimera définitivement tous vos souvenirs enregistrés et vous désinscrira de la mémoire. Cette action est irréversible."
+    },
     "settings.dangerZone.description": {
         "en": "Actions in this section are permanent and cannot be undone.",
         "fr": "Les actions dans cette section sont permanentes et ne peuvent pas être annulées."
