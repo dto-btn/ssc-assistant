@@ -48,7 +48,7 @@ jobs:
         echo "PLAYWRIGHT_E2E_ACCESS_TOKEN=$TOKEN" >> $GITHUB_ENV
     - name: Run Playwright tests
       run: npx playwright test
-    - uses: actions/upload-artifact@v7
+    - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
         name: playwright-report
