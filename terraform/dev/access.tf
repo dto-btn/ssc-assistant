@@ -26,17 +26,17 @@ locals {
      {
       name                = "nolan-is"
       user_principal_name = "Nolan.Isaac-Smith@ssc-spc.gc.ca"
-      dev = false
+      dev = true
     },
     {
       name                = "sasha-v"
       user_principal_name = "Sasha.Vujisic@ssc-spc.gc.ca"
-      dev = false
+      dev = true
     },
     {
       name                = "sumandeep-k"
       user_principal_name = "sumandeep.kaur@ssc-spc.gc.ca"
-      dev = false
+      dev = true
     }
   ]
 
