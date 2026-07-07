@@ -53,11 +53,6 @@ resource "azurerm_linux_web_app" "frontend" {
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
   }
 
-  sticky_settings {
-    app_setting_names = [ "VITE_API_BACKEND", "VITE_API_KEY", "WEBSITE_RUN_FROM_PACKAGE",
-    "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET", "PORT", "VITE_SAS_TOKEN", "VITE_BLOB_STORAGE_URL"]
-  }
-
   identity {
     type = "UserAssigned"
     identity_ids = [ azurerm_user_assigned_identity.frontend.id ]
@@ -106,7 +101,7 @@ resource "azurerm_app_service_certificate" "frontend" {
   name                = "ssc-assistant-cert"
   resource_group_name = azurerm_resource_group.dev.name
   location            = azurerm_service_plan.frontend.location
-  pfx_blob            = filebase64("../certificates/ssc-assistant-sandbox.pfx")
+  pfx_blob            = filebase64("../certificates/certificate2026-pilot-prod.pfx")
   password            = var.pfx_secret
 }
 
