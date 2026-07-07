@@ -22,6 +22,21 @@ locals {
       name = "jeneerthan_pageerathan"
       user_principal_name = "jeneerthan.pageerathan@ssc-spc.gc.ca"
       dev = false
+    },
+     {
+      name                = "nolan-is"
+      user_principal_name = "Nolan.Isaac-Smith@ssc-spc.gc.ca"
+      dev = false
+    },
+    {
+      name                = "sasha-v"
+      user_principal_name = "Sasha.Vujisic@ssc-spc.gc.ca"
+      dev = false
+    },
+    {
+      name                = "sumandeep-k"
+      user_principal_name = "sumandeep.kaur@ssc-spc.gc.ca"
+      dev = false
     }
   ]
 

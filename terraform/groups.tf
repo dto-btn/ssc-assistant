@@ -45,6 +45,18 @@ locals {
       name = "dev-cr"
       user_principal_name = "Cody.Robillard@ssc-spc.gc.ca"
     },
+    {
+      name = "dev-ni"
+      user_principal_name = "Nolan.Isaac-Smith@ssc-spc.gc.ca"
+    },
+    {
+      name = "dev-sv"
+      user_principal_name = "Sasha.Vujisic@ssc-spc.gc.ca"
+    },
+    {
+      name = "dev-sk"
+      user_principal_name = "sumandeep.kaur@ssc-spc.gc.ca"
+    }
   ]
 }
 
