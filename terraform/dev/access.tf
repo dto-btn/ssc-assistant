@@ -9,21 +9,16 @@ locals {
       dev = true
     },
     { 
-      name = "po-af"
-      user_principal_name = "alain.forcier@ssc-spc.gc.ca"
-      dev = false
-    },
-    { 
       name = "codyrobillard"
       user_principal_name = "cody.robillard@ssc-spc.gc.ca"
-      dev = false
+      dev = true
     },
     { 
       name = "jeneerthan_pageerathan"
       user_principal_name = "jeneerthan.pageerathan@ssc-spc.gc.ca"
-      dev = false
+      dev = true
     },
-     {
+    {
       name                = "nolan-is"
       user_principal_name = "Nolan.Isaac-Smith@ssc-spc.gc.ca"
       dev = true
