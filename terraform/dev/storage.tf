@@ -35,6 +35,12 @@ resource "azurerm_storage_container" "assistantfiles" {
   container_access_type = "private"
 }
 
+resource "azurerm_storage_container" "assistantfiles_v2" {
+  name                 = "assistant-chat-files-v2"
+  storage_account_id   = azurerm_storage_account.dev.id
+  container_access_type = "private"
+}
+
 data "azurerm_storage_account_sas" "blob_read_sas" {
   connection_string = azurerm_storage_account.dev.primary_connection_string
   https_only        = true

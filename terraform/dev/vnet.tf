@@ -22,6 +22,7 @@ resource "azurerm_subnet" "frontend" {
     address_prefixes      = ["10.2.0.0/20"]
     virtual_network_name  = azurerm_virtual_network.main.name
     resource_group_name   = azurerm_resource_group.dev.name
+    private_endpoint_network_policies = "Enabled"
 
     service_endpoints = [
         "Microsoft.AzureActiveDirectory",
@@ -43,6 +44,7 @@ resource "azurerm_subnet" "api" {
     address_prefixes      = ["10.2.16.0/20"]
     virtual_network_name  = azurerm_virtual_network.main.name
     resource_group_name   = azurerm_resource_group.dev.name
+    private_endpoint_network_policies = "Enabled"
 
     service_endpoints = [
         "Microsoft.AzureActiveDirectory",

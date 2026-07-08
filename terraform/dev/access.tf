@@ -86,7 +86,7 @@ resource "azurerm_role_assignment" "openai_user" {
   for_each             = data.azuread_user.users
   role_definition_name = "Cognitive Services User"
   scope = data.azurerm_resource_group.ai.id
-  principal_id         = each.value.id
+  principal_id         = each.value.object_id
 }
 
 #######################################################
@@ -103,12 +103,12 @@ resource "azurerm_role_assignment" "devs_storage_blob_contributor" {
   for_each             = data.azuread_user.devs
   role_definition_name = "Storage Blob Data Contributor"
   scope = azurerm_storage_account.dev.id
-  principal_id         = each.value.id
+  principal_id         = each.value.object_id
 }
 
 resource "azurerm_role_assignment" "devs_storage_table_reader" {
   for_each             = data.azuread_user.devs
   role_definition_name = "Storage Table Data Reader"
   scope = azurerm_storage_account.dev.id
-  principal_id         = each.value.id
+  principal_id         = each.value.object_id
 }
