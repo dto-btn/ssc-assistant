@@ -40,6 +40,8 @@ import {
   OrchestratorProgressEvent,
   resolveServersFromInsights,
 } from "../../services/orchestratorService";
+import * as memoryService from "../../services/memoryService";
+import { saveMemoryForTurn } from "./memoryThunks";
 import { Citation } from "../../utils/citations";
 import { createStreamTypewriter } from "../../utils/streamTypewriter";
 import { selectMessagesForSession } from "../selectors/chatSelectors";
@@ -111,6 +113,21 @@ const ATTACHMENT_TEXT_LIMIT = 12000;
 const isOrchestratorServer = (server: Tool.Mcp): boolean => {
   const label = `${server.server_label || ""} ${server.server_description || ""}`.toLowerCase();
   return label.includes("orchestrator");
+};
+
+/**
+ * Build a system-role memory context message from retrieved memories.
+ * Returns undefined when there are no memories to inject.
+ */
+const buildMemoryContextSystemMessage = (
+  memories: Array<{ id: string; label: string; text: string }>
+): CompletionMessage | undefined => {
+  if (!memories.length) return undefined;
+  const facts = memories.map((m) => `- ${m.text}`).join("\n");
+  return {
+    role: "system",
+    content: `The following facts are known about the user from previous conversations. Use them to personalize your response where relevant:\n${facts}`,
+  };
 };
 
 const attachmentTextCache = new Map<string, string>();
@@ -780,8 +797,22 @@ export const sendAssistantMessage = ({
 
     const chartSystemMessage = buildPlaygroundChartSystemMessage();
     const finalServersWithAuth = routedServersWithAuth;
+
+    // SEAM 1: Fetch per-user memories and inject as a leading system message.
+    // Best-effort: memory failure must never block the chat response.
+    let memoryContextMessage: CompletionMessage | undefined;
+    if (getState().memory.consentOptIn) {
+      try {
+        const memories = await memoryService.getMemories(serversWithAuth, accessToken ?? undefined);
+        memoryContextMessage = buildMemoryContextSystemMessage(memories);
+      } catch {
+        // intentionally silent
+      }
+    }
+
     const baseCompletionMessages = [
       chartSystemMessage,
+      ...(memoryContextMessage ? [memoryContextMessage] : []),
       ...completionMessages,
     ];
     let preflightRoutingContextMessage: CompletionMessage | undefined;
@@ -1495,6 +1526,14 @@ export const sendAssistantMessage = ({
           brArtifacts: finalBitsArtifacts,
         })
       );
+    }
+
+    // SEAM 3: Persist this turn to memory. Best-effort — never blocks the response.
+    if (!completionWasAborted && getState().memory.consentOptIn) {
+      const finalAnswerText = typeof finalAssistantAnswer?.content === "string"
+        ? finalAssistantAnswer.content
+        : "";
+      dispatch(saveMemoryForTurn(content, finalAnswerText));
     }
   } catch (error) {
     // If the user explicitly stopped the response, swallow the abort error
