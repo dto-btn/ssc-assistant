@@ -188,8 +188,12 @@ const TopBar: React.FC<TopBarProps> = ({
                   minHeight: 44,
                   opacity: Boolean(isExportDisabled || isExporting) ? 0.4 : 1,
                   pointerEvents: "auto",
+                  boxSizing: "border-box",
                   // WCAG 2.4.7 — white ring stays visible on the dark gradient toolbar.
                   "&:focus-visible": { outline: "2px solid #fff", outlineOffset: "2px" },
+                  "&:hover": {
+                    border: "2px solid white",
+                  },
                 }}
               >
                 <FileDownloadIcon />
@@ -243,8 +247,9 @@ const TopBar: React.FC<TopBarProps> = ({
                 display: "none"
               },
               "&:hover": {
-                bgcolor: "#f5f5f5",
-                color: "#2e3470",
+                bgcolor: "primary.dark",
+                color: "#f5f5f5",
+                border: "2px solid white",
               },
             }}
           >
@@ -265,6 +270,7 @@ const TopBar: React.FC<TopBarProps> = ({
               fontSize: { xs: "14px", sm: "16px" },
               "&:hover": {
                 bgcolor: "rgba(255, 255, 255, 0.1)",
+                border: "2px solid white",
               },
               // WCAG 2.4.7 — white ring stays visible on the dark gradient toolbar.
               "&:focus-visible": { outline: "2px solid #fff", outlineOffset: "2px" },

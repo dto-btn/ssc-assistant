@@ -116,7 +116,8 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) =
           },
           "&:hover": {
             bgcolor: placement === "topbar" ? "action.hover" : "primary.main",
-            color: placement === "topbar" ? "primary.dark" : "primary.contrastText",
+            color: "#f5f5f5",
+            border: "2px solid white",
           },
         }}
       >
