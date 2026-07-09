@@ -16,7 +16,7 @@ import {
   Chip,
   Stack,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { disabledFeaturesSet } from "../allowedTools";
@@ -50,6 +50,7 @@ export const ChatInput = ({
   const theme = useTheme();
   const [file, setFile] = useState<Attachment | undefined>(undefined);
   const inputFieldRef = React.useRef<HTMLInputElement>(null);
+  const footerRef = useRef<HTMLElement | null>(null);
   const hasDetectedDrag = useDetectedDrag({
     onDrop: (event: React.DragEvent) => {
       event.preventDefault();
@@ -126,6 +127,30 @@ export const ChatInput = ({
     }
   }, [quotedText]);
 
+  useEffect(() => {
+    
+    const el = footerRef.current || document.querySelector('footer');
+    if (!el) return;
+
+    const setVar = () => {
+      const h = (el as HTMLElement).offsetHeight || 0;
+      document.documentElement.style.setProperty('--chat-input-height', `${h}px`);
+    };
+
+    setVar();
+
+    const ro = new ResizeObserver(() => setVar());
+    ro.observe(el as Element);
+
+    const onWin = () => setVar();
+    window.addEventListener('resize', onWin);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', onWin);
+    };
+  }, []);
+
   // Use effect to handle file drop on the window
   // This is done this way to allow dropping files anywhere on the window instead of just the input area
   useEffect(() => {
@@ -146,6 +171,7 @@ export const ChatInput = ({
     <>
       <Container
         component="footer"
+        ref={footerRef as any}
         sx={(theme) => ({
           position: "sticky",
           bottom: 0,
