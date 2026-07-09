@@ -66,7 +66,7 @@ resource "azurerm_key_vault_certificate" "import-cert" {
   key_vault_id = azurerm_key_vault.main.id
 
   certificate {
-    contents = filebase64("certificates/ssc-assistant-sandbox.pfx")
+    contents = filebase64("certificates/certificate2026-pilot-prod.pfx")
     password = var.pfx_secret
   }
 }

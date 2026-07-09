@@ -9,19 +9,34 @@ locals {
       dev = true
     },
     { 
-      name = "po-af"
-      user_principal_name = "alain.forcier@ssc-spc.gc.ca"
-      dev = false
-    },
-    { 
       name = "codyrobillard"
       user_principal_name = "cody.robillard@ssc-spc.gc.ca"
-      dev = false
+      dev = true
     },
     { 
       name = "jeneerthan_pageerathan"
       user_principal_name = "jeneerthan.pageerathan@ssc-spc.gc.ca"
-      dev = false
+      dev = true
+    },
+    {
+      name                = "nolan-is"
+      user_principal_name = "Nolan.Isaac-Smith@ssc-spc.gc.ca"
+      dev = true
+    },
+    {
+      name                = "sasha-v"
+      user_principal_name = "Sasha.Vujisic@ssc-spc.gc.ca"
+      dev = true
+    },
+    {
+      name                = "sumandeep-k"
+      user_principal_name = "sumandeep.kaur@ssc-spc.gc.ca"
+      dev = true
+    },
+    {
+      name                = "michael-a"
+      user_principal_name = "MichaelChidera.Agonsi@ssc-spc.gc.ca"
+      dev = true
     }
   ]
 
@@ -76,7 +91,7 @@ resource "azurerm_role_assignment" "openai_user" {
   for_each             = data.azuread_user.users
   role_definition_name = "Cognitive Services User"
   scope = data.azurerm_resource_group.ai.id
-  principal_id         = each.value.id
+  principal_id         = each.value.object_id
 }
 
 #######################################################
@@ -93,12 +108,12 @@ resource "azurerm_role_assignment" "devs_storage_blob_contributor" {
   for_each             = data.azuread_user.devs
   role_definition_name = "Storage Blob Data Contributor"
   scope = azurerm_storage_account.dev.id
-  principal_id         = each.value.id
+  principal_id         = each.value.object_id
 }
 
 resource "azurerm_role_assignment" "devs_storage_table_reader" {
   for_each             = data.azuread_user.devs
   role_definition_name = "Storage Table Data Reader"
   scope = azurerm_storage_account.dev.id
-  principal_id         = each.value.id
+  principal_id         = each.value.object_id
 }

@@ -3,6 +3,7 @@ resource "azurerm_search_service" "main" {
   resource_group_name = azurerm_resource_group.dev.name
   location            = azurerm_resource_group.dev.location
   sku                 = "standard"
+  semantic_search_sku = "standard"
 
   tags = {
     ProjectType = "aoai-your-data-service"
