@@ -129,12 +129,26 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
       }
 
       const rect = contentEl.getBoundingClientRect();
-      const buttonWidth = 64; // matches sx width
+      const buttonWidth = 64;
       const left = rect.left + rect.width / 2 - buttonWidth / 2;
 
-      // Keep a small margin from viewport edges
       const minMargin = 8;
       if (left < minMargin || left + buttonWidth > window.innerWidth - minMargin) {
+        setScrollBtnVisible(false);
+        return;
+      }
+
+      const appBarEl = document.querySelector('.MuiAppBar-root') || document.querySelector('header');
+      const appBarBottom = appBarEl ? (appBarEl as HTMLElement).getBoundingClientRect().bottom : 0;
+
+      const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--chat-input-height').trim();
+      const chatInputHeight = cssVar ? parseInt(cssVar.replace('px','')) : 70;
+
+      const buttonHeight = 64;
+      const buttonTop = window.innerHeight - (chatInputHeight + 12) - buttonHeight;
+
+      const verticalMargin = 8;
+      if (appBarBottom && buttonTop < appBarBottom + verticalMargin) {
         setScrollBtnVisible(false);
         return;
       }
