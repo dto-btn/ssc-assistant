@@ -32,6 +32,11 @@ locals {
       name                = "sumandeep-k"
       user_principal_name = "sumandeep.kaur@ssc-spc.gc.ca"
       dev = true
+    },
+    {
+      name                = "michael-a"
+      user_principal_name = "MichaelChidera.Agonsi@ssc-spc.gc.ca"
+      dev = true
     }
   ]
 

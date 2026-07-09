@@ -56,6 +56,11 @@ locals {
     {
       name = "dev-sk"
       user_principal_name = "sumandeep.kaur@ssc-spc.gc.ca"
+    },
+    {
+      name                = "michael-a"
+      user_principal_name = "MichaelChidera.Agonsi@ssc-spc.gc.ca"
+      dev = true
     }
   ]
 }

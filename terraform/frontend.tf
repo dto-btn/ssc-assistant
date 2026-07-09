@@ -74,15 +74,6 @@ resource "azurerm_linux_web_app" "frontend" {
         tenant_auth_endpoint = var.aad_auth_endpoint
         allowed_audiences = ["api://${var.aad_client_id}"]
         allowed_applications = [var.aad_client_id]
-
-        # MANUAL STEP - Secret Rotation: the AzureRM provider does not expose the
-        # portal's "auto-rotate client secret" toggle for the Microsoft identity
-        # provider (app id ${var.aad_client_id}) on the Authentication blade.
-        # `active_directory_v2` only supports client_id/client_secret_setting_name/
-        # client_secret_certificate_thumbprint - there's no equivalent property.
-        # After every `terraform apply`, go to:
-        #   App Service > Settings > Authentication > Identity provider (Microsoft)
-        #   > Edit > Client secret expiration > enable "Auto-rotate client secret".
       }
 
       # apple_v2 {
