@@ -30,7 +30,7 @@ resource "azurerm_linux_web_app" "frontend" {
     ftps_state = "FtpsOnly"
 
     application_stack {
-      node_version = "20-lts"
+      node_version = "22-lts"
     }
     use_32_bit_worker = false
 
@@ -51,11 +51,6 @@ resource "azurerm_linux_web_app" "frontend" {
     MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
     PORT = 8080
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
-  }
-
-  sticky_settings {
-    app_setting_names = [ "VITE_API_BACKEND", "VITE_API_KEY", "WEBSITE_RUN_FROM_PACKAGE",
-    "MICROSOFT_PROVIDER_AUTHENTICATION_SECRET", "PORT", "VITE_SAS_TOKEN", "VITE_BLOB_STORAGE_URL"]
   }
 
   identity {
@@ -103,11 +98,18 @@ resource "azurerm_linux_web_app" "frontend" {
 }
 
 resource "azurerm_app_service_certificate" "frontend" {
-  name                = "ssc-assistant-cert"
+  name                = "ScSc-CIO_ECT_ssc_assistant_dev-rg-CanadaCentralwebspace-Linux-260306201355"
   resource_group_name = azurerm_resource_group.dev.name
   location            = azurerm_service_plan.frontend.location
-  pfx_blob            = filebase64("../certificates/ssc-assistant-sandbox.pfx")
+  pfx_blob            = filebase64("../certificates/certificate2026-pilot-prod.pfx")
   password            = var.pfx_secret
+
+  lifecycle {
+    ignore_changes = [
+      password,
+      pfx_blob,
+    ]
+  }
 }
 
 resource "azurerm_app_service_custom_hostname_binding" "frontend" {

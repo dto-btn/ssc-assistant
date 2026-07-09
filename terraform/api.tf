@@ -121,8 +121,6 @@ resource "azurerm_linux_web_app" "api" {
     BLOB_ENDPOINT                 = azurerm_storage_account.main.primary_blob_endpoint 
     AZURE_AD_CLIENT_ID            = var.aad_client_id_api
     AZURE_AD_TENANT_ID            = data.azurerm_client_config.current.tenant_id
-    ARCHIBUS_API_USERNAME         = var.archibus_api_user
-    ARCHIBUS_API_PASSWORD         = var.archibus_api_password
     WEBSITE_WEBDEPLOY_USE_SCM     = true
     WEBSITE_RUN_FROM_PACKAGE      = "1"
     ALLOWED_TOOLS                 = "corporate, geds, bits, pmcoe"
@@ -137,7 +135,7 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   sticky_settings { # settings that are the same regardless of deployment slot..
-    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DATABASE_ENDPOINT", "BLOB_ENDPOINT", "AZURE_SEARCH_INDEX_NAME", "ALLOWED_TOOLS", "ARCHIBUS_API_USERNAME", "ARCHIBUS_API_PASSWORD" ]
+    app_setting_names = [ "AZURE_SEARCH_SERVICE_ENDPOINT", "AZURE_SEARCH_ADMIN_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "DATABASE_ENDPOINT", "BLOB_ENDPOINT", "AZURE_SEARCH_INDEX_NAME", "ALLOWED_TOOLS" ]
   }
 }
 

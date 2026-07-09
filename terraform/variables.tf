@@ -80,16 +80,6 @@ variable "geds_api_token" {
     sensitive = true
 }
 
-variable "archibus_api_user" {
-    type = string
-    default = "apiuser"
-}
-
-variable "archibus_api_password" {
-    type = string
-    sensitive = true
-}
-
 variable "bits_database_config" {
   description = "Configuration for the database connection"
   type = object({
