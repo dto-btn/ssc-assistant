@@ -145,9 +145,9 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
       const chatInputHeight = cssVar ? parseInt(cssVar.replace('px','')) : 70;
 
       const buttonHeight = 64;
-      const buttonTop = window.innerHeight - (chatInputHeight + 12) - buttonHeight;
+      const buttonTop = window.innerHeight - (chatInputHeight + 4) - buttonHeight;
 
-      const verticalMargin = 8;
+      const verticalMargin = 4;
       if (appBarBottom && buttonTop < appBarBottom + verticalMargin) {
         setScrollBtnVisible(false);
         return;
