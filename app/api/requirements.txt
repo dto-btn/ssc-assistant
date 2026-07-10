@@ -7,7 +7,7 @@ apiflask
 Flask
 gunicorn
 openai
-python-dotenv
+python-dotenv>=1.2.2
 bs4
 marshmallow_dataclass
 typeguard
