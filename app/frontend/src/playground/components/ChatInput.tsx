@@ -427,14 +427,24 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
           onClick={isLoading ? onStop : handleSend}
           disabled={isUploading || (!isLoading && !canSend)}
           sx={{
-            '&:hover': { backgroundColor: 'rgba(0,0,0,0.08)' },
             minWidth: 44,
             minHeight: 44,
+            borderRadius: '50%',
+            transition: 'background-color 0.2s ease, color 0.2s ease, transform 0.2s ease',
+            color: canSend && !isLoading && !isUploading ? 'primary.main' : 'text.secondary',
+            '&:hover': canSend && !isLoading && !isUploading ? {
+              bgcolor: 'primary.main',
+              color: 'common.white',
+              transform: 'translateY(-1px)',
+            } : {
+              bgcolor: 'action.hover',
+              color: 'text.secondary',
+            },
             '&:focus-visible': {
               outline: `3px solid ${theme.palette.primary.main}`,
               outlineOffset: 3,
             },
-          }}
+          }} 
           aria-label={
             isLoading
               ? t('stop', { defaultValue: 'Stop' })
@@ -468,7 +478,12 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
               </Box>
             </Box>
           ) : (
-            <SendIcon sx={{ color: 'primary.main' }} aria-hidden="true" />
+            <SendIcon
+              sx={{
+                color: canSend && !isLoading && !isUploading ? 'inherit' : 'inherit',
+              }}
+              aria-hidden="true"
+            />
           )}
         </IconButton>
         {/*
