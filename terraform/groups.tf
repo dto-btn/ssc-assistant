@@ -3,7 +3,6 @@ resource "azuread_group" "owners" {
   # owners # Managed by Infra group, do not alter.
   members = [
     data.azuread_user.users["dev-gt"].object_id,
-    data.azuread_user.users["po-af"].object_id,
     data.azuread_service_principal.terraform.object_id
   ]
   security_enabled = true
