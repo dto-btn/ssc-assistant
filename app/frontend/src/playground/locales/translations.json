@@ -403,6 +403,14 @@
         "en": "Could not delete the chat. Please try again.",
         "fr": "Impossible de supprimer la conversation. Veuillez réessayer."
     },
+    "errors.mcpUnavailable": {
+        "en": "MPC tools were unavailable for this response, so the assistant retried without tools. Citations may be missing.",
+        "fr": "Les outils MPC n'étaient pas disponibles pour cette réponse, donc l'assistant a réessayé sans outils. Des citations peuvent être manquantes."
+    },
+    "errors.orchestratorUnconfigured": {
+        "en": "Orchestrator MCP is not configured; routing will fall back to available MCP servers.",
+        "fr": "L'orchestrateur MCP n'est pas configuré ; le routage utilisera les serveurs MCP disponibles en remplacement."
+    },
     "errors.sessionFilesLoadFailed": {
         "en": "Could not load session files. Please refresh the page.",
         "fr": "Impossible de charger les fichiers de session. Veuillez actualiser la page."

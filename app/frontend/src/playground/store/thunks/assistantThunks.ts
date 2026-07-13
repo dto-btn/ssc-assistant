@@ -655,7 +655,7 @@ export const sendAssistantMessage = ({
     if (!hasOrchestratorServer) {
       dispatch(
         addToast({
-          message: "Orchestrator MCP is not configured; routing will fall back to available MCP servers.",
+          message: i18n.t("playground:errors.orchestratorUnconfigured"),
           isError: false,
         })
       );
@@ -1313,7 +1313,7 @@ export const sendAssistantMessage = ({
 
       dispatch(
         addToast({
-          message: "MCP tools were unavailable for this response, so the assistant retried without tools. Citations may be missing.",
+          message: i18n.t("playground:errors.mcpUnavailable"),
           isError: false,
         })
       );
