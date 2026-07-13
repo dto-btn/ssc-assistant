@@ -34,10 +34,6 @@ locals {
       user_principal_name = "guillaume.turcotte2@ssc-spc.gc.ca"
     },
     { 
-      name = "po-af"
-      user_principal_name = "alain.forcier@ssc-spc.gc.ca"
-    },
-    { 
       name = "tl-davids"
       user_principal_name = "david.simard@ssc-spc.gc.ca"
     },
