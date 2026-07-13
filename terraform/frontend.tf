@@ -101,11 +101,18 @@ resource "azurerm_linux_web_app" "frontend" {
 }
 
 resource "azurerm_app_service_certificate" "frontend" {
-  name                = "ssc-assistant-cert"
+  name                = "ScSc-CIO_ECT_ssc_assistant-rg-CanadaCentralwebspace-Linux-260217160352"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_service_plan.frontend.location
   pfx_blob            = filebase64("certificates/certificate2026-pilot-prod.pfx")
   password            = var.pfx_secret
+
+  lifecycle {
+    ignore_changes = [
+      password,
+      pfx_blob,
+    ]
+  }
 }
 
 resource "azurerm_app_service_custom_hostname_binding" "frontend" {

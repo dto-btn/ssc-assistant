@@ -88,7 +88,7 @@ resource "azurerm_role_assignment" "storage_table_reader" {
   for_each             = data.azuread_user.users
   scope                = azurerm_storage_account.main.id
   role_definition_name = "Storage Table Data Reader"
-  principal_id         = each.value.id
+  principal_id         = each.value.object_id
 }
 
 #######################################################
