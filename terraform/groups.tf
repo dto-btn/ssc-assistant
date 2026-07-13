@@ -3,7 +3,6 @@ resource "azuread_group" "owners" {
   # owners # Managed by Infra group, do not alter.
   members = [
     data.azuread_user.users["dev-gt"].object_id,
-    data.azuread_user.users["po-af"].object_id,
     data.azuread_service_principal.terraform.object_id
   ]
   security_enabled = true
@@ -32,10 +31,6 @@ locals {
     { 
       name = "dev-gt"
       user_principal_name = "guillaume.turcotte2@ssc-spc.gc.ca"
-    },
-    { 
-      name = "po-af"
-      user_principal_name = "alain.forcier@ssc-spc.gc.ca"
     },
     { 
       name = "tl-davids"
@@ -93,7 +88,7 @@ resource "azurerm_role_assignment" "storage_table_reader" {
   for_each             = data.azuread_user.users
   scope                = azurerm_storage_account.main.id
   role_definition_name = "Storage Table Data Reader"
-  principal_id         = each.value.id
+  principal_id         = each.value.object_id
 }
 
 #######################################################
