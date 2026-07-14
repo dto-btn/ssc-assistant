@@ -404,8 +404,8 @@
         "fr": "Impossible de supprimer la conversation. Veuillez réessayer."
     },
     "errors.mcpUnavailable": {
-        "en": "MPC tools were unavailable for this response, so the assistant retried without tools. Citations may be missing.",
-        "fr": "Les outils MPC n'étaient pas disponibles pour cette réponse, donc l'assistant a réessayé sans outils. Des citations peuvent être manquantes."
+        "en": "MCP tools were unavailable for this response, so the assistant retried without tools. Citations may be missing.",
+        "fr": "Les outils MCP n'étaient pas disponibles pour cette réponse, donc l'assistant a réessayé sans outils. Des citations peuvent être manquantes."
     },
     "errors.orchestratorUnconfigured": {
         "en": "Orchestrator MCP is not configured; routing will fall back to available MCP servers.",
