@@ -110,14 +110,16 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) =
           fontWeight: "bold",
           borderRadius: "8px",
           fontSize: { xs: "0.75rem", sm: "0.875rem" },
+          border: "2px solid transparent",
+          boxSizing: "border-box",
           "& .MuiButton-startIcon": {
             marginLeft: placement === "topbar" ? { xs: 0, sm: -0.5 } : undefined,
             marginRight: placement === "topbar" ? { xs: 0, sm: 1 } : undefined,
           },
           "&:hover": {
-            bgcolor: placement === "topbar" ? "action.hover" : "primary.main",
-            color: "#f5f5f5",
-            border: "2px solid white",
+            bgcolor: placement === "topbar" ? "primary.dark" : "common.white",
+            color: placement === "topbar" ? "common.white" : "primary.main",
+            borderColor: placement === "topbar" ? "common.white" : "primary.main",
           },
         }}
       >

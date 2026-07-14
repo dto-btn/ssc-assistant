@@ -7,6 +7,7 @@
  */
 
 import React, { useCallback, useState } from "react";
+import { alpha } from "@mui/material";
 import { List as ListWindow, RowComponentProps } from "react-window";
 import type { ListImperativeAPI } from "react-window";
 import useMeasure from "react-use-measure";
@@ -273,13 +274,13 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           outline: isActiveOption ? "2px solid" : "2px solid transparent",
           outlineColor: isActiveOption ? "primary.main" : "transparent",
           outlineOffset: -2,
-          backgroundColor: session.id === currentSessionId ? "rgba(25, 118, 210, 0.08)" : "transparent",
+          backgroundColor: session.id === currentSessionId ? "action.selected" : "transparent",
           boxSizing: "border-box",
           width: "100%",
           border: "1px solid transparent",
           transition: "background-color 0.15s ease, border-color 0.15s ease",
           "&:hover": {
-            backgroundColor: "rgba(25, 118, 210, 0.08)",
+            backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.08),
             borderColor: "primary.light",
           },
           "& .more-button": {
@@ -457,8 +458,10 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
               py: 0.75,
               transition: "background-color 0.15s ease",
               boxSizing: 'border-box',
+              borderTop: "1px solid transparent",
+              borderBottom: "1px solid transparent",
               "&:hover": {
-                backgroundColor: "rgba(25, 118, 210, 0.08)",
+                backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.08),
                 borderTop: "1px solid",
                 borderBottom: "1px solid",
                 borderColor: "primary.light",

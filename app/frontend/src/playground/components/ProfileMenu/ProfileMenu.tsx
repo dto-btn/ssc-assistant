@@ -2,6 +2,7 @@ import * as React from "react";
 import { RootState } from '../../store';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from "react-redux";
+import { alpha } from "@mui/material";
 import {
   Box,
   Button,
@@ -91,14 +92,11 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
           textTransform: "none",
           transition: "background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease",
           '&:hover': {
-            backgroundColor: "rgba(25, 118, 210, 0.08)",
+            backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.08),
             borderColor: "primary.main",
           },
           '&:hover .MuiTypography-root': {
             borderColor: "primary.main",
-            paddingBottom: "2px",
-          },
-          '&:hover .MuiAvatar-root': {
           },
         }}
         onClick={handleOpen}
