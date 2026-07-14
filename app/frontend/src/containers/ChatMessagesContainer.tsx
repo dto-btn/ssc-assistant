@@ -40,6 +40,9 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
   const lastMsgRef = useRef<HTMLDivElement>(null);
   const [showSkeleton, setShowSkeleton] = useState(false);
   const [whitespace, setWhitespace] = useState("0px");
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [scrollBtnLeft, setScrollBtnLeft] = useState<number | null>(null);
+  const [scrollBtnVisible, setScrollBtnVisible] = useState(true);
 
   // Show skeleton if generating but not yet streaming response
   useEffect(() => {
@@ -117,6 +120,55 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
 
   }, [isLoading, chatHistory.chatItems, containerRef, lastCompletionRef, handleScroll]);
 
+  useEffect(() => {
+    const compute = () => {
+      const contentEl = contentRef.current;
+      if (!contentEl) {
+        setScrollBtnVisible(false);
+        return;
+      }
+
+      const rect = contentEl.getBoundingClientRect();
+      const buttonWidth = 64;
+      const left = rect.left + rect.width / 2 - buttonWidth / 2;
+
+      const minMargin = 8;
+      if (left < minMargin || left + buttonWidth > window.innerWidth - minMargin) {
+        setScrollBtnVisible(false);
+        return;
+      }
+
+      const appBarEl = document.querySelector('.MuiAppBar-root') || document.querySelector('header');
+      const appBarBottom = appBarEl ? (appBarEl as HTMLElement).getBoundingClientRect().bottom : 0;
+
+      const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--chat-input-height').trim();
+      const chatInputHeight = cssVar ? parseInt(cssVar.replace('px','')) : 70;
+
+      const buttonHeight = 64;
+      const buttonTop = window.innerHeight - (chatInputHeight + 4) - buttonHeight;
+
+      const verticalMargin = 4;
+      if (appBarBottom && buttonTop < appBarBottom + verticalMargin) {
+        setScrollBtnVisible(false);
+        return;
+      }
+
+      setScrollBtnLeft(Math.round(left));
+      setScrollBtnVisible(true);
+    };
+
+    compute();
+
+    const ro = new ResizeObserver(() => compute());
+    if (contentRef.current) ro.observe(contentRef.current);
+    window.addEventListener('resize', compute);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', compute);
+    };
+  }, [scrollable, chatHistory.chatItems]);
+
 
   return (
     <Box
@@ -134,7 +186,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
       aria-live="polite"
       aria-relevant="additions"
     >
-      <Box sx={{ maxWidth: "lg", margin: "auto" }}>
+      <Box ref={contentRef} sx={{ maxWidth: "lg", margin: "auto" }}>
         {!chatHistory?.chatItems ? (
           <>
             <svg width={0} height={0}>
@@ -268,7 +320,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
             width: "100%",
           }}
         />
-        {scrollable && (
+        {scrollable && scrollBtnVisible && (
           <IconButton
             id="scroll-down-button"
             onClick={onScrollArrowClick}
@@ -277,11 +329,12 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                 backgroundColor: "rgba(0, 0, 0, 0.2)",
               },
               position: "fixed",
-              bottom: { xs: "70px", sm: "80px", md: "90px" },
-              right: "40%",
+              bottom: `calc(var(--chat-input-height, 70px) + 12px)`,
+              left: scrollBtnLeft ? `${scrollBtnLeft}px` : undefined,
               zIndex: 1200,
               height: "64px",
-              width: "64px"
+              width: "64px",
+              transition: 'left 0.15s ease, opacity 0.15s ease',
             }}
             aria-label={t("scroll.down")}
           >
