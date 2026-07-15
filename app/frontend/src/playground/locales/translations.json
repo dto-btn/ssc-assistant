@@ -411,6 +411,10 @@
         "en": "Could not delete all chats. Please try again.",
         "fr": "Impossible de supprimer toutes les conversations. Veuillez réessayer."
     },
+    "errors.deleteAllPartial": {
+        "en": "Some conversations could not be deleted. Please refresh to see current state.",
+        "fr": "Certaines conversations n'ont pas pu être supprimées. Veuillez actualiser pour voir l'état actuel."
+    },
     "errors.mcpUnavailable": {
         "en": "MCP tools were unavailable for this response, so the assistant retried without tools. Citations may be missing.",
         "fr": "Les outils MCP n'étaient pas disponibles pour cette réponse, donc l'assistant a réessayé sans outils. Des citations peuvent être manquantes."
@@ -418,6 +422,10 @@
     "errors.orchestratorUnconfigured": {
         "en": "Orchestrator MCP is not configured; routing will fall back to available MCP servers.",
         "fr": "L'orchestrateur MCP n'est pas configuré ; le routage utilisera les serveurs MCP disponibles en remplacement."
+    },
+    "errors.renameFailed": {
+        "en": "Could not rename the chat. Please try again.",
+        "fr": "Impossible de renommer la conversation. Veuillez réessayer."
     },
     "errors.sessionFilesLoadFailed": {
         "en": "Could not load session files. Please refresh the page.",
