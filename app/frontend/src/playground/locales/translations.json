@@ -111,6 +111,10 @@
         "en": "Delete",
         "fr": "Supprimer"
     },
+    "delete.all.success": {
+        "en": "All conversations deleted.",
+        "fr": "Toutes les conversations ont été supprimées."
+    },
     "delete.success": {
         "en": "Conversation deleted",
         "fr": "Conversation supprimée"
@@ -402,6 +406,10 @@
     "errors.deleteFailed": {
         "en": "Could not delete the chat. Please try again.",
         "fr": "Impossible de supprimer la conversation. Veuillez réessayer."
+    },
+    "errors.deleteAllFailed": {
+        "en": "Could not delete all chats. Please try again.",
+        "fr": "Impossible de supprimer toutes les conversations. Veuillez réessayer."
     },
     "errors.mcpUnavailable": {
         "en": "MCP tools were unavailable for this response, so the assistant retried without tools. Citations may be missing.",
