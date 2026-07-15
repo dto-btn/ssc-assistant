@@ -187,7 +187,7 @@ export const deleteAllSessions = (): AppThunk<Promise<void>> => async (
       dispatch(
         addToast({
           message: i18n.t("playground:delete.all.success", {
-            defaultValue: "All conversations deleted",
+            defaultValue: "All conversations deleted.",
           }),
           isError: false,
         })
