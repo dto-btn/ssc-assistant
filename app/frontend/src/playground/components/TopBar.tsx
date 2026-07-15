@@ -273,6 +273,8 @@ const TopBar: React.FC<TopBarProps> = ({
               minHeight: "44px",
               fontWeight: "bold",
               fontSize: { xs: "14px", sm: "16px" },
+              boxSizing: "border-box",
+              border: "2px solid transparent",
               "&:hover": {
                 bgcolor: "primary.dark",
                 border: "2px solid white",
