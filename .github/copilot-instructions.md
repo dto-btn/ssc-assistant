@@ -19,12 +19,11 @@ Key files and directories
 Runtime and environment
 - Auth: API uses header `X-API-Key` (see `app.py security_schemes`) and AAD user context (`utils/auth.py`, `user_ad`).
 - Azure identity: local dev requires `az login --use-device-code` so `DefaultAzureCredential` works for Table/Blob/OpenAI.
-- Required env (API): `AZURE_OPENAI_ENDPOINT`, `AZURE_SEARCH_SERVICE_ENDPOINT`, `AZURE_SEARCH_ADMIN_KEY`, `DATABASE_ENDPOINT`, `BLOB_ENDPOINT`, `SQL_CONNECTION_STRING`, optional `ALLOWED_TOOLS`.
+- Required env (API): `AZURE_OPENAI_ENDPOINT`, `AZURE_SEARCH_SERVICE_ENDPOINT`, `AZURE_SEARCH_ADMIN_KEY`, `DATABASE_ENDPOINT`, `BLOB_ENDPOINT`, optional `ALLOWED_TOOLS`.
 - Frontend flags: `.env` uses `VITE_ALLOWED_TOOLS` and `VITE_DISABLED_FEATURES` (see `app/frontend/README.md`).
 
 Developer workflows (concrete)
 - API (local): `cd app/api`, create venv (`uv venv`), `source .venv/bin/activate`, `uv pip sync requirements-dev.txt`, run `flask --debug run --port=5001`.
-- DB migrations: `alembic` from `app/api` (see `app/api/README.md`); set `SQL_CONNECTION_STRING` first.
 - Frontend: `cd app/frontend && npm run dev` (Vite + `server.js` proxy, MSAL configured in env).
 - Functions: follow `az-functions/create-index/README.md` for `.env`, `local.settings.json`, deps, and triggers.
 - Infra: `cd terraform && terraform init && terraform plan -var-file=secret.tfvars` (see `terraform/README.md`).
