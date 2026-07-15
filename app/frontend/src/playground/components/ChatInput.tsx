@@ -479,9 +479,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
             </Box>
           ) : (
             <SendIcon
-              sx={{
-                color: canSend && !isLoading && !isUploading ? 'inherit' : 'inherit',
-              }}
               aria-hidden="true"
             />
           )}
