@@ -46,7 +46,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5.2.0
       with:
-        python-version: '3.12'
+        python-version: '3.13.14'
 
     # commenting this one out until we re-enable the MS SQL dependencies in the requirements.txt
     # - name: Install system dependencies
