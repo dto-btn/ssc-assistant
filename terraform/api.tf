@@ -85,7 +85,7 @@ resource "azurerm_linux_web_app" "api" {
     api_definition_url = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net/openapi.json"
 
     application_stack {
-      python_version = "3.12"
+      python_version = "3.13.14"
     }
     use_32_bit_worker = false
 
