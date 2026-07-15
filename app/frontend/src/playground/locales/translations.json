@@ -403,6 +403,10 @@
         "en": "Open source in a new tab: {{title}}",
         "fr": "Ouvrir la source dans un nouvel onglet : {{title}}"
     },
+    "errors.attachmentExtractionFailed": {
+        "en": "Could not read these files: {{files}}",
+        "fr": "Impossible de lire ces fichiers : {{files}}"
+    },
     "errors.deleteFailed": {
         "en": "Could not delete the chat. Please try again.",
         "fr": "Impossible de supprimer la conversation. Veuillez réessayer."
