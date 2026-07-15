@@ -194,7 +194,8 @@ const TopBar: React.FC<TopBarProps> = ({
                   "&:focus-visible": { outline: "2px solid #fff", outlineOffset: "2px" },
                   "&:hover": {
                     border: "2px solid",
-                    borderColor: "common.white"
+                    borderColor: "common.white",
+                    bgcolor: "primary.dark",
                   },
                 }}
               >
