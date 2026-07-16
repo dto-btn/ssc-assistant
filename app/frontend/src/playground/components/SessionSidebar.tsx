@@ -7,6 +7,7 @@
  */
 
 import React, { useCallback, useState } from "react";
+import { alpha } from "@mui/material";
 import { List as ListWindow, RowComponentProps } from "react-window";
 import type { ListImperativeAPI } from "react-window";
 import useMeasure from "react-use-measure";
@@ -273,12 +274,15 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           outline: isActiveOption ? "2px solid" : "2px solid transparent",
           outlineColor: isActiveOption ? "primary.main" : "transparent",
           outlineOffset: -2,
-          backgroundColor:
-            session.id === currentSessionId ? "action.selected" : "transparent",
+          backgroundColor: session.id === currentSessionId ? "action.selected" : "transparent",
+          boxSizing: "border-box",
+          width: "100%",
+          border: "1px solid transparent",
+          transition: "background-color 0.15s ease, border-color 0.15s ease",
           "&:hover": {
-            backgroundColor: "action.hover",
+            backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.08),
+            borderColor: "primary.light",
           },
-          transition: "none",
           "& .more-button": {
             opacity: 1,
             color: "text.disabled",
@@ -445,7 +449,25 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
 
       <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
         <Box key="newChat">
-          <ListItemButton id="new-chat-button" onClick={handleNewSession} aria-label={t("new.chat.aria")}>
+          <ListItemButton 
+            id="new-chat-button" 
+            onClick={handleNewSession} 
+            aria-label={t("new.chat.aria")}
+            sx={{
+              px: 1,
+              py: 0.75,
+              transition: "background-color 0.15s ease",
+              boxSizing: 'border-box',
+              borderTop: "1px solid transparent",
+              borderBottom: "1px solid transparent",
+              "&:hover": {
+                backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                borderTop: "1px solid",
+                borderBottom: "1px solid",
+                borderColor: "primary.light",
+              },
+            }}
+          >
             <ListItemIcon sx={{ minWidth: "0px", mr: "10px" }}>
               <AddCommentIcon fontSize="small" color="primary" />
             </ListItemIcon>

@@ -188,8 +188,15 @@ const TopBar: React.FC<TopBarProps> = ({
                   minHeight: 44,
                   opacity: Boolean(isExportDisabled || isExporting) ? 0.4 : 1,
                   pointerEvents: "auto",
+                  boxSizing: "border-box",
+                  border: "2px solid transparent",
                   // WCAG 2.4.7 — white ring stays visible on the dark gradient toolbar.
                   "&:focus-visible": { outline: "2px solid #fff", outlineOffset: "2px" },
+                  "&:hover": {
+                    border: "2px solid",
+                    borderColor: "common.white",
+                    bgcolor: "primary.dark",
+                  },
                 }}
               >
                 <FileDownloadIcon />
@@ -231,6 +238,8 @@ const TopBar: React.FC<TopBarProps> = ({
               textTransform: "none",
               fontWeight: "bold",
               lineHeight: 1.2,
+              border: "2px solid transparent",
+              boxSizing: "border-box",
               borderRadius: "8px",
               padding: { xs: "4px 8px", sm: "6px 16px" },
               fontSize: { xs: "0.75rem", sm: "0.875rem" },
@@ -243,8 +252,9 @@ const TopBar: React.FC<TopBarProps> = ({
                 display: "none"
               },
               "&:hover": {
-                bgcolor: "#f5f5f5",
-                color: "#2e3470",
+                bgcolor: "primary.dark",
+                color: "common.white",
+                border: "2px solid white",
               },
             }}
           >
@@ -263,8 +273,11 @@ const TopBar: React.FC<TopBarProps> = ({
               minHeight: "44px",
               fontWeight: "bold",
               fontSize: { xs: "14px", sm: "16px" },
+              boxSizing: "border-box",
+              border: "2px solid transparent",
               "&:hover": {
-                bgcolor: "rgba(255, 255, 255, 0.1)",
+                bgcolor: "primary.dark",
+                border: "2px solid white",
               },
               // WCAG 2.4.7 — white ring stays visible on the dark gradient toolbar.
               "&:focus-visible": { outline: "2px solid #fff", outlineOffset: "2px" },

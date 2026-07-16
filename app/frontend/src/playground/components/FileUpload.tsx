@@ -77,8 +77,20 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFiles, disabled }) => {
               minHeight: 44,
               border: (theme) => `1px solid ${theme.palette.divider}`,
               bgcolor: (theme) => theme.palette.background.paper,
+              color: (theme) => theme.palette.text.primary,
+              transition: 'background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease',
               '&:hover': {
-                bgcolor: (theme) => theme.palette.action.hover,
+                bgcolor: (theme) => theme.palette.primary.main,
+                color: (theme) => theme.palette.common.white,
+              },
+              '&:focus-visible': {
+                outline: '2px solid',
+                outlineColor: (theme) => theme.palette.primary.main,
+                outlineOffset: 2,
+              },
+              '&:disabled': {
+                opacity: 0.6,
+                cursor: 'not-allowed',
               },
             }}
           >

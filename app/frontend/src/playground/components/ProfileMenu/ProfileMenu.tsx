@@ -2,6 +2,7 @@ import * as React from "react";
 import { RootState } from '../../store';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from "react-redux";
+import { alpha } from "@mui/material";
 import {
   Box,
   Button,
@@ -79,7 +80,24 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
         id="profile-menu-button"
         sx={{
           cursor: "pointer",
-          width: 1
+          width: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          px: 1,
+          py: 0.75,
+          borderRadius: 1,
+          border: "1px solid transparent",
+          color: "text.primary",
+          textTransform: "none",
+          transition: "background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease",
+          '&:hover': {
+            backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.08),
+            borderColor: "primary.main",
+          },
+          '&:hover .MuiTypography-root': {
+            borderColor: "primary.main",
+          },
         }}
         onClick={handleOpen}
         tabIndex={0}
@@ -89,8 +107,8 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
         aria-controls={isOpen ? "profile-menu" : undefined}
         aria-expanded={isOpen ? "true" : "false"}
       >
-          <UserProfilePicture size={size} fontSize={fontSize} />
-          <Box //floats the avatar and name to left
+        <UserProfilePicture size={size} fontSize={fontSize} />
+        <Box //floats the avatar and name to left
             sx={{
               marginLeft: "auto",
               display: "flex",
