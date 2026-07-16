@@ -29,13 +29,6 @@ jobs:
       enable-mcp: true
     secrets: inherit
 
-  alembic-dev:
-    if: github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/db.yml
-    with:
-      environment: 'dev'
-    secrets: inherit
-
   ###################
   #    PILOT-PROD   #
   ###################
@@ -55,13 +48,6 @@ jobs:
       disabled-features: ''
       environment: 'pilot-prod'
       app-name: 'ssc-assistant'
-    secrets: inherit
-
-  alembic-pilot-prod:
-    if: github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/db.yml
-    with:
-      environment: 'pilot-prod'
     secrets: inherit
 
   ###################
@@ -87,10 +73,3 @@ jobs:
       runner: 'self-hosted'
       redirect-uri-domain: 'https://assistant.ssc-spc.gc.ca'
     secrets: inherit
-
-  # alembic-prod:
-  #   if: github.ref == 'refs/heads/main'
-  #   uses: ./.github/workflows/db.yml
-  #   with:
-  #     environment: 'prod'
-  #   secrets: inherit
