@@ -64,8 +64,7 @@ export const PlaygroundShell: React.FC = () => {
 
   return (
     <Box display="flex" height="100dvh">
-      {/* WCAG 2.4.1 — skip link lets keyboard users bypass sidebar navigation
-          Target the chat input so users land directly in the composer. */}
+      {/* WCAG 2.4.1 — skip link lets keyboard users bypass sidebar navigation */}
       <Box
         component="a"
         href="#playground-ask-question"
