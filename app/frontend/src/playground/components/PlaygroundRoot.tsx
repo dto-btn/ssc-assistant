@@ -64,10 +64,11 @@ export const PlaygroundShell: React.FC = () => {
 
   return (
     <Box display="flex" height="100dvh">
-      {/* WCAG 2.4.1 — skip link lets keyboard users bypass sidebar navigation */}
+      {/* WCAG 2.4.1 — skip link lets keyboard users bypass sidebar navigation
+          Target the chat input so users land directly in the composer. */}
       <Box
         component="a"
-        href="#playground-main-content"
+        href="#playground-ask-question"
         sx={{
           position: "absolute",
           left: "-999px",
@@ -96,11 +97,10 @@ export const PlaygroundShell: React.FC = () => {
       <SessionBootstrapper />
       <NewConversationOnOpen />
       <SessionSidebar isMobile={isMobile} />
-      {/* Skip-link target — ChatArea renders its own <main> landmark internally;
-          this div only needs tabIndex={-1} so the skip link can shift focus here
-          without adding a second <main> to the page. */}
+      {/* Container for the chat area. ChatArea renders a proper <main> landmark
+          internally; this wrapper keeps layout flex behavior and a focus target
+          for other flows. */}
       <Box
-        id="playground-main-content"
         tabIndex={-1}
         sx={{ flex: 1, display: "flex", minWidth: 0 }}
       >
