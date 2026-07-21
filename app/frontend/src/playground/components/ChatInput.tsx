@@ -405,8 +405,12 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
           inputRef={inputRef}
           sx={{ ml: 1, flex: 1, minWidth: 0 }}
           // The visually-hidden <label htmlFor="playground-ask-question"> above
-          // provides the accessible name, so no aria-label is needed here.
-          inputProps={{ tabIndex: 0 }}
+          // provides a label association. Add a persistent aria-label for
+          // assistive tech and to satisfy the accessible name requirements.
+          inputProps={{
+            tabIndex: 0,
+            'aria-label': t('type.a.message', { defaultValue: 'Your message' }),
+          }}
           value={input}
           multiline
           maxRows={15}
