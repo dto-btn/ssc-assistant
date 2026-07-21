@@ -19,7 +19,6 @@ interface AppProps {
 
 export const App = ({ instance }: AppProps) => {
   const { t } = useTranslation();
-  // Move scroll-lock from <body> to the child `#app-content` wrapper.
   // This watches for body.style changes (set by MUI) and applies overflow/padding to the wrapper instead.
   React.useEffect(() => {
     if (typeof document === 'undefined') return;
