@@ -24,7 +24,10 @@ export const AppSnackbars = () => {
                             horizontal: "center",
                         }}
                         sx={{
-                            bottom: "var(--chat-input-height, 100px) !important",
+                        bottom: {
+                            xs: "calc(var(--chat-input-height, 100px) + env(safe-area-inset-bottom)) !important",
+                            sm: "24px !important",
+                        },
                         }}
                         style={{
                             maxWidth: "50%",

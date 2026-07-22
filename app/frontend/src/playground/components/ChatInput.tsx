@@ -9,7 +9,7 @@
  * - Accessible controls and keyboard behavior (Enter to send, Shift+Enter newline)
  */
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Box,
   Paper,
@@ -79,7 +79,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
   const dispatch = useAppDispatch();
   const quotedText = useAppSelector((state: RootState) => state.quoted.quotedText);
   const isLoading = useAppSelector((state: RootState) => state.chat.isLoadingBySessionId[sessionId] ?? false);
-
+  const footerRef = useRef<HTMLDivElement>(null);
   // File attachment state managed by dedicated hook
   const {
     attachments,
@@ -116,7 +116,38 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
     }
   }, [quotedText]);
 
+  useLayoutEffect(() => {
+    const footer = footerRef.current;
 
+    if (!footer) return;
+
+    const updateHeight = () => {
+      const height = footer.getBoundingClientRect().height;
+
+      document.documentElement.style.setProperty(
+        "--chat-input-height",
+        `${height + 16}px`
+      );
+    };
+
+    updateHeight();
+
+    const observer = new ResizeObserver(() => {
+      updateHeight();
+    });
+
+    observer.observe(footer);
+
+    return () => {
+      observer.disconnect();
+
+      document.documentElement.style.removeProperty(
+        "--chat-input-height"
+      );
+    };
+  }, []);
+
+  
   /**
    * Submits the current message to the chat store including any quoted text and
    * attachments, then resets the composer state. Guarded against empty input
@@ -273,6 +304,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
 
   return (
     <Box
+      ref={footerRef}
       component="footer"
       sx={{
         position: "sticky",
