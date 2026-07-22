@@ -10,6 +10,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { createPortal } from "react-dom";
 
 import {
   acceptPlaygroundDisclaimer,
@@ -49,6 +50,29 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
     [state],
   );
 
+  // Toggle `inert` on the application root while the playground disclaimer is visible
+  React.useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const root = document.getElementById('root');
+    const modalRoot = document.getElementById('modal-root');
+    if (!root) return;
+    if (currentDisclaimer) {
+      try {
+        (root as any).inert = true;
+      } catch (e) {}
+      if (modalRoot) modalRoot.removeAttribute('aria-hidden');
+    } else {
+      try {
+        (root as any).inert = false;
+      } catch (e) {}
+    }
+    return () => {
+      try {
+        (root as any).inert = false;
+      } catch (e) {}
+    };
+  }, [currentDisclaimer]);
+
   const handleAccept = () => {
     if (!currentDisclaimer) {
       return;
@@ -78,13 +102,15 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
   const contentKeys = CONTENT_KEYS[currentDisclaimer];
   const descriptionId = "playground-disclaimer-description";
 
-  return (
+  const dialog = (
     <Dialog
       open
       fullWidth
       maxWidth="md"
       fullScreen={isSmallScreen}
       disableEscapeKeyDown
+      disableScrollLock
+      disablePortal
       onClose={handleMandatoryDialogClose}
       aria-labelledby="playground-disclaimer-title"
       aria-describedby={descriptionId}
@@ -127,6 +153,15 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
       </DialogActions>
     </Dialog>
   );
+
+  if (typeof document !== "undefined") {
+    const modalRoot = document.getElementById("modal-root");
+    if (modalRoot) {
+      return createPortal(dialog, modalRoot);
+    }
+  }
+
+  return dialog;
 };
 
 export default PlaygroundDisclaimerDialog;

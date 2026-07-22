@@ -21,3 +21,14 @@
 	z-index: 10000;
 	text-decoration: none;
 }
+
+/* App content wrapper to allow scroll-lock to be applied to a child instead of the body */
+#app-content {
+  height: 100vh;
+  overflow: auto;
+}
+
+/* When scroll-locked, hide overflow on the wrapper and preserve layout */
+.app-scroll-locked {
+  overflow: hidden !important;
+}

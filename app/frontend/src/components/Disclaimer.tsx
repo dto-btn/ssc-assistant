@@ -6,6 +6,7 @@ import {
   DialogActions,
   Button,
 } from "@mui/material";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 
 import { useMsal } from "@azure/msal-react";
@@ -65,6 +66,34 @@ export const Disclaimer = () => {
 
   const shouldShow = !!currentDisclaimerKey && inProgress === InteractionStatus.None;
 
+  // When the disclaimer dialog is visible, mark the application root as inert
+  // so that assistive technology and focus are not blocked by aria-hidden on ancestors.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const root = document.getElementById('root');
+    const modalRoot = document.getElementById('modal-root');
+    if (!root) return;
+    if (shouldShow) {
+      try {
+        (root as any).inert = true;
+      } catch (e) {
+        // inert might not be supported; best-effort only
+      }
+      if (modalRoot) {
+        modalRoot.removeAttribute('aria-hidden');
+      }
+    } else {
+      try {
+        (root as any).inert = false;
+      } catch (e) {}
+    }
+    return () => {
+      try {
+        (root as any).inert = false;
+      } catch (e) {}
+    };
+  }, [shouldShow]);
+
   const handleAccept = (key: DisclaimerKey) => {
     PersistenceUtils.setDisclaimerAccepted(key);
     setDisclaimerAcceptedState((prevState) => ({
@@ -79,39 +108,44 @@ export const Disclaimer = () => {
     return null; // No configuration found for the current disclaimer
   }
 
-  return (
-    <div>
-      <Dialog open={shouldShow} fullWidth>
-        <DialogTitle>
-          {currentDisclaimerConfig?.title
-            ? t("disclaimer") + " - " + t(currentDisclaimerConfig.title)
-            : t("disclaimer")}
-        </DialogTitle>
-        <DialogContent>
-          {currentDisclaimerConfig?.text && <p>{t(currentDisclaimerConfig.text)}</p>}
-          {currentDisclaimerConfig?.text2 && (
-            <p style={{ fontWeight: "bold" }}>{t(currentDisclaimerConfig.text2)}</p>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button
-            id="accept-disclaimer-button"
-            color='primary'
-            variant='contained'
-            onClick={() => handleAccept(currentDisclaimerConfig.key)}
-          >
-            {t("accept")}
-          </Button>
-          <Button
-            id="change-language-button"
-            onClick={() => {
-              appStore.languageService.changeLanguage();
-            }}
-          >
-            {t("langlink")}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </div>
+  const dialog = (
+    <Dialog open={shouldShow} fullWidth disableScrollLock disablePortal>
+      <DialogTitle>
+        {currentDisclaimerConfig?.title
+          ? t("disclaimer") + " - " + t(currentDisclaimerConfig.title)
+          : t("disclaimer")}
+      </DialogTitle>
+      <DialogContent>
+        {currentDisclaimerConfig?.text && <p>{t(currentDisclaimerConfig.text)}</p>}
+        {currentDisclaimerConfig?.text2 && (
+          <p style={{ fontWeight: "bold" }}>{t(currentDisclaimerConfig.text2)}</p>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button
+          id="accept-disclaimer-button"
+          color='primary'
+          variant='contained'
+          onClick={() => handleAccept(currentDisclaimerConfig.key)}
+        >
+          {t("accept")}
+        </Button>
+        <Button
+          id="change-language-button"
+          onClick={() => {
+            appStore.languageService.changeLanguage();
+          }}
+        >
+          {t("langlink")}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
+
+  if (typeof document !== "undefined") {
+    const modalRoot = document.getElementById("modal-root");
+    if (modalRoot) return createPortal(dialog, modalRoot);
+  }
+
+  return dialog;
 };
