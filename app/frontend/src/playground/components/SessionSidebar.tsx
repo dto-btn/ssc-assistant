@@ -42,7 +42,6 @@ import { LEFT_MENU_EXPANDED_WIDTH } from "../constants";
 import SessionRenameDialog from "./SessionRenameDialog";
 import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
 import { selectIsSessionWaitingById } from "../store/selectors/chatSelectors";
-import SyncStatusIndicator from "./SyncStatusIndicator";
 import ProfileMenu from "./ProfileMenu/ProfileMenu";
 import { deleteSession as deleteSessionThunk, persistSessionRename } from "../store/thunks/sessionManagementThunks";
 import { closeMobileSidebar } from "../store/slices/uiSlice";
@@ -370,7 +369,6 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
                 />
               </Tooltip>
             )}
-            <SyncStatusIndicator sessionId={session.id} variant="icon" />
           </Box>
         </ListItemButton>
 

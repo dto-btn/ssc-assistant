@@ -17,10 +17,6 @@ vi.mock("./SessionRenameDialog", () => ({
   default: () => null,
 }));
 
-vi.mock("./SyncStatusIndicator", () => ({
-  default: () => null,
-}));
-
 vi.mock("./ProfileMenu/ProfileMenu", () => ({
   default: () => null,
 }));
