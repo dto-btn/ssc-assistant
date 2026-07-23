@@ -96,11 +96,11 @@ const TopBar: React.FC<TopBarProps> = ({
           }}
         >
           {(!isMobile || !isMobileSidebarOpen) && (
-            <Tooltip title={isSidebarOpen ? t("sidebar.collapse", { ns: "playground" }) : t("sidebar.open", { ns: "playground" })}>
+            <Tooltip title={t("sidebar.navigation", { ns: "playground" })}>
               <IconButton
                 id="playground-open-sidebar-button"
                 onClick={onToggleSidebar}
-                aria-label={isSidebarOpen ? t("sidebar.collapse", { ns: "playground" }) : t("sidebar.open", { ns: "playground" })}
+                aria-label={t("sidebar.navigation", { ns: "playground" })}
                 aria-expanded={isSidebarOpen}
                 aria-controls="playground-session-sidebar"
                 sx={{
