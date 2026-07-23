@@ -42,9 +42,12 @@ import { LEFT_MENU_EXPANDED_WIDTH } from "../constants";
 import SessionRenameDialog from "./SessionRenameDialog";
 import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
 import { selectIsSessionWaitingById } from "../store/selectors/chatSelectors";
+import SyncStatusIndicator from "./SyncStatusIndicator";
 import ProfileMenu from "./ProfileMenu/ProfileMenu";
 import { deleteSession as deleteSessionThunk, persistSessionRename } from "../store/thunks/sessionManagementThunks";
 import { closeMobileSidebar } from "../store/slices/uiSlice";
+
+const showCloudSyncIndicator = String(import.meta.env.VITE_PLAYGROUND_SHOW_CLOUD_SYNC_INDICATOR || "").toLowerCase() === "true";
 
 /**
  * Sidebar for listing and managing Playground chat sessions.
@@ -368,6 +371,9 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
                   }}
                 />
               </Tooltip>
+            )}
+            {showCloudSyncIndicator && (
+              <SyncStatusIndicator sessionId={session.id} variant="icon" />
             )}
           </Box>
         </ListItemButton>
