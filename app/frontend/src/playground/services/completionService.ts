@@ -60,6 +60,25 @@ export interface CompletionMcpToolOutput {
   output: string;
 }
 
+export interface ImageGenerationRequest {
+  prompt: string;
+  model: string;
+  userToken: string;
+  size?: string;
+  signal?: AbortSignal;
+}
+
+export interface GeneratedImage {
+  b64Json?: string;
+  url?: string;
+  revisedPrompt?: string;
+}
+
+export interface ImageGenerationResult {
+  images: GeneratedImage[];
+  provider: string;
+}
+
 /**
  * Base interface for completion providers
  */
@@ -69,6 +88,8 @@ export interface CompletionProvider {
     request: CompletionRequest, 
     callbacks: StreamingCallbacks
   ): Promise<CompletionResult>;
+  /** Optional: providers that support text-to-image generation implement this. */
+  generateImage?(request: ImageGenerationRequest): Promise<ImageGenerationResult>;
 }
 
 /**
@@ -112,6 +133,26 @@ export class CompletionService {
    */
   getAvailableProviders(): string[] {
     return Array.from(this.providers.keys());
+  }
+
+  /**
+   * Delegate image generation to the requested provider, defaulting to Azure OpenAI.
+   */
+  async generateImage(
+    request: ImageGenerationRequest,
+    providerName: string = 'azure-openai'
+  ): Promise<ImageGenerationResult> {
+    const provider = this.providers.get(providerName);
+
+    if (!provider) {
+      throw new Error(`Provider '${providerName}' not found`);
+    }
+
+    if (!provider.generateImage) {
+      throw new Error(`Provider '${providerName}' does not support image generation`);
+    }
+
+    return provider.generateImage(request);
   }
 }
 

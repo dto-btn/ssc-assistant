@@ -18,6 +18,9 @@ import {
   Typography,
   CircularProgress,
   Chip,
+  FormControl,
+  Select,
+  MenuItem,
   useTheme,
 } from "@mui/material";
 import FileUpload from "./FileUpload";
@@ -29,8 +32,12 @@ import SendIcon from "@mui/icons-material/Send";
 import InfoIcon from "@mui/icons-material/Info";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
 import StopCircleIcon from "@mui/icons-material/StopCircle";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import ImageIcon from "@mui/icons-material/Image";
 import isFeatureEnabled from "../FeatureGate";
 import { sendAssistantMessage, stopAssistantMessage } from "../store/thunks/assistantThunks";
+import { generateAssistantImage } from "../store/thunks/imageThunks";
+import { setGenerationMode, setImageSize } from "../store/slices/modelSlice";
 import { createPortal } from "react-dom";
 
 /**
@@ -79,6 +86,9 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
   const dispatch = useAppDispatch();
   const quotedText = useAppSelector((state: RootState) => state.quoted.quotedText);
   const isLoading = useAppSelector((state: RootState) => state.chat.isLoadingBySessionId[sessionId] ?? false);
+  const generationMode = useAppSelector((state: RootState) => state.models.generationMode);
+  const imageSize = useAppSelector((state: RootState) => state.models.imageSize);
+  const imageGenerationEnabled = isFeatureEnabled('ImageGeneration');
 
   // File attachment state managed by dedicated hook
   const {
@@ -125,6 +135,17 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
   const handleSend = useCallback(async () => {
     if (isLoading || isUploading) return;
     if (!input.trim() && attachments.length === 0) return;
+
+    if (generationMode === 'image') {
+      const prompt = quotedText ? `${quotedText}\n\n${input}` : input;
+      if (!prompt.trim()) return;
+      setInput("");
+      if (quotedText) {
+        dispatch(clearQuotedText());
+      }
+      await dispatch(generateAssistantImage({ sessionId, prompt, size: imageSize }));
+      return;
+    }
 
     const messageContent = quotedText ? `> ${quotedText}\n\n${input}` : input;
     let uploadedFiles: FileAttachment[] = [];
@@ -244,7 +265,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
     if (quotedText) {
       dispatch(clearQuotedText());
     }
-  }, [input, attachments, quotedText, dispatch, sessionId, accessToken, t, isLoading, isUploading]);
+  }, [input, attachments, quotedText, dispatch, sessionId, accessToken, t, isLoading, isUploading, generationMode, imageSize]);
 
   /**
    * Keyboard behavior: Enter sends the message, Shift+Enter inserts a newline.
@@ -359,6 +380,44 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
         </Paper>
       )}
 
+      {/* Chat / Image generation mode toggle */}
+      {imageGenerationEnabled && (
+        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1, px: 1.5, pb: 0.75 }}>
+          <Chip
+            icon={<ChatBubbleOutlineIcon fontSize="small" />}
+            label={t('image.mode.chat', { defaultValue: 'Chat' })}
+            size="small"
+            color={generationMode === 'chat' ? 'primary' : 'default'}
+            variant={generationMode === 'chat' ? 'filled' : 'outlined'}
+            onClick={() => dispatch(setGenerationMode('chat'))}
+            aria-pressed={generationMode === 'chat'}
+            aria-label={t('image.mode.toggleAriaLabel', { defaultValue: 'Switch between chat and image generation' })}
+          />
+          <Chip
+            icon={<ImageIcon fontSize="small" />}
+            label={t('image.mode.image', { defaultValue: 'Image' })}
+            size="small"
+            color={generationMode === 'image' ? 'primary' : 'default'}
+            variant={generationMode === 'image' ? 'filled' : 'outlined'}
+            onClick={() => dispatch(setGenerationMode('image'))}
+            aria-pressed={generationMode === 'image'}
+          />
+          {generationMode === 'image' && (
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <Select
+                value={imageSize}
+                onChange={(e) => dispatch(setImageSize(e.target.value))}
+                aria-label={t('image.size.label', { defaultValue: 'Image size' })}
+              >
+                <MenuItem value="1024x1024">{t('image.size.square', { defaultValue: 'Square (1024\u00d71024)' })}</MenuItem>
+                <MenuItem value="1792x1024">{t('image.size.landscape', { defaultValue: 'Landscape (1792\u00d71024)' })}</MenuItem>
+                <MenuItem value="1024x1792">{t('image.size.portrait', { defaultValue: 'Portrait (1024\u00d71792)' })}</MenuItem>
+              </Select>
+            </FormControl>
+          )}
+        </Box>
+      )}
+
       {/* Input row */}
       <Paper
         component="form"
@@ -378,7 +437,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
         }}
         aria-describedby={error ? 'chatinput-error' : undefined}
       >
-        {isFeatureEnabled('FileUpload') && (
+        {isFeatureEnabled('FileUpload') && generationMode !== 'image' && (
           <Box sx={{ ml: 0.5 }}>
             <FileUpload onFiles={(files) => handleFiles(files)} disabled={composerBusy} />
           </Box>
@@ -419,6 +478,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
           onPaste={handlePaste}
           onKeyDown={handleKeyDown}
           id="playground-ask-question"
+          placeholder={generationMode === 'image' ? t('image.prompt.placeholder', { defaultValue: 'Describe the image you want to generate...' }) : undefined}
         />
 
         {/** Disable when there's nothing to send; show stop or upload states when busy */}

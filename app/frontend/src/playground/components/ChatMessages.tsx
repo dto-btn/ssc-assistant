@@ -1029,12 +1029,15 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   const shouldPulseAssistantIcon =
     assistantResponsePhase === "waiting-first-token"
     || assistantResponsePhase === "drafting"
-    || assistantResponsePhase === "streaming";
+    || assistantResponsePhase === "streaming"
+    || assistantResponsePhase === "generating-image";
   const assistantStatusLabel = assistantResponsePhase === "waiting-first-token"
     ? t("assistant.waiting")
     : assistantResponsePhase === "drafting"
       ? t("assistant.drafting")
-      : undefined;
+      : assistantResponsePhase === "generating-image"
+        ? t("assistant.generatingImage")
+        : undefined;
   const mermaidErrorText = t("assistant.mermaid.error");
 
   const baseRehypePlugins = useMemo<Pluggable[]>(() => [rehypeHighlight], []);
@@ -1136,7 +1139,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
           const isPreStreamingPhase = Boolean(
             isAssistantMessage
               && message.id === activeAssistantMessageId
-              && (assistantResponsePhase === "waiting-first-token" || assistantResponsePhase === "drafting")
+              && (assistantResponsePhase === "waiting-first-token"
+                || assistantResponsePhase === "drafting"
+                || assistantResponsePhase === "generating-image")
           );
 
           return (

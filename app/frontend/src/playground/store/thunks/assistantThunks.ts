@@ -90,8 +90,10 @@ export {
  * Per-session AbortControllers for in-flight streaming requests.
  * Stored outside Redux because AbortController instances are not serializable.
  * The map is keyed by sessionId and cleaned up in the thunk's finally block.
+ * Exported so other flows (e.g. image generation) can register into the same
+ * per-session slot and be cancelled by the shared Stop button.
  */
-const sessionAbortControllers = new Map<string, AbortController>();
+export const sessionAbortControllers = new Map<string, AbortController>();
 
 /**
  * Cancels the active streaming request for the given session.

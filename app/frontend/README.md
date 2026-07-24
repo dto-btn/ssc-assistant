@@ -43,6 +43,7 @@ Relevant env settings:
 VITE_PLAYGROUND_LITELLM_BASE_URL=http://localhost:4000/v1
 VITE_PLAYGROUND_LITELLM_PROXY_KEY=
 VITE_LITELLM_MODEL=
+VITE_LITELLM_IMAGE_MODEL=
 VITE_PMCOE_CONTAINER=pmcoe-sept-2025
 VITE_PLAYGROUND_ORCHESTRATOR_PREFLIGHT=true
 VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
@@ -51,6 +52,7 @@ VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 - `VITE_PLAYGROUND_LITELLM_BASE_URL`: standalone LiteLLM proxy base URL (must include `/v1`).
 - `VITE_PLAYGROUND_LITELLM_PROXY_KEY`: optional bearer token (LiteLLM master key) used for proxy auth.
 - `VITE_LITELLM_MODEL`: optional provider-scoped model id (for example `azure/gpt-4o-mini`).
+- `VITE_LITELLM_IMAGE_MODEL`: optional model id used for the playground's image-generation mode (LiteLLM `/v1/images/generations`, backed by an Azure-hosted FLUX.2-flex deployment). Defaults to `flux-2-flex`, matching the `model_name` configured in the standalone LiteLLM proxy.
 - `VITE_PMCOE_CONTAINER`: PMCOE blob container prefix used when the current Responses/MCP payload contains a document filename but omits `source_path`.
 - If `VITE_LITELLM_MODEL` is empty, model selection follows standalone LiteLLM config defaults.
 - `VITE_PLAYGROUND_ORCHESTRATOR_PREFLIGHT`: enables the orchestrator route suggestion preflight before the completion request.
@@ -83,7 +85,7 @@ VITE_ORCHESTRATOR_MIN_RECOMMENDATION_CONFIDENCE=40
 * `VITE_ALLOWED_TOOLS`: This controls the tools that will be presented in the tools menu, example, the BITS (EDR) data,
 geds API And so on.
 * `VITE_DISABLED_FEATURES`: disables the listed features. For instance `file_upload` will disable the file upload button
-from the UI.
+from the UI. Add `ImageGeneration` to this list to hide the Chat/Image mode toggle in the playground composer.
 * `VITE_PLAYGROUND_SHOW_ORCHESTRATOR_DEBUG`: when `true`, shows a playground-only dev panel with orchestrator category and MCP route suggestions.
 * `VITE_ORCHESTRATOR_MIN_RECOMMENDATION_CONFIDENCE`: minimum orchestrator confidence required before including a recommended MCP server. Supports `0-1` or `0-100` input; default is `40` (i.e., `0.4`).
 

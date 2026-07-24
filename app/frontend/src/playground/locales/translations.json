@@ -331,6 +331,54 @@
         "en": "Assistant is responding.",
         "fr": "L'assistant répond."
     },
+    "assistant.generatingImage": {
+        "en": "Generating image...",
+        "fr": "Génération de l'image en cours..."
+    },
+    "image.mode.chat": {
+        "en": "Chat",
+        "fr": "Discussion"
+    },
+    "image.mode.image": {
+        "en": "Image",
+        "fr": "Image"
+    },
+    "image.mode.toggleAriaLabel": {
+        "en": "Switch between chat and image generation",
+        "fr": "Basculer entre la discussion et la génération d'images"
+    },
+    "image.size.label": {
+        "en": "Image size",
+        "fr": "Taille de l'image"
+    },
+    "image.size.square": {
+        "en": "Square (1024×1024)",
+        "fr": "Carré (1024×1024)"
+    },
+    "image.size.landscape": {
+        "en": "Landscape (1792×1024)",
+        "fr": "Paysage (1792×1024)"
+    },
+    "image.size.portrait": {
+        "en": "Portrait (1024×1792)",
+        "fr": "Portrait (1024×1792)"
+    },
+    "image.prompt.placeholder": {
+        "en": "Describe the image you want to generate...",
+        "fr": "Décrivez l'image que vous souhaitez générer..."
+    },
+    "image.errors.generationFailedChat": {
+        "en": "Sorry, I couldn't generate that image. Please try again.",
+        "fr": "Désolé, je n'ai pas pu générer cette image. Veuillez réessayer."
+    },
+    "image.errors.generationFailedToast": {
+        "en": "Image generation failed.",
+        "fr": "La génération de l'image a échoué."
+    },
+    "image.errors.noImageReturned": {
+        "en": "The model did not return an image.",
+        "fr": "Le modèle n'a retourné aucune image."
+    },
     "assistant.copy.code": {
         "en": "Copy code",
         "fr": "Copier le code"

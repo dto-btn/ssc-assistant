@@ -6,7 +6,15 @@
  */
 
 import OpenAI from "openai";
-import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult, CompletionMessage } from "../completionService";
+import {
+  CompletionProvider,
+  CompletionRequest,
+  StreamingCallbacks,
+  CompletionResult,
+  CompletionMessage,
+  ImageGenerationRequest,
+  ImageGenerationResult,
+} from "../completionService";
 import { ResponseInput, Tool } from "openai/resources/responses/responses.mjs";
 import {
   Citation,
@@ -384,6 +392,48 @@ export class AzureOpenAIProvider implements CompletionProvider {
         );
       }
       onError?.(err);
+      throw err;
+    } finally {
+      timeout.cleanup();
+    }
+  }
+
+  /**
+   * Generate one or more images from a text prompt via LiteLLM's OpenAI-compatible
+   * `/v1/images/generations` endpoint (e.g. Azure-hosted FLUX.2-flex).
+   */
+  async generateImage(request: ImageGenerationRequest): Promise<ImageGenerationResult> {
+    const { prompt, model, userToken, size, signal } = request;
+    const timeout = this.createTimeoutSignal(signal);
+
+    try {
+      const client = this.createClient(userToken);
+      const response = await client.images.generate(
+        {
+          model,
+          prompt,
+          size: (size as OpenAI.Images.ImageGenerateParams["size"]) ?? "1024x1024",
+          response_format: "b64_json",
+        },
+        { signal: timeout.signal }
+      );
+
+      const images = (response.data || []).map((item) => ({
+        b64Json: item.b64_json,
+        url: item.url,
+        revisedPrompt: item.revised_prompt,
+      }));
+
+      return { images, provider: this.name };
+    } catch (error) {
+      if (signal?.aborted) {
+        throw error;
+      }
+
+      let err = error instanceof Error ? error : new Error(String(error));
+      if (isAbortLikeError(error)) {
+        err = new Error("Image generation timed out before completion.");
+      }
       throw err;
     } finally {
       timeout.cleanup();

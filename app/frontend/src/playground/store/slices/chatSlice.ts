@@ -103,7 +103,7 @@ export interface OrchestratorInsights {
   error?: string;
 }
 
-export type AssistantResponsePhase = "idle" | "waiting-first-token" | "drafting" | "streaming";
+export type AssistantResponsePhase = "idle" | "waiting-first-token" | "drafting" | "streaming" | "generating-image";
 
 interface ChatState {
   messages: Message[];
@@ -185,6 +185,16 @@ const chatSlice = createSlice({
         message.brArtifacts = brArtifacts;
       }
     },
+    setMessageAttachments: (
+      state,
+      action: PayloadAction<{ messageId: string; attachments: FileAttachment[] | undefined }>,
+    ) => {
+      const { messageId, attachments } = action.payload;
+      const message = state.messages.find((msg) => msg.id === messageId);
+      if (message) {
+        message.attachments = attachments;
+      }
+    },
     setMessageFeedback: (
       state,
       action: PayloadAction<{ messageId: string; feedback: "liked" | "disliked" | undefined }>,
@@ -254,6 +264,7 @@ export const {
   updateMessageContent,
   setMessageAttribution,
   setMessageBrArtifacts,
+  setMessageAttachments,
   setMessageFeedback,
   setSessionLoading,
   setAssistantResponsePhase,

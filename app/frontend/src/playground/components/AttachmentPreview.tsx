@@ -85,6 +85,33 @@ const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ attachments }) =>
         const timestampLabel = formatUploadedAt(attachment.uploadedAt);
         const canRenderImagePreview = isImage && Boolean(previewUrl);
         const downloadName = deriveDownloadName(attachment);
+        const isGeneratedImage = canRenderImagePreview && attachment.metadataType === "generated-image";
+
+        if (isGeneratedImage) {
+          return (
+            <Box
+              key={key}
+              component="a"
+              href={previewUrl || attachment.url}
+              download={downloadName}
+              sx={{ display: "block", maxWidth: "100%" }}
+            >
+              <Box
+                component="img"
+                src={previewUrl}
+                alt={attachment.originalName}
+                sx={{
+                  width: "100%",
+                  maxWidth: 512,
+                  height: "auto",
+                  borderRadius: 1.5,
+                  border: (theme) => `1px solid ${theme.palette.divider}`,
+                  display: "block",
+                }}
+              />
+            </Box>
+          );
+        }
 
         return (
           <Paper
