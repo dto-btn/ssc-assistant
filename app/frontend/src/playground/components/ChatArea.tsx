@@ -258,6 +258,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   if (messages.length === 0) {
     return (
       <Box
+        component="main"
         flex={1}
         display="flex"
         flexDirection="column"
