@@ -259,14 +259,13 @@ const ChatArea: React.FC<ChatAreaProps> = ({
     return (
       <Box
         component="main"
-        flex={1}
         display="flex"
         flexDirection="column"
         height="100dvh"
         minWidth={0}
       >
         {renderHeader()}
-        <Box flex={1} display="flex" flexDirection="column" alignItems="center" justifyContent="center" p={{ xs: 2, sm: 4, md: 6 }} minWidth={0}>
+        <Box display="flex" flexDirection="column" flex={1} minHeight={0} minWidth={0} alignItems="center" justifyContent="center" p={{ xs: 2, sm: 4, md: 6 }} overflow="auto">
           <Typography component="h1" variant="h3" gutterBottom>
             {t("how.can.i.help")}
           </Typography>
