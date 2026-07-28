@@ -33,7 +33,7 @@ function buildStatusConfig(status: SessionSyncStatus, label: string, tooltip?: s
       return {
         label,
         tooltip,
-        icon: <CloudUploadIcon fontSize="small" />, 
+        icon: <CloudUploadIcon fontSize="small" />,
         color: "warning",
         chipVariant: "filled",
       };
@@ -41,7 +41,7 @@ function buildStatusConfig(status: SessionSyncStatus, label: string, tooltip?: s
       return {
         label,
         tooltip,
-        icon: <CloudSyncIcon fontSize="small" />, 
+        icon: <CloudSyncIcon fontSize="small" />,
         color: "info",
         chipVariant: "filled",
       };
@@ -49,7 +49,7 @@ function buildStatusConfig(status: SessionSyncStatus, label: string, tooltip?: s
       return {
         label,
         tooltip,
-        icon: <ErrorOutlineIcon fontSize="small" />, 
+        icon: <ErrorOutlineIcon fontSize="small" />,
         color: "error",
         chipVariant: "filled",
       };
@@ -58,7 +58,7 @@ function buildStatusConfig(status: SessionSyncStatus, label: string, tooltip?: s
       return {
         label,
         tooltip,
-        icon: <CloudDoneIcon fontSize="small" />, 
+        icon: <CloudDoneIcon fontSize="small" />,
         color: "success",
         chipVariant: "outlined",
       };
