@@ -100,6 +100,46 @@ from the UI.
 - [react msal App reg setup](https://learn.microsoft.com/en-us/entra/identity-platform/tutorial-single-page-app-react-register-app)
 - [react msal app config](https://learn.microsoft.com/en-us/entra/identity-platform/tutorial-single-page-app-react-prepare-spa?tabs=visual-studio)
 
+### Reproducing HTTP 431 (Header Too Large)
+
+Use the local harness to reproduce oversized-header failures for research/debugging:
+
+```bash
+npm run repro:431
+```
+
+Optional flags:
+
+```bash
+# Send an oversized Cookie header (default)
+npm run repro:431 -- --type cookie --header-bytes 8192 --max-header-size 1024
+
+# Send an oversized Authorization bearer header
+npm run repro:431 -- --type authorization --header-bytes 8192 --max-header-size 1024
+
+# Probe an existing URL instead of starting a local harness
+npm run repro:431 -- --url http://localhost:8080 --type authorization --header-bytes 8192
+
+# Estimate the effective 431 threshold on a target URL
+npm run repro:431 -- --url https://assistant.cio-sandbox-ect.ssc-spc.cloud-nuage.canada.ca \
+  --type cookie --find-limit --min-bytes 512 --max-bytes 32768
+
+# If your environment uses TLS interception / self-signed corporate certs
+npm run repro:431 -- --url https://assistant.ssc-spc.gc.ca/ \
+  --type cookie --find-limit --min-bytes 512 --max-bytes 32768 --insecure
+```
+
+Run automated tests:
+
+```bash
+npm run test:headers
+```
+
+What this validates:
+- Requests under the configured max header size are accepted.
+- Oversized Cookie headers can trigger HTTP 431.
+- Oversized Authorization bearer headers can trigger HTTP 431.
+
 ### Setting up custom SSL/TSL certs and bindings in Azure App Services
 
 General documentation on the subject: 
