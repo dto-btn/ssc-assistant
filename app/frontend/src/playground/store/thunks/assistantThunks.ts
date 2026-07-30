@@ -204,6 +204,13 @@ const isDuplicateProgressUpdate = (
   );
 };
 
+const normalizeInsightTitle = (value: unknown): string | undefined => {
+  if (typeof value !== "string") return undefined;
+  const normalized = value.trim().replace(/\s+/g, " ");
+  if (!normalized) return undefined;
+  return normalized;
+};
+
 /**
  * Build a lightweight interim insights object used while routing is in progress.
  */
@@ -582,22 +589,13 @@ export const sendAssistantMessage = ({
     }
 
     const isNewChat = getState().sessions.sessions.find((s) => s.id === sessionId)?.isNewChat;
-    if (isNewChat) {
-      const meaningfulText = content.trim().length > 0;
-      const meaningfulTurn = meaningfulText || (attachments && attachments.length > 0);
+    const meaningfulText = content.trim().length > 0;
+    const meaningfulTurn = meaningfulText || (attachments && attachments.length > 0);
+    const shouldAutoRenameSession = Boolean(isNewChat && meaningfulText);
 
-      if (meaningfulText) {
-        // Rename chat if this is the first message with text in a new session
-        const autoName = deriveSessionName(content);
-        if (autoName) {
-          dispatch(renameSession({ id: sessionId, name: autoName }));
-        }
-      }
-
-      if (meaningfulTurn) {
-        // Mark session as no longer new if there's text or attachments
-        dispatch(setIsSessionNew({ id: sessionId, isNew: false }));
-      }
+    if (isNewChat && meaningfulTurn) {
+      // Mark immediately so automatic naming only runs once per chat.
+      dispatch(setIsSessionNew({ id: sessionId, isNew: false }));
     }
 
     const dispatchForAttachments = dispatch as AppDispatch;
@@ -743,6 +741,16 @@ export const sendAssistantMessage = ({
           })),
         }
       : baseInsights;
+
+    if (shouldAutoRenameSession) {
+      const orchestratorSuggestedTitle = normalizeInsightTitle(orchestratorInsights?.chatTitle);
+      const fallbackTitle = deriveSessionName(content);
+      const nextTitle = orchestratorSuggestedTitle || fallbackTitle;
+
+      if (nextTitle) {
+        dispatch(renameSession({ id: sessionId, name: nextTitle }));
+      }
+    }
 
     const assistantMcpAttribution = buildMessageMcpAttribution(
       routedServers,

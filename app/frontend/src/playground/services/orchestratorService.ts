@@ -52,6 +52,16 @@ const normalizeCategory = (value?: string): string | undefined => {
 };
 
 /**
+ * Normalize optional orchestrator-provided chat title strings.
+ */
+const normalizeChatTitle = (value: unknown): string | undefined => {
+  if (typeof value !== "string") return undefined;
+  const normalized = value.trim().replace(/\s+/g, " ");
+  if (!normalized) return undefined;
+  return normalized.slice(0, 80);
+};
+
+/**
  * Coerce raw orchestrator recommendation payloads into typed objects.
  */
 const normalizeRecommendations = (raw: unknown): OrchestratorRecommendation[] => {
@@ -546,6 +556,11 @@ export const getOrchestratorInsights = async ({
     ) as Record<string, unknown> | undefined;
 
     const recommendations = normalizeRecommendations(suggestPayload.recommendations);
+    const chatTitle =
+      normalizeChatTitle(suggestPayload.chat_title)
+      || normalizeChatTitle(suggestPayload.chatTitle)
+      || normalizeChatTitle(classifyPayload?.chat_title)
+      || normalizeChatTitle(classifyPayload?.chatTitle);
     const responseClassificationMethod =
       typeof suggestPayload.classification_method === "string"
         ? suggestPayload.classification_method
@@ -583,6 +598,7 @@ export const getOrchestratorInsights = async ({
     return {
       category,
       recommendations: effectiveRecommendations,
+      chatTitle,
       classificationMethod:
         responseClassificationMethod || effectiveRecommendations[0]?.classification_method,
       fallbackReason,

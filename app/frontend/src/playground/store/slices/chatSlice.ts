@@ -87,6 +87,7 @@ export interface OrchestratorProgressUpdate {
 export interface OrchestratorInsights {
   category: string;
   recommendations: OrchestratorRecommendation[];
+  chatTitle?: string;
   classificationMethod?: string;
   status?: OrchestratorProgressUpdate["status"];
   statusMessage?: string;
