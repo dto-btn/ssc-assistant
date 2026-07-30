@@ -48,6 +48,8 @@ jobs:
       disabled-features: ''
       environment: 'pilot-prod'
       app-name: 'ssc-assistant'
+      enable-playground: true
+      enable-mcp: true
     secrets: inherit
 
   ###################
@@ -70,6 +72,8 @@ jobs:
       disabled-features: ''
       environment: 'prod'
       app-name: 'G3Pc-SSC-CIOAssistant-Linux-Frontend-asv'
+      enable-playground: true
+      enable-mcp: true
       runner: 'self-hosted'
       redirect-uri-domain: 'https://assistant.ssc-spc.gc.ca'
     secrets: inherit
