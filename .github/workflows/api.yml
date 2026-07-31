@@ -13,6 +13,10 @@ on:
         type: string
         required: false
         default: 'ubuntu-latest'
+      python-version:
+        type: string
+        required: false
+        default: '3.13.14'
     secrets:
       API_PUBLISH_PROFILE:
         required: false
@@ -46,7 +50,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5.2.0
       with:
-        python-version: '3.13.14'
+        python-version: ${{ inputs.python-version }}
 
     # commenting this one out until we re-enable the MS SQL dependencies in the requirements.txt
     # - name: Install system dependencies

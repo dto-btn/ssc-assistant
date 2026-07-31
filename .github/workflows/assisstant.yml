@@ -60,6 +60,7 @@ jobs:
       environment: 'prod'
       app-name: 'G3Pc-SSC-CIOAssistant-Linux-API-asv'
       runner: 'self-hosted'
+      python-version: '3.12.13'
     secrets: inherit
 
   frontend-prod-163ent:
