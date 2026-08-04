@@ -54,6 +54,7 @@ resource "azurerm_linux_web_app" "frontend" {
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
     TITLE_RENAME_THRESHOLD = var.title_rename_threshold
     TITLE_RENAME_MODEL= var.title_rename_model
+    NODE_OPTIONS = "--max-http-header-size=32768"
   }
 
   identity {
