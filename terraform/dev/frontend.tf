@@ -23,7 +23,7 @@ resource "azurerm_linux_web_app" "frontend" {
 
   virtual_network_subnet_id = azurerm_subnet.frontend.id
 
-  client_affinity_enabled = true
+  client_affinity_enabled = false
   https_only = true
 
   site_config {
@@ -51,6 +51,7 @@ resource "azurerm_linux_web_app" "frontend" {
     MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
     PORT = 8080
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
+    NODE_OPTIONS = "--max-http-header-size=32768"
   }
 
   identity {

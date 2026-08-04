@@ -17,7 +17,7 @@ resource "azurerm_linux_web_app" "api" {
 
   virtual_network_subnet_id = azurerm_subnet.api.id
 
-  client_affinity_enabled = true
+  client_affinity_enabled = false
   https_only = true
 
   site_config {
