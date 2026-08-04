@@ -38,7 +38,7 @@ variable "jwt_secret" {
 variable "pfx_secret" {
     type = string
     sensitive = true
-    description = "the pfx secret for the private key"
+    description = "the pfx secret for the private key. Required only on new deployment or recreate. See code for cmnt"
 }
 
 # those 2 must be provided, along with the secret.. (microsoft_provider_authentication_secret)
