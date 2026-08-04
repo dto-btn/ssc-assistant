@@ -178,6 +178,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
   const moreMenuOpen = Boolean(moreMenuPosition);
 
   const sidebarTitleId = "playground-session-sidebar-title";
+  const sidebarNavLabel = t("sidebar.chatSessionsNavigation", { defaultValue: "Chat sessions" });
 
   const [containerRef, { height: containerHeight }] = useMeasure();
   const listRef = React.useRef<ListImperativeAPI | null>(null);
@@ -410,7 +411,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
     <Box
       component="nav"
       id="playground-session-sidebar"
-      aria-label={t("sidebar.navigation")}
+      aria-label={sidebarNavLabel}
       sx={{
         width: LEFT_MENU_EXPANDED_WIDTH,
         display: "flex",
