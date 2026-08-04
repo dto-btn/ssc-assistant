@@ -1,0 +1,37 @@
+flowchart TD
+  U[Engineer opens playground route] --> R[PlaygroundRoute feature gate]
+  R --> P[Playground.tsx Providers]
+  P --> PR[PlaygroundRoot shell]
+
+  PR --> SB[SessionSidebar]
+  PR --> CA[ChatArea]
+  PR --> BOOT[SessionBootstrapper]
+  PR --> NEW[NewConversationOnOpen]
+
+  CA --> CI[ChatInput]
+  CA --> CM[ChatMessages]
+  CA --> RH[useSessionRehydration]
+
+  CI -->|dispatch sendAssistantMessage| TH[assistantThunks.ts]
+  TH --> ORCH[orchestratorService.ts]
+  TH --> CS[completionService.ts]
+  CS --> PROV[azureOpenAIProvider.ts]
+  PROV --> LLM[LiteLLM OpenAI Responses API]
+  LLM --> MCP[Configured MCP servers]
+  MCP --> LLM
+  LLM --> PROV
+  PROV --> TH
+  TH --> CM
+
+  CI -->|upload list extract| ST[playground/api/storage.ts]
+  ST --> PAPI[api playground routes]
+  PAPI --> BLOB[(Azure Blob)]
+
+  CM -->|like dislike| FBTH[feedbackThunks.ts]
+  FBTH --> FBAPI[playground/api/feedback.ts]
+  FBAPI --> PF[api playground feedback route]
+  PF --> TABLE[(Azure Table)]
+
+  SB -->|rename delete| SMTH[sessionManagementThunks.ts]
+  SMTH --> ST
+  RH --> ST

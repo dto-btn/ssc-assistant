@@ -6,16 +6,13 @@
       "type": "debugpy",
       "request": "launch",
       "module": "flask",
+      "python": "${workspaceFolder}/app/api/.venv/bin/python",
       "cwd": "${workspaceFolder}/app/api",
       "env": {
         "FLASK_APP": "app.py",
         "FLASK_DEBUG": "1"
       },
-      "args": [
-        "run",
-        "--debug",
-        "--port=5001"
-      ],
+      "args": ["run", "--debug", "--port=5001"],
       "jinja": true,
       "autoStartBrowser": false
     },
@@ -23,14 +20,9 @@
       "name": "Frontend",
       "request": "launch",
       "cwd": "${workspaceFolder}/app/frontend",
-      "runtimeArgs": [
-        "run-script",
-        "dev"
-      ],
+      "runtimeArgs": ["run-script", "dev"],
       "runtimeExecutable": "npm",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
+      "skipFiles": ["<node_internals>/**"],
       "type": "node"
     },
     {
@@ -39,6 +31,6 @@
       "request": "attach",
       "port": 5001,
       "preLaunchTask": "func: host start"
-    },
+    }
   ]
 }

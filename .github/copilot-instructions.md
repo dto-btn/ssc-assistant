@@ -41,3 +41,10 @@ When adding features
 - New index/data source: update the Function app templates and ensure `vectorSearch` profiles and `semantic` config match usage.
 
 Need clarity? Tell us where these instructions feel thin (e.g., exact pytest config, MSAL settings, or Function deployment), and we’ll tighten this file.
+
+<!-- mermaid-ai-skills:start -->
+## Mermaid Diagrams
+
+When the user asks to create, edit, or visualize a diagram, follow the
+instructions in `.github/instructions/mermaid.instructions.md`.
+<!-- mermaid-ai-skills:end -->

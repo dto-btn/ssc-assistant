@@ -1,0 +1,30 @@
+flowchart TD
+  ROOT[app/frontend/src/playground]
+
+  ROOT --> A1[Playground.tsx\nEntry + Providers]
+  ROOT --> A2[components\nUI and interaction surfaces]
+  ROOT --> A3[store\nRedux state reducers and thunks]
+  ROOT --> A4[services\nLLM orchestration and providers]
+  ROOT --> A5[api\nPlayground REST clients]
+  ROOT --> A6[hooks\nSession hydration and attachments]
+  ROOT --> A7[utils\nFormatting citation and stream helpers]
+  ROOT --> A8[export\nJSON PDF Word export helpers]
+  ROOT --> A9[constants and types.ts\nShared types and constants]
+
+  A2 --> C1[PlaygroundRoot.tsx\nlayout shell]
+  A2 --> C2[ChatArea.tsx\nmain content region]
+  A2 --> C3[ChatInput.tsx\ncomposer and uploads]
+  A2 --> C4[ChatMessages.tsx\nrender transcript]
+  A2 --> C5[SessionSidebar.tsx\nsession navigation]
+
+  A3 --> S1[slices\nchat session tool auth ui]
+  A3 --> S2[thunks\nassistant feedback bootstrap management]
+  A3 --> S3[middleware\narchiver and outbox]
+  A3 --> S4[selectors\nread model helpers]
+
+  A4 --> SV1[orchestratorService.ts\nroute recommendation]
+  A4 --> SV2[completionService.ts\nprovider abstraction]
+  A4 --> SV3[providers/azureOpenAIProvider.ts\nstreaming implementation]
+
+  A5 --> AP1[storage.ts\nupload list rename delete extract]
+  A5 --> AP2[feedback.ts\nsubmit feedback]

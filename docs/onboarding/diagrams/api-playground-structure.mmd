@@ -1,0 +1,27 @@
+flowchart TD
+  ROOT[app/api/playground]
+
+  ROOT --> P1[routes_playground.py\nPlayground HTTP endpoints]
+  ROOT --> P2[test_routes_playground.py\nRoute level tests]
+  ROOT --> P3[conftest.py\nPytest fixtures]
+  ROOT --> P4[populate_test_sessions.py\nLocal test data script]
+
+  P1 --> E1[POST upload\nstore file or chat archive]
+  P1 --> E2[GET files-for-session\nlist session files]
+  P1 --> E3[POST extract-file-text\ntext or data URL preview]
+  P1 --> E4[POST sessions id rename\nupdate blob metadata]
+  P1 --> E5[DELETE sessions id\nsoft delete session files]
+  P1 --> E6[DELETE sessions\nsoft delete all user sessions]
+  P1 --> E7[POST feedback\npersist playground feedback]
+
+  E1 --> D1[get_container_client\nBlob container access]
+  E2 --> D1
+  E3 --> D1
+  E4 --> D1
+  E5 --> D1
+  E6 --> D1
+
+  E3 --> D2[FileManager\nextracts text from file bytes]
+  E7 --> D3[leave_feedback\nshared db utility]
+  D3 --> T[(Azure Table)]
+  D1 --> B[(Azure Blob)]
