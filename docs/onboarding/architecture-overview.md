@@ -67,7 +67,8 @@ flowchart LR
 
   PlaygroundUI -->|OpenAI Responses API calls| LiteLLM
   PlaygroundUI -->|preflight route suggestion| Orchestrator
-  PlaygroundUI -->|tool execution in model run| DomainMCP
+  LiteLLM -->|smart proxy for inference + streaming| AOAI
+  AOAI -->|tool calls during model run| DomainMCP
 
   AzureProxy --> AOAI
   V1 --> AAD
@@ -118,7 +119,8 @@ sequenceDiagram
   participant U as User
   participant PFE as Playground Frontend (/playground)
   participant O as Orchestrator MCP
-  participant L as Standalone LiteLLM
+  participant L as Standalone LiteLLM (Smart Proxy)
+  participant AO as Azure OpenAI (Inference Provider)
   participant M as Routed MCP Servers
   participant PAPI as /api/playground/*
   participant B as Blob Storage
@@ -127,9 +129,13 @@ sequenceDiagram
   U->>PFE: Ask question
   PFE->>O: Optional preflight classification/routing
   O-->>PFE: Recommended MCP targets
-  PFE->>L: Responses API request (model + tools=MCP servers)
-  L->>M: MCP tool calls as needed
-  M-->>L: Tool outputs/citations
+  PFE->>L: Responses API request (model + tool config)
+  L->>AO: Inference request with conversation context
+  AO-->>L: Model output and tool intents
+  AO->>M: Tool calls as needed
+  M-->>AO: Tool outputs/citations
+  AO-->>L: Follow-up output with tool-grounded content
+  AO-->>L: Final model output
   L-->>PFE: Streamed response events + final output
   PFE->>PAPI: Upload/list/extract/rename/delete session files
   PAPI->>B: Store/read blobs under per-user oid prefix
@@ -140,7 +146,9 @@ sequenceDiagram
 Notes:
 
 - Playground completion path is currently frontend -> standalone LiteLLM directly.
+- LiteLLM acts as a smart proxy in front of Azure OpenAI (request shaping/routing/stream handling).
 - Playground API routes are used for file/session lifecycle and feedback, not for chat generation.
+- Azure OpenAI is the component that performs tool-calling against configured MCP servers.
 - Orchestrator and downstream MCP selection are controlled by client config (`VITE_MCP_SERVERS`) and preflight logic.
 
 ## 4) How Old and New Systems Are "Fused"

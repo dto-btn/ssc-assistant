@@ -16,9 +16,11 @@ flowchart TD
   TH --> ORCH[orchestratorService.ts]
   TH --> CS[completionService.ts]
   CS --> PROV[azureOpenAIProvider.ts]
-  PROV --> LLM[LiteLLM OpenAI Responses API]
-  LLM --> MCP[Configured MCP servers]
-  MCP --> LLM
+  PROV --> LLM[LiteLLM smart proxy]
+  LLM --> AOAI[Azure OpenAI inference provider]
+  AOAI --> LLM
+  AOAI --> MCP[Configured MCP servers tool calls]
+  MCP --> AOAI
   LLM --> PROV
   PROV --> TH
   TH --> CM

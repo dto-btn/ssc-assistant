@@ -34,7 +34,8 @@ What each diagram answers:
 
 4. Model call:
    - `completionService.ts` delegates to `providers/azureOpenAIProvider.ts`.
-   - Despite the filename, this provider currently talks to a LiteLLM/OpenAI-compatible endpoint configured for Playground.
+  - Despite the filename, this provider currently talks to a LiteLLM/OpenAI-compatible endpoint configured for Playground.
+  - LiteLLM is used as a smart proxy layer, while Azure OpenAI is the service that performs tool-calling to configured MCP servers.
 
 5. Files and sessions:
    - Upload/list/extract/rename/delete run through `playground/api/storage.ts`.
