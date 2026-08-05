@@ -268,6 +268,7 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
         id: "citation-drawer",
         role: "dialog",
         "aria-labelledby": "citation-drawer-title",
+        "aria-modal": "true",
         sx: {
           width: isSmall ? "100%" : 420,
           maxWidth: "100%",
@@ -318,7 +319,10 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
               }
             }}
           >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              aria-label={t("citations.accordion.expand", { title: getGroupDisplayTitle(group) })}
+            >
               <Typography
                 variant="subtitle2"
                 sx={{ overflowWrap: "anywhere", wordBreak: "break-word" }}

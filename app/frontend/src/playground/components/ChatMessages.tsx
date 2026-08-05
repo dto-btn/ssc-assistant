@@ -80,6 +80,7 @@ interface AssistantMessageBubbleProps {
   remarkPlugins: Pluggable[];
   rehypePlugins: Pluggable[];
   resolvedAttachments: FileAttachment[];
+  isError?: boolean;
 }
 
 interface ChatMessageRowProps {
@@ -163,6 +164,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
   remarkPlugins,
   rehypePlugins,
   resolvedAttachments,
+  isError,
 }) => {
   const { t, i18n } = useTranslation("playground");
   const [isCitationDrawerOpen, setCitationDrawerOpen] = useState(false);
@@ -724,7 +726,8 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
                 </Box>
               )}
               {!shouldHideAssistantMarkdownForBrTable && (
-                <Box sx={ASSISTANT_MARKDOWN_SX}>
+                // WCAG 3.3.1 / 4.1.3 — scoped to text only so buttons after it aren't announced.
+                <Box sx={ASSISTANT_MARKDOWN_SX} role={isError ? "alert" : undefined}>
                   <MarkdownHooks
                     components={markdownComponents}
                     remarkPlugins={remarkPlugins}
@@ -963,6 +966,7 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
           remarkPlugins={remarkPlugins}
           rehypePlugins={messageRehypePlugins}
           resolvedAttachments={resolvedAttachments}
+          isError={message.isError}
         />
       ) : (
         <Box

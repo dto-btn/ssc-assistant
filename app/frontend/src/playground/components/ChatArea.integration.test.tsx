@@ -53,6 +53,7 @@ vi.mock("../store/thunks/assistantThunks", () => ({
 
 import ChatArea from "./ChatArea";
 import chatReducer from "../store/slices/chatSlice";
+import type { Message } from "../store/slices/chatSlice";
 import sessionReducer from "../store/slices/sessionSlice";
 import sessionFilesReducer from "../store/slices/sessionFilesSlice";
 import syncReducer from "../store/slices/syncSlice";

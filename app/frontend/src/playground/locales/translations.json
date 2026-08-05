@@ -387,6 +387,10 @@
         "en": "Open citation details for {{title}}",
         "fr": "Ouvrir les détails de la citation pour {{title}}"
     },
+    "citations.accordion.expand": {
+        "en": "Expand citation: {{title}}",
+        "fr": "Développer la citation : {{title}}"
+    },
     "citations.localSourceReference": {
         "en": "Local source reference",
         "fr": "Référence à une source locale"
