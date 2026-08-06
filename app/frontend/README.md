@@ -41,7 +41,7 @@ Relevant env settings:
 
 ```bash
 VITE_PLAYGROUND_LITELLM_BASE_URL=http://localhost:4000/v1
-VITE_PLAYGROUND_LITELLM_PROXY_KEY=
+VITE_PLAYGROUND_LITELLM_SCOPE=api://<litellm-app-client-id>/user_impersonation
 VITE_LITELLM_MODEL=
 VITE_PMCOE_CONTAINER=pmcoe-sept-2025
 VITE_PLAYGROUND_ORCHESTRATOR_PREFLIGHT=true
@@ -49,7 +49,7 @@ VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 
 - `VITE_PLAYGROUND_LITELLM_BASE_URL`: standalone LiteLLM proxy base URL (must include `/v1`).
-- `VITE_PLAYGROUND_LITELLM_PROXY_KEY`: optional bearer token (LiteLLM master key) used for proxy auth.
+- `VITE_PLAYGROUND_LITELLM_SCOPE`: delegated Entra scope accepted by LiteLLM App Service Easy Auth.
 - `VITE_LITELLM_MODEL`: optional provider-scoped model id (for example `azure/gpt-4o-mini`).
 - `VITE_PMCOE_CONTAINER`: PMCOE blob container prefix used when the current Responses/MCP payload contains a document filename but omits `source_path`.
 - If `VITE_LITELLM_MODEL` is empty, model selection follows standalone LiteLLM config defaults.

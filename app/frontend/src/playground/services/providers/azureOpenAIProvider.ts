@@ -6,6 +6,7 @@
  */
 
 import OpenAI from "openai";
+import { msalInstance } from "../../../index";
 import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult, CompletionMessage } from "../completionService";
 import { ResponseInput, Tool } from "openai/resources/responses/responses.mjs";
 import {
@@ -204,13 +205,27 @@ export class AzureOpenAIProvider implements CompletionProvider {
     return base.replace(/\/$/, "");
   }
 
-  /**
-   * Build an OpenAI-compatible client for standalone LiteLLM proxy.
-   * Uses dedicated proxy key when configured, otherwise falls back to user token.
-   */
-  private createClient(userToken: string): OpenAI {
-    const proxyKey = String(import.meta.env.VITE_PLAYGROUND_LITELLM_PROXY_KEY || "").trim();
-    const authToken = proxyKey.length > 0 ? proxyKey : userToken.trim();
+  private async getLiteLLMToken(fallbackToken: string): Promise<string> {
+    const scope = String(import.meta.env.VITE_PLAYGROUND_LITELLM_SCOPE || "").trim();
+    if (!scope) {
+      return fallbackToken.trim();
+    }
+
+    const account = msalInstance.getActiveAccount();
+    if (!account) {
+      throw new Error("No active account is available for LiteLLM authentication.");
+    }
+
+    const response = await msalInstance.acquireTokenSilent({
+      account,
+      scopes: [scope],
+    });
+    return response.accessToken;
+  }
+
+  /** Build an OpenAI-compatible client for standalone LiteLLM proxy. */
+  private async createClient(userToken: string): Promise<OpenAI> {
+    const authToken = await this.getLiteLLMToken(userToken);
     const defaultHeaders = {
       "Authorization": "Bearer " + authToken,
       "x-caller-system": "ssc-assistant",
@@ -286,7 +301,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
     try {
       const updatedMessages = this.convertMessagesToInput(messages);
 
-      const client = this.createClient(userToken);
+      const client = await this.createClient(userToken);
 
       const stream = await client.responses.stream({
         model: model,
