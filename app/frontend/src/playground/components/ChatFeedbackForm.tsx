@@ -7,7 +7,7 @@
  * Currently logs to console only — wire `handleSubmit` to the backend when ready.
  */
 
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
     Box,
     Button,
@@ -32,6 +32,15 @@ type FeedbackType = "issue" | "suggestion";
 type Step = "select" | "detail";
 
 const MAX_ATTACHMENTS = 3;
+
+const visuallyHiddenSx = {
+  position: "absolute",
+  width: "1px",
+  height: "1px",
+  overflow: "hidden",
+  clip: "rect(0,0,0,0)",
+  whiteSpace: "nowrap",
+} as const;
 
 interface FeedbackAttachment {
     name: string;
@@ -81,8 +90,12 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
     const [issueSteps, setIssueSteps] = useState("");
     const [suggestion, setSuggestion] = useState("");
     const [attachments, setAttachments] = useState<File[]>([]);
+    const [attachmentLimitExceeded, setAttachmentLimitExceeded] = useState(false);
+    const [attachmentAnnouncement, setAttachmentAnnouncement] = useState("");
     const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const issueDescriptionRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+    const suggestionRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
 
     const brandColor = theme.palette.primary.main;
 
@@ -96,6 +109,8 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
             setIssueSteps("");
             setSuggestion("");
             setAttachments([]);
+            setAttachmentLimitExceeded(false);
+            setAttachmentAnnouncement("");
             setHasAttemptedSubmit(false);
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
@@ -114,6 +129,8 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
         setIssueSteps("");
         setSuggestion("");
         setAttachments([]);
+        setAttachmentLimitExceeded(false);
+        setAttachmentAnnouncement("");
         setHasAttemptedSubmit(false);
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
@@ -123,10 +140,36 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
     const handleAttachmentsChange = useCallback(
         (event: React.ChangeEvent<HTMLInputElement>) => {
             const selectedFiles = Array.from(event.target.files ?? []);
-            setAttachments(selectedFiles.slice(0, MAX_ATTACHMENTS));
+        const keptFiles = selectedFiles.slice(0, MAX_ATTACHMENTS);
+        const exceeded = selectedFiles.length > MAX_ATTACHMENTS;
+
+        setAttachments(keptFiles);
+        setAttachmentLimitExceeded(exceeded);
+
+        const baseMessage =
+          keptFiles.length > 0
+            ? t("chat.feedback.attachments.selected", {
+                count: keptFiles.length,
+              })
+            : t("chat.feedback.attachments.none");
+        const limitMessage = exceeded
+          ? ` ${t("chat.feedback.attachments.limit.exceeded", {
+              max: MAX_ATTACHMENTS,
+            })}`
+          : "";
+
+        setAttachmentAnnouncement(`${baseMessage}.${limitMessage}`);
         },
-        [],
+      [t],
     );
+
+    useEffect(() => {
+      if (!open || step !== "detail") return;
+
+      const targetInput =
+        feedbackType === "issue" ? issueDescriptionRef.current : suggestionRef.current;
+      targetInput?.focus();
+    }, [feedbackType, open, step]);
 
     const isIssueInvalid =
         feedbackType === "issue" &&
@@ -326,6 +369,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                   <TextField
                     label={t("chat.feedback.issue.description.label")}
                     aria-label={t("chat.feedback.issue.description.label")}
+                    inputRef={issueDescriptionRef}
                     placeholder={t(
                       "chat.feedback.issue.description.placeholder",
                     )}
@@ -335,7 +379,6 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                     rows={3}
                     fullWidth
                     required
-                    autoFocus
                     error={hasAttemptedSubmit && !issueDescription.trim()}
                     helperText={
                       hasAttemptedSubmit && !issueDescription.trim()
@@ -369,6 +412,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                 <TextField
                   label={t("chat.feedback.suggestion.note.label")}
                   aria-label={t("chat.feedback.suggestion.note.label")}
+                  inputRef={suggestionRef}
                   value={suggestion}
                   placeholder={
                     "" + t("chat.feedback.suggestion.note.placeholder")
@@ -378,7 +422,6 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                   rows={4}
                   fullWidth
                   required
-                  autoFocus
                   error={hasAttemptedSubmit && !suggestion.trim()}
                   helperText={
                     hasAttemptedSubmit && !suggestion.trim()
@@ -421,6 +464,17 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                       : t("chat.feedback.attachments.none")}
                   </Typography>
                 </Box>
+                {attachmentLimitExceeded && (
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    sx={{ mt: 0.75, display: "block" }}
+                  >
+                    {t("chat.feedback.attachments.limit.exceeded", {
+                      max: MAX_ATTACHMENTS,
+                    })}
+                  </Typography>
+                )}
                 <Typography
                   variant="caption"
                   color="text.secondary"
@@ -428,6 +482,14 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                 >
                   {t("chat.feedback.attachments.max")}
                 </Typography>
+                <Box
+                  component="span"
+                  aria-live="polite"
+                  aria-atomic="true"
+                  sx={visuallyHiddenSx}
+                >
+                  {attachmentAnnouncement}
+                </Box>
               </Box>
             </>
           )}

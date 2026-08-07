@@ -226,120 +226,114 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
     return (
       <>
         {/* role="group" gives screen-reader users context that these buttons belong together (WCAG 1.3.1) */}
-      <Box
-        role="group"
-        aria-label={t("message.actions")}
-        // Hide the entire group from AT when buttons are invisible — prevents screen readers
-        // from announcing "Message actions" and finding no accessible children (WCAG 1.3.1)
-        aria-hidden={!isVisible}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        sx={{
-          display: isVisible ? "inline-flex" : "none",
-          alignItems: "center",
-          mt: 0.5,
-          // Prevent ghost hover highlights on invisible buttons (WCAG 2.1.1)
-          pointerEvents: isVisible ? "auto" : "none",
-        }}
-      >
-        {/*
+        <Box
+          role="group"
+          aria-label={t("message.actions")}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          sx={{
+            display: isVisible ? "inline-flex" : "none",
+            alignItems: "center",
+            mt: 0.5,
+            // Prevent ghost hover highlights on invisible buttons (WCAG 2.1.1)
+            pointerEvents: isVisible ? "auto" : "none",
+          }}
+        >
+          {/*
           Visually-hidden live region — announces only copy confirmations to screen
           readers without interrupting ongoing speech (WCAG 4.1.3). Scoping it here
           (rather than on the outer Box) prevents unrelated state changes from
           triggering announcements.
         */}
-        <Box
-          component="span"
-          aria-live="polite"
-          aria-atomic="true"
-          sx={visuallyHiddenSx}
-        >
-          {isCopied ? t("copy.success") : ""}
-        </Box>
-
-        <Tooltip title={isCopied ? t("copy.success") : t("copy")} arrow>
-          <IconButton
-            aria-label={isCopied ? t("copy.success") : t("copy")}
-            size="small"
-            onClick={handleCopy}
-            tabIndex={isVisible ? 0 : -1}
-            aria-hidden={!isVisible}
-            sx={baseIconButtonSx}
+          <Box
+            component="span"
+            aria-live="polite"
+            aria-atomic="true"
+            sx={visuallyHiddenSx}
           >
-            {isCopied ? (
-              <CheckIcon sx={{ fontSize: 20, color: brandColor }} />
-            ) : (
-              <ContentCopyIcon sx={{ fontSize: 20, color: iconColor }} />
-            )}
-          </IconButton>
-        </Tooltip>
+            {isCopied ? t("copy.success") : ""}
+          </Box>
 
-        {/* Regenerate — only on the most recent non-streaming response */}
-        {isMostRecent && !isStreaming && (
-          <Tooltip title={t("regenerate")} arrow>
+          <Tooltip title={isCopied ? t("copy.success") : t("copy")} arrow>
             <IconButton
-              aria-label={t("regenerate")}
+              aria-label={isCopied ? t("copy.success") : t("copy")}
               size="small"
-              onClick={handleRegenerate}
+              onClick={handleCopy}
               tabIndex={isVisible ? 0 : -1}
-              aria-hidden={!isVisible}
               sx={baseIconButtonSx}
             >
-              <RefreshIcon sx={{ fontSize: 20, color: iconColor }} />
+              {isCopied ? (
+                <CheckIcon sx={{ fontSize: 20, color: brandColor }} />
+              ) : (
+                <ContentCopyIcon sx={{ fontSize: 20, color: iconColor }} />
+              )}
             </IconButton>
           </Tooltip>
-        )}
 
-        <Tooltip title={t("good.response")} arrow>
-          <IconButton
-            aria-label={t("good.response")}
-            aria-pressed={isLiked}
-            size="small"
-            onClick={handleLike}
-            tabIndex={isVisible ? 0 : -1}
-            aria-hidden={!isVisible}
-            sx={isLiked ? activeFeedbackSx : baseIconButtonSx}
-          >
-            {isLiked ? (
-              <ThumbUpAltIcon sx={{ fontSize: 20, color: brandColor }} />
-            ) : (
-              <ThumbUpAltOutlinedIcon sx={{ fontSize: 20, color: iconColor }} />
-            )}
-          </IconButton>
-        </Tooltip>
+          {/* Regenerate — only on the most recent non-streaming response */}
+          {isMostRecent && !isStreaming && (
+            <Tooltip title={t("regenerate")} arrow>
+              <IconButton
+                aria-label={t("regenerate")}
+                size="small"
+                onClick={handleRegenerate}
+                tabIndex={isVisible ? 0 : -1}
+                sx={baseIconButtonSx}
+              >
+                <RefreshIcon sx={{ fontSize: 20, color: iconColor }} />
+              </IconButton>
+            </Tooltip>
+          )}
 
-        <Tooltip title={t("bad.response")} arrow>
-          <IconButton
-            aria-label={t("bad.response")}
-            aria-pressed={isDisliked}
-            size="small"
-            onClick={handleDislike}
-            tabIndex={isVisible ? 0 : -1}
-            aria-hidden={!isVisible}
-            sx={isDisliked ? activeFeedbackSx : baseIconButtonSx}
-          >
-            {isDisliked ? (
-              <ThumbDownAltIcon sx={{ fontSize: 20, color: brandColor }} />
-            ) : (
-              <ThumbDownAltOutlinedIcon
-                sx={{ fontSize: 20, color: iconColor }}
-              />
-            )}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title={t("feedback")} arrow>
-          <IconButton
-            aria-label={t("feedback")}
-            size="small"
-            onClick={handleFeedbackNote}
-            tabIndex={isVisible ? 0 : -1}
-            aria-hidden={!isVisible}
-            sx={baseIconButtonSx}
-          >
-            <RateReviewOutlinedIcon sx={{ fontSize: 20, color: iconColor }} />
-          </IconButton>
-        </Tooltip>
-      </Box>
+          <Tooltip title={t("good.response")} arrow>
+            <IconButton
+              aria-label={t("good.response")}
+              aria-pressed={isLiked}
+              size="small"
+              onClick={handleLike}
+              tabIndex={isVisible ? 0 : -1}
+              sx={isLiked ? activeFeedbackSx : baseIconButtonSx}
+            >
+              {isLiked ? (
+                <ThumbUpAltIcon sx={{ fontSize: 20, color: brandColor }} />
+              ) : (
+                <ThumbUpAltOutlinedIcon
+                  sx={{ fontSize: 20, color: iconColor }}
+                />
+              )}
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title={t("bad.response")} arrow>
+            <IconButton
+              aria-label={t("bad.response")}
+              aria-pressed={isDisliked}
+              size="small"
+              onClick={handleDislike}
+              tabIndex={isVisible ? 0 : -1}
+              sx={isDisliked ? activeFeedbackSx : baseIconButtonSx}
+            >
+              {isDisliked ? (
+                <ThumbDownAltIcon sx={{ fontSize: 20, color: brandColor }} />
+              ) : (
+                <ThumbDownAltOutlinedIcon
+                  sx={{ fontSize: 20, color: iconColor }}
+                />
+              )}
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={t("feedback")} arrow>
+            <IconButton
+              aria-label={t("feedback")}
+              size="small"
+              onClick={handleFeedbackNote}
+              tabIndex={isVisible ? 0 : -1}
+              sx={baseIconButtonSx}
+            >
+              <RateReviewOutlinedIcon sx={{ fontSize: 20, color: iconColor }} />
+            </IconButton>
+          </Tooltip>
+        </Box>
 
         <ChatFeedbackForm
           open={chatFeedbackOpen}
