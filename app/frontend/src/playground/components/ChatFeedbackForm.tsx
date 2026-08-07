@@ -1,0 +1,266 @@
+/**
+ * ChatFeedbackForm component
+ *
+ * Two-step modal for per-message response feedback. Step 1 presents two
+ * category cards (issue / suggestion); step 2 collects a free-text note.
+ * Tracks messageId and sessionId alongside the feedback type and note.
+ * Currently logs to console only — wire `handleSubmit` to the backend when ready.
+ */
+
+import React, { useCallback, useState } from "react";
+import {
+    Box,
+    Button,
+    ButtonBase,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    IconButton,
+    TextField,
+    Typography,
+    useMediaQuery,
+    useTheme,
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined";
+import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { useTranslation } from "react-i18next";
+
+type FeedbackType = "issue" | "suggestion";
+type Step = "select" | "detail";
+
+interface ChatFeedbackFormProps {
+    open: boolean;
+    onClose: () => void;
+    messageId: string;
+    sessionId: string;
+}
+
+const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
+    open,
+    onClose,
+    messageId,
+    sessionId,
+}) => {
+    const { t } = useTranslation("playground");
+    const theme = useTheme();
+    const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+
+    const [step, setStep] = useState<Step>("select");
+    const [feedbackType, setFeedbackType] = useState<FeedbackType | null>(null);
+    const [note, setNote] = useState("");
+    const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+
+    const brandColor = theme.palette.primary.main;
+
+    // Delay state reset until after the close animation completes
+    const handleClose = useCallback(() => {
+        onClose();
+        setTimeout(() => {
+            setStep("select");
+            setFeedbackType(null);
+            setNote("");
+            setHasAttemptedSubmit(false);
+        }, 300);
+    }, [onClose]);
+
+    const handleSelectType = useCallback((type: FeedbackType) => {
+        setFeedbackType(type);
+        setStep("detail");
+    }, []);
+
+    const handleBack = useCallback(() => {
+        setStep("select");
+        setNote("");
+        setHasAttemptedSubmit(false);
+    }, []);
+
+    const handleSubmit = useCallback(() => {
+        setHasAttemptedSubmit(true);
+        if (!note.trim()) return;
+
+        // TODO: wire to backend when ready
+        console.log("Chat feedback submitted", {
+            messageId,
+            sessionId,
+            type: feedbackType,
+            positive: feedbackType === "suggestion",
+            note: note.trim(),
+        });
+
+        handleClose();
+    }, [feedbackType, handleClose, messageId, note, sessionId]);
+
+    /** sx applied to each category card — full WCAG 2.5.5 touch target and keyboard focus ring */
+    const cardSx = {
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        textAlign: "center",
+        p: 2.5,
+        gap: 1,
+        borderRadius: 2,
+        border: `1px solid ${theme.palette.divider}`,
+        width: "100%",
+        minHeight: 44,
+        transition: "border-color 0.15s, box-shadow 0.15s",
+        "&:hover": {
+            borderColor: brandColor,
+            boxShadow: `0 0 0 2px ${alpha(brandColor, 0.2)}`,
+        },
+        "&.Mui-focusVisible": {
+            outline: `2px solid ${brandColor}`,
+            outlineOffset: "2px",
+        },
+    } as const;
+
+    const iconWrapperSx = (color: string) => ({
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 56,
+        height: 56,
+        borderRadius: "50%",
+        bgcolor: alpha(color, 0.12),
+        color,
+    });
+
+    const dialogTitle =
+        step === "select"
+            ? t("chat.feedback.title")
+            : feedbackType === "issue"
+                ? t("chat.feedback.report.issue")
+                : t("chat.feedback.suggestion");
+
+    return (
+        <Dialog
+            open={open}
+            onClose={handleClose}
+            fullWidth
+            maxWidth="sm"
+            fullScreen={isSmallScreen}
+            aria-labelledby="chat-feedback-dialog-title"
+            aria-describedby={
+                step === "select" ? "chat-feedback-dialog-subtitle" : undefined
+            }
+        >
+            <DialogTitle
+                id="chat-feedback-dialog-title"
+                sx={{ display: "flex", alignItems: "center", gap: 1 }}
+            >
+                {step === "detail" && (
+                    <IconButton
+                        aria-label={t("chat.feedback.back")}
+                        edge="start"
+                        onClick={handleBack}
+                        size="small"
+                        sx={{ mr: 0.5 }}
+                    >
+                        <ArrowBackIcon fontSize="small" />
+                    </IconButton>
+                )}
+                {dialogTitle}
+            </DialogTitle>
+
+            <DialogContent>
+                {step === "select" ? (
+                    <>
+                        <Typography
+                            id="chat-feedback-dialog-subtitle"
+                            variant="body2"
+                            color="text.secondary"
+                            gutterBottom
+                        >
+                            {t("chat.feedback.subtitle")}
+                        </Typography>
+
+                        <Box
+                            sx={{
+                                display: "grid",
+                                gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+                                gap: 2,
+                                mt: 2,
+                            }}
+                        >
+                            <ButtonBase
+                                focusRipple
+                                onClick={() => handleSelectType("issue")}
+                                sx={cardSx}
+                                aria-label={t("chat.feedback.report.issue")}
+                            >
+                                <Box sx={iconWrapperSx(theme.palette.error.main)}>
+                                    <ReportProblemOutlinedIcon />
+                                </Box>
+                                <Typography variant="body2" fontWeight="bold">
+                                    {t("chat.feedback.report.issue")}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                    {t("chat.feedback.report.issue.description")}
+                                </Typography>
+                            </ButtonBase>
+
+                            <ButtonBase
+                                focusRipple
+                                onClick={() => handleSelectType("suggestion")}
+                                sx={cardSx}
+                                aria-label={t("chat.feedback.suggestion")}
+                            >
+                                <Box sx={iconWrapperSx(theme.palette.success.main)}>
+                                    <LightbulbOutlinedIcon />
+                                </Box>
+                                <Typography variant="body2" fontWeight="bold">
+                                    {t("chat.feedback.suggestion")}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                    {t("chat.feedback.suggestion.description")}
+                                </Typography>
+                            </ButtonBase>
+                        </Box>
+                    </>
+                ) : (
+                    <>
+                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                            {feedbackType === "issue"
+                                ? t("chat.feedback.report.issue.detail.subtitle")
+                                : t("chat.feedback.suggestion.detail.subtitle")}
+                        </Typography>
+
+                        <TextField
+                            label={t("chat.feedback.note.label")}
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                            multiline
+                            rows={4}
+                            fullWidth
+                            required
+                            error={hasAttemptedSubmit && !note.trim()}
+                            helperText={
+                                hasAttemptedSubmit && !note.trim()
+                                    ? t("chat.feedback.note.required")
+                                    : " "
+                            }
+                            sx={{ mt: 2 }}
+                        />
+                    </>
+                )}
+            </DialogContent>
+
+            {step === "detail" && (
+                <DialogActions>
+                    <Button onClick={handleClose}>{t("cancel")}</Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleSubmit}
+                        disabled={!note.trim()}
+                    >
+                        {t("submit")}
+                    </Button>
+                </DialogActions>
+            )}
+        </Dialog>
+    );
+};
+
+export default ChatFeedbackForm;

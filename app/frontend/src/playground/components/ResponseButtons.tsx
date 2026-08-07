@@ -53,6 +53,7 @@ import {
   clearResponseFeedback,
 } from "../store/thunks/feedbackThunks";
 import { sendAssistantMessage } from "../store/thunks/assistantThunks";
+import ChatFeedbackForm from "./ChatFeedbackForm";
 
 interface ResponseButtonsProps {
   /** Whether the parent message row is currently hovered. */
@@ -136,6 +137,7 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
 
     const [isCopied, setIsCopied] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
+    const [chatFeedbackOpen, setChatFeedbackOpen] = useState(false);
 
     // Guards against a double-dispatch on rapid taps: once regenerate fires we
     // block re-entry until the component unmounts (which happens after deleteMessage).
@@ -215,19 +217,15 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
       }
     }, [dispatch, feedback, messageId]);
     const handleFeedbackNote = useCallback(() => {
-      // if (feedback === "message") {
-      //   dispatch(clearResponseFeedback(messageId));
-      // } else {
-      //   dispatch(submitResponseFeedback(messageId, false));
-      // }
-      console.log("Feedback note clicked");
-    }, [dispatch, feedback, messageId]);
+      setChatFeedbackOpen(true);
+    }, []);
 
     const isLiked = feedback === "liked";
     const isDisliked = feedback === "disliked";
 
     return (
-      // role="group" gives screen-reader users context that these buttons belong together (WCAG 1.3.1)
+      <>
+        {/* role="group" gives screen-reader users context that these buttons belong together (WCAG 1.3.1) */}
       <Box
         role="group"
         aria-label={t("message.actions")}
@@ -342,6 +340,14 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
           </IconButton>
         </Tooltip>
       </Box>
+
+        <ChatFeedbackForm
+          open={chatFeedbackOpen}
+          onClose={() => setChatFeedbackOpen(false)}
+          messageId={messageId}
+          sessionId={sessionId}
+        />
+      </>
     );
   },
 );

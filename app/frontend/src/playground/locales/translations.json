@@ -654,5 +654,49 @@
     "message.label.assistant": {
         "en": "SSC Assistant's response",
         "fr": "Réponse de l'assistant SSC"
+    },
+    "chat.feedback.title": {
+        "en": "Response Feedback",
+        "fr": "Commentaires sur la réponse"
+    },
+    "chat.feedback.subtitle": {
+        "en": "We value your feedback and use it to improve SSCA. What would you like to do?",
+        "fr": "Vos commentaires nous aident à améliorer l'assistant SPC. Que souhaitez-vous faire ?"
+    },
+    "chat.feedback.report.issue": {
+        "en": "Report an Issue",
+        "fr": "Signaler un problème"
+    },
+    "chat.feedback.report.issue.description": {
+        "en": "Let us know about a problem or bug you encountered.",
+        "fr": "Informez-nous d'un problème ou d'un bogue que vous avez rencontré."
+    },
+    "chat.feedback.report.issue.detail.subtitle": {
+        "en": "Please provide details about the issue you encountered.",
+        "fr": "Veuillez fournir des détails sur le problème que vous avez rencontré."
+    },
+    "chat.feedback.suggestion": {
+        "en": "Provide a Suggestion",
+        "fr": "Fournir une suggestion"
+    },
+    "chat.feedback.suggestion.description": {
+        "en": "Share your ideas or suggestions to help us improve.",
+        "fr": "Partagez vos idées ou suggestions pour nous aider à nous améliorer."
+    },
+    "chat.feedback.suggestion.detail.subtitle": {
+        "en": "Share your suggestion to help us improve SSCA.",
+        "fr": "Partagez votre suggestion pour nous aider à améliorer l'assistant SPC."
+    },
+    "chat.feedback.note.label": {
+        "en": "Note",
+        "fr": "Note"
+    },
+    "chat.feedback.note.required": {
+        "en": "Note is required.",
+        "fr": "La note est obligatoire."
+    },
+    "chat.feedback.back": {
+        "en": "Back",
+        "fr": "Retour"
     }
 }
