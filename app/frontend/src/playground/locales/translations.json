@@ -675,6 +675,22 @@
         "en": "Please provide details about the issue you encountered.",
         "fr": "Veuillez fournir des détails sur le problème que vous avez rencontré."
     },
+    "chat.feedback.issue.description.label": {
+        "en": "Description",
+        "fr": "Description"
+    },
+    "chat.feedback.issue.description.required": {
+        "en": "Description is required.",
+        "fr": "La description est obligatoire."
+    },
+    "chat.feedback.issue.steps.label": {
+        "en": "Steps to Reproduce",
+        "fr": "Étapes à reproduire"
+    },
+    "chat.feedback.issue.steps.required": {
+        "en": "Steps to reproduce are required.",
+        "fr": "Les étapes à reproduire sont obligatoires."
+    },
     "chat.feedback.suggestion": {
         "en": "Provide a Suggestion",
         "fr": "Fournir une suggestion"
@@ -686,6 +702,34 @@
     "chat.feedback.suggestion.detail.subtitle": {
         "en": "Share your suggestion to help us improve SSCA.",
         "fr": "Partagez votre suggestion pour nous aider à améliorer l'assistant SPC."
+    },
+    "chat.feedback.suggestion.note.label": {
+        "en": "Suggestion",
+        "fr": "Suggestion"
+    },
+    "chat.feedback.suggestion.note.required": {
+        "en": "Suggestion is required.",
+        "fr": "La suggestion est obligatoire."
+    },
+    "chat.feedback.attachments.label": {
+        "en": "Attach images (max 3)",
+        "fr": "Joindre des images (max. 3)"
+    },
+    "chat.feedback.attachments.choose": {
+        "en": "Choose Files",
+        "fr": "Choisir des fichiers"
+    },
+    "chat.feedback.attachments.selected": {
+        "en": "{{count}} file(s) selected",
+        "fr": "{{count}} fichier(s) sélectionné(s)"
+    },
+    "chat.feedback.attachments.none": {
+        "en": "No file chosen",
+        "fr": "Aucun fichier choisi"
+    },
+    "chat.feedback.attachments.max": {
+        "en": "You can attach up to 3 images (JPG, PNG, GIF).",
+        "fr": "Vous pouvez joindre jusqu'à 3 images (JPG, PNG, GIF)."
     },
     "chat.feedback.note.label": {
         "en": "Note",

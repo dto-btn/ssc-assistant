@@ -7,7 +7,7 @@
  * Currently logs to console only — wire `handleSubmit` to the backend when ready.
  */
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
     Box,
     Button,
@@ -31,6 +31,33 @@ import { useTranslation } from "react-i18next";
 type FeedbackType = "issue" | "suggestion";
 type Step = "select" | "detail";
 
+const MAX_ATTACHMENTS = 3;
+
+interface FeedbackAttachment {
+    name: string;
+    size: number;
+    type: string;
+}
+
+type ChatFeedbackPayload =
+    | {
+          messageId: string;
+          sessionId: string;
+          type: "issue";
+          positive: false;
+          description: string;
+          stepsToReproduce: string;
+          attachments: FeedbackAttachment[];
+      }
+    | {
+          messageId: string;
+          sessionId: string;
+          type: "suggestion";
+          positive: true;
+          suggestion: string;
+          attachments: FeedbackAttachment[];
+      };
+
 interface ChatFeedbackFormProps {
     open: boolean;
     onClose: () => void;
@@ -50,8 +77,12 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
 
     const [step, setStep] = useState<Step>("select");
     const [feedbackType, setFeedbackType] = useState<FeedbackType | null>(null);
-    const [note, setNote] = useState("");
+    const [issueDescription, setIssueDescription] = useState("");
+    const [issueSteps, setIssueSteps] = useState("");
+    const [suggestion, setSuggestion] = useState("");
+    const [attachments, setAttachments] = useState<File[]>([]);
     const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const brandColor = theme.palette.primary.main;
 
@@ -61,8 +92,14 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
         setTimeout(() => {
             setStep("select");
             setFeedbackType(null);
-            setNote("");
+            setIssueDescription("");
+            setIssueSteps("");
+            setSuggestion("");
+            setAttachments([]);
             setHasAttemptedSubmit(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
         }, 300);
     }, [onClose]);
 
@@ -73,25 +110,76 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
 
     const handleBack = useCallback(() => {
         setStep("select");
-        setNote("");
+        setIssueDescription("");
+        setIssueSteps("");
+        setSuggestion("");
+        setAttachments([]);
         setHasAttemptedSubmit(false);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
     }, []);
+
+    const handleAttachmentsChange = useCallback(
+        (event: React.ChangeEvent<HTMLInputElement>) => {
+            const selectedFiles = Array.from(event.target.files ?? []);
+            setAttachments(selectedFiles.slice(0, MAX_ATTACHMENTS));
+        },
+        [],
+    );
+
+    const isIssueInvalid =
+        feedbackType === "issue" &&
+        (!issueDescription.trim() || !issueSteps.trim());
+    const isSuggestionInvalid =
+        feedbackType === "suggestion" && !suggestion.trim();
+    const isFormInvalid = isIssueInvalid || isSuggestionInvalid;
 
     const handleSubmit = useCallback(() => {
         setHasAttemptedSubmit(true);
-        if (!note.trim()) return;
+        if (!feedbackType || isFormInvalid) return;
+
+        const attachmentPayload = attachments.map((file) => ({
+            name: file.name,
+            size: file.size,
+            type: file.type,
+        }));
+
+        const payload: ChatFeedbackPayload =
+            feedbackType === "issue"
+                ? {
+                      messageId,
+                      sessionId,
+                      type: "issue",
+                      positive: false,
+                      description: issueDescription.trim(),
+                      stepsToReproduce: issueSteps.trim(),
+                      attachments: attachmentPayload,
+                  }
+                : {
+                      messageId,
+                      sessionId,
+                      type: "suggestion",
+                      positive: true,
+                      suggestion: suggestion.trim(),
+                      attachments: attachmentPayload,
+                  };
 
         // TODO: wire to backend when ready
-        console.log("Chat feedback submitted", {
-            messageId,
-            sessionId,
-            type: feedbackType,
-            positive: feedbackType === "suggestion",
-            note: note.trim(),
-        });
+        console.log("Chat feedback submitted", payload);
 
         handleClose();
-    }, [feedbackType, handleClose, messageId, note, sessionId]);
+    }, [
+        attachments,
+        feedbackType,
+        handleClose,
+        isFormInvalid,
+        issueDescription,
+        issueSteps,
+        messageId,
+        sessionId,
+        suggestion,
+    ]);
 
     /** sx applied to each category card — full WCAG 2.5.5 touch target and keyboard focus ring */
     const cardSx = {
@@ -227,22 +315,96 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                                 : t("chat.feedback.suggestion.detail.subtitle")}
                         </Typography>
 
-                        <TextField
-                            label={t("chat.feedback.note.label")}
-                            value={note}
-                            onChange={(e) => setNote(e.target.value)}
-                            multiline
-                            rows={4}
-                            fullWidth
-                            required
-                            error={hasAttemptedSubmit && !note.trim()}
-                            helperText={
-                                hasAttemptedSubmit && !note.trim()
-                                    ? t("chat.feedback.note.required")
-                                    : " "
-                            }
-                            sx={{ mt: 2 }}
-                        />
+                        {feedbackType === "issue" ? (
+                            <>
+                                <TextField
+                                    label={t("chat.feedback.issue.description.label")}
+                                    value={issueDescription}
+                                    onChange={(e) => setIssueDescription(e.target.value)}
+                                    multiline
+                                    rows={3}
+                                    fullWidth
+                                    required
+                                    error={hasAttemptedSubmit && !issueDescription.trim()}
+                                    helperText={
+                                        hasAttemptedSubmit && !issueDescription.trim()
+                                            ? t("chat.feedback.issue.description.required")
+                                            : " "
+                                    }
+                                    sx={{ mt: 2 }}
+                                />
+
+                                <TextField
+                                    label={t("chat.feedback.issue.steps.label")}
+                                    value={issueSteps}
+                                    onChange={(e) => setIssueSteps(e.target.value)}
+                                    multiline
+                                    rows={3}
+                                    fullWidth
+                                    required
+                                    error={hasAttemptedSubmit && !issueSteps.trim()}
+                                    helperText={
+                                        hasAttemptedSubmit && !issueSteps.trim()
+                                            ? t("chat.feedback.issue.steps.required")
+                                            : " "
+                                    }
+                                />
+                            </>
+                        ) : (
+                            <TextField
+                                label={t("chat.feedback.suggestion.note.label")}
+                                value={suggestion}
+                                onChange={(e) => setSuggestion(e.target.value)}
+                                multiline
+                                rows={4}
+                                fullWidth
+                                required
+                                error={hasAttemptedSubmit && !suggestion.trim()}
+                                helperText={
+                                    hasAttemptedSubmit && !suggestion.trim()
+                                        ? t("chat.feedback.suggestion.note.required")
+                                        : " "
+                                }
+                                sx={{ mt: 2 }}
+                            />
+                        )}
+
+                        <Box sx={{ mt: 1 }}>
+                            <Typography
+                                component="p"
+                                variant="subtitle2"
+                                sx={{ display: "block", mb: 1 }}
+                            >
+                                {t("chat.feedback.attachments.label")}
+                            </Typography>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                                <Button
+                                    variant="outlined"
+                                    component="label"
+                                    sx={{ textTransform: "none" }}
+                                >
+                                    {t("chat.feedback.attachments.choose")}
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        hidden
+                                        multiple
+                                        accept=".jpg,.jpeg,.png,.gif,image/jpeg,image/png,image/gif"
+                                        onChange={handleAttachmentsChange}
+                                    />
+                                </Button>
+                                <Typography variant="body2" color="text.secondary">
+                                    {attachments.length > 0
+                                        ? t("chat.feedback.attachments.selected", {
+                                              count: attachments.length,
+                                          })
+                                        : t("chat.feedback.attachments.none")}
+                                </Typography>
+                            </Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: "block" }}>
+                                {t("chat.feedback.attachments.max")}
+                            </Typography>
+                        </Box>
                     </>
                 )}
             </DialogContent>
@@ -253,7 +415,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                     <Button
                         variant="contained"
                         onClick={handleSubmit}
-                        disabled={!note.trim()}
+                        disabled={isFormInvalid}
                     >
                         {t("submit")}
                     </Button>
