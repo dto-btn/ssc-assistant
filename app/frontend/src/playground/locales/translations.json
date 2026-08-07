@@ -679,6 +679,10 @@
         "en": "Description",
         "fr": "Description"
     },
+    "chat.feedback.issue.description.placeholder": {
+        "en": "Please describe what happend",
+        "fr": "Veuillez décrire le problème que vous avez rencontré."
+    },
     "chat.feedback.issue.description.required": {
         "en": "Description is required.",
         "fr": "La description est obligatoire."
@@ -686,6 +690,10 @@
     "chat.feedback.issue.steps.label": {
         "en": "Steps to Reproduce",
         "fr": "Étapes à reproduire"
+    },
+    "chat.feedback.issue.steps.placeholder": {
+        "en": "Please provide the steps to reproduce the issue",
+        "fr": "Veuillez fournir les étapes pour reproduire le problème."
     },
     "chat.feedback.issue.steps.required": {
         "en": "Steps to reproduce are required.",
@@ -707,6 +715,10 @@
         "en": "Suggestion",
         "fr": "Suggestion"
     },
+    "chat.feedback.suggestion.note.placeholder": {
+        "en": "Please describe your suggestion in detail.",
+        "fr": "Veuillez décrire votre suggestion en détail."
+    },
     "chat.feedback.suggestion.note.required": {
         "en": "Suggestion is required.",
         "fr": "La suggestion est obligatoire."
@@ -726,6 +738,10 @@
     "chat.feedback.attachments.none": {
         "en": "No file chosen",
         "fr": "Aucun fichier choisi"
+    },
+    "chat.feedback.attachments.limit.exceeded": {
+        "en": "You selected more than {{max}} files. Only the first {{max}} were kept.",
+        "fr": "Vous avez sélectionné plus de {{max}} fichiers. Seuls les {{max}} premiers ont été conservés."
     },
     "chat.feedback.attachments.max": {
         "en": "You can attach up to 3 images (JPG, PNG, GIF).",

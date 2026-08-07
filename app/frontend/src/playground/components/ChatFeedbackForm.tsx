@@ -223,205 +223,229 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                 : t("chat.feedback.suggestion");
 
     return (
-        <Dialog
-            open={open}
-            onClose={handleClose}
-            fullWidth
-            maxWidth="sm"
-            fullScreen={isSmallScreen}
-            aria-labelledby="chat-feedback-dialog-title"
-            aria-describedby={
-                step === "select" ? "chat-feedback-dialog-subtitle" : undefined
-            }
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        fullWidth
+        maxWidth="sm"
+        fullScreen={isSmallScreen}
+        aria-labelledby="chat-feedback-dialog-title"
+        aria-describedby={
+          step === "select" ? "chat-feedback-dialog-subtitle" : undefined
+        }
+      >
+        <DialogTitle
+          id="chat-feedback-dialog-title"
+          sx={{ display: "flex", alignItems: "center", gap: 1 }}
         >
-            <DialogTitle
-                id="chat-feedback-dialog-title"
-                sx={{ display: "flex", alignItems: "center", gap: 1 }}
+          {step === "detail" && (
+            <IconButton
+              aria-label={t("chat.feedback.back")}
+              edge="start"
+              onClick={handleBack}
+              size="small"
+              sx={{ mr: 0.5 }}
             >
-                {step === "detail" && (
-                    <IconButton
-                        aria-label={t("chat.feedback.back")}
-                        edge="start"
-                        onClick={handleBack}
-                        size="small"
-                        sx={{ mr: 0.5 }}
-                    >
-                        <ArrowBackIcon fontSize="small" />
-                    </IconButton>
-                )}
-                {dialogTitle}
-            </DialogTitle>
+              <ArrowBackIcon fontSize="small" />
+            </IconButton>
+          )}
+          {dialogTitle}
+        </DialogTitle>
 
-            <DialogContent>
-                {step === "select" ? (
-                    <>
-                        <Typography
-                            id="chat-feedback-dialog-subtitle"
-                            variant="body2"
-                            color="text.secondary"
-                            gutterBottom
-                        >
-                            {t("chat.feedback.subtitle")}
-                        </Typography>
+        <DialogContent>
+          {step === "select" ? (
+            <>
+              <Typography
+                id="chat-feedback-dialog-subtitle"
+                variant="body2"
+                color="text.secondary"
+                gutterBottom
+              >
+                {t("chat.feedback.subtitle")}
+              </Typography>
 
-                        <Box
-                            sx={{
-                                display: "grid",
-                                gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-                                gap: 2,
-                                mt: 2,
-                            }}
-                        >
-                            <ButtonBase
-                                focusRipple
-                                onClick={() => handleSelectType("issue")}
-                                sx={cardSx}
-                                aria-label={t("chat.feedback.report.issue")}
-                            >
-                                <Box sx={iconWrapperSx(theme.palette.error.main)}>
-                                    <ReportProblemOutlinedIcon />
-                                </Box>
-                                <Typography variant="body2" fontWeight="bold">
-                                    {t("chat.feedback.report.issue")}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    {t("chat.feedback.report.issue.description")}
-                                </Typography>
-                            </ButtonBase>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+                  gap: 2,
+                  mt: 2,
+                }}
+              >
+                <ButtonBase
+                  focusRipple
+                  onClick={() => handleSelectType("issue")}
+                  sx={cardSx}
+                  aria-label={t("chat.feedback.report.issue")}
+                >
+                  <Box
+                    aria-hidden="true"
+                    sx={iconWrapperSx(theme.palette.error.main)}
+                  >
+                    <ReportProblemOutlinedIcon />
+                  </Box>
+                  <Typography variant="body2" fontWeight="bold">
+                    {t("chat.feedback.report.issue")}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {t("chat.feedback.report.issue.description")}
+                  </Typography>
+                </ButtonBase>
 
-                            <ButtonBase
-                                focusRipple
-                                onClick={() => handleSelectType("suggestion")}
-                                sx={cardSx}
-                                aria-label={t("chat.feedback.suggestion")}
-                            >
-                                <Box sx={iconWrapperSx(theme.palette.success.main)}>
-                                    <LightbulbOutlinedIcon />
-                                </Box>
-                                <Typography variant="body2" fontWeight="bold">
-                                    {t("chat.feedback.suggestion")}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    {t("chat.feedback.suggestion.description")}
-                                </Typography>
-                            </ButtonBase>
-                        </Box>
-                    </>
-                ) : (
-                    <>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                            {feedbackType === "issue"
-                                ? t("chat.feedback.report.issue.detail.subtitle")
-                                : t("chat.feedback.suggestion.detail.subtitle")}
-                        </Typography>
+                <ButtonBase
+                  focusRipple
+                  onClick={() => handleSelectType("suggestion")}
+                  sx={cardSx}
+                  aria-label={t("chat.feedback.suggestion")}
+                >
+                  <Box
+                    aria-hidden="true"
+                    sx={iconWrapperSx(theme.palette.success.main)}
+                  >
+                    <LightbulbOutlinedIcon />
+                  </Box>
+                  <Typography variant="body2" fontWeight="bold">
+                    {t("chat.feedback.suggestion")}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {t("chat.feedback.suggestion.description")}
+                  </Typography>
+                </ButtonBase>
+              </Box>
+            </>
+          ) : (
+            <>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                {feedbackType === "issue"
+                  ? t("chat.feedback.report.issue.detail.subtitle")
+                  : t("chat.feedback.suggestion.detail.subtitle")}
+              </Typography>
 
-                        {feedbackType === "issue" ? (
-                            <>
-                                <TextField
-                                    label={t("chat.feedback.issue.description.label")}
-                                    value={issueDescription}
-                                    onChange={(e) => setIssueDescription(e.target.value)}
-                                    multiline
-                                    rows={3}
-                                    fullWidth
-                                    required
-                                    error={hasAttemptedSubmit && !issueDescription.trim()}
-                                    helperText={
-                                        hasAttemptedSubmit && !issueDescription.trim()
-                                            ? t("chat.feedback.issue.description.required")
-                                            : " "
-                                    }
-                                    sx={{ mt: 2 }}
-                                />
+              {feedbackType === "issue" ? (
+                <>
+                  <TextField
+                    label={t("chat.feedback.issue.description.label")}
+                    aria-label={t("chat.feedback.issue.description.label")}
+                    placeholder={t(
+                      "chat.feedback.issue.description.placeholder",
+                    )}
+                    value={issueDescription}
+                    onChange={(e) => setIssueDescription(e.target.value)}
+                    multiline
+                    rows={3}
+                    fullWidth
+                    required
+                    autoFocus
+                    error={hasAttemptedSubmit && !issueDescription.trim()}
+                    helperText={
+                      hasAttemptedSubmit && !issueDescription.trim()
+                        ? t("chat.feedback.issue.description.required")
+                        : " "
+                    }
+                    sx={{ mt: 2 }}
+                  />
 
-                                <TextField
-                                    label={t("chat.feedback.issue.steps.label")}
-                                    value={issueSteps}
-                                    onChange={(e) => setIssueSteps(e.target.value)}
-                                    multiline
-                                    rows={3}
-                                    fullWidth
-                                    required
-                                    error={hasAttemptedSubmit && !issueSteps.trim()}
-                                    helperText={
-                                        hasAttemptedSubmit && !issueSteps.trim()
-                                            ? t("chat.feedback.issue.steps.required")
-                                            : " "
-                                    }
-                                />
-                            </>
-                        ) : (
-                            <TextField
-                                label={t("chat.feedback.suggestion.note.label")}
-                                value={suggestion}
-                                onChange={(e) => setSuggestion(e.target.value)}
-                                multiline
-                                rows={4}
-                                fullWidth
-                                required
-                                error={hasAttemptedSubmit && !suggestion.trim()}
-                                helperText={
-                                    hasAttemptedSubmit && !suggestion.trim()
-                                        ? t("chat.feedback.suggestion.note.required")
-                                        : " "
-                                }
-                                sx={{ mt: 2 }}
-                            />
-                        )}
+                  <TextField
+                    label={t("chat.feedback.issue.steps.label")}
+                    aria-label={t("chat.feedback.issue.steps.label")}
+                    placeholder={
+                      "" + t("chat.feedback.issue.steps.placeholder")
+                    }
+                    value={issueSteps}
+                    onChange={(e) => setIssueSteps(e.target.value)}
+                    multiline
+                    rows={3}
+                    fullWidth
+                    required
+                    error={hasAttemptedSubmit && !issueSteps.trim()}
+                    helperText={
+                      hasAttemptedSubmit && !issueSteps.trim()
+                        ? t("chat.feedback.issue.steps.required")
+                        : " "
+                    }
+                  />
+                </>
+              ) : (
+                <TextField
+                  label={t("chat.feedback.suggestion.note.label")}
+                  aria-label={t("chat.feedback.suggestion.note.label")}
+                  value={suggestion}
+                  placeholder={
+                    "" + t("chat.feedback.suggestion.note.placeholder")
+                  }
+                  onChange={(e) => setSuggestion(e.target.value)}
+                  multiline
+                  rows={4}
+                  fullWidth
+                  required
+                  autoFocus
+                  error={hasAttemptedSubmit && !suggestion.trim()}
+                  helperText={
+                    hasAttemptedSubmit && !suggestion.trim()
+                      ? t("chat.feedback.suggestion.note.required")
+                      : " "
+                  }
+                  sx={{ mt: 2 }}
+                />
+              )}
 
-                        <Box sx={{ mt: 1 }}>
-                            <Typography
-                                component="p"
-                                variant="subtitle2"
-                                sx={{ display: "block", mb: 1 }}
-                            >
-                                {t("chat.feedback.attachments.label")}
-                            </Typography>
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                                <Button
-                                    variant="outlined"
-                                    component="label"
-                                    sx={{ textTransform: "none" }}
-                                >
-                                    {t("chat.feedback.attachments.choose")}
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        hidden
-                                        multiple
-                                        accept=".jpg,.jpeg,.png,.gif,image/jpeg,image/png,image/gif"
-                                        onChange={handleAttachmentsChange}
-                                    />
-                                </Button>
-                                <Typography variant="body2" color="text.secondary">
-                                    {attachments.length > 0
-                                        ? t("chat.feedback.attachments.selected", {
-                                              count: attachments.length,
-                                          })
-                                        : t("chat.feedback.attachments.none")}
-                                </Typography>
-                            </Box>
-                            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: "block" }}>
-                                {t("chat.feedback.attachments.max")}
-                            </Typography>
-                        </Box>
-                    </>
-                )}
-            </DialogContent>
+              <Box sx={{ mt: 1 }}>
+                <Typography
+                  component="p"
+                  variant="subtitle2"
+                  sx={{ display: "block", mb: 1 }}
+                >
+                  {t("chat.feedback.attachments.label")}
+                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    sx={{ textTransform: "none" }}
+                  >
+                    {t("chat.feedback.attachments.choose")}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      hidden
+                      multiple
+                      accept=".jpg,.jpeg,.png,.gif,image/jpeg,image/png,image/gif"
+                      onChange={handleAttachmentsChange}
+                    />
+                  </Button>
+                  <Typography variant="body2" color="text.secondary">
+                    {attachments.length > 0
+                      ? t("chat.feedback.attachments.selected", {
+                          count: attachments.length,
+                        })
+                      : t("chat.feedback.attachments.none")}
+                  </Typography>
+                </Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 0.75, display: "block" }}
+                >
+                  {t("chat.feedback.attachments.max")}
+                </Typography>
+              </Box>
+            </>
+          )}
+        </DialogContent>
 
-            {step === "detail" && (
-                <DialogActions>
-                    <Button onClick={handleClose}>{t("cancel")}</Button>
-                    <Button
-                        variant="contained"
-                        onClick={handleSubmit}
-                        disabled={isFormInvalid}
-                    >
-                        {t("submit")}
-                    </Button>
-                </DialogActions>
-            )}
-        </Dialog>
+        {step === "detail" && (
+          <DialogActions>
+            <Button onClick={handleClose}>{t("cancel")}</Button>
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              disabled={isFormInvalid}
+            >
+              {t("submit")}
+            </Button>
+          </DialogActions>
+        )}
+      </Dialog>
     );
 };
 
