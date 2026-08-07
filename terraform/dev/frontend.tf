@@ -102,9 +102,11 @@ resource "azurerm_app_service_certificate" "frontend" {
   name                = "ScSc-CIO_ECT_ssc_assistant_dev-rg-CanadaCentralwebspace-Linux-260306201355"
   resource_group_name = azurerm_resource_group.dev.name
   location            = azurerm_service_plan.frontend.location
+  # Cert in keyvault
   pfx_blob            = filebase64("../certificates/certificate2026-pilot-prod.pfx")
   password            = var.pfx_secret
 
+  # var.pfx_secret only needed on new deployment or recreate.  Use random value otherwise.
   lifecycle {
     ignore_changes = [
       password,
