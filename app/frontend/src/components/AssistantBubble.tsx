@@ -515,7 +515,7 @@ export const AssistantBubble = ({
                 <>
                   <Divider />
                   <Box sx={{ m: 2, maxWidth: "100%" }}>
-                    <Typography gutterBottom component="h3" variant="subtitle2">
+                    <Typography gutterBottom component="h2" variant="subtitle2">
                       Citation(s):
                     </Typography>
                     <Stack
@@ -576,7 +576,7 @@ export const AssistantBubble = ({
                       borderColor: "divider",
                     }}
                   >
-                    <Typography component="h3" variant="subtitle1">Citations</Typography>
+                    <Typography component="h2" variant="subtitle1">Citations</Typography>
                     <IconButton
                       id="close-citation-drawer-button"
                       aria-label={t("aria.close") as string}
@@ -601,7 +601,7 @@ export const AssistantBubble = ({
                       >
                         <AccordionSummary
                           expandIcon={<ExpandMoreIcon />}
-                          aria-label={`Expand citation: ${group.title}`}
+                          aria-label={t("citations.accordion.label", { ns: "playground", title: group.title })}
                         >
                           <Typography variant="subtitle2">
                             {group.title}

@@ -321,7 +321,7 @@ const CitationDrawer: React.FC<CitationDrawerProps> = ({
           >
             <AccordionSummary
               expandIcon={<ExpandMoreIcon />}
-              aria-label={t("citations.accordion.expand", { title: getGroupDisplayTitle(group) })}
+              aria-label={t("citations.accordion.label", { title: getGroupDisplayTitle(group) })}
             >
               <Typography
                 variant="subtitle2"

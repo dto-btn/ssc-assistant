@@ -15,6 +15,7 @@ import type { AppDispatch } from "../store";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
 import { Box, Typography, CircularProgress } from "@mui/material";
+import { visuallyHidden } from "@mui/utils";
 import Suggestions from "./Suggestions";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 import { selectCurrentSessionFiles } from "../store/selectors/sessionFilesSelectors";
@@ -77,28 +78,17 @@ const ChatArea: React.FC<ChatAreaProps> = ({
       <>
         <Typography
           component="h1"
-          sx={{
-            position: "absolute",
-            width: "1px",
-            height: "1px",
-            overflow: "hidden",
-            clip: "rect(0,0,0,0)",
-            whiteSpace: "nowrap",
-          }}
+          sx={visuallyHidden}
         >
           {t("page.title")}
         </Typography>
-        <Box display="flex" alignItems="center" width="100%">
-          <Box flexGrow={1} minWidth={0}>
-            <TopBar 
-            onToggleSidebar={onOpenSidebar} 
-            isSidebarOpen={isSidebarOpen}
-            onExport={handleExport}
-            isExportDisabled={!currentSessionId}
-            isExporting={isExporting}
-          />
-          </Box>
-        </Box>
+        <TopBar
+          onToggleSidebar={onOpenSidebar}
+          isSidebarOpen={isSidebarOpen}
+          onExport={handleExport}
+          isExportDisabled={!currentSessionId}
+          isExporting={isExporting}
+        />
       </>
     );
   };

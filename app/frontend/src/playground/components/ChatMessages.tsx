@@ -726,8 +726,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
                 </Box>
               )}
               {!shouldHideAssistantMarkdownForBrTable && (
-                // WCAG 3.3.1 / 4.1.3 — scoped to text only so buttons after it aren't announced.
-                <Box sx={ASSISTANT_MARKDOWN_SX} role={isError ? "alert" : undefined}>
+                <Box sx={ASSISTANT_MARKDOWN_SX}>
                   <MarkdownHooks
                     components={markdownComponents}
                     remarkPlugins={remarkPlugins}
@@ -935,9 +934,6 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
     <ListItem
       key={message.id}
       alignItems="flex-start"
-      // WCAG 1.3.1 — identify the message sender so screen readers announce
-      // who said what before reading the message content.
-      aria-label={isAssistantMessage ? t("message.label.assistant") : t("message.label.user")}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       sx={{

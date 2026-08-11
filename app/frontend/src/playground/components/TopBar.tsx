@@ -90,7 +90,7 @@ const TopBar: React.FC<TopBarProps> = ({
             overflow: "hidden",
           }}
         >
-          <Tooltip title={t("sidebar.navigation", { ns: "playground" })}>
+          <Tooltip title={t(isSidebarOpen ? "sidebar.close" : "sidebar.open", { ns: "playground" })}>
             <IconButton
               id="playground-open-sidebar-button"
               onClick={onToggleSidebar}
