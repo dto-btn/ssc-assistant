@@ -14,7 +14,7 @@ import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../store";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
-import { Box, Typography, useTheme, useMediaQuery, CircularProgress } from "@mui/material";
+import { Box, Typography, CircularProgress } from "@mui/material";
 import Suggestions from "./Suggestions";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 import { selectCurrentSessionFiles } from "../store/selectors/sessionFilesSelectors";
@@ -62,9 +62,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   // Session archive rehydration managed by dedicated hook.
   const { isRehydrated } = useSessionRehydration(currentSessionId);
 
+  /** 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isMobileSidebarOpen = useAppSelector((state) => state.ui.isMobileSidebarOpen);
+  */
 
   /**
    * Renders the brand TopBar with sidebar toggle.
@@ -91,8 +93,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
             <TopBar 
             onToggleSidebar={onOpenSidebar} 
             isSidebarOpen={isSidebarOpen}
-            isMobile={isMobile}
-            isMobileSidebarOpen={isMobileSidebarOpen}
             onExport={handleExport}
             isExportDisabled={!currentSessionId}
             isExporting={isExporting}

@@ -3,7 +3,6 @@ import { AppBar, Toolbar, Typography, Box, useTheme, Tooltip, IconButton, Button
 import { useTranslation } from "react-i18next";
 import MenuIcon from "@mui/icons-material/Menu";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
-import CloseIcon from "@mui/icons-material/Close";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
@@ -22,8 +21,6 @@ import type { PlaygroundExportFormat } from "../export/sessionExport";
 interface TopBarProps {
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
-  isMobile?: boolean;
-  isMobileSidebarOpen?: boolean;
   onExport?: (format: PlaygroundExportFormat) => void;
   isExportDisabled?: boolean;
   isExporting?: boolean;
@@ -32,8 +29,6 @@ interface TopBarProps {
 const TopBar: React.FC<TopBarProps> = ({
   onToggleSidebar,
   isSidebarOpen,
-  isMobile,
-  isMobileSidebarOpen,
   onExport,
   isExportDisabled,
   isExporting,
@@ -95,26 +90,24 @@ const TopBar: React.FC<TopBarProps> = ({
             overflow: "hidden",
           }}
         >
-          {(!isMobile || !isMobileSidebarOpen) && (
-            <Tooltip title={t("sidebar.navigation", { ns: "playground" })}>
-              <IconButton
-                id="playground-open-sidebar-button"
-                onClick={onToggleSidebar}
-                aria-label={t("sidebar.navigation", { ns: "playground" })}
-                aria-expanded={isSidebarOpen}
-                aria-controls="playground-session-sidebar"
-                sx={{
-                  color: "white",
-                  minWidth: 44,
-                  minHeight: 44,
-                  // WCAG 2.4.7 — white ring stays visible on the dark gradient toolbar.
-                  "&:focus-visible": { outline: "2px solid #fff", outlineOffset: "2px" },
-                }}
-              >
-                {isSidebarOpen ? <MenuOpenIcon /> : <MenuIcon />}
-              </IconButton>
-            </Tooltip>
-          )}
+          <Tooltip title={t("sidebar.navigation", { ns: "playground" })}>
+            <IconButton
+              id="playground-open-sidebar-button"
+              onClick={onToggleSidebar}
+              aria-label={t("sidebar.navigation", { ns: "playground" })}
+              aria-expanded={isSidebarOpen}
+              aria-controls="playground-session-sidebar"
+              sx={{
+                color: "white",
+                minWidth: 44,
+                minHeight: 44,
+                // WCAG 2.4.7 — white ring stays visible on the dark gradient toolbar.
+                "&:focus-visible": { outline: "2px solid #fff", outlineOffset: "2px" },
+              }}
+            >
+              {isSidebarOpen ? <MenuOpenIcon /> : <MenuIcon />}
+            </IconButton>
+          </Tooltip>
           <img
             src={logo}
             style={{
@@ -146,23 +139,7 @@ const TopBar: React.FC<TopBarProps> = ({
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: { xs: "0.5rem", sm: "1rem" }, flexShrink: 0 }}>
-          {isMobile && isMobileSidebarOpen && (
-            <Tooltip title={t("sidebar.close", { ns: "playground" })}>
-              <IconButton
-                onClick={onToggleSidebar}
-                aria-label={t("sidebar.close", { ns: "playground" })}
-                sx={{
-                  color: "white",
-                  minWidth: 44,
-                  minHeight: 44,
-                  // WCAG 2.4.7 — white ring stays visible on the dark gradient toolbar.
-                  "&:focus-visible": { outline: "2px solid #fff", outlineOffset: "2px" },
-                }}
-              >
-                <CloseIcon />
-              </IconButton>
-            </Tooltip>
-          )}
+
           <Box sx={{ display: "flex" }}>
             <Tooltip
               title={
