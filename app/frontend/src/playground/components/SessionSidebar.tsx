@@ -178,7 +178,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
   const moreMenuOpen = Boolean(moreMenuPosition);
 
   const sidebarTitleId = "playground-session-sidebar-title";
-  const sidebarNavLabel = t("sidebar.chatSessionsNavigation", { defaultValue: "Chat sessions" });
+  const sidebarNavLabel = t("sidebar.navigation");
 
   const [containerRef, { height: containerHeight }] = useMeasure();
   const listRef = React.useRef<ListImperativeAPI | null>(null);
