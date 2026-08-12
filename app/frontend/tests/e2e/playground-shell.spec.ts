@@ -27,6 +27,10 @@ test('renders the playground shell and creates a first chat session', async ({ p
 /**
  * Verifies that desktop layouts can collapse and reopen the session sidebar
  * without losing access to the active chat shell.
+ *
+ * WCAG 2.5.3 / 3.2.4 — the toggle keeps one stable accessible name across states;
+ * only aria-expanded changes, so voice-control and screen-reader users can always
+ * target it by the same name.
  */
 test('collapses and reopens the desktop sidebar', async ({ playground }, testInfo) => {
   test.skip(isMobileProject(testInfo.project.name), 'Desktop-only sidebar behaviour.');
@@ -34,9 +38,12 @@ test('collapses and reopens the desktop sidebar', async ({ playground }, testInf
   await playground.goto();
   await playground.startNewChat();
 
-  await expect(playground.sidebarToggle()).toHaveAttribute('aria-label', 'Collapse sidebar');
+  await expect(playground.sidebarToggle()).toHaveAttribute('aria-label', 'Chat sessions');
+  await expect(playground.sidebarToggle()).toHaveAttribute('aria-expanded', 'true');
   await playground.sidebarToggle().click();
-  await expect(playground.sidebarToggle()).toHaveAttribute('aria-label', 'Open chat sessions');
+  await expect(playground.sidebarToggle()).toHaveAttribute('aria-label', 'Chat sessions');
+  await expect(playground.sidebarToggle()).toHaveAttribute('aria-expanded', 'false');
   await playground.sidebarToggle().click();
-  await expect(playground.sidebarToggle()).toHaveAttribute('aria-label', 'Collapse sidebar');
+  await expect(playground.sidebarToggle()).toHaveAttribute('aria-label', 'Chat sessions');
+  await expect(playground.sidebarToggle()).toHaveAttribute('aria-expanded', 'true');
 });

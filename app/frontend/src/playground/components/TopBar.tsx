@@ -90,6 +90,7 @@ const TopBar: React.FC<TopBarProps> = ({
             overflow: "hidden",
           }}
         >
+          {/* WCAG 2.5.3 / 3.2.4 (M1) — the accessible name stays constant; aria-expanded carries the state. */}
           <Tooltip title={t(isSidebarOpen ? "sidebar.close" : "sidebar.open", { ns: "playground" })}>
             <IconButton
               id="playground-open-sidebar-button"

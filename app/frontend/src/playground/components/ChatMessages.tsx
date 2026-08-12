@@ -164,7 +164,6 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
   remarkPlugins,
   rehypePlugins,
   resolvedAttachments,
-  isError,
 }) => {
   const { t, i18n } = useTranslation("playground");
   const [isCitationDrawerOpen, setCitationDrawerOpen] = useState(false);
@@ -934,6 +933,11 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
     <ListItem
       key={message.id}
       alignItems="flex-start"
+      aria-label={
+        isUserMessage
+          ? t("message.label.user", { defaultValue: "Your message" })
+          : t("message.label.assistant", { defaultValue: "SSC Assistant's response" })
+      }
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       sx={{

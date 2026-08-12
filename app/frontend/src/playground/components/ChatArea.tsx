@@ -75,7 +75,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
    */
   const renderHeader = () => {
     return (
-      <>
+      <Box component="header">
         <Typography
           component="h1"
           sx={visuallyHidden}
@@ -89,7 +89,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({
           isExportDisabled={!currentSessionId}
           isExporting={isExporting}
         />
-      </>
+      </Box>
     );
   };
 
@@ -264,7 +264,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({
   if (messages.length === 0) {
     return (
       <Box
-        component="main"
         flex={1}
         display="flex"
         flexDirection="column"
@@ -272,32 +271,34 @@ const ChatArea: React.FC<ChatAreaProps> = ({
         minWidth={0}
       >
         {renderHeader()}
-        <Box flex={1} display="flex" flexDirection="column" alignItems="center" justifyContent="center" p={{ xs: 2, sm: 4, md: 6 }} minWidth={0}>
-          <Typography component="h2" variant="h3" gutterBottom>
-            {t("how.can.i.help")}
-          </Typography>
-          <Typography
-            component="p"
-            variant="body1"
-            align="center"
-            sx={{
-              width: "100%",
-              maxWidth: { xs: "100%", sm: "600px", md: "800px" },
-              mb: { xs: 2, sm: 3, md: 4 },
-              px: { xs: 1, sm: 2 },
-              lineHeight: 1.7,
-              color: "text.primary",
-            }}
-          >
-            {t("how.can.i.help.description")}
-          </Typography>
-          <Suggestions
-            onSuggestionClicked={handleSuggestion}
-            disabled={isLoading}
-          />
-          <OrchestratorDebugPanel sessionId={currentSessionId} />
+        <Box component="main" display="flex" flexDirection="column" flex={1} minHeight={0} minWidth={0}>
+          <Box flex={1} display="flex" flexDirection="column" alignItems="center" justifyContent="center" p={{ xs: 2, sm: 4, md: 6 }} minWidth={0}>
+            <Typography component="h2" variant="h3" gutterBottom>
+              {t("how.can.i.help")}
+            </Typography>
+            <Typography
+              component="p"
+              variant="body1"
+              align="center"
+              sx={{
+                width: "100%",
+                maxWidth: { xs: "100%", sm: "600px", md: "800px" },
+                mb: { xs: 2, sm: 3, md: 4 },
+                px: { xs: 1, sm: 2 },
+                lineHeight: 1.7,
+                color: "text.primary",
+              }}
+            >
+              {t("how.can.i.help.description")}
+            </Typography>
+            <Suggestions
+              onSuggestionClicked={handleSuggestion}
+              disabled={isLoading}
+            />
+            <OrchestratorDebugPanel sessionId={currentSessionId} />
+          </Box>
+          <ChatInput sessionId={currentSessionId} />
         </Box>
-        <ChatInput sessionId={currentSessionId} />
       </Box>
     );
   }

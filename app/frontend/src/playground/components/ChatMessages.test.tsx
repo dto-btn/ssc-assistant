@@ -988,10 +988,9 @@ describe("ChatMessages", () => {
     const listItems = screen.getAllByRole("listitem");
     expect(listItems).toHaveLength(2);
 
-    // No aria-label on the list items — sender context comes from visually-hidden
-    // prefix spans and the logo alt text inside each item, preventing double-read.
-    expect(listItems[0]).not.toHaveAttribute("aria-label");
-    expect(listItems[1]).not.toHaveAttribute("aria-label");
+    // Each list item names its sender so screen readers announce who wrote the message.
+    expect(listItems[0]).toHaveAttribute("aria-label", "You said:");
+    expect(listItems[1]).toHaveAttribute("aria-label", "Assistant said:");
   });
 
   it("includes a visually-hidden sender prefix inside user messages (M8)", () => {
