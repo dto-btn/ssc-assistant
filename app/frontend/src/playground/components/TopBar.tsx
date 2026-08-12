@@ -1,5 +1,6 @@
 import React from "react";
 import { AppBar, Toolbar, Typography, Box, useTheme, Tooltip, IconButton, Button } from "@mui/material";
+import { visuallyHidden } from "@mui/utils";
 import { useTranslation } from "react-i18next";
 import MenuIcon from "@mui/icons-material/Menu";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
@@ -67,6 +68,10 @@ const TopBar: React.FC<TopBarProps> = ({
         borderColor: "divider",
       }}
     >
+      {/* The AppBar is the page banner landmark, so the page h1 lives inside it. */}
+      <Typography component="h1" sx={visuallyHidden}>
+        {t("page.title", { ns: "playground" })}
+      </Typography>
       <Toolbar
         sx={{
           background: `linear-gradient(45deg, #222, ${theme.palette.primary.main})`,

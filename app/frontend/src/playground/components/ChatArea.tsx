@@ -15,7 +15,6 @@ import type { AppDispatch } from "../store";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
 import { Box, Typography, CircularProgress } from "@mui/material";
-import { visuallyHidden } from "@mui/utils";
 import Suggestions from "./Suggestions";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 import { selectCurrentSessionFiles } from "../store/selectors/sessionFilesSelectors";
@@ -71,25 +70,17 @@ const ChatArea: React.FC<ChatAreaProps> = ({
 
   /**
    * Renders the brand TopBar with sidebar toggle.
-   * The visually-hidden h1 here is the single page-title landmark for all render states.
+   * TopBar's AppBar is the page banner landmark and carries the page h1.
    */
   const renderHeader = () => {
     return (
-      <Box component="header">
-        <Typography
-          component="h1"
-          sx={visuallyHidden}
-        >
-          {t("page.title")}
-        </Typography>
-        <TopBar
-          onToggleSidebar={onOpenSidebar}
-          isSidebarOpen={isSidebarOpen}
-          onExport={handleExport}
-          isExportDisabled={!currentSessionId}
-          isExporting={isExporting}
-        />
-      </Box>
+      <TopBar
+        onToggleSidebar={onOpenSidebar}
+        isSidebarOpen={isSidebarOpen}
+        onExport={handleExport}
+        isExportDisabled={!currentSessionId}
+        isExporting={isExporting}
+      />
     );
   };
 
