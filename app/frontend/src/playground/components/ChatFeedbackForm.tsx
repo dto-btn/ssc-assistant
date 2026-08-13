@@ -9,19 +9,20 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Box,
-    Button,
-    ButtonBase,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    IconButton,
-    TextField,
-    Typography,
-    useMediaQuery,
-    useTheme,
+  Box,
+  Button,
+  ButtonBase,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  TextField,
+  Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
+import { visuallyHidden } from "@mui/utils";
 import { alpha } from "@mui/material/styles";
 import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined";
 import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
@@ -33,52 +34,43 @@ type Step = "select" | "detail";
 
 const MAX_ATTACHMENTS = 3;
 
-const visuallyHiddenSx = {
-  position: "absolute",
-  width: "1px",
-  height: "1px",
-  overflow: "hidden",
-  clip: "rect(0,0,0,0)",
-  whiteSpace: "nowrap",
-} as const;
-
 interface FeedbackAttachment {
-    name: string;
-    size: number;
-    type: string;
+  name: string;
+  size: number;
+  type: string;
 }
 
 type ChatFeedbackPayload =
-    | {
-          messageId: string;
-          sessionId: string;
-          type: "issue";
-          positive: false;
-          description: string;
-          stepsToReproduce: string;
-          attachments: FeedbackAttachment[];
-      }
-    | {
-          messageId: string;
-          sessionId: string;
-          type: "suggestion";
-          positive: true;
-          suggestion: string;
-          attachments: FeedbackAttachment[];
-      };
+  | {
+      messageId: string;
+      sessionId: string;
+      type: "issue";
+      positive: false;
+      description: string;
+      stepsToReproduce: string;
+      attachments: FeedbackAttachment[];
+    }
+  | {
+      messageId: string;
+      sessionId: string;
+      type: "suggestion";
+      positive: true;
+      suggestion: string;
+      attachments: FeedbackAttachment[];
+    };
 
 interface ChatFeedbackFormProps {
-    open: boolean;
-    onClose: () => void;
-    messageId: string;
-    sessionId: string;
+  open: boolean;
+  onClose: () => void;
+  messageId: string;
+  sessionId: string;
 }
 
 const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
-    open,
-    onClose,
-    messageId,
-    sessionId,
+  open,
+  onClose,
+  messageId,
+  sessionId,
 }) => {
   const { t } = useTranslation("playground");
   const theme = useTheme();
@@ -103,32 +95,10 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
 
   const brandColor = theme.palette.primary.main;
 
-  // Delay state reset until after the close animation completes
-  const handleClose = useCallback(() => {
-    onClose();
-    setTimeout(() => {
-      setStep("select");
-      setFeedbackType(null);
-      setIssueDescription("");
-      setIssueSteps("");
-      setSuggestion("");
-      setAttachments([]);
-      setAttachmentLimitExceeded(false);
-      setAttachmentAnnouncement("");
-      setHasAttemptedSubmit(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }, 300);
-  }, [onClose]);
-
-  const handleSelectType = useCallback((type: FeedbackType) => {
-    setFeedbackType(type);
-    setStep("detail");
-  }, []);
-
-  const handleBack = useCallback(() => {
+  // Reset all state to initial values
+  const resetState = () => {
     setStep("select");
+    setFeedbackType(null);
     setIssueDescription("");
     setIssueSteps("");
     setSuggestion("");
@@ -139,6 +109,21 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  // Reset state when the dialog is closed using slotprops.transition.onExited, so that the dialog is fully closed before resetting state.
+  const handleClose = useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  const handleSelectType = useCallback((type: FeedbackType) => {
+    setFeedbackType(type);
+    setStep("detail");
+  }, []);
+
+  const handleBack = useCallback(() => {
+    setStep("select");
+    resetState();
   }, []);
 
   const handleAttachmentsChange = useCallback(
@@ -286,6 +271,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
       aria-describedby={
         step === "select" ? "chat-feedback-dialog-subtitle" : undefined
       }
+      slotProps={{ transition: { onExited: resetState } }}
     >
       <DialogTitle
         id="chat-feedback-dialog-title"
@@ -329,7 +315,8 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                 focusRipple
                 onClick={() => handleSelectType("issue")}
                 sx={cardSx}
-                aria-label={t("chat.feedback.report.issue")}
+                aria-label={t(`chat.feedback.report.issue`)}
+                aria-describedby="feedback-issue-description"
               >
                 <Box
                   aria-hidden="true"
@@ -337,10 +324,18 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                 >
                   <ReportProblemOutlinedIcon />
                 </Box>
-                <Typography variant="body2" fontWeight="bold">
+                <Typography
+                  id="feedback-issue-title"
+                  variant="body2"
+                  fontWeight="bold"
+                >
                   {t("chat.feedback.report.issue")}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  id="feedback-issue-description"
+                  variant="caption"
+                  color="text.primary"
+                >
                   {t("chat.feedback.report.issue.description")}
                 </Typography>
               </ButtonBase>
@@ -349,7 +344,8 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                 focusRipple
                 onClick={() => handleSelectType("suggestion")}
                 sx={cardSx}
-                aria-label={t("chat.feedback.suggestion")}
+                aria-label={t(`chat.feedback.suggestion`)}
+                aria-describedby="feedback-suggestion-description"
               >
                 <Box
                   aria-hidden="true"
@@ -360,7 +356,11 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                 <Typography variant="body2" fontWeight="bold">
                   {t("chat.feedback.suggestion")}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  id="feedback-suggestion-description"
+                  variant="caption"
+                  color="text.primary"
+                >
                   {t("chat.feedback.suggestion.description")}
                 </Typography>
               </ButtonBase>
@@ -378,7 +378,6 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
               <>
                 <TextField
                   label={t("chat.feedback.issue.description.label")}
-                  aria-label={t("chat.feedback.issue.description.label")}
                   inputRef={issueDescriptionRef}
                   placeholder={t("chat.feedback.issue.description.placeholder")}
                   value={issueDescription}
@@ -398,7 +397,6 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
 
                 <TextField
                   label={t("chat.feedback.issue.steps.label")}
-                  aria-label={t("chat.feedback.issue.steps.label")}
                   placeholder={"" + t("chat.feedback.issue.steps.placeholder")}
                   value={issueSteps}
                   onChange={(e) => setIssueSteps(e.target.value)}
@@ -417,7 +415,6 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
             ) : (
               <TextField
                 label={t("chat.feedback.suggestion.note.label")}
-                aria-label={t("chat.feedback.suggestion.note.label")}
                 inputRef={suggestionRef}
                 value={suggestion}
                 placeholder={
@@ -492,7 +489,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                 component="span"
                 aria-live="polite"
                 aria-atomic="true"
-                sx={visuallyHiddenSx}
+                sx={visuallyHidden}
               >
                 {attachmentAnnouncement}
               </Box>
@@ -504,17 +501,13 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
       {step === "detail" && (
         <DialogActions>
           <Button onClick={handleClose}>{t("cancel")}</Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={isFormInvalid}
-          >
+          <Button variant="contained" onClick={handleSubmit}>
             {t("submit")}
           </Button>
         </DialogActions>
       )}
     </Dialog>
   );
-};
+};;;
 
 export default ChatFeedbackForm;

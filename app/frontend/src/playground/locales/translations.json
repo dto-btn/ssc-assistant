@@ -680,8 +680,8 @@
         "fr": "Description"
     },
     "chat.feedback.issue.description.placeholder": {
-        "en": "Please describe what happend",
-        "fr": "Veuillez décrire le problème que vous avez rencontré."
+      "en": "Please describe the problem you encountered.",
+      "fr": "Veuillez décrire le problème que vous avez rencontré."
     },
     "chat.feedback.issue.description.required": {
         "en": "Description is required.",

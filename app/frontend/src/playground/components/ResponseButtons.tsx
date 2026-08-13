@@ -54,6 +54,8 @@ import {
 } from "../store/thunks/feedbackThunks";
 import { sendAssistantMessage } from "../store/thunks/assistantThunks";
 import ChatFeedbackForm from "./ChatFeedbackForm";
+import { visuallyHidden } from "@mui/utils";
+import isFeatureEnabled from "../FeatureGate";
 
 interface ResponseButtonsProps {
   /** Whether the parent message row is currently hovered. */
@@ -75,16 +77,6 @@ interface ResponseButtonsProps {
 }
 
 const COPY_RESET_MS = 3000;
-
-/** Visually-hidden style — removes an element from view while keeping it accessible to screen readers. */
-const visuallyHiddenSx = {
-  position: "absolute",
-  width: "1px",
-  height: "1px",
-  overflow: "hidden",
-  clip: "rect(0,0,0,0)",
-  whiteSpace: "nowrap",
-} as const;
 
 const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
   ({
@@ -249,7 +241,7 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
             component="span"
             aria-live="polite"
             aria-atomic="true"
-            sx={visuallyHiddenSx}
+            sx={visuallyHidden}
           >
             {isCopied ? t("copy.success") : ""}
           </Box>
@@ -322,17 +314,21 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
               )}
             </IconButton>
           </Tooltip>
-          <Tooltip title={t("feedback")} arrow>
-            <IconButton
-              aria-label={t("feedback")}
-              size="small"
-              onClick={handleFeedbackNote}
-              tabIndex={isVisible ? 0 : -1}
-              sx={baseIconButtonSx}
-            >
-              <RateReviewOutlinedIcon sx={{ fontSize: 20, color: iconColor }} />
-            </IconButton>
-          </Tooltip>
+          {isFeatureEnabled("ChatFeedbackResponse") && (
+            <Tooltip title={t("feedback")} arrow>
+              <IconButton
+                aria-label={t("feedback")}
+                size="small"
+                onClick={handleFeedbackNote}
+                tabIndex={isVisible ? 0 : -1}
+                sx={baseIconButtonSx}
+              >
+                <RateReviewOutlinedIcon
+                  sx={{ fontSize: 20, color: iconColor }}
+                />
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
 
         <ChatFeedbackForm
