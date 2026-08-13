@@ -35,6 +35,34 @@ variable "jwt_secret" {
     description = "the jwt secret that will be used to decrypt the access key from the API"
 }
 
+variable "litellm_proxy_url" {
+    type = string
+    description = "Base URL of the standalone LiteLLM proxy (no /v1 suffix), reached server-side by the API."
+}
+
+variable "litellm_master_key" {
+    type = string
+    sensitive = true
+    description = "LiteLLM master key sent by the API on the X-Litellm-Key header. Keep server-side only."
+}
+
+variable "litellm_scope" {
+    type = string
+    default = ""
+    description = "Entra scope (api://<litellm-client-id>/.default) for the managed-identity token that passes LiteLLM Easy Auth. Empty disables the token layer."
+}
+
+variable "orchestrator_url" {
+    type = string
+    description = "Base URL of the orchestrator (ssca-mcp-server), reached server-side by the API."
+}
+
+variable "orchestrator_scope" {
+    type = string
+    default = ""
+    description = "Entra scope (api://<orchestrator-client-id>/.default) for the managed-identity token that passes orchestrator Easy Auth. Empty disables the token layer."
+}
+
 variable "pfx_secret" {
     type = string
     sensitive = true
