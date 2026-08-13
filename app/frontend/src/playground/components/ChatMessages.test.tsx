@@ -993,7 +993,7 @@ describe("ChatMessages", () => {
     expect(listItems[1]).toHaveAttribute("aria-label", "Assistant said:");
   });
 
-  it("includes a visually-hidden sender prefix inside user messages (M8)", () => {
+  it("does not duplicate sender text inside user bubble content (M8)", () => {
     renderMessages("s1", {
       chat: {
         messages: [
@@ -1014,7 +1014,7 @@ describe("ChatMessages", () => {
       },
     });
 
-    // The visually-hidden "You" span is present in the DOM for screen readers.
-    expect(screen.getByText("You")).toBeInTheDocument();
+    // Sender context is announced from list-item labels, so bubble text stays clean.
+    expect(screen.queryByText("You")).not.toBeInTheDocument();
   });
 });
