@@ -53,9 +53,9 @@ import {
   clearResponseFeedback,
 } from "../store/thunks/feedbackThunks";
 import { sendAssistantMessage } from "../store/thunks/assistantThunks";
-import ChatFeedbackForm from "./ChatFeedbackForm";
 import { visuallyHidden } from "@mui/utils";
 import isFeatureEnabled from "../FeatureGate";
+import { openChatFeedbackModal } from "../store/slices/uiSlice";
 
 interface ResponseButtonsProps {
   /** Whether the parent message row is currently hovered. */
@@ -129,7 +129,6 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
 
     const [isCopied, setIsCopied] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
-    const [chatFeedbackOpen, setChatFeedbackOpen] = useState(false);
 
     // Guards against a double-dispatch on rapid taps: once regenerate fires we
     // block re-entry until the component unmounts (which happens after deleteMessage).
@@ -208,9 +207,10 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
         dispatch(submitResponseFeedback(messageId, false));
       }
     }, [dispatch, feedback, messageId]);
+    /** Handles opening the chat feedback modal through uiSlice */
     const handleFeedbackNote = useCallback(() => {
-      setChatFeedbackOpen(true);
-    }, []);
+      dispatch(openChatFeedbackModal({ messageId, sessionId }));
+    }, [dispatch, messageId, sessionId]);
 
     const isLiked = feedback === "liked";
     const isDisliked = feedback === "disliked";
@@ -330,13 +330,6 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
             </Tooltip>
           )}
         </Box>
-
-        <ChatFeedbackForm
-          open={chatFeedbackOpen}
-          onClose={() => setChatFeedbackOpen(false)}
-          messageId={messageId}
-          sessionId={sessionId}
-        />
       </>
     );
   },

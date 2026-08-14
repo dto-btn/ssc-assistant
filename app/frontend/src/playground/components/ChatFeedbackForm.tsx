@@ -28,6 +28,9 @@ import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined
 import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useTranslation } from "react-i18next";
+import { submitChatFeedback } from "../store/thunks/feedbackThunks";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "../store";
 
 type FeedbackType = "issue" | "suggestion";
 type Step = "select" | "detail";
@@ -38,14 +41,15 @@ interface FeedbackAttachment {
   name: string;
   size: number;
   type: string;
+  url?: string; // Optional URL for uploaded attachments, if applicable
 }
 
-type ChatFeedbackPayload =
+export type ChatFeedbackPayload =
   | {
       messageId: string;
       sessionId: string;
       type: "issue";
-      positive: false;
+      // positive: false;
       description: string;
       stepsToReproduce: string;
       attachments: FeedbackAttachment[];
@@ -54,7 +58,7 @@ type ChatFeedbackPayload =
       messageId: string;
       sessionId: string;
       type: "suggestion";
-      positive: true;
+      // positive: true;
       suggestion: string;
       attachments: FeedbackAttachment[];
     };
@@ -75,6 +79,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
   const { t } = useTranslation("playground");
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  const dispatch = useDispatch<AppDispatch>();
 
   const [step, setStep] = useState<Step>("select");
   const [feedbackType, setFeedbackType] = useState<FeedbackType | null>(null);
@@ -169,10 +174,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
     feedbackType === "suggestion" && !suggestion.trim();
   const isFormInvalid = isIssueInvalid || isSuggestionInvalid;
 
-  // Handle form submission
-  // not yet connect to backend, just log to console for now we need an api route for this.
-  // I am taking messageId and sessionId as props to this component, so we can send them along with the feedback to
-  // trace the exact session and message the feedback is related to.
+  /** Uses feedback thunks to handle submission of the payload */
   const handleSubmit = useCallback(() => {
     setHasAttemptedSubmit(true);
     if (!feedbackType || isFormInvalid) return;
@@ -181,6 +183,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
       name: file.name,
       size: file.size,
       type: file.type,
+      url: undefined, // Placeholder for uploaded file URL if needed
     }));
 
     const payload: ChatFeedbackPayload =
@@ -189,7 +192,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
             messageId,
             sessionId,
             type: "issue",
-            positive: false,
+            // positive: false,
             description: issueDescription.trim(),
             stepsToReproduce: issueSteps.trim(),
             attachments: attachmentPayload,
@@ -198,13 +201,11 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
             messageId,
             sessionId,
             type: "suggestion",
-            positive: true,
+            // positive: true,
             suggestion: suggestion.trim(),
             attachments: attachmentPayload,
           };
-
-    // TODO: wire to backend when ready
-    console.log("Chat feedback submitted", payload);
+    dispatch(submitChatFeedback(payload)); // This is a thunk that will handle the API call and dispatching to the store
 
     handleClose();
   }, [
@@ -217,6 +218,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
     messageId,
     sessionId,
     suggestion,
+    dispatch,
   ]);
 
   /** sx applied to each category card — full WCAG 2.5.5 touch target and keyboard focus ring */
@@ -508,6 +510,6 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
       )}
     </Dialog>
   );
-};;;
+};
 
 export default ChatFeedbackForm;

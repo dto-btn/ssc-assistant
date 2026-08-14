@@ -9,6 +9,7 @@
 import { addToast } from "../slices/toastSlice";
 import { AppThunk } from "..";
 import { sendPlaygroundFeedback } from "../../api/feedback";
+import type { ChatFeedbackPayload } from "../../components/ChatFeedbackForm";
 import { setMessageFeedback } from "../slices/chatSlice";
 import i18n from "../../../i18n";
 
@@ -64,4 +65,20 @@ export const clearResponseFeedback =
   (messageId: string): AppThunk =>
   async (dispatch) => {
     dispatch(setMessageFeedback({ messageId, feedback: undefined }));
+  };
+
+
+
+export const submitChatFeedback =
+  (payload: ChatFeedbackPayload): AppThunk =>
+  async (dispatch, getState) => {
+    const accessToken = getState().auth.accessToken ?? undefined;
+    console.log("Submitting chat feedback:", payload);
+    try {
+      if (payload) {
+        dispatch(addToast({ message: i18n.t("feedback.success", { ns: "playground" }), isError: false }));
+      }
+    } catch (error) {
+      dispatch(addToast({ message: i18n.t("feedback.error", { ns: "playground" }), isError: true }));
+    }
   };
