@@ -118,32 +118,14 @@ const sanitizeServerId = (value: string): string => {
 };
 
 /**
- * Validate ad-hoc recommended endpoints before adding them to tool routing.
+ * Extract the opaque registry id from an `mcpref:<id>` server reference.
  */
-const isAllowedRecommendedEndpoint = (rawEndpoint: string): boolean => {
-  try {
-    const parsed = new URL(rawEndpoint.trim());
-    const host = parsed.hostname.toLowerCase();
-    const path = parsed.pathname.toLowerCase();
-
-    const isLocalHttp = import.meta.env.DEV && parsed.protocol === "http:" && isLocalHost(host);
-    const isHttps = parsed.protocol === "https:";
-    if (!isHttps && !isLocalHttp) {
-      return false;
-    }
-
-    if (!path.endsWith("/mcp")) {
-      return false;
-    }
-
-    if (host.endsWith(".example.com") || host === "example.com") {
-      return false;
-    }
-
-    return true;
-  } catch {
-    return false;
+const MCP_REF_PREFIX = "mcpref:";
+const extractMcpRefId = (serverUrl?: string): string | undefined => {
+  if (!serverUrl || !serverUrl.startsWith(MCP_REF_PREFIX)) {
+    return undefined;
   }
+  return serverUrl.slice(MCP_REF_PREFIX.length);
 };
 
 /**
@@ -160,20 +142,6 @@ const dedupeServers = (servers: Tool.Mcp[]): Tool.Mcp[] => {
 };
 
 /**
- * Canonicalize endpoints so recommendations can be matched reliably.
- */
-const normalizeEndpointForMatch = (endpoint?: string): string => {
-  if (!endpoint) return "";
-  try {
-    const parsed = new URL(endpoint.trim());
-    const path = parsed.pathname.replace(/\/+$/, "") || "/";
-    return `${parsed.protocol.toLowerCase()}//${parsed.host.toLowerCase()}${path}`;
-  } catch {
-    return endpoint.trim().replace(/\/+$/, "").toLowerCase();
-  }
-};
-
-/**
  * Resolve orchestrator recommendations into concrete downstream MCP servers.
  */
 export const resolveServersFromInsights = (
@@ -187,43 +155,17 @@ export const resolveServersFromInsights = (
     return [];
   }
 
-  const byEndpoint = new Map<string, Tool.Mcp>();
+  // The API backend owns MCP URLs, so recommendations reference servers by opaque id only.
   const byId = new Map<string, Tool.Mcp>();
-
   downstreamServers.forEach((server) => {
-    if (server.server_url) {
-      byEndpoint.set(normalizeEndpointForMatch(server.server_url), server);
-    }
-    byId.set(sanitizeServerId(server.server_label || server.server_url || "mcp"), server);
+    byId.set(sanitizeServerId(extractMcpRefId(server.server_url) ?? server.server_label ?? "mcp"), server);
   });
 
   const recommended: Tool.Mcp[] = [];
   insights.recommendations.forEach((recommendation) => {
-    // Prefer exact endpoint matches against already configured servers.
-    const endpoint = recommendation.endpoint?.trim();
-    const normalizedEndpoint = normalizeEndpointForMatch(endpoint);
-    if (normalizedEndpoint && byEndpoint.has(normalizedEndpoint)) {
-      recommended.push(byEndpoint.get(normalizedEndpoint)!);
-      return;
-    }
-
-    const byServerId = byId.get(sanitizeServerId(recommendation.mcp_server_id));
-    if (byServerId) {
-      recommended.push(byServerId);
-      return;
-    }
-
-    // Last resort: materialize a safe ad-hoc MCP server from recommendation payload.
-    if (endpoint && isAllowedRecommendedEndpoint(endpoint)) {
-      recommended.push({
-        type: "mcp",
-        server_url: endpoint,
-        server_label: recommendation.mcp_server_id,
-        server_description:
-          recommendation.rationale ||
-          `Recommended by orchestrator for category ${recommendation.category || CATEGORY_GENERIC}.`,
-        require_approval: "never",
-      });
+    const match = byId.get(sanitizeServerId(recommendation.mcp_server_id));
+    if (match) {
+      recommended.push(match);
     }
   });
 
@@ -328,10 +270,8 @@ export const getOrchestratorInsights = async ({
   }
 
   try {
-    if (!orchestratorServer.server_url) {
-      return null;
-    }
-
+    // The orchestrator is reached through the same-origin API backend, which owns the
+    // upstream URL; no server_url is required on the client any more.
     const transportKind: "streamable-http" | undefined = undefined;
 
     emitProgress(onProgress, {

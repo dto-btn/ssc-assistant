@@ -6,7 +6,7 @@
  */
 
 import OpenAI from "openai";
-import { msalInstance } from "../../../index";
+import { msalInstance } from "../../../msalInstance";
 import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult, CompletionMessage } from "../completionService";
 import { ResponseInput, Tool } from "openai/resources/responses/responses.mjs";
 import {

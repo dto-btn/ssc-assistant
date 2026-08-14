@@ -63,6 +63,12 @@ variable "orchestrator_scope" {
     description = "Entra scope (api://<orchestrator-client-id>/.default) for the managed-identity token that passes orchestrator Easy Auth. Empty disables the token layer."
 }
 
+variable "playground_mcp_servers" {
+    type = string
+    default = "[]"
+    description = "JSON array of MCP servers owned by the API backend. The browser receives only a sanitized (URL-less) view; the proxy expands opaque refs to these endpoints. Each entry: {id, server_label, server_description, server_url, headers?}."
+}
+
 variable "pfx_secret" {
     type = string
     sensitive = true

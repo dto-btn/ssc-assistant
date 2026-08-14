@@ -134,6 +134,9 @@ resource "azurerm_linux_web_app" "api" {
     LITELLM_SCOPE                 = var.litellm_scope
     ORCHESTRATOR_URL              = var.orchestrator_url
     ORCHESTRATOR_SCOPE            = var.orchestrator_scope
+
+    # Server-owned MCP registry; the browser only receives a sanitized (URL-less) view.
+    PLAYGROUND_MCP_SERVERS        = var.playground_mcp_servers
   }
 
   sticky_settings { # settings that are the same regardless of deployment slot..

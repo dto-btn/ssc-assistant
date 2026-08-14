@@ -25,7 +25,6 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
   const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [brData, setBrData] = useState<BusinessRequest | undefined>(undefined);
-  const mcpServers = useAppSelector((state) => state.tools.mcpServers);
   const accessToken = useAppSelector((state) => state.auth.accessToken);
 
   const normalizedRows = useMemo(() => {
@@ -62,9 +61,8 @@ const BusinessRequestTable: React.FC<BusinessRequestTableProps> = ({
   };
 
   const fetchBRData = async (BR: string) => {
-    // Resolve BR details via the BITS MCP server (replaces the legacy api/1.0 REST call).
+    // Resolve BR details via the API backend (server-side BITS lookup).
     return getBusinessRequest(BR, {
-      servers: mcpServers,
       accessToken: accessToken ?? undefined,
     });
   };

@@ -6,6 +6,7 @@ token; this layer authenticates the user and then injects the server-held creden
 forwarding upstream. The master key is therefore never exposed to end users.
 """
 
+import json
 import logging
 import os
 import uuid
@@ -18,6 +19,7 @@ from flask import Response, abort, jsonify, request, stream_with_context
 
 from utils.auth import auth, user_ad
 from proxy.common import PROXY_TIMEOUT, upstream_headers, stream_response, filtered_response_headers
+from playground import mcp_registry
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +71,30 @@ def _caller_headers(incoming) -> dict:
     return {"x-caller-system": system, "x-caller-component": component}
 
 
+def _prepare_litellm_body(subpath: str, raw_body: bytes) -> bytes:
+    """Expand opaque MCP tool refs to real endpoints server-side for responses calls.
+
+    Only the responses endpoint carries a `tools` array. On any parse failure the original
+    body is forwarded unchanged so non-JSON or unexpected payloads still work.
+    """
+    if subpath != "v1/responses" or not raw_body:
+        return raw_body
+    try:
+        body = json.loads(raw_body)
+    except (ValueError, UnicodeDecodeError):
+        return raw_body
+    injected = mcp_registry.inject_mcp_tools(body)
+    return json.dumps(injected).encode("utf-8")
+
+
+@api_playground_proxy.get("/mcp-servers")
+@auth.login_required(role="chat")
+@user_ad.login_required
+def list_mcp_servers():
+    """Return the browser-safe MCP server catalog (ids/labels only, never URLs)."""
+    return jsonify({"servers": mcp_registry.sanitized_servers()})
+
+
 @api_playground_proxy.post("/litellm/<path:subpath>")
 @auth.login_required(role="chat")
 @user_ad.login_required
@@ -92,11 +118,13 @@ def litellm_proxy(subpath: str):
     if _LITELLM_SCOPE:
         headers["Authorization"] = f"Bearer {_get_litellm_token_provider()()}"
 
+    outgoing_body = _prepare_litellm_body(subpath, request.get_data())
+
     try:
         upstream_response = requests.request(
             "POST",
             upstream_url,
-            data=request.get_data(),
+            data=outgoing_body,
             headers=headers,
             stream=True,
             timeout=PROXY_TIMEOUT,
@@ -172,8 +200,20 @@ def orchestrator_suggest_route():
         logger.exception("Orchestrator proxy error req_id=%s", req_id)
         return jsonify({"error": {"code": "upstream_unavailable", "message": "Orchestrator unavailable"}}), 502
 
+    content_type = upstream_response.headers.get("content-type", "application/json")
+
+    # Strip internal endpoint URLs from routing recommendations so the browser only ever
+    # receives opaque server ids.
+    if upstream_response.ok and "application/json" in content_type.lower():
+        try:
+            sanitized = mcp_registry.sanitize_route_response(upstream_response.json())
+            return Response(json.dumps(sanitized), status=upstream_response.status_code,
+                            content_type="application/json")
+        except ValueError:
+            pass
+
     return Response(
         upstream_response.content,
         status=upstream_response.status_code,
-        content_type=upstream_response.headers.get("content-type", "application/json"),
+        content_type=content_type,
     )
