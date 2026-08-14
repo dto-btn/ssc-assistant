@@ -80,6 +80,7 @@ interface AssistantMessageBubbleProps {
   remarkPlugins: Pluggable[];
   rehypePlugins: Pluggable[];
   resolvedAttachments: FileAttachment[];
+  isError?: boolean;
 }
 
 interface ChatMessageRowProps {
@@ -932,9 +933,11 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
     <ListItem
       key={message.id}
       alignItems="flex-start"
-      // WCAG 1.3.1 — identify the message sender so screen readers announce
-      // who said what before reading the message content.
-      aria-label={isAssistantMessage ? t("message.label.assistant") : t("message.label.user")}
+      aria-label={
+        isUserMessage
+          ? t("message.label.user", { defaultValue: "Your message" })
+          : t("message.label.assistant", { defaultValue: "SSC Assistant's response" })
+      }
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       sx={{
@@ -963,6 +966,7 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
           remarkPlugins={remarkPlugins}
           rehypePlugins={messageRehypePlugins}
           resolvedAttachments={resolvedAttachments}
+          isError={message.isError}
         />
       ) : (
         <Box
@@ -977,19 +981,6 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
             borderRadius: "16px 4px 16px 16px",
           }}
         >
-          <Box
-            component="span"
-            sx={{
-              position: "absolute",
-              width: "1px",
-              height: "1px",
-              overflow: "hidden",
-              clip: "rect(0,0,0,0)",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {t("chat.sender.you", { defaultValue: "You" })}
-          </Box>
           <Box sx={USER_MARKDOWN_SX}>
             <MarkdownHooks
               components={markdownComponents}
