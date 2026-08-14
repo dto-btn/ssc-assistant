@@ -36,6 +36,12 @@ type FeedbackType = "issue" | "suggestion";
 type Step = "select" | "detail";
 
 const MAX_ATTACHMENTS = 3;
+const MAX_ATTACHMENT_SIZE_BYTES = 2 * 1024 * 1024; // Set the max file size
+const ALLOWED_ATTACHMENT_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+]);
 
 interface FeedbackAttachment {
   name: string;
@@ -81,6 +87,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const dispatch = useDispatch<AppDispatch>();
 
+  // State for managing the current step, feedback type, and form inputs
   const [step, setStep] = useState<Step>("select");
   const [feedbackType, setFeedbackType] = useState<FeedbackType | null>(null);
   const [issueDescription, setIssueDescription] = useState("");
@@ -89,7 +96,16 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
   const [attachments, setAttachments] = useState<File[]>([]);
   const [attachmentLimitExceeded, setAttachmentLimitExceeded] = useState(false);
   const [attachmentAnnouncement, setAttachmentAnnouncement] = useState("");
-  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const [attachmentError, setAttachmentError] = useState<string>("");
+  const [attachmentErrorAnnouncement, setAttachmentErrorAnnouncement] =
+    useState<string>("");
+
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false); // validation gate for required fields
+
+  // Refs for focusing inputs on validation errors
+  const issueStepsRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(
+    null,
+  );
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const issueDescriptionRef = useRef<
     HTMLInputElement | HTMLTextAreaElement | null
@@ -111,12 +127,14 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
     setAttachmentLimitExceeded(false);
     setAttachmentAnnouncement("");
     setHasAttemptedSubmit(false);
+    setAttachmentError("");
+    setAttachmentErrorAnnouncement("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  // Reset state when the dialog is closed using slotprops.transition.onExited, so that the dialog is fully closed before resetting state.
+  // Action handlers for dialog navigation and form submission
   const handleClose = useCallback(() => {
     onClose();
   }, [onClose]);
@@ -134,25 +152,64 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
   const handleAttachmentsChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const selectedFiles = Array.from(event.target.files ?? []);
-      const keptFiles = selectedFiles.slice(0, MAX_ATTACHMENTS);
-      const exceeded = selectedFiles.length > MAX_ATTACHMENTS;
+      const invalidTypeFiles = selectedFiles.filter(
+        (file) => !ALLOWED_ATTACHMENT_TYPES.has(file.type),
+      );
+
+      const oversizedFiles = selectedFiles.filter(
+        (file) => file.size > MAX_ATTACHMENT_SIZE_BYTES,
+      );
+
+      const validFiles = selectedFiles.filter(
+        (file) =>
+          ALLOWED_ATTACHMENT_TYPES.has(file.type) &&
+          file.size <= MAX_ATTACHMENT_SIZE_BYTES,
+      );
+
+      const keptFiles = validFiles.slice(0, MAX_ATTACHMENTS);
+      const tooManyFiles = validFiles.length > MAX_ATTACHMENTS;
 
       setAttachments(keptFiles);
-      setAttachmentLimitExceeded(exceeded);
+      setAttachmentLimitExceeded(tooManyFiles);
 
-      const baseMessage =
-        keptFiles.length > 0
-          ? t("chat.feedback.attachments.selected", {
-              count: keptFiles.length,
-            })
-          : t("chat.feedback.attachments.none");
-      const limitMessage = exceeded
-        ? ` ${t("chat.feedback.attachments.limit.exceeded", {
+      const errors: string[] = [];
+
+      if (invalidTypeFiles.length > 0) {
+        errors.push(
+          t("chat.feedback.attachments.invalid.type", {
+            defaultValue: "Only JPEG, PNG, and GIF images are allowed.",
+          }),
+        );
+      }
+
+      if (oversizedFiles.length > 0) {
+        errors.push(
+          t("chat.feedback.attachments.invalid.size", {
+            max: MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024),
+          }),
+        );
+      }
+
+      if (tooManyFiles) {
+        errors.push(
+          t("chat.feedback.attachments.limit.exceeded", {
             max: MAX_ATTACHMENTS,
-          })}`
-        : "";
+          }),
+        );
+      }
 
-      setAttachmentAnnouncement(`${baseMessage}.${limitMessage}`);
+      const errorMessage = errors.join(" ");
+      setAttachmentError(errorMessage);
+      setAttachmentErrorAnnouncement(errorMessage);
+
+      const selectedMessage =
+        keptFiles.length > 0
+          ? `${t("chat.feedback.attachments.selected", {
+              count: keptFiles.length,
+            })}: ${keptFiles.map((file) => file.name).join(", ")}`
+          : t("chat.feedback.attachments.none");
+
+      setAttachmentAnnouncement(selectedMessage);
     },
     [t],
   );
@@ -167,6 +224,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
     targetInput?.focus();
   }, [feedbackType, open, step]);
 
+  // Validation checks for required fields based on feedback type
   const isIssueInvalid =
     feedbackType === "issue" &&
     (!issueDescription.trim() || !issueSteps.trim());
@@ -177,7 +235,26 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
   /** Uses feedback thunks to handle submission of the payload */
   const handleSubmit = useCallback(() => {
     setHasAttemptedSubmit(true);
-    if (!feedbackType || isFormInvalid) return;
+    if (!feedbackType) {
+      return;
+    }
+
+    if (feedbackType === "issue") {
+      if (!issueDescription.trim()) {
+        issueDescriptionRef.current?.focus();
+        return;
+      }
+
+      if (!issueSteps.trim()) {
+        issueStepsRef.current?.focus();
+        return;
+      }
+    }
+
+    if (feedbackType === "suggestion" && !suggestion.trim()) {
+      suggestionRef.current?.focus();
+      return;
+    }
 
     const attachmentPayload = attachments.map((file) => ({
       name: file.name,
@@ -186,7 +263,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
       url: undefined, // Placeholder for uploaded file URL if needed
     }));
 
-    const payload: ChatFeedbackPayload =
+    const payload: ChatFeedbackPayload = // Construct the payload based on feedback type
       feedbackType === "issue"
         ? {
             messageId,
@@ -205,6 +282,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
             suggestion: suggestion.trim(),
             attachments: attachmentPayload,
           };
+
     dispatch(submitChatFeedback(payload)); // This is a thunk that will handle the API call and dispatching to the store
 
     handleClose();
@@ -399,6 +477,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
 
                 <TextField
                   label={t("chat.feedback.issue.steps.label")}
+                  inputRef={issueStepsRef}
                   placeholder={"" + t("chat.feedback.issue.steps.placeholder")}
                   value={issueSteps}
                   onChange={(e) => setIssueSteps(e.target.value)}
@@ -479,6 +558,21 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                     max: MAX_ATTACHMENTS,
                   })}
                 </Typography>
+              )}
+              {attachmentError && (
+                <Typography
+                  role="alert"
+                  variant="caption"
+                  color="error"
+                  sx={{ mt: 0.75, display: "block" }}
+                >
+                  {attachmentError}
+                </Typography>
+              )}
+              {attachmentErrorAnnouncement && (
+                <Box role="alert" sx={visuallyHidden}>
+                  {attachmentErrorAnnouncement}
+                </Box>
               )}
               <Typography
                 variant="caption"
