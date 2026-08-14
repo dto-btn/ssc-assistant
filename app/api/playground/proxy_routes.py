@@ -104,7 +104,7 @@ def litellm_proxy(subpath: str):
     except requests.Timeout:
         logger.exception("LiteLLM proxy timeout req_id=%s", req_id)
         return Response("Upstream timeout", status=504)
-    except Exception:  # pylint: disable=broad-except
+    except requests.RequestException:
         logger.exception("LiteLLM proxy error req_id=%s", req_id)
         return Response("Proxy error", status=502)
 
@@ -168,7 +168,7 @@ def orchestrator_suggest_route():
     except requests.Timeout:
         logger.exception("Orchestrator proxy timeout req_id=%s", req_id)
         return jsonify({"error": {"code": "upstream_timeout", "message": "Orchestrator timeout"}}), 504
-    except Exception:  # pylint: disable=broad-except
+    except requests.RequestException:
         logger.exception("Orchestrator proxy error req_id=%s", req_id)
         return jsonify({"error": {"code": "upstream_unavailable", "message": "Orchestrator unavailable"}}), 502
 
