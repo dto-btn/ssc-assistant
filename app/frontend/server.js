@@ -9,10 +9,6 @@ config();
 
 const app = express();
 
-const blobStorageUrl = process.env.VITE_BLOB_STORAGE_URL; // Base URL for the blob storage
-const rawSasToken = process.env.VITE_SAS_TOKEN; // The SAS token with all query parameters
-const sasToken = rawSasToken ? rawSasToken.replace(/^\?/, '') : '';
-
 const onApiProxyReq = (proxyReq) => {
     // Add the X-API-Key header to the outgoing proxy request
     proxyReq.setHeader('X-API-Key', process.env.VITE_API_KEY);
@@ -25,35 +21,26 @@ app.use('/api/*', createProxyMiddleware({
 }));
 
 /**
- * Creates a route that proxies requests to the blob storage URL with the SAS token.
- * @returns Proxy middleware for blob storage routes
+ * Blob previews are streamed by the API backend using its managed identity, so the browser
+ * only ever talks to the API and no SAS token is exposed. The container-prefixed request
+ * path is rewritten onto the API's blob route.
  */
-if (!blobStorageUrl) {
-    console.warn("VITE_BLOB_STORAGE_URL is not defined. Blob previews will be unavailable.");
-}
-
-/**
- * Build a proxy middleware that appends the SAS token so previews do not expose secrets.
- */
-const blobStorageProxyRoute = () => createProxyMiddleware({
-    target: blobStorageUrl,
+const blobApiProxy = createProxyMiddleware({
+    target: process.env.VITE_API_BACKEND,
     changeOrigin: true,
-    selfHandleResponse: false,
-    onProxyReq: (proxyReq) => {
-        if (sasToken) {
-            const separator = proxyReq.path.includes('?') ? '&' : '?';
-            proxyReq.path += separator + sasToken;
-        }
+    onProxyReq: (proxyReq, req) => {
+        proxyReq.setHeader('X-API-Key', process.env.VITE_API_KEY);
+        proxyReq.path = '/api/playground/blob' + (req.originalUrl || req.url);
     },
 });
 
-const blobStorageProxy = blobStorageUrl ? blobStorageProxyRoute() : null;
-
-if (blobStorageProxy) {
-    app.use('/assistant-chat-files/*', blobStorageProxy);
-    app.use('/assistant-chat-files-v2/*', blobStorageProxy);
-    app.use('/pmcoe-(dev|sept-2025|latest)/*', blobStorageProxy);
+if (!process.env.VITE_API_BACKEND) {
+    console.warn("VITE_API_BACKEND is not defined. Blob previews will be unavailable.");
 }
+
+app.use('/assistant-chat-files/*', blobApiProxy);
+app.use('/assistant-chat-files-v2/*', blobApiProxy);
+app.use('/pmcoe-(dev|sept-2025|latest)/*', blobApiProxy);
 
 const isPortAvailable = (port) => new Promise((resolve) => {
     const server = net.createServer();

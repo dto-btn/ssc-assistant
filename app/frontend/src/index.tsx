@@ -7,14 +7,12 @@ import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 
-import { PublicClientApplication, EventType, AccountInfo, EventMessage } from "@azure/msal-browser";
-import { msalConfig } from './authConfig.ts';
+import { EventType, AccountInfo, EventMessage } from "@azure/msal-browser";
+import { msalInstance } from "./msalInstance";
 
 import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "./theme.ts";
 import React from "react";
-
-export const msalInstance = new PublicClientApplication(msalConfig);
 
 msalInstance.initialize().then(() => {
   console.debug("msalInstance -> Initialisation...");

@@ -127,6 +127,16 @@ resource "azurerm_linux_web_app" "api" {
     BITS_DB_PWD                   = var.bits_database_config.PASSWORD
 
     PMCOE_SEARCH_INDEX_NAME       = "pmcoe-sept-2025"
+
+    # Server-side LiteLLM + orchestrator proxying (master key never reaches the browser).
+    LITELLM_PROXY_URL             = var.litellm_proxy_url
+    LITELLM_MASTER_KEY            = var.litellm_master_key
+    LITELLM_SCOPE                 = var.litellm_scope
+    ORCHESTRATOR_URL              = var.orchestrator_url
+    ORCHESTRATOR_SCOPE            = var.orchestrator_scope
+
+    # Server-owned MCP registry; the browser only receives a sanitized (URL-less) view.
+    PLAYGROUND_MCP_SERVERS        = var.playground_mcp_servers
   }
 
   sticky_settings { # settings that are the same regardless of deployment slot..

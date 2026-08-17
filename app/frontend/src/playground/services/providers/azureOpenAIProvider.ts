@@ -6,6 +6,7 @@
  */
 
 import OpenAI from "openai";
+import { msalInstance } from "../../../msalInstance";
 import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult, CompletionMessage } from "../completionService";
 import { ResponseInput, Tool } from "openai/resources/responses/responses.mjs";
 import {
@@ -16,7 +17,9 @@ import {
 } from "../../utils/citations";
 
 const DEFAULT_RESPONSES_TIMEOUT_MS = 90000;
-const DEFAULT_STANDALONE_LITELLM_BASE_URL = "http://localhost:4000/v1";
+// Same-origin API backend route; server.js proxies /api/* to Flask, which injects the
+// LiteLLM master key server-side so it is never exposed to the browser.
+const DEFAULT_LITELLM_PROXY_PATH = "/api/playground/litellm/v1";
 const IS_DEV = import.meta.env.DEV;
 
 /**
@@ -199,18 +202,37 @@ export class AzureOpenAIProvider implements CompletionProvider {
       throw new Error("Playground LiteLLM proxy is disabled (set VITE_PLAYGROUND_USE_LITELLM=true).");
     }
 
+    // Prefer an explicit override, otherwise target the same-origin API backend route.
     const configured = String(import.meta.env.VITE_PLAYGROUND_LITELLM_BASE_URL || "").trim();
-    const base = configured.length > 0 ? configured : DEFAULT_STANDALONE_LITELLM_BASE_URL;
-    return base.replace(/\/$/, "");
+    if (configured.length > 0) {
+      return configured.replace(/\/$/, "");
+    }
+
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    return `${origin}${DEFAULT_LITELLM_PROXY_PATH}`;
   }
 
-  /**
-   * Build an OpenAI-compatible client for standalone LiteLLM proxy.
-   * Uses dedicated proxy key when configured, otherwise falls back to user token.
-   */
-  private createClient(userToken: string): OpenAI {
-    const proxyKey = String(import.meta.env.VITE_PLAYGROUND_LITELLM_PROXY_KEY || "").trim();
-    const authToken = proxyKey.length > 0 ? proxyKey : userToken.trim();
+  private async getLiteLLMToken(fallbackToken: string): Promise<string> {
+    const scope = String(import.meta.env.VITE_PLAYGROUND_LITELLM_SCOPE || "").trim();
+    if (!scope) {
+      return fallbackToken.trim();
+    }
+
+    const account = msalInstance.getActiveAccount();
+    if (!account) {
+      throw new Error("No active account is available for LiteLLM authentication.");
+    }
+
+    const response = await msalInstance.acquireTokenSilent({
+      account,
+      scopes: [scope],
+    });
+    return response.accessToken;
+  }
+
+  /** Build an OpenAI-compatible client for standalone LiteLLM proxy. */
+  private async createClient(userToken: string): Promise<OpenAI> {
+    const authToken = await this.getLiteLLMToken(userToken);
     const defaultHeaders = {
       "Authorization": "Bearer " + authToken,
       "x-caller-system": "ssc-assistant",
@@ -286,7 +308,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
     try {
       const updatedMessages = this.convertMessagesToInput(messages);
 
-      const client = this.createClient(userToken);
+      const client = await this.createClient(userToken);
 
       const stream = await client.responses.stream({
         model: model,

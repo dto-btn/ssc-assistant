@@ -50,10 +50,14 @@ export const PlaygroundShell: React.FC = () => {
     (state) => state.ui.isSidebarCollapsed
   );
 
-  // Load MCP server configuration on startup
+  // Load MCP server catalog from the API once authentication is ready; the loader needs a
+  // user token, and gating on it also re-loads after a token refresh.
+  const accessToken = useAppSelector((state) => state.auth.accessToken);
   React.useEffect(() => {
-    dispatch(loadServers());
-  }, [dispatch]);
+    if (accessToken) {
+      dispatch(loadServers());
+    }
+  }, [dispatch, accessToken]);
 
   React.useEffect(() => {
     // Prevent a stale mobile drawer state from leaking into desktop layout.

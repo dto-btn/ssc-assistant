@@ -10,6 +10,8 @@
 
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Tool } from "openai/resources/responses/responses.mjs";
+import { msalInstance } from "../../../msalInstance";
+import { apiUse } from "../../../authConfig";
 
 /**
  * Allow insecure transport only for local development loopback MCP endpoints.
@@ -43,31 +45,48 @@ export const isValidMcpUrl = (rawUrl: string): boolean => {
 
 // Async thunk to load tools using the toolService
 /**
- * Load MCP server definitions from environment config and validate URLs.
+ * Load MCP server definitions from the API backend.
+ *
+ * The backend owns the registry and returns a sanitized catalog (ids/labels only, no
+ * URLs). Each server is referenced by an opaque `mcpref:<id>` ref; the API proxy expands
+ * it to the real endpoint server-side, so the browser never holds internal MCP URLs.
  */
 export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rejectWithValue }) => {
-  
+
   try {
-    const rawValue = import.meta.env.VITE_MCP_SERVERS;
-    if (!rawValue) return [];
+    const account = msalInstance.getActiveAccount();
+    if (!account) {
+      // Auth not ready yet; the catalog is re-loaded once an account becomes active.
+      return [];
+    }
 
-    const rawServers = JSON.parse(rawValue);
+    const { accessToken } = await msalInstance.acquireTokenSilent({ ...apiUse, account });
 
-    // Validate and map raw server data to Tool.Mcp objects
+    const response = await fetch("/api/playground/mcp-servers", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) {
+      return rejectWithValue(`Failed to load MCP servers (${response.status})`);
+    }
+
+    const data = (await response.json()) as { servers?: unknown };
+    const rawServers = Array.isArray(data.servers) ? data.servers : [];
+
+    // Validate and map sanitized server data to opaque-ref Tool.Mcp objects.
     const toolServers: Tool.Mcp[] = (rawServers as unknown[])
       .filter(
         (server): server is Record<string, unknown> =>
           !!server &&
           typeof server === "object" &&
+          typeof (server as Record<string, unknown>).id === "string" &&
           typeof (server as Record<string, unknown>).server_label === "string" &&
-          typeof (server as Record<string, unknown>).server_url === "string" &&
-          typeof (server as Record<string, unknown>).server_description === "string" &&
-          isValidMcpUrl((server as Record<string, unknown>).server_url as string)
+          typeof (server as Record<string, unknown>).server_description === "string"
       )
       .map((server) => ({
         server_label: server.server_label as string,
         type: 'mcp' as const,
-        server_url: server.server_url as string,
+        // Opaque ref resolved to a real endpoint by the API backend proxy.
+        server_url: `mcpref:${server.id as string}`,
         server_description: server.server_description as string,
         // Default to never so unsupported values do not break tool execution.
         require_approval: (server.require_approval === "always" || server.require_approval === "never")
@@ -78,7 +97,7 @@ export const loadServers = createAsyncThunk('tools/loadServers', async (_, { rej
     return toolServers;
 
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to parse MCP servers';
+    const message = error instanceof Error ? error.message : 'Failed to load MCP servers';
     console.error(message);
     return rejectWithValue(message);
   }

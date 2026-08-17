@@ -1,5 +1,5 @@
 import { userRead, graphConfig } from "./authConfig";
-import { msalInstance } from "./index";
+import { msalInstance } from "./msalInstance";
 
 /**
  * Examples:

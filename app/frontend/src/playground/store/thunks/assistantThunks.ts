@@ -254,28 +254,6 @@ const resolveCompletionModel = (state: RootState): string => {
 };
 
 /**
- * Locate orchestrator MCP server definition from configured tool servers.
- */
-const findOrchestratorServer = (servers: Tool.Mcp[]): Tool.Mcp | undefined => {
-  return servers.find((server) => {
-    const label = String(server.server_label || "").toLowerCase();
-    const description = String(server.server_description || "").toLowerCase();
-    return label.includes("orchestrator") || description.includes("orchestrator");
-  });
-};
-
-/**
- * Translate orchestrator MCP endpoint into the preflight REST route.
- */
-const toOrchestratorPreflightUrl = (serverUrl: string): string => {
-  const trimmed = serverUrl.replace(/\/$/, "");
-  if (trimmed.endsWith("/mcp")) {
-    return `${trimmed.slice(0, -4)}/orchestrator/suggest-route`;
-  }
-  return `${trimmed}/orchestrator/suggest-route`;
-};
-
-/**
  * Extract text content from the most recent user message for preflight routing.
  */
 const extractLastUserText = (messages: CompletionMessage[]): string => {
@@ -786,11 +764,12 @@ export const sendAssistantMessage = ({
     ];
     let preflightRoutingContextMessage: CompletionMessage | undefined;
 
-    const orchestratorServer = findOrchestratorServer(serversWithAuth);
-    const orchestratorServerUrl = orchestratorServer?.server_url;
-    if (shouldUseOrchestratorPreflight() && orchestratorServerUrl) {
+    // Gate on the feature flag and whether orchestration is configured; the API backend
+    // owns the orchestrator URL, so the client no longer needs a server_url here.
+    if (shouldUseOrchestratorPreflight() && hasOrchestratorServer) {
       try {
-        const preflightResponse = await fetch(toOrchestratorPreflightUrl(orchestratorServerUrl), {
+        // Route through the API backend (same-origin) so the browser never contacts the orchestrator directly.
+        const preflightResponse = await fetch("/api/playground/orchestrator/suggest-route", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

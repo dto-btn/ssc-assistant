@@ -8,10 +8,7 @@
  * - Preserve backward compatibility via legacy classify/suggest fallback.
  */
 
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { Tool } from "openai/resources/responses/responses.mjs";
-import { tryParseJsonObject } from "../utils/json";
 import type {
   Message,
   OrchestratorInsights,
@@ -22,8 +19,9 @@ const CATEGORY_GENERIC = "general";
 
 const MAX_CONTEXT_MESSAGES = 8;
 
-const ORCHESTRATOR_CLIENT_NAME = "ssc-playground-orchestrator-client";
-const ORCHESTRATOR_CLIENT_VERSION = "1.0.0";
+// Same-origin API route; server.js proxies /api/* to the Flask backend (adds X-API-Key),
+// which forwards to the orchestrator with server-side credentials.
+const ORCHESTRATOR_SUGGEST_ROUTE_PATH = "/api/playground/orchestrator/suggest-route";
 
 /**
  * Return whether the host is one of the allowed local development loopbacks.
@@ -110,63 +108,6 @@ export const normalizeHttpsMcpUrl = (rawServerUrl: string): URL => {
 };
 
 /**
- * Extract structured payload from MCP tool responses across different shapes.
- */
-const extractToolPayload = (toolResult: unknown): Record<string, unknown> | null => {
-  if (!toolResult || typeof toolResult !== "object") {
-    return null;
-  }
-
-  const result = toolResult as Record<string, unknown>;
-  const structured = result.structuredContent;
-  if (structured && typeof structured === "object" && !Array.isArray(structured)) {
-    return structured as Record<string, unknown>;
-  }
-
-  const content = result.content;
-  if (Array.isArray(content)) {
-    for (const entry of content) {
-      if (!entry || typeof entry !== "object") continue;
-      const text = (entry as Record<string, unknown>).text;
-      if (typeof text !== "string") continue;
-      const parsed = tryParseJsonObject(text);
-      if (parsed) {
-        return parsed;
-      }
-    }
-  }
-
-  return null;
-};
-
-const connectOrchestratorClient = async (
-  serverUrl: string,
-  accessToken?: string
-): Promise<{
-  client: Client;
-  transport: StreamableHTTPClientTransport;
-  transportKind: "streamable-http";
-}> => {
-  // This call establishes a streamable HTTP session reused by the caller.
-  const mcpUrl = normalizeHttpsMcpUrl(serverUrl);
-  const client = new Client({
-    name: ORCHESTRATOR_CLIENT_NAME,
-    version: ORCHESTRATOR_CLIENT_VERSION,
-  });
-  const transport = new StreamableHTTPClientTransport(mcpUrl, {
-    requestInit: {
-      headers: accessToken
-        ? {
-            Authorization: `Bearer ${accessToken}`,
-          }
-        : undefined,
-    },
-  });
-  await client.connect(transport);
-  return { client, transport, transportKind: "streamable-http" };
-};
-
-/**
  * Convert arbitrary server IDs into a deterministic matching key.
  */
 const sanitizeServerId = (value: string): string => {
@@ -177,32 +118,14 @@ const sanitizeServerId = (value: string): string => {
 };
 
 /**
- * Validate ad-hoc recommended endpoints before adding them to tool routing.
+ * Extract the opaque registry id from an `mcpref:<id>` server reference.
  */
-const isAllowedRecommendedEndpoint = (rawEndpoint: string): boolean => {
-  try {
-    const parsed = new URL(rawEndpoint.trim());
-    const host = parsed.hostname.toLowerCase();
-    const path = parsed.pathname.toLowerCase();
-
-    const isLocalHttp = import.meta.env.DEV && parsed.protocol === "http:" && isLocalHost(host);
-    const isHttps = parsed.protocol === "https:";
-    if (!isHttps && !isLocalHttp) {
-      return false;
-    }
-
-    if (!path.endsWith("/mcp")) {
-      return false;
-    }
-
-    if (host.endsWith(".example.com") || host === "example.com") {
-      return false;
-    }
-
-    return true;
-  } catch {
-    return false;
+const MCP_REF_PREFIX = "mcpref:";
+const extractMcpRefId = (serverUrl?: string): string | undefined => {
+  if (!serverUrl || !serverUrl.startsWith(MCP_REF_PREFIX)) {
+    return undefined;
   }
+  return serverUrl.slice(MCP_REF_PREFIX.length);
 };
 
 /**
@@ -219,20 +142,6 @@ const dedupeServers = (servers: Tool.Mcp[]): Tool.Mcp[] => {
 };
 
 /**
- * Canonicalize endpoints so recommendations can be matched reliably.
- */
-const normalizeEndpointForMatch = (endpoint?: string): string => {
-  if (!endpoint) return "";
-  try {
-    const parsed = new URL(endpoint.trim());
-    const path = parsed.pathname.replace(/\/+$/, "") || "/";
-    return `${parsed.protocol.toLowerCase()}//${parsed.host.toLowerCase()}${path}`;
-  } catch {
-    return endpoint.trim().replace(/\/+$/, "").toLowerCase();
-  }
-};
-
-/**
  * Resolve orchestrator recommendations into concrete downstream MCP servers.
  */
 export const resolveServersFromInsights = (
@@ -246,43 +155,17 @@ export const resolveServersFromInsights = (
     return [];
   }
 
-  const byEndpoint = new Map<string, Tool.Mcp>();
+  // The API backend owns MCP URLs, so recommendations reference servers by opaque id only.
   const byId = new Map<string, Tool.Mcp>();
-
   downstreamServers.forEach((server) => {
-    if (server.server_url) {
-      byEndpoint.set(normalizeEndpointForMatch(server.server_url), server);
-    }
-    byId.set(sanitizeServerId(server.server_label || server.server_url || "mcp"), server);
+    byId.set(sanitizeServerId(extractMcpRefId(server.server_url) ?? server.server_label ?? "mcp"), server);
   });
 
   const recommended: Tool.Mcp[] = [];
   insights.recommendations.forEach((recommendation) => {
-    // Prefer exact endpoint matches against already configured servers.
-    const endpoint = recommendation.endpoint?.trim();
-    const normalizedEndpoint = normalizeEndpointForMatch(endpoint);
-    if (normalizedEndpoint && byEndpoint.has(normalizedEndpoint)) {
-      recommended.push(byEndpoint.get(normalizedEndpoint)!);
-      return;
-    }
-
-    const byServerId = byId.get(sanitizeServerId(recommendation.mcp_server_id));
-    if (byServerId) {
-      recommended.push(byServerId);
-      return;
-    }
-
-    // Last resort: materialize a safe ad-hoc MCP server from recommendation payload.
-    if (endpoint && isAllowedRecommendedEndpoint(endpoint)) {
-      recommended.push({
-        type: "mcp",
-        server_url: endpoint,
-        server_label: recommendation.mcp_server_id,
-        server_description:
-          recommendation.rationale ||
-          `Recommended by orchestrator for category ${recommendation.category || CATEGORY_GENERIC}.`,
-        require_approval: "never",
-      });
+    const match = byId.get(sanitizeServerId(recommendation.mcp_server_id));
+    if (match) {
+      recommended.push(match);
     }
   });
 
@@ -316,13 +199,6 @@ export interface OrchestratorProgressEvent {
   transport?: "streamable-http";
 }
 
-interface OrchestratorClientConnection {
-  client: Client;
-  transport: StreamableHTTPClientTransport;
-  transportKind: "streamable-http";
-}
-
-const orchestratorConnections = new Map<string, Promise<OrchestratorClientConnection>>();
 const lastProgressByHandler = new WeakMap<
   (event: OrchestratorProgressEvent) => void,
   string
@@ -355,65 +231,6 @@ const emitProgress = (
     ...event,
     timestamp: new Date().toISOString(),
   });
-};
-
-const invalidateOrchestratorConnection = (serverUrl: string): void => {
-  // Close and evict failed connection so the next call performs a fresh handshake.
-  let key: string;
-  try {
-    key = normalizeHttpsMcpUrl(serverUrl).toString();
-  } catch {
-    return;
-  }
-
-  const existingPromise = orchestratorConnections.get(key);
-  if (!existingPromise) return;
-
-  orchestratorConnections.delete(key);
-  existingPromise
-    .then(({ transport }) => transport.close())
-    .catch(() => undefined);
-};
-
-/**
- * Get or create a memoized orchestrator connection for a server URL.
- */
-const getOrchestratorConnection = async (
-  serverUrl: string,
-  accessToken?: string,
-  onProgress?: (event: OrchestratorProgressEvent) => void
-): Promise<OrchestratorClientConnection> => {
-  // Connection promises are memoized to avoid parallel handshakes for one URL.
-  const mcpUrl = normalizeHttpsMcpUrl(serverUrl);
-  const key = mcpUrl.toString();
-  const existing = orchestratorConnections.get(key);
-  if (existing) {
-    return existing;
-  }
-
-  emitProgress(onProgress, {
-    status: "connecting",
-    message: `Connecting to orchestrator at ${mcpUrl.host}`,
-  });
-
-  const connectionPromise = (async () => {
-    const connection = await connectOrchestratorClient(mcpUrl.toString(), accessToken);
-    emitProgress(onProgress, {
-      status: "connected",
-      message: "Orchestrator connection established",
-      transport: connection.transportKind,
-    });
-    return connection;
-  })();
-
-  orchestratorConnections.set(key, connectionPromise);
-
-  try {
-    return await connectionPromise;
-  } catch (error) {
-    orchestratorConnections.delete(key);
-    throw error;
-  }
 };
 
 export const getOrchestratorInsights = async ({
@@ -453,15 +270,9 @@ export const getOrchestratorInsights = async ({
   }
 
   try {
-    if (!orchestratorServer.server_url) {
-      return null;
-    }
-
-    const { client, transportKind } = await getOrchestratorConnection(
-      orchestratorServer.server_url,
-      accessToken,
-      onProgress
-    );
+    // The orchestrator is reached through the same-origin API backend, which owns the
+    // upstream URL; no server_url is required on the client any more.
+    const transportKind: "streamable-http" | undefined = undefined;
 
     emitProgress(onProgress, {
       status: "classifying",
@@ -472,47 +283,27 @@ export const getOrchestratorInsights = async ({
     let classifyPayload: Record<string, unknown> | null = null;
     let suggestPayload: Record<string, unknown> | null = null;
 
-    try {
-      // Preferred API: one call that returns both category and routing decisions.
-      const combinedResult = await client.callTool({
-        name: "classify_and_suggest",
-        arguments: {
-          messages: contextMessages,
-          max_recommendations: 3,
-          require_single_best: false,
-        },
-      });
+    // Route through the API backend so the browser never contacts the orchestrator directly.
+    const response = await fetch(ORCHESTRATOR_SUGGEST_ROUTE_PATH, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+      body: JSON.stringify({
+        messages: contextMessages,
+        max_recommendations: 3,
+        require_single_best: false,
+      }),
+    });
 
-      const combinedPayload = extractToolPayload(combinedResult);
-      classifyPayload = combinedPayload;
-      suggestPayload = combinedPayload;
-    } catch {
-      // Backward-compatible fallback for orchestrators that expose older tools only.
-      emitProgress(onProgress, {
-        status: "routing",
-        message: "Using legacy routing flow",
-        transport: transportKind,
-      });
-
-      const classifyResult = await client.callTool({
-        name: "classify_context",
-        arguments: {
-          messages: contextMessages,
-        },
-      });
-
-      const suggestResult = await client.callTool({
-        name: "suggest_route",
-        arguments: {
-          messages: contextMessages,
-          max_recommendations: 3,
-          require_single_best: false,
-        },
-      });
-
-      classifyPayload = extractToolPayload(classifyResult);
-      suggestPayload = extractToolPayload(suggestResult);
+    if (!response.ok) {
+      throw new Error(`Orchestrator route request failed with status ${response.status}`);
     }
+
+    const routePayload = (await response.json()) as Record<string, unknown>;
+    classifyPayload = routePayload;
+    suggestPayload = routePayload;
 
     if (!suggestPayload) {
       emitProgress(onProgress, {
@@ -593,9 +384,6 @@ export const getOrchestratorInsights = async ({
     };
   } catch (error) {
     console.error("Orchestrator call failed", error);
-    if (orchestratorServer.server_url) {
-      invalidateOrchestratorConnection(orchestratorServer.server_url);
-    }
     emitProgress(onProgress, {
       status: "error",
       message: "Unable to reach orchestrator. Falling back.",
