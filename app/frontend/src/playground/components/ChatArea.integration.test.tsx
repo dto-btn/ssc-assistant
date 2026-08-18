@@ -4,11 +4,24 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { ThemeProvider, createTheme } from "@mui/material";
 import { describe, expect, it, beforeEach, vi } from "vitest";
 
-vi.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    t: (key: string, options?: { defaultValue?: string }) => options?.defaultValue ?? key,
-  }),
-}));
+// vi.mock("react-i18next", () => ({
+//   useTranslation: () => ({
+//     t: (key: string, options?: { defaultValue?: string }) =>
+//       options?.defaultValue ?? key,
+//   }),
+// }));
+
+vi.mock("react-i18next", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-i18next")>();
+
+  return {
+    ...actual,
+    useTranslation: () => ({
+      t: (key: string, options?: { defaultValue?: string }) =>
+        options?.defaultValue ?? key,
+    }),
+  };
+});
 
 vi.mock("./ChatMessages", () => ({
   default: () => <div data-testid="chat-messages" />,
