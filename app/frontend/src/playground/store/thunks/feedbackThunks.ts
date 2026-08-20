@@ -67,8 +67,6 @@ export const clearResponseFeedback =
     dispatch(setMessageFeedback({ messageId, feedback: undefined }));
   };
 
-
-
 export const submitChatFeedback =
   (payload: ChatFeedbackPayload): AppThunk =>
   async (dispatch, getState) => {
@@ -79,9 +77,19 @@ export const submitChatFeedback =
           accessToken,
           feedback: payload,
         });
-        dispatch(addToast({ message: i18n.t("feedback.success", { ns: "playground" }), isError: false }));
+        dispatch(
+          addToast({
+            message: i18n.t("feedback.success", { ns: "playground" }),
+            isError: false,
+          }),
+        );
       }
     } catch (error) {
-      dispatch(addToast({ message: i18n.t("feedback.error", { ns: "playground" }), isError: true }));
+      dispatch(
+        addToast({
+          message: i18n.t("feedback.error", { ns: "playground" }),
+          isError: true,
+        }),
+      );
     }
   };

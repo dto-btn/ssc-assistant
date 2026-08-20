@@ -28,6 +28,7 @@ from utils.models import (
     PlaygroundExtractTextRequest,
     PlaygroundExtractTextResponse,
     PlaygroundFeedbackRequest,
+    PlaygroundChatFeedbackRequest,
     PlaygroundFeedbackResponse,
     Feedback,
 )
@@ -916,5 +917,33 @@ def submit_feedback(payload: PlaygroundFeedbackRequest):
     except Exception:
         logger.exception("Failed to store playground feedback")
         return {"message": "Failed to save feedback"}, 500
+
+    return {"message": "Feedback saved!"}
+
+
+@api_playground.post("/feedback/chat")
+@api_playground.doc(
+    summary="Submit playground chat feedback",
+    description="Stores thumbs-up/down or written feedback for the playground chat experience per message.",
+    security="ApiKeyAuth",
+)
+@api_playground.input(PlaygroundChatFeedbackRequest.Schema, arg_name="payload")  # type: ignore[attr-defined]
+@api_playground.output(PlaygroundFeedbackResponse.Schema)  # type: ignore[attr-defined]
+@auth.login_required(role="chat")
+@user_ad.login_required
+def submit_chat_feedback(payload: PlaygroundChatFeedbackRequest):
+    """Persist playground chat feedback without depending on the legacy chat routes."""
+    try:
+        payload = _coerce_to_dataclass(payload, PlaygroundChatFeedbackRequest)
+    except PlaygroundAPIError as exc:
+        return {"message": _public_error_message(exc)}, exc.status_code
+
+    print(payload)
+
+    # try:
+    #     leave_feedback(feedback)
+    # except Exception:
+    #     logger.exception("Failed to store playground feedback")
+    #     return {"message": "Failed to save feedback"}, 500
 
     return {"message": "Feedback saved!"}

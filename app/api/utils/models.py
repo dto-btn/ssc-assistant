@@ -198,6 +198,18 @@ class PlaygroundFeedbackRequest:
     uuid: str = field(default='')
     source: Optional[str] = field(default='playground')
 
+@dataclass
+class PlaygroundChatFeedbackRequest:
+    """Payload for playground-native feedback submissions."""
+    messageId: str
+    sessionId: str
+    type: str
+    description:Optional[str] = None
+    stepsToReproduce: Optional[str] = None
+    suggestion: Optional[str] = None
+    attachments: Optional[List[PlaygroundFileMetadata]] = None
+
+
 
 @dataclass
 class PlaygroundFeedbackResponse:
