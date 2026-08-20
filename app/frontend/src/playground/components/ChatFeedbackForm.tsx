@@ -548,17 +548,6 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                     : t("chat.feedback.attachments.none")}
                 </Typography>
               </Box>
-              {attachmentLimitExceeded && (
-                <Typography
-                  variant="caption"
-                  color="error"
-                  sx={{ mt: 0.75, display: "block" }}
-                >
-                  {t("chat.feedback.attachments.limit.exceeded", {
-                    max: MAX_ATTACHMENTS,
-                  })}
-                </Typography>
-              )}
               {attachmentError && (
                 <Typography
                   role="alert"
