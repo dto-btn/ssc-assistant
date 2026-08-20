@@ -17,8 +17,8 @@ import ChatInput from "./ChatInput";
 import {
   Box,
   Typography,
-  useTheme,
-  useMediaQuery,
+  // useTheme,
+  // useMediaQuery,
   CircularProgress,
 } from "@mui/material";
 import Suggestions from "./Suggestions";
@@ -71,12 +71,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({ onOpenSidebar, isSidebarOpen }) => 
   // Session archive rehydration managed by dedicated hook.
   const { isRehydrated } = useSessionRehydration(currentSessionId);
 
- 
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const isMobileSidebarOpen = useAppSelector(
-    (state) => state.ui.isMobileSidebarOpen,
-  );
+  // const theme = useTheme();
+  // const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  // const isMobileSidebarOpen = useAppSelector(
+  //   (state) => state.ui.isMobileSidebarOpen,
+  // );
 
   // Chat feedback modal state from uiSlice and used to control the visibility of the ChatFeedbackForm component.
   const chatFeedbackModalState = useAppSelector(

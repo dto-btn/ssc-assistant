@@ -6,8 +6,8 @@
  */
 
 const FEEDBACK_ENDPOINT = "/api/playground/feedback";
-const CHAT_FEEDBACK_ATTACHMENT_ENDPOINT = "/api/playground/feedback/attachment";
-const CHAT_FEEDBACK_ENDPOINT = "/api/playground/feedback/chat";
+// const CHAT_FEEDBACK_ATTACHMENT_ENDPOINT = "/api/playground/feedback/attachment";
+// const CHAT_FEEDBACK_ENDPOINT = "/api/playground/feedback/chat";
 import type {ChatFeedbackPayload} from "../components/ChatFeedbackForm";
 
 export interface SendPlaygroundFeedbackOptions {
@@ -57,8 +57,8 @@ export async function sendPlaygroundFeedback({
 }
 export async function sendChatFeedback({
   accessToken,
-  feedback,
-  source = "playground",
+  // feedback,
+  // source = "playground",
 }: SendChatFeedbackOptions): Promise<void> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",

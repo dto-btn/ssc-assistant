@@ -94,7 +94,6 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
   const [issueSteps, setIssueSteps] = useState("");
   const [suggestion, setSuggestion] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
-  const [attachmentLimitExceeded, setAttachmentLimitExceeded] = useState(false);
   const [attachmentAnnouncement, setAttachmentAnnouncement] = useState("");
   const [attachmentError, setAttachmentError] = useState<string>("");
   const [attachmentErrorAnnouncement, setAttachmentErrorAnnouncement] =
@@ -124,7 +123,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
     setIssueSteps("");
     setSuggestion("");
     setAttachments([]);
-    setAttachmentLimitExceeded(false);
+
     setAttachmentAnnouncement("");
     setHasAttemptedSubmit(false);
     setAttachmentError("");
@@ -170,7 +169,6 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
       const tooManyFiles = validFiles.length > MAX_ATTACHMENTS;
 
       setAttachments(keptFiles);
-      setAttachmentLimitExceeded(tooManyFiles);
 
       const errors: string[] = [];
 
