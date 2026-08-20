@@ -515,7 +515,7 @@ export const AssistantBubble = ({
                 <>
                   <Divider />
                   <Box sx={{ m: 2, maxWidth: "100%" }}>
-                    <Typography gutterBottom variant="subtitle2">
+                    <Typography gutterBottom component="h2" variant="subtitle2">
                       Citation(s):
                     </Typography>
                     <Stack
@@ -576,7 +576,7 @@ export const AssistantBubble = ({
                       borderColor: "divider",
                     }}
                   >
-                    <Typography variant="subtitle1">Citations</Typography>
+                    <Typography component="h2" variant="subtitle1">Citations</Typography>
                     <IconButton
                       id="close-citation-drawer-button"
                       aria-label={t("aria.close") as string}
@@ -599,7 +599,10 @@ export const AssistantBubble = ({
                           else setActiveCitationGroupUrl(undefined);
                         }}
                       >
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <AccordionSummary
+                          expandIcon={<ExpandMoreIcon />}
+                          aria-label={t("citations.accordion.label", { ns: "playground", title: group.title })}
+                        >
                           <Typography variant="subtitle2">
                             {group.title}
                           </Typography>
@@ -647,6 +650,7 @@ export const AssistantBubble = ({
                                 <Fragment key={`${group.url}-${idx}`}>
                                   {mappedNum !== undefined && (
                                     <Typography
+                                      component="span"
                                       variant="h4"
                                       sx={{
                                         fontWeight: 600,

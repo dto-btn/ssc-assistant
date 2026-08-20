@@ -90,6 +90,12 @@ vi.mock("react-i18next", async (importOriginal) => {
         if (key === "assistant.streaming") {
           return "Assistant is responding.";
         }
+        if (key === "message.label.user") {
+          return "You said:";
+        }
+        if (key === "message.label.assistant") {
+          return "Assistant said:";
+        }
         if (key === "mcp.attribution.trigger") {
           return `MCP servers used for this response: ${options?.servers ?? "MCP server"}`;
         }
@@ -944,5 +950,71 @@ describe("ChatMessages", () => {
     });
 
     expect(screen.queryByText(/graph TD/i)).not.toBeInTheDocument();
+  });
+
+  // WCAG 1.3.1, 4.1.2 (M8) — Chat messages individually navigable by screen readers
+  it("wraps messages in a list inside the log container (M8)", () => {
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "user",
+            content: "Hello, how can you help?",
+            timestamp: 1,
+          },
+          {
+            id: "m2",
+            sessionId: "s1",
+            role: "assistant",
+            content: "I can help with many things.",
+            timestamp: 2,
+          },
+        ],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: { s1: "idle" },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    // role="log" on the container provides aria-live auto-announce for new messages.
+    expect(screen.getByRole("log")).toBeInTheDocument();
+
+    // Each message is a discrete list item so screen readers can navigate between them.
+    const listItems = screen.getAllByRole("listitem");
+    expect(listItems).toHaveLength(2);
+
+    // Each list item names its sender so screen readers announce who wrote the message.
+    expect(listItems[0]).toHaveAttribute("aria-label", "You said:");
+    expect(listItems[1]).toHaveAttribute("aria-label", "Assistant said:");
+  });
+
+  it("does not duplicate sender text inside user bubble content (M8)", () => {
+    renderMessages("s1", {
+      chat: {
+        messages: [
+          {
+            id: "m1",
+            sessionId: "s1",
+            role: "user",
+            content: "Hello",
+            timestamp: 1,
+          },
+        ],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: { s1: "idle" },
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: {
+        bySessionId: {},
+      },
+    });
+
+    // Sender context is announced from list-item labels, so bubble text stays clean.
+    expect(screen.queryByText("You")).not.toBeInTheDocument();
   });
 });

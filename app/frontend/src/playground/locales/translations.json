@@ -139,10 +139,6 @@
     "en": "Chat sessions",
     "fr": "Sessions de conversation"
   },
-  "sidebar.collapse": {
-    "en": "Collapse sidebar",
-    "fr": "Réduire la barre latérale"
-  },
   "sidebar.open": {
     "en": "Open chat sessions",
     "fr": "Ouvrir les sessions de conversation"
@@ -386,6 +382,10 @@
   "citations.chip.open": {
     "en": "Open citation details for {{title}}",
     "fr": "Ouvrir les détails de la citation pour {{title}}"
+  },
+  "citations.accordion.label": {
+    "en": "Citation: {{title}}",
+    "fr": "Citation : {{title}}"
   },
   "citations.localSourceReference": {
     "en": "Local source reference",

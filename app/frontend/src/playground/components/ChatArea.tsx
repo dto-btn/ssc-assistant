@@ -14,7 +14,13 @@ import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../store";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
-import { Box, Typography, useTheme, useMediaQuery, CircularProgress } from "@mui/material";
+import {
+  Box,
+  Typography,
+  useTheme,
+  useMediaQuery,
+  CircularProgress,
+} from "@mui/material";
 import Suggestions from "./Suggestions";
 import { selectMessagesBySessionId } from "../store/selectors/chatSelectors";
 import { selectCurrentSessionFiles } from "../store/selectors/sessionFilesSelectors";
@@ -65,6 +71,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ onOpenSidebar, isSidebarOpen }) => 
   // Session archive rehydration managed by dedicated hook.
   const { isRehydrated } = useSessionRehydration(currentSessionId);
 
+ 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isMobileSidebarOpen = useAppSelector(
@@ -78,22 +85,17 @@ const ChatArea: React.FC<ChatAreaProps> = ({ onOpenSidebar, isSidebarOpen }) => 
 
   /**
    * Renders the brand TopBar with sidebar toggle.
+   * TopBar's AppBar is the page banner landmark and carries the page h1.
    */
   const renderHeader = () => {
     return (
-      <Box display="flex" alignItems="center" width="100%">
-        <Box flexGrow={1} minWidth={0}>
-          <TopBar
-            onToggleSidebar={onOpenSidebar}
-            isSidebarOpen={isSidebarOpen}
-            isMobile={isMobile}
-            isMobileSidebarOpen={isMobileSidebarOpen}
-            onExport={handleExport}
-            isExportDisabled={!currentSessionId}
-            isExporting={isExporting}
-          />
-        </Box>
-      </Box>
+      <TopBar
+        onToggleSidebar={onOpenSidebar}
+        isSidebarOpen={isSidebarOpen}
+        onExport={handleExport}
+        isExportDisabled={!currentSessionId}
+        isExporting={isExporting}
+      />
     );
   };
 
@@ -254,7 +256,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ onOpenSidebar, isSidebarOpen }) => 
           justifyContent="center"
           minWidth={0}
         >
-          <Typography component="h1" variant="body1">
+          <Typography component="p" variant="body1">
             {t("select.or.create.session")}
           </Typography>
         </Box>
@@ -315,7 +317,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({ onOpenSidebar, isSidebarOpen }) => 
   if (messages.length === 0) {
     return (
       <Box
-        component="main"
         flex={1}
         display="flex"
         flexDirection="column"
@@ -324,39 +325,48 @@ const ChatArea: React.FC<ChatAreaProps> = ({ onOpenSidebar, isSidebarOpen }) => 
       >
         {renderHeader()}
         <Box
-          flex={1}
+          component="main"
           display="flex"
           flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          p={{ xs: 2, sm: 4, md: 6 }}
+          flex={1}
+          minHeight={0}
           minWidth={0}
         >
-          <Typography component="h1" variant="h3" gutterBottom>
-            {t("how.can.i.help")}
-          </Typography>
-          <Typography
-            component="p"
-            variant="body1"
-            align="center"
-            sx={{
-              width: "100%",
-              maxWidth: { xs: "100%", sm: "600px", md: "800px" },
-              mb: { xs: 2, sm: 3, md: 4 },
-              px: { xs: 1, sm: 2 },
-              lineHeight: 1.7,
-              color: "text.primary",
-            }}
+          <Box
+            flex={1}
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            p={{ xs: 2, sm: 4, md: 6 }}
+            minWidth={0}
           >
-            {t("how.can.i.help.description")}
-          </Typography>
-          <Suggestions
-            onSuggestionClicked={handleSuggestion}
-            disabled={isLoading}
-          />
-          <OrchestratorDebugPanel sessionId={currentSessionId} />
+            <Typography component="h2" variant="h3" gutterBottom>
+              {t("how.can.i.help")}
+            </Typography>
+            <Typography
+              component="p"
+              variant="body1"
+              align="center"
+              sx={{
+                width: "100%",
+                maxWidth: { xs: "100%", sm: "600px", md: "800px" },
+                mb: { xs: 2, sm: 3, md: 4 },
+                px: { xs: 1, sm: 2 },
+                lineHeight: 1.7,
+                color: "text.primary",
+              }}
+            >
+              {t("how.can.i.help.description")}
+            </Typography>
+            <Suggestions
+              onSuggestionClicked={handleSuggestion}
+              disabled={isLoading}
+            />
+            <OrchestratorDebugPanel sessionId={currentSessionId} />
+          </Box>
+          <ChatInput sessionId={currentSessionId} />
         </Box>
-        <ChatInput sessionId={currentSessionId} />
       </Box>
     );
   }
@@ -378,22 +388,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({ onOpenSidebar, isSidebarOpen }) => 
         minHeight={0}
         minWidth={0}
       >
-        {/* WCAG 1.3.1 / page-has-heading-one: the empty-state branches each supply an
-            h1, but this active-chat branch has no visible heading. A visually-hidden h1
-            keeps axe happy and gives screen-reader users a page title landmark. */}
-        <Typography
-          component="h1"
-          sx={{
-            position: "absolute",
-            width: "1px",
-            height: "1px",
-            overflow: "hidden",
-            clip: "rect(0,0,0,0)",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {t("chat.transcript", { defaultValue: "Chat conversation" })}
-        </Typography>
         <ChatMessages sessionId={currentSessionId} />
         {chatFeedbackModalState && (
           <ChatFeedbackForm

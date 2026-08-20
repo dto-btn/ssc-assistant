@@ -42,6 +42,8 @@ export interface Message {
    * - undefined: No feedback provided.
    */
   feedback?: "liked" | "disliked";
+  /** True when this message carries an error notification rather than a normal response. */
+  isError?: boolean;
 }
 
 export interface MessageMcpAttributionServer {
@@ -154,13 +156,16 @@ const chatSlice = createSlice({
       state.orchestratorInsightsBySessionId = {};
       state.isLoadingBySessionId = {};
     },
-    updateMessageContent: (state, action: PayloadAction<{ messageId: string; content: string; citations?: Citation[] }>) => {
-      const { messageId, content, citations } = action.payload;
+    updateMessageContent: (state, action: PayloadAction<{ messageId: string; content: string; citations?: Citation[]; isError?: boolean }>) => {
+      const { messageId, content, citations, isError } = action.payload;
       const message = state.messages.find(msg => msg.id === messageId);
       if (message) {
         message.content = content;
         if (citations !== undefined) {
           message.citations = citations;
+        }
+        if (isError !== undefined) {
+          message.isError = isError;
         }
       }
     },
