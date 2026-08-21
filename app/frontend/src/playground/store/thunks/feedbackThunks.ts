@@ -68,15 +68,21 @@ export const clearResponseFeedback =
   };
 
 export const submitChatFeedback =
-  (payload: ChatFeedbackPayload): AppThunk =>
+  (feedbackPayload: ChatFeedbackPayload): AppThunk =>
   async (dispatch, getState) => {
     const accessToken = getState().auth.accessToken ?? undefined;
+    const payload =
+      "data:application/json;base64," +
+      btoa(unescape(encodeURIComponent(JSON.stringify(feedbackPayload))));
     try {
       if (payload) {
         await sendChatFeedback({
           accessToken,
           feedback: payload,
+          sessionId: feedbackPayload.sessionId,
+          messageId: feedbackPayload.messageId,
         });
+
         dispatch(
           addToast({
             message: i18n.t("feedback.success", { ns: "playground" }),

@@ -3,6 +3,7 @@ import uuid
 import concurrent.futures
 import re
 import unicodedata
+import json
 from datetime import datetime
 from typing import Dict, Any, Optional, Tuple, List, Type, TypeVar
 import logging
@@ -357,6 +358,39 @@ def _fetch_file_bytes(
         or "application/octet-stream"
     )
     return file_bytes, content_type
+
+def _merge_feedback_entry(container_client, oid: str, session_id: str, entry: Dict[str, Any]) -> None:
+    """Read {sessionId}.feedback.json, replace any entry with the same messageId+kind, write it back."""
+    sanitized_session = secure_filename(str(session_id)) or str(session_id)
+    blob_name = f"{oid}/{sanitized_session}.feedback.json"
+    blob_client = container_client.get_blob_client(blob_name)
+
+    try:
+        doc = json.loads(blob_client.download_blob(max_concurrency=1).readall())
+    except ResourceNotFoundError:
+        doc = {"sessionId": session_id, "entries": []}
+
+    timestamp = datetime.utcnow().isoformat() + "Z"
+    entry["submittedAt"] = timestamp
+    doc["entries"] = [
+        e for e in doc.get("entries", [])
+        if not (e.get("messageId") == entry.get("messageId") and e.get("type") == entry.get("type"))
+    ] + [entry]
+    doc["lastUpdated"] = timestamp
+
+    blob_client.upload_blob(
+        json.dumps(doc).encode("utf-8"),
+        overwrite=True,
+        metadata=_normalize_blob_metadata({
+            "user_id": oid,
+            "sessionid": str(session_id),
+            "category": "feedback",
+            "type": "chat-feedback",
+            "lastupdated": timestamp,
+            "deleted": "false",
+        }),
+        content_settings=ContentSettings(content_type="application/json"),
+    )
 
 # GET /api/playground/files-for-session: Returns files for a given sessionId by searching blob metadata
 @api_playground.get("/files-for-session")
@@ -920,30 +954,40 @@ def submit_feedback(payload: PlaygroundFeedbackRequest):
 
     return {"message": "Feedback saved!"}
 
-
 @api_playground.post("/feedback/chat")
-@api_playground.doc(
-    summary="Submit playground chat feedback",
-    description="Stores thumbs-up/down or written feedback for the playground chat experience per message.",
-    security="ApiKeyAuth",
-)
 @api_playground.input(PlaygroundChatFeedbackRequest.Schema, arg_name="payload")  # type: ignore[attr-defined]
 @api_playground.output(PlaygroundFeedbackResponse.Schema)  # type: ignore[attr-defined]
 @auth.login_required(role="chat")
 @user_ad.login_required
 def submit_chat_feedback(payload: PlaygroundChatFeedbackRequest):
-    """Persist playground chat feedback without depending on the legacy chat routes."""
     try:
         payload = _coerce_to_dataclass(payload, PlaygroundChatFeedbackRequest)
     except PlaygroundAPIError as exc:
         return {"message": _public_error_message(exc)}, exc.status_code
 
-    print(payload)
+    try:
+        oid = _get_authenticated_oid()
+    except PlaygroundAPIError as exc:
+        return {"message": _public_error_message(exc)}, exc.status_code
 
-    # try:
-    #     leave_feedback(feedback)
-    # except Exception:
-    #     logger.exception("Failed to store playground feedback")
-    #     return {"message": "Failed to save feedback"}, 500
+    encoded_payload = payload.feedback
+    if encoded_payload.startswith("data:"):
+       encoded_payload = payload.feedback.split(",", 1)[-1] if payload.feedback.startswith("data:") else payload.feedback
+    entry = json.loads(base64.b64decode(encoded_payload))
+    entry["messageId"] = payload.messageId
+   
+    try:
+        container_client = _get_container_client()
+        container_client.create_container()
+    except ResourceExistsError:
+        pass
+    except AzureError:
+        logger.exception("Failed to access blob service for oid %s", oid)
+        return {"message": "Server error"}, 500
+    try:
+        _merge_feedback_entry(container_client, oid, payload.sessionId, entry)
+    except Exception:
+        logger.exception("Failed to store playground chat feedback")
+        return {"message": "Failed to save feedback"}, 500
 
     return {"message": "Feedback saved!"}

@@ -19,8 +19,10 @@ export interface SendPlaygroundFeedbackOptions {
 }
 
 interface SendChatFeedbackOptions {
-  feedback: ChatFeedbackPayload;
+  feedback: string;
   accessToken?: string;
+  sessionId: string;
+  messageId: string;
 }
 
 /**
@@ -57,6 +59,8 @@ export async function sendPlaygroundFeedback({
 export async function sendChatFeedback({
   accessToken,
   feedback,
+  sessionId,
+  messageId,
 }: SendChatFeedbackOptions): Promise<void> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -69,7 +73,7 @@ export async function sendChatFeedback({
   const response = await fetch(CHAT_FEEDBACK_ENDPOINT, {
     method: "POST",
     headers,
-    body: JSON.stringify(feedback),
+    body: JSON.stringify({ feedback, sessionId, messageId }),
   });
 
   if (!response.ok) {
