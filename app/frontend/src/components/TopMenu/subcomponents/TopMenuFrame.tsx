@@ -37,8 +37,6 @@ export const TopMenuFrame: FC<TopMenuProps> = ({
           top: 0,
           right: 0,
           width: `calc(100vw - ${isOpen ? LEFT_MENU_WIDTH : 0}px)`,
-          overflowX: "auto",
-          WebkitOverflowScrolling: "touch",
         }}
       >
         <Toolbar
@@ -51,13 +49,10 @@ export const TopMenuFrame: FC<TopMenuProps> = ({
             alignItems: "center",
             justifyContent: "space-between",
             flexShrink: 0,
-            flexWrap: "nowrap",
+            flexWrap: "wrap",
             borderRadius: 0,
             background: `linear-gradient(45deg, #222, ${theme.palette.primary.main})`,
-            maxHeight: 40,
             border: "none",
-            overflowX: "auto",
-            overflowY: "hidden",
           })}
         >
           {childrenLeftOfLogo}
@@ -68,7 +63,6 @@ export const TopMenuFrame: FC<TopMenuProps> = ({
               gap: "1rem",
               userSelect: "none",
               minWidth: 0,
-              whiteSpace: "nowrap",
             }}
           >
             <img
@@ -81,7 +75,7 @@ export const TopMenuFrame: FC<TopMenuProps> = ({
             />
             <Typography
               variant="h1"
-              sx={{ fontSize: "20px", fontWeight: "500", textWrap: "nowrap" }}
+              sx={{ fontSize: "20px", fontWeight: "500" }}
             >
               {t("title")}
             </Typography>
@@ -95,8 +89,7 @@ export const TopMenuFrame: FC<TopMenuProps> = ({
               justifyContent: "space-between",
               flexGrow: 1,
               minWidth: 0,
-              overflowX: "auto",
-              whiteSpace: "nowrap",
+              flexWrap: "wrap",
             }}
           >
             {/* This is where the content will go. */}
