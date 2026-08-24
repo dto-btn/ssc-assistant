@@ -45,8 +45,8 @@ const ToastContainer: React.FC = () => {
           anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
           sx={{
             bottom: {
-              xs: "calc(var(--chat-input-height, 100px) + env(safe-area-inset-bottom)) !important",
-              sm: "24px !important",
+              xs: "calc(var(--chat-input-height) + env(safe-area-inset-bottom))",
+              sm: "24px",
             },
           }}
         >

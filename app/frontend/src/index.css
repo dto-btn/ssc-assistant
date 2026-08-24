@@ -22,6 +22,10 @@
 	text-decoration: none;
 }
 
+:root {
+  --chat-input-height: 100px;
+}
+
 /* App content wrapper to allow scroll-lock to be applied to a child instead of the body */
 #app-content {
   height: 100vh;

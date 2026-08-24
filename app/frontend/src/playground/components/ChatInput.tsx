@@ -147,7 +147,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
     };
   }, []);
 
-  
   /**
    * Submits the current message to the chat store including any quoted text and
    * attachments, then resets the composer state. Guarded against empty input
