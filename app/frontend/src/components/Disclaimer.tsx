@@ -74,21 +74,13 @@ export const Disclaimer = () => {
     const modalRoot = document.getElementById('modal-root');
     if (!root) return;
     if (shouldShow && modalRoot) {
-      try {
-        (root as any).inert = true;
-      } catch (e) {
-        // inert might not be supported; best-effort only
-      }
+      root.inert = true;
       modalRoot.removeAttribute('aria-hidden');
     } else {
-      try {
-        (root as any).inert = false;
-      } catch (e) {}
+      root.inert = false;
     }
     return () => {
-      try {
-        (root as any).inert = false;
-      } catch (e) {}
+      root.inert = false;
     };
   }, [shouldShow]);
 
