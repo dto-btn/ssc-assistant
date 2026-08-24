@@ -58,7 +58,7 @@ export const App = ({ instance }: AppProps) => {
           On the playground page, #playground-ask-question is used; elsewhere #ask-question. */}
       <a
         className="skip-link"
-        href="#playground-ask-question"
+        href="#ask-question"
         onClick={(e) => {
           const target =
             document.getElementById("playground-ask-question") ??
