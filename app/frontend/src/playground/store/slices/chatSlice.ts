@@ -89,6 +89,7 @@ export interface OrchestratorInsights {
   recommendations: OrchestratorRecommendation[];
   chatTitle?: string;
   classificationMethod?: string;
+  chatTitleSource?: "ai" | "deterministic";
   status?: OrchestratorProgressUpdate["status"];
   statusMessage?: string;
   progressUpdates?: OrchestratorProgressUpdate[];

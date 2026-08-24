@@ -686,6 +686,15 @@ export const sendAssistantMessage = ({
         })
       : null;
 
+    if (shouldAutoRenameSession) {
+      // Combined classifier output owns the primary title; keep the local
+      // heuristic only for unavailable or pre-title orchestrator versions.
+      const autoName = orchestratorInsights?.chatTitle || deriveSessionName(content);
+      if (autoName) {
+        dispatch(renameSession({ id: sessionId, name: autoName }));
+      }
+    }
+
     // If orchestrator is unavailable, preserve existing behavior by using configured downstream servers.
     const orchestratorUnavailable = !orchestratorInsights;
 

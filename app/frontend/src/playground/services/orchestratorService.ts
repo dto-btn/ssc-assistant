@@ -51,14 +51,16 @@ const normalizeCategory = (value?: string): string | undefined => {
   return normalized === "generic" ? "general" : normalized;
 };
 
-/**
- * Normalize optional orchestrator-provided chat title strings.
- */
+/** Normalize optional orchestrator-provided chat title strings. */
 const normalizeChatTitle = (value: unknown): string | undefined => {
   if (typeof value !== "string") return undefined;
-  const normalized = value.trim().replace(/\s+/g, " ");
-  if (!normalized) return undefined;
-  return normalized.slice(0, 80);
+
+  const normalized = value.replace(/\s+/g, " ").trim();
+  return normalized ? normalized.slice(0, 80) : undefined;
+};
+
+const normalizeChatTitleSource = (value: unknown): "ai" | "deterministic" | undefined => {
+  return value === "ai" || value === "deterministic" ? value : undefined;
 };
 
 /**
@@ -588,6 +590,11 @@ export const getOrchestratorInsights = async ({
       typeof fallback?.reason === "string" && fallback.reason.trim().length > 0
         ? fallback.reason
         : undefined;
+    const chatTitleSource =
+      normalizeChatTitleSource(suggestPayload.chat_title_source)
+      ?? normalizeChatTitleSource(suggestPayload.chatTitleSource)
+      ?? normalizeChatTitleSource(classifyPayload?.chat_title_source)
+      ?? normalizeChatTitleSource(classifyPayload?.chatTitleSource);
 
     emitProgress(onProgress, {
       status: "done",
@@ -601,6 +608,7 @@ export const getOrchestratorInsights = async ({
       chatTitle,
       classificationMethod:
         responseClassificationMethod || effectiveRecommendations[0]?.classification_method,
+      chatTitleSource,
       fallbackReason,
       fallbackUpstream,
       source: "orchestrator",
