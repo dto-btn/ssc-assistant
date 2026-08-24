@@ -57,7 +57,8 @@ test('opens and closes the mobile session drawer around session selection', asyn
   await expect(playground.page.getByText('Mobile archived response B.')).toBeVisible();
   await expect(playground.page.getByText('Mobile archived response A.')).toHaveCount(0);
   await expect(playground.composer()).toBeVisible();
-  await expect(playground.sidebarToggle()).toHaveAttribute('aria-label', 'Open chat sessions');
+  await expect(playground.sidebarToggle()).toHaveAttribute('aria-label', 'Chat sessions');
+  await expect(playground.sidebarToggle()).toHaveAttribute('aria-expanded', 'false');
 });
 
 /**

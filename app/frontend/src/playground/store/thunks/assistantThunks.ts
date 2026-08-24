@@ -1516,9 +1516,9 @@ export const sendAssistantMessage = ({
     // If a placeholder was already dispatched, reuse it for the error message
     // to avoid a duplicate empty assistant turn above the error text.
     if (placeholderAssistantMessageId) {
-      dispatch(updateMessageContent({ messageId: placeholderAssistantMessageId, content: assistantErrorMessage }));
+      dispatch(updateMessageContent({ messageId: placeholderAssistantMessageId, content: assistantErrorMessage, isError: true }));
     } else {
-      dispatch(addMessage({ sessionId, role: "assistant", content: assistantErrorMessage }));
+      dispatch(addMessage({ sessionId, role: "assistant", content: assistantErrorMessage, isError: true }));
     }
 
     dispatch(
