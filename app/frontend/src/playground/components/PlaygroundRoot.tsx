@@ -91,7 +91,7 @@ export const PlaygroundShell: React.FC = () => {
           },
         }}
       >
-        {t("skip.to.main")}
+        {t("skip.to.chat.input")}
       </Box>
       <SessionBootstrapper />
       <NewConversationOnOpen />
