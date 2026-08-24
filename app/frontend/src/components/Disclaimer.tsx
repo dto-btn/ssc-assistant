@@ -6,7 +6,6 @@ import {
   DialogActions,
   Button,
 } from "@mui/material";
-import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 
 import { useMsal } from "@azure/msal-react";
@@ -73,9 +72,9 @@ export const Disclaimer = () => {
     const root = document.getElementById('root');
     const modalRoot = document.getElementById('modal-root');
     if (!root) return;
-    if (shouldShow && modalRoot) {
+    if (shouldShow) {
       root.inert = true;
-      modalRoot.removeAttribute('aria-hidden');
+      modalRoot?.removeAttribute('aria-hidden');
     } else {
       root.inert = false;
     }
@@ -99,7 +98,12 @@ export const Disclaimer = () => {
   }
 
   const dialog = (
-    <Dialog open={shouldShow} fullWidth disableScrollLock disablePortal>
+    <Dialog
+      open={shouldShow}
+      fullWidth
+      disableScrollLock
+      container={() => document.getElementById("modal-root") ?? document.body}
+    >
       <DialogTitle>
         {currentDisclaimerConfig?.title
           ? t("disclaimer") + " - " + t(currentDisclaimerConfig.title)
@@ -131,11 +135,6 @@ export const Disclaimer = () => {
       </DialogActions>
     </Dialog>
   );
-
-  if (typeof document !== "undefined") {
-    const modalRoot = document.getElementById("modal-root");
-    if (modalRoot) return createPortal(dialog, modalRoot);
-  }
 
   return dialog;
 };

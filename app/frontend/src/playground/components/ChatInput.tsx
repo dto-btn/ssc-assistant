@@ -313,8 +313,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
         pb: 'env(safe-area-inset-bottom)',
         width: "100%",
         maxWidth: "100%",
-        maxHeight: 130,
-        overflow: 'hidden',
         px: { xs: 0.5, sm: 1 },
         boxSizing: "border-box",
         mx: 0,
@@ -378,7 +376,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
                   component="img"
                   src={p.url}
                   alt={p.file.name}
-                  sx={{ maxHeight: 110, borderRadius: 2, display: 'block' }}
+                  sx={{ maxHeight: "7rem", borderRadius: 2, display: 'block' }}
                 />
               ) : (
                 <Chip icon={<AttachFileIcon />} label={p.file.name} variant="outlined" />
@@ -411,8 +409,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
           background: dragActive ? theme.palette.action.hover : undefined,
           transition: "background 0.2s, border-color 0.2s",
           minHeight: 40,
-          maxHeight: 78,
-          overflow: 'hidden',
         }}
         aria-describedby={error ? 'chatinput-error' : undefined}
       >
@@ -441,7 +437,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
 
         <InputBase
           inputRef={inputRef}
-          sx={{ ml: 1, flex: 1, minWidth: 0, maxHeight: 64, overflowY: 'auto', lineHeight: 1.2, fontSize: '0.86rem', py: 0.3 }}
+          sx={{ ml: 1, flex: 1, minWidth: 0, lineHeight: 1.2, py: 0.3 }}
           // The visually-hidden <label htmlFor="playground-ask-question"> above
           // provides a label association. Add a persistent aria-label for
           // assistive tech and to satisfy the accessible name requirements.
@@ -452,7 +448,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
           value={input}
           multiline
           minRows={1}
-          maxRows={3}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             const v = e.target.value;
             // Simple length validation with i18n fallback

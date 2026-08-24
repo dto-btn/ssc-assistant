@@ -10,7 +10,6 @@ import {
   useTheme,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { createPortal } from "react-dom";
 
 import {
   acceptPlaygroundDisclaimer,
@@ -56,9 +55,9 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
     const root = document.getElementById('root');
     const modalRoot = document.getElementById('modal-root');
     if (!root) return;
-    if (currentDisclaimer && modalRoot) {
+    if (currentDisclaimer) {
       root.inert = true;
-      modalRoot.removeAttribute('aria-hidden');
+      modalRoot?.removeAttribute('aria-hidden');
     } else {
       root.inert = false;
     }
@@ -104,8 +103,8 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
       fullScreen={isSmallScreen}
       disableEscapeKeyDown
       disableScrollLock
-      disablePortal
       onClose={handleMandatoryDialogClose}
+      container={() => document.getElementById("modal-root") ?? document.body}
       aria-labelledby="playground-disclaimer-title"
       aria-describedby={descriptionId}
     >
@@ -147,13 +146,6 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
       </DialogActions>
     </Dialog>
   );
-
-  if (typeof document !== "undefined") {
-    const modalRoot = document.getElementById("modal-root");
-    if (modalRoot) {
-      return createPortal(dialog, modalRoot);
-    }
-  }
 
   return dialog;
 };
