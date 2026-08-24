@@ -56,11 +56,11 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
     const root = document.getElementById('root');
     const modalRoot = document.getElementById('modal-root');
     if (!root) return;
-    if (currentDisclaimer) {
+    if (currentDisclaimer && modalRoot) {
       try {
         (root as any).inert = true;
       } catch (e) {}
-      if (modalRoot) modalRoot.removeAttribute('aria-hidden');
+      modalRoot.removeAttribute('aria-hidden');
     } else {
       try {
         (root as any).inert = false;

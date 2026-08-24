@@ -73,15 +73,13 @@ export const Disclaimer = () => {
     const root = document.getElementById('root');
     const modalRoot = document.getElementById('modal-root');
     if (!root) return;
-    if (shouldShow) {
+    if (shouldShow && modalRoot) {
       try {
         (root as any).inert = true;
       } catch (e) {
         // inert might not be supported; best-effort only
       }
-      if (modalRoot) {
-        modalRoot.removeAttribute('aria-hidden');
-      }
+      modalRoot.removeAttribute('aria-hidden');
     } else {
       try {
         (root as any).inert = false;
