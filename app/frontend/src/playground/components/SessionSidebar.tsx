@@ -544,68 +544,75 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         onRename={handleRenameSession}
       />
 
-      <Box
-        sx={{
-          marginTop: "auto",
-          flexShrink: 0,
-          display: "flex",
-          justifyContent: "flex-start",
-          alignItems: "center",
-          width: "100%",
-          borderTop: "1px solid",
-          borderColor: "divider",
-          bgcolor: "background.default",
-          px: 1,
-          pt: 1,
-          pb: 1,
-          "@media (max-height: 540px), (max-width: 480px)": {
-            position: "fixed",
-            right: 12,
-            bottom: 12,
-            width: "auto",
-            marginTop: 0,
-            borderTop: "none",
-            bgcolor: "transparent",
-            px: 0,
-            pt: 0,
-            pb: 0,
-            zIndex: 1300,
-            "& #profile-menu-button": {
-              width: "auto",
-              minWidth: 0,
-              px: 0.75,
-              py: 0.75,
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: "999px",
-              bgcolor: "background.paper",
-              boxShadow: 2,
-            },
-            "& #profile-menu-button .MuiTypography-root": {
-              display: "none",
-            },
-          },
-        }}
-      >
-        <ProfileMenu
-          size="30px"
-          fontSize="12px"
-          logout={() => console.log("logout")}
-        />
-      </Box>
+      {!isMobile && (
+        <Box
+          sx={{
+            marginTop: "auto",
+            flexShrink: 0,
+            display: "flex",
+            justifyContent: "flex-start",
+            alignItems: "center",
+            width: "100%",
+            borderTop: "1px solid",
+            borderColor: "divider",
+            bgcolor: "background.default",
+            px: 1,
+            pt: 1,
+            pb: 1,
+          }}
+        >
+          <ProfileMenu
+            size="30px"
+            fontSize="12px"
+            logout={() => console.log("logout")}
+          />
+        </Box>
+      )}
     </Box>
   );
 
   if (isMobile) {
     return (
-      <Drawer
-        anchor="left"
-        variant="temporary"
-        open={isMobileSidebarOpen}
-        onClose={() => dispatch(closeMobileSidebar())}
-      >
-        {sidebarContent}
-      </Drawer>
+      <>
+        <Drawer
+          anchor="left"
+          variant="temporary"
+          open={isMobileSidebarOpen}
+          onClose={() => dispatch(closeMobileSidebar())}
+        >
+          {sidebarContent}
+        </Drawer>
+        {isMobileSidebarOpen && (
+          <Box
+            sx={{
+              position: "fixed",
+              left: LEFT_MENU_EXPANDED_WIDTH + 8,
+              bottom: 12,
+              zIndex: 1300,
+              "& #profile-menu-button": {
+                width: "auto",
+                minWidth: 0,
+                px: 0.75,
+                py: 0.75,
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: "999px",
+                bgcolor: "background.paper",
+                boxShadow: 2,
+              },
+              "& #profile-menu-button .MuiTypography-root": {
+                display: "none",
+              },
+            }}
+          >
+            <ProfileMenu
+              size="30px"
+              fontSize="12px"
+              logout={() => console.log("logout")}
+            />
+          </Box>
+        )}
+      </>
     );
   }
 
