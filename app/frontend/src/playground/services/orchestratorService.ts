@@ -12,6 +12,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { Tool } from "openai/resources/responses/responses.mjs";
 import { tryParseJsonObject } from "../utils/json";
+import { normalizeChatTitle } from "../utils/chatTitle";
 import type {
   Message,
   OrchestratorInsights,
@@ -49,14 +50,6 @@ const normalizeCategory = (value?: string): string | undefined => {
   const normalized = value.trim().toLowerCase();
   if (!normalized) return undefined;
   return normalized === "generic" ? "general" : normalized;
-};
-
-/** Normalize optional orchestrator-provided chat title strings. */
-const normalizeChatTitle = (value: unknown): string | undefined => {
-  if (typeof value !== "string") return undefined;
-
-  const normalized = value.replace(/\s+/g, " ").trim();
-  return normalized ? normalized.slice(0, 80) : undefined;
 };
 
 const normalizeChatTitleSource = (value: unknown): "ai" | "deterministic" | undefined => {
@@ -560,9 +553,7 @@ export const getOrchestratorInsights = async ({
     const recommendations = normalizeRecommendations(suggestPayload.recommendations);
     const chatTitle =
       normalizeChatTitle(suggestPayload.chat_title)
-      || normalizeChatTitle(suggestPayload.chatTitle)
-      || normalizeChatTitle(classifyPayload?.chat_title)
-      || normalizeChatTitle(classifyPayload?.chatTitle);
+      || normalizeChatTitle(classifyPayload?.chat_title);
     const responseClassificationMethod =
       typeof suggestPayload.classification_method === "string"
         ? suggestPayload.classification_method
@@ -592,9 +583,7 @@ export const getOrchestratorInsights = async ({
         : undefined;
     const chatTitleSource =
       normalizeChatTitleSource(suggestPayload.chat_title_source)
-      ?? normalizeChatTitleSource(suggestPayload.chatTitleSource)
-      ?? normalizeChatTitleSource(classifyPayload?.chat_title_source)
-      ?? normalizeChatTitleSource(classifyPayload?.chatTitleSource);
+      ?? normalizeChatTitleSource(classifyPayload?.chat_title_source);
 
     emitProgress(onProgress, {
       status: "done",

@@ -367,6 +367,22 @@ describe("sendAssistantMessage auto-rename", () => {
     expect(store.getState().sessions.sessions[0].isNewChat).toBe(false);
   });
 
+  it("keeps a fallback name when the orchestrator call rejects", async () => {
+    getOrchestratorInsightsMock.mockRejectedValue(new Error("orchestrator down"));
+
+    const store = makeStore({ isNewChat: true, mcpServers: [orchestratorServer] });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "What is the capital of France?",
+      }) as any,
+    );
+
+    expect(store.getState().sessions.sessions[0].name).toBe("What is the capital of");
+    expect(store.getState().sessions.sessions[0].isNewChat).toBe(false);
+  });
+
   it("auto-renames only once per chat", async () => {
     getOrchestratorInsightsMock
       .mockResolvedValueOnce({

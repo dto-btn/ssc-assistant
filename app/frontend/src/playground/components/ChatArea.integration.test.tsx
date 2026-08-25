@@ -18,12 +18,12 @@ vi.mock("./ChatInput", () => ({
   default: () => <div data-testid="chat-input" />,
 }));
 
-vi.mock("./OrchestratorDebugPanel", () => ({
-  default: () => <div data-testid="orchestrator-debug" />,
-}));
-
 vi.mock("./Suggestions", () => ({
   default: () => <div data-testid="suggestions" />,
+}));
+
+vi.mock("./OrchestratorDebugPanel", () => ({
+  default: () => <div data-testid="orchestrator-debug" />,
 }));
 
 vi.mock("./TopBar", () => ({

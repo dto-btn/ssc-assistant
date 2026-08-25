@@ -40,6 +40,7 @@ import {
   OrchestratorProgressEvent,
   resolveServersFromInsights,
 } from "../../services/orchestratorService";
+import { normalizeChatTitle } from "../../utils/chatTitle";
 import { Citation } from "../../utils/citations";
 import { createStreamTypewriter } from "../../utils/streamTypewriter";
 import { selectMessagesForSession } from "../selectors/chatSelectors";
@@ -202,13 +203,6 @@ const isDuplicateProgressUpdate = (
     && previous.message === next.message
     && previous.transport === next.transport
   );
-};
-
-const normalizeInsightTitle = (value: unknown): string | undefined => {
-  if (typeof value !== "string") return undefined;
-  const normalized = value.trim().replace(/\s+/g, " ");
-  if (!normalized) return undefined;
-  return normalized;
 };
 
 /**
@@ -598,6 +592,15 @@ export const sendAssistantMessage = ({
       dispatch(setIsSessionNew({ id: sessionId, isNew: false }));
     }
 
+    if (shouldAutoRenameSession) {
+      // Name up front so a failure before the orchestrator resolves still leaves
+      // the chat named; the AI title overrides this once insights arrive.
+      const fallbackName = deriveSessionName(content);
+      if (fallbackName) {
+        dispatch(renameSession({ id: sessionId, name: fallbackName }));
+      }
+    }
+
     const dispatchForAttachments = dispatch as AppDispatch;
     const { mcpServers } = getState().tools;
     const existingSessionMessages = selectMessagesForSession(getState(), sessionId);
@@ -686,15 +689,6 @@ export const sendAssistantMessage = ({
         })
       : null;
 
-    if (shouldAutoRenameSession) {
-      // Combined classifier output owns the primary title; keep the local
-      // heuristic only for unavailable or pre-title orchestrator versions.
-      const autoName = orchestratorInsights?.chatTitle || deriveSessionName(content);
-      if (autoName) {
-        dispatch(renameSession({ id: sessionId, name: autoName }));
-      }
-    }
-
     // If orchestrator is unavailable, preserve existing behavior by using configured downstream servers.
     const orchestratorUnavailable = !orchestratorInsights;
 
@@ -752,7 +746,7 @@ export const sendAssistantMessage = ({
       : baseInsights;
 
     if (shouldAutoRenameSession) {
-      const orchestratorSuggestedTitle = normalizeInsightTitle(orchestratorInsights?.chatTitle);
+      const orchestratorSuggestedTitle = normalizeChatTitle(orchestratorInsights?.chatTitle);
       const fallbackTitle = deriveSessionName(content);
       const nextTitle = orchestratorSuggestedTitle || fallbackTitle;
 
