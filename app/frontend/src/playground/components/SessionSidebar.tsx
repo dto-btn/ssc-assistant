@@ -186,6 +186,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
   const listRef = React.useRef<ListImperativeAPI | null>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
   const sessionOrderKey = sessionsNewestFirst.map((session) => session.id).join("|");
+  const sessionListHeight = Math.max(Math.floor(containerHeight), 120);
 
   const activateSession = useCallback((sessionId: string) => {
     dispatch(setCurrentSession(sessionId));
@@ -421,7 +422,9 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         display: "flex",
         flexDirection: "column",
         height: "100dvh",
+        minHeight: 0,
         overflowX: "hidden",
+        overflowY: "hidden",
         borderRight: "1px solid",
         borderColor: "divider",
         bgcolor: "background.default",
@@ -452,7 +455,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         )}
       </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0, overflow: 'hidden' }}>
         <Box key="newChat">
           <ListItemButton 
             id="new-chat-button" 
@@ -490,28 +493,26 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           </Divider>
         </ListItem>
 
-        <Box ref={containerRef} sx={{ flexGrow: 1, minHeight: 0 }}>
-          {containerHeight > 0 && (
-            <ListWindow
-              role="list"
-              aria-labelledby={sidebarTitleId}
-              listRef={listRef}
-              onFocus={() => {
-                if (activeIndex < 0 && sessionsNewestFirst.length > 0) {
-                  setActiveIndex(0);
-                }
-              }}
-              onKeyDown={handleSessionListKeyDown}
-              overscanCount={5}
-              rowHeight={52}
-              rowCount={sessionsNewestFirst.length}
-              rowComponent={chatItemRender}
-              rowProps={{}}
-              tabIndex={0}
-              tagName="ul"
-              style={{ width: LEFT_MENU_EXPANDED_WIDTH, height: containerHeight, listStyle: "none", padding: 0, margin: 0 }}
-            />
-          )}
+        <Box ref={containerRef} sx={{ flexGrow: 1, minHeight: 120, flexShrink: 1, overflowY: 'auto' }}>
+          <ListWindow
+            role="list"
+            aria-labelledby={sidebarTitleId}
+            listRef={listRef}
+            onFocus={() => {
+              if (activeIndex < 0 && sessionsNewestFirst.length > 0) {
+                setActiveIndex(0);
+              }
+            }}
+            onKeyDown={handleSessionListKeyDown}
+            overscanCount={5}
+            rowHeight={52}
+            rowCount={sessionsNewestFirst.length}
+            rowComponent={chatItemRender}
+            rowProps={{}}
+            tabIndex={0}
+            tagName="ul"
+            style={{ width: "100%", height: sessionListHeight, listStyle: "none", padding: 0, margin: 0 }}
+          />
         </Box>
 
         <Menu
@@ -546,10 +547,44 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
       <Box
         sx={{
           marginTop: "auto",
+          flexShrink: 0,
           display: "flex",
           justifyContent: "flex-start",
+          alignItems: "center",
+          width: "100%",
+          borderTop: "1px solid",
+          borderColor: "divider",
+          bgcolor: "background.default",
           px: 1,
+          pt: 1,
           pb: 1,
+          "@media (max-height: 540px), (max-width: 480px)": {
+            position: "fixed",
+            right: 12,
+            bottom: 12,
+            width: "auto",
+            marginTop: 0,
+            borderTop: "none",
+            bgcolor: "transparent",
+            px: 0,
+            pt: 0,
+            pb: 0,
+            zIndex: 1300,
+            "& #profile-menu-button": {
+              width: "auto",
+              minWidth: 0,
+              px: 0.75,
+              py: 0.75,
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: "999px",
+              bgcolor: "background.paper",
+              boxShadow: 2,
+            },
+            "& #profile-menu-button .MuiTypography-root": {
+              display: "none",
+            },
+          },
         }}
       >
         <ProfileMenu
