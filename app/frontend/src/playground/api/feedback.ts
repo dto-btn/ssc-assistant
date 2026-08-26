@@ -8,7 +8,6 @@
 const FEEDBACK_ENDPOINT = "/api/playground/feedback";
 const CHAT_FEEDBACK_ATTACHMENT_ENDPOINT = "/api/playground/feedback/attachment";
 const CHAT_FEEDBACK_ENDPOINT = "/api/playground/feedback/chat";
-import type { ChatFeedbackPayload } from "../components/ChatFeedbackForm";
 
 export interface SendPlaygroundFeedbackOptions {
   feedback: string;
@@ -56,6 +55,10 @@ export async function sendPlaygroundFeedback({
     throw new Error("Failed to send feedback");
   }
 }
+
+/**
+ * Persist chat feedback via the playground backend.
+ */
 export async function sendChatFeedback({
   accessToken,
   feedback,

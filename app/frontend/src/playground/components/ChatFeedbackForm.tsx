@@ -4,7 +4,6 @@
  * Two-step modal for per-message response feedback. Step 1 presents two
  * category cards (issue / suggestion); step 2 collects a free-text note.
  * Tracks messageId and sessionId alongside the feedback type and note.
- * Currently logs to console only — wire `handleSubmit` to the backend when ready.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -393,7 +392,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                 focusRipple
                 onClick={() => handleSelectType("issue")}
                 sx={cardSx}
-                aria-label={t(`chat.feedback.report.issue`)}
+                aria-labelledby="feedback-issue-title"
                 aria-describedby="feedback-issue-description"
               >
                 <Box
@@ -422,7 +421,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                 focusRipple
                 onClick={() => handleSelectType("suggestion")}
                 sx={cardSx}
-                aria-label={t(`chat.feedback.suggestion`)}
+                aria-labelledby="feedback-suggestion-title"
                 aria-describedby="feedback-suggestion-description"
               >
                 <Box
@@ -431,7 +430,11 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                 >
                   <LightbulbOutlinedIcon />
                 </Box>
-                <Typography variant="body2" fontWeight="bold">
+                <Typography
+                  id="feedback-suggestion-title"
+                  variant="body2"
+                  fontWeight="bold"
+                >
                   {t("chat.feedback.suggestion")}
                 </Typography>
                 <Typography
