@@ -7,7 +7,7 @@
 
 const FEEDBACK_ENDPOINT = "/api/playground/feedback";
 // const CHAT_FEEDBACK_ATTACHMENT_ENDPOINT = "/api/playground/feedback/attachment";
-// const CHAT_FEEDBACK_ENDPOINT = "/api/playground/feedback/chat";
+const CHAT_FEEDBACK_ENDPOINT = "/api/playground/feedback/chat";
 import type {ChatFeedbackPayload} from "../components/ChatFeedbackForm";
 
 export interface SendPlaygroundFeedbackOptions {
@@ -55,10 +55,13 @@ export async function sendPlaygroundFeedback({
     throw new Error("Failed to send feedback");
   }
 }
+
+/**
+ * Persist chat feedback via the playground backend.
+ */
 export async function sendChatFeedback({
   accessToken,
-  // feedback,
-  // source = "playground",
+  feedback,
 }: SendChatFeedbackOptions): Promise<void> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -67,15 +70,14 @@ export async function sendChatFeedback({
   if (accessToken?.trim()) {
     headers.Authorization = `Bearer ${accessToken.trim()}`;
   }
-  
 
-  // const response = await fetch(CHAT_FEEDBACK_ENDPOINT, {
-  //   method: "POST",
-  //   headers,
-  //   body: JSON.stringify({ feedback, positive, uuid, source }),
-  // });
+  const response = await fetch(CHAT_FEEDBACK_ENDPOINT, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ feedback }),
+  });
 
-  // if (!response.ok) {
-  //   throw new Error("Failed to send feedback");
-  // }
+  if (!response.ok) {
+    throw new Error("Failed to send feedback");
+  }
 }
