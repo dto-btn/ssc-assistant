@@ -16,11 +16,12 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  CircularProgress,
   TextField,
   Typography,
   useMediaQuery,
   useTheme,
-} from "@mui/material";
+} from "@mui/material"
 import { visuallyHidden } from "@mui/utils";
 import { alpha } from "@mui/material/styles";
 import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined";
@@ -30,30 +31,34 @@ import { useTranslation } from "react-i18next";
 import { submitChatFeedback } from "../store/thunks/feedbackThunks";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../store";
+import { useAppSelector } from "../store/hooks"
+import { uploadFile } from "../api/storage"
+import type { FileAttachment } from "../types"
+import { addToast } from "../store/slices/toastSlice"
 
 type FeedbackType = "issue" | "suggestion";
 type Step = "select" | "detail";
 
 const MAX_ATTACHMENTS = 3;
-const MAX_ATTACHMENT_SIZE_BYTES = 2 * 1024 * 1024; // Set the max file size
+const MAX_ATTACHMENT_SIZE_BYTES = 4 * 1024 * 1024; // Set the max file size
 const ALLOWED_ATTACHMENT_TYPES = new Set([
   "image/jpeg",
   "image/png",
   "image/gif",
 ]);
 
-interface FeedbackPayload {
-  messageId: string;
-  sessionId: string;
+interface BaseFeedbackForm {
+  messageId: string
+  sessionId: string
   //postive: boolean;
-  type: FeedbackType;
-  description?: string; // For issues
+  type: FeedbackType
+  description?: string
 }
 
-export type ChatFeedbackPayload = FeedbackPayload & {
-  stepsToReproduce?: string; // For issues
-  attachments?: File[];
-};
+export type ChatFeedbackFormSubmission = BaseFeedbackForm & {
+  stepsToReproduce?: string
+  attachments?: FileAttachment[]
+}
 
 interface ChatFeedbackFormProps {
   open: boolean;
@@ -68,101 +73,103 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
   messageId,
   sessionId,
 }) => {
-  const { t } = useTranslation("playground");
-  const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
-  const dispatch = useDispatch<AppDispatch>();
+  const { t } = useTranslation("playground")
+  const theme = useTheme()
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"))
+  const dispatch = useDispatch<AppDispatch>()
+  const accessToken = useAppSelector((state) => state.auth.accessToken!)
 
   // State for managing the current step, feedback type, and form inputs
-  const [step, setStep] = useState<Step>("select");
-  const [feedbackType, setFeedbackType] = useState<FeedbackType | null>(null);
-  const [description, setDescription] = useState("");
-  const [issueSteps, setIssueSteps] = useState("");
- 
-  const [attachments, setAttachments] = useState<File[]>([]);
-  const [attachmentAnnouncement, setAttachmentAnnouncement] = useState("");
-  const [attachmentError, setAttachmentError] = useState<string>("");
-  const [attachmentErrorAnnouncement, setAttachmentErrorAnnouncement] =
-    useState<string>("");
+  const [step, setStep] = useState<Step>("select")
+  const [feedbackType, setFeedbackType] = useState<FeedbackType | null>(null)
+  const [description, setDescription] = useState("")
+  const [issueSteps, setIssueSteps] = useState("")
 
-  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false); // validation gate for required fields
+  const [attachments, setAttachments] = useState<File[]>([])
+  const [attachmentAnnouncement, setAttachmentAnnouncement] = useState("")
+  const [attachmentError, setAttachmentError] = useState<string>("")
+  const [attachmentErrorAnnouncement, setAttachmentErrorAnnouncement] =
+    useState<string>("")
+
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false) // validation gate for required fields
+  const [isSubmitting, setIsSubmitting] = useState(false) // submission state for async feedback submission
 
   // Refs for focusing inputs on validation errors
   const issueStepsRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(
     null,
-  );
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  )
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const descriptionRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(
     null,
-  );
+  )
   const suggestionRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(
     null,
-  );
+  )
 
-  const brandColor = theme.palette.primary.main;
+  const brandColor = theme.palette.primary.main
 
   // Reset all state to initial values
   const resetState = () => {
-    setStep("select");
-    setFeedbackType(null);
-    setDescription("");
-    setIssueSteps("");
-    setAttachments([]);
+    setStep("select")
+    setFeedbackType(null)
+    setDescription("")
+    setIssueSteps("")
+    setAttachments([])
 
-    setAttachmentAnnouncement("");
-    setHasAttemptedSubmit(false);
-    setAttachmentError("");
-    setAttachmentErrorAnnouncement("");
+    setAttachmentAnnouncement("")
+    setHasAttemptedSubmit(false)
+    setAttachmentError("")
+    setAttachmentErrorAnnouncement("")
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = ""
     }
-  };
+  }
 
   // Action handlers for dialog navigation and form submission
   const handleClose = useCallback(() => {
-    onClose();
-  }, [onClose]);
+    onClose()
+  }, [onClose])
 
   const handleSelectType = useCallback((type: FeedbackType) => {
-    setFeedbackType(type);
-    setStep("detail");
-  }, []);
+    setFeedbackType(type)
+    setStep("detail")
+  }, [])
 
   const handleBack = useCallback(() => {
-    setStep("select");
-    resetState();
-  }, []);
+    setStep("select")
+    resetState()
+  }, [])
 
   const handleAttachmentsChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      const selectedFiles = Array.from(event.target.files ?? []);
+      const selectedFiles = Array.from(event.target.files ?? [])
       const invalidTypeFiles = selectedFiles.filter(
         (file) => !ALLOWED_ATTACHMENT_TYPES.has(file.type),
-      );
+      )
 
       const oversizedFiles = selectedFiles.filter(
         (file) => file.size > MAX_ATTACHMENT_SIZE_BYTES,
-      );
+      )
 
       const validFiles = selectedFiles.filter(
         (file) =>
           ALLOWED_ATTACHMENT_TYPES.has(file.type) &&
           file.size <= MAX_ATTACHMENT_SIZE_BYTES,
-      );
+      )
 
-      const keptFiles = validFiles.slice(0, MAX_ATTACHMENTS);
-      const tooManyFiles = validFiles.length > MAX_ATTACHMENTS;
+      const keptFiles = validFiles.slice(0, MAX_ATTACHMENTS)
+      const tooManyFiles = validFiles.length > MAX_ATTACHMENTS
 
-      setAttachments(keptFiles);
+      setAttachments(keptFiles)
 
-      const errors: string[] = [];
+      const errors: string[] = []
 
       if (invalidTypeFiles.length > 0) {
         errors.push(
           t("chat.feedback.attachments.invalid.type", {
             defaultValue: "Only JPEG, PNG, and GIF images are allowed.",
           }),
-        );
+        )
       }
 
       if (oversizedFiles.length > 0) {
@@ -170,7 +177,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
           t("chat.feedback.attachments.invalid.size", {
             max: MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024),
           }),
-        );
+        )
       }
 
       if (tooManyFiles) {
@@ -178,66 +185,86 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
           t("chat.feedback.attachments.limit.exceeded", {
             max: MAX_ATTACHMENTS,
           }),
-        );
+        )
       }
 
-      const errorMessage = errors.join(" ");
-      setAttachmentError(errorMessage);
-      setAttachmentErrorAnnouncement(errorMessage);
+      const errorMessage = errors.join(" ")
+      setAttachmentError(errorMessage)
+      setAttachmentErrorAnnouncement(errorMessage)
 
       const selectedMessage =
         keptFiles.length > 0
           ? `${t("chat.feedback.attachments.selected", {
               count: keptFiles.length,
             })}: ${keptFiles.map((file) => file.name).join(", ")}`
-          : t("chat.feedback.attachments.none");
+          : t("chat.feedback.attachments.none")
 
-      setAttachmentAnnouncement(selectedMessage);
+      setAttachmentAnnouncement(selectedMessage)
     },
     [t],
-  );
+  )
 
   useEffect(() => {
-    if (!open || step !== "detail") return;
+    if (!open || step !== "detail") return
 
     const targetInput =
-      feedbackType === "issue" ? descriptionRef.current : suggestionRef.current;
-    targetInput?.focus();
-  }, [feedbackType, open, step]);
-
-  // Validation checks for required fields based on feedback type
-  const isIssueInvalid =
-    feedbackType === "issue" && (!description.trim() || !issueSteps.trim());
-  const isSuggestionInvalid =
-    feedbackType === "suggestion" && !description.trim();
-  const isFormInvalid = isIssueInvalid || isSuggestionInvalid;
+      feedbackType === "issue" ? descriptionRef.current : suggestionRef.current
+    targetInput?.focus()
+  }, [feedbackType, open, step])
 
   /** Uses feedback thunks to handle submission of the payload */
-  const handleSubmit = useCallback(() => {
-    setHasAttemptedSubmit(true);
+  const handleSubmit = useCallback(async () => {
+    setHasAttemptedSubmit(true)
+    // Validate required fields based on feedback type
     if (!feedbackType) {
-      return;
+      return
     }
 
     if (feedbackType === "issue") {
       if (!description.trim()) {
-        descriptionRef.current?.focus();
-        return;
+        descriptionRef.current?.focus()
+        return
       }
 
       if (!issueSteps.trim()) {
-        issueStepsRef.current?.focus();
-        return;
+        issueStepsRef.current?.focus()
+        return
       }
     }
 
     if (feedbackType === "suggestion" && !description.trim()) {
-      suggestionRef.current?.focus();
-      return;
+      suggestionRef.current?.focus()
+      return
+    }
+    // proceed with submission if all required fields are valid
+    setIsSubmitting(true)
+    let uploadedAttachments: FileAttachment[] = []
+    if (attachments && attachments.length > 0) {
+      try {
+        uploadedAttachments = await Promise.all(
+          attachments.map((file) =>
+            uploadFile({
+              file,
+              accessToken,
+              sessionId,
+              category: "feedback",
+              metadata: { messageId },
+            }),
+          ),
+        )
+      } catch (error) {
+        dispatch(
+          addToast({
+            message: t("chat.feedback.attachments.upload.error"),
+            isError: true,
+          }),
+        )
+        setIsSubmitting(false)
+        return
+      }
     }
 
-
-    const payload: ChatFeedbackPayload = // Construct the payload based on feedback type
+    const payload: ChatFeedbackFormSubmission =
       feedbackType === "issue"
         ? {
             messageId,
@@ -246,7 +273,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
             // positive: false,
             description: description.trim(),
             stepsToReproduce: issueSteps.trim(),
-            attachments,
+            attachments: uploadedAttachments,
           }
         : {
             messageId,
@@ -254,24 +281,23 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
             type: "suggestion",
             // positive: true,
             description: description.trim(),
-            attachments,
-          };
+            attachments: uploadedAttachments,
+          }
 
-    dispatch(submitChatFeedback(payload)); // This is a thunk that will handle the API call and dispatching to the store
-
-    handleClose();
+    await dispatch(submitChatFeedback(payload)) // This is a thunk that will handle the API call and dispatching to the store
+    setIsSubmitting(false)
+    handleClose()
   }, [
     attachments,
     feedbackType,
     handleClose,
-    isFormInvalid,
+    accessToken,
     description,
     issueSteps,
     messageId,
     sessionId,
-    descriptionRef,
     dispatch,
-  ]);
+  ])
 
   /** sx applied to each category card — full WCAG 2.5.5 touch target and keyboard focus ring */
   const cardSx = {
@@ -294,7 +320,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
       outline: `2px solid ${brandColor}`,
       outlineOffset: "2px",
     },
-  } as const;
+  } as const
 
   const iconWrapperSx = (color: string) => ({
     display: "flex",
@@ -305,14 +331,14 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
     borderRadius: "50%",
     bgcolor: alpha(color, 0.12),
     color,
-  });
+  })
 
   const dialogTitle =
     step === "select"
       ? t("chat.feedback.title")
       : feedbackType === "issue"
         ? t("chat.feedback.report.issue")
-        : t("chat.feedback.suggestion");
+        : t("chat.feedback.suggestion")
 
   return (
     <Dialog
@@ -564,13 +590,20 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
       {step === "detail" && (
         <DialogActions>
           <Button onClick={handleClose}>{t("cancel")}</Button>
-          <Button variant="contained" onClick={handleSubmit}>
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
             {t("submit")}
+            {isSubmitting && (
+              <CircularProgress size={20} sx={{ ml: 1, color: "inherit" }} />
+            )}
           </Button>
         </DialogActions>
       )}
     </Dialog>
-  );
+  )
 };
 
 export default ChatFeedbackForm;

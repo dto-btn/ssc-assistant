@@ -9,11 +9,9 @@
 import { addToast } from "../slices/toastSlice";
 import { AppThunk } from "..";
 import { sendPlaygroundFeedback, sendChatFeedback } from "../../api/feedback";
-import type { ChatFeedbackPayload } from "../../components/ChatFeedbackForm";
+import type { ChatFeedbackFormPayload } from "../../components/ChatFeedbackForm";
 import { setMessageFeedback } from "../slices/chatSlice";
 import i18n from "../../../i18n";
-import type { FileAttachment } from "../../types";
-import { uploadFile } from "../../api/storage";
 
 /**
  * Submit like or dislike feedback for a specific assistant message.
@@ -69,68 +67,34 @@ export const clearResponseFeedback =
     dispatch(setMessageFeedback({ messageId, feedback: undefined }));
   };
 
+  /**
+   * Submit detailed chat feedback for a specific message.
+   *
+   * @param feedbackPayload - The feedback payload containing message ID, session ID, and feedback details.
+   */
 export const submitChatFeedback =
-  (feedbackPayload: ChatFeedbackPayload): AppThunk =>
+  (feedbackPayload: ChatFeedbackFormPayload): AppThunk =>
   async (dispatch, getState) => {
     const accessToken = getState().auth.accessToken!;
 
     try {
-      let uploadedAttachments: FileAttachment[] = [];
-      if (
-        feedbackPayload.attachments &&
-        feedbackPayload.attachments.length > 0
-      ) {
-        try {
-          uploadedAttachments = await Promise.all(
-            feedbackPayload.attachments.map((file) =>
-              uploadFile({
-                file,
-                accessToken,
-                sessionId: feedbackPayload.sessionId,
-                category: "feedback",
-                metadata: { messageId: feedbackPayload.messageId },
-              }),
-            ),
-          );
-        } catch (error) {
-          dispatch(
-            addToast({
-              message: i18n.t("feedback.attachmentUploadError", {
-                ns: "playground",
-              }),
-              isError: true,
-            }),
-          );
-          return; // Exit early if attachment upload fails
-        }
-      }
-      const payloadWithUploadedAttachments = {
-        ...feedbackPayload,
-        attachments: uploadedAttachments,
-      };
-
       const payload =
         "data:application/json;base64," +
-        btoa(
-          unescape(
-            encodeURIComponent(JSON.stringify(payloadWithUploadedAttachments)),
-          ),
-        );
-      if (payload) {
-        await sendChatFeedback({
-          accessToken,
-          feedback: payload,
-          sessionId: feedbackPayload.sessionId,
-          messageId: feedbackPayload.messageId,
-        });
+        btoa(unescape(encodeURIComponent(JSON.stringify(feedbackPayload))));
 
-        dispatch(
-          addToast({
-            message: i18n.t("feedback.success", { ns: "playground" }),
-            isError: false,
-          }),
-        );
-      }
+      await sendChatFeedback({
+        accessToken,
+        feedback: payload,
+        sessionId: feedbackPayload.sessionId,
+        messageId: feedbackPayload.messageId,
+      });
+
+      dispatch(
+        addToast({
+          message: i18n.t("feedback.success", { ns: "playground" }),
+          isError: false,
+        }),
+      );
     } catch (error) {
       dispatch(
         addToast({
