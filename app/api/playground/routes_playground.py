@@ -30,6 +30,7 @@ from utils.models import (
     PlaygroundExtractTextResponse,
     PlaygroundFeedbackRequest,
     PlaygroundChatFeedbackRequest,
+    PlaygroundChatFeedbackEntry,
     PlaygroundFeedbackResponse,
     Feedback,
 )
@@ -962,20 +963,26 @@ def submit_feedback(payload: PlaygroundFeedbackRequest):
 def submit_chat_feedback(payload: PlaygroundChatFeedbackRequest):
     try:
         payload = _coerce_to_dataclass(payload, PlaygroundChatFeedbackRequest)
-    except PlaygroundAPIError as exc:
-        return {"message": _public_error_message(exc)}, exc.status_code
-
-    try:
         oid = _get_authenticated_oid()
     except PlaygroundAPIError as exc:
         return {"message": _public_error_message(exc)}, exc.status_code
 
     encoded_payload = payload.feedback
     if encoded_payload.startswith("data:"):
-       encoded_payload = payload.feedback.split(",", 1)[-1] if payload.feedback.startswith("data:") else payload.feedback
-    entry = json.loads(base64.b64decode(encoded_payload))
+        encoded_payload = encoded_payload.split(",", 1)[-1]
+
+    try:
+        file_bytes = base64.b64decode(encoded_payload)
+    except Exception:
+        return {"message": "Failed to decode feedback file"}, 400
+    try:
+        entry = json.loads(file_bytes)
+        _=_coerce_to_dataclass(entry, PlaygroundChatFeedbackEntry)
+    except (json.JSONDecodeError, ValueError, TypeError, PlaygroundAPIError):
+        logger.exception("Failed to decode playground chat feedback")
+        return {"message": "Invalid feedback payload"}, 400
+    
     entry["messageId"] = payload.messageId
-   
     try:
         container_client = _get_container_client()
         container_client.create_container()

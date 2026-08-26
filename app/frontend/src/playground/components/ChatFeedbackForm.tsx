@@ -49,24 +49,18 @@ interface FeedbackAttachment {
   url?: string; // Optional URL for uploaded attachments, if applicable
 }
 
-export type ChatFeedbackPayload =
-  | {
-      messageId: string;
-      sessionId: string;
-      type: "issue";
-      // positive: false;
-      description: string;
-      stepsToReproduce: string;
-      attachments: FeedbackAttachment[];
-    }
-  | {
-      messageId: string;
-      sessionId: string;
-      type: "suggestion";
-      // positive: true;
-      suggestion: string;
-      attachments: FeedbackAttachment[];
-    };
+interface FeedbackPayload {
+  messageId: string;
+  sessionId: string;
+  //postive: boolean;
+  type: FeedbackType;
+  description?: string; // For issues
+}
+
+export type ChatFeedbackPayload = FeedbackPayload & {
+  stepsToReproduce?: string; // For issues
+  attachments?: FeedbackAttachment[]; // Optional attachments
+};
 
 interface ChatFeedbackFormProps {
   open: boolean;
@@ -89,9 +83,9 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
   // State for managing the current step, feedback type, and form inputs
   const [step, setStep] = useState<Step>("select");
   const [feedbackType, setFeedbackType] = useState<FeedbackType | null>(null);
-  const [issueDescription, setIssueDescription] = useState("");
+  const [description, setDescription] = useState("");
   const [issueSteps, setIssueSteps] = useState("");
-  const [suggestion, setSuggestion] = useState("");
+ 
   const [attachments, setAttachments] = useState<File[]>([]);
   const [attachmentAnnouncement, setAttachmentAnnouncement] = useState("");
   const [attachmentError, setAttachmentError] = useState<string>("");
@@ -105,9 +99,9 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
     null,
   );
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const issueDescriptionRef = useRef<
-    HTMLInputElement | HTMLTextAreaElement | null
-  >(null);
+  const descriptionRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(
+    null,
+  );
   const suggestionRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(
     null,
   );
@@ -118,9 +112,8 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
   const resetState = () => {
     setStep("select");
     setFeedbackType(null);
-    setIssueDescription("");
+    setDescription("");
     setIssueSteps("");
-    setSuggestion("");
     setAttachments([]);
 
     setAttachmentAnnouncement("");
@@ -215,18 +208,15 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
     if (!open || step !== "detail") return;
 
     const targetInput =
-      feedbackType === "issue"
-        ? issueDescriptionRef.current
-        : suggestionRef.current;
+      feedbackType === "issue" ? descriptionRef.current : suggestionRef.current;
     targetInput?.focus();
   }, [feedbackType, open, step]);
 
   // Validation checks for required fields based on feedback type
   const isIssueInvalid =
-    feedbackType === "issue" &&
-    (!issueDescription.trim() || !issueSteps.trim());
+    feedbackType === "issue" && (!description.trim() || !issueSteps.trim());
   const isSuggestionInvalid =
-    feedbackType === "suggestion" && !suggestion.trim();
+    feedbackType === "suggestion" && !description.trim();
   const isFormInvalid = isIssueInvalid || isSuggestionInvalid;
 
   /** Uses feedback thunks to handle submission of the payload */
@@ -237,8 +227,8 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
     }
 
     if (feedbackType === "issue") {
-      if (!issueDescription.trim()) {
-        issueDescriptionRef.current?.focus();
+      if (!description.trim()) {
+        descriptionRef.current?.focus();
         return;
       }
 
@@ -248,7 +238,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
       }
     }
 
-    if (feedbackType === "suggestion" && !suggestion.trim()) {
+    if (feedbackType === "suggestion" && !description.trim()) {
       suggestionRef.current?.focus();
       return;
     }
@@ -267,7 +257,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
             sessionId,
             type: "issue",
             // positive: false,
-            description: issueDescription.trim(),
+            description: description.trim(),
             stepsToReproduce: issueSteps.trim(),
             attachments: attachmentPayload,
           }
@@ -276,7 +266,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
             sessionId,
             type: "suggestion",
             // positive: true,
-            suggestion: suggestion.trim(),
+            description: description.trim(),
             attachments: attachmentPayload,
           };
 
@@ -288,11 +278,11 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
     feedbackType,
     handleClose,
     isFormInvalid,
-    issueDescription,
+    description,
     issueSteps,
     messageId,
     sessionId,
-    suggestion,
+    descriptionRef,
     dispatch,
   ]);
 
@@ -459,17 +449,17 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
               <>
                 <TextField
                   label={t("chat.feedback.issue.description.label")}
-                  inputRef={issueDescriptionRef}
+                  inputRef={descriptionRef}
                   placeholder={t("chat.feedback.issue.description.placeholder")}
-                  value={issueDescription}
-                  onChange={(e) => setIssueDescription(e.target.value)}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   multiline
                   rows={3}
                   fullWidth
                   required
-                  error={hasAttemptedSubmit && !issueDescription.trim()}
+                  error={hasAttemptedSubmit && !description.trim()}
                   helperText={
-                    hasAttemptedSubmit && !issueDescription.trim()
+                    hasAttemptedSubmit && !description.trim()
                       ? t("chat.feedback.issue.description.required")
                       : " "
                   }
@@ -498,18 +488,18 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
               <TextField
                 label={t("chat.feedback.suggestion.note.label")}
                 inputRef={suggestionRef}
-                value={suggestion}
+                value={description}
                 placeholder={
                   "" + t("chat.feedback.suggestion.note.placeholder")
                 }
-                onChange={(e) => setSuggestion(e.target.value)}
+                onChange={(e) => setDescription(e.target.value)}
                 multiline
                 rows={4}
                 fullWidth
                 required
-                error={hasAttemptedSubmit && !suggestion.trim()}
+                error={hasAttemptedSubmit && !description.trim()}
                 helperText={
-                  hasAttemptedSubmit && !suggestion.trim()
+                  hasAttemptedSubmit && !description.trim()
                     ? t("chat.feedback.suggestion.note.required")
                     : " "
                 }
