@@ -42,13 +42,6 @@ const ALLOWED_ATTACHMENT_TYPES = new Set([
   "image/gif",
 ]);
 
-interface FeedbackAttachment {
-  name: string;
-  size: number;
-  type: string;
-  url?: string; // Optional URL for uploaded attachments, if applicable
-}
-
 interface FeedbackPayload {
   messageId: string;
   sessionId: string;
@@ -59,7 +52,7 @@ interface FeedbackPayload {
 
 export type ChatFeedbackPayload = FeedbackPayload & {
   stepsToReproduce?: string; // For issues
-  attachments?: FeedbackAttachment[]; // Optional attachments
+  attachments?: File[];
 };
 
 interface ChatFeedbackFormProps {
@@ -243,12 +236,6 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
       return;
     }
 
-    const attachmentPayload = attachments.map((file) => ({
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      url: undefined, // Placeholder for uploaded file URL if needed
-    }));
 
     const payload: ChatFeedbackPayload = // Construct the payload based on feedback type
       feedbackType === "issue"
@@ -259,7 +246,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
             // positive: false,
             description: description.trim(),
             stepsToReproduce: issueSteps.trim(),
-            attachments: attachmentPayload,
+            attachments,
           }
         : {
             messageId,
@@ -267,7 +254,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
             type: "suggestion",
             // positive: true,
             description: description.trim(),
-            attachments: attachmentPayload,
+            attachments,
           };
 
     dispatch(submitChatFeedback(payload)); // This is a thunk that will handle the API call and dispatching to the store

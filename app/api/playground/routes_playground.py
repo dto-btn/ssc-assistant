@@ -517,7 +517,8 @@ def upload_file(upload_request: PlaygroundUploadRequest):
     original_name = upload_request.name
     session_id = upload_request.sessionId or upload_request.session_id
     category = (upload_request.category or "files").lower()
-    safe_category = "chat" if category not in {"files", "chat"} else category
+    ALLOWED_CATEGORIES = {"files", "chat", "feedback"}
+    safe_category = "chat" if category not in ALLOWED_CATEGORIES else category
     mime_type = upload_request.fileType or upload_request.mimeType or upload_request.type
     metadata_input = upload_request.metadata
     extra_metadata: Dict[str, Any] = metadata_input if isinstance(metadata_input, dict) else {}
@@ -557,6 +558,8 @@ def upload_file(upload_request: PlaygroundUploadRequest):
         sanitized_session = secure_filename(str(session_id)) or str(session_id)
         base_filename = f"{sanitized_session}.chat.json"
         blob_name = f"{oid}/{base_filename}"
+    elif safe_category == "feedback":
+        blob_name = f"{oid}/{safe_category}/{session_segment}{extra_metadata.get("messageId")}_{normalized_name}"
     else:
         blob_name = f"{oid}/{safe_category}/{session_segment}{uuid.uuid4().hex}_{normalized_name}"
 

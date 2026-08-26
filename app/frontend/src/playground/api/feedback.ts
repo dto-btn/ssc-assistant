@@ -6,7 +6,6 @@
  */
 
 const FEEDBACK_ENDPOINT = "/api/playground/feedback";
-const CHAT_FEEDBACK_ATTACHMENT_ENDPOINT = "/api/playground/feedback/attachment";
 const CHAT_FEEDBACK_ENDPOINT = "/api/playground/feedback/chat";
 
 export interface SendPlaygroundFeedbackOptions {
