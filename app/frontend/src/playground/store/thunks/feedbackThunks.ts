@@ -9,7 +9,7 @@
 import { addToast } from "../slices/toastSlice";
 import { AppThunk } from "..";
 import { sendPlaygroundFeedback, sendChatFeedback } from "../../api/feedback";
-import type { ChatFeedbackFormPayload } from "../../components/ChatFeedbackForm";
+import type { ChatFeedbackFormSubmission } from "../../components/ChatFeedbackForm"
 import { setMessageFeedback } from "../slices/chatSlice";
 import i18n from "../../../i18n";
 
@@ -73,34 +73,34 @@ export const clearResponseFeedback =
    * @param feedbackPayload - The feedback payload containing message ID, session ID, and feedback details.
    */
 export const submitChatFeedback =
-  (feedbackPayload: ChatFeedbackFormPayload): AppThunk =>
+  (feedbackPayload: ChatFeedbackFormSubmission): AppThunk =>
   async (dispatch, getState) => {
-    const accessToken = getState().auth.accessToken!;
+    const accessToken = getState().auth.accessToken!
 
     try {
       const payload =
         "data:application/json;base64," +
-        btoa(unescape(encodeURIComponent(JSON.stringify(feedbackPayload))));
+        btoa(unescape(encodeURIComponent(JSON.stringify(feedbackPayload))))
 
       await sendChatFeedback({
         accessToken,
         feedback: payload,
         sessionId: feedbackPayload.sessionId,
         messageId: feedbackPayload.messageId,
-      });
+      })
 
       dispatch(
         addToast({
           message: i18n.t("feedback.success", { ns: "playground" }),
           isError: false,
         }),
-      );
+      )
     } catch (error) {
       dispatch(
         addToast({
           message: i18n.t("feedback.error", { ns: "playground" }),
           isError: true,
         }),
-      );
+      )
     }
-  };
+  }
