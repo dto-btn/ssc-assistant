@@ -369,12 +369,12 @@ def _merge_feedback_entry(container_client, oid: str, session_id: str, entry: Di
     try:
         doc = json.loads(blob_client.download_blob(max_concurrency=1).readall())
     except ResourceNotFoundError:
-        doc = {"sessionId": session_id, "entries": []}
+        doc = {"sessionId": session_id, "feedback_responses": []}
 
     timestamp = datetime.utcnow().isoformat() + "Z"
     entry["submittedAt"] = timestamp
-    doc["entries"] = [
-        e for e in doc.get("entries", [])
+    doc["feedback_responses"] = [
+        e for e in doc.get("feedback_responses", [])
         if not (e.get("messageId") == entry.get("messageId") and e.get("type") == entry.get("type"))
     ] + [entry]
     doc["lastUpdated"] = timestamp

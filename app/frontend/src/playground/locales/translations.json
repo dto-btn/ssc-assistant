@@ -752,8 +752,8 @@
     "fr": "Vous avez sélectionné plus de {{max}} fichiers. Seuls les {{max}} premiers ont été conservés."
   },
   "chat.feedback.attachments.max": {
-    "en": "You can attach up to 3 images (JPG, PNG, GIF).",
-    "fr": "Vous pouvez joindre jusqu'à 3 images (JPG, PNG, GIF)."
+    "en": "You can attach up to 3 images (JPG, PNG, GIF). Up to {{max_size}} MB each.",
+    "fr": "Vous pouvez joindre jusqu'à 3 images (JPG, PNG, GIF). Jusqu'à {{max_size}} Mo chacune."
   },
   "chat.feedback.note.label": {
     "en": "Note",

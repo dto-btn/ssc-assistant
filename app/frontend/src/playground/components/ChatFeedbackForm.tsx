@@ -40,12 +40,13 @@ type FeedbackType = "issue" | "suggestion";
 type Step = "select" | "detail";
 
 const MAX_ATTACHMENTS = 3;
-const MAX_ATTACHMENT_SIZE_BYTES = 4 * 1024 * 1024; // Set the max file size
+const MAX_SIZE_MB = 10;
+const MAX_ATTACHMENT_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024; // Set the max file size
 const ALLOWED_ATTACHMENT_TYPES = new Set([
   "image/jpeg",
   "image/png",
-  "image/gif",
-]);
+  "image/gif", // possibly later to allow PDFs or other file types, but for now only images are allowed
+])
 
 interface BaseFeedbackForm {
   messageId: string
@@ -79,12 +80,11 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
   const dispatch = useDispatch<AppDispatch>()
   const accessToken = useAppSelector((state) => state.auth.accessToken!)
 
-  // State for managing the current step, feedback type, and form inputs
+  // State variables for form steps, feedback type, description, issue steps, attachments, and validation/submission states
   const [step, setStep] = useState<Step>("select")
   const [feedbackType, setFeedbackType] = useState<FeedbackType | null>(null)
   const [description, setDescription] = useState("")
   const [issueSteps, setIssueSteps] = useState("")
-
   const [attachments, setAttachments] = useState<File[]>([])
   const [attachmentAnnouncement, setAttachmentAnnouncement] = useState("")
   const [attachmentError, setAttachmentError] = useState<string>("")
@@ -572,7 +572,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                 color="text.secondary"
                 sx={{ mt: 0.75, display: "block" }}
               >
-                {t("chat.feedback.attachments.max")}
+                {t("chat.feedback.attachments.max", { max_size: MAX_SIZE_MB })}
               </Typography>
               <Box
                 component="span"
