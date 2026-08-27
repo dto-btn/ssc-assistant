@@ -331,7 +331,29 @@ describe("sendAssistantMessage auto-rename", () => {
     vi.unstubAllGlobals();
   });
 
-  it("renames a new session from the first meaningful user message", async () => {
+  it("renames a new session from orchestrator title when provided", async () => {
+    getOrchestratorInsightsMock.mockResolvedValue({
+      category: "policy",
+      recommendations: [],
+      chatTitle: "France capital quick answer",
+      source: "orchestrator",
+      timestamp: new Date().toISOString(),
+    } as any);
+
+    const store = makeStore({ isNewChat: true, mcpServers: [orchestratorServer] });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "What is the capital of France?",
+      }) as any,
+    );
+
+    expect(store.getState().sessions.sessions[0].name).toBe("France capital quick answer");
+    expect(store.getState().sessions.sessions[0].isNewChat).toBe(false);
+  });
+
+  it("falls back to derived title when orchestrator title is unavailable", async () => {
     const store = makeStore({ isNewChat: true });
 
     await store.dispatch(
@@ -342,6 +364,59 @@ describe("sendAssistantMessage auto-rename", () => {
     );
 
     expect(store.getState().sessions.sessions[0].name).toBe("What is the capital of");
+    expect(store.getState().sessions.sessions[0].isNewChat).toBe(false);
+  });
+
+  it("keeps a fallback name when the orchestrator call rejects", async () => {
+    getOrchestratorInsightsMock.mockRejectedValue(new Error("orchestrator down"));
+
+    const store = makeStore({ isNewChat: true, mcpServers: [orchestratorServer] });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "What is the capital of France?",
+      }) as any,
+    );
+
+    expect(store.getState().sessions.sessions[0].name).toBe("What is the capital of");
+    expect(store.getState().sessions.sessions[0].isNewChat).toBe(false);
+  });
+
+  it("auto-renames only once per chat", async () => {
+    getOrchestratorInsightsMock
+      .mockResolvedValueOnce({
+        category: "policy",
+        recommendations: [],
+        chatTitle: "First AI title",
+        source: "orchestrator",
+        timestamp: new Date().toISOString(),
+      } as any)
+      .mockResolvedValueOnce({
+        category: "policy",
+        recommendations: [],
+        chatTitle: "Second AI title should not apply",
+        source: "orchestrator",
+        timestamp: new Date().toISOString(),
+      } as any);
+
+    const store = makeStore({ isNewChat: true, mcpServers: [orchestratorServer] });
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "First question",
+      }) as any,
+    );
+
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "Second question",
+      }) as any,
+    );
+
+    expect(store.getState().sessions.sessions[0].name).toBe("First AI title");
     expect(store.getState().sessions.sessions[0].isNewChat).toBe(false);
   });
 
