@@ -206,16 +206,19 @@ export class AzureOpenAIProvider implements CompletionProvider {
 
   /**
    * Build an OpenAI-compatible client for standalone LiteLLM proxy.
-   * Uses dedicated proxy key when configured, otherwise falls back to user token.
+   * Uses MSAL token in Authorization and optional LiteLLM virtual key header.
    */
-  private createClient(userToken: string): OpenAI {
+  private createClient(authorizationToken: string): OpenAI {
     const proxyKey = String(import.meta.env.VITE_PLAYGROUND_LITELLM_PROXY_KEY || "").trim();
-    const authToken = proxyKey.length > 0 ? proxyKey : userToken.trim();
-    const defaultHeaders = {
-      "Authorization": "Bearer " + authToken,
+    const defaultHeaders: Record<string, string> = {
+      "Authorization": "Bearer " + authorizationToken,
       "x-caller-system": "ssc-assistant",
       "x-caller-component": "ssc-assistant-playground",
     };
+
+    if (proxyKey.length > 0) {
+      defaultHeaders["x-litellm-api-key"] = proxyKey;
+    }
 
     return new OpenAI({
       baseURL: this.getBaseURL(),
@@ -223,6 +226,35 @@ export class AzureOpenAIProvider implements CompletionProvider {
       dangerouslyAllowBrowser: true,
       defaultHeaders,
     });
+  }
+
+  /**
+   * Resolve the bearer token used by Easy Auth for LiteLLM requests.
+   */
+  private async resolveAuthorizationToken(userToken: string): Promise<string> {
+    const fallbackToken = userToken.trim();
+    const litellmScope = String(import.meta.env.VITE_PLAYGROUND_LITELLM_SCOPE || "").trim();
+    if (!litellmScope) {
+      return fallbackToken;
+    }
+
+    try {
+      const { msalInstance } = await import("../../../index");
+      const account = msalInstance.getActiveAccount();
+      if (!account) {
+        return fallbackToken;
+      }
+
+      const response = await msalInstance.acquireTokenSilent({
+        scopes: [litellmScope],
+        account,
+      });
+      const scopedToken = String(response.accessToken || "").trim();
+      return scopedToken.length > 0 ? scopedToken : fallbackToken;
+    } catch (error) {
+      console.warn("Failed to acquire LiteLLM scoped token. Falling back to default token.", error);
+      return fallbackToken;
+    }
   }
 
   /**
@@ -286,7 +318,8 @@ export class AzureOpenAIProvider implements CompletionProvider {
     try {
       const updatedMessages = this.convertMessagesToInput(messages);
 
-      const client = this.createClient(userToken);
+      const authorizationToken = await this.resolveAuthorizationToken(userToken);
+      const client = this.createClient(authorizationToken);
 
       const stream = await client.responses.stream({
         model: model,
