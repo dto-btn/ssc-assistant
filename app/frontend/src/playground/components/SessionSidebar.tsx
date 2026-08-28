@@ -9,8 +9,6 @@
 import React, { useCallback, useState } from "react";
 import { alpha } from "@mui/material";
 import { List as ListWindow, RowComponentProps } from "react-window";
-import type { ListImperativeAPI } from "react-window";
-import useMeasure from "react-use-measure";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   setCurrentSession,
@@ -182,11 +180,11 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
   const sidebarTitleId = "playground-session-sidebar-title";
   const sidebarNavLabel = t("sidebar.navigation");
 
-  const [containerRef, { height: containerHeight }] = useMeasure();
-  const listRef = React.useRef<ListImperativeAPI | null>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
   const sessionOrderKey = sessionsNewestFirst.map((session) => session.id).join("|");
-  const sessionListHeight = Math.max(Math.floor(containerHeight), 120);
+  const rowHeight = 52;
+  // The sidebar owns the scrollport, so the list renders every row at full height.
+  const sessionListHeight = sessionsNewestFirst.length * rowHeight;
 
   const activateSession = useCallback((sessionId: string) => {
     dispatch(setCurrentSession(sessionId));
@@ -214,8 +212,16 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
       return;
     }
 
-    listRef.current?.scrollToRow({ align: "smart", index: activeIndex });
-  }, [activeIndex, listRef]);
+    const activeSession = sessionsNewestFirst[activeIndex];
+    if (!activeSession) {
+      return;
+    }
+
+    // jsdom does not implement scrollIntoView.
+    document
+      .getElementById(`session-button-${activeSession.id}`)
+      ?.scrollIntoView?.({ block: "nearest" });
+  }, [activeIndex, sessionsNewestFirst]);
 
   const handleSessionListKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     if (!sessionsNewestFirst.length) {
@@ -422,9 +428,8 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         display: "flex",
         flexDirection: "column",
         height: "100dvh",
-        minHeight: 0,
         overflowX: "hidden",
-        overflowY: "hidden",
+        overflowY: "auto",
         borderRight: "1px solid",
         borderColor: "divider",
         bgcolor: "background.default",
@@ -455,7 +460,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         )}
       </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0, overflow: 'hidden' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
         <Box key="newChat">
           <ListItemButton 
             id="new-chat-button" 
@@ -493,11 +498,10 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           </Divider>
         </ListItem>
 
-        <Box ref={containerRef} sx={{ flexGrow: 1, minHeight: 120, flexShrink: 1, overflowY: 'auto' }}>
+        <Box>
           <ListWindow
             role="list"
             aria-labelledby={sidebarTitleId}
-            listRef={listRef}
             onFocus={() => {
               if (activeIndex < 0 && sessionsNewestFirst.length > 0) {
                 setActiveIndex(0);
@@ -505,7 +509,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
             }}
             onKeyDown={handleSessionListKeyDown}
             overscanCount={5}
-            rowHeight={52}
+            rowHeight={rowHeight}
             rowCount={sessionsNewestFirst.length}
             rowComponent={chatItemRender}
             rowProps={{}}
