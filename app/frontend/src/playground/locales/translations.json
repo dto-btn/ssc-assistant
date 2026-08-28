@@ -1,658 +1,770 @@
 {
-    "page.title": {
-        "en": "SSC Assistant Playground",
-        "fr": "Bac à sable de l'Assistant SPC"
-    },
-    "select.or.create.session": {
-        "en": "Select or create a chat session to begin.",
-        "fr": "Sélectionnez ou créez une session de chat pour commencer."
-    },
-    "how.can.i.help": {
-        "en": "How can I help?",
-        "fr": "Comment puis-je vous aider?"
-    },
-    "how.can.i.help.description": {
-        "en": "Have Business request, project management or HR questions, need MySSC+ info, or some policy guidance? I'm on it! I can also crunch data, look someone up for you in GEDS, jazz up your drafts, or take your outline and turn it into something awesome for you to review. And that's just the beginning...",
-        "fr": "Vous avez des questions sur les demandes d'affaires, la gestion de projet ou les RH, vous avez besoin d'informations sur MonSSC+ ou de conseils sur les politiques ? Je m'en occupe ! Je peux aussi traiter des données, chercher quelqu'un pour vous dans SAGE, donner du style à vos ébauches ou transformer un plan en un document de qualité pour votre révision. Et ce n'est que le début..."
-    },
-    "type.a.message": {
-        "en": "Type a message...",
-        "fr": "Tapez un message..."
-    },
-    "send": {
-        "en": "Send",
-        "fr": "Envoyer"
-    },
-    "files.attached": {
-        "en": "file(s) attached",
-        "fr": "fichier(s) joint(s)"
-    },
-    "quote.this.message": {
-        "en": "Quote this message",
-        "fr": "Citer ce message"
-    },
-    "attachments": {
-        "en": "Attachments",
-        "fr": "Fichiers joints"
-    },
-    "link": {
-        "en": "link",
-        "fr": "lien"
-    },
-    "feedback": {
-        "en": "Feedback",
-        "fr": "Retour"
-    },
-    "feedback.system.title": {
-        "en": "Feedback on the system",
-        "fr": "Retour sur le système"
-    },
-    "feedback.system.subtitle": {
-        "en": "Help us improve the assistant by sharing what worked and what did not.",
-        "fr": "Aidez-nous à améliorer l'assistant en partageant ce qui a fonctionné et ce qui n'a pas fonctionné."
-    },
-    "feedback.reaction.label": {
-        "en": "Overall sentiment",
-        "fr": "Sentiment général"
-    },
-    "feedback.reaction.required": {
-        "en": "Please select like or dislike.",
-        "fr": "Veuillez sélectionner j'aime ou je n'aime pas."
-    },
-    "feedback.message.label": {
-        "en": "Message",
-        "fr": "Message"
-    },
-    "feedback.message.required": {
-        "en": "Message is required.",
-        "fr": "Le message est obligatoire."
-    },
-    "provide.feedback": {
-        "en": "Please provide feedback on the response provided",
-        "fr": "Veuillez donner votre avis sur la réponse fournie"
-    },
-    "your.feedback": {
-        "en": "Your feedback",
-        "fr": "Votre retour"
-    },
-    "submit": {
-        "en": "Submit",
-        "fr": "Soumettre"
-    },
-    "cancel": {
-        "en": "Cancel",
-        "fr": "Annuler"
-    },
-    "attach": {
-        "en": "Attach",
-        "fr": "Joindre"
-    },
-    "replay": {
-        "en": "Replay",
-        "fr": "Rejouer"
-    },
-    "stop": {
-        "en": "Stop",
-        "fr": "Arrêter"
-    },
-    "rename.conversation": {
-        "en": "Rename Conversation",
-        "fr": "Renommer la conversation"
-    },
-    "conversation.name": {
-        "en": "Conversation Name",
-        "fr": "Nom de la conversation"
-    },
-    "rename": {
-        "en": "Rename",
-        "fr": "Renommer"
-    },
-    "delete": {
-        "en": "Delete",
-        "fr": "Supprimer"
-    },
-    "delete.all.success": {
-        "en": "All conversations deleted.",
-        "fr": "Toutes les conversations ont été supprimées."
-    },
-    "delete.success": {
-        "en": "Conversation deleted",
-        "fr": "Conversation supprimée"
-    },
-    "delete.remote": {
-        "en": "Conversation deleted in another window.",
-        "fr": "Conversation supprimée dans une autre fenêtre."
-    },
-    "chats": {
-        "en": "Chats",
-        "fr": "Conversations"
-    },
-    "new": {
-        "en": "New",
-        "fr": "Nouveau"
-    },
-    "options": {
-        "en": "Options",
-        "fr": "Options"
-    },
-    "sidebar.navigation": {
-        "en": "Chat sessions",
-        "fr": "Sessions de conversation"
-    },
-    "sidebar.collapse": {
-        "en": "Collapse sidebar",
-        "fr": "Réduire la barre latérale"
-    },
-    "sidebar.open": {
-        "en": "Open chat sessions",
-        "fr": "Ouvrir les sessions de conversation"
-    },
-    "sidebar.close": {
-        "en": "Close chat sessions",
-        "fr": "Fermer les sessions de conversation"
-    },
-    "sidebar.waitingForResponse": {
-        "en": "Waiting for AI response",
-        "fr": "En attente d'une réponse de l'IA"
-    },
-    "export.label": {
-        "en": "Export",
-        "fr": "Exporter"
-    },
-    "export.option.json": {
-        "en": "Export as JSON",
-        "fr": "Exporter en JSON"
-    },
-    "export.option.pdf": {
-        "en": "Export as PDF",
-        "fr": "Exporter en PDF"
-    },
-    "export.option.word": {
-        "en": "Export as Word (.docx)",
-        "fr": "Exporter en Word (.docx)"
-    },
-    "export.disabled.noSession": {
-        "en": "Select a chat to export",
-        "fr": "Sélectionnez une conversation à exporter"
-    },
-    "export.success.json": {
-        "en": "Chat exported as JSON.",
-        "fr": "Conversation exportée en JSON."
-    },
-    "export.success.pdf": {
-        "en": "Chat exported as PDF.",
-        "fr": "Conversation exportée en PDF."
-    },
-    "export.success.word": {
-        "en": "Chat exported as Word (.docx).",
-        "fr": "Conversation exportée en Word (.docx)."
-    },
-    "export.failed": {
-        "en": "Could not export this chat.",
-        "fr": "Impossible d’exporter cette conversation."
-    },
-    "delete.conversation": {
-        "en": "Delete Conversation",
-        "fr": "Supprimer la conversation"
-    },
-    "suggestions.pmcoe.q1": {
-        "en": "What is the purpose of the Project Management Operating Guide?",
-        "fr": "Quel est le but du Guide de gestion de projet ?"
-    },
-    "suggestions.pmcoe.q2": {
-        "en": "What is EPS and what does it stand for?",
-        "fr": "Qu’est-ce que le système SPE et que signifie cet acronyme ?"
-    },
-    "suggestions.pmcoe.q3": {
-        "en": "What is the OPMCA and why does it matter?",
-        "fr": "Qu’est-ce que l’ECGPO et pourquoi est-ce important ?"
-    },
-    "suggestions.pmcoe.q4": {
-        "en": "What types of documents and/or templates are available in the SSC PGoF and how can we use them?",
-        "fr": "Quels types de documents et/ou modèles sont disponibles dans le SSC CFGP et comment les utiliser ?"
-    },
-    "suggestions.pmcoe.q5": {
-        "en": "What is the purpose of the OPMCA?",
-        "fr": "Quel est le but de l’ECGPO ?"
-    },
-    "suggestions.pmcoe.q6": {
-        "en": "Where can I find the latest version of a gating template, and how do I ensure I’m using the correct one?",
-        "fr": "Où puis-je trouver la dernière version d’un modèle de validation, et comment m’assurer d’utiliser le bon ?"
-    },
-    "suggestions.pmcoe.q7": {
-        "en": "What documents are required at each gate?",
-        "fr": "Quels documents sont requis à chaque porte ?"
-    },
-    "suggestions.pmcoe.q8": {
-        "en": "How is the Operating Guide structured?",
-        "fr": "Comment est structuré le Guide de gestion de projet ?"
-    },
-    "suggestions.pmcoe.q9": {
-        "en": "How do I know if my project qualifies for an “Expedited Gate Review”?",
-        "fr": "Comment savoir si mon projet est admissible à une “Revue de porte accélérée” ?"
-    },
-    "suggestions.pmcoe.q10": {
-        "en": "What does the OPMCA evaluate?",
-        "fr": "Que mesure l’ECGPO ?"
-    },
-    "suggestions.pmcoe.q11": {
-        "en": "How do I track the progress of my project through the gates?",
-        "fr": "Comment suivre l’avancement de mon projet à travers les portes ?"
-    },
-    "suggestions.pmcoe.q12": {
-        "en": "What is the purpose of the Enterprise Portfolio System (EPS)?",
-        "fr": "Quel est le but du système SPE ?"
-    },
-    "suggestions.pmcoe.q13": {
-        "en": "What type of information is stored in EPS?",
-        "fr": "Quel type d’information est stocké dans SPE ?"
-    },
-    "suggestions.pmcoe.q14": {
-        "en": "How does EPS fit within the project management lifecycle?",
-        "fr": "Comment SPE s’intègre-t-il au cycle de vie de la gestion de projet ?"
-    },
-    "suggestions.pmcoe.q15": {
-        "en": "What are Project Manager-Led Initiatives (PMLI)?",
-        "fr": "Que sont les initiatives dirigées par les chefs de projet (IDGP) ?"
-    },
-    "suggestions.pmcoe.q16": {
-        "en": "How is a Project Manager-Led Initiative different from a regular project?",
-        "fr": "En quoi une initiative dirigée par un chef de projet (IDGP) diffère-t-elle d’un projet régulier ?"
-    },
-    "suggestions.general.contact": {
-        "en": "I need to find contact information in GEDS.",
-        "fr": "Aidez-moi à trouver des coordonnées dans SAGE."
-    },
-    "suggestions.general.email": {
-        "en": "Help me rewrite an email so it is more formal.",
-        "fr": "Aidez-moi à réécrire un courriel pour qu'il soit plus formel."
-    },
-    "suggestions.general.hire": {
-        "en": "Can you tell me how do I find information on how to hire a student?",
-        "fr": "Pouvez-vous me dire comment trouver des informations sur l'embauche d'un étudiant ?"
-    },
-    "suggestions.business.find": {
-        "en": "What kind of questions can I ask about Business Requests (BR)?",
-        "fr": "Quel genre de questions puis-je poser sur les demandes opérationnelles (DO) ?"
-    },
-    "suggestions.business.pspc": {
-        "en": "Find all the BRs submited in the last 3 weeks that are from the client PSPC",
-        "fr": "Trouvez toutes les demandes d'affaires soumises au cours des 3 dernières semaines provenant du client SPAC"
-    },
-    "suggestions.business.piechart": {
-        "en": "Give me a pie chart of BA OPI that worked on BRs for the month of March for the client ESDC for brs of high priority only.",
-        "fr": "Donnez-moi un graphique circulaire des BPR analystes qui ont travaillé sur des DO pour le mois de mars pour le client EDSC, pour les DO de priorité Élevée seulement."
-    },
-    "suggestions.categories.general": {
-        "en": "General",
-        "fr": "Général"
-    },
-    "suggestions.categories.br": {
-        "en": "Business Requests",
-        "fr": "Demandes d'affaires"
-    },
-    "suggestions.categories.geds": {
-        "en": "GEDS",
-        "fr": "SAGE"
-    },
-    "suggestions.categories.corporate": {
-        "en": "MySSC+",
-        "fr": "MonSPC+"
-    },
-    "suggestions.categories.pmcoe": {
-        "en": "PMCoE",
-        "fr": "CEGP"
-    },
-    "try.asking": {
-        "en": "Try asking:",
-        "fr": "Essayez de demander :"
-    },
-    "assistant.error.chat": {
-        "en": "Sorry, I encountered an error while processing your request. Please try again.",
-        "fr": "Désolé, une erreur est survenue lors du traitement de votre demande. Veuillez réessayer."
-    },
-    "assistant.error.toast": {
-        "en": "An error occurred during completion.",
-        "fr": "Une erreur est survenue pendant le traitement."
-    },
-    "assistant.stopped": {
-        "en": "Response stopped by user.",
-        "fr": "Réponse arrêtée par l'utilisateur."
-    },
-    "assistant.waiting": {
-        "en": "Assistant is thinking...",
-        "fr": "L'assistant réfléchit..."
-    },
-    "assistant.drafting": {
-        "en": "Assistant is drafting...",
-        "fr": "L'assistant rédige..."
-    },
-    "assistant.streaming": {
-        "en": "Assistant is responding.",
-        "fr": "L'assistant répond."
-    },
-    "assistant.copy.code": {
-        "en": "Copy code",
-        "fr": "Copier le code"
-    },
-    "assistant.code.scrollRegion": {
-        "en": "Scrollable code block",
-        "fr": "Bloc de code défilable"
-    },
-    "assistant.copied": {
-        "en": "Copied",
-        "fr": "Copié"
-    },
-    "assistant.mermaid.error": {
-        "en": "Invalid diagram format.",
-        "fr": "Format de diagramme invalide."
-    },
-    "assistant.mermaid.viewCode": {
-        "en": "View code",
-        "fr": "Voir le code"
-    },
-    "assistant.mermaid.viewDiagram": {
-        "en": "View diagram",
-        "fr": "Voir le diagramme"
-    },
-    "assistant.label": {
-        "en": "Assistant",
-        "fr": "Assistant"
-    },
-    "citations.label": {
-        "en": "Citation(s):",
-        "fr": "Citation(s) :"
-    },
-    "citations.drawer.title": {
-        "en": "Citations",
-        "fr": "Citations"
-    },
-    "citations.source": {
-        "en": "Source:",
-        "fr": "Source :"
-    },
-    "citations.drawer.close": {
-        "en": "Close citations",
-        "fr": "Fermer les citations"
-    },
-    "citations.inline.open": {
-        "en": "Open citation details",
-        "fr": "Ouvrir les détails de la citation"
-    },
-    "citations.inline.openNumber": {
-        "en": "Open citation {{number}} details",
-        "fr": "Ouvrir les détails de la citation {{number}}"
-    },
-    "citations.chip.open": {
-        "en": "Open citation details for {{title}}",
-        "fr": "Ouvrir les détails de la citation pour {{title}}"
-    },
-    "citations.localSourceReference": {
-        "en": "Local source reference",
-        "fr": "Référence à une source locale"
-    },
-    "citations.sourceDocument": {
-        "en": "Source document: {{title}}",
-        "fr": "Document source : {{title}}"
-    },
-    "citations.sourceLocation": {
-        "en": "Source location: {{location}}",
-        "fr": "Emplacement de la source : {{location}}"
-    },
-    "citations.source.openExternal": {
-        "en": "Open source in a new tab: {{title}}",
-        "fr": "Ouvrir la source dans un nouvel onglet : {{title}}"
-    },
-    "errors.attachmentExtractionFailed": {
-        "en": "Could not read these files: {{files}}",
-        "fr": "Impossible de lire ces fichiers : {{files}}"
-    },
-    "errors.deleteFailed": {
-        "en": "Could not delete the chat. Please try again.",
-        "fr": "Impossible de supprimer la conversation. Veuillez réessayer."
-    },
-    "errors.deleteAllFailed": {
-        "en": "Could not delete all chats. Please try again.",
-        "fr": "Impossible de supprimer toutes les conversations. Veuillez réessayer."
-    },
-    "errors.deleteAllPartial": {
-        "en": "Some conversations could not be deleted. Please refresh to see current state.",
-        "fr": "Certaines conversations n'ont pas pu être supprimées. Veuillez actualiser pour voir l'état actuel."
-    },
-    "errors.mcpUnavailable": {
-        "en": "MCP tools were unavailable for this response, so the assistant retried without tools. Citations may be missing.",
-        "fr": "Les outils MCP n'étaient pas disponibles pour cette réponse, donc l'assistant a réessayé sans outils. Des citations peuvent être manquantes."
-    },
-    "errors.orchestratorUnconfigured": {
-        "en": "Orchestrator MCP is not configured; routing will fall back to available MCP servers.",
-        "fr": "L'orchestrateur MCP n'est pas configuré ; le routage utilisera les serveurs MCP disponibles en remplacement."
-    },
-    "errors.renameFailed": {
-        "en": "Could not rename the chat. Please try again.",
-        "fr": "Impossible de renommer la conversation. Veuillez réessayer."
-    },
-    "errors.sessionFilesLoadFailed": {
-        "en": "Could not load session files. Please refresh the page.",
-        "fr": "Impossible de charger les fichiers de session. Veuillez actualiser la page."
-    },
-    "ai.disclaimer": {
-        "en": "AI may make mistakes. Please validate all information before use.",
-        "fr": "L'IA peut faire des erreurs. Veuillez valider toutes les informations avant utilisation."
-    },
-    "disclaimer.modal.title.assistant": {
-        "en": "DISCLAIMER",
-        "fr": "AVERTISSEMENT"
-    },
-    "disclaimer.modal.assistant.body": {
-        "en": "The SSC Assistant is in pilot phase and uses Azure OpenAI. Answers may be incorrect even if they seem reliable. Just like humans, AI can make mistakes. Your feedback is important to help us improve the tool.",
-        "fr": "L’Assistant de SPC est en phase pilote et utilise Azure OpenAI. Les réponses peuvent être inexactes même si elles semblent fiables. Comme les humains, l’IA peut faire des erreurs. Vos commentaires sont importants pour nous aider à améliorer l’outil."
-    },
-    "disclaimer.modal.assistant.strong": {
-        "en": "DO NOT SEND ANY PROTECTED INFORMATION IN THE CHATBOT.",
-        "fr": "NE TRANSMETTEZ AUCUN RENSEIGNEMENT PROTÉGÉ DANS LE CLAVARDEUR."
-    },
-    "disclaimer.modal.title.br": {
-        "en": "DISCLAIMER - Business Request (BR)",
-        "fr": "AVERTISSEMENT - Demande d’affaires (DA)"
-    },
-    "disclaimer.modal.br.body": {
-        "en": "This system is currently in a testing phase, and as such, data accuracy and system functionality are continuously being improved.",
-        "fr": "Ce système est actuellement en phase d’essai; l’exactitude des données et les fonctionnalités du système sont en amélioration continue."
-    },
-    "disclaimer.modal.br.strong": {
-        "en": "Please note that the data retrieved from the Enterprise Data Repository (EDR), sourced from the Business Intake and Tracking System (BITS), may be up to 48 hours old.",
-        "fr": "Veuillez noter que les données récupérées à partir du Répertoire des données d’entreprise (RDE), alimenté par le système de Saisie et suivi des demandes d’affaires (BITS), peuvent dater de jusqu’à 48 heures."
-    },
-    "disclaimer.modal.accept": {
-        "en": "ACCEPT",
-        "fr": "ACCEPTER"
-    },
-    "disclaimer.modal.switchToFrench": {
-        "en": "FRANÇAIS",
-        "fr": "FRANÇAIS"
-    },
-    "disclaimer.modal.switchToEnglish": {
-        "en": "ENGLISH",
-        "fr": "ENGLISH"
-    },
-    "auth.tokenExpired": {
-        "en": "Authentication required. Please refresh the page.",
-        "fr": "Authentification requise. Veuillez actualiser la page."
-    },
-    "sync.status.synced": {
-        "en": "Synced",
-        "fr": "Synchronisé"
-    },
-    "sync.status.pending": {
-        "en": "Pending upload",
-        "fr": "En attente"
-    },
-    "sync.status.syncing": {
-        "en": "Uploading",
-        "fr": "Synchronisation"
-    },
-    "sync.status.error": {
-        "en": "Upload failed",
-        "fr": "Échec de la synchronisation"
-    },
-    "profile.logout": {
-        "en": "Logout",
-        "fr": "Déconnexion"
-    },
-    "profile.settings": {
-        "en": "Settings",
-        "fr": "Paramètres"
-    },
-    "mcp.attribution.unknown": {
-        "en": "Tool server",
-        "fr": "Serveur MCP"
-    },
-    "mcp.attribution.summary": {
-        "en": "Tool: {{primaryServer}}{{suffix}}",
-        "fr": "Outil : {{primaryServer}}{{suffix}}"
-    },
-    "mcp.attribution.trigger": {
-        "en": "Tools used for this response: {{servers}}",
-        "fr": "Outils utilisés pour cette réponse : {{servers}}"
-    },
-    "mcp.attribution.title": {
-        "en": "MCP attribution",
-        "fr": "Attribution MCP"
-    },
-    "mcp.attribution.description.single": {
-        "en": "This response used the following MCP server.",
-        "fr": "Cette réponse a utilisé le serveur MCP suivant."
-    },
-    "mcp.attribution.description.multiple": {
-        "en": "This response used the following MCP servers.",
-        "fr": "Cette réponse a utilisé les serveurs MCP suivants."
-    },
-    "mcp.attribution.category": {
-        "en": "Category: {{category}}",
-        "fr": "Catégorie : {{category}}"
-    },
-    "mcp.attribution.status": {
-        "en": "Status: {{status}}",
-        "fr": "Statut : {{status}}"
-    },
-    "settings.dangerZone.title": {
-        "en": "Danger Zone",
-        "fr": "Zone de danger"
-    },
-    "settings.dangerZone.description": {
-        "en": "Actions in this section are permanent and cannot be undone.",
-        "fr": "Les actions dans cette section sont permanentes et ne peuvent pas être annulées."
-    },
-    "settings.deleteChats.title": {
-        "en": "Delete all chats",
-        "fr": "Supprimer toutes les conversations"
-    },
-    "settings.deleteChats.description": {
-        "en": "Permanently delete all your chat history.",
-        "fr": "Supprimer définitivement tout votre historique de chat."
-    },
-    "settings.deleteChats.button": {
-        "en": "Delete All",
-        "fr": "Tout supprimer"
-    },
-    "settings.deleteChats.confirm.title": {
-        "en": "Confirm deletion?",
-        "fr": "Confirmer la suppression ?"
-    },
-    "settings.deleteChats.confirm.message": {
-        "en": "Are you sure you want to delete ALL chats? This action is permanent.",
-        "fr": "Êtes-vous sûr de vouloir supprimer TOUTES les conversations ? Cette action est permanente."
-    },
-    "settings.deleteChats.deletingIndicator": {
-        "en": "Deleting all chats, please wait...",
-        "fr": "Suppression de toutes les conversations, veuillez patienter..."
-    },
-    "close": {
-        "en": "Close",
-        "fr": "Fermer"
-    },
-    "copy": {
-        "en": "Copy",
-        "fr": "Copier"
-    },
-    "copy.success": {
-        "en": "Copied!",
-        "fr": "Copié !"
-    },
-    "regenerate": {
-        "en": "Regenerate",
-        "fr": "Régénérer"
-    },
-    "good.response": {
-        "en": "Good response",
-        "fr": "Bonne réponse"
-    },
-    "bad.response": {
-        "en": "Bad response",
-        "fr": "Mauvaise réponse"
-    },
-    "feedback.liked": {
-        "en": "User liked this response",
-        "fr": "L'utilisateur a aimé cette réponse"
-    },
-    "feedback.disliked": {
-        "en": "User disliked this response",
-        "fr": "L'utilisateur n'a pas aimé cette réponse"
-    },
-    "feedback.success": {
-        "en": "Feedback submitted, thank you!",
-        "fr": "Retour soumis, merci !"
-    },
-    "feedback.error": {
-        "en": "Error sending feedback",
-        "fr": "Erreur lors de l'envoi du retour"
-    },
-    "br.query.parameters": {
-        "en": "Query Parameters",
-        "fr": "Paramètres de requête"
-    },
-    "br.query.status": {
-        "en": "Status",
-        "fr": "Statut"
-    },
-    "br.query.statuses": {
-        "en": "Statuses",
-        "fr": "Statuts"
-    },
-    "message.actions": {
-        "en": "Message actions",
-        "fr": "Actions du message"
-    },
-    "assistant.contextTruncated.toast": {
-        "en": "Context truncated. Switching to a new conversation is recommended.",
-        "fr": "Contexte tronqué. Il est recommandé de passer à une nouvelle conversation."
-    },
-    "profile.icon.title": {
-        "en": "Open profile menu",
-        "fr": "Ouvrir le menu du profil"
-    },
-    "skip.to.main": {
-        "en": "Skip to main content",
-        "fr": "Aller au contenu principal"
-    },
-    "new.chat.aria": {
-        "en": "Start a new chat",
-        "fr": "Démarrer une nouvelle conversation"
-    },
-    "chat.sender.you": {
-        "en": "You",
-        "fr": "Vous"
-    },
-    "chat.transcript": {
-        "en": "Chat conversation",
-        "fr": "Conversation"
-    },
-    "message.label.user": {
-        "en": "Your message",
-        "fr": "Votre message"
-    },
-    "message.label.assistant": {
-        "en": "SSC Assistant's response",
-        "fr": "Réponse de l'assistant SSC"
-    }
+  "page.title": {
+    "en": "SSC Assistant Playground",
+    "fr": "Bac à sable de l'Assistant SPC"
+  },
+  "select.or.create.session": {
+    "en": "Select or create a chat session to begin.",
+    "fr": "Sélectionnez ou créez une session de chat pour commencer."
+  },
+  "how.can.i.help": {
+    "en": "How can I help?",
+    "fr": "Comment puis-je vous aider?"
+  },
+  "how.can.i.help.description": {
+    "en": "Have Business request, project management or HR questions, need MySSC+ info, or some policy guidance? I'm on it! I can also crunch data, look someone up for you in GEDS, jazz up your drafts, or take your outline and turn it into something awesome for you to review. And that's just the beginning...",
+    "fr": "Vous avez des questions sur les demandes d'affaires, la gestion de projet ou les RH, vous avez besoin d'informations sur MonSSC+ ou de conseils sur les politiques ? Je m'en occupe ! Je peux aussi traiter des données, chercher quelqu'un pour vous dans SAGE, donner du style à vos ébauches ou transformer un plan en un document de qualité pour votre révision. Et ce n'est que le début..."
+  },
+  "type.a.message": {
+    "en": "Type a message...",
+    "fr": "Tapez un message..."
+  },
+  "send": {
+    "en": "Send",
+    "fr": "Envoyer"
+  },
+  "files.attached": {
+    "en": "file(s) attached",
+    "fr": "fichier(s) joint(s)"
+  },
+  "quote.this.message": {
+    "en": "Quote this message",
+    "fr": "Citer ce message"
+  },
+  "attachments": {
+    "en": "Attachments",
+    "fr": "Fichiers joints"
+  },
+  "link": {
+    "en": "link",
+    "fr": "lien"
+  },
+  "feedback": {
+    "en": "Feedback",
+    "fr": "Retour"
+  },
+  "feedback.system.title": {
+    "en": "Feedback on the system",
+    "fr": "Retour sur le système"
+  },
+  "feedback.system.subtitle": {
+    "en": "Help us improve the assistant by sharing what worked and what did not.",
+    "fr": "Aidez-nous à améliorer l'assistant en partageant ce qui a fonctionné et ce qui n'a pas fonctionné."
+  },
+  "feedback.reaction.label": {
+    "en": "Overall sentiment",
+    "fr": "Sentiment général"
+  },
+  "feedback.reaction.required": {
+    "en": "Please select like or dislike.",
+    "fr": "Veuillez sélectionner j'aime ou je n'aime pas."
+  },
+  "feedback.message.label": {
+    "en": "Message",
+    "fr": "Message"
+  },
+  "feedback.message.required": {
+    "en": "Message is required.",
+    "fr": "Le message est obligatoire."
+  },
+  "provide.feedback": {
+    "en": "Please provide feedback on the response provided",
+    "fr": "Veuillez donner votre avis sur la réponse fournie"
+  },
+  "your.feedback": {
+    "en": "Your feedback",
+    "fr": "Votre retour"
+  },
+  "submit": {
+    "en": "Submit",
+    "fr": "Soumettre"
+  },
+  "cancel": {
+    "en": "Cancel",
+    "fr": "Annuler"
+  },
+  "attach": {
+    "en": "Attach",
+    "fr": "Joindre"
+  },
+  "replay": {
+    "en": "Replay",
+    "fr": "Rejouer"
+  },
+  "stop": {
+    "en": "Stop",
+    "fr": "Arrêter"
+  },
+  "rename.conversation": {
+    "en": "Rename Conversation",
+    "fr": "Renommer la conversation"
+  },
+  "conversation.name": {
+    "en": "Conversation Name",
+    "fr": "Nom de la conversation"
+  },
+  "rename": {
+    "en": "Rename",
+    "fr": "Renommer"
+  },
+  "delete": {
+    "en": "Delete",
+    "fr": "Supprimer"
+  },
+  "delete.all.success": {
+    "en": "All conversations deleted.",
+    "fr": "Toutes les conversations ont été supprimées."
+  },
+  "delete.success": {
+    "en": "Conversation deleted",
+    "fr": "Conversation supprimée"
+  },
+  "delete.remote": {
+    "en": "Conversation deleted in another window.",
+    "fr": "Conversation supprimée dans une autre fenêtre."
+  },
+  "chats": {
+    "en": "Chats",
+    "fr": "Conversations"
+  },
+  "new": {
+    "en": "New",
+    "fr": "Nouveau"
+  },
+  "options": {
+    "en": "Options",
+    "fr": "Options"
+  },
+  "sidebar.navigation": {
+    "en": "Chat sessions",
+    "fr": "Sessions de conversation"
+  },
+  "sidebar.open": {
+    "en": "Open chat sessions",
+    "fr": "Ouvrir les sessions de conversation"
+  },
+  "sidebar.close": {
+    "en": "Close chat sessions",
+    "fr": "Fermer les sessions de conversation"
+  },
+  "sidebar.waitingForResponse": {
+    "en": "Waiting for AI response",
+    "fr": "En attente d'une réponse de l'IA"
+  },
+  "export.label": {
+    "en": "Export",
+    "fr": "Exporter"
+  },
+  "export.option.json": {
+    "en": "Export as JSON",
+    "fr": "Exporter en JSON"
+  },
+  "export.option.pdf": {
+    "en": "Export as PDF",
+    "fr": "Exporter en PDF"
+  },
+  "export.option.word": {
+    "en": "Export as Word (.docx)",
+    "fr": "Exporter en Word (.docx)"
+  },
+  "export.disabled.noSession": {
+    "en": "Select a chat to export",
+    "fr": "Sélectionnez une conversation à exporter"
+  },
+  "export.success.json": {
+    "en": "Chat exported as JSON.",
+    "fr": "Conversation exportée en JSON."
+  },
+  "export.success.pdf": {
+    "en": "Chat exported as PDF.",
+    "fr": "Conversation exportée en PDF."
+  },
+  "export.success.word": {
+    "en": "Chat exported as Word (.docx).",
+    "fr": "Conversation exportée en Word (.docx)."
+  },
+  "export.failed": {
+    "en": "Could not export this chat.",
+    "fr": "Impossible d’exporter cette conversation."
+  },
+  "delete.conversation": {
+    "en": "Delete Conversation",
+    "fr": "Supprimer la conversation"
+  },
+  "suggestions.pmcoe.q1": {
+    "en": "What is the purpose of the Project Management Operating Guide?",
+    "fr": "Quel est le but du Guide de gestion de projet ?"
+  },
+  "suggestions.pmcoe.q2": {
+    "en": "What is EPS and what does it stand for?",
+    "fr": "Qu’est-ce que le système SPE et que signifie cet acronyme ?"
+  },
+  "suggestions.pmcoe.q3": {
+    "en": "What is the OPMCA and why does it matter?",
+    "fr": "Qu’est-ce que l’ECGPO et pourquoi est-ce important ?"
+  },
+  "suggestions.pmcoe.q4": {
+    "en": "What types of documents and/or templates are available in the SSC PGoF and how can we use them?",
+    "fr": "Quels types de documents et/ou modèles sont disponibles dans le SSC CFGP et comment les utiliser ?"
+  },
+  "suggestions.pmcoe.q5": {
+    "en": "What is the purpose of the OPMCA?",
+    "fr": "Quel est le but de l’ECGPO ?"
+  },
+  "suggestions.pmcoe.q6": {
+    "en": "Where can I find the latest version of a gating template, and how do I ensure I’m using the correct one?",
+    "fr": "Où puis-je trouver la dernière version d’un modèle de validation, et comment m’assurer d’utiliser le bon ?"
+  },
+  "suggestions.pmcoe.q7": {
+    "en": "What documents are required at each gate?",
+    "fr": "Quels documents sont requis à chaque porte ?"
+  },
+  "suggestions.pmcoe.q8": {
+    "en": "How is the Operating Guide structured?",
+    "fr": "Comment est structuré le Guide de gestion de projet ?"
+  },
+  "suggestions.pmcoe.q9": {
+    "en": "How do I know if my project qualifies for an “Expedited Gate Review”?",
+    "fr": "Comment savoir si mon projet est admissible à une “Revue de porte accélérée” ?"
+  },
+  "suggestions.pmcoe.q10": {
+    "en": "What does the OPMCA evaluate?",
+    "fr": "Que mesure l’ECGPO ?"
+  },
+  "suggestions.pmcoe.q11": {
+    "en": "How do I track the progress of my project through the gates?",
+    "fr": "Comment suivre l’avancement de mon projet à travers les portes ?"
+  },
+  "suggestions.pmcoe.q12": {
+    "en": "What is the purpose of the Enterprise Portfolio System (EPS)?",
+    "fr": "Quel est le but du système SPE ?"
+  },
+  "suggestions.pmcoe.q13": {
+    "en": "What type of information is stored in EPS?",
+    "fr": "Quel type d’information est stocké dans SPE ?"
+  },
+  "suggestions.pmcoe.q14": {
+    "en": "How does EPS fit within the project management lifecycle?",
+    "fr": "Comment SPE s’intègre-t-il au cycle de vie de la gestion de projet ?"
+  },
+  "suggestions.pmcoe.q15": {
+    "en": "What are Project Manager-Led Initiatives (PMLI)?",
+    "fr": "Que sont les initiatives dirigées par les chefs de projet (IDGP) ?"
+  },
+  "suggestions.pmcoe.q16": {
+    "en": "How is a Project Manager-Led Initiative different from a regular project?",
+    "fr": "En quoi une initiative dirigée par un chef de projet (IDGP) diffère-t-elle d’un projet régulier ?"
+  },
+  "suggestions.general.contact": {
+    "en": "I need to find contact information in GEDS.",
+    "fr": "Aidez-moi à trouver des coordonnées dans SAGE."
+  },
+  "suggestions.general.email": {
+    "en": "Help me rewrite an email so it is more formal.",
+    "fr": "Aidez-moi à réécrire un courriel pour qu'il soit plus formel."
+  },
+  "suggestions.general.hire": {
+    "en": "Can you tell me how do I find information on how to hire a student?",
+    "fr": "Pouvez-vous me dire comment trouver des informations sur l'embauche d'un étudiant ?"
+  },
+  "suggestions.business.find": {
+    "en": "What kind of questions can I ask about Business Requests (BR)?",
+    "fr": "Quel genre de questions puis-je poser sur les demandes opérationnelles (DO) ?"
+  },
+  "suggestions.business.pspc": {
+    "en": "Find all the BRs submited in the last 3 weeks that are from the client PSPC",
+    "fr": "Trouvez toutes les demandes d'affaires soumises au cours des 3 dernières semaines provenant du client SPAC"
+  },
+  "suggestions.business.piechart": {
+    "en": "Give me a pie chart of BA OPI that worked on BRs for the month of March for the client ESDC for brs of high priority only.",
+    "fr": "Donnez-moi un graphique circulaire des BPR analystes qui ont travaillé sur des DO pour le mois de mars pour le client EDSC, pour les DO de priorité Élevée seulement."
+  },
+  "suggestions.categories.general": {
+    "en": "General",
+    "fr": "Général"
+  },
+  "suggestions.categories.br": {
+    "en": "Business Requests",
+    "fr": "Demandes d'affaires"
+  },
+  "suggestions.categories.geds": {
+    "en": "GEDS",
+    "fr": "SAGE"
+  },
+  "suggestions.categories.corporate": {
+    "en": "MySSC+",
+    "fr": "MonSPC+"
+  },
+  "suggestions.categories.pmcoe": {
+    "en": "PMCoE",
+    "fr": "CEGP"
+  },
+  "try.asking": {
+    "en": "Try asking:",
+    "fr": "Essayez de demander :"
+  },
+  "assistant.error.chat": {
+    "en": "Sorry, I encountered an error while processing your request. Please try again.",
+    "fr": "Désolé, une erreur est survenue lors du traitement de votre demande. Veuillez réessayer."
+  },
+  "assistant.error.toast": {
+    "en": "An error occurred during completion.",
+    "fr": "Une erreur est survenue pendant le traitement."
+  },
+  "assistant.stopped": {
+    "en": "Response stopped by user.",
+    "fr": "Réponse arrêtée par l'utilisateur."
+  },
+  "assistant.waiting": {
+    "en": "Assistant is thinking...",
+    "fr": "L'assistant réfléchit..."
+  },
+  "assistant.drafting": {
+    "en": "Assistant is drafting...",
+    "fr": "L'assistant rédige..."
+  },
+  "assistant.streaming": {
+    "en": "Assistant is responding.",
+    "fr": "L'assistant répond."
+  },
+  "assistant.copy.code": {
+    "en": "Copy code",
+    "fr": "Copier le code"
+  },
+  "assistant.code.scrollRegion": {
+    "en": "Scrollable code block",
+    "fr": "Bloc de code défilable"
+  },
+  "assistant.copied": {
+    "en": "Copied",
+    "fr": "Copié"
+  },
+  "assistant.mermaid.error": {
+    "en": "Invalid diagram format.",
+    "fr": "Format de diagramme invalide."
+  },
+  "assistant.mermaid.viewCode": {
+    "en": "View code",
+    "fr": "Voir le code"
+  },
+  "assistant.mermaid.viewDiagram": {
+    "en": "View diagram",
+    "fr": "Voir le diagramme"
+  },
+  "assistant.label": {
+    "en": "Assistant",
+    "fr": "Assistant"
+  },
+  "citations.label": {
+    "en": "Citation(s):",
+    "fr": "Citation(s) :"
+  },
+  "citations.drawer.title": {
+    "en": "Citations",
+    "fr": "Citations"
+  },
+  "citations.source": {
+    "en": "Source:",
+    "fr": "Source :"
+  },
+  "citations.drawer.close": {
+    "en": "Close citations",
+    "fr": "Fermer les citations"
+  },
+  "citations.inline.open": {
+    "en": "Open citation details",
+    "fr": "Ouvrir les détails de la citation"
+  },
+  "citations.inline.openNumber": {
+    "en": "Open citation {{number}} details",
+    "fr": "Ouvrir les détails de la citation {{number}}"
+  },
+  "citations.chip.open": {
+    "en": "Open citation details for {{title}}",
+    "fr": "Ouvrir les détails de la citation pour {{title}}"
+  },
+  "citations.accordion.label": {
+    "en": "Citation: {{title}}",
+    "fr": "Citation : {{title}}"
+  },
+  "citations.localSourceReference": {
+    "en": "Local source reference",
+    "fr": "Référence à une source locale"
+  },
+  "citations.sourceDocument": {
+    "en": "Source document: {{title}}",
+    "fr": "Document source : {{title}}"
+  },
+  "citations.sourceLocation": {
+    "en": "Source location: {{location}}",
+    "fr": "Emplacement de la source : {{location}}"
+  },
+  "citations.source.openExternal": {
+    "en": "Open source in a new tab: {{title}}",
+    "fr": "Ouvrir la source dans un nouvel onglet : {{title}}"
+  },
+  "errors.attachmentExtractionFailed": {
+    "en": "Could not read these files: {{files}}",
+    "fr": "Impossible de lire ces fichiers : {{files}}"
+  },
+  "errors.deleteFailed": {
+    "en": "Could not delete the chat. Please try again.",
+    "fr": "Impossible de supprimer la conversation. Veuillez réessayer."
+  },
+  "errors.deleteAllFailed": {
+    "en": "Could not delete all chats. Please try again.",
+    "fr": "Impossible de supprimer toutes les conversations. Veuillez réessayer."
+  },
+  "errors.deleteAllPartial": {
+    "en": "Some conversations could not be deleted. Please refresh to see current state.",
+    "fr": "Certaines conversations n'ont pas pu être supprimées. Veuillez actualiser pour voir l'état actuel."
+  },
+  "errors.mcpUnavailable": {
+    "en": "MCP tools were unavailable for this response, so the assistant retried without tools. Citations may be missing.",
+    "fr": "Les outils MCP n'étaient pas disponibles pour cette réponse, donc l'assistant a réessayé sans outils. Des citations peuvent être manquantes."
+  },
+  "errors.orchestratorUnconfigured": {
+    "en": "Orchestrator MCP is not configured; routing will fall back to available MCP servers.",
+    "fr": "L'orchestrateur MCP n'est pas configuré ; le routage utilisera les serveurs MCP disponibles en remplacement."
+  },
+  "errors.renameFailed": {
+    "en": "Could not rename the chat. Please try again.",
+    "fr": "Impossible de renommer la conversation. Veuillez réessayer."
+  },
+  "errors.sessionFilesLoadFailed": {
+    "en": "Could not load session files. Please refresh the page.",
+    "fr": "Impossible de charger les fichiers de session. Veuillez actualiser la page."
+  },
+  "ai.disclaimer": {
+    "en": "AI may make mistakes. Please validate all information before use.",
+    "fr": "L'IA peut faire des erreurs. Veuillez valider toutes les informations avant utilisation."
+  },
+  "disclaimer.modal.title.assistant": {
+    "en": "DISCLAIMER",
+    "fr": "AVERTISSEMENT"
+  },
+  "disclaimer.modal.assistant.body": {
+    "en": "The SSC Assistant is in pilot phase and uses Azure OpenAI. Answers may be incorrect even if they seem reliable. Just like humans, AI can make mistakes. Your feedback is important to help us improve the tool.",
+    "fr": "L’Assistant de SPC est en phase pilote et utilise Azure OpenAI. Les réponses peuvent être inexactes même si elles semblent fiables. Comme les humains, l’IA peut faire des erreurs. Vos commentaires sont importants pour nous aider à améliorer l’outil."
+  },
+  "disclaimer.modal.assistant.strong": {
+    "en": "DO NOT SEND ANY PROTECTED INFORMATION IN THE CHATBOT.",
+    "fr": "NE TRANSMETTEZ AUCUN RENSEIGNEMENT PROTÉGÉ DANS LE CLAVARDEUR."
+  },
+  "disclaimer.modal.title.br": {
+    "en": "DISCLAIMER - Business Request (BR)",
+    "fr": "AVERTISSEMENT - Demande d’affaires (DA)"
+  },
+  "disclaimer.modal.br.body": {
+    "en": "This system is currently in a testing phase, and as such, data accuracy and system functionality are continuously being improved.",
+    "fr": "Ce système est actuellement en phase d’essai; l’exactitude des données et les fonctionnalités du système sont en amélioration continue."
+  },
+  "disclaimer.modal.br.strong": {
+    "en": "Please note that the data retrieved from the Enterprise Data Repository (EDR), sourced from the Business Intake and Tracking System (BITS), may be up to 48 hours old.",
+    "fr": "Veuillez noter que les données récupérées à partir du Répertoire des données d’entreprise (RDE), alimenté par le système de Saisie et suivi des demandes d’affaires (BITS), peuvent dater de jusqu’à 48 heures."
+  },
+  "disclaimer.modal.accept": {
+    "en": "ACCEPT",
+    "fr": "ACCEPTER"
+  },
+  "disclaimer.modal.switchToFrench": {
+    "en": "FRANÇAIS",
+    "fr": "FRANÇAIS"
+  },
+  "disclaimer.modal.switchToEnglish": {
+    "en": "ENGLISH",
+    "fr": "ENGLISH"
+  },
+  "auth.tokenExpired": {
+    "en": "Authentication required. Please refresh the page.",
+    "fr": "Authentification requise. Veuillez actualiser la page."
+  },
+  "sync.status.synced": {
+    "en": "Synced",
+    "fr": "Synchronisé"
+  },
+  "sync.status.pending": {
+    "en": "Pending upload",
+    "fr": "En attente"
+  },
+  "sync.status.syncing": {
+    "en": "Uploading",
+    "fr": "Synchronisation"
+  },
+  "sync.status.error": {
+    "en": "Upload failed",
+    "fr": "Échec de la synchronisation"
+  },
+  "profile.logout": {
+    "en": "Logout",
+    "fr": "Déconnexion"
+  },
+  "profile.settings": {
+    "en": "Settings",
+    "fr": "Paramètres"
+  },
+  "mcp.attribution.unknown": {
+    "en": "Tool server",
+    "fr": "Serveur MCP"
+  },
+  "mcp.attribution.summary": {
+    "en": "Tool: {{primaryServer}}{{suffix}}",
+    "fr": "Outil : {{primaryServer}}{{suffix}}"
+  },
+  "mcp.attribution.trigger": {
+    "en": "Tools used for this response: {{servers}}",
+    "fr": "Outils utilisés pour cette réponse : {{servers}}"
+  },
+  "mcp.attribution.title": {
+    "en": "MCP attribution",
+    "fr": "Attribution MCP"
+  },
+  "mcp.attribution.description.single": {
+    "en": "This response used the following MCP server.",
+    "fr": "Cette réponse a utilisé le serveur MCP suivant."
+  },
+  "mcp.attribution.description.multiple": {
+    "en": "This response used the following MCP servers.",
+    "fr": "Cette réponse a utilisé les serveurs MCP suivants."
+  },
+  "mcp.attribution.category": {
+    "en": "Category: {{category}}",
+    "fr": "Catégorie : {{category}}"
+  },
+  "mcp.attribution.status": {
+    "en": "Status: {{status}}",
+    "fr": "Statut : {{status}}"
+  },
+  "settings.dangerZone.title": {
+    "en": "Danger Zone",
+    "fr": "Zone de danger"
+  },
+  "settings.dangerZone.description": {
+    "en": "Actions in this section are permanent and cannot be undone.",
+    "fr": "Les actions dans cette section sont permanentes et ne peuvent pas être annulées."
+  },
+  "settings.deleteChats.title": {
+    "en": "Delete all chats",
+    "fr": "Supprimer toutes les conversations"
+  },
+  "settings.deleteChats.description": {
+    "en": "Permanently delete all your chat history.",
+    "fr": "Supprimer définitivement tout votre historique de chat."
+  },
+  "settings.deleteChats.button": {
+    "en": "Delete All",
+    "fr": "Tout supprimer"
+  },
+  "settings.deleteChats.confirm.title": {
+    "en": "Confirm deletion?",
+    "fr": "Confirmer la suppression ?"
+  },
+  "settings.deleteChats.confirm.message": {
+    "en": "Are you sure you want to delete ALL chats? This action is permanent.",
+    "fr": "Êtes-vous sûr de vouloir supprimer TOUTES les conversations ? Cette action est permanente."
+  },
+  "settings.deleteChats.deletingIndicator": {
+    "en": "Deleting all chats, please wait...",
+    "fr": "Suppression de toutes les conversations, veuillez patienter..."
+  },
+  "close": {
+    "en": "Close",
+    "fr": "Fermer"
+  },
+  "copy": {
+    "en": "Copy",
+    "fr": "Copier"
+  },
+  "copy.success": {
+    "en": "Copied!",
+    "fr": "Copié !"
+  },
+  "regenerate": {
+    "en": "Regenerate",
+    "fr": "Régénérer"
+  },
+  "good.response": {
+    "en": "Good response",
+    "fr": "Bonne réponse"
+  },
+  "bad.response": {
+    "en": "Bad response",
+    "fr": "Mauvaise réponse"
+  },
+  "feedback.liked": {
+    "en": "User liked this response",
+    "fr": "L'utilisateur a aimé cette réponse"
+  },
+  "feedback.disliked": {
+    "en": "User disliked this response",
+    "fr": "L'utilisateur n'a pas aimé cette réponse"
+  },
+  "feedback.success": {
+    "en": "Feedback submitted, thank you!",
+    "fr": "Retour soumis, merci !"
+  },
+  "feedback.error": {
+    "en": "Error sending feedback",
+    "fr": "Erreur lors de l'envoi du retour"
+  },
+  "br.query.parameters": {
+    "en": "Query Parameters",
+    "fr": "Paramètres de requête"
+  },
+  "br.query.status": {
+    "en": "Status",
+    "fr": "Statut"
+  },
+  "br.query.statuses": {
+    "en": "Statuses",
+    "fr": "Statuts"
+  },
+  "message.actions": {
+    "en": "Message actions",
+    "fr": "Actions du message"
+  },
+  "assistant.contextTruncated.toast": {
+    "en": "Context truncated. Switching to a new conversation is recommended.",
+    "fr": "Contexte tronqué. Il est recommandé de passer à une nouvelle conversation."
+  },
+  "profile.icon.title": {
+    "en": "Open profile menu",
+    "fr": "Ouvrir le menu du profil"
+  },
+  "skip.to.main": {
+    "en": "Skip to main content",
+    "fr": "Aller au contenu principal"
+  },
+  "new.chat.aria": {
+    "en": "Start a new chat",
+    "fr": "Démarrer une nouvelle conversation"
+  },
+  "chat.sender.you": {
+    "en": "You",
+    "fr": "Vous"
+  },
+  "chat.transcript": {
+    "en": "Chat conversation",
+    "fr": "Conversation"
+  },
+  "message.label.user": {
+    "en": "Your message",
+    "fr": "Votre message"
+  },
+  "message.label.assistant": {
+    "en": "SSC Assistant's response",
+    "fr": "Réponse de l'assistant SSC"
+  },
+  "chat.feedback.title": {
+    "en": "Response Feedback",
+    "fr": "Commentaires sur la réponse"
+  },
+  "chat.feedback.subtitle": {
+    "en": "We value your feedback and use it to improve SSCA. What would you like to do?",
+    "fr": "Vos commentaires nous aident à améliorer l'assistant SPC. Que souhaitez-vous faire ?"
+  },
+  "chat.feedback.report.issue": {
+    "en": "Report an Issue",
+    "fr": "Signaler un problème"
+  },
+  "chat.feedback.report.issue.description": {
+    "en": "Let us know about a problem or bug you encountered.",
+    "fr": "Informez-nous d'un problème ou d'un bogue que vous avez rencontré."
+  },
+  "chat.feedback.report.issue.detail.subtitle": {
+    "en": "Please provide details about the issue you encountered.",
+    "fr": "Veuillez fournir des détails sur le problème que vous avez rencontré."
+  },
+  "chat.feedback.issue.description.label": {
+    "en": "Description",
+    "fr": "Description"
+  },
+  "chat.feedback.issue.description.placeholder": {
+    "en": "Please describe the problem you encountered.",
+    "fr": "Veuillez décrire le problème que vous avez rencontré."
+  },
+  "chat.feedback.issue.description.required": {
+    "en": "Description is required.",
+    "fr": "La description est obligatoire."
+  },
+  "chat.feedback.issue.steps.label": {
+    "en": "Steps to Reproduce",
+    "fr": "Étapes à reproduire"
+  },
+  "chat.feedback.issue.steps.placeholder": {
+    "en": "Please provide the steps to reproduce the issue",
+    "fr": "Veuillez fournir les étapes pour reproduire le problème."
+  },
+  "chat.feedback.issue.steps.required": {
+    "en": "Steps to reproduce are required.",
+    "fr": "Les étapes à reproduire sont obligatoires."
+  },
+  "chat.feedback.suggestion": {
+    "en": "Provide a Suggestion",
+    "fr": "Fournir une suggestion"
+  },
+  "chat.feedback.suggestion.description": {
+    "en": "Share your ideas or suggestions to help us improve.",
+    "fr": "Partagez vos idées ou suggestions pour nous aider à nous améliorer."
+  },
+  "chat.feedback.suggestion.detail.subtitle": {
+    "en": "Share your suggestion to help us improve SSCA.",
+    "fr": "Partagez votre suggestion pour nous aider à améliorer l'assistant SPC."
+  },
+  "chat.feedback.suggestion.note.label": {
+    "en": "Suggestion",
+    "fr": "Suggestion"
+  },
+  "chat.feedback.suggestion.note.placeholder": {
+    "en": "Please describe your suggestion in detail.",
+    "fr": "Veuillez décrire votre suggestion en détail."
+  },
+  "chat.feedback.suggestion.note.required": {
+    "en": "Suggestion is required.",
+    "fr": "La suggestion est obligatoire."
+  },
+  "chat.feedback.attachments.label": {
+    "en": "Attach images (max 3)",
+    "fr": "Joindre des images (max. 3)"
+  },
+  "chat.feedback.attachments.choose": {
+    "en": "Choose Files",
+    "fr": "Choisir des fichiers"
+  },
+  "chat.feedback.attachments.selected": {
+    "en": "{{count}} file(s) selected",
+    "fr": "{{count}} fichier(s) sélectionné(s)"
+  },
+  "chat.feedback.attachments.none": {
+    "en": "No file chosen",
+    "fr": "Aucun fichier choisi"
+  },
+  "chat.feedback.attachments.invalid.type": {
+    "en": "Invalid file type. Only JPG, PNG, and GIF are allowed.",
+    "fr": "Type de fichier invalide. Seuls les fichiers JPG, PNG et GIF sont autorisés."
+  },
+  "chat.feedback.attachments.invalid.size": {
+    "en": "File is too large. Each image must be smaller than {{max}} MB.",
+    "fr": "Le fichier est trop volumineux. Chaque image doit être inférieure à {{max}} Mo."
+  },
+  "chat.feedback.attachments.limit.exceeded": {
+    "en": "You selected more than {{max}} files. Only the first {{max}} were kept.",
+    "fr": "Vous avez sélectionné plus de {{max}} fichiers. Seuls les {{max}} premiers ont été conservés."
+  },
+  "chat.feedback.attachments.max": {
+    "en": "You can attach up to 3 images (JPG, PNG, GIF).",
+    "fr": "Vous pouvez joindre jusqu'à 3 images (JPG, PNG, GIF)."
+  },
+  "chat.feedback.note.label": {
+    "en": "Note",
+    "fr": "Note"
+  },
+  "chat.feedback.note.required": {
+    "en": "Note is required.",
+    "fr": "La note est obligatoire."
+  },
+  "chat.feedback.back": {
+    "en": "Back",
+    "fr": "Retour"
+  }
 }

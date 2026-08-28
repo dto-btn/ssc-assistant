@@ -17,12 +17,20 @@ interface UiState {
   isMobileSidebarOpen: boolean;
   /** True strictly while a bulk session deletion is in-flight via the API. */
   isDeletingAllChats: boolean;
+
+  chatFeedbackModalState: ChatFeedbackModalState | null;
+}
+
+interface ChatFeedbackModalState {
+  messageId: string;
+  sessionId: string;
 }
 
 const initialState: UiState = {
   isSidebarCollapsed: false,
   isMobileSidebarOpen: false,
   isDeletingAllChats: false,
+  chatFeedbackModalState: null,
 };
 
 const uiSlice = createSlice({
@@ -49,6 +57,15 @@ const uiSlice = createSlice({
     setIsDeletingAllChats: (state, action: PayloadAction<boolean>) => {
       state.isDeletingAllChats = action.payload;
     },
+    openChatFeedbackModal: (state, action: PayloadAction<{ messageId: string; sessionId: string }>) => {
+      state.chatFeedbackModalState = {
+        messageId: action.payload.messageId,
+        sessionId: action.payload.sessionId,
+      };
+    },
+    closeChatFeedbackModal: (state) => {
+      state.chatFeedbackModalState = null;
+    },
   },
 });
 
@@ -59,6 +76,8 @@ export const {
   closeMobileSidebar,
   setMobileSidebarOpen,
   setIsDeletingAllChats,
+  openChatFeedbackModal,
+  closeChatFeedbackModal,
 } = uiSlice.actions;
 
 export default uiSlice.reducer;

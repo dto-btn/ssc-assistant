@@ -64,6 +64,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) =
 
     setIsSubmitting(true);
     const uuid = currentSessionId ?? crypto.randomUUID();
+    console.log(uuid);
 
     try {
       await sendPlaygroundFeedback({
@@ -177,7 +178,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) =
               </ToggleButton>
             </ToggleButtonGroup>
             {hasAttemptedSubmit && positive === null && (
-              <Typography variant="caption" color="error" sx={{ mt: 0.75, display: "block" }}>
+              <Typography role="alert" variant="caption" color="error" sx={{ mt: 0.75, display: "block" }}>
                 {t("feedback.reaction.required")}
               </Typography>
             )}

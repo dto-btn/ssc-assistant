@@ -17,7 +17,7 @@ resource "azurerm_linux_web_app" "api" {
 
   virtual_network_subnet_id = azurerm_subnet.api.id
 
-  client_affinity_enabled = true
+  client_affinity_enabled = false
   https_only = true
 
   site_config {
@@ -25,7 +25,7 @@ resource "azurerm_linux_web_app" "api" {
     api_definition_url = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net/openapi.json"
 
     application_stack {
-      python_version = "3.13.14"
+      python_version = "3.13"
     }
     use_32_bit_worker = false
 

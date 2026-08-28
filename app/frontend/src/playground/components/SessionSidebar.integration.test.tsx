@@ -50,6 +50,7 @@ function renderSidebar(isMobile: boolean, preloadedState?: TestStoreState) {
       isSidebarCollapsed: false,
       isMobileSidebarOpen: false,
       isDeletingAllChats: false,
+      chatFeedbackModalState: { messageId: "m1", sessionId: "s1" },
     },
   };
 
@@ -87,6 +88,29 @@ function renderSidebar(isMobile: boolean, preloadedState?: TestStoreState) {
 }
 
 describe("SessionSidebar responsive behavior", () => {
+  it("renders a named navigation landmark for chat sessions", () => {
+    renderSidebar(false, {
+      chat: {
+        messages: [],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {},
+        orchestratorInsightsBySessionId: {},
+      },
+      sessions: {
+        sessions: [],
+        currentSessionId: null,
+      },
+      ui: {
+        isSidebarCollapsed: false,
+        isMobileSidebarOpen: false,
+        isDeletingAllChats: false,
+        chatFeedbackModalState: { messageId: "m1", sessionId: "s1" },
+      },
+    });
+
+    expect(screen.getByRole("navigation", { name: "Chat sessions" })).toBeInTheDocument();
+  });
+
   /**
    * Test that the "chats" section heading is hidden when the desktop sidebar
    * is in a collapsed state.
@@ -107,6 +131,7 @@ describe("SessionSidebar responsive behavior", () => {
         isSidebarCollapsed: true,
         isMobileSidebarOpen: false,
         isDeletingAllChats: false,
+        chatFeedbackModalState: { messageId: "m1", sessionId: "s1" },
       },
     });
 
@@ -134,6 +159,7 @@ describe("SessionSidebar responsive behavior", () => {
         isSidebarCollapsed: false,
         isMobileSidebarOpen: false,
         isDeletingAllChats: false,
+        chatFeedbackModalState: { messageId: "m1", sessionId: "s1" },
       },
     });
 
@@ -183,6 +209,7 @@ describe("SessionSidebar responsive behavior", () => {
         isSidebarCollapsed: false,
         isMobileSidebarOpen: true,
         isDeletingAllChats: false,
+        chatFeedbackModalState: { messageId: "m1", sessionId: "s1" },
       },
     });
 
@@ -223,6 +250,7 @@ describe("SessionSidebar responsive behavior", () => {
         isSidebarCollapsed: false,
         isMobileSidebarOpen: false,
         isDeletingAllChats: false,
+        chatFeedbackModalState: { messageId: "m1", sessionId: "s1" },
       },
     });
 
@@ -267,6 +295,7 @@ describe("SessionSidebar responsive behavior", () => {
         isSidebarCollapsed: false,
         isMobileSidebarOpen: false,
         isDeletingAllChats: false,
+        chatFeedbackModalState: { messageId: "m1", sessionId: "s1" },
       },
     });
 
@@ -325,6 +354,7 @@ describe("SessionSidebar responsive behavior", () => {
           isSidebarCollapsed: false,
           isMobileSidebarOpen: true,
           isDeletingAllChats: false,
+          chatFeedbackModalState: { messageId: "m1", sessionId: "s1" },
         },
       });
 
@@ -363,6 +393,7 @@ describe("SessionSidebar responsive behavior", () => {
         isSidebarCollapsed: false,
         isMobileSidebarOpen: true,
         isDeletingAllChats: false,
+        chatFeedbackModalState: { messageId: "m1", sessionId: "s1" },
       },
     });
 
@@ -408,6 +439,7 @@ describe("SessionSidebar responsive behavior", () => {
         isSidebarCollapsed: false,
         isMobileSidebarOpen: false,
         isDeletingAllChats: false,
+        chatFeedbackModalState: { messageId: "m1", sessionId: "s1" },
       },
     });
 

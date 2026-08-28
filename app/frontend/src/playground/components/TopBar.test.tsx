@@ -84,7 +84,7 @@ describe("TopBar", () => {
    */
   it("shows collapse icon and correct accessibility label when sidebar is open", () => {
     renderTopBar(true);
-    const button = screen.getByRole("button", { name: "sidebar.collapse" });
+    const button = screen.getByRole("button", { name: "sidebar.navigation" });
     expect(button).toBeInTheDocument();
     expect(button).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByTestId("MenuOpenIcon")).toBeInTheDocument();
@@ -96,7 +96,7 @@ describe("TopBar", () => {
    */
   it("shows expand icon and correct accessibility label when sidebar is closed", () => {
     renderTopBar(false);
-    const button = screen.getByRole("button", { name: "sidebar.open" });
+    const button = screen.getByRole("button", { name: "sidebar.navigation" });
     expect(button).toBeInTheDocument();
     expect(button).toHaveAttribute("aria-expanded", "false");
     expect(screen.getByTestId("MenuIcon")).toBeInTheDocument();
@@ -111,7 +111,7 @@ describe("TopBar", () => {
     const user = userEvent.setup();
     renderTopBar(true, { onToggle });
 
-    await user.click(screen.getByRole("button", { name: "sidebar.collapse" }));
+    await user.click(screen.getByRole("button", { name: "sidebar.navigation" }));
     expect(onToggle).toHaveBeenCalled();
   });
 

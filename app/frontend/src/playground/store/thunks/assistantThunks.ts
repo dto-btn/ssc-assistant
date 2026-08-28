@@ -40,6 +40,7 @@ import {
   OrchestratorProgressEvent,
   resolveServersFromInsights,
 } from "../../services/orchestratorService";
+import { normalizeChatTitle } from "../../utils/chatTitle";
 import { Citation } from "../../utils/citations";
 import { createStreamTypewriter } from "../../utils/streamTypewriter";
 import { selectMessagesForSession } from "../selectors/chatSelectors";
@@ -582,21 +583,21 @@ export const sendAssistantMessage = ({
     }
 
     const isNewChat = getState().sessions.sessions.find((s) => s.id === sessionId)?.isNewChat;
-    if (isNewChat) {
-      const meaningfulText = content.trim().length > 0;
-      const meaningfulTurn = meaningfulText || (attachments && attachments.length > 0);
+    const meaningfulText = content.trim().length > 0;
+    const meaningfulTurn = meaningfulText || (attachments && attachments.length > 0);
+    const shouldAutoRenameSession = Boolean(isNewChat && meaningfulText);
 
-      if (meaningfulText) {
-        // Rename chat if this is the first message with text in a new session
-        const autoName = deriveSessionName(content);
-        if (autoName) {
-          dispatch(renameSession({ id: sessionId, name: autoName }));
-        }
-      }
+    if (isNewChat && meaningfulTurn) {
+      // Mark immediately so automatic naming only runs once per chat.
+      dispatch(setIsSessionNew({ id: sessionId, isNew: false }));
+    }
 
-      if (meaningfulTurn) {
-        // Mark session as no longer new if there's text or attachments
-        dispatch(setIsSessionNew({ id: sessionId, isNew: false }));
+    if (shouldAutoRenameSession) {
+      // Name up front so a failure before the orchestrator resolves still leaves
+      // the chat named; the AI title overrides this once insights arrive.
+      const fallbackName = deriveSessionName(content);
+      if (fallbackName) {
+        dispatch(renameSession({ id: sessionId, name: fallbackName }));
       }
     }
 
@@ -743,6 +744,16 @@ export const sendAssistantMessage = ({
           })),
         }
       : baseInsights;
+
+    if (shouldAutoRenameSession) {
+      const orchestratorSuggestedTitle = normalizeChatTitle(orchestratorInsights?.chatTitle);
+      const fallbackTitle = deriveSessionName(content);
+      const nextTitle = orchestratorSuggestedTitle || fallbackTitle;
+
+      if (nextTitle) {
+        dispatch(renameSession({ id: sessionId, name: nextTitle }));
+      }
+    }
 
     const assistantMcpAttribution = buildMessageMcpAttribution(
       routedServers,
@@ -1516,9 +1527,9 @@ export const sendAssistantMessage = ({
     // If a placeholder was already dispatched, reuse it for the error message
     // to avoid a duplicate empty assistant turn above the error text.
     if (placeholderAssistantMessageId) {
-      dispatch(updateMessageContent({ messageId: placeholderAssistantMessageId, content: assistantErrorMessage }));
+      dispatch(updateMessageContent({ messageId: placeholderAssistantMessageId, content: assistantErrorMessage, isError: true }));
     } else {
-      dispatch(addMessage({ sessionId, role: "assistant", content: assistantErrorMessage }));
+      dispatch(addMessage({ sessionId, role: "assistant", content: assistantErrorMessage, isError: true }));
     }
 
     dispatch(
