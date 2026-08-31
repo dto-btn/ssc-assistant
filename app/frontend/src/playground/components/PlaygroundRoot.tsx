@@ -68,6 +68,10 @@ export const PlaygroundShell: React.FC = () => {
       <Box
         component="a"
         href="#playground-ask-question"
+        onClick={(event: React.MouseEvent<HTMLAnchorElement>) => {
+          event.preventDefault();
+          document.getElementById("playground-ask-question")?.focus();
+        }}
         sx={{
           position: "absolute",
           left: "-999px",
