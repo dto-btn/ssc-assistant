@@ -632,8 +632,8 @@
     "fr": "Ouvrir le menu du profil"
   },
   "skip.to.chat.input": {
-      "en": "Skip to chat input",
-      "fr": "Aller au champ de saisie de la discussion"
+    "en": "Skip to chat input",
+    "fr": "Aller au champ de saisie de la discussion"
   },
   "skip.to.main": {
     "en": "Skip to main content",

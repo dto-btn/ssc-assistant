@@ -448,6 +448,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
           value={input}
           multiline
           minRows={1}
+          maxRows={15}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             const v = e.target.value;
             // Simple length validation with i18n fallback
