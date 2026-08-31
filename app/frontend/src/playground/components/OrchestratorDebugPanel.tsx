@@ -79,6 +79,12 @@ const OrchestratorDebugPanel: React.FC<OrchestratorDebugPanelProps> = ({ session
         Classification: {formatClassificationMethod(insights.classificationMethod)}
       </Typography>
 
+      {insights.chatTitle ? (
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+          Chat title: {insights.chatTitle} ({insights.chatTitleSource || "legacy"})
+        </Typography>
+      ) : null}
+
       {insights.status ? (
         <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
           Status: {insights.status}

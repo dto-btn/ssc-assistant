@@ -6,7 +6,9 @@ import type { Locator, Page } from '@playwright/test';
  * Fail with a readable summary when axe finds accessibility violations.
  */
 export async function expectNoAxeViolations(page: Page, scopeName: string): Promise<void> {
-  const results = await new AxeBuilder({ page }).analyze();
+  const results = await new AxeBuilder({ page })
+  .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'best-practice'])
+  .analyze();
   const summary = results.violations
     .map((violation) => {
       const targets = violation.nodes

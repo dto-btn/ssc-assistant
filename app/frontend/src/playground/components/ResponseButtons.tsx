@@ -21,10 +21,22 @@
  * visible because hover events are unreliable on touchscreens.
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useDispatch } from "react-redux";
 import { alpha } from "@mui/material/styles";
-import { Tooltip, Box, IconButton, useTheme, useMediaQuery } from "@mui/material";
+import {
+  Tooltip,
+  Box,
+  IconButton,
+  useTheme,
+  useMediaQuery,
+} from "@mui/material";
 import ThumbUpAltOutlinedIcon from "@mui/icons-material/ThumbUpAltOutlined";
 import ThumbDownAltOutlinedIcon from "@mui/icons-material/ThumbDownAltOutlined";
 import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
@@ -32,11 +44,18 @@ import ThumbDownAltIcon from "@mui/icons-material/ThumbDownAlt";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckIcon from "@mui/icons-material/Check";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
 import { useTranslation } from "react-i18next";
 import type { AppDispatch } from "../store";
 import { Message } from "../store/slices/chatSlice";
-import { submitResponseFeedback, clearResponseFeedback } from "../store/thunks/feedbackThunks";
+import {
+  submitResponseFeedback,
+  clearResponseFeedback,
+} from "../store/thunks/feedbackThunks";
 import { sendAssistantMessage } from "../store/thunks/assistantThunks";
+import { visuallyHidden } from "@mui/utils";
+import isFeatureEnabled from "../FeatureGate";
+import { openChatFeedbackModal } from "../store/slices/uiSlice";
 
 interface ResponseButtonsProps {
   /** Whether the parent message row is currently hovered. */
@@ -59,18 +78,17 @@ interface ResponseButtonsProps {
 
 const COPY_RESET_MS = 3000;
 
-/** Visually-hidden style — removes an element from view while keeping it accessible to screen readers. */
-const visuallyHiddenSx = {
-  position: "absolute",
-  width: "1px",
-  height: "1px",
-  overflow: "hidden",
-  clip: "rect(0,0,0,0)",
-  whiteSpace: "nowrap",
-} as const;
-
 const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
-  ({ isHovering, isMostRecent, text, messageId, isStreaming, regenerateSourceMessage, sessionId, feedback }) => {
+  ({
+    isHovering,
+    isMostRecent,
+    text,
+    messageId,
+    isStreaming,
+    regenerateSourceMessage,
+    sessionId,
+    feedback,
+  }) => {
     const { t } = useTranslation("playground");
     const dispatch = useDispatch<AppDispatch>();
     const theme = useTheme();
@@ -82,26 +100,32 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
     const brandColor = theme.palette.primary.main;
 
     /** sx applied to every IconButton — ensures a 44×44 touch target (WCAG 2.5.5) */
-    const baseIconButtonSx = useMemo(() => ({
-      borderRadius: "6px",
-      padding: "10px",
-      minWidth: 44,
-      minHeight: 44,
-      "&:hover": { backgroundColor: alpha(brandColor, 0.08) },
-      // Visible focus ring for keyboard navigation (WCAG 2.4.7)
-      "&.Mui-focusVisible": {
-        outline: `2px solid ${brandColor}`,
-        outlineOffset: "2px",
-        backgroundColor: alpha(brandColor, 0.08),
-      },
-    }), [brandColor]);
+    const baseIconButtonSx = useMemo(
+      () => ({
+        borderRadius: "6px",
+        padding: "10px",
+        minWidth: 44,
+        minHeight: 44,
+        "&:hover": { backgroundColor: alpha(brandColor, 0.08) },
+        // Visible focus ring for keyboard navigation (WCAG 2.4.7)
+        "&.Mui-focusVisible": {
+          outline: `2px solid ${brandColor}`,
+          outlineOffset: "2px",
+          backgroundColor: alpha(brandColor, 0.08),
+        },
+      }),
+      [brandColor],
+    );
 
     /** Additional sx for an actively-pressed like/dislike button */
-    const activeFeedbackSx = useMemo(() => ({
-      ...baseIconButtonSx,
-      backgroundColor: alpha(brandColor, 0.12),
-      "&:hover": { backgroundColor: alpha(brandColor, 0.18) },
-    }), [baseIconButtonSx, brandColor]);
+    const activeFeedbackSx = useMemo(
+      () => ({
+        ...baseIconButtonSx,
+        backgroundColor: alpha(brandColor, 0.12),
+        "&:hover": { backgroundColor: alpha(brandColor, 0.18) },
+      }),
+      [baseIconButtonSx, brandColor],
+    );
 
     const [isCopied, setIsCopied] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
@@ -122,7 +146,8 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
     }, [isCopied]);
 
     const handleCopy = useCallback(() => {
-      navigator.clipboard.writeText(text)
+      navigator.clipboard
+        .writeText(text)
         .then(() => setIsCopied(true))
         .catch(() => {
           // Clipboard access denied or unavailable (e.g. insecure context)
@@ -182,107 +207,130 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
         dispatch(submitResponseFeedback(messageId, false));
       }
     }, [dispatch, feedback, messageId]);
+    /** Handles opening the chat feedback modal through uiSlice */
+    const handleFeedbackNote = useCallback(() => {
+      dispatch(openChatFeedbackModal({ messageId, sessionId }));
+    }, [dispatch, messageId, sessionId]);
 
     const isLiked = feedback === "liked";
     const isDisliked = feedback === "disliked";
 
     return (
-      // role="group" gives screen-reader users context that these buttons belong together (WCAG 1.3.1)
-      <Box
-        role="group"
-        aria-label={t("message.actions")}
-        // Hide the entire group from AT when buttons are invisible — prevents screen readers
-        // from announcing "Message actions" and finding no accessible children (WCAG 1.3.1)
-        aria-hidden={!isVisible}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        sx={{
-          display: isVisible ? "inline-flex" : "none",
-          alignItems: "center",
-          mt: 0.5,
-          // Prevent ghost hover highlights on invisible buttons (WCAG 2.1.1)
-          pointerEvents: isVisible ? "auto" : "none",
-        }}
-      >
-        {/*
+      <>
+        {/* role="group" gives screen-reader users context that these buttons belong together (WCAG 1.3.1) */}
+        <Box
+          role="group"
+          aria-label={t("message.actions")}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          sx={{
+            display: isVisible ? "inline-flex" : "none",
+            alignItems: "center",
+            mt: 0.5,
+            // Prevent ghost hover highlights on invisible buttons (WCAG 2.1.1)
+            pointerEvents: isVisible ? "auto" : "none",
+          }}
+        >
+          {/*
           Visually-hidden live region — announces only copy confirmations to screen
           readers without interrupting ongoing speech (WCAG 4.1.3). Scoping it here
           (rather than on the outer Box) prevents unrelated state changes from
           triggering announcements.
         */}
-        <Box component="span" aria-live="polite" aria-atomic="true" sx={visuallyHiddenSx}>
-          {isCopied ? t("copy.success") : ""}
-        </Box>
-
-        <Tooltip title={isCopied ? t("copy.success") : t("copy")} arrow>
-          <IconButton
-            aria-label={isCopied ? t("copy.success") : t("copy")}
-            size="small"
-            onClick={handleCopy}
-            tabIndex={isVisible ? 0 : -1}
-            aria-hidden={!isVisible}
-            sx={baseIconButtonSx}
+          <Box
+            component="span"
+            aria-live="polite"
+            aria-atomic="true"
+            sx={visuallyHidden}
           >
-            {isCopied ? (
-              <CheckIcon sx={{ fontSize: 20, color: brandColor }} />
-            ) : (
-              <ContentCopyIcon sx={{ fontSize: 20, color: iconColor }} />
-            )}
-          </IconButton>
-        </Tooltip>
+            {isCopied ? t("copy.success") : ""}
+          </Box>
 
-        {/* Regenerate — only on the most recent non-streaming response */}
-        {isMostRecent && !isStreaming && (
-          <Tooltip title={t("regenerate")} arrow>
+          <Tooltip title={isCopied ? t("copy.success") : t("copy")} arrow>
             <IconButton
-              aria-label={t("regenerate")}
+              aria-label={isCopied ? t("copy.success") : t("copy")}
               size="small"
-              onClick={handleRegenerate}
+              onClick={handleCopy}
               tabIndex={isVisible ? 0 : -1}
-              aria-hidden={!isVisible}
               sx={baseIconButtonSx}
             >
-              <RefreshIcon sx={{ fontSize: 20, color: iconColor }} />
+              {isCopied ? (
+                <CheckIcon sx={{ fontSize: 20, color: brandColor }} />
+              ) : (
+                <ContentCopyIcon sx={{ fontSize: 20, color: iconColor }} />
+              )}
             </IconButton>
           </Tooltip>
-        )}
 
-        <Tooltip title={t("good.response")} arrow>
-          <IconButton
-            aria-label={t("good.response")}
-            aria-pressed={isLiked}
-            size="small"
-            onClick={handleLike}
-            tabIndex={isVisible ? 0 : -1}
-            aria-hidden={!isVisible}
-            sx={isLiked ? activeFeedbackSx : baseIconButtonSx}
-          >
-            {isLiked ? (
-              <ThumbUpAltIcon sx={{ fontSize: 20, color: brandColor }} />
-            ) : (
-              <ThumbUpAltOutlinedIcon sx={{ fontSize: 20, color: iconColor }} />
-            )}
-          </IconButton>
-        </Tooltip>
+          {/* Regenerate — only on the most recent non-streaming response */}
+          {isMostRecent && !isStreaming && (
+            <Tooltip title={t("regenerate")} arrow>
+              <IconButton
+                aria-label={t("regenerate")}
+                size="small"
+                onClick={handleRegenerate}
+                tabIndex={isVisible ? 0 : -1}
+                sx={baseIconButtonSx}
+              >
+                <RefreshIcon sx={{ fontSize: 20, color: iconColor }} />
+              </IconButton>
+            </Tooltip>
+          )}
 
-        <Tooltip title={t("bad.response")} arrow>
-          <IconButton
-            aria-label={t("bad.response")}
-            aria-pressed={isDisliked}
-            size="small"
-            onClick={handleDislike}
-            tabIndex={isVisible ? 0 : -1}
-            aria-hidden={!isVisible}
-            sx={isDisliked ? activeFeedbackSx : baseIconButtonSx}
-          >
-            {isDisliked ? (
-              <ThumbDownAltIcon sx={{ fontSize: 20, color: brandColor }} />
-            ) : (
-              <ThumbDownAltOutlinedIcon sx={{ fontSize: 20, color: iconColor }} />
-            )}
-          </IconButton>
-        </Tooltip>
-      </Box>
+          <Tooltip title={t("good.response")} arrow>
+            <IconButton
+              aria-label={t("good.response")}
+              aria-pressed={isLiked}
+              size="small"
+              onClick={handleLike}
+              tabIndex={isVisible ? 0 : -1}
+              sx={isLiked ? activeFeedbackSx : baseIconButtonSx}
+            >
+              {isLiked ? (
+                <ThumbUpAltIcon sx={{ fontSize: 20, color: brandColor }} />
+              ) : (
+                <ThumbUpAltOutlinedIcon
+                  sx={{ fontSize: 20, color: iconColor }}
+                />
+              )}
+            </IconButton>
+          </Tooltip>
+
+          <Tooltip title={t("bad.response")} arrow>
+            <IconButton
+              aria-label={t("bad.response")}
+              aria-pressed={isDisliked}
+              size="small"
+              onClick={handleDislike}
+              tabIndex={isVisible ? 0 : -1}
+              sx={isDisliked ? activeFeedbackSx : baseIconButtonSx}
+            >
+              {isDisliked ? (
+                <ThumbDownAltIcon sx={{ fontSize: 20, color: brandColor }} />
+              ) : (
+                <ThumbDownAltOutlinedIcon
+                  sx={{ fontSize: 20, color: iconColor }}
+                />
+              )}
+            </IconButton>
+          </Tooltip>
+          {isFeatureEnabled("ChatFeedbackResponse") && (
+            <Tooltip title={t("feedback")} arrow>
+              <IconButton
+                aria-label={t("feedback")}
+                size="small"
+                onClick={handleFeedbackNote}
+                tabIndex={isVisible ? 0 : -1}
+                sx={baseIconButtonSx}
+              >
+                <RateReviewOutlinedIcon
+                  sx={{ fontSize: 20, color: iconColor }}
+                />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
+      </>
     );
   },
 );
@@ -290,4 +338,3 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
 ResponseButtons.displayName = "ResponseButtons";
 
 export default ResponseButtons;
-
