@@ -466,8 +466,8 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
           onClick={isLoading ? onStop : handleSend}
           disabled={isUploading || (!isLoading && !canSend)}
           sx={{
-            minWidth: 38,
-            minHeight: 38,
+            minWidth: 44,
+            minHeight: 44,
             borderRadius: '50%',
             transition: 'background-color 0.2s ease, color 0.2s ease, transform 0.2s ease',
             color: canSend && !isLoading && !isUploading ? 'primary.main' : 'text.secondary',
