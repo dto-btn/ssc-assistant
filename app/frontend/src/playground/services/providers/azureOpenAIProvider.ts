@@ -206,19 +206,14 @@ export class AzureOpenAIProvider implements CompletionProvider {
 
   /**
    * Build an OpenAI-compatible client for standalone LiteLLM proxy.
-   * Uses MSAL token in Authorization and optional LiteLLM virtual key header.
+   * The browser authenticates with the Entra token only; no LiteLLM key is shipped to the client.
    */
   private createClient(authorizationToken: string): OpenAI {
-    const proxyKey = String(import.meta.env.VITE_PLAYGROUND_LITELLM_PROXY_KEY || "").trim();
     const defaultHeaders: Record<string, string> = {
       "Authorization": "Bearer " + authorizationToken,
       "x-caller-system": "ssc-assistant",
       "x-caller-component": "ssc-assistant-playground",
     };
-
-    if (proxyKey.length > 0) {
-      defaultHeaders["x-litellm-api-key"] = proxyKey;
-    }
 
     return new OpenAI({
       baseURL: this.getBaseURL(),
