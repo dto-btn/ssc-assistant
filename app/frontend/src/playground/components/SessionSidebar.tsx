@@ -9,8 +9,6 @@
 import React, { useCallback, useState } from "react";
 import { alpha } from "@mui/material";
 import { List as ListWindow, RowComponentProps } from "react-window";
-import type { ListImperativeAPI } from "react-window";
-import useMeasure from "react-use-measure";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   setCurrentSession,
@@ -182,10 +180,11 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
   const sidebarTitleId = "playground-session-sidebar-title";
   const sidebarNavLabel = t("sidebar.navigation");
 
-  const [containerRef, { height: containerHeight }] = useMeasure();
-  const listRef = React.useRef<ListImperativeAPI | null>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
   const sessionOrderKey = sessionsNewestFirst.map((session) => session.id).join("|");
+  const rowHeight = 52;
+  // The sidebar owns the scrollport, so the list renders every row at full height.
+  const sessionListHeight = sessionsNewestFirst.length * rowHeight;
 
   const activateSession = useCallback((sessionId: string) => {
     dispatch(setCurrentSession(sessionId));
@@ -213,8 +212,16 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
       return;
     }
 
-    listRef.current?.scrollToRow({ align: "smart", index: activeIndex });
-  }, [activeIndex, listRef]);
+    const activeSession = sessionsNewestFirst[activeIndex];
+    if (!activeSession) {
+      return;
+    }
+
+    // jsdom does not implement scrollIntoView.
+    document
+      .getElementById(`session-button-${activeSession.id}`)
+      ?.scrollIntoView?.({ block: "nearest" });
+  }, [activeIndex, sessionsNewestFirst]);
 
   const handleSessionListKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     if (!sessionsNewestFirst.length) {
@@ -422,6 +429,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         flexDirection: "column",
         height: "100dvh",
         overflowX: "hidden",
+        overflowY: "auto",
         borderRight: "1px solid",
         borderColor: "divider",
         bgcolor: "background.default",
@@ -452,7 +460,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         )}
       </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
         <Box key="newChat">
           <ListItemButton 
             id="new-chat-button" 
@@ -490,28 +498,25 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           </Divider>
         </ListItem>
 
-        <Box ref={containerRef} sx={{ flexGrow: 1, minHeight: 0 }}>
-          {containerHeight > 0 && (
-            <ListWindow
-              role="list"
-              aria-labelledby={sidebarTitleId}
-              listRef={listRef}
-              onFocus={() => {
-                if (activeIndex < 0 && sessionsNewestFirst.length > 0) {
-                  setActiveIndex(0);
-                }
-              }}
-              onKeyDown={handleSessionListKeyDown}
-              overscanCount={5}
-              rowHeight={52}
-              rowCount={sessionsNewestFirst.length}
-              rowComponent={chatItemRender}
-              rowProps={{}}
-              tabIndex={0}
-              tagName="ul"
-              style={{ width: LEFT_MENU_EXPANDED_WIDTH, height: containerHeight, listStyle: "none", padding: 0, margin: 0 }}
-            />
-          )}
+        <Box>
+          <ListWindow
+            role="list"
+            aria-labelledby={sidebarTitleId}
+            onFocus={() => {
+              if (activeIndex < 0 && sessionsNewestFirst.length > 0) {
+                setActiveIndex(0);
+              }
+            }}
+            onKeyDown={handleSessionListKeyDown}
+            overscanCount={5}
+            rowHeight={rowHeight}
+            rowCount={sessionsNewestFirst.length}
+            rowComponent={chatItemRender}
+            rowProps={{}}
+            tabIndex={0}
+            tagName="ul"
+            style={{ width: "100%", height: sessionListHeight, listStyle: "none", padding: 0, margin: 0 }}
+          />
         </Box>
 
         <Menu
@@ -543,34 +548,75 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         onRename={handleRenameSession}
       />
 
-      <Box
-        sx={{
-          marginTop: "auto",
-          display: "flex",
-          justifyContent: "flex-start",
-          px: 1,
-          pb: 1,
-        }}
-      >
-        <ProfileMenu
-          size="30px"
-          fontSize="12px"
-          logout={() => console.log("logout")}
-        />
-      </Box>
+      {!isMobile && (
+        <Box
+          sx={{
+            marginTop: "auto",
+            flexShrink: 0,
+            display: "flex",
+            justifyContent: "flex-start",
+            alignItems: "center",
+            width: "100%",
+            borderTop: "1px solid",
+            borderColor: "divider",
+            bgcolor: "background.default",
+            px: 1,
+            pt: 1,
+            pb: 1,
+          }}
+        >
+          <ProfileMenu
+            size="30px"
+            fontSize="12px"
+            logout={() => console.log("logout")}
+          />
+        </Box>
+      )}
     </Box>
   );
 
   if (isMobile) {
     return (
-      <Drawer
-        anchor="left"
-        variant="temporary"
-        open={isMobileSidebarOpen}
-        onClose={() => dispatch(closeMobileSidebar())}
-      >
-        {sidebarContent}
-      </Drawer>
+      <>
+        <Drawer
+          anchor="left"
+          variant="temporary"
+          open={isMobileSidebarOpen}
+          onClose={() => dispatch(closeMobileSidebar())}
+        >
+          {sidebarContent}
+        </Drawer>
+        {isMobileSidebarOpen && (
+          <Box
+            sx={{
+              position: "fixed",
+              left: LEFT_MENU_EXPANDED_WIDTH + 8,
+              bottom: 12,
+              zIndex: 1300,
+              "& #profile-menu-button": {
+                width: "auto",
+                minWidth: 0,
+                px: 0.75,
+                py: 0.75,
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: "999px",
+                bgcolor: "background.paper",
+                boxShadow: 2,
+              },
+              "& #profile-menu-button .MuiTypography-root": {
+                display: "none",
+              },
+            }}
+          >
+            <ProfileMenu
+              size="30px"
+              fontSize="12px"
+              logout={() => console.log("logout")}
+            />
+          </Box>
+        )}
+      </>
     );
   }
 

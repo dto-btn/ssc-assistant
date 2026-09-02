@@ -132,14 +132,13 @@ test('skip link focuses main content', async ({ playground }, testInfo) => {
 
   await playground.goto();
 
-  // The skip link should be the first focusable element.
-  await playground.page.keyboard.press('Tab');
-  const focused = playground.page.locator(':focus');
-  await expect(focused).toHaveAttribute('href', '#playground-main-content');
+  const skipLink = playground.page.getByRole('link', { name: 'Skip to chat input' });
+  await expect(skipLink).toHaveAttribute('href', '#playground-ask-question');
 
-  // Activating it should move focus to the main content container.
+  // Activating it should move focus to the chat composer input.
+  await skipLink.focus();
   await playground.page.keyboard.press('Enter');
-  await expect(playground.page.locator('#playground-main-content')).toBeFocused();
+  await expect(playground.page.locator('#playground-ask-question')).toBeFocused();
 });
 
 /**

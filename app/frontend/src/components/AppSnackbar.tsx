@@ -19,6 +19,16 @@ export const AppSnackbars = () => {
                         open={datum.isOpen}
                         message={datum.message}
                         TransitionComponent={SlideTransition}
+                        anchorOrigin={{
+                            vertical: "bottom",
+                            horizontal: "center",
+                        }}
+                        sx={{
+                            bottom: {
+                                xs: "calc(var(--chat-input-height) + env(safe-area-inset-bottom))",
+                                sm: "24px",
+                            },
+                        }}
                         style={{
                             maxWidth: "50%",
                         }}

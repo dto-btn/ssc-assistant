@@ -9,7 +9,7 @@
  * - Accessible controls and keyboard behavior (Enter to send, Shift+Enter newline)
  */
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Box,
   Paper,
@@ -79,7 +79,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
   const dispatch = useAppDispatch();
   const quotedText = useAppSelector((state: RootState) => state.quoted.quotedText);
   const isLoading = useAppSelector((state: RootState) => state.chat.isLoadingBySessionId[sessionId] ?? false);
-
+  const footerRef = useRef<HTMLDivElement>(null);
   // File attachment state managed by dedicated hook
   const {
     attachments,
@@ -116,6 +116,36 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
     }
   }, [quotedText]);
 
+  useLayoutEffect(() => {
+    const footer = footerRef.current;
+
+    if (!footer) return;
+
+    const updateHeight = () => {
+      const height = footer.getBoundingClientRect().height;
+
+      document.documentElement.style.setProperty(
+        "--chat-input-height",
+        `${height + 16}px`
+      );
+    };
+
+    updateHeight();
+
+    const observer = new ResizeObserver(() => {
+      updateHeight();
+    });
+
+    observer.observe(footer);
+
+    return () => {
+      observer.disconnect();
+
+      document.documentElement.style.removeProperty(
+        "--chat-input-height"
+      );
+    };
+  }, []);
 
   /**
    * Submits the current message to the chat store including any quoted text and
@@ -273,19 +303,23 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
 
   return (
     <Box
+      ref={footerRef}
       component="footer"
-      maxWidth="md"
       sx={{
         position: "sticky",
         bottom: 0,
         boxShadow: `0px -15px 20px ${theme.palette.background.default}`,
-        pt: 1,
+        pt: 0.5,
         pb: 'env(safe-area-inset-bottom)',
         width: "100%",
-        mx: "auto",
+        maxWidth: "100%",
+        px: { xs: 0.5, sm: 1 },
+        boxSizing: "border-box",
+        mx: 0,
         display: "flex",
         flexDirection: "column",
         alignItems: "stretch",
+        gap: 0.2,
       }}
     >
       {/* Quoted text banner */}
@@ -342,7 +376,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
                   component="img"
                   src={p.url}
                   alt={p.file.name}
-                  sx={{ maxHeight: 110, borderRadius: 2, display: 'block' }}
+                  sx={{ maxHeight: "7rem", borderRadius: 2, display: 'block' }}
                 />
               ) : (
                 <Chip icon={<AttachFileIcon />} label={p.file.name} variant="outlined" />
@@ -364,17 +398,17 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
         component="form"
         onSubmit={(e) => { e.preventDefault(); handleSend(); }}
         sx={{
-          p: "2px 5px",
+          p: "0.25rem 0.75rem",
           minWidth: 0,
           display: "flex",
           alignItems: "center",
-          borderRadius: attachments.length > 0 || quotedText ? "0 0 30px 30px" : "40px",
+          borderRadius: attachments.length > 0 || quotedText ? "0 0 28px 28px" : "32px",
           borderColor: dragActive ? theme.palette.secondary.main : theme.palette.primary.main,
           borderWidth: attachments.length > 0 || quotedText ? "0 1px 1px 1px" : "1px",
           borderStyle: "solid",
           background: dragActive ? theme.palette.action.hover : undefined,
           transition: "background 0.2s, border-color 0.2s",
-          minHeight: 60,
+          minHeight: 40,
         }}
         aria-describedby={error ? 'chatinput-error' : undefined}
       >
@@ -403,12 +437,17 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
 
         <InputBase
           inputRef={inputRef}
-          sx={{ ml: 1, flex: 1, minWidth: 0 }}
+          sx={{ ml: 1, flex: 1, minWidth: 0, lineHeight: 1.2, py: 0.3 }}
           // The visually-hidden <label htmlFor="playground-ask-question"> above
-          // provides the accessible name, so no aria-label is needed here.
-          inputProps={{ tabIndex: 0 }}
+          // provides a label association. Add a persistent aria-label for
+          // assistive tech and to satisfy the accessible name requirements.
+          inputProps={{
+            tabIndex: 0,
+            'aria-label': t('type.a.message', { defaultValue: 'Your message' }),
+          }}
           value={input}
           multiline
+          minRows={1}
           maxRows={15}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             const v = e.target.value;
@@ -548,9 +587,22 @@ const ChatInput: React.FC<ChatInputProps> = ({ sessionId }) => {
       )}
 
       {/* Footer helper text */}
-      <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', gap: 1, alignItems: 'center', py: 1 }}>
-        <InfoIcon fontSize="inherit" color="info" />
-        <Typography variant="body2" color="text.secondary">
+      <Box
+        sx={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 0.4,
+          alignItems: 'center',
+          py: 0.25,
+          px: 0.5,
+          minHeight: 22,
+          maxHeight: 22,
+          overflow: 'hidden',
+        }}
+      >
+        <InfoIcon fontSize="small" color="info" sx={{ transform: 'scale(0.85)' }} />
+        <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.1, fontSize: '0.72rem' }}>
           {t('ai.disclaimer', { defaultValue: 'AI may make mistakes' })}
         </Typography>
       </Box>

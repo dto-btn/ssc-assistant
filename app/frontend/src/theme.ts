@@ -42,5 +42,5 @@ export const theme = createTheme({
       fontSize: "1rem",
       fontWeight: 700,
     },
-  }
+  },
   });

@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from "react-redux";
 import { alpha } from "@mui/material";
 import {
-  Box,
   Button,
   Collapse,
   ListItemIcon,
@@ -81,6 +80,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
         sx={{
           cursor: "pointer",
           width: 1,
+          minHeight: 44,
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-start",
@@ -90,6 +90,8 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
           border: "1px solid transparent",
           color: "text.primary",
           textTransform: "none",
+          overflow: "hidden",
+          gap: 1,
           transition: "background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease",
           '&:hover': {
             backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.08),
@@ -108,13 +110,6 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({
         aria-expanded={isOpen ? "true" : "false"}
       >
         <UserProfilePicture size={size} fontSize={fontSize} />
-        <Box //floats the avatar and name to left
-            sx={{
-              marginLeft: "auto",
-              display: "flex",
-              gap: "1rem",
-            }}
-          ></Box>
       </Button>
       <Menu
         id="profile-menu"
