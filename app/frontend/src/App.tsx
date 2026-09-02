@@ -42,18 +42,16 @@ export const App = ({ instance }: AppProps) => {
 
       <MSClarity />
       <CssBaseline />
-      <div id="app-content">
-        <AppErrorBoundary>
-          <MsalProvider instance={instance}>
-            <UnauthenticatedTemplate>
-              <ConnectingScreen />
-            </UnauthenticatedTemplate>
-            <AuthenticatedTemplate>
-              <AppRoutes />
-            </AuthenticatedTemplate>
-          </MsalProvider>
-        </AppErrorBoundary>
-      </div>
+      <AppErrorBoundary>
+        <MsalProvider instance={instance}>
+          <UnauthenticatedTemplate>
+            <ConnectingScreen />
+          </UnauthenticatedTemplate>
+          <AuthenticatedTemplate>
+            <AppRoutes />
+          </AuthenticatedTemplate>
+        </MsalProvider>
+      </AppErrorBoundary>
       <AppSnackbars />
     </>
   );
