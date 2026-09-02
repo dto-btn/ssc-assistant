@@ -14,6 +14,7 @@ import { useAppStore } from "../stores/AppStore";
 import { allowedToolsSet } from "../allowedTools";
 import { DisclaimerKey, DisclaimerState } from "../../types";
 import { PersistenceUtils } from '../util/persistence';
+import { useInertRoot } from "../hooks/useInertRoot";
 
 interface DisclaimerConfig {
   key: DisclaimerKey;
@@ -67,21 +68,7 @@ export const Disclaimer = () => {
 
   // When the disclaimer dialog is visible, mark the application root as inert
   // so that assistive technology and focus are not blocked by aria-hidden on ancestors.
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const root = document.getElementById('root');
-    const modalRoot = document.getElementById('modal-root');
-    if (!root) return;
-    if (shouldShow) {
-      root.inert = true;
-      modalRoot?.removeAttribute('aria-hidden');
-    } else {
-      root.inert = false;
-    }
-    return () => {
-      root.inert = false;
-    };
-  }, [shouldShow]);
+  useInertRoot(shouldShow);
 
   const handleAccept = (key: DisclaimerKey) => {
     PersistenceUtils.setDisclaimerAccepted(key);

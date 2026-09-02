@@ -18,6 +18,11 @@ interface AppProps {
 
 export const App = ({ instance }: AppProps) => {
   const { t } = useTranslation();
+  // App renders above the router (see AppRoutes), so useLocation() isn't
+  // available here. Read the pathname directly for the no-JS href fallback;
+  // the onClick handler below still targets the live DOM for JS navigation.
+  const isPlayground = window.location.pathname.startsWith("/playground");
+  const skipLinkTargetId = isPlayground ? "playground-ask-question" : "ask-question";
 
   return (
     <>
@@ -25,17 +30,16 @@ export const App = ({ instance }: AppProps) => {
           On the playground page, #playground-ask-question is used; elsewhere #ask-question. */}
       <a
         className="skip-link"
-        href="#ask-question"
+        href={`#${skipLinkTargetId}`}
         onClick={(e) => {
-          const target =
-            document.getElementById("playground-ask-question") ??
-            document.getElementById("ask-question");
+          const target = document.getElementById(skipLinkTargetId);
           if (target) {
             e.preventDefault();
             target.focus();
           }
         }}
       >{t("skip.to.chat.input")}</a>
+
       <MSClarity />
       <CssBaseline />
       <div id="app-content">

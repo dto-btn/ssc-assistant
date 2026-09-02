@@ -43,11 +43,4 @@ export const theme = createTheme({
       fontWeight: 700,
     },
   },
-  components: {
-    MuiModal: {
-      defaultProps: {
-        disableScrollLock: true,
-      },
-    },
-  },
   });

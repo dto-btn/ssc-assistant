@@ -19,6 +19,7 @@ import {
   type PlaygroundDisclaimerKey,
   type PlaygroundDisclaimerState,
 } from "../utils/disclaimerState";
+import { useInertRoot } from "../../hooks/useInertRoot";
 
 const CONTENT_KEYS: Record<
   PlaygroundDisclaimerKey,
@@ -50,21 +51,7 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
   );
 
   // Toggle `inert` on the application root while the playground disclaimer is visible
-  React.useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const root = document.getElementById('root');
-    const modalRoot = document.getElementById('modal-root');
-    if (!root) return;
-    if (currentDisclaimer) {
-      root.inert = true;
-      modalRoot?.removeAttribute('aria-hidden');
-    } else {
-      root.inert = false;
-    }
-    return () => {
-      root.inert = false;
-    };
-  }, [currentDisclaimer]);
+  useInertRoot(!!currentDisclaimer);
 
   const handleAccept = () => {
     if (!currentDisclaimer) {
