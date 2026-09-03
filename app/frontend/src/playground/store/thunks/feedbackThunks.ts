@@ -9,7 +9,7 @@
 import { addToast } from "../slices/toastSlice";
 import { AppThunk } from "..";
 import { sendPlaygroundFeedback, sendChatFeedback } from "../../api/feedback";
-import type { ChatFeedbackPayload } from "../../components/ChatFeedbackForm";
+import type { ChatFeedbackFormSubmission } from "../../types"
 import { setMessageFeedback } from "../slices/chatSlice";
 import i18n from "../../../i18n";
 
@@ -67,21 +67,51 @@ export const clearResponseFeedback =
     dispatch(setMessageFeedback({ messageId, feedback: undefined }));
   };
 
-
-
+  /**
+   * Submit detailed chat feedback for a specific message.
+   *
+   * @param feedbackPayload - The feedback payload containing message ID, session ID, and feedback details.
+   */
 export const submitChatFeedback =
-  (payload: ChatFeedbackPayload): AppThunk =>
+  (feedbackPayload: ChatFeedbackFormSubmission): AppThunk =>
   async (dispatch, getState) => {
-    const accessToken = getState().auth.accessToken ?? undefined;
-    try {
-      if (payload) {
-        await sendChatFeedback({
-          accessToken,
-          feedback: payload,
-        });
-        dispatch(addToast({ message: i18n.t("feedback.success", { ns: "playground" }), isError: false }));
-      }
-    } catch (error) {
-      dispatch(addToast({ message: i18n.t("feedback.error", { ns: "playground" }), isError: true }));
+    const accessToken = getState().auth.accessToken
+    if (!accessToken) {
+      console.error("No access token available for chat feedback submission")
+      dispatch(
+        addToast({
+          message: i18n.t("feedback.error", { ns: "playground" }),
+          isError: true,
+        }),
+      )
+      return
     }
-  };
+
+    try {
+      const payload =
+        "data:application/json;base64," +
+        btoa(unescape(encodeURIComponent(JSON.stringify(feedbackPayload))))
+
+      await sendChatFeedback({
+        accessToken,
+        feedback: payload,
+        sessionId: feedbackPayload.sessionId,
+        messageId: feedbackPayload.messageId,
+      })
+
+      dispatch(
+        addToast({
+          message: i18n.t("feedback.success", { ns: "playground" }),
+          isError: false,
+        }),
+      )
+    } catch (error) {
+      console.error("Chat feedback submission failed", error)
+      dispatch(
+        addToast({
+          message: i18n.t("feedback.error", { ns: "playground" }),
+          isError: true,
+        }),
+      )
+    }
+  }

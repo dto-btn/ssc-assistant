@@ -1,11 +1,12 @@
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { ThemeProvider, createTheme } from "@mui/material";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import ChatFeedbackForm from "./ChatFeedbackForm";
 import { submitChatFeedback } from "../store/thunks/feedbackThunks";
+import { uploadFile } from "../api/storage"
 
 vi.mock("../store/thunks/feedbackThunks", () => ({
   submitChatFeedback: vi.fn((payload) => ({
@@ -13,6 +14,10 @@ vi.mock("../store/thunks/feedbackThunks", () => ({
     payload,
   })),
 }));
+
+vi.mock("../api/storage", () => ({
+  uploadFile: vi.fn(),
+}))
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -35,8 +40,8 @@ const onClose = vi.fn();
 
 function renderForm() {
   const store = configureStore({
-    reducer: () => ({ auth: { accessToken: undefined } }),
-  });
+    reducer: () => ({ auth: { accessToken: "test-access-token" } }),
+  })
 
   return render(
     <Provider store={store}>
@@ -95,31 +100,33 @@ describe("ChatFeedbackForm", () => {
     expect(screen.getByRole("textbox")).toHaveFocus();
   });
 
-  it("submits issue feedback with trimmed required fields", () => {
-    renderForm();
+  it("submits issue feedback with trimmed required fields", async () => {
+    renderForm()
 
     fireEvent.click(
       screen.getByRole("button", { name: "chat.feedback.report.issue" }),
-    );
-    const [descriptionInput, stepsInput] = screen.getAllByRole("textbox");
+    )
+    const [descriptionInput, stepsInput] = screen.getAllByRole("textbox")
     fireEvent.change(descriptionInput, {
       target: { value: "  The answer cited an outdated policy.  " },
-    });
+    })
     fireEvent.change(stepsInput, {
       target: { value: "  Ask about the current policy.  " },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "submit" }));
+    })
+    fireEvent.click(screen.getByRole("button", { name: "submit" }))
 
-    expect(submitChatFeedback).toHaveBeenCalledWith({
-      messageId: "message-1",
-      sessionId: "session-1",
-      type: "issue",
-      description: "The answer cited an outdated policy.",
-      stepsToReproduce: "Ask about the current policy.",
-      attachments: [],
-    });
-    expect(onClose).toHaveBeenCalledOnce();
-  });
+    await waitFor(() => {
+      expect(submitChatFeedback).toHaveBeenCalledWith({
+        messageId: "message-1",
+        sessionId: "session-1",
+        type: "issue",
+        description: "The answer cited an outdated policy.",
+        stepsToReproduce: "Ask about the current policy.",
+        attachments: [],
+      })
+      expect(onClose).toHaveBeenCalledOnce()
+    })
+  })
 
   it("shows required validation and keeps the dialog open for an incomplete issue", () => {
     renderForm();
@@ -140,51 +147,64 @@ describe("ChatFeedbackForm", () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it("submits suggestion feedback with accepted image attachments only", () => {
-    renderForm();
+  it("uploads accepted image attachments before submitting suggestion feedback", async () => {
+    const uploadedAttachment = {
+      blobName: "user-id/feedback/session-1/message-1/policy.png",
+      url: "https://storage.example/feedback/policy.png",
+      originalName: "policy.png",
+      size: 5,
+      contentType: "image/png",
+      sessionId: "session-1",
+      category: "feedback",
+    }
+    vi.mocked(uploadFile).mockResolvedValue(uploadedAttachment)
+
+    renderForm()
 
     fireEvent.click(
       screen.getByRole("button", { name: "chat.feedback.suggestion" }),
-    );
+    )
     fireEvent.change(screen.getByRole("textbox"), {
       target: { value: "Add links to related policy sections." },
-    });
+    })
 
     const upload = screen
       .getByRole("button", { name: "chat.feedback.attachments.choose" })
-      .querySelector<HTMLInputElement>('input[type="file"]');
-    expect(upload).not.toBeNull();
+      .querySelector<HTMLInputElement>('input[type="file"]')
+    expect(upload).not.toBeNull()
     const acceptedImage = new File(["image"], "policy.png", {
       type: "image/png",
-    });
+    })
     const rejectedFile = new File(["document"], "policy.pdf", {
       type: "application/pdf",
-    });
+    })
     fireEvent.change(upload!, {
       target: { files: [acceptedImage, rejectedFile] },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "submit" }));
+    })
+    fireEvent.click(screen.getByRole("button", { name: "submit" }))
 
-    expect(submitChatFeedback).toHaveBeenCalledWith({
-      messageId: "message-1",
-      sessionId: "session-1",
-      type: "suggestion",
-      suggestion: "Add links to related policy sections.",
-      attachments: [
-        {
-          name: "policy.png",
-          size: acceptedImage.size,
-          type: "image/png",
-          url: undefined,
-        },
-      ],
-    });
-    expect(screen.getAllByRole("alert")).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          textContent: "chat.feedback.attachments.invalid.type",
-        }),
-      ]),
-    );
-  });
+    await waitFor(() => {
+      expect(uploadFile).toHaveBeenCalledWith({
+        file: acceptedImage,
+        accessToken: "test-access-token",
+        sessionId: "session-1",
+        category: "feedback",
+        metadata: { messageId: "message-1" },
+      })
+    })
+
+    await waitFor(() => {
+      expect(submitChatFeedback).toHaveBeenCalledWith({
+        messageId: "message-1",
+        sessionId: "session-1",
+        type: "suggestion",
+        description: "Add links to related policy sections.",
+        attachments: [uploadedAttachment],
+      })
+    })
+
+    expect(
+      screen.getAllByText("chat.feedback.attachments.invalid.type"),
+    ).not.toHaveLength(0)
+  })
 });
