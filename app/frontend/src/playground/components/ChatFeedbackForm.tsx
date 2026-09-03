@@ -33,10 +33,14 @@ import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../store";
 import { useAppSelector } from "../store/hooks"
 import { uploadFile } from "../api/storage"
-import type { FileAttachment } from "../types"
+import type {
+  FileAttachment,
+  ChatFeedbackFormSubmission,
+  FeedbackType,
+} from "../types"
 import { addToast } from "../store/slices/toastSlice"
 
-type FeedbackType = "issue" | "suggestion";
+
 type Step = "select" | "detail";
 
 const MAX_ATTACHMENTS = 3;
@@ -48,18 +52,6 @@ const ALLOWED_ATTACHMENT_TYPES = new Set([
   "image/gif", // possibly later to allow PDFs or other file types, but for now only images are allowed
 ])
 
-interface BaseFeedbackForm {
-  messageId: string
-  sessionId: string
-  //postive: boolean;
-  type: FeedbackType
-  description?: string
-}
-
-export type ChatFeedbackFormSubmission = BaseFeedbackForm & {
-  stepsToReproduce?: string
-  attachments?: FileAttachment[]
-}
 
 interface ChatFeedbackFormProps {
   open: boolean;
@@ -78,7 +70,8 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
   const theme = useTheme()
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"))
   const dispatch = useDispatch<AppDispatch>()
-  const accessToken = useAppSelector((state) => state.auth.accessToken!)
+  const accessToken = useAppSelector((state) => state.auth.accessToken)
+
 
   // State variables for form steps, feedback type, description, issue steps, attachments, and validation/submission states
   const [step, setStep] = useState<Step>("select")
@@ -236,6 +229,16 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
       suggestionRef.current?.focus()
       return
     }
+    if (!accessToken) {
+      console.error("No access token available for chat feedback form")
+      dispatch(
+        addToast({
+          message: t("feedback.error", { ns: "playground" }),
+          isError: true,
+        }),
+      )
+      return
+    }
     // proceed with submission if all required fields are valid
     setIsSubmitting(true)
     let uploadedAttachments: FileAttachment[] = []
@@ -253,6 +256,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
           ),
         )
       } catch (error) {
+        console.error("Error uploading attachments:", error) // implement logging later
         dispatch(
           addToast({
             message: t("chat.feedback.attachments.upload.error"),
@@ -270,7 +274,6 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
             messageId,
             sessionId,
             type: "issue",
-            // positive: false,
             description: description.trim(),
             stepsToReproduce: issueSteps.trim(),
             attachments: uploadedAttachments,
@@ -279,7 +282,6 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
             messageId,
             sessionId,
             type: "suggestion",
-            // positive: true,
             description: description.trim(),
             attachments: uploadedAttachments,
           }
@@ -297,6 +299,8 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
     messageId,
     sessionId,
     dispatch,
+    t,
+    uploadFile,
   ])
 
   /** sx applied to each category card — full WCAG 2.5.5 touch target and keyboard focus ring */

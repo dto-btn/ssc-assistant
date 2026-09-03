@@ -9,7 +9,7 @@
 import { addToast } from "../slices/toastSlice";
 import { AppThunk } from "..";
 import { sendPlaygroundFeedback, sendChatFeedback } from "../../api/feedback";
-import type { ChatFeedbackFormSubmission } from "../../components/ChatFeedbackForm"
+import type { ChatFeedbackFormSubmission } from "../../types"
 import { setMessageFeedback } from "../slices/chatSlice";
 import i18n from "../../../i18n";
 
@@ -75,7 +75,17 @@ export const clearResponseFeedback =
 export const submitChatFeedback =
   (feedbackPayload: ChatFeedbackFormSubmission): AppThunk =>
   async (dispatch, getState) => {
-    const accessToken = getState().auth.accessToken!
+    const accessToken = getState().auth.accessToken
+    if (!accessToken) {
+      console.error("No access token available for chat feedback submission")
+      dispatch(
+        addToast({
+          message: i18n.t("feedback.error", { ns: "playground" }),
+          isError: true,
+        }),
+      )
+      return
+    }
 
     try {
       const payload =
@@ -96,6 +106,7 @@ export const submitChatFeedback =
         }),
       )
     } catch (error) {
+      console.error("Chat feedback submission failed", error)
       dispatch(
         addToast({
           message: i18n.t("feedback.error", { ns: "playground" }),
