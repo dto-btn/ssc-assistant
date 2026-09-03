@@ -1,4 +1,5 @@
 import base64
+from email import message
 import uuid
 import concurrent.futures
 import re
@@ -10,13 +11,15 @@ import logging
 from urllib.parse import urlparse, quote, unquote
 from werkzeug.utils import secure_filename
 import mimetypes
+from datetime import timezone
 
 from utils.auth import auth, user_ad
 from utils.azure_clients import get_blob_service_client
 from utils.db import leave_feedback
 from utils.file_manager import FileManager
 from apiflask import APIBlueprint
-from azure.core.exceptions import AzureError, HttpResponseError, ResourceExistsError, ResourceNotFoundError
+from azure.core.exceptions import AzureError, HttpResponseError, ResourceExistsError, ResourceNotFoundError, ResourceModifiedError
+from azure.core import MatchConditions
 from azure.storage.blob import ContentSettings, BlobClient, ContainerClient
 from utils.models import (
     PlaygroundSessionFilesQuery,
@@ -80,6 +83,13 @@ SUPPORTED_EXTENSIONS = {
     ".svg",
 }
 
+FEEDBACK_ATTACHMENT_SUPPORTED_EXTENSIONS = {
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".gif",
+}
+
 TEXT_MIME_PREFIX = "text/"
 IMAGE_MIME_PREFIX = "image/"
 DELETED_FLAG_VALUE = "true"
@@ -109,6 +119,11 @@ def _normalize_extension(filename: str) -> Optional[str]:
 # Keep attachment policy identical to the main app's extractor for `files` uploads.
 def _is_supported_file(mime_type: Optional[str], filename: str, category: str) -> bool:
     """Validate whether a file is eligible for upload given its MIME or extension."""
+    if category == "feedback": ## Check if the file belongs to the feedback category
+        normalized_extension = _normalize_extension(filename)
+        if normalized_extension and normalized_extension in FEEDBACK_ATTACHMENT_SUPPORTED_EXTENSIONS:
+            return True
+        return False
     if category != "files":
         return True
     normalized_mime = (mime_type or "").lower()
@@ -365,33 +380,70 @@ def _merge_feedback_entry(container_client, oid: str, session_id: str, entry: Di
     sanitized_session = secure_filename(str(session_id)) or str(session_id)
     blob_name = f"{oid}/{sanitized_session}.feedback.json"
     blob_client = container_client.get_blob_client(blob_name)
+    # Attempt to merge the feedback entry up to 3 times in case of concurrent modifications.
+    for attempt in range(3):
+        etag = None
+        doc: Dict[str, Any]
 
-    try:
-        doc = json.loads(blob_client.download_blob(max_concurrency=1).readall())
-    except ResourceNotFoundError:
-        doc = {"sessionId": session_id, "feedback_responses": []}
+        try:
+            props = blob_client.get_blob_properties()
+            etag = props.etag
+            raw = blob_client.download_blob(max_concurrency=1).readall()
 
-    timestamp = datetime.utcnow().isoformat() + "Z"
-    entry["submittedAt"] = timestamp
-    doc["feedback_responses"] = [
-        e for e in doc.get("feedback_responses", [])
-        if not (e.get("messageId") == entry.get("messageId") and e.get("type") == entry.get("type"))
-    ] + [entry]
-    doc["lastUpdated"] = timestamp
+            try:
+                parsed = json.loads(raw)
+                if not isinstance(parsed, dict):
+                    raise ValueError("Feedback blob root is not an object.")
+                doc = parsed
+            except (json.JSONDecodeError, TypeError, ValueError):
+                logger.warning("Failed to parse feedback blob, initializing new document.", extra={"blob_name": blob_name})
+                doc = {"sessionId": session_id, "feedback_responses": []}
+        except ResourceNotFoundError:
+            doc = {"sessionId": session_id, "feedback_responses": []}
+        except AzureError:
+            logger.exception("Failed to fetch blob properties", extra={"blob_name": blob_name})
+            raise
 
-    blob_client.upload_blob(
-        json.dumps(doc).encode("utf-8"),
-        overwrite=True,
-        metadata=_normalize_blob_metadata({
+        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")  
+        entry["submittedAt"] = timestamp
+
+        existing = doc.get("feedback_responses", [])
+        doc["feedback_responses"] = [
+            e for e in existing
+            if not (e.get("messageId") == entry.get("messageId") and e.get("type") == entry.get("type"))
+        ] + [entry]
+        doc["lastUpdated"] = timestamp
+
+        payload = json.dumps(doc).encode("utf-8")
+        metadata = _normalize_blob_metadata({
             "user_id": oid,
             "sessionid": str(session_id),
             "category": "feedback",
             "type": "chat-feedback",
             "lastupdated": timestamp,
             "deleted": "false",
-        }),
-        content_settings=ContentSettings(content_type="application/json"),
-    )
+        })
+
+        try:
+            upload_kwargs = {
+                "overwrite": True,
+                "metadata":metadata,
+                "content_settings": ContentSettings(content_type="application/json"),
+            }
+            if etag:
+                upload_kwargs["etag"] = etag
+                upload_kwargs["match_condition"] = MatchConditions.IfNotModified
+            
+            blob_client.upload_blob(
+                payload,
+                **upload_kwargs,
+            )
+            return
+        except ResourceModifiedError:
+            if attempt == 2:
+                raise
+            logger.warning("Resource modified, retrying upload (attempt %d)", attempt + 1)
+            continue
 
 # GET /api/playground/files-for-session: Returns files for a given sessionId by searching blob metadata
 @api_playground.get("/files-for-session")
@@ -559,7 +611,10 @@ def upload_file(upload_request: PlaygroundUploadRequest):
         base_filename = f"{sanitized_session}.chat.json"
         blob_name = f"{oid}/{base_filename}"
     elif safe_category == "feedback":
-        blob_name = f"{oid}/{safe_category}/{session_segment}{extra_metadata.get("messageId")}_{normalized_name}"
+        message_id = extra_metadata.get("messageId")
+        if not message_id:
+            return {"message": "messageId is required for feedback attachments"}, 400
+        blob_name = f"{oid}/{safe_category}/{session_segment}{message_id}_{normalized_name}"
     else:
         blob_name = f"{oid}/{safe_category}/{session_segment}{uuid.uuid4().hex}_{normalized_name}"
 
