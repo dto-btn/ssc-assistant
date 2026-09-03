@@ -6,6 +6,7 @@
  */
 
 import OpenAI from "openai";
+import { InteractionRequiredAuthError } from "@azure/msal-browser";
 import { CompletionProvider, CompletionRequest, StreamingCallbacks, CompletionResult, CompletionMessage } from "../completionService";
 import { ResponseInput, Tool } from "openai/resources/responses/responses.mjs";
 import {
@@ -206,13 +207,11 @@ export class AzureOpenAIProvider implements CompletionProvider {
 
   /**
    * Build an OpenAI-compatible client for standalone LiteLLM proxy.
-   * Uses dedicated proxy key when configured, otherwise falls back to user token.
+   * The browser authenticates with the Entra token only; no LiteLLM key is shipped to the client.
    */
-  private createClient(userToken: string): OpenAI {
-    const proxyKey = String(import.meta.env.VITE_PLAYGROUND_LITELLM_PROXY_KEY || "").trim();
-    const authToken = proxyKey.length > 0 ? proxyKey : userToken.trim();
-    const defaultHeaders = {
-      "Authorization": "Bearer " + authToken,
+  private createClient(authorizationToken: string): OpenAI {
+    const defaultHeaders: Record<string, string> = {
+      "Authorization": "Bearer " + authorizationToken,
       "x-caller-system": "ssc-assistant",
       "x-caller-component": "ssc-assistant-playground",
     };
@@ -223,6 +222,52 @@ export class AzureOpenAIProvider implements CompletionProvider {
       dangerouslyAllowBrowser: true,
       defaultHeaders,
     });
+  }
+
+  /**
+   * Resolve the bearer token sent to the standalone LiteLLM proxy.
+   *
+   * Production (App Service Easy Auth in front of LiteLLM): acquire an Entra token whose audience is
+   * the LiteLLM app registration (`VITE_PLAYGROUND_LITELLM_SCOPE`). Easy Auth validates it and the
+   * proxy's custom_auth hook trusts the injected principal. We never fall back to the ssc-assistant
+   * API token here: it has the wrong audience and Easy Auth would reject it with a confusing 401.
+   *
+   * Local dev (no Easy Auth): use the optional `VITE_PLAYGROUND_LITELLM_PROXY_KEY` for a master-key
+   * proxy, or the user token when the local proxy is keyless. Never set the proxy key in production.
+   */
+  private async resolveAuthorizationToken(userToken: string): Promise<string> {
+    const litellmScope = String(import.meta.env.VITE_PLAYGROUND_LITELLM_SCOPE || "").trim();
+
+    if (litellmScope) {
+      const { msalInstance } = await import("../../../index");
+      const account = msalInstance.getActiveAccount();
+      if (!account) {
+        throw new Error("No active account to acquire the LiteLLM API token. Sign in and retry.");
+      }
+
+      try {
+        const response = await msalInstance.acquireTokenSilent({ scopes: [litellmScope], account });
+        const scopedToken = String(response.accessToken || "").trim();
+        if (!scopedToken) {
+          throw new Error("Acquired an empty LiteLLM API token.");
+        }
+        return scopedToken;
+      } catch (error) {
+        if (error instanceof InteractionRequiredAuthError) {
+          // First use of the LiteLLM scope may need consent; redirect to acquire it interactively.
+          await msalInstance.acquireTokenRedirect({ scopes: [litellmScope], account });
+        }
+        // acquireTokenRedirect navigates away; this only throws if it resolved without redirecting.
+        throw error;
+      }
+    }
+
+    const devProxyKey = String(import.meta.env.VITE_PLAYGROUND_LITELLM_PROXY_KEY || "").trim();
+    if (devProxyKey) {
+      return devProxyKey;
+    }
+
+    return userToken.trim();
   }
 
   /**
@@ -286,7 +331,8 @@ export class AzureOpenAIProvider implements CompletionProvider {
     try {
       const updatedMessages = this.convertMessagesToInput(messages);
 
-      const client = this.createClient(userToken);
+      const authorizationToken = await this.resolveAuthorizationToken(userToken);
+      const client = this.createClient(authorizationToken);
 
       const stream = await client.responses.stream({
         model: model,

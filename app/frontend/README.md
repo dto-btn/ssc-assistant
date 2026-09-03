@@ -41,6 +41,7 @@ Relevant env settings:
 
 ```bash
 VITE_PLAYGROUND_LITELLM_BASE_URL=http://localhost:4000/v1
+VITE_PLAYGROUND_LITELLM_SCOPE=
 VITE_PLAYGROUND_LITELLM_PROXY_KEY=
 VITE_LITELLM_MODEL=
 VITE_PMCOE_CONTAINER=pmcoe-sept-2025
@@ -49,7 +50,9 @@ VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 
 - `VITE_PLAYGROUND_LITELLM_BASE_URL`: standalone LiteLLM proxy base URL (must include `/v1`).
-- `VITE_PLAYGROUND_LITELLM_PROXY_KEY`: optional bearer token (LiteLLM master key) used for proxy auth.
+- `VITE_PLAYGROUND_LITELLM_SCOPE`: MSAL scope for the LiteLLM API audience. In production the Entra token acquired for this scope is the browser's only credential; App Service Easy Auth validates it at the edge and the proxy's `custom_auth` hook trusts the injected principal. When set, the token is required — the app does not fall back to the ssc-assistant API token (wrong audience).
+- `VITE_PLAYGROUND_LITELLM_PROXY_KEY`: **local dev only** bearer key for a master-key local proxy (no Easy Auth). Used only when `VITE_PLAYGROUND_LITELLM_SCOPE` is empty. Leave blank in production/CI.
+- The browser never holds a LiteLLM key in production; `VITE_PLAYGROUND_LITELLM_PROXY_KEY` is a local-dev convenience only. Never put `LITELLM_MASTER_KEY` or a production LiteLLM key in a browser-delivered `VITE_*` variable.
 - `VITE_LITELLM_MODEL`: optional provider-scoped model id (for example `azure/gpt-4o-mini`).
 - `VITE_PMCOE_CONTAINER`: PMCOE blob container prefix used when the current Responses/MCP payload contains a document filename but omits `source_path`.
 - If `VITE_LITELLM_MODEL` is empty, model selection follows standalone LiteLLM config defaults.
