@@ -257,6 +257,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
           // First use of the LiteLLM scope may need consent; redirect to acquire it interactively.
           await msalInstance.acquireTokenRedirect({ scopes: [litellmScope], account });
         }
+        // acquireTokenRedirect navigates away; this only throws if it resolved without redirecting.
         throw error;
       }
     }
