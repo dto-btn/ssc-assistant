@@ -766,5 +766,9 @@
   "chat.feedback.back": {
     "en": "Back",
     "fr": "Retour"
+  },
+  "chat.feedback.submitting": {
+    "en": "Submitting feedback...",
+    "fr": "Envoi des commentaires..."
   }
 }

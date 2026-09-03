@@ -482,7 +482,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                 <TextField
                   label={t("chat.feedback.issue.steps.label")}
                   inputRef={issueStepsRef}
-                  placeholder={"" + t("chat.feedback.issue.steps.placeholder")}
+                  placeholder={t("chat.feedback.issue.steps.placeholder")}
                   value={issueSteps}
                   onChange={(e) => setIssueSteps(e.target.value)}
                   multiline
@@ -502,9 +502,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                 label={t("chat.feedback.suggestion.note.label")}
                 inputRef={suggestionRef}
                 value={description}
-                placeholder={
-                  "" + t("chat.feedback.suggestion.note.placeholder")
-                }
+                placeholder={t("chat.feedback.suggestion.note.placeholder")}
                 onChange={(e) => setDescription(e.target.value)}
                 multiline
                 rows={4}
@@ -554,7 +552,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
               </Box>
               {attachmentError && (
                 <Typography
-                  role="alert"
+                  aria-hidden="true"
                   variant="caption"
                   color="error"
                   sx={{ mt: 0.75, display: "block" }}
@@ -594,12 +592,27 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
             variant="contained"
             onClick={handleSubmit}
             disabled={isSubmitting}
+            aria-busy={isSubmitting}
           >
             {t("submit")}
             {isSubmitting && (
               <CircularProgress size={20} sx={{ ml: 1, color: "inherit" }} />
             )}
           </Button>
+
+          {isSubmitting && (
+            <Box
+              component="span"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              sx={visuallyHidden}
+            >
+              {t("chat.feedback.submitting", {
+                defaultValue: "Submitting feedback...",
+              })}
+            </Box>
+          )}
         </DialogActions>
       )}
     </Dialog>

@@ -63,8 +63,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ placement = "floating" }) =
     if (positive === null || !feedback.trim()) return;
 
     setIsSubmitting(true);
-    const uuid = currentSessionId ?? crypto.randomUUID();
-    console.log(uuid);
+    const uuid = currentSessionId ?? crypto.randomUUID()
 
     try {
       await sendPlaygroundFeedback({
