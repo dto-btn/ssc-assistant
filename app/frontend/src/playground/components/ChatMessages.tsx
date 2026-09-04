@@ -48,6 +48,7 @@ import { transformToBusinessRequest } from "../utils/bits_utils";
 import { MONTH_INDEX_BY_NAME, MONTH_NAMES_PATTERN, MERMAID_FENCE_PATTERN, MERMAID_DIAGRAM_TYPE_PATTERN } from "../constants/patterns";
 import { normalizePromptForInference } from "../utils/promptUtils";
 import { formatIsoDate } from "../services/bitsTransformService";
+import { formatConversationTimestamp } from "../../util/chatTime";
 import "highlight.js/styles/github.css";
 
 const BusinessRequestTable = lazy(
@@ -134,6 +135,19 @@ const getPlainText = (children: React.ReactNode): string => {
       return "";
     })
     .join("");
+};
+
+const shouldShowMessageTimestamp = (message: Message, previousMessage?: Message): boolean => {
+  if (!previousMessage) {
+    return true;
+  }
+
+  const currentDate = new Date(message.timestamp);
+  const previousDate = new Date(previousMessage.timestamp);
+  const currentDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()).getTime();
+  const previousDay = new Date(previousDate.getFullYear(), previousDate.getMonth(), previousDate.getDate()).getTime();
+
+  return currentDay !== previousDay || message.timestamp - previousMessage.timestamp >= 60 * 60 * 1000;
 };
 
 const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({
@@ -1117,7 +1131,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
           width: "100%",
         }}
       >
-        {messages.map((message: Message) => {
+        {messages.map((message: Message, index) => {
           const isAssistantMessage = message.role === "assistant";
           const pulseThisAssistantIcon = Boolean(
             isAssistantMessage
@@ -1129,24 +1143,44 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
               && message.id === activeAssistantMessageId
               && (assistantResponsePhase === "waiting-first-token" || assistantResponsePhase === "drafting")
           );
+          const showTimestamp = shouldShowMessageTimestamp(message, messages[index - 1]);
 
           return (
-            <ChatMessageRow
-              key={message.id}
-              message={message}
-              pulseThisAssistantIcon={pulseThisAssistantIcon}
-              assistantStatusLabel={assistantStatusLabel}
-              isPreStreamingPhase={isPreStreamingPhase}
-              isMostRecent={message.id === activeAssistantMessageId}
-              regenerateSourceMessage={regenerateSourceByAssistantId[message.id]}
-              isShowingMermaidCode={Boolean(mermaidCodeViewByMessageId[message.id])}
-              onToggleMermaidCodeView={toggleMermaidCodeView}
-              remarkPlugins={remarkPlugins}
-              baseRehypePlugins={baseRehypePlugins}
-              rehypePluginsWithMermaid={rehypePluginsWithMermaid}
-              sessionId={sessionId}
-              sessionFilesByBlobName={sessionFilesByBlobName}
-            />
+            <React.Fragment key={message.id}>
+              {showTimestamp && (
+                <ListItem component="li" sx={{ justifyContent: "center", py: 0.5, width: "100%" }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "text.secondary",
+                      bgcolor: "background.paper",
+                      border: "1px solid",
+                      borderColor: "divider",
+                      borderRadius: "999px",
+                      px: 1.25,
+                      py: 0.25,
+                    }}
+                  >
+                    {formatConversationTimestamp(message.timestamp)}
+                  </Typography>
+                </ListItem>
+              )}
+              <ChatMessageRow
+                message={message}
+                pulseThisAssistantIcon={pulseThisAssistantIcon}
+                assistantStatusLabel={assistantStatusLabel}
+                isPreStreamingPhase={isPreStreamingPhase}
+                isMostRecent={message.id === activeAssistantMessageId}
+                regenerateSourceMessage={regenerateSourceByAssistantId[message.id]}
+                isShowingMermaidCode={Boolean(mermaidCodeViewByMessageId[message.id])}
+                onToggleMermaidCodeView={toggleMermaidCodeView}
+                remarkPlugins={remarkPlugins}
+                baseRehypePlugins={baseRehypePlugins}
+                rehypePluginsWithMermaid={rehypePluginsWithMermaid}
+                sessionId={sessionId}
+                sessionFilesByBlobName={sessionFilesByBlobName}
+              />
+            </React.Fragment>
           );
         })}
       </List>

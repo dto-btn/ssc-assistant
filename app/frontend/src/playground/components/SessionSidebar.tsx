@@ -40,12 +40,13 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useTranslation } from 'react-i18next';
 import { LEFT_MENU_EXPANDED_WIDTH } from "../constants";
 import SessionRenameDialog from "./SessionRenameDialog";
-import { selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
+import { selectSessionLastActivityById, selectSessionsNewestFirst } from "../store/selectors/sessionSelectors";
 import { selectIsSessionWaitingById } from "../store/selectors/chatSelectors";
 import SyncStatusIndicator from "./SyncStatusIndicator";
 import ProfileMenu from "./ProfileMenu/ProfileMenu";
 import { deleteSession as deleteSessionThunk, persistSessionRename } from "../store/thunks/sessionManagementThunks";
 import { closeMobileSidebar } from "../store/slices/uiSlice";
+import { formatConversationBucket, formatConversationTimestamp } from "../../util/chatTime";
 
 const showCloudSyncIndicator = String(import.meta.env.VITE_PLAYGROUND_SHOW_CLOUD_SYNC_INDICATOR || "").toLowerCase() === "true";
 
@@ -65,6 +66,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
   const { t } = useTranslation('playground');
   const sessions = useAppSelector((state) => state.sessions.sessions);
   const sessionsNewestFirst = useAppSelector(selectSessionsNewestFirst);
+  const sessionLastActivityById = useAppSelector(selectSessionLastActivityById);
   const isSessionWaitingById = useAppSelector(selectIsSessionWaitingById);
   const currentSessionId = useAppSelector((state) => state.sessions.currentSessionId);
   const isSidebarCollapsed = useAppSelector(
@@ -262,6 +264,13 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
     const isActiveOption = index === activeIndex;
     const isWaitingForAssistant = Boolean(isSessionWaitingById[session.id]);
     const waitingDescriptionId = `session-waiting-status-${session.id}`;
+    const lastActivity = sessionLastActivityById[session.id] ?? session.createdAt;
+    const bucket = formatConversationBucket(lastActivity);
+    const previousSession = index > 0 ? sessionsNewestFirst[index - 1] : undefined;
+    const previousLastActivity = previousSession
+      ? sessionLastActivityById[previousSession.id] ?? previousSession.createdAt
+      : undefined;
+    const showBucket = !previousLastActivity || bucket !== formatConversationBucket(previousLastActivity);
 
     return (
       <ListItem
@@ -272,8 +281,9 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         sx={{
           listStyle: "none",
           display: "flex",
-          flexDirection: "row",
-          p: "2px 0px",
+          flexDirection: "column",
+          alignItems: "stretch",
+          p: "0px",
           outline: isActiveOption ? "2px solid" : "2px solid transparent",
           outlineColor: isActiveOption ? "primary.main" : "transparent",
           outlineOffset: -2,
@@ -297,6 +307,23 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           },
         }}
       >
+        {showBucket && (
+          <Typography
+            component="div"
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              fontWeight: 700,
+              px: 1.25,
+              pt: 0.75,
+              pb: 0.25,
+              lineHeight: 1.2,
+            }}
+          >
+            {bucket}
+          </Typography>
+        )}
+        <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", minHeight: 52 }}>
         <ListItemButton
           id={`session-button-${session.id}`}
           disableRipple
@@ -309,7 +336,8 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           aria-current={session.id === currentSessionId ? "page" : undefined}
           aria-describedby={isWaitingForAssistant ? waitingDescriptionId : undefined}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%", minWidth: 0 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "stretch", width: "100%", minWidth: 0 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, width: "100%", minWidth: 0 }}>
             <Typography
               data-testid={`session-title-${session.id}`}
               data-waiting-for-response={isWaitingForAssistant ? "true" : "false"}
@@ -376,6 +404,19 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
             {showCloudSyncIndicator && (
               <SyncStatusIndicator sessionId={session.id} variant="icon" />
             )}
+            </Box>
+            <Typography
+              variant="caption"
+              noWrap
+              sx={{
+                color: "text.secondary",
+                fontSize: "0.72rem",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {formatConversationTimestamp(lastActivity)}
+            </Typography>
           </Box>
         </ListItemButton>
 
@@ -407,9 +448,10 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
             <MoreHorizIcon />
           </Tooltip>
         </IconButton>
+        </Box>
       </ListItem>
     );
-  }, [activeIndex, activateSession, currentSessionId, handleMoreMenuClick, isSessionWaitingById, moreMenuOpen, selectedSessionId, sessionsNewestFirst, t]);
+  }, [activeIndex, activateSession, currentSessionId, handleMoreMenuClick, isSessionWaitingById, moreMenuOpen, selectedSessionId, sessionLastActivityById, sessionsNewestFirst, t]);
 
   const sidebarContent = (
     <Box
@@ -503,7 +545,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
               }}
               onKeyDown={handleSessionListKeyDown}
               overscanCount={5}
-              rowHeight={52}
+              rowHeight={76}
               rowCount={sessionsNewestFirst.length}
               rowComponent={chatItemRender}
               rowProps={{}}

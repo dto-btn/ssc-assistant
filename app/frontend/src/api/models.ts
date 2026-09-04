@@ -21,6 +21,7 @@ interface Context {
 interface Message {
   role: "user" | "assistant" | "system";
   content: string;
+  createdAt?: string;
   context?: Context | null;
   tools_info?: ToolInfo[];
   quotedText?: string;
@@ -29,6 +30,7 @@ interface Message {
 
 interface Completion {
   message: Message;
+  createdAt?: string;
   completion_tokens?: number | null;
   prompt_tokens?: number | null;
   total_tokens?: number | null;
@@ -75,6 +77,8 @@ interface ChatHistory {
   description: string;
   uuid: string;
   model: string;
+  createdAt?: string;
+  updatedAt?: string;
   isTopicSet: boolean;
   staticTools: string[];
 }
