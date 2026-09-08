@@ -41,8 +41,8 @@ export const sortChatsByLastActivity = (chatHistories: ChatHistory[]): ChatHisto
 export type ConversationBucket =
   | "Today"
   | "Yesterday"
-  | "Previous 7 days"
-  | "Previous 30 days"
+  | "Last 7 days"
+  | "Last 30 days"
   | "Older";
 
 // Counts calendar days via UTC-normalized local Y/M/D so DST shifts never skew the diff.
@@ -74,11 +74,11 @@ export const formatConversationBucket = (
   }
 
   if (diffDays <= 7) {
-    return "Previous 7 days";
+    return "Last 7 days";
   }
 
   if (diffDays <= 30) {
-    return "Previous 30 days";
+    return "Last 30 days";
   }
 
   return "Older";
