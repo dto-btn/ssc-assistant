@@ -254,7 +254,7 @@ export class AzureOpenAIProvider implements CompletionProvider {
         return scopedToken;
       } catch (error) {
         if (error instanceof InteractionRequiredAuthError) {
-          // First use of the LiteLLM scope may need consent; redirect to acquire it interactively.
+          // Silent acquisition can fail on session expiry or Conditional Access; recover interactively.
           await msalInstance.acquireTokenRedirect({ scopes: [litellmScope], account });
         }
         // acquireTokenRedirect navigates away; this only throws if it resolved without redirecting.
