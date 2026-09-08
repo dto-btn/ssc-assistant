@@ -1148,7 +1148,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
           return (
             <React.Fragment key={message.id}>
               {showTimestamp && (
-                <ListItem component="li" sx={{ justifyContent: "center", py: 0.5, width: "100%" }}>
+                // A date divider is not a message, so it stays out of the listitem sequence.
+                <ListItem
+                  component="li"
+                  role="separator"
+                  aria-label={formatConversationTimestamp(message.timestamp)}
+                  sx={{ justifyContent: "center", py: 0.5, width: "100%" }}
+                >
                   <Typography
                     variant="caption"
                     sx={{
