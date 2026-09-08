@@ -86,6 +86,7 @@ interface AssistantMessageBubbleProps {
 
 interface ChatMessageRowProps {
   message: Message;
+  timestampLabel?: string;
   pulseThisAssistantIcon: boolean;
   assistantStatusLabel?: string;
   isPreStreamingPhase: boolean;
@@ -885,6 +886,7 @@ const resolveAttachmentsForMessage = (
 
 const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
   message,
+  timestampLabel,
   pulseThisAssistantIcon,
   assistantStatusLabel,
   isPreStreamingPhase,
@@ -959,9 +961,35 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
         py: 1,
         width: "100%",
         maxWidth: { xs: "100%", md: "980px" },
-        justifyContent: isUserMessage ? "flex-end" : "flex-start",
+        flexDirection: "column",
+        alignItems: "stretch",
       }}
     >
+      {timestampLabel && (
+        <Box sx={{ display: "flex", justifyContent: "center", width: "100%", pb: 1 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              bgcolor: "background.paper",
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: "999px",
+              px: 1.25,
+              py: 0.25,
+            }}
+          >
+            {timestampLabel}
+          </Typography>
+        </Box>
+      )}
+      <Box
+        sx={{
+          display: "flex",
+          width: "100%",
+          justifyContent: isUserMessage ? "flex-end" : "flex-start",
+        }}
+      >
       {isAssistantMessage ? (
         <AssistantMessageBubble
           message={message}
@@ -1009,6 +1037,7 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
           )}
         </Box>
       )}
+      </Box>
     </ListItem>
   );
 });
@@ -1146,47 +1175,23 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
           const showTimestamp = shouldShowMessageTimestamp(message, messages[index - 1]);
 
           return (
-            <React.Fragment key={message.id}>
-              {showTimestamp && (
-                // A date divider is not a message, so it stays out of the listitem sequence.
-                <ListItem
-                  component="li"
-                  role="separator"
-                  aria-label={formatConversationTimestamp(message.timestamp)}
-                  sx={{ justifyContent: "center", py: 0.5, width: "100%" }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: "text.secondary",
-                      bgcolor: "background.paper",
-                      border: "1px solid",
-                      borderColor: "divider",
-                      borderRadius: "999px",
-                      px: 1.25,
-                      py: 0.25,
-                    }}
-                  >
-                    {formatConversationTimestamp(message.timestamp)}
-                  </Typography>
-                </ListItem>
-              )}
-              <ChatMessageRow
-                message={message}
-                pulseThisAssistantIcon={pulseThisAssistantIcon}
-                assistantStatusLabel={assistantStatusLabel}
-                isPreStreamingPhase={isPreStreamingPhase}
-                isMostRecent={message.id === activeAssistantMessageId}
-                regenerateSourceMessage={regenerateSourceByAssistantId[message.id]}
-                isShowingMermaidCode={Boolean(mermaidCodeViewByMessageId[message.id])}
-                onToggleMermaidCodeView={toggleMermaidCodeView}
-                remarkPlugins={remarkPlugins}
-                baseRehypePlugins={baseRehypePlugins}
-                rehypePluginsWithMermaid={rehypePluginsWithMermaid}
-                sessionId={sessionId}
-                sessionFilesByBlobName={sessionFilesByBlobName}
-              />
-            </React.Fragment>
+            <ChatMessageRow
+              key={message.id}
+              message={message}
+              timestampLabel={showTimestamp ? formatConversationTimestamp(message.timestamp) : undefined}
+              pulseThisAssistantIcon={pulseThisAssistantIcon}
+              assistantStatusLabel={assistantStatusLabel}
+              isPreStreamingPhase={isPreStreamingPhase}
+              isMostRecent={message.id === activeAssistantMessageId}
+              regenerateSourceMessage={regenerateSourceByAssistantId[message.id]}
+              isShowingMermaidCode={Boolean(mermaidCodeViewByMessageId[message.id])}
+              onToggleMermaidCodeView={toggleMermaidCodeView}
+              remarkPlugins={remarkPlugins}
+              baseRehypePlugins={baseRehypePlugins}
+              rehypePluginsWithMermaid={rehypePluginsWithMermaid}
+              sessionId={sessionId}
+              sessionFilesByBlobName={sessionFilesByBlobName}
+            />
           );
         })}
       </List>
