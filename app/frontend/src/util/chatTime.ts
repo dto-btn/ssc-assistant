@@ -38,36 +38,52 @@ export const sortChatsByLastActivity = (chatHistories: ChatHistory[]): ChatHisto
     return [...chatHistories].sort((a, b) => getChatLastActivityDate(b).getTime() - getChatLastActivityDate(a).getTime());
 };
 
-export const formatConversationBucket = (value: Date | number, now = new Date()): string => {
-    const date = value instanceof Date ? value : new Date(value);
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const dateStart = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-    const diffDays = Math.floor((todayStart - dateStart) / MS_PER_DAY);
+export type ConversationBucket =
+  | "Today"
+  | "Yesterday"
+  | "Previous 7 days"
+  | "Previous 30 days"
+  | "Older";
 
-    if (diffDays <= 0) {
-        return "Today";
-    }
-    if (diffDays === 1) {
-        return "Yesterday";
-    }
-    if (diffDays < 7) {
-        return new Intl.DateTimeFormat(undefined, { weekday: "long" }).format(date);
-    }
-    if (diffDays < 14) {
-        return "Last Week";
-    }
-    if (diffDays < 21) {
-        return "2 Weeks";
-    }
-    if (diffDays < 28) {
-        return "3 Weeks";
-    }
-    if (date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth()) {
-        return "This Month";
-    }
-
-    return "Older";
+// Counts calendar days via UTC-normalized local Y/M/D so DST shifts never skew the diff.
+const calendarDaysBetween = (from: Date, to: Date): number => {
+  const fromDay = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate());
+  const toDay = Date.UTC(to.getFullYear(), to.getMonth(), to.getDate());
+  return Math.round((toDay - fromDay) / MS_PER_DAY);
 };
+
+export const formatConversationBucket = (
+  value: Date | number | string | null | undefined,
+  now = new Date()
+): ConversationBucket => {
+  const date = toValidDate(value);
+  if (!date) {
+    return "Older";
+  }
+
+  const reference = toValidDate(now) ?? new Date();
+  const diffDays = calendarDaysBetween(date, reference);
+
+  // Clock skew or a future timestamp still reads as the most recent bucket.
+  if (diffDays <= 0) {
+    return "Today";
+  }
+
+  if (diffDays === 1) {
+    return "Yesterday";
+  }
+
+  if (diffDays <= 7) {
+    return "Previous 7 days";
+  }
+
+  if (diffDays <= 30) {
+    return "Previous 30 days";
+  }
+
+  return "Older";
+};
+
 
 export const formatConversationTimestamp = (value: Date | number): string => {
     const date = value instanceof Date ? value : new Date(value);
