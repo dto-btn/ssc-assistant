@@ -64,13 +64,18 @@ export const PlaygroundShell: React.FC = () => {
 
   return (
     <Box display="flex" height="100dvh">
-      {/* WCAG 2.4.1 — skip link lets keyboard users bypass sidebar navigation */}
+      {/* WCAG 2.4.1 — skip link lets keyboard users bypass sidebar navigation.
+          Falls back to the main-content landmark when the ask-input isn't rendered
+          yet (e.g. "no session" / "hydrating" states) so the link never lands nowhere. */}
       <Box
         component="a"
         href="#playground-ask-question"
         onClick={(event: React.MouseEvent<HTMLAnchorElement>) => {
           event.preventDefault();
-          document.getElementById("playground-ask-question")?.focus();
+          const target =
+            document.getElementById("playground-ask-question") ??
+            document.getElementById("playground-main-content");
+          target?.focus();
         }}
         sx={{
           position: "absolute",
@@ -101,9 +106,10 @@ export const PlaygroundShell: React.FC = () => {
       <NewConversationOnOpen />
       <SessionSidebar isMobile={isMobile} />
       {/* Container for the chat area. ChatArea renders a proper <main> landmark
-          internally; this wrapper keeps layout flex behavior and a focus target
-          for other flows. */}
+          internally; this wrapper keeps layout flex behavior and doubles as the
+          skip-link's fallback focus target so it always lands somewhere. */}
       <Box
+        id="playground-main-content"
         tabIndex={-1}
         sx={{ flex: 1, display: "flex", minWidth: 0 }}
       >

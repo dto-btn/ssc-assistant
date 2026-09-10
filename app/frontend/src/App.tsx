@@ -19,10 +19,12 @@ interface AppProps {
 export const App = ({ instance }: AppProps) => {
   const { t } = useTranslation();
   // App renders above the router (see AppRoutes), so useLocation() isn't
-  // available here. Read the pathname directly for the no-JS href fallback;
-  // the onClick handler below still targets the live DOM for JS navigation.
-  const isPlayground = window.location.pathname.startsWith("/playground");
-  const skipLinkTargetId = isPlayground ? "playground-ask-question" : "ask-question";
+  // available here. The href below is only a no-JS fallback computed at
+  // mount; the onClick handler re-reads location.pathname on every click so
+  // client-side route changes (no remount of App) never leave a stale target.
+  const skipLinkTargetId = window.location.pathname.startsWith("/playground")
+    ? "playground-ask-question"
+    : "ask-question";
 
   return (
     <>
@@ -32,7 +34,10 @@ export const App = ({ instance }: AppProps) => {
         className="skip-link"
         href={`#${skipLinkTargetId}`}
         onClick={(e) => {
-          const target = document.getElementById(skipLinkTargetId);
+          const currentTargetId = window.location.pathname.startsWith("/playground")
+            ? "playground-ask-question"
+            : "ask-question";
+          const target = document.getElementById(currentTargetId);
           if (target) {
             e.preventDefault();
             target.focus();

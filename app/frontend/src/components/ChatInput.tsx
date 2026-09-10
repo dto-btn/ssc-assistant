@@ -172,6 +172,7 @@ export const ChatInput = ({
       <Container
         component="footer"
         ref={footerRef as any}
+        maxWidth="md"
         sx={(theme) => ({
           position: "sticky",
           bottom: 0,

@@ -12,11 +12,16 @@ export function useInertRoot(active: boolean) {
 
     inertCount += 1;
     root.inert = true;
-    document.getElementById("modal-root")?.removeAttribute("aria-hidden");
+    const modalRoot = document.getElementById("modal-root");
+    const previousAriaHidden = modalRoot?.getAttribute("aria-hidden") ?? null;
+    modalRoot?.removeAttribute("aria-hidden");
 
     return () => {
       inertCount -= 1;
       if (inertCount === 0) root.inert = false;
+      if (previousAriaHidden !== null) {
+        modalRoot?.setAttribute("aria-hidden", previousAriaHidden);
+      }
     };
   }, [active]);
 }

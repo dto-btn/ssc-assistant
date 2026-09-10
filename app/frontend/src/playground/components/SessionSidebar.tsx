@@ -9,6 +9,7 @@
 import React, { useCallback, useState } from "react";
 import { alpha } from "@mui/material";
 import { List as ListWindow, RowComponentProps } from "react-window";
+import useMeasure from "react-use-measure";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   setCurrentSession,
@@ -183,8 +184,9 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
   const [activeIndex, setActiveIndex] = useState(-1);
   const sessionOrderKey = sessionsNewestFirst.map((session) => session.id).join("|");
   const rowHeight = 52;
-  // The sidebar owns the scrollport, so the list renders every row at full height.
-  const sessionListHeight = sessionsNewestFirst.length * rowHeight;
+  // Bound the list to its own container so react-window can actually virtualize
+  // (a height driven by row count renders every row and defeats overscanCount).
+  const [listContainerRef, { height: listContainerHeight }] = useMeasure();
 
   const activateSession = useCallback((sessionId: string) => {
     dispatch(setCurrentSession(sessionId));
@@ -498,7 +500,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           </Divider>
         </ListItem>
 
-        <Box>
+        <Box ref={listContainerRef} sx={{ flex: 1, minHeight: 0 }}>
           <ListWindow
             role="list"
             aria-labelledby={sidebarTitleId}
@@ -515,7 +517,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
             rowProps={{}}
             tabIndex={0}
             tagName="ul"
-            style={{ width: "100%", height: sessionListHeight, listStyle: "none", padding: 0, margin: 0 }}
+            style={{ width: "100%", height: listContainerHeight, listStyle: "none", padding: 0, margin: 0 }}
           />
         </Box>
 
