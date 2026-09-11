@@ -73,6 +73,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
     (state) => state.ui.isMobileSidebarOpen
   );
   const dispatch = useAppDispatch();
+  const handleLogout = useCallback(() => console.log("logout"), []);
 
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [sessionToRename, setSessionToRename] = useState<string | null>(null);
@@ -431,6 +432,10 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         flexDirection: "column",
         height: "100dvh",
         overflowX: "hidden",
+        // Fallback scroll: at extreme zoom, 100dvh can shrink to less than the
+        // fixed-height header/button/divider need, squeezing the list toward 0.
+        // The list has its own minHeight floor below, so when that floor plus
+        // the fixed items exceeds 100dvh, this lets the whole nav scroll to it.
         overflowY: "auto",
         borderRight: "1px solid",
         borderColor: "divider",
@@ -500,7 +505,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           </Divider>
         </ListItem>
 
-        <Box ref={listContainerRef} sx={{ flex: 1, minHeight: 0 }}>
+        <Box ref={listContainerRef} sx={{ flex: 1, minHeight: rowHeight * 3 }}>
           <ListWindow
             role="list"
             aria-labelledby={sidebarTitleId}
@@ -570,7 +575,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           <ProfileMenu
             size="30px"
             fontSize="12px"
-            logout={() => console.log("logout")}
+            logout={handleLogout}
           />
         </Box>
       )}
@@ -614,7 +619,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
             <ProfileMenu
               size="30px"
               fontSize="12px"
-              logout={() => console.log("logout")}
+              logout={handleLogout}
             />
           </Box>
         )}
