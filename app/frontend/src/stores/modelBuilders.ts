@@ -7,11 +7,14 @@ export const buildDefaultModel = () => {
 
 
 export const buildDefaultChatHistory = () => {
+    const now = new Date().toISOString();
     const defaultChatHistory: ChatHistory = {
         chatItems: [],
         description: "",
         uuid: uuidv4(),
         model: buildDefaultModel(),
+        createdAt: now,
+        updatedAt: now,
         isTopicSet: false, // Default value for isTopicSet
         staticTools: [] // Default value for staticTools
     };

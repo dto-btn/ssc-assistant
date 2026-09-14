@@ -128,9 +128,12 @@ export const useApiRequestService = () => {
             ? quotedTextFromRegenerate
             : quotedText;
 
+        const now = new Date().toISOString();
+
         const userMessage: Message = {
             role: "user",
             content: question,
+            createdAt: now,
             quotedText: messagedQuoted,
             attachments: attachments,
         };
@@ -185,9 +188,11 @@ export const useApiRequestService = () => {
         }
 
         const responsePlaceholder: Completion = {
+            createdAt: now,
             message: {
                 role: "assistant",
                 content: "",
+                createdAt: now,
             },
         };
 
@@ -218,6 +223,7 @@ export const useApiRequestService = () => {
         setCurrentChatHistory((prevChatHistory) => {
             const updatedChatHistory = {
                 ...prevChatHistory,
+                updatedAt: now,
                 chatItems: [
                     ...prevChatHistory.chatItems,
                     userMessage,

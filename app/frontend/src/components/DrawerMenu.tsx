@@ -25,9 +25,10 @@ import EditIcon from "@mui/icons-material/Edit";
 import { useTranslation } from "react-i18next";
 import React from "react";
 import { allowedToolsSet } from "../allowedTools";
+import { formatConversationBucket, formatConversationTimestamp, getChatLastActivityDate } from "../util/chatTime";
 
 interface DrawerMenuProps {
-  chatDescriptions: string[];
+  chatHistories: ChatHistory[];
   currentChatIndex: number;
   handleDeleteSavedChat: (index: number) => void;
   handleLoadSavedChat: (index: number) => void;
@@ -36,7 +37,7 @@ interface DrawerMenuProps {
 }
 
 export const DrawerMenu = ({
-  chatDescriptions,
+  chatHistories,
   handleDeleteSavedChat,
   handleLoadSavedChat,
   renameChat,
@@ -73,7 +74,7 @@ export const DrawerMenu = ({
   };
 
   const handleRenameClicked = () => {
-    if (selectedChatIndex !== null && chatDescriptions[selectedChatIndex]) {
+    if (selectedChatIndex !== null && chatHistories[selectedChatIndex]) {
       setEditedDescription("");
     }
     setEditingIndex(selectedChatIndex);
@@ -117,12 +118,19 @@ export const DrawerMenu = ({
   const chatDescriptionsWithOriginalIndex: {
     chatDescription: string;
     originalIndex: number;
-  }[] = chatDescriptions.map((chatDescription, index) => {
+    lastActivity: Date;
+    bucket: string;
+  }[] = chatHistories.map((chatHistory, index) => {
+    const lastActivity = getChatLastActivityDate(chatHistory);
     return {
-      chatDescription,
+      chatDescription: chatHistory.description || `Conversation ${index + 1}`,
       originalIndex: index,
+      lastActivity,
+      bucket: formatConversationBucket(lastActivity),
     };
-  });
+  }).sort((a, b) => b.lastActivity.getTime() - a.lastActivity.getTime());
+
+  let previousBucket = "";
 
   const list = () => (
     <Box
@@ -183,122 +191,148 @@ export const DrawerMenu = ({
         </Divider>
         <Collapse in={true} timeout="auto" unmountOnExit>
           {chatDescriptionsWithOriginalIndex
-            .reverse()
-            .map(({ chatDescription, originalIndex: index }) => {
+            .map((item) => {
+              const { chatDescription, originalIndex: index } = item;
+              const showBucket = item.bucket !== previousBucket;
+              previousBucket = item.bucket;
+
               return (
-                <ListItem
-                  key={index}
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    padding: "2px 0px",
-                    backgroundColor:
-                      index === currentChatIndex ? "lightgray" : "transparent",
-                    "&:hover": {
-                      backgroundColor: "lightgrey",
-                    },
-                    transition: "none",
-                    // Hide the more button by default; show on hover or focus within for accessibility
-                    "& .more-button": {
-                      opacity: 0,
-                      transition: "opacity 0.15s ease-in-out",
-                    },
-                    "&:hover .more-button, &:focus-within .more-button": {
-                      opacity: 1,
-                    },
-                  }}
-                >
-                  {(editingIndex === null || editingIndex !== index) && (
-                    <ListItemButton
-                      id={`chat-history-button-${index}`}
-                      disableRipple
+                <React.Fragment key={index}>
+                  {showBucket && (
+                    <Typography
+                      component="div"
+                      variant="caption"
                       sx={{
-                        padding: "5px 10px",
-                        "&:hover": {
-                          backgroundColor: "transparent",
-                        },
+                        color: "text.secondary",
+                        fontWeight: 700,
+                        px: "10px",
+                        pt: 1.25,
+                        pb: 0.25,
                       }}
-                      onClick={() => handleLoadSavedChat(index)}
                     >
-                      <Typography
-                        noWrap
-                        sx={{
-                          width: "100%",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {chatDescription}
-                      </Typography>
-                    </ListItemButton>
+                      {item.bucket}
+                    </Typography>
                   )}
-                  <IconButton
-                    id={`chat-history-options-button-${index}`}
-                    className="more-button"
-                    onClick={(event) => handleMoreMenuClick(event, index)}
-                    aria-label="more"
-                    aria-controls={
-                      moreMenuOpen ? "chat-history-menu" : undefined
-                    }
-                    aria-expanded={moreMenuOpen ? "true" : undefined}
-                    aria-haspopup="true"
+                  <ListItem
                     sx={{
-                      marginRight: "10px",
+                      display: "flex",
+                      flexDirection: "row",
+                      padding: "2px 0px",
+                      backgroundColor:
+                        index === currentChatIndex ? "lightgray" : "transparent",
                       "&:hover": {
-                        backgroundColor: "transparent",
-                        color: "black",
+                        backgroundColor: "lightgrey",
+                      },
+                      transition: "none",
+                      // Hide the more button by default; show on hover or focus within for accessibility
+                      "& .more-button": {
+                        opacity: 0,
+                        transition: "opacity 0.15s ease-in-out",
+                      },
+                      "&:hover .more-button, &:focus-within .more-button": {
+                        opacity: 1,
                       },
                     }}
                   >
-                    <Tooltip
-                      tabIndex={-1}
-                      title="Options"
-                      placement="top"
-                      slotProps={{
-                        popper: {
-                          sx: {
-                            "& .MuiTooltip-tooltip": {
-                              backgroundColor: "black",
-                              color: "white",
-                            },
+                    {(editingIndex === null || editingIndex !== index) && (
+                      <ListItemButton
+                        id={`chat-history-button-${index}`}
+                        disableRipple
+                        sx={{
+                          padding: "5px 10px",
+                          "&:hover": {
+                            backgroundColor: "transparent",
                           },
-                          modifiers: [
-                            {
-                              name: "offset",
-                              options: {
-                                offset: [0, 5],
-                              },
+                        }}
+                        onClick={() => handleLoadSavedChat(index)}
+                      >
+                        <ListItemText
+                          primary={chatDescription}
+                          secondary={formatConversationTimestamp(item.lastActivity)}
+                          primaryTypographyProps={{
+                            noWrap: true,
+                            sx: {
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
                             },
-                          ],
+                          }}
+                          secondaryTypographyProps={{
+                            noWrap: true,
+                            sx: {
+                              fontSize: "0.72rem",
+                            },
+                          }}
+                        />
+                      </ListItemButton>
+                    )}
+                    <IconButton
+                      id={`chat-history-options-button-${index}`}
+                      className="more-button"
+                      onClick={(event) => handleMoreMenuClick(event, index)}
+                      aria-label="more"
+                      aria-controls={
+                        moreMenuOpen ? "chat-history-menu" : undefined
+                      }
+                      aria-expanded={moreMenuOpen ? "true" : undefined}
+                      aria-haspopup="true"
+                      sx={{
+                        marginRight: "10px",
+                        "&:hover": {
+                          backgroundColor: "transparent",
+                          color: "black",
                         },
                       }}
                     >
-                      <MoreHorizIcon tabIndex={-1} />
-                    </Tooltip>
-                  </IconButton>
-                  {editingIndex !== null && editingIndex === index && (
-                    <TextField
-                      inputRef={textFieldRef}
-                      value={editedDescription}
-                      onChange={(e) => setEditedDescription(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleSaveEdit();
-                        if (e.key === "Escape") handleCancelEdit();
-                      }}
-                      onBlur={handleBlur}
-                      sx={{
-                        flexGrow: "1",
-                        mr: "5px",
-                        "& .MuiInputBase-input": {
-                          padding: "5px 10px",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        },
-                      }}
-                    />
-                  )}
-                </ListItem>
+                      <Tooltip
+                        tabIndex={-1}
+                        title="Options"
+                        placement="top"
+                        slotProps={{
+                          popper: {
+                            sx: {
+                              "& .MuiTooltip-tooltip": {
+                                backgroundColor: "black",
+                                color: "white",
+                              },
+                            },
+                            modifiers: [
+                              {
+                                name: "offset",
+                                options: {
+                                  offset: [0, 5],
+                                },
+                              },
+                            ],
+                          },
+                        }}
+                      >
+                        <MoreHorizIcon tabIndex={-1} />
+                      </Tooltip>
+                    </IconButton>
+                    {editingIndex !== null && editingIndex === index && (
+                      <TextField
+                        inputRef={textFieldRef}
+                        value={editedDescription}
+                        onChange={(e) => setEditedDescription(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSaveEdit();
+                          if (e.key === "Escape") handleCancelEdit();
+                        }}
+                        onBlur={handleBlur}
+                        sx={{
+                          flexGrow: "1",
+                          mr: "5px",
+                          "& .MuiInputBase-input": {
+                            padding: "5px 10px",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          },
+                        }}
+                      />
+                    )}
+                  </ListItem>
+                </React.Fragment>
               );
             })}
         </Collapse>
