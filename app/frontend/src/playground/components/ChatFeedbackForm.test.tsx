@@ -5,7 +5,7 @@ import { ThemeProvider, createTheme } from "@mui/material";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import ChatFeedbackForm from "./ChatFeedbackForm";
-import { submitChatFeedback } from "../store/thunks/feedbackThunks";
+import { submitChatFeedbackForm } from "../store/thunks/feedbackThunks"
 import { uploadFile } from "../api/storage"
 
 vi.mock("../store/thunks/feedbackThunks", () => ({
@@ -116,7 +116,7 @@ describe("ChatFeedbackForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "submit" }))
 
     await waitFor(() => {
-      expect(submitChatFeedback).toHaveBeenCalledWith({
+      expect(submitChatFeedbackForm).toHaveBeenCalledWith({
         messageId: "message-1",
         sessionId: "session-1",
         type: "issue",
@@ -143,7 +143,7 @@ describe("ChatFeedbackForm", () => {
       screen.getByText("chat.feedback.issue.steps.required"),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("textbox")[0]).toHaveFocus();
-    expect(submitChatFeedback).not.toHaveBeenCalled();
+    expect(submitChatFeedbackForm).not.toHaveBeenCalled()
     expect(onClose).not.toHaveBeenCalled();
   });
 
@@ -194,7 +194,7 @@ describe("ChatFeedbackForm", () => {
     })
 
     await waitFor(() => {
-      expect(submitChatFeedback).toHaveBeenCalledWith({
+      expect(submitChatFeedbackForm).toHaveBeenCalledWith({
         messageId: "message-1",
         sessionId: "session-1",
         type: "suggestion",

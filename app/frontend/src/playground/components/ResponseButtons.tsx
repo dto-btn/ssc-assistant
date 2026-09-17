@@ -194,19 +194,19 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
     // to the other, the new feedback is submitted; the server records both events.
     const handleLike = useCallback(() => {
       if (feedback === "liked") {
-        dispatch(clearResponseFeedback(messageId));
+        dispatch(clearResponseFeedback(messageId))
       } else {
-        dispatch(submitResponseFeedback(messageId, true));
+        dispatch(submitResponseFeedback(sessionId, messageId, true))
       }
-    }, [dispatch, feedback, messageId]);
+    }, [dispatch, feedback, messageId, sessionId])
 
     const handleDislike = useCallback(() => {
       if (feedback === "disliked") {
-        dispatch(clearResponseFeedback(messageId));
+        dispatch(clearResponseFeedback(messageId))
       } else {
-        dispatch(submitResponseFeedback(messageId, false));
+        dispatch(submitResponseFeedback(sessionId, messageId, false))
       }
-    }, [dispatch, feedback, messageId]);
+    }, [dispatch, feedback, messageId, sessionId])
     /** Handles opening the chat feedback modal through uiSlice */
     const handleFeedbackNote = useCallback(() => {
       dispatch(openChatFeedbackModal({ messageId, sessionId }));
