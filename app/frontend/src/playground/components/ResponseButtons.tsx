@@ -14,7 +14,7 @@
  * - Like / Dislike: immediately submits feedback via `submitResponseFeedback`
  *   (no modal). The pressed button stays visually active; clicking the same
  *   button again deselects it. Like and dislike are mutually exclusive in the
- *   UI; the server records all submitted feedback events.
+ *   UI; the current reaction is persisted per message.
  *
  * On desktop the buttons are shown when the parent message is hovered or
  * focused. On small/touch-screen devices (`isSmallScreen`) they are always
@@ -89,15 +89,15 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
     sessionId,
     feedback,
   }) => {
-    const { t } = useTranslation("playground");
-    const dispatch = useDispatch<AppDispatch>();
-    const theme = useTheme();
+    const { t } = useTranslation("playground")
+    const dispatch = useDispatch<AppDispatch>()
+    const theme = useTheme()
     // (pointer: coarse) matches any touch-first device regardless of resolution —
     // more reliable than a breakpoint which misses large tablets (e.g. iPad Pro landscape).
-    const isSmallScreen = useMediaQuery("(pointer: coarse)");
+    const isSmallScreen = useMediaQuery("(pointer: coarse)")
 
     // Source brand colour from the theme so a single-point change propagates everywhere
-    const brandColor = theme.palette.primary.main;
+    const brandColor = theme.palette.primary.main
 
     /** sx applied to every IconButton — ensures a 44×44 touch target (WCAG 2.5.5) */
     const baseIconButtonSx = useMemo(
@@ -115,7 +115,7 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
         },
       }),
       [brandColor],
-    );
+    )
 
     /** Additional sx for an actively-pressed like/dislike button */
     const activeFeedbackSx = useMemo(
@@ -125,25 +125,25 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
         "&:hover": { backgroundColor: alpha(brandColor, 0.18) },
       }),
       [baseIconButtonSx, brandColor],
-    );
+    )
 
-    const [isCopied, setIsCopied] = useState(false);
-    const [isFocused, setIsFocused] = useState(false);
+    const [isCopied, setIsCopied] = useState(false)
+    const [isFocused, setIsFocused] = useState(false)
 
     // Guards against a double-dispatch on rapid taps: once regenerate fires we
     // block re-entry until the component unmounts (which happens after deleteMessage).
-    const isRegeneratingRef = useRef(false);
+    const isRegeneratingRef = useRef(false)
 
     // Buttons are visible when the row is hovered/focused, it is the most
     // recent response, or we are on a small/touch-screen device.
-    const isVisible = isHovering || isMostRecent || isSmallScreen || isFocused;
-    const iconColor = isVisible ? brandColor : "transparent";
+    const isVisible = isHovering || isMostRecent || isSmallScreen || isFocused
+    const iconColor = isVisible ? brandColor : "transparent"
 
     useEffect(() => {
-      if (!isCopied) return undefined;
-      const timer = setTimeout(() => setIsCopied(false), COPY_RESET_MS);
-      return () => clearTimeout(timer);
-    }, [isCopied]);
+      if (!isCopied) return undefined
+      const timer = setTimeout(() => setIsCopied(false), COPY_RESET_MS)
+      return () => clearTimeout(timer)
+    }, [isCopied])
 
     const handleCopy = useCallback(() => {
       navigator.clipboard
@@ -151,16 +151,16 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
         .then(() => setIsCopied(true))
         .catch(() => {
           // Clipboard access denied or unavailable (e.g. insecure context)
-        });
-    }, [text]);
+        })
+    }, [text])
 
-    const handleFocus = useCallback(() => setIsFocused(true), []);
+    const handleFocus = useCallback(() => setIsFocused(true), [])
     // Only hide buttons when focus leaves the entire group, not when tabbing between buttons
     const handleBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
       if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-        setIsFocused(false);
+        setIsFocused(false)
       }
-    }, []);
+    }, [])
 
     /**
      * Deletes the stale assistant message and re-sends via `sendAssistantMessage`.
@@ -173,11 +173,11 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
      * a second tap to fire the handler again without the guard.
      */
     const handleRegenerate = useCallback(() => {
-      if (isRegeneratingRef.current || !regenerateSourceMessage) return;
+      if (isRegeneratingRef.current || !regenerateSourceMessage) return
 
       // All validation passed — lock before dispatching so only one regenerate
       // can fire per component lifetime (ref resets naturally on unmount).
-      isRegeneratingRef.current = true;
+      isRegeneratingRef.current = true
 
       void dispatch(
         sendAssistantMessage({
@@ -187,11 +187,11 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
           skipUserMessage: true,
           deleteMessageId: messageId,
         }),
-      );
-    }, [dispatch, messageId, regenerateSourceMessage, sessionId]);
+      )
+    }, [dispatch, messageId, regenerateSourceMessage, sessionId])
 
-    // Like and dislike are mutually exclusive in the UI. When switching from one
-    // to the other, the new feedback is submitted; the server records both events.
+    // Like and dislike are mutually exclusive in the UI and persisted per message.
+    // Clicking the active reaction clears it.
     const handleLike = useCallback(() => {
       if (feedback === "liked") {
         dispatch(clearResponseFeedback(messageId))
@@ -209,11 +209,11 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
     }, [dispatch, feedback, messageId, sessionId])
     /** Handles opening the chat feedback modal through uiSlice */
     const handleFeedbackNote = useCallback(() => {
-      dispatch(openChatFeedbackModal({ messageId, sessionId }));
-    }, [dispatch, messageId, sessionId]);
+      dispatch(openChatFeedbackModal({ messageId, sessionId }))
+    }, [dispatch, messageId, sessionId])
 
-    const isLiked = feedback === "liked";
-    const isDisliked = feedback === "disliked";
+    const isLiked = feedback === "liked"
+    const isDisliked = feedback === "disliked"
 
     return (
       <>
@@ -331,7 +331,7 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
           )}
         </Box>
       </>
-    );
+    )
   },
 );
 

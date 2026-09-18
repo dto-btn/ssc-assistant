@@ -16,9 +16,10 @@ import type { FileAttachment } from "../../types";
 import {
   decodeArchiveDataUrl,
   isChatArchiveAttachment,
+  isChatFeedbackAttachment,
   normalizeArchiveMessage,
   pickLatestArchive,
-} from "../../utils/archives";
+} from "../../utils/archives"
 import { applyRemoteSessionDeletion } from "./sessionManagementThunks";
 import { selectHasMessagesForSession } from "../selectors/chatSelectors";
 import { addToast } from "../slices/toastSlice";
@@ -107,16 +108,20 @@ export const rehydrateSessionFromArchive = (
     }
 
     const chatArchives = files.filter(isChatArchiveAttachment);
+   
     if (!chatArchives.length) {
-      return { restored: false, hasArchive: false, latestVersion: null };
+      return { restored: false, hasArchive: false, latestVersion: null }
     }
 
-    const latestArchive = pickLatestArchive(chatArchives);
-    const latestVersion: string | null = latestArchive?.lastUpdated ?? latestArchive?.uploadedAt ?? null;
+    const latestArchive = pickLatestArchive(chatArchives)
+    const latestVersion: string | null =
+      latestArchive?.lastUpdated ?? latestArchive?.uploadedAt ?? null
     if (!latestArchive || (!latestArchive.url && !latestArchive.blobName)) {
-      return { restored: false, hasArchive: true, latestVersion };
+      return { restored: false, hasArchive: true, latestVersion }
     }
 
+    // Find the chat feedback archive, if it exists. This depends on chat messages loading first.
+    const chatFeedbackArchive = files.find(isChatFeedbackAttachment)
     try {
       const { dataUrl } = await fetchFileDataUrl({
         fileUrl: latestArchive.url ?? undefined,
@@ -135,6 +140,63 @@ export const rehydrateSessionFromArchive = (
             .map((entry) => normalizeArchiveMessage(entry, sessionId))
             .filter((message): message is Message => message !== null)
         : [];
+      
+      const feedBackByMessageId = new Map<string, Message["feedback"]>()
+      if (
+        chatFeedbackArchive &&
+        (chatFeedbackArchive.url || chatFeedbackArchive.blobName)
+      ) {
+        const { dataUrl: feedbackDataUrl } = await fetchFileDataUrl({
+          fileUrl: chatFeedbackArchive.url ?? undefined,
+          blobName: chatFeedbackArchive.blobName ?? undefined,
+          fileType: chatFeedbackArchive.contentType ?? "application/json",
+          accessToken,
+        })
+
+        if (feedbackDataUrl) {
+          const decodedFeedback = decodeArchiveDataUrl(feedbackDataUrl)
+          const parsedFeedback = JSON.parse(decodedFeedback) as {
+            feedback_responses?: unknown[]
+          }
+
+          for (const entry of parsedFeedback.feedback_responses ?? []) {
+            if (!entry || typeof entry !== "object") continue
+
+            const record = entry as Record<string, unknown>
+            if (record.type !== "reaction") continue
+            if (typeof record.messageId !== "string") continue
+            if (typeof record.positive !== "boolean") continue
+
+            feedBackByMessageId.set(
+              record.messageId,
+              record.positive ? "liked" : "disliked",
+            )
+          }
+        }
+      }
+      const restoredMessagesWithFeedback = restoredMessages.map((message) => ({
+        ...message,
+        feedback: feedBackByMessageId.get(message.id) ?? message.feedback,
+      }))
+
+
+
+      if (!restoredMessages.length) {
+        return { restored: false, hasArchive: true, latestVersion };
+      }
+
+      dispatch(
+        hydrateSessionMessages({
+          sessionId,
+          messages: restoredMessagesWithFeedback,
+        }),
+      )
+      return { restored: true, hasArchive: true, latestVersion };
+    } catch (error) {
+      console.error("Failed to rehydrate session archive", { sessionId, error });
+      return { restored: false, hasArchive: true, latestVersion };
+    }
+  };
 
 /**
  * Generates a human-readable session title for a recovered chat archive.
@@ -146,19 +208,6 @@ export const rehydrateSessionFromArchive = (
  * @param providedName - The name from the archive, if available.
  * @returns A human-readable session title.
  */
-
-      if (!restoredMessages.length) {
-        return { restored: false, hasArchive: true, latestVersion };
-      }
-
-      dispatch(hydrateSessionMessages({ sessionId, messages: restoredMessages }));
-      return { restored: true, hasArchive: true, latestVersion };
-    } catch (error) {
-      console.error("Failed to rehydrate session archive", { sessionId, error });
-      return { restored: false, hasArchive: true, latestVersion };
-    }
-  };
-
 const buildRecoveredName = (sessionId: string, uploadedAtMs: number, providedName?: string | null) => {
   if (providedName && providedName.trim().length > 0) {
     return providedName.trim();
