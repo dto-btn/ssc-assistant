@@ -8,7 +8,7 @@
 
 import { addToast } from "../slices/toastSlice"
 import { AppThunk } from ".."
-import { sendPlaygroundFeedback, sendChatFeedback } from "../../api/feedback"
+import { sendChatFeedback } from "../../api/feedback"
 import type {
   ChatFeedbackFormSubmission,
   ChatFeedbackResponseReaction,
@@ -25,6 +25,16 @@ import i18n from "../../../i18n"
 export const submitResponseFeedback =
   (sessionId: string, messageId: string, positive: boolean): AppThunk =>
   async (dispatch, getState) => {
+    const accessToken = getState().auth.accessToken
+    if (!accessToken) {
+      dispatch(
+        addToast({
+          message: i18n.t("feedback.error", { ns: "playground" }),
+          isError: true,
+        }),
+      )
+      return
+    }
     const previousFeedback = getState().chat.messages.find(
       (message) => message.id === messageId,
     )?.feedback
@@ -49,17 +59,8 @@ export const submitResponseFeedback =
 
     try {
       dispatch(setMessageFeedback({ messageId, feedback }))
-      await sendPlaygroundFeedback({
-        feedback: feedbackMessage,
-        positive,
-        uuid: messageId,
-        accessToken: getState().auth.accessToken ?? undefined,
-      })
-
-      // Submits chat reaction through a different flow saving to json
-      // first step to requiring this flow
       await sendChatFeedback({
-        accessToken: getState().auth.accessToken ?? undefined,
+        accessToken,
         feedback: feedbackReactionPayload,
         sessionId,
         messageId,
@@ -89,9 +90,43 @@ export const submitResponseFeedback =
  * Clear feedback for a specific message (e.g. when toggling off a like/dislike).
  */
 export const clearResponseFeedback =
-  (messageId: string): AppThunk =>
-  async (dispatch) => {
-    dispatch(setMessageFeedback({ messageId, feedback: undefined }))
+  (sessionId: string, messageId: string): AppThunk =>
+  async (dispatch, getState) => {
+    const accessToken = getState().auth.accessToken
+
+    if (!accessToken) {
+      dispatch(
+        addToast({
+          message: i18n.t("feedback.error", { ns: "playground" }),
+          isError: true,
+        }),
+      )
+      return
+    }
+
+    const payload: ChatFeedbackResponseReaction = {
+      messageId,
+      sessionId,
+      type: "reaction",
+      positive: null,
+    }
+
+    try {
+      await sendChatFeedback({
+        accessToken,
+        feedback: encodeFeedbackPayload(payload),
+        sessionId,
+        messageId,
+      })
+      dispatch(setMessageFeedback({ messageId, feedback: undefined }))
+    } catch (error) {
+      dispatch(
+        addToast({
+          message: i18n.t("feedback.error", { ns: "playground" }),
+          isError: true,
+        }),
+      )
+    }
   }
 
 /**

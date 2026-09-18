@@ -28,7 +28,7 @@ export interface ChatFeedbackResponse {
 }
 
 export type ChatFeedbackResponseReaction = ChatFeedbackResponse & {
-  positive: boolean
+  positive: boolean | null
   description?: string
 }
 

@@ -124,11 +124,11 @@ describe("ResponseButtons", () => {
     
     const likeBtn = screen.getByLabelText("good.response");
     fireEvent.click(likeBtn);
-    expect(submitResponseFeedback).toHaveBeenCalledWith("m1", true);
+    expect(submitResponseFeedback).toHaveBeenCalledWith("s1", "m1", true)
 
     const dislikeBtn = screen.getByLabelText("bad.response");
     fireEvent.click(dislikeBtn);
-    expect(submitResponseFeedback).toHaveBeenCalledWith("m1", false);
+    expect(submitResponseFeedback).toHaveBeenCalledWith("s1", "m1", false)
   });
 
   it("does not dispatch regenerate without a matching user turn", () => {
@@ -149,6 +149,6 @@ describe("ResponseButtons", () => {
     expect(likeBtn).toHaveAttribute("aria-pressed", "true");
     
     fireEvent.click(likeBtn);
-    expect(clearResponseFeedback).toHaveBeenCalledWith("m1");
+    expect(clearResponseFeedback).toHaveBeenCalledWith("s1", "m1")
   });
 });

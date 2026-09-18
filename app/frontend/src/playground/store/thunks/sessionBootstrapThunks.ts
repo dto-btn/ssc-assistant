@@ -141,42 +141,50 @@ export const rehydrateSessionFromArchive = (
             .filter((message): message is Message => message !== null)
         : [];
       
-      const feedBackByMessageId = new Map<string, Message["feedback"]>()
+      const feedbackByMessageId = new Map<string, Message["feedback"]>()
       if (
         chatFeedbackArchive &&
         (chatFeedbackArchive.url || chatFeedbackArchive.blobName)
       ) {
-        const { dataUrl: feedbackDataUrl } = await fetchFileDataUrl({
-          fileUrl: chatFeedbackArchive.url ?? undefined,
-          blobName: chatFeedbackArchive.blobName ?? undefined,
-          fileType: chatFeedbackArchive.contentType ?? "application/json",
-          accessToken,
-        })
+        try {
+          const { dataUrl: feedbackDataUrl } = await fetchFileDataUrl({
+            fileUrl: chatFeedbackArchive.url ?? undefined,
+            blobName: chatFeedbackArchive.blobName ?? undefined,
+            fileType: chatFeedbackArchive.contentType ?? "application/json",
+            accessToken,
+          })
 
-        if (feedbackDataUrl) {
-          const decodedFeedback = decodeArchiveDataUrl(feedbackDataUrl)
-          const parsedFeedback = JSON.parse(decodedFeedback) as {
-            feedback_responses?: unknown[]
+          if (feedbackDataUrl) {
+            const decodedFeedback = decodeArchiveDataUrl(feedbackDataUrl)
+            const parsedFeedback = JSON.parse(decodedFeedback) as {
+              feedback_responses?: unknown[]
+            }
+
+            for (const entry of parsedFeedback.feedback_responses ?? []) {
+              if (!entry || typeof entry !== "object" || Array.isArray(entry))
+                continue
+
+              const record = entry as Record<string, unknown>
+              if (record.type !== "reaction") continue
+              if (typeof record.messageId !== "string") continue
+              if (typeof record.positive !== "boolean") continue
+
+              feedbackByMessageId.set(
+                record.messageId,
+                record.positive ? "liked" : "disliked",
+              )
+            }
           }
-
-          for (const entry of parsedFeedback.feedback_responses ?? []) {
-            if (!entry || typeof entry !== "object") continue
-
-            const record = entry as Record<string, unknown>
-            if (record.type !== "reaction") continue
-            if (typeof record.messageId !== "string") continue
-            if (typeof record.positive !== "boolean") continue
-
-            feedBackByMessageId.set(
-              record.messageId,
-              record.positive ? "liked" : "disliked",
-            )
-          }
+        } catch (error) {
+          console.error("Failed to rehydrate chat feedback archive", {
+            sessionId,
+            error,
+          })
         }
       }
       const restoredMessagesWithFeedback = restoredMessages.map((message) => ({
         ...message,
-        feedback: feedBackByMessageId.get(message.id) ?? message.feedback,
+        feedback: feedbackByMessageId.get(message.id) ?? message.feedback,
       }))
 
 

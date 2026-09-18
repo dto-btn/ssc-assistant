@@ -211,7 +211,7 @@ class PlaygroundChatFeedbackEntry:
     messageId: str
     sessionId: str
     type: str
-    description: str
+    description: Optional[str] = None
     positive: Optional[bool] = None
     stepsToReproduce: Optional[str] = None
     attachments: Optional[List[Attachment]] = None
