@@ -9,11 +9,11 @@ import { submitChatFeedbackForm } from "../store/thunks/feedbackThunks"
 import { uploadFile } from "../api/storage"
 
 vi.mock("../store/thunks/feedbackThunks", () => ({
-  submitChatFeedback: vi.fn((payload) => ({
-    type: "mock/submitChatFeedback",
+  submitChatFeedbackForm: vi.fn((payload) => ({
+    type: "mock/submitChatFeedbackForm",
     payload,
   })),
-}));
+}))
 
 vi.mock("../api/storage", () => ({
   uploadFile: vi.fn(),
