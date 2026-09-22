@@ -43,6 +43,12 @@ const ToastContainer: React.FC = () => {
           autoHideDuration={getAutoHideDuration(toast)}
           onClose={() => dispatch(removeToast(toast.id))}
           anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          sx={{
+            bottom: {
+              xs: "calc(var(--chat-input-height) + env(safe-area-inset-bottom))",
+              sm: "24px",
+            },
+          }}
         >
           <Alert
             onClose={() => dispatch(removeToast(toast.id))}

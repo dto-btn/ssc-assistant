@@ -14,6 +14,7 @@ import { useAppStore } from "../stores/AppStore";
 import { allowedToolsSet } from "../allowedTools";
 import { DisclaimerKey, DisclaimerState } from "../../types";
 import { PersistenceUtils } from '../util/persistence';
+import { useInertRoot } from "../hooks/useInertRoot";
 
 interface DisclaimerConfig {
   key: DisclaimerKey;
@@ -65,6 +66,10 @@ export const Disclaimer = () => {
 
   const shouldShow = !!currentDisclaimerKey && inProgress === InteractionStatus.None;
 
+  // When the disclaimer dialog is visible, mark the application root as inert
+  // so that assistive technology and focus are not blocked by aria-hidden on ancestors.
+  useInertRoot(shouldShow);
+
   const handleAccept = (key: DisclaimerKey) => {
     PersistenceUtils.setDisclaimerAccepted(key);
     setDisclaimerAcceptedState((prevState) => ({
@@ -79,39 +84,44 @@ export const Disclaimer = () => {
     return null; // No configuration found for the current disclaimer
   }
 
-  return (
-    <div>
-      <Dialog open={shouldShow} fullWidth>
-        <DialogTitle>
-          {currentDisclaimerConfig?.title
-            ? t("disclaimer") + " - " + t(currentDisclaimerConfig.title)
-            : t("disclaimer")}
-        </DialogTitle>
-        <DialogContent>
-          {currentDisclaimerConfig?.text && <p>{t(currentDisclaimerConfig.text)}</p>}
-          {currentDisclaimerConfig?.text2 && (
-            <p style={{ fontWeight: "bold" }}>{t(currentDisclaimerConfig.text2)}</p>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button
-            id="accept-disclaimer-button"
-            color='primary'
-            variant='contained'
-            onClick={() => handleAccept(currentDisclaimerConfig.key)}
-          >
-            {t("accept")}
-          </Button>
-          <Button
-            id="change-language-button"
-            onClick={() => {
-              appStore.languageService.changeLanguage();
-            }}
-          >
-            {t("langlink")}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </div>
+  const dialog = (
+    <Dialog
+      open={shouldShow}
+      fullWidth
+      disableScrollLock
+      container={() => document.getElementById("modal-root") ?? document.body}
+    >
+      <DialogTitle>
+        {currentDisclaimerConfig?.title
+          ? t("disclaimer") + " - " + t(currentDisclaimerConfig.title)
+          : t("disclaimer")}
+      </DialogTitle>
+      <DialogContent>
+        {currentDisclaimerConfig?.text && <p>{t(currentDisclaimerConfig.text)}</p>}
+        {currentDisclaimerConfig?.text2 && (
+          <p style={{ fontWeight: "bold" }}>{t(currentDisclaimerConfig.text2)}</p>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button
+          id="accept-disclaimer-button"
+          color='primary'
+          variant='contained'
+          onClick={() => handleAccept(currentDisclaimerConfig.key)}
+        >
+          {t("accept")}
+        </Button>
+        <Button
+          id="change-language-button"
+          onClick={() => {
+            appStore.languageService.changeLanguage();
+          }}
+        >
+          {t("langlink")}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
+
+  return dialog;
 };
