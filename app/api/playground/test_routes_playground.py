@@ -3,7 +3,7 @@ import pytest  # type: ignore[import]
 from apiflask import APIFlask
 from types import SimpleNamespace
 from typing import Dict, Iterable
-
+import json
 from playground import routes_playground
 
 
@@ -49,10 +49,16 @@ class FakeBlobClient:
         return SimpleNamespace(
             metadata=dict(self._blob.metadata),
             content_settings=self._blob.content_settings,
+            etag = "fake-etag"
         )
 
-    def download_blob(self, _max_concurrency: int = 1) -> FakeDownload:
+    def download_blob(self, max_concurrency: int = 1) -> FakeDownload:
         return FakeDownload(self._blob.data)
+
+    def upload_blob(self, data:bytes, **kwargs) -> None:
+        self._blob.data = data
+        self._blob.size = len(data)
+        self._blob.metadata = dict(kwargs.get("metadata", self._blob.metadata))
 
     def set_blob_metadata(self, metadata: Dict[str, str]) -> None:
         if getattr(self._container, "should_fail", False):
@@ -458,3 +464,134 @@ def test_rename_session_missing_returns_404(monkeypatch, api_headers, test_clien
     assert response.status_code == 404
     payload = response.get_json()
     assert payload.get("failed") == []
+
+def test_merge_feedback_unreact_removes_only_matching_reaction():
+    container = FakeContainerClient(
+        "https://example.com/assistant-chat-files-v2",
+    )
+
+    feedback_blob = FakeBlob(
+        "user-123/session-1.feedback.json",
+        {
+            "sessionid": "session-1",
+            "category": "feedback",
+            "type": "chat-feedback",
+            "deleted": "false",
+        },
+        json.dumps(
+            {
+                "sessionId": "session-1",
+                "feedback_responses": [
+                    {
+                        "messageId": "message-1",
+                        "sessionId": "session-1",
+                        "type": "reaction",
+                        "positive": True,
+                    },
+                    {
+                        "messageId": "message-1",
+                        "sessionId": "session-1",
+                        "type": "suggestion",
+                        "description": "Keep this suggestion",
+                    },
+                    {
+                        "messageId": "message-2",
+                        "sessionId": "session-1",
+                        "type": "reaction",
+                        "positive": False,
+                    },
+                ],
+            }
+        ).encode("utf-8"),
+        "application/json",
+    )
+    container.add_blob(feedback_blob)
+
+    routes_playground._merge_feedback_entry(
+        container,
+        "user-123",
+        "session-1",
+        {
+            "messageId": "message-1",
+            "sessionId": "session-1",
+            "type": "reaction",
+            "positive": None,
+        },
+    )
+
+    saved = json.loads(feedback_blob.data)
+    responses = saved["feedback_responses"]
+
+    assert {
+        "sessionId": "session-1",
+        "messageId": "message-1",
+        "type": "suggestion",
+        "description": "Keep this suggestion",
+    } in responses
+
+    assert {
+        "messageId": "message-2",
+        "sessionId": "session-1",
+        "type": "reaction",
+        "positive": False,
+    } in responses
+
+    assert not any(
+        response.get("messageId") == "message-1"
+        and response.get("type") == "reaction"
+        for response in responses
+    )
+
+def test_merge_feedback_replaces_existing_reaction():
+    container = FakeContainerClient(
+        "https://example.com/assistant-chat-files-v2",
+    )
+
+    feedback_blob = FakeBlob(
+        "user-123/session-1.feedback.json",
+        {
+            "sessionid": "session-1",
+            "category": "feedback",
+            "type": "chat-feedback",
+            "deleted": "false",
+        },
+        json.dumps(
+            {
+                "sessionId": "session-1",
+                "feedback_responses": [
+                    {
+                        "messageId": "message-1",
+                        "sessionId": "session-1",
+                        "type": "reaction",
+                        "positive": True,
+                    }
+                ],
+            }
+        ).encode("utf-8"),
+        "application/json",
+    )
+    container.add_blob(feedback_blob)
+
+    routes_playground._merge_feedback_entry(
+        container,
+        "user-123",
+        "session-1",
+        {
+            "messageId": "message-1",
+            "sessionId": "session-1",
+            "type": "reaction",
+            "positive": False,
+            "description": "disliked",
+        },
+    )
+
+    saved = json.loads(feedback_blob.data)
+    reactions = [
+        response
+        for response in saved["feedback_responses"]
+        if response.get("messageId") == "message-1"
+        and response.get("type") == "reaction"
+    ]
+
+    assert len(reactions) == 1
+    assert reactions[0]["positive"] is False

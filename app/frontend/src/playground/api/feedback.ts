@@ -25,7 +25,7 @@ interface SendChatFeedbackOptions {
 
 /**
  * Persist playground feedback via the playground backend.
- *
+ * Now only takes feedback submitted only through general feedback form.
  * Mirrors the auth pattern of the other playground API clients by attaching the
  * caller's MSAL bearer token when available.
  */
@@ -57,6 +57,7 @@ export async function sendPlaygroundFeedback({
 
 /**
  * Persist chat feedback via the playground backend.
+ * Handles feedback for individual chat messages; like, dislike, unreact, chatfeedback-form (issues/suggestions)
  */
 export async function sendChatFeedback({
   accessToken,

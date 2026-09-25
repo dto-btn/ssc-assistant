@@ -98,6 +98,26 @@ export function isChatArchiveAttachment(file: FileAttachment): boolean {
 }
 
 /**
+ * Detects chat feedback archive attachments.
+ * @param file - The file attachment to check.
+ * @returns True if the file is a chat feedback archive attachment, false otherwise.
+ */
+export function isChatFeedbackAttachment(file: FileAttachment): boolean {
+  const metadataType = file.metadataType?.toLowerCase();
+  if (metadataType === "chat-feedback") {
+    return true;
+  }
+
+  const category = file.category?.toLowerCase();
+  if (category !== "feedback") {
+    return false;
+  }
+
+  const name = file.originalName || file.blobName;
+  return typeof name === "string" && name.endsWith(".feedback.json");
+}
+
+/**
  * Selects the newest archive candidate based on metadata timestamps.
  */
 export function pickLatestArchive(files?: FileAttachment[] | null): FileAttachment | undefined {
