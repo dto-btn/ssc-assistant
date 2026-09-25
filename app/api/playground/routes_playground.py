@@ -1,21 +1,25 @@
 import base64
+from email import message
 import uuid
 import concurrent.futures
 import re
 import unicodedata
+import json
 from datetime import datetime
 from typing import Dict, Any, Optional, Tuple, List, Type, TypeVar
 import logging
 from urllib.parse import urlparse, quote, unquote
 from werkzeug.utils import secure_filename
 import mimetypes
+from datetime import timezone
 
 from utils.auth import auth, user_ad
 from utils.azure_clients import get_blob_service_client
 from utils.db import leave_feedback
 from utils.file_manager import FileManager
 from apiflask import APIBlueprint
-from azure.core.exceptions import AzureError, HttpResponseError, ResourceExistsError, ResourceNotFoundError
+from azure.core.exceptions import AzureError, HttpResponseError, ResourceExistsError, ResourceNotFoundError, ResourceModifiedError
+from azure.core import MatchConditions
 from azure.storage.blob import ContentSettings, BlobClient, ContainerClient
 from utils.models import (
     PlaygroundSessionFilesQuery,
@@ -28,6 +32,8 @@ from utils.models import (
     PlaygroundExtractTextRequest,
     PlaygroundExtractTextResponse,
     PlaygroundFeedbackRequest,
+    PlaygroundChatFeedbackRequest,
+    PlaygroundChatFeedbackEntry,
     PlaygroundFeedbackResponse,
     Feedback,
 )
@@ -77,6 +83,13 @@ SUPPORTED_EXTENSIONS = {
     ".svg",
 }
 
+FEEDBACK_ATTACHMENT_SUPPORTED_EXTENSIONS = {
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".gif",
+}
+
 TEXT_MIME_PREFIX = "text/"
 IMAGE_MIME_PREFIX = "image/"
 DELETED_FLAG_VALUE = "true"
@@ -106,6 +119,11 @@ def _normalize_extension(filename: str) -> Optional[str]:
 # Keep attachment policy identical to the main app's extractor for `files` uploads.
 def _is_supported_file(mime_type: Optional[str], filename: str, category: str) -> bool:
     """Validate whether a file is eligible for upload given its MIME or extension."""
+    if category == "feedback": ## Check if the file belongs to the feedback category
+        normalized_extension = _normalize_extension(filename)
+        if normalized_extension and normalized_extension in FEEDBACK_ATTACHMENT_SUPPORTED_EXTENSIONS:
+            return True
+        return False
     if category != "files":
         return True
     normalized_mime = (mime_type or "").lower()
@@ -357,6 +375,76 @@ def _fetch_file_bytes(
     )
     return file_bytes, content_type
 
+def _merge_feedback_entry(container_client, oid: str, session_id: str, entry: Dict[str, Any]) -> None:
+    """Read {sessionId}.feedback.json, replace any entry with the same messageId+kind, write it back."""
+    sanitized_session = secure_filename(str(session_id)) or str(session_id)
+    blob_name = f"{oid}/{sanitized_session}.feedback.json"
+    blob_client = container_client.get_blob_client(blob_name)
+    # Attempt to merge the feedback entry up to 3 times in case of concurrent modifications.
+    for attempt in range(3):
+        etag = None
+        doc: Dict[str, Any]
+
+        try:
+            props = blob_client.get_blob_properties()
+            etag = props.etag
+            raw = blob_client.download_blob(max_concurrency=1).readall()
+
+            try:
+                parsed = json.loads(raw)
+                if not isinstance(parsed, dict):
+                    raise ValueError("Feedback blob root is not an object.")
+                doc = parsed
+            except (json.JSONDecodeError, TypeError, ValueError):
+                logger.warning("Failed to parse feedback blob, initializing new document.", extra={"blob_name": blob_name})
+                doc = {"sessionId": session_id, "feedback_responses": []}
+        except ResourceNotFoundError:
+            doc = {"sessionId": session_id, "feedback_responses": []}
+        except AzureError:
+            logger.exception("Failed to fetch blob properties", extra={"blob_name": blob_name})
+            raise
+
+        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")  
+        entry["submittedAt"] = timestamp
+
+        existing = doc.get("feedback_responses", [])
+        doc["feedback_responses"] = [
+            e for e in existing
+            if not (e.get("messageId") == entry.get("messageId") and e.get("type") == entry.get("type"))
+        ] + [entry]
+        doc["lastUpdated"] = timestamp
+
+        payload = json.dumps(doc).encode("utf-8")
+        metadata = _normalize_blob_metadata({
+            "user_id": oid,
+            "sessionid": str(session_id),
+            "category": "feedback",
+            "type": "chat-feedback",
+            "lastupdated": timestamp,
+            "deleted": "false",
+        })
+
+        try:
+            upload_kwargs = {
+                "overwrite": True,
+                "metadata":metadata,
+                "content_settings": ContentSettings(content_type="application/json"),
+            }
+            if etag:
+                upload_kwargs["etag"] = etag
+                upload_kwargs["match_condition"] = MatchConditions.IfNotModified
+            
+            blob_client.upload_blob(
+                payload,
+                **upload_kwargs,
+            )
+            return
+        except ResourceModifiedError:
+            if attempt == 2:
+                raise
+            logger.warning("Resource modified, retrying upload (attempt %d)", attempt + 1)
+            continue
+
 # GET /api/playground/files-for-session: Returns files for a given sessionId by searching blob metadata
 @api_playground.get("/files-for-session")
 @api_playground.doc(
@@ -481,7 +569,8 @@ def upload_file(upload_request: PlaygroundUploadRequest):
     original_name = upload_request.name
     session_id = upload_request.sessionId or upload_request.session_id
     category = (upload_request.category or "files").lower()
-    safe_category = "chat" if category not in {"files", "chat"} else category
+    ALLOWED_CATEGORIES = {"files", "chat", "feedback"}
+    safe_category = "chat" if category not in ALLOWED_CATEGORIES else category
     mime_type = upload_request.fileType or upload_request.mimeType or upload_request.type
     metadata_input = upload_request.metadata
     extra_metadata: Dict[str, Any] = metadata_input if isinstance(metadata_input, dict) else {}
@@ -521,6 +610,11 @@ def upload_file(upload_request: PlaygroundUploadRequest):
         sanitized_session = secure_filename(str(session_id)) or str(session_id)
         base_filename = f"{sanitized_session}.chat.json"
         blob_name = f"{oid}/{base_filename}"
+    elif safe_category == "feedback":
+        message_id = extra_metadata.get("messageId")
+        if not message_id:
+            return {"message": "messageId is required for feedback attachments"}, 400
+        blob_name = f"{oid}/{safe_category}/{session_segment}{message_id}_{normalized_name}"
     else:
         blob_name = f"{oid}/{safe_category}/{session_segment}{uuid.uuid4().hex}_{normalized_name}"
 
@@ -915,6 +1009,50 @@ def submit_feedback(payload: PlaygroundFeedbackRequest):
         leave_feedback(feedback)
     except Exception:
         logger.exception("Failed to store playground feedback")
+        return {"message": "Failed to save feedback"}, 500
+
+    return {"message": "Feedback saved!"}
+
+@api_playground.post("/feedback/chat")
+@api_playground.input(PlaygroundChatFeedbackRequest.Schema, arg_name="payload")  # type: ignore[attr-defined]
+@api_playground.output(PlaygroundFeedbackResponse.Schema)  # type: ignore[attr-defined]
+@auth.login_required(role="chat")
+@user_ad.login_required
+def submit_chat_feedback(payload: PlaygroundChatFeedbackRequest):
+    try:
+        payload = _coerce_to_dataclass(payload, PlaygroundChatFeedbackRequest)
+        oid = _get_authenticated_oid()
+    except PlaygroundAPIError as exc:
+        return {"message": _public_error_message(exc)}, exc.status_code
+
+    encoded_payload = payload.feedback
+    if encoded_payload.startswith("data:"):
+        encoded_payload = encoded_payload.split(",", 1)[-1]
+
+    try:
+        file_bytes = base64.b64decode(encoded_payload)
+    except Exception:
+        return {"message": "Failed to decode feedback file"}, 400
+    try:
+        entry = json.loads(file_bytes)
+        _=_coerce_to_dataclass(entry, PlaygroundChatFeedbackEntry)
+    except (json.JSONDecodeError, ValueError, TypeError, PlaygroundAPIError):
+        logger.exception("Failed to decode playground chat feedback")
+        return {"message": "Invalid feedback payload"}, 400
+    
+    entry["messageId"] = payload.messageId
+    try:
+        container_client = _get_container_client()
+        container_client.create_container()
+    except ResourceExistsError:
+        pass
+    except AzureError:
+        logger.exception("Failed to access blob service for oid %s", oid)
+        return {"message": "Server error"}, 500
+    try:
+        _merge_feedback_entry(container_client, oid, payload.sessionId, entry)
+    except Exception:
+        logger.exception("Failed to store playground chat feedback")
         return {"message": "Failed to save feedback"}, 500
 
     return {"message": "Feedback saved!"}

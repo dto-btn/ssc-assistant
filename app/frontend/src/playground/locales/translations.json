@@ -631,6 +631,10 @@
     "en": "Open profile menu",
     "fr": "Ouvrir le menu du profil"
   },
+  "skip.to.chat.input": {
+    "en": "Skip to chat input",
+    "fr": "Aller au champ de saisie de la discussion"
+  },
   "skip.to.main": {
     "en": "Skip to main content",
     "fr": "Aller au contenu principal"
@@ -752,8 +756,8 @@
     "fr": "Vous avez sélectionné plus de {{max}} fichiers. Seuls les {{max}} premiers ont été conservés."
   },
   "chat.feedback.attachments.max": {
-    "en": "You can attach up to 3 images (JPG, PNG, GIF).",
-    "fr": "Vous pouvez joindre jusqu'à 3 images (JPG, PNG, GIF)."
+    "en": "You can attach up to 3 images (JPG, PNG, GIF). Up to {{max_size}} MB each.",
+    "fr": "Vous pouvez joindre jusqu'à 3 images (JPG, PNG, GIF). Jusqu'à {{max_size}} Mo chacune."
   },
   "chat.feedback.note.label": {
     "en": "Note",
@@ -766,5 +770,9 @@
   "chat.feedback.back": {
     "en": "Back",
     "fr": "Retour"
+  },
+  "chat.feedback.submitting": {
+    "en": "Submitting feedback...",
+    "fr": "Envoi des commentaires..."
   }
 }

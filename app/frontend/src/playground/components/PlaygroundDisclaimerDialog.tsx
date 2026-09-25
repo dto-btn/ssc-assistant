@@ -19,6 +19,7 @@ import {
   type PlaygroundDisclaimerKey,
   type PlaygroundDisclaimerState,
 } from "../utils/disclaimerState";
+import { useInertRoot } from "../../hooks/useInertRoot";
 
 const CONTENT_KEYS: Record<
   PlaygroundDisclaimerKey,
@@ -49,6 +50,9 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
     [state],
   );
 
+  // Toggle `inert` on the application root while the playground disclaimer is visible
+  useInertRoot(!!currentDisclaimer);
+
   const handleAccept = () => {
     if (!currentDisclaimer) {
       return;
@@ -78,14 +82,16 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
   const contentKeys = CONTENT_KEYS[currentDisclaimer];
   const descriptionId = "playground-disclaimer-description";
 
-  return (
+  const dialog = (
     <Dialog
       open
       fullWidth
       maxWidth="md"
       fullScreen={isSmallScreen}
       disableEscapeKeyDown
+      disableScrollLock
       onClose={handleMandatoryDialogClose}
+      container={() => document.getElementById("modal-root") ?? document.body}
       aria-labelledby="playground-disclaimer-title"
       aria-describedby={descriptionId}
     >
@@ -127,6 +133,8 @@ const PlaygroundDisclaimerDialog: React.FC = () => {
       </DialogActions>
     </Dialog>
   );
+
+  return dialog;
 };
 
 export default PlaygroundDisclaimerDialog;

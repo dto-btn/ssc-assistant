@@ -16,11 +16,12 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  CircularProgress,
   TextField,
   Typography,
   useMediaQuery,
   useTheme,
-} from "@mui/material";
+} from "@mui/material"
 import { visuallyHidden } from "@mui/utils";
 import { alpha } from "@mui/material/styles";
 import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined";
@@ -30,43 +31,27 @@ import { useTranslation } from "react-i18next";
 import { submitChatFeedback } from "../store/thunks/feedbackThunks";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../store";
+import { useAppSelector } from "../store/hooks"
+import { uploadFile } from "../api/storage"
+import type {
+  FileAttachment,
+  ChatFeedbackFormSubmission,
+  FeedbackType,
+} from "../types"
+import { addToast } from "../store/slices/toastSlice"
 
-type FeedbackType = "issue" | "suggestion";
+
 type Step = "select" | "detail";
 
 const MAX_ATTACHMENTS = 3;
-const MAX_ATTACHMENT_SIZE_BYTES = 2 * 1024 * 1024; // Set the max file size
+const MAX_SIZE_MB = 10;
+const MAX_ATTACHMENT_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024; // Set the max file size
 const ALLOWED_ATTACHMENT_TYPES = new Set([
   "image/jpeg",
   "image/png",
-  "image/gif",
-]);
+  "image/gif", // possibly later to allow PDFs or other file types, but for now only images are allowed
+])
 
-interface FeedbackAttachment {
-  name: string;
-  size: number;
-  type: string;
-  url?: string; // Optional URL for uploaded attachments, if applicable
-}
-
-export type ChatFeedbackPayload =
-  | {
-      messageId: string;
-      sessionId: string;
-      type: "issue";
-      // positive: false;
-      description: string;
-      stepsToReproduce: string;
-      attachments: FeedbackAttachment[];
-    }
-  | {
-      messageId: string;
-      sessionId: string;
-      type: "suggestion";
-      // positive: true;
-      suggestion: string;
-      attachments: FeedbackAttachment[];
-    };
 
 interface ChatFeedbackFormProps {
   open: boolean;
@@ -81,102 +66,103 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
   messageId,
   sessionId,
 }) => {
-  const { t } = useTranslation("playground");
-  const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
-  const dispatch = useDispatch<AppDispatch>();
+  const { t } = useTranslation("playground")
+  const theme = useTheme()
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"))
+  const dispatch = useDispatch<AppDispatch>()
+  const accessToken = useAppSelector((state) => state.auth.accessToken)
 
-  // State for managing the current step, feedback type, and form inputs
-  const [step, setStep] = useState<Step>("select");
-  const [feedbackType, setFeedbackType] = useState<FeedbackType | null>(null);
-  const [issueDescription, setIssueDescription] = useState("");
-  const [issueSteps, setIssueSteps] = useState("");
-  const [suggestion, setSuggestion] = useState("");
-  const [attachments, setAttachments] = useState<File[]>([]);
-  const [attachmentAnnouncement, setAttachmentAnnouncement] = useState("");
-  const [attachmentError, setAttachmentError] = useState<string>("");
+
+  // State variables for form steps, feedback type, description, issue steps, attachments, and validation/submission states
+  const [step, setStep] = useState<Step>("select")
+  const [feedbackType, setFeedbackType] = useState<FeedbackType | null>(null)
+  const [description, setDescription] = useState("")
+  const [issueSteps, setIssueSteps] = useState("")
+  const [attachments, setAttachments] = useState<File[]>([])
+  const [attachmentAnnouncement, setAttachmentAnnouncement] = useState("")
+  const [attachmentError, setAttachmentError] = useState<string>("")
   const [attachmentErrorAnnouncement, setAttachmentErrorAnnouncement] =
-    useState<string>("");
+    useState<string>("")
 
-  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false); // validation gate for required fields
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false) // validation gate for required fields
+  const [isSubmitting, setIsSubmitting] = useState(false) // submission state for async feedback submission
 
   // Refs for focusing inputs on validation errors
   const issueStepsRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(
     null,
-  );
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const issueDescriptionRef = useRef<
-    HTMLInputElement | HTMLTextAreaElement | null
-  >(null);
+  )
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const descriptionRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(
+    null,
+  )
   const suggestionRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(
     null,
-  );
+  )
 
-  const brandColor = theme.palette.primary.main;
+  const brandColor = theme.palette.primary.main
 
   // Reset all state to initial values
   const resetState = () => {
-    setStep("select");
-    setFeedbackType(null);
-    setIssueDescription("");
-    setIssueSteps("");
-    setSuggestion("");
-    setAttachments([]);
+    setStep("select")
+    setFeedbackType(null)
+    setDescription("")
+    setIssueSteps("")
+    setAttachments([])
 
-    setAttachmentAnnouncement("");
-    setHasAttemptedSubmit(false);
-    setAttachmentError("");
-    setAttachmentErrorAnnouncement("");
+    setAttachmentAnnouncement("")
+    setHasAttemptedSubmit(false)
+    setAttachmentError("")
+    setAttachmentErrorAnnouncement("")
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = ""
     }
-  };
+  }
 
   // Action handlers for dialog navigation and form submission
   const handleClose = useCallback(() => {
-    onClose();
-  }, [onClose]);
+    onClose()
+  }, [onClose])
 
   const handleSelectType = useCallback((type: FeedbackType) => {
-    setFeedbackType(type);
-    setStep("detail");
-  }, []);
+    setFeedbackType(type)
+    setStep("detail")
+  }, [])
 
   const handleBack = useCallback(() => {
-    setStep("select");
-    resetState();
-  }, []);
+    setStep("select")
+    resetState()
+  }, [])
 
   const handleAttachmentsChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      const selectedFiles = Array.from(event.target.files ?? []);
+      const selectedFiles = Array.from(event.target.files ?? [])
       const invalidTypeFiles = selectedFiles.filter(
         (file) => !ALLOWED_ATTACHMENT_TYPES.has(file.type),
-      );
+      )
 
       const oversizedFiles = selectedFiles.filter(
         (file) => file.size > MAX_ATTACHMENT_SIZE_BYTES,
-      );
+      )
 
       const validFiles = selectedFiles.filter(
         (file) =>
           ALLOWED_ATTACHMENT_TYPES.has(file.type) &&
           file.size <= MAX_ATTACHMENT_SIZE_BYTES,
-      );
+      )
 
-      const keptFiles = validFiles.slice(0, MAX_ATTACHMENTS);
-      const tooManyFiles = validFiles.length > MAX_ATTACHMENTS;
+      const keptFiles = validFiles.slice(0, MAX_ATTACHMENTS)
+      const tooManyFiles = validFiles.length > MAX_ATTACHMENTS
 
-      setAttachments(keptFiles);
+      setAttachments(keptFiles)
 
-      const errors: string[] = [];
+      const errors: string[] = []
 
       if (invalidTypeFiles.length > 0) {
         errors.push(
           t("chat.feedback.attachments.invalid.type", {
             defaultValue: "Only JPEG, PNG, and GIF images are allowed.",
           }),
-        );
+        )
       }
 
       if (oversizedFiles.length > 0) {
@@ -184,7 +170,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
           t("chat.feedback.attachments.invalid.size", {
             max: MAX_ATTACHMENT_SIZE_BYTES / (1024 * 1024),
           }),
-        );
+        )
       }
 
       if (tooManyFiles) {
@@ -192,109 +178,130 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
           t("chat.feedback.attachments.limit.exceeded", {
             max: MAX_ATTACHMENTS,
           }),
-        );
+        )
       }
 
-      const errorMessage = errors.join(" ");
-      setAttachmentError(errorMessage);
-      setAttachmentErrorAnnouncement(errorMessage);
+      const errorMessage = errors.join(" ")
+      setAttachmentError(errorMessage)
+      setAttachmentErrorAnnouncement(errorMessage)
 
       const selectedMessage =
         keptFiles.length > 0
           ? `${t("chat.feedback.attachments.selected", {
               count: keptFiles.length,
             })}: ${keptFiles.map((file) => file.name).join(", ")}`
-          : t("chat.feedback.attachments.none");
+          : t("chat.feedback.attachments.none")
 
-      setAttachmentAnnouncement(selectedMessage);
+      setAttachmentAnnouncement(selectedMessage)
     },
     [t],
-  );
+  )
 
   useEffect(() => {
-    if (!open || step !== "detail") return;
+    if (!open || step !== "detail") return
 
     const targetInput =
-      feedbackType === "issue"
-        ? issueDescriptionRef.current
-        : suggestionRef.current;
-    targetInput?.focus();
-  }, [feedbackType, open, step]);
-
-  // Validation checks for required fields based on feedback type
-  const isIssueInvalid =
-    feedbackType === "issue" &&
-    (!issueDescription.trim() || !issueSteps.trim());
-  const isSuggestionInvalid =
-    feedbackType === "suggestion" && !suggestion.trim();
-  const isFormInvalid = isIssueInvalid || isSuggestionInvalid;
+      feedbackType === "issue" ? descriptionRef.current : suggestionRef.current
+    targetInput?.focus()
+  }, [feedbackType, open, step])
 
   /** Uses feedback thunks to handle submission of the payload */
-  const handleSubmit = useCallback(() => {
-    setHasAttemptedSubmit(true);
+  const handleSubmit = useCallback(async () => {
+    setHasAttemptedSubmit(true)
+    // Validate required fields based on feedback type
     if (!feedbackType) {
-      return;
+      return
     }
 
     if (feedbackType === "issue") {
-      if (!issueDescription.trim()) {
-        issueDescriptionRef.current?.focus();
-        return;
+      if (!description.trim()) {
+        descriptionRef.current?.focus()
+        return
       }
 
       if (!issueSteps.trim()) {
-        issueStepsRef.current?.focus();
-        return;
+        issueStepsRef.current?.focus()
+        return
       }
     }
 
-    if (feedbackType === "suggestion" && !suggestion.trim()) {
-      suggestionRef.current?.focus();
-      return;
+    if (feedbackType === "suggestion" && !description.trim()) {
+      suggestionRef.current?.focus()
+      return
+    }
+    if (!accessToken) {
+      console.error("No access token available for chat feedback form")
+      dispatch(
+        addToast({
+          message: t("feedback.error", { ns: "playground" }),
+          isError: true,
+        }),
+      )
+      return
+    }
+    // proceed with submission if all required fields are valid
+    setIsSubmitting(true)
+    let uploadedAttachments: FileAttachment[] = []
+    if (attachments && attachments.length > 0) {
+      try {
+        uploadedAttachments = await Promise.all(
+          attachments.map((file) =>
+            uploadFile({
+              file,
+              accessToken,
+              sessionId,
+              category: "feedback",
+              metadata: { messageId },
+            }),
+          ),
+        )
+      } catch (error) {
+        console.error("Error uploading attachments:", error) // implement logging later
+        dispatch(
+          addToast({
+            message: t("chat.feedback.attachments.upload.error"),
+            isError: true,
+          }),
+        )
+        setIsSubmitting(false)
+        return
+      }
     }
 
-    const attachmentPayload = attachments.map((file) => ({
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      url: undefined, // Placeholder for uploaded file URL if needed
-    }));
-
-    const payload: ChatFeedbackPayload = // Construct the payload based on feedback type
+    const payload: ChatFeedbackFormSubmission =
       feedbackType === "issue"
         ? {
             messageId,
             sessionId,
             type: "issue",
-            // positive: false,
-            description: issueDescription.trim(),
+            description: description.trim(),
             stepsToReproduce: issueSteps.trim(),
-            attachments: attachmentPayload,
+            attachments: uploadedAttachments,
           }
         : {
             messageId,
             sessionId,
             type: "suggestion",
-            // positive: true,
-            suggestion: suggestion.trim(),
-            attachments: attachmentPayload,
-          };
+            description: description.trim(),
+            attachments: uploadedAttachments,
+          }
 
-    dispatch(submitChatFeedback(payload)); // This is a thunk that will handle the API call and dispatching to the store
-
-    handleClose();
+    await dispatch(submitChatFeedback(payload)) // This is a thunk that will handle the API call and dispatching to the store
+    setIsSubmitting(false)
+    handleClose()
   }, [
     attachments,
     feedbackType,
     handleClose,
-    isFormInvalid,
-    issueDescription,
+    accessToken,
+    description,
     issueSteps,
     messageId,
     sessionId,
-    suggestion,
     dispatch,
-  ]);
+    t,
+    uploadFile,
+  ])
 
   /** sx applied to each category card — full WCAG 2.5.5 touch target and keyboard focus ring */
   const cardSx = {
@@ -317,7 +324,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
       outline: `2px solid ${brandColor}`,
       outlineOffset: "2px",
     },
-  } as const;
+  } as const
 
   const iconWrapperSx = (color: string) => ({
     display: "flex",
@@ -328,14 +335,14 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
     borderRadius: "50%",
     bgcolor: alpha(color, 0.12),
     color,
-  });
+  })
 
   const dialogTitle =
     step === "select"
       ? t("chat.feedback.title")
       : feedbackType === "issue"
         ? t("chat.feedback.report.issue")
-        : t("chat.feedback.suggestion");
+        : t("chat.feedback.suggestion")
 
   return (
     <Dialog
@@ -459,17 +466,17 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
               <>
                 <TextField
                   label={t("chat.feedback.issue.description.label")}
-                  inputRef={issueDescriptionRef}
+                  inputRef={descriptionRef}
                   placeholder={t("chat.feedback.issue.description.placeholder")}
-                  value={issueDescription}
-                  onChange={(e) => setIssueDescription(e.target.value)}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   multiline
                   rows={3}
                   fullWidth
                   required
-                  error={hasAttemptedSubmit && !issueDescription.trim()}
+                  error={hasAttemptedSubmit && !description.trim()}
                   helperText={
-                    hasAttemptedSubmit && !issueDescription.trim()
+                    hasAttemptedSubmit && !description.trim()
                       ? t("chat.feedback.issue.description.required")
                       : " "
                   }
@@ -479,7 +486,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                 <TextField
                   label={t("chat.feedback.issue.steps.label")}
                   inputRef={issueStepsRef}
-                  placeholder={"" + t("chat.feedback.issue.steps.placeholder")}
+                  placeholder={t("chat.feedback.issue.steps.placeholder")}
                   value={issueSteps}
                   onChange={(e) => setIssueSteps(e.target.value)}
                   multiline
@@ -498,18 +505,16 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
               <TextField
                 label={t("chat.feedback.suggestion.note.label")}
                 inputRef={suggestionRef}
-                value={suggestion}
-                placeholder={
-                  "" + t("chat.feedback.suggestion.note.placeholder")
-                }
-                onChange={(e) => setSuggestion(e.target.value)}
+                value={description}
+                placeholder={t("chat.feedback.suggestion.note.placeholder")}
+                onChange={(e) => setDescription(e.target.value)}
                 multiline
                 rows={4}
                 fullWidth
                 required
-                error={hasAttemptedSubmit && !suggestion.trim()}
+                error={hasAttemptedSubmit && !description.trim()}
                 helperText={
-                  hasAttemptedSubmit && !suggestion.trim()
+                  hasAttemptedSubmit && !description.trim()
                     ? t("chat.feedback.suggestion.note.required")
                     : " "
                 }
@@ -551,7 +556,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
               </Box>
               {attachmentError && (
                 <Typography
-                  role="alert"
+                  aria-hidden="true"
                   variant="caption"
                   color="error"
                   sx={{ mt: 0.75, display: "block" }}
@@ -569,7 +574,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
                 color="text.secondary"
                 sx={{ mt: 0.75, display: "block" }}
               >
-                {t("chat.feedback.attachments.max")}
+                {t("chat.feedback.attachments.max", { max_size: MAX_SIZE_MB })}
               </Typography>
               <Box
                 component="span"
@@ -587,13 +592,35 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
       {step === "detail" && (
         <DialogActions>
           <Button onClick={handleClose}>{t("cancel")}</Button>
-          <Button variant="contained" onClick={handleSubmit}>
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
+          >
             {t("submit")}
+            {isSubmitting && (
+              <CircularProgress size={20} sx={{ ml: 1, color: "inherit" }} />
+            )}
           </Button>
+
+          {isSubmitting && (
+            <Box
+              component="span"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              sx={visuallyHidden}
+            >
+              {t("chat.feedback.submitting", {
+                defaultValue: "Submitting feedback...",
+              })}
+            </Box>
+          )}
         </DialogActions>
       )}
     </Dialog>
-  );
+  )
 };
 
 export default ChatFeedbackForm;

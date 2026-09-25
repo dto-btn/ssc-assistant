@@ -110,7 +110,19 @@ export const UserProfilePicture = ({ size, fontSize }: UserProfileProps) => {
           src={profilePictureURL}
           sx={size ? { width: size, height: size } : {}}
         />
-        <Typography sx={{ marginLeft: 3, textTransform: 'none', color: 'text.primary' }}>{fullName}</Typography>
+        <Typography
+          noWrap
+          sx={{
+            marginLeft: 3,
+            textTransform: 'none',
+            color: 'text.primary',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            minWidth: 0,
+          }}
+        >
+          {fullName}
+        </Typography>
       </>
     );
   }
@@ -119,7 +131,19 @@ export const UserProfilePicture = ({ size, fontSize }: UserProfileProps) => {
   return (
     <>
       <Avatar aria-hidden alt={fullName} sx={letterAvatar?.sx} children={letterAvatar?.children} />
-      <Typography sx={{ marginLeft: 1, textTransform: 'none', color: 'text.primary' }}>{fullName}</Typography>
+      <Typography
+        noWrap
+        sx={{
+          marginLeft: 1,
+          textTransform: 'none',
+          color: 'text.primary',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          minWidth: 0,
+        }}
+      >
+        {fullName}
+      </Typography>
     </>
   );
 };
