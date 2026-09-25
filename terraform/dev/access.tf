@@ -41,7 +41,7 @@ locals {
     {
       name = "dev-zed"
       user_principal_name = "zbigniew.rakowski@ssc-spc.gc.ca"
-       dev = true
+      dev = true
     },
   ]
 
