@@ -50,6 +50,7 @@ const MainScreen = () => {
   // Chat store now hydrates at creation
   // Avoid calling getCurrentChatHistory() repeatedly in JSX/effects; keep a stable reference per render
   const currentChatHistory = getCurrentChatHistory();
+  const sidebarChatHistories = PersistenceUtils.getChatHistories();
   const chatService = useChatService();
   const apiRequestService = useApiRequestService();
 
@@ -583,7 +584,7 @@ const MainScreen = () => {
         }
         appDrawerContents={
           <DrawerMenu
-            chatDescriptions={chatHistoriesDescriptions}
+            chatHistories={sidebarChatHistories}
             currentChatIndex={currentChatIndex}
             handleDeleteSavedChat={handleDeleteSavedChat}
             handleLoadSavedChat={chatService.handleLoadSavedChat}

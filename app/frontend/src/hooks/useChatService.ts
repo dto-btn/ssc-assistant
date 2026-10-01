@@ -306,8 +306,10 @@ export const useChatService = () => {
                             ) {
                                 return {
                                     ...item,
+                                    createdAt: item.createdAt || new Date().toISOString(),
                                     message: {
                                         ...item.message,
+                                        createdAt: item.message.createdAt || item.createdAt || new Date().toISOString(),
                                         content: message_chunk,
                                     },
                                 };
@@ -318,6 +320,7 @@ export const useChatService = () => {
 
                     const updatedChatHistory: ChatHistory = {
                         ...prevChatHistory,
+                        updatedAt: new Date().toISOString(),
                         chatItems: updatedChatItems,
                     };
 

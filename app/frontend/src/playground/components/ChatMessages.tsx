@@ -48,6 +48,7 @@ import { transformToBusinessRequest } from "../utils/bits_utils";
 import { MONTH_INDEX_BY_NAME, MONTH_NAMES_PATTERN, MERMAID_FENCE_PATTERN, MERMAID_DIAGRAM_TYPE_PATTERN } from "../constants/patterns";
 import { normalizePromptForInference } from "../utils/promptUtils";
 import { formatIsoDate } from "../services/bitsTransformService";
+import { formatConversationTimestamp } from "../../util/chatTime";
 import "highlight.js/styles/github.css";
 
 const BusinessRequestTable = lazy(
@@ -85,6 +86,7 @@ interface AssistantMessageBubbleProps {
 
 interface ChatMessageRowProps {
   message: Message;
+  timestampLabel?: string;
   pulseThisAssistantIcon: boolean;
   assistantStatusLabel?: string;
   isPreStreamingPhase: boolean;
@@ -134,6 +136,19 @@ const getPlainText = (children: React.ReactNode): string => {
       return "";
     })
     .join("");
+};
+
+const shouldShowMessageTimestamp = (message: Message, previousMessage?: Message): boolean => {
+  if (!previousMessage) {
+    return true;
+  }
+
+  const currentDate = new Date(message.timestamp);
+  const previousDate = new Date(previousMessage.timestamp);
+  const currentDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate()).getTime();
+  const previousDay = new Date(previousDate.getFullYear(), previousDate.getMonth(), previousDate.getDate()).getTime();
+
+  return currentDay !== previousDay || message.timestamp - previousMessage.timestamp >= 60 * 60 * 1000;
 };
 
 const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({
@@ -871,6 +886,7 @@ const resolveAttachmentsForMessage = (
 
 const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
   message,
+  timestampLabel,
   pulseThisAssistantIcon,
   assistantStatusLabel,
   isPreStreamingPhase,
@@ -945,9 +961,35 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
         py: 1,
         width: "100%",
         maxWidth: { xs: "100%", md: "980px" },
-        justifyContent: isUserMessage ? "flex-end" : "flex-start",
+        flexDirection: "column",
+        alignItems: "stretch",
       }}
     >
+      {timestampLabel && (
+        <Box sx={{ display: "flex", justifyContent: "center", width: "100%", pb: 1 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              bgcolor: "background.paper",
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: "999px",
+              px: 1.25,
+              py: 0.25,
+            }}
+          >
+            {timestampLabel}
+          </Typography>
+        </Box>
+      )}
+      <Box
+        sx={{
+          display: "flex",
+          width: "100%",
+          justifyContent: isUserMessage ? "flex-end" : "flex-start",
+        }}
+      >
       {isAssistantMessage ? (
         <AssistantMessageBubble
           message={message}
@@ -995,6 +1037,7 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
           )}
         </Box>
       )}
+      </Box>
     </ListItem>
   );
 });
@@ -1117,7 +1160,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
           width: "100%",
         }}
       >
-        {messages.map((message: Message) => {
+        {messages.map((message: Message, index) => {
           const isAssistantMessage = message.role === "assistant";
           const pulseThisAssistantIcon = Boolean(
             isAssistantMessage
@@ -1129,11 +1172,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
               && message.id === activeAssistantMessageId
               && (assistantResponsePhase === "waiting-first-token" || assistantResponsePhase === "drafting")
           );
+          const showTimestamp = shouldShowMessageTimestamp(message, messages[index - 1]);
 
           return (
             <ChatMessageRow
               key={message.id}
               message={message}
+              timestampLabel={showTimestamp ? formatConversationTimestamp(message.timestamp) : undefined}
               pulseThisAssistantIcon={pulseThisAssistantIcon}
               assistantStatusLabel={assistantStatusLabel}
               isPreStreamingPhase={isPreStreamingPhase}
