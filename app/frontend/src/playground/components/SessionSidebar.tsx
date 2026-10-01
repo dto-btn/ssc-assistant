@@ -186,7 +186,10 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
 
   const [activeIndex, setActiveIndex] = useState(-1);
   const sessionOrderKey = sessionsNewestFirst.map((session) => session.id).join("|");
-  const rowHeight = 52;
+  // Each virtual row may include a date bucket above its 52px session content.
+  // Reserve that space for every row so react-window does not position the next
+  // item on top of a bucket's timestamp.
+  const rowHeight = 76;
   // Bound the list to its own container so react-window can actually virtualize
   // (a height driven by row count renders every row and defeats overscanCount).
   const [listContainerRef, { height: listContainerHeight }] = useMeasure();
