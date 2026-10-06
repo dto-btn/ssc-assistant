@@ -56,7 +56,7 @@ locals {
       name                = "michael-a"
       user_principal_name = "MichaelChidera.Agonsi@ssc-spc.gc.ca"
       dev = true
-    }
+    },
     {
       name = "dev-zed"
       user_principal_name = "zbigniew.rakowski@ssc-spc.gc.ca"
