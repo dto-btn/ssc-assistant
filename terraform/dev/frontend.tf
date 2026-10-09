@@ -26,6 +26,12 @@ resource "azurerm_linux_web_app" "frontend" {
   client_affinity_enabled = false
   https_only = true
 
+  lifecycle {
+    ignore_changes = [
+      app_settings["MICROSOFT_PROVIDER_AUTHENTICATION_SECRET"],
+    ]
+  }
+
   site_config {
     ftps_state = "FtpsOnly"
 
@@ -48,7 +54,6 @@ resource "azurerm_linux_web_app" "frontend" {
     VITE_SAS_TOKEN           = data.azurerm_storage_account_sas.blob_read_sas.sas
     VITE_BLOB_STORAGE_URL    = azurerm_storage_account.dev.primary_blob_endpoint
     WEBSITE_RUN_FROM_PACKAGE = "1"
-    MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
     PORT = 8080
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
     NODE_OPTIONS = "--max-http-header-size=32768"
