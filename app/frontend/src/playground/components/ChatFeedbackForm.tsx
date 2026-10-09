@@ -28,7 +28,7 @@ import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined
 import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useTranslation } from "react-i18next";
-import { submitChatFeedback } from "../store/thunks/feedbackThunks";
+import { submitChatFeedbackForm } from "../store/thunks/feedbackThunks"
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../store";
 import { useAppSelector } from "../store/hooks"
@@ -286,7 +286,7 @@ const ChatFeedbackForm: React.FC<ChatFeedbackFormProps> = ({
             attachments: uploadedAttachments,
           }
 
-    await dispatch(submitChatFeedback(payload)) // This is a thunk that will handle the API call and dispatching to the store
+    await dispatch(submitChatFeedbackForm(payload)) // This is a thunk that will handle the API call and dispatching to the store
     setIsSubmitting(false)
     handleClose()
   }, [

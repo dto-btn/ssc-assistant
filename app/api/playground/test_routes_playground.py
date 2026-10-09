@@ -1,9 +1,11 @@
+import base64
+
 import jwt
 import pytest  # type: ignore[import]
 from apiflask import APIFlask
 from types import SimpleNamespace
 from typing import Dict, Iterable
-
+import json
 from playground import routes_playground
 
 
@@ -22,6 +24,7 @@ class FakeBlob:
         self.data = data
         self.size = len(data)
         self.content_settings = SimpleNamespace(content_type=content_type)
+        self.etag = "etag-0"
 
 
 class FakeDownload:
@@ -49,10 +52,25 @@ class FakeBlobClient:
         return SimpleNamespace(
             metadata=dict(self._blob.metadata),
             content_settings=self._blob.content_settings,
+            etag = self._blob.etag
         )
 
-    def download_blob(self, _max_concurrency: int = 1) -> FakeDownload:
+    def download_blob(self, max_concurrency: int = 1) -> FakeDownload:
         return FakeDownload(self._blob.data)
+
+    def upload_blob(self, data:bytes, **kwargs) -> None:
+        c = self._container
+        c.upload_calls.append(kwargs)
+        if c.conflicts_remaining > 0:
+            c.conflicts_remaining -= 1
+            self._blob.etag = f"etag-{len(c.upload_calls)}"
+            raise routes_playground.ResourceModifiedError(message="Etag conflict")
+        if(kwargs.get("match_condition") == routes_playground.MatchConditions.IfNotModified and kwargs.get("etag") != self._blob.etag):
+            raise routes_playground.ResourceModifiedError(message="Etag conflict")
+        self._blob.data = data
+        self._blob.size = len(data)
+        self._blob.metadata = dict(kwargs.get("metadata", self._blob.metadata))
+        self._blob.etag = f"etag-w{len(c.upload_calls)}"
 
     def set_blob_metadata(self, metadata: Dict[str, str]) -> None:
         if getattr(self._container, "should_fail", False):
@@ -67,6 +85,8 @@ class FakeContainerClient:
         self.url = url
         self._blobs: Dict[str, FakeBlob] = {}
         self.should_fail = False
+        self.conflicts_remaining = 0
+        self.upload_calls = []
 
     def add_blob(self, blob: FakeBlob) -> None:
         self._blobs[blob.name] = blob
@@ -89,6 +109,9 @@ class FakeContainerClient:
 
     def get_blob(self, name: str) -> FakeBlob:
         return self._blobs[name]
+    
+    def conflict_once(self):
+        self.conflicts_remaining = 1
 
 @pytest.fixture
 def api_headers(monkeypatch):
@@ -458,3 +481,195 @@ def test_rename_session_missing_returns_404(monkeypatch, api_headers, test_clien
     assert response.status_code == 404
     payload = response.get_json()
     assert payload.get("failed") == []
+
+
+"""Feedback Feature Tests"""
+def test_merge_feedback_unreact_removes_only_matching_reaction():
+    container = FakeContainerClient(
+        "https://example.com/assistant-chat-files-v2",
+    )
+
+    feedback_blob = FakeBlob(
+        "user-123/session-1.feedback.json",
+        {
+            "sessionid": "session-1",
+            "category": "feedback",
+            "type": "chat-feedback",
+            "deleted": "false",
+        },
+        json.dumps(
+            {
+                "sessionId": "session-1",
+                "feedback_responses": [
+                    {
+                        "messageId": "message-1",
+                        "sessionId": "session-1",
+                        "type": "reaction",
+                        "positive": True,
+                    },
+                    {
+                        "messageId": "message-1",
+                        "sessionId": "session-1",
+                        "type": "suggestion",
+                        "description": "Keep this suggestion",
+                    },
+                    {
+                        "messageId": "message-2",
+                        "sessionId": "session-1",
+                        "type": "reaction",
+                        "positive": False,
+                    },
+                ],
+            }
+        ).encode("utf-8"),
+        "application/json",
+    )
+    container.add_blob(feedback_blob)
+
+    routes_playground._merge_feedback_entry(
+        container,
+        "user-123",
+        "session-1",
+        {
+            "messageId": "message-1",
+            "sessionId": "session-1",
+            "type": "reaction",
+            "positive": None,
+        },
+    )
+
+    saved = json.loads(feedback_blob.data)
+    responses = saved["feedback_responses"]
+
+    assert {
+        "sessionId": "session-1",
+        "messageId": "message-1",
+        "type": "suggestion",
+        "description": "Keep this suggestion",
+    } in responses
+
+    assert {
+        "messageId": "message-2",
+        "sessionId": "session-1",
+        "type": "reaction",
+        "positive": False,
+    } in responses
+
+    assert not any(
+        response.get("messageId") == "message-1"
+        and response.get("type") == "reaction"
+        for response in responses
+    )
+
+def test_merge_feedback_replaces_existing_reaction():
+    container = FakeContainerClient(
+        "https://example.com/assistant-chat-files-v2",
+    )
+
+    feedback_blob = FakeBlob(
+        "user-123/session-1.feedback.json",
+        {
+            "sessionid": "session-1",
+            "category": "feedback",
+            "type": "chat-feedback",
+            "deleted": "false",
+        },
+        json.dumps(
+            {
+                "sessionId": "session-1",
+                "feedback_responses": [
+                    {
+                        "messageId": "message-1",
+                        "sessionId": "session-1",
+                        "type": "reaction",
+                        "positive": True,
+                    }
+                ],
+            }
+        ).encode("utf-8"),
+        "application/json",
+    )
+    container.add_blob(feedback_blob)
+
+    routes_playground._merge_feedback_entry(
+        container,
+        "user-123",
+        "session-1",
+        {
+            "messageId": "message-1",
+            "sessionId": "session-1",
+            "type": "reaction",
+            "positive": False,
+            "description": "disliked",
+        },
+    )
+
+    saved = json.loads(feedback_blob.data)
+    reactions = [
+        response
+        for response in saved["feedback_responses"]
+        if response.get("messageId") == "message-1"
+        and response.get("type") == "reaction"
+    ]
+
+    assert len(reactions) == 1
+    assert reactions[0]["positive"] is False
+
+def _feedback_container():
+    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
+    blob = FakeBlob(
+        "user-123/session-1.feedback.json",
+        {"sessionid": "session-1", "deleted": "false"},
+        json.dumps({"sessionId": "session-1", "feedback_responses": []}).encode(),
+        "application/json",
+    )
+    container.add_blob(blob)
+    return container, blob
+
+
+def _reaction_entry():
+    return {"messageId": "m1", "sessionId": "session-1", "type": "reaction", "positive": True}
+
+
+def test_merge_feedback_retries_once_on_conflict():
+    container, blob = _feedback_container()
+    container.conflict_once()
+
+    routes_playground._merge_feedback_entry(container, "user-123", "session-1", _reaction_entry())
+
+    assert len(container.upload_calls) == 2
+    assert all(
+        c["match_condition"] == routes_playground.MatchConditions.IfNotModified
+        for c in container.upload_calls
+    )
+    # the retry must use a refreshed etag
+    assert container.upload_calls[0]["etag"] != container.upload_calls[1]["etag"]
+    assert len(json.loads(blob.data)["feedback_responses"]) == 1
+
+
+def test_merge_feedback_raises_after_retries_exhausted():
+    container, _ = _feedback_container()
+    container.conflicts_remaining = 99
+
+    with pytest.raises(routes_playground.ResourceModifiedError):
+        routes_playground._merge_feedback_entry(container, "user-123", "session-1", _reaction_entry())
+
+    assert len(container.upload_calls) == 3
+
+
+def test_submit_chat_feedback_returns_409_when_retries_exhausted(monkeypatch, api_headers, test_client):
+    container, _ = _feedback_container()
+    container.conflicts_remaining = 99
+    _set_mock_clients(monkeypatch, container)
+
+    entry = {"messageId": "m1", "sessionId": "session-1", "type": "reaction", "positive": True} 
+    body = {
+        "sessionId": "session-1",
+        "messageId": "m1",
+        "feedback": base64.b64encode(json.dumps(entry).encode()).decode(),
+    }
+    response = test_client.post("/api/playground/feedback/chat", headers=api_headers, json=body)
+
+    assert response.status_code == 409
+    assert "concurrently" in response.get_json()["message"]
+    assert len(container.upload_calls) == 3

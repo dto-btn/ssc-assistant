@@ -16,9 +16,10 @@ import type { FileAttachment } from "../../types";
 import {
   decodeArchiveDataUrl,
   isChatArchiveAttachment,
+  isChatFeedbackAttachment,
   normalizeArchiveMessage,
   pickLatestArchive,
-} from "../../utils/archives";
+} from "../../utils/archives"
 import { applyRemoteSessionDeletion } from "./sessionManagementThunks";
 import { selectHasMessagesForSession } from "../selectors/chatSelectors";
 import { addToast } from "../slices/toastSlice";
@@ -48,93 +49,167 @@ export interface RehydrateSessionOptions {
  * @param options - Optional settings. If `force` is true, hydration will occur even if local messages exist.
  * @returns A promise resolving to an object indicating whether restoration occurred, whether an archive was found, and the latest archive version.
  */
-export const rehydrateSessionFromArchive = (
-  sessionId: string,
-  options?: RehydrateSessionOptions,
-): AppThunk<Promise<SessionRehydrationResult>> =>
+export const rehydrateSessionFromArchive =
+  (
+    sessionId: string,
+    options?: RehydrateSessionOptions,
+  ): AppThunk<Promise<SessionRehydrationResult>> =>
   async (dispatch, getState) => {
     if (!sessionId) {
-      return { restored: false, hasArchive: false, latestVersion: null };
+      return { restored: false, hasArchive: false, latestVersion: null }
     }
 
-    const state = getState();
-    const accessToken = state.auth.accessToken;
+    const state = getState()
+    const accessToken = state.auth.accessToken
     if (!accessToken?.trim()) {
-      return { restored: false, hasArchive: false, latestVersion: null };
+      return { restored: false, hasArchive: false, latestVersion: null }
     }
 
-    const hasExistingMessages = selectHasMessagesForSession(state, sessionId);
-    const shouldSkipHydration = hasExistingMessages && !options?.force;
+    const hasExistingMessages = selectHasMessagesForSession(state, sessionId)
+    const shouldSkipHydration = hasExistingMessages && !options?.force
     if (shouldSkipHydration) {
-      const cachedFiles = state.sessionFiles.bySessionId?.[sessionId] ?? [];
-      const cachedArchives = cachedFiles.filter(isChatArchiveAttachment);
-      const latestCachedArchive = pickLatestArchive(cachedArchives);
-      const latestVersion = latestCachedArchive?.lastUpdated ?? latestCachedArchive?.uploadedAt ?? null;
+      const cachedFiles = state.sessionFiles.bySessionId?.[sessionId] ?? []
+      const cachedArchives = cachedFiles.filter(isChatArchiveAttachment)
+      const latestCachedArchive = pickLatestArchive(cachedArchives)
+      const latestVersion =
+        latestCachedArchive?.lastUpdated ??
+        latestCachedArchive?.uploadedAt ??
+        null
       return {
         restored: false,
         hasArchive: cachedArchives.length > 0,
         latestVersion,
-      };
+      }
     }
 
-    let files = state.sessionFiles.bySessionId?.[sessionId] ?? [];
-    let sessionDeleted = false;
+    let files = state.sessionFiles.bySessionId?.[sessionId] ?? []
+    let sessionDeleted = false
     if (!files.length) {
       try {
-        const result = await listSessionFiles({ accessToken, sessionId });
-        files = result.files;
-        sessionDeleted = result.sessionDeleted;
+        const result = await listSessionFiles({ accessToken, sessionId })
+        files = result.files
+        sessionDeleted = result.sessionDeleted
         if (result.deletedSessionIds.length) {
           result.deletedSessionIds
             .filter((id) => id && id !== sessionId)
             .forEach((id) => {
-              void dispatch(applyRemoteSessionDeletion(id, { silent: true }));
-            });
+              void dispatch(applyRemoteSessionDeletion(id, { silent: true }))
+            })
         }
         if (sessionDeleted) {
-          void dispatch(applyRemoteSessionDeletion(sessionId, { silent: true }));
-          return { restored: false, hasArchive: false, latestVersion: null };
+          void dispatch(applyRemoteSessionDeletion(sessionId, { silent: true }))
+          return { restored: false, hasArchive: false, latestVersion: null }
         }
-        dispatch(setSessionFiles({ sessionId, files }));
+        dispatch(setSessionFiles({ sessionId, files }))
       } catch (error) {
-        console.error("Failed to list files for session", { sessionId, error });
-        return { restored: false, hasArchive: false, latestVersion: null };
+        console.error("Failed to list files for session", { sessionId, error })
+        return { restored: false, hasArchive: false, latestVersion: null }
       }
     }
 
     if (sessionDeleted) {
-      return { restored: false, hasArchive: false, latestVersion: null };
+      return { restored: false, hasArchive: false, latestVersion: null }
     }
 
-    const chatArchives = files.filter(isChatArchiveAttachment);
+    const chatArchives = files.filter(isChatArchiveAttachment)
+
     if (!chatArchives.length) {
-      return { restored: false, hasArchive: false, latestVersion: null };
+      return { restored: false, hasArchive: false, latestVersion: null }
     }
 
-    const latestArchive = pickLatestArchive(chatArchives);
-    const latestVersion: string | null = latestArchive?.lastUpdated ?? latestArchive?.uploadedAt ?? null;
+    const latestArchive = pickLatestArchive(chatArchives)
+    const latestVersion: string | null =
+      latestArchive?.lastUpdated ?? latestArchive?.uploadedAt ?? null
     if (!latestArchive || (!latestArchive.url && !latestArchive.blobName)) {
-      return { restored: false, hasArchive: true, latestVersion };
+      return { restored: false, hasArchive: true, latestVersion }
     }
 
+    // Find the chat feedback archive, if it exists. This depends on chat messages loading first.
+    const chatFeedbackArchive = pickLatestArchive(
+      files.filter(isChatFeedbackAttachment),
+    )
     try {
-      const { dataUrl } = await fetchFileDataUrl({
-        fileUrl: latestArchive.url ?? undefined,
-        blobName: latestArchive.blobName ?? undefined,
-        fileType: latestArchive.contentType ?? undefined,
-        accessToken,
-      });
+      const [{ dataUrl }, feedbackByMessageId] = await Promise.all([
+        fetchFileDataUrl({
+          fileUrl: latestArchive.url ?? undefined,
+          blobName: latestArchive.blobName ?? undefined,
+          fileType: latestArchive.contentType ?? undefined,
+          accessToken,
+        }),
+        loadFeedbackByMessageId(chatFeedbackArchive, accessToken, sessionId),
+      ])
       if (!dataUrl) {
-        return { restored: false, hasArchive: true, latestVersion };
+        return { restored: false, hasArchive: true, latestVersion }
       }
 
-      const decoded = decodeArchiveDataUrl(dataUrl);
-      const parsed = JSON.parse(decoded) as { messages?: unknown[] };
+      const decoded = decodeArchiveDataUrl(dataUrl)
+      const parsed = JSON.parse(decoded) as { messages?: unknown[] }
       const restoredMessages = Array.isArray(parsed.messages)
         ? parsed.messages
             .map((entry) => normalizeArchiveMessage(entry, sessionId))
             .filter((message): message is Message => message !== null)
-        : [];
+        : []
+
+      if (!restoredMessages.length) {
+        return { restored: false, hasArchive: true, latestVersion }
+      }
+
+      dispatch(
+        hydrateSessionMessages({
+          sessionId,
+          messages: restoredMessages.map((message) => ({
+            ...message,
+            feedback: feedbackByMessageId.get(message.id) ?? message.feedback,
+          })),
+        }),
+      )
+      return { restored: true, hasArchive: true, latestVersion }
+    } catch (error) {
+      console.error("Failed to rehydrate session archive", { sessionId, error })
+      return { restored: false, hasArchive: true, latestVersion }
+    }
+  }
+// load feedback helper function a feedback failure must not block message rehydration.
+const loadFeedbackByMessageId = async (
+  archive: FileAttachment | undefined,
+  accessToken: string,
+  sessionId: string,
+): Promise<Map<string, Message["feedback"]>> => {
+  const feedbackByMessageId = new Map<string, Message["feedback"]>()
+  if (!archive || (!archive.url && !archive.blobName))
+    return feedbackByMessageId
+
+  try {
+    const { dataUrl } = await fetchFileDataUrl({
+      fileUrl: archive.url ?? undefined,
+      blobName: archive.blobName ?? undefined,
+      fileType: archive.contentType ?? "application/json",
+      accessToken,
+    })
+    if (!dataUrl) return feedbackByMessageId
+
+    const parsed = JSON.parse(decodeArchiveDataUrl(dataUrl)) as {
+      feedback_responses?: unknown[]
+    }
+    for (const entry of parsed.feedback_responses ?? []) {
+      if (!entry || typeof entry !== "object" || Array.isArray(entry)) continue
+      const record = entry as Record<string, unknown>
+      if (record.type !== "reaction") continue
+      if (typeof record.messageId !== "string") continue
+      if (typeof record.positive !== "boolean") continue
+      feedbackByMessageId.set(
+        record.messageId,
+        record.positive ? "liked" : "disliked",
+      )
+    }
+  } catch (error) {
+    console.error("Failed to rehydrate chat feedback archive", {
+      sessionId,
+      error,
+    })
+  }
+  return feedbackByMessageId
+}
 
 /**
  * Generates a human-readable session title for a recovered chat archive.
@@ -146,19 +221,6 @@ export const rehydrateSessionFromArchive = (
  * @param providedName - The name from the archive, if available.
  * @returns A human-readable session title.
  */
-
-      if (!restoredMessages.length) {
-        return { restored: false, hasArchive: true, latestVersion };
-      }
-
-      dispatch(hydrateSessionMessages({ sessionId, messages: restoredMessages }));
-      return { restored: true, hasArchive: true, latestVersion };
-    } catch (error) {
-      console.error("Failed to rehydrate session archive", { sessionId, error });
-      return { restored: false, hasArchive: true, latestVersion };
-    }
-  };
-
 const buildRecoveredName = (sessionId: string, uploadedAtMs: number, providedName?: string | null) => {
   if (providedName && providedName.trim().length > 0) {
     return providedName.trim();

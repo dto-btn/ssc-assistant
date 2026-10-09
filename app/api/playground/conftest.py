@@ -13,3 +13,8 @@ os.environ.setdefault("BLOB_ENDPOINT", "https://dummy.blob.core.windows.net/")
 
 # Must be set before auth.py is imported so OAuth2TokenValidation is not constructed.
 os.environ.setdefault("SKIP_USER_VALIDATION", "true")
+
+os.environ.setdefault(
+    "DATABASE_ENDPOINT",
+    "https://dummy.table.core.windows.net/",
+)

@@ -408,10 +408,25 @@ def _merge_feedback_entry(container_client, oid: str, session_id: str, entry: Di
         entry["submittedAt"] = timestamp
 
         existing = doc.get("feedback_responses", [])
-        doc["feedback_responses"] = [
-            e for e in existing
-            if not (e.get("messageId") == entry.get("messageId") and e.get("type") == entry.get("type"))
-        ] + [entry]
+        if not isinstance(existing, list):
+            existing = []
+        valid_existing = [e for e in existing if isinstance(e, dict)]
+        existing = valid_existing
+        if entry.get("type") == "reaction" and entry.get("positive") is None:
+            doc["feedback_responses"] = [
+                existing_entry
+                for existing_entry in existing
+                if not (existing_entry.get("messageId") == entry.get("messageId") and existing_entry.get("type") == "reaction")
+            ]
+        else:
+            doc["feedback_responses"] = [
+                existing_entry
+                for existing_entry in existing
+                if not (
+                    existing_entry.get("messageId") == entry.get("messageId")
+                    and existing_entry.get("type") == entry.get("type")
+                )
+            ] + [entry]
         doc["lastUpdated"] = timestamp
 
         payload = json.dumps(doc).encode("utf-8")
@@ -1041,6 +1056,7 @@ def submit_chat_feedback(payload: PlaygroundChatFeedbackRequest):
         return {"message": "Invalid feedback payload"}, 400
     
     entry["messageId"] = payload.messageId
+    entry["sessionId"] = payload.sessionId
     try:
         container_client = _get_container_client()
         container_client.create_container()
@@ -1051,6 +1067,18 @@ def submit_chat_feedback(payload: PlaygroundChatFeedbackRequest):
         return {"message": "Server error"}, 500
     try:
         _merge_feedback_entry(container_client, oid, payload.sessionId, entry)
+    except ResourceModifiedError:
+        logger.warning(
+            "Feedback blob changed during concurrent update",
+            extra={
+                "oid": oid,
+                "session_id": payload.sessionId,
+                "message_id": payload.messageId,
+            },
+        )
+        return {
+            "message": "Feedback changed concurrently. Please try again."
+        }, 409
     except Exception:
         logger.exception("Failed to store playground chat feedback")
         return {"message": "Failed to save feedback"}, 500

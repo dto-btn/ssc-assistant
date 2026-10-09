@@ -119,17 +119,21 @@ describe("ResponseButtons", () => {
     }));
   });
 
-  it("triggers feedback thunks correctly (Issue 2 persistence fix)", () => {
-    renderWithProviders(<ResponseButtons {...defaultProps} />);
-    
-    const likeBtn = screen.getByLabelText("good.response");
-    fireEvent.click(likeBtn);
-    expect(submitResponseFeedback).toHaveBeenCalledWith("m1", true);
+  it("submits a like with the session and message IDs", () => {
+    renderWithProviders(<ResponseButtons {...defaultProps} />)
 
-    const dislikeBtn = screen.getByLabelText("bad.response");
-    fireEvent.click(dislikeBtn);
-    expect(submitResponseFeedback).toHaveBeenCalledWith("m1", false);
-  });
+    fireEvent.click(screen.getByLabelText("good.response"))
+
+    expect(submitResponseFeedback).toHaveBeenCalledWith("s1", "m1", true)
+  })
+
+  it("submits a dislike with the session and message IDs", () => {
+    renderWithProviders(<ResponseButtons {...defaultProps} />)
+
+    fireEvent.click(screen.getByLabelText("bad.response"))
+
+    expect(submitResponseFeedback).toHaveBeenCalledWith("s1", "m1", false)
+  })
 
   it("does not dispatch regenerate without a matching user turn", () => {
     renderWithProviders(
@@ -149,6 +153,73 @@ describe("ResponseButtons", () => {
     expect(likeBtn).toHaveAttribute("aria-pressed", "true");
     
     fireEvent.click(likeBtn);
-    expect(clearResponseFeedback).toHaveBeenCalledWith("m1");
+    expect(clearResponseFeedback).toHaveBeenCalledWith("s1", "m1")
   });
+
+  it("triggers clearResponseFeedback when clicking an already active dislike button", () => {
+    renderWithProviders(
+      <ResponseButtons {...defaultProps} feedback="disliked" />,
+    )
+
+    const dislikeButton = screen.getByLabelText("bad.response")
+
+    expect(dislikeButton).toHaveAttribute("aria-pressed", "true")
+
+    fireEvent.click(dislikeButton)
+
+    expect(clearResponseFeedback).toHaveBeenCalledWith("s1", "m1")
+  })
+  it("switches from like to dislike", () => {
+    renderWithProviders(<ResponseButtons {...defaultProps} feedback="liked" />)
+
+    fireEvent.click(screen.getByLabelText("bad.response"))
+
+    expect(submitResponseFeedback).toHaveBeenCalledWith("s1", "m1", false)
+    expect(clearResponseFeedback).not.toHaveBeenCalled()
+  })
+
+  it("switches from dislike to like", () => {
+    renderWithProviders(
+      <ResponseButtons {...defaultProps} feedback="disliked" />,
+    )
+
+    fireEvent.click(screen.getByLabelText("good.response"))
+
+    expect(submitResponseFeedback).toHaveBeenCalledWith("s1", "m1", true)
+    expect(clearResponseFeedback).not.toHaveBeenCalled()
+  })
+
+  it("ignores a second reaction while feedback is pending", async () => {
+    let resolveFeedback!: () => void
+
+    const pendingFeedback = new Promise<void>((resolve) => {
+      resolveFeedback = resolve
+    })
+
+    vi.mocked(submitResponseFeedback).mockImplementationOnce(() => async () => {
+      await pendingFeedback
+    })
+
+    renderWithProviders(<ResponseButtons {...defaultProps} />)
+
+    const likeButton = screen.getByLabelText("good.response")
+    const dislikeButton = screen.getByLabelText("bad.response")
+
+    fireEvent.click(likeButton)
+
+    expect(likeButton).toBeDisabled()
+    expect(dislikeButton).toBeDisabled()
+
+    fireEvent.click(dislikeButton)
+
+    expect(submitResponseFeedback).toHaveBeenCalledTimes(1)
+    expect(clearResponseFeedback).not.toHaveBeenCalled()
+
+    resolveFeedback()
+
+    await waitFor(() => {
+      expect(likeButton).not.toBeDisabled()
+      expect(dislikeButton).not.toBeDisabled()
+    })
+  })
 });

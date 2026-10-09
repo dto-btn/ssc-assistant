@@ -19,12 +19,20 @@ export interface FileAttachment {
 }
 
 /** Feedback types and form structure shared between the UI and backend for chat feedback submissions. */
-export type FeedbackType = "issue" | "suggestion" | string
+export type FeedbackType = "issue" | "suggestion" | "reaction" | string
 
-export interface BaseFeedbackForm {
+export interface ChatFeedbackResponse {
   messageId: string
   sessionId: string
   type: FeedbackType
+}
+
+export type ChatFeedbackResponseReaction = ChatFeedbackResponse & {
+  positive: boolean | null
+  description?: string
+}
+
+export type BaseFeedbackForm = ChatFeedbackResponse & {
   description?: string
 }
 
