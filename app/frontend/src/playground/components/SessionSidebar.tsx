@@ -9,7 +9,6 @@
 import React, { useCallback, useState } from "react";
 import { alpha } from "@mui/material";
 import { List as ListWindow, RowComponentProps } from "react-window";
-import type { ListImperativeAPI } from "react-window";
 import useMeasure from "react-use-measure";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
@@ -74,6 +73,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
     (state) => state.ui.isMobileSidebarOpen
   );
   const dispatch = useAppDispatch();
+  const handleLogout = useCallback(() => console.log("logout"), []);
 
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [sessionToRename, setSessionToRename] = useState<string | null>(null);
@@ -182,10 +182,12 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
   const sidebarTitleId = "playground-session-sidebar-title";
   const sidebarNavLabel = t("sidebar.navigation");
 
-  const [containerRef, { height: containerHeight }] = useMeasure();
-  const listRef = React.useRef<ListImperativeAPI | null>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
   const sessionOrderKey = sessionsNewestFirst.map((session) => session.id).join("|");
+  const rowHeight = 52;
+  // Bound the list to its own container so react-window can actually virtualize
+  // (a height driven by row count renders every row and defeats overscanCount).
+  const [listContainerRef, { height: listContainerHeight }] = useMeasure();
 
   const activateSession = useCallback((sessionId: string) => {
     dispatch(setCurrentSession(sessionId));
@@ -213,8 +215,16 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
       return;
     }
 
-    listRef.current?.scrollToRow({ align: "smart", index: activeIndex });
-  }, [activeIndex, listRef]);
+    const activeSession = sessionsNewestFirst[activeIndex];
+    if (!activeSession) {
+      return;
+    }
+
+    // jsdom does not implement scrollIntoView.
+    document
+      .getElementById(`session-button-${activeSession.id}`)
+      ?.scrollIntoView?.({ block: "nearest" });
+  }, [activeIndex, sessionsNewestFirst]);
 
   const handleSessionListKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
     if (!sessionsNewestFirst.length) {
@@ -422,6 +432,11 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         flexDirection: "column",
         height: "100dvh",
         overflowX: "hidden",
+        // Fallback scroll: at extreme zoom, 100dvh can shrink to less than the
+        // fixed-height header/button/divider need, squeezing the list toward 0.
+        // The list has its own minHeight floor below, so when that floor plus
+        // the fixed items exceeds 100dvh, this lets the whole nav scroll to it.
+        overflowY: "auto",
         borderRight: "1px solid",
         borderColor: "divider",
         bgcolor: "background.default",
@@ -452,7 +467,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         )}
       </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
         <Box key="newChat">
           <ListItemButton 
             id="new-chat-button" 
@@ -490,28 +505,25 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
           </Divider>
         </ListItem>
 
-        <Box ref={containerRef} sx={{ flexGrow: 1, minHeight: 0 }}>
-          {containerHeight > 0 && (
-            <ListWindow
-              role="list"
-              aria-labelledby={sidebarTitleId}
-              listRef={listRef}
-              onFocus={() => {
-                if (activeIndex < 0 && sessionsNewestFirst.length > 0) {
-                  setActiveIndex(0);
-                }
-              }}
-              onKeyDown={handleSessionListKeyDown}
-              overscanCount={5}
-              rowHeight={52}
-              rowCount={sessionsNewestFirst.length}
-              rowComponent={chatItemRender}
-              rowProps={{}}
-              tabIndex={0}
-              tagName="ul"
-              style={{ width: LEFT_MENU_EXPANDED_WIDTH, height: containerHeight, listStyle: "none", padding: 0, margin: 0 }}
-            />
-          )}
+        <Box ref={listContainerRef} sx={{ flex: 1, minHeight: rowHeight * 3 }}>
+          <ListWindow
+            role="list"
+            aria-labelledby={sidebarTitleId}
+            onFocus={() => {
+              if (activeIndex < 0 && sessionsNewestFirst.length > 0) {
+                setActiveIndex(0);
+              }
+            }}
+            onKeyDown={handleSessionListKeyDown}
+            overscanCount={5}
+            rowHeight={rowHeight}
+            rowCount={sessionsNewestFirst.length}
+            rowComponent={chatItemRender}
+            rowProps={{}}
+            tabIndex={0}
+            tagName="ul"
+            style={{ width: "100%", height: listContainerHeight, listStyle: "none", padding: 0, margin: 0 }}
+          />
         </Box>
 
         <Menu
@@ -543,34 +555,75 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
         onRename={handleRenameSession}
       />
 
-      <Box
-        sx={{
-          marginTop: "auto",
-          display: "flex",
-          justifyContent: "flex-start",
-          px: 1,
-          pb: 1,
-        }}
-      >
-        <ProfileMenu
-          size="30px"
-          fontSize="12px"
-          logout={() => console.log("logout")}
-        />
-      </Box>
+      {!isMobile && (
+        <Box
+          sx={{
+            marginTop: "auto",
+            flexShrink: 0,
+            display: "flex",
+            justifyContent: "flex-start",
+            alignItems: "center",
+            width: "100%",
+            borderTop: "1px solid",
+            borderColor: "divider",
+            bgcolor: "background.default",
+            px: 1,
+            pt: 1,
+            pb: 1,
+          }}
+        >
+          <ProfileMenu
+            size="30px"
+            fontSize="12px"
+            logout={handleLogout}
+          />
+        </Box>
+      )}
     </Box>
   );
 
   if (isMobile) {
     return (
-      <Drawer
-        anchor="left"
-        variant="temporary"
-        open={isMobileSidebarOpen}
-        onClose={() => dispatch(closeMobileSidebar())}
-      >
-        {sidebarContent}
-      </Drawer>
+      <>
+        <Drawer
+          anchor="left"
+          variant="temporary"
+          open={isMobileSidebarOpen}
+          onClose={() => dispatch(closeMobileSidebar())}
+        >
+          {sidebarContent}
+        </Drawer>
+        {isMobileSidebarOpen && (
+          <Box
+            sx={{
+              position: "fixed",
+              left: LEFT_MENU_EXPANDED_WIDTH + 8,
+              bottom: 12,
+              zIndex: 1300,
+              "& #profile-menu-button": {
+                width: "auto",
+                minWidth: 0,
+                px: 0.75,
+                py: 0.75,
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: "999px",
+                bgcolor: "background.paper",
+                boxShadow: 2,
+              },
+              "& #profile-menu-button .MuiTypography-root": {
+                display: "none",
+              },
+            }}
+          >
+            <ProfileMenu
+              size="30px"
+              fontSize="12px"
+              logout={handleLogout}
+            />
+          </Box>
+        )}
+      </>
     );
   }
 

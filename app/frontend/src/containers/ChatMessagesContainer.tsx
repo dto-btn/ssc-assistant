@@ -329,7 +329,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                 backgroundColor: "rgba(0, 0, 0, 0.2)",
               },
               position: "fixed",
-              bottom: `calc(var(--chat-input-height, 70px) + 12px)`,
+              bottom: `calc(var(--chat-input-height) + 12px)`,
               left: scrollBtnLeft ? `${scrollBtnLeft}px` : undefined,
               zIndex: 1200,
               height: "64px",

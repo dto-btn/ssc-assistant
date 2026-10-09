@@ -49,9 +49,9 @@ export const TopMenuFrame: FC<TopMenuProps> = ({
             alignItems: "center",
             justifyContent: "space-between",
             flexShrink: 0,
+            flexWrap: "wrap",
             borderRadius: 0,
             background: `linear-gradient(45deg, #222, ${theme.palette.primary.main})`,
-            maxHeight: 40,
             border: "none",
           })}
         >
@@ -62,6 +62,7 @@ export const TopMenuFrame: FC<TopMenuProps> = ({
               alignItems: "center",
               gap: "1rem",
               userSelect: "none",
+              minWidth: 0,
             }}
           >
             <img
@@ -74,7 +75,7 @@ export const TopMenuFrame: FC<TopMenuProps> = ({
             />
             <Typography
               variant="h1"
-              sx={{ fontSize: "20px", fontWeight: "500", textWrap: "nowrap" }}
+              sx={{ fontSize: "20px", fontWeight: "500" }}
             >
               {t("title")}
             </Typography>
@@ -87,6 +88,8 @@ export const TopMenuFrame: FC<TopMenuProps> = ({
               gap: "1rem",
               justifyContent: "space-between",
               flexGrow: 1,
+              minWidth: 0,
+              flexWrap: "wrap",
             }}
           >
             {/* This is where the content will go. */}

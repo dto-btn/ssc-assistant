@@ -1,0 +1,80 @@
+---
+name: Code Quality
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions: read-all
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Remove previous Super-linter PR comments
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          echo "Looking for previous Super-linter comments on PR #${PR_NUMBER}"
+
+          comment_ids="$(
+            gh api \
+              "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+              --paginate \
+              --jq '.[]
+                | select(.user.type == "Bot")
+                | select(.body | contains("Powered by [Super-linter]"))
+                | .id'
+          )"
+
+          if [ -z "${comment_ids}" ]; then
+            echo "No previous Super-linter comments found."
+            exit 0
+          fi
+
+          echo "${comment_ids}" | while read -r comment_id; do
+            [ -z "${comment_id}" ] && continue
+
+            echo "Deleting Super-linter comment ${comment_id}"
+
+            gh api \
+              --method DELETE \
+              "repos/${REPO}/issues/comments/${comment_id}"
+          done
+
+      - name: Super-linter
+        uses: super-linter/super-linter/slim@2da136927bd4a73596db63044b504547c62cb854 # v9.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_ALL_CODEBASE: false
+          VALIDATE_CHECKOV: false
+          VALIDATE_JSCPD: false
+          VALIDATE_BIOME_FORMAT: false
+          VALIDATE_BIOME_LINT: false
+          VALIDATE_TRIVY: false
+          SUPPRESS_POSSUM: true
+          LINTER_RULES_PATH: /
+          DISABLE_ERRORS: true
+          SAVE_SUPER_LINTER_SUMMARY: true
+          FAIL_ON_INVALID_GITHUB_ACTIONS_EVENT_CONFIGURATION: true
+          NO_COLOR: "1"
+          FORCE_COLOR: "0"
+          TERM: dumb

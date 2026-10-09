@@ -21,3 +21,7 @@
 	z-index: 10000;
 	text-decoration: none;
 }
+
+:root {
+  --chat-input-height: 100px;
+}
