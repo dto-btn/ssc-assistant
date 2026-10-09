@@ -755,6 +755,10 @@
     "en": "You can attach up to 3 images (JPG, PNG, GIF). Up to {{max_size}} MB each.",
     "fr": "Vous pouvez joindre jusqu'à 3 images (JPG, PNG, GIF). Jusqu'à {{max_size}} Mo chacune."
   },
+  "chat.feedback.attachments.upload.error": {
+    "en": "Failed to upload attachment. Check connection.",
+    "fr": "Échec du téléchargement de la pièce jointe. Vérifiez la connexion."
+  },
   "chat.feedback.note.label": {
     "en": "Note",
     "fr": "Note"
