@@ -195,37 +195,34 @@ const ResponseButtons: React.FC<ResponseButtonsProps> = React.memo(
 
     // Like and dislike are mutually exclusive in the UI and persisted per message.
     // Clicking the active reaction clears it.
-    const handleLike = useCallback(async () => {
-      if (isFeedbackPendingRef.current) return
-      setIsFeedbackPending(true)
-      isFeedbackPendingRef.current = true
-      try {
-        if (feedback === "liked") {
-          await dispatch(clearResponseFeedback(sessionId, messageId))
-        } else {
-          await dispatch(submitResponseFeedback(sessionId, messageId, true))
+    const handleReaction = useCallback(
+      async (positive: boolean) => {
+        if (isFeedbackPendingRef.current) return
+        setIsFeedbackPending(true)
+        isFeedbackPendingRef.current = true
+        try {
+          const isActive = feedback === (positive ? "liked" : "disliked")
+          if (isActive) {
+            await dispatch(clearResponseFeedback(sessionId, messageId))
+          } else {
+            await dispatch(
+              submitResponseFeedback(sessionId, messageId, positive),
+            )
+          }
+        } finally {
+          setIsFeedbackPending(false)
+          isFeedbackPendingRef.current = false
         }
-      } finally {
-        setIsFeedbackPending(false)
-        isFeedbackPendingRef.current = false
-      }
-    }, [dispatch, feedback, isFeedbackPendingRef, messageId, sessionId])
+      },
+      [dispatch, feedback, messageId, sessionId],
+    )
+    const handleLike = useCallback(() => handleReaction(true), [handleReaction])
 
-    const handleDislike = useCallback(async () => {
-      if (isFeedbackPendingRef.current) return
-      setIsFeedbackPending(true)
-      isFeedbackPendingRef.current = true
-      try {
-        if (feedback === "disliked") {
-          await dispatch(clearResponseFeedback(sessionId, messageId))
-        } else {
-          await dispatch(submitResponseFeedback(sessionId, messageId, false))
-        }
-      } finally {
-        setIsFeedbackPending(false)
-        isFeedbackPendingRef.current = false
-      }
-    }, [dispatch, feedback, isFeedbackPendingRef, messageId, sessionId])
+    const handleDislike = useCallback(
+      () => handleReaction(false),
+      [handleReaction],
+    )
+    
     /** Handles opening the chat feedback modal through uiSlice */
     const handleFeedbackNote = useCallback(() => {
       dispatch(openChatFeedbackModal({ messageId, sessionId }))

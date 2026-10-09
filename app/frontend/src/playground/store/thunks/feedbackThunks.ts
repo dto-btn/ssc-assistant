@@ -7,7 +7,8 @@
  */
 
 import { addToast } from "../slices/toastSlice"
-import { AppThunk } from ".."
+import { AppThunk, RootState } from ".."
+import type { ThunkDispatch, UnknownAction } from "@reduxjs/toolkit"
 import { sendChatFeedback } from "../../api/feedback"
 import type {
   ChatFeedbackFormSubmission,
@@ -25,16 +26,8 @@ import i18n from "../../../i18n"
 export const submitResponseFeedback =
   (sessionId: string, messageId: string, positive: boolean): AppThunk =>
   async (dispatch, getState) => {
-    const accessToken = getState().auth.accessToken
-    if (!accessToken) {
-      dispatch(
-        addToast({
-          message: i18n.t("feedback.error", { ns: "playground" }),
-          isError: true,
-        }),
-      )
-      return
-    }
+    const accessToken = requireAccessToken(getState, dispatch)
+    if (!accessToken) return
     const previousFeedback = getState().chat.messages.find(
       (message) => message.id === messageId,
     )?.feedback
@@ -92,17 +85,8 @@ export const submitResponseFeedback =
 export const clearResponseFeedback =
   (sessionId: string, messageId: string): AppThunk =>
   async (dispatch, getState) => {
-    const accessToken = getState().auth.accessToken
-
-    if (!accessToken) {
-      dispatch(
-        addToast({
-          message: i18n.t("feedback.error", { ns: "playground" }),
-          isError: true,
-        }),
-      )
-      return
-    }
+    const accessToken = requireAccessToken(getState, dispatch)
+    if (!accessToken) return
 
     const payload: ChatFeedbackResponseReaction = {
       messageId,
@@ -137,17 +121,8 @@ export const clearResponseFeedback =
 export const submitChatFeedbackForm =
   (feedbackPayload: ChatFeedbackFormSubmission): AppThunk =>
   async (dispatch, getState) => {
-    const accessToken = getState().auth.accessToken
-    if (!accessToken) {
-      console.error("No access token available for chat feedback submission")
-      dispatch(
-        addToast({
-          message: i18n.t("feedback.error", { ns: "playground" }),
-          isError: true,
-        }),
-      )
-      return
-    }
+    const accessToken = requireAccessToken(getState, dispatch)
+    if (!accessToken) return
 
     try {
       const payload = encodeFeedbackPayload(feedbackPayload)
@@ -185,3 +160,21 @@ const encodeFeedbackPayload = (
 ) =>
   "data:application/json;base64," +
   btoa(unescape(encodeURIComponent(JSON.stringify(feedbackPayload))))
+
+
+const requireAccessToken = (
+  getState: () => RootState,
+  dispatch: ThunkDispatch<RootState, unknown, UnknownAction>,
+): string | undefined => {
+  const accessToken = getState().auth.accessToken
+  if (!accessToken) {
+    dispatch(
+      addToast({
+        message: i18n.t("feedback.error", { ns: "playground" }),
+        isError: true,
+      }),
+    )
+    return undefined
+  }
+  return accessToken
+}
