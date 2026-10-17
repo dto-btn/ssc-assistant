@@ -1,10 +1,9 @@
-import { Box, CircularProgress, IconButton, Skeleton, Stack, Typography } from "@mui/material";
+import { Box, CircularProgress, IconButton, Skeleton, Stack } from "@mui/material";
 import { Fragment, memo, useEffect,useRef,useState } from "react";
 import ArrowCircleDownIcon from '@mui/icons-material/ArrowCircleDown';
 import { AlertBubble, AssistantBubble, UserBubble } from "../components";
 import { isACompletion, isAMessage, isAToastMessage } from "../utils";
 import { useTranslation } from "react-i18next";
-import { formatConversationTimestamp, getChatItemDate, shouldShowMessageTimestamp } from "../util/chatTime";
 
 const SKELETON_HEIGHT = 200;
 const SKELETON_CIRCLE_SIZE = "35px"; // Same as UserBubble avatar size
@@ -206,57 +205,46 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
             </Box>
           </>
         ) : (
-          chatHistory.chatItems.map((chatItem, index) => {
-            const currentItemDate = getChatItemDate(chatItem, chatHistory.createdAt);
-            const previousItemDate = index > 0 ? getChatItemDate(chatHistory.chatItems[index - 1], chatHistory.createdAt) : null;
-            const showTimestamp = shouldShowMessageTimestamp(currentItemDate, previousItemDate);
-
-            return index === chatHistory.chatItems.length - 1
+          chatHistory.chatItems.map((chatItem, index) => (
+            index === chatHistory.chatItems.length - 1
               ? (showSkeleton ? (
-                <Fragment key="skeleton-loader">
-                  {showTimestamp && (
-                    <TimestampDivider>{formatConversationTimestamp(currentItemDate)}</TimestampDivider>
-                  )}
-                  <Stack
-                    direction="row"
-                    spacing={1}
+                <Stack
+                  key="skeleton-loader"
+                  direction="row"
+                  spacing={1}
+                  sx={{
+                    pl: 2,
+                    my: 4,
+                    width: "100%",
+                    height: showSkeleton ? `${SKELETON_HEIGHT}px` : "0px",
+                    opacity: showSkeleton ? 1 : 0,
+                    overflow: "hidden",
+                    transition: "height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+                  }}
+                >
+                  <Skeleton
                     sx={{
-                      pl: 2,
-                      my: 4,
-                      width: "100%",
-                      height: showSkeleton ? `${SKELETON_HEIGHT}px` : "0px",
-                      opacity: showSkeleton ? 1 : 0,
-                      overflow: "hidden",
-                      transition: "height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+                      bgcolor: "primary.light",
+                      aspectRatio: "1 / 1", // ensures perfect circle
+                      minWidth: SKELETON_CIRCLE_SIZE,
+                      minHeight: SKELETON_CIRCLE_SIZE,
+                      maxWidth: SKELETON_CIRCLE_SIZE,
+                      maxHeight: SKELETON_CIRCLE_SIZE,
                     }}
-                  >
-                    <Skeleton
-                      sx={{
-                        bgcolor: "primary.light",
-                        aspectRatio: "1 / 1", // ensures perfect circle
-                        minWidth: SKELETON_CIRCLE_SIZE,
-                        minHeight: SKELETON_CIRCLE_SIZE,
-                        maxWidth: SKELETON_CIRCLE_SIZE,
-                        maxHeight: SKELETON_CIRCLE_SIZE,
-                      }}
-                      variant="circular"
-                      aria-label={t("loading.skeleton")}
-                    />
-                    <Stack direction="column" alignItems="left" sx={{ width: "100%" }}>
-                      <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="85%" height={30} aria-label={t("loading.skeleton")} />
-                      <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="82%" height={30} aria-label={t("loading.skeleton")} />
-                      <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="88%" height={30} aria-label={t("loading.skeleton")} />
-                      <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="84%" height={30} aria-label={t("loading.skeleton")} />
-                      <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="87%" height={30} aria-label={t("loading.skeleton")} />
-                    </Stack>
+                    variant="circular"
+                    aria-label={t("loading.skeleton")}
+                  />
+                  <Stack direction="column" alignItems="left" sx={{ width: "100%" }}>
+                    <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="85%" height={30} aria-label={t("loading.skeleton")} />
+                    <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="82%" height={30} aria-label={t("loading.skeleton")} />
+                    <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="88%" height={30} aria-label={t("loading.skeleton")} />
+                    <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="84%" height={30} aria-label={t("loading.skeleton")} />
+                    <Skeleton sx={{ bgcolor: "primary.light" }} variant="text" width="87%" height={30} aria-label={t("loading.skeleton")} />
                   </Stack>
-                </Fragment>
+                </Stack>
               )
                 : (
                   <Fragment key={index}>
-                    {showTimestamp && (
-                      <TimestampDivider>{formatConversationTimestamp(currentItemDate)}</TimestampDivider>
-                    )}
                     {isACompletion(chatItem) && chatItem.message.content && (
                       <div ref={lastCompletionRef} style={{
                         marginBottom: whitespace,
@@ -280,9 +268,6 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                 )
               ) : (
                 <Fragment key={index}>
-                  {showTimestamp && (
-                    <TimestampDivider>{formatConversationTimestamp(currentItemDate)}</TimestampDivider>
-                  )}
                   {isACompletion(chatItem) && chatItem.message.content && (
                     <div
                       ref={
@@ -326,8 +311,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                     />
                   )}
                 </Fragment>
-              )
-          })
+              )))
         )}
         <div
           style={{
@@ -368,24 +352,5 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
     </Box >
   );
 };
-
-const TimestampDivider = ({ children }: { children: string }) => (
-  <Box sx={{ display: "flex", justifyContent: "center", my: 1 }}>
-    <Typography
-      variant="caption"
-      sx={{
-        color: "text.secondary",
-        bgcolor: "background.paper",
-        border: "1px solid",
-        borderColor: "divider",
-        borderRadius: "999px",
-        px: 1.25,
-        py: 0.25,
-      }}
-    >
-      {children}
-    </Typography>
-  </Box>
-);
 
 export default memo(ChatMessagesContainer);

@@ -16,7 +16,7 @@ export const selectSessionLastActivityById = createSelector(
     const lastActivityById: Record<string, number> = {};
 
     sessions.forEach((session) => {
-      lastActivityById[session.id] = session.createdAt;
+      lastActivityById[session.id] = session.updatedAt ?? session.createdAt;
     });
 
     messages.forEach((message) => {

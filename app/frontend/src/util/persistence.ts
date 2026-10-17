@@ -5,15 +5,13 @@ import { DEFAULT_CHAT_MODEL } from "../constants/models";
 const cleanChatHistories = (histories: (Partial<ChatHistory> | null | undefined)[]) => {
     return histories.map((history, i) => {
         const fallbackDescription = "Conversation " + (i + 1);
-        const now = new Date().toISOString();
         const defaultHistory = {
             chatItems: [],
             description: fallbackDescription,
             uuid: "",
             model: DEFAULT_CHAT_MODEL,
             employeeProfile: null,
-            createdAt: now,
-            updatedAt: now,
+            createdAt: new Date(),
             isTopicSet: false,
             staticTools: [],
         };
@@ -48,15 +46,7 @@ const cleanChatHistories = (histories: (Partial<ChatHistory> | null | undefined)
         if (candidate.createdAt) {
             const parsedDate = new Date(candidate.createdAt as string);
             if (!Number.isNaN(parsedDate.getTime())) {
-                createdAt = parsedDate.toISOString();
-            }
-        }
-
-        let updatedAt = createdAt;
-        if (candidate.updatedAt) {
-            const parsedDate = new Date(candidate.updatedAt as string);
-            if (!Number.isNaN(parsedDate.getTime())) {
-                updatedAt = parsedDate.toISOString();
+                createdAt = parsedDate;
             }
         }
 
@@ -73,7 +63,6 @@ const cleanChatHistories = (histories: (Partial<ChatHistory> | null | undefined)
             model,
             uuid,
             createdAt,
-            updatedAt,
             isTopicSet,
         } as ChatHistory;
     });

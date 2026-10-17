@@ -9,7 +9,7 @@
 import { fetchFileDataUrl, listSessionFiles } from "../../api/storage";
 import type { AppThunk } from "..";
 import type { Session } from "../slices/sessionSlice";
-import { addSession, renameSession } from "../slices/sessionSlice";
+import { addSession, renameSession, updateSessionActivity } from "../slices/sessionSlice";
 import { setSessionFiles } from "../slices/sessionFilesSlice";
 import { hydrateSessionMessages, type Message } from "../slices/chatSlice";
 import type { FileAttachment } from "../../types";
@@ -204,14 +204,18 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
     return;
   }
 
-  const grouped = new Map<string, { files: FileAttachment[]; latestTimestamp: number; sessionName?: string | null }>();
+  const grouped = new Map<string, { files: FileAttachment[]; earliestTimestamp: number; latestTimestamp: number; sessionName?: string | null }>();
   for (const file of files) {
     const sessionId = file.sessionId ?? undefined;
     if (!sessionId) {
       continue;
     }
-    const record = grouped.get(sessionId) ?? { files: [], latestTimestamp: 0, sessionName: file.sessionName };
+    const record = grouped.get(sessionId) ?? { files: [], earliestTimestamp: Infinity, latestTimestamp: 0, sessionName: file.sessionName };
     record.files.push(file);
+    const createdAtMs = file.uploadedAt ? Date.parse(file.uploadedAt) : Number.NaN;
+    if (Number.isFinite(createdAtMs) && createdAtMs > 0) {
+      record.earliestTimestamp = Math.min(record.earliestTimestamp, createdAtMs);
+    }
     const timestampSource = file.lastUpdated || file.uploadedAt;
     const uploadedAtMs = timestampSource ? Date.parse(timestampSource) : Number.NaN;
     if (Number.isFinite(uploadedAtMs) && uploadedAtMs > record.latestTimestamp) {
@@ -243,6 +247,7 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
     const existing = existingSessions.get(sessionId);
     const trimmedRemoteName = value.sessionName?.trim();
     if (existing) {
+      dispatch(updateSessionActivity({ id: sessionId, updatedAt: value.latestTimestamp }));
       if (trimmedRemoteName && trimmedRemoteName.length && existing.name !== trimmedRemoteName) {
         // Align any locally cached session titles with the latest metadata recovered from blob storage.
         dispatch(
@@ -255,13 +260,15 @@ export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async
       return;
     }
 
-    const createdAt = Number.isFinite(value.latestTimestamp) && value.latestTimestamp > 0
+    const updatedAt = Number.isFinite(value.latestTimestamp) && value.latestTimestamp > 0
       ? value.latestTimestamp
       : Date.now();
+    const createdAt = Number.isFinite(value.earliestTimestamp) ? value.earliestTimestamp : updatedAt;
     newSessions.push({
       id: sessionId,
       name: buildRecoveredName(sessionId, createdAt, trimmedRemoteName ?? value.sessionName),
       createdAt,
+      updatedAt,
       isNewChat: false,
     });
   });

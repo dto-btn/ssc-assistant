@@ -6,11 +6,13 @@
  */
 
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { addMessage, hydrateSessionMessages } from "./chatSlice";
 
 export interface Session {
   id: string;
   name: string;
   createdAt: number;
+  updatedAt?: number;
   staticTools?: string[];
   isNewChat: boolean;
 }
@@ -30,8 +32,17 @@ const sessionSlice = createSlice({
   initialState,
   reducers: {
     addSession: (state, action: PayloadAction<Session>) => {
-      state.sessions.push(action.payload);
+      state.sessions.push({ ...action.payload, updatedAt: action.payload.updatedAt ?? action.payload.createdAt });
       state.currentSessionId = action.payload.id;
+    },
+    updateSessionActivity: (
+      state,
+      action: PayloadAction<{ id: string; updatedAt: number }>
+    ) => {
+      const session = state.sessions.find((session) => session.id === action.payload.id);
+      if (session && Number.isFinite(action.payload.updatedAt)) {
+        session.updatedAt = Math.max(session.updatedAt ?? session.createdAt, action.payload.updatedAt);
+      }
     },
     removeSession: (state, action: PayloadAction<string>) => {
       state.sessions = state.sessions.filter((session) => session.id !== action.payload);
@@ -70,10 +81,29 @@ const sessionSlice = createSlice({
       if (session) session.isNewChat = action.payload.isNew;
     }
   },
+  extraReducers: (builder) => {
+    builder.addCase(addMessage, (state, action) => {
+      const session = state.sessions.find((session) => session.id === action.payload.sessionId);
+      if (session) {
+        session.updatedAt = Math.max(session.updatedAt ?? session.createdAt, Date.now());
+      }
+    });
+    builder.addCase(hydrateSessionMessages, (state, action) => {
+      const session = state.sessions.find((session) => session.id === action.payload.sessionId);
+      if (session) {
+        action.payload.messages.forEach((message) => {
+          if (Number.isFinite(message.timestamp)) {
+            session.updatedAt = Math.max(session.updatedAt ?? session.createdAt, message.timestamp);
+          }
+        });
+      }
+    });
+  },
 });
 
 export const {
   addSession,
+  updateSessionActivity,
   removeSession,
   clearAllSessions,
   setCurrentSession,

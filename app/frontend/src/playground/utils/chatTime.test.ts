@@ -1,12 +1,28 @@
 import { describe, expect, it } from "vitest";
 
-import { formatConversationBucket } from "./chatTime";
+import { formatConversationBucket, formatConversationTimestamp } from "./chatTime";
 
-// Mid-afternoon so that +/- a few hours never rolls into an adjacent day by accident.
 const NOW = new Date(2026, 8, 9, 14, 30);
 
 const daysBefore = (days: number, hour = 14, minute = 30) =>
   new Date(2026, 8, 9 - days, hour, minute);
+
+describe("formatConversationTimestamp", () => {
+  it("omits the year for timestamps in the current year", () => {
+    expect(formatConversationTimestamp(NOW, NOW)).toBe(new Intl.DateTimeFormat(undefined, {
+      month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+    }).format(NOW));
+  });
+
+  it("includes the year for timestamps outside the current year", () => {
+    for (const year of [2025, 2027]) {
+      const date = new Date(year, 8, 9, 14, 30);
+      expect(formatConversationTimestamp(date.getTime(), NOW)).toBe(new Intl.DateTimeFormat(undefined, {
+        year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+      }).format(date));
+    }
+  });
+});
 
 describe("formatConversationBucket", () => {
   it("buckets the same calendar day as Today", () => {
@@ -22,12 +38,10 @@ describe("formatConversationBucket", () => {
   });
 
   it("uses calendar days, not elapsed hours, at the midnight boundary", () => {
-    // 31 minutes earlier but a different calendar day.
     const justBeforeMidnight = new Date(2026, 8, 8, 23, 59);
     const justAfterMidnight = new Date(2026, 8, 9, 0, 1);
 
     expect(formatConversationBucket(justBeforeMidnight, justAfterMidnight)).toBe("Yesterday");
-    // Nearly 24h earlier but still the same calendar day.
     expect(formatConversationBucket(justAfterMidnight, new Date(2026, 8, 9, 23, 59))).toBe("Today");
   });
 
@@ -86,7 +100,6 @@ describe("formatConversationBucket", () => {
   });
 
   it("counts calendar days across a DST transition", () => {
-    // In DST-observing zones these local midnights are only 23h apart; the bucket must still be Yesterday.
     const dayAfterSpringForward = new Date(2026, 2, 9, 10, 0);
     expect(formatConversationBucket(new Date(2026, 2, 8, 10, 0), dayAfterSpringForward)).toBe("Yesterday");
 

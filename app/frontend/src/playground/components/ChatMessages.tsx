@@ -48,7 +48,7 @@ import { transformToBusinessRequest } from "../utils/bits_utils";
 import { MONTH_INDEX_BY_NAME, MONTH_NAMES_PATTERN, MERMAID_FENCE_PATTERN, MERMAID_DIAGRAM_TYPE_PATTERN } from "../constants/patterns";
 import { normalizePromptForInference } from "../utils/promptUtils";
 import { formatIsoDate } from "../services/bitsTransformService";
-import { formatConversationTimestamp } from "../../util/chatTime";
+import { formatConversationTimestamp } from "../utils/chatTime";
 import "highlight.js/styles/github.css";
 
 const BusinessRequestTable = lazy(

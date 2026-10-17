@@ -45,7 +45,7 @@ import SyncStatusIndicator from "./SyncStatusIndicator";
 import ProfileMenu from "./ProfileMenu/ProfileMenu";
 import { deleteSession as deleteSessionThunk, persistSessionRename } from "../store/thunks/sessionManagementThunks";
 import { closeMobileSidebar } from "../store/slices/uiSlice";
-import { formatConversationBucket, formatConversationTimestamp } from "../../util/chatTime";
+import { formatConversationBucket, formatConversationTimestamp } from "../utils/chatTime";
 
 const showCloudSyncIndicator = String(import.meta.env.VITE_PLAYGROUND_SHOW_CLOUD_SYNC_INDICATOR || "").toLowerCase() === "true";
 
