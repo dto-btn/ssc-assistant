@@ -9,7 +9,11 @@
 import { fetchFileDataUrl, listSessionFiles } from "../../api/storage";
 import type { AppThunk } from "..";
 import type { Session } from "../slices/sessionSlice";
-import { addSession, renameSession, updateSessionActivity } from "../slices/sessionSlice";
+import {
+  addSession,
+  renameSession,
+  updateSessionActivity,
+} from "../slices/sessionSlice";
 import { setSessionFiles } from "../slices/sessionFilesSlice";
 import { hydrateSessionMessages, type Message } from "../slices/chatSlice";
 import type { FileAttachment } from "../../types";
@@ -48,10 +52,11 @@ export interface RehydrateSessionOptions {
  * @param options - Optional settings. If `force` is true, hydration will occur even if local messages exist.
  * @returns A promise resolving to an object indicating whether restoration occurred, whether an archive was found, and the latest archive version.
  */
-export const rehydrateSessionFromArchive = (
-  sessionId: string,
-  options?: RehydrateSessionOptions,
-): AppThunk<Promise<SessionRehydrationResult>> =>
+export const rehydrateSessionFromArchive =
+  (
+    sessionId: string,
+    options?: RehydrateSessionOptions,
+  ): AppThunk<Promise<SessionRehydrationResult>> =>
   async (dispatch, getState) => {
     if (!sessionId) {
       return { restored: false, hasArchive: false, latestVersion: null };
@@ -69,7 +74,10 @@ export const rehydrateSessionFromArchive = (
       const cachedFiles = state.sessionFiles.bySessionId?.[sessionId] ?? [];
       const cachedArchives = cachedFiles.filter(isChatArchiveAttachment);
       const latestCachedArchive = pickLatestArchive(cachedArchives);
-      const latestVersion = latestCachedArchive?.lastUpdated ?? latestCachedArchive?.uploadedAt ?? null;
+      const latestVersion =
+        latestCachedArchive?.lastUpdated ??
+        latestCachedArchive?.uploadedAt ??
+        null;
       return {
         restored: false,
         hasArchive: cachedArchives.length > 0,
@@ -92,7 +100,9 @@ export const rehydrateSessionFromArchive = (
             });
         }
         if (sessionDeleted) {
-          void dispatch(applyRemoteSessionDeletion(sessionId, { silent: true }));
+          void dispatch(
+            applyRemoteSessionDeletion(sessionId, { silent: true }),
+          );
           return { restored: false, hasArchive: false, latestVersion: null };
         }
         dispatch(setSessionFiles({ sessionId, files }));
@@ -112,7 +122,8 @@ export const rehydrateSessionFromArchive = (
     }
 
     const latestArchive = pickLatestArchive(chatArchives);
-    const latestVersion: string | null = latestArchive?.lastUpdated ?? latestArchive?.uploadedAt ?? null;
+    const latestVersion: string | null =
+      latestArchive?.lastUpdated ?? latestArchive?.uploadedAt ?? null;
     if (!latestArchive || (!latestArchive.url && !latestArchive.blobName)) {
       return { restored: false, hasArchive: true, latestVersion };
     }
@@ -136,30 +147,39 @@ export const rehydrateSessionFromArchive = (
             .filter((message): message is Message => message !== null)
         : [];
 
-/**
- * Generates a human-readable session title for a recovered chat archive.
- * If the archive provides a name, it is used. Otherwise, falls back to a label
- * based on the upload timestamp, or as a last resort, a truncated session ID.
- *
- * @param sessionId - The unique session identifier.
- * @param uploadedAtMs - The upload timestamp in milliseconds.
- * @param providedName - The name from the archive, if available.
- * @returns A human-readable session title.
- */
+      /**
+       * Generates a human-readable session title for a recovered chat archive.
+       * If the archive provides a name, it is used. Otherwise, falls back to a label
+       * based on the upload timestamp, or as a last resort, a truncated session ID.
+       *
+       * @param sessionId - The unique session identifier.
+       * @param uploadedAtMs - The upload timestamp in milliseconds.
+       * @param providedName - The name from the archive, if available.
+       * @returns A human-readable session title.
+       */
 
       if (!restoredMessages.length) {
         return { restored: false, hasArchive: true, latestVersion };
       }
 
-      dispatch(hydrateSessionMessages({ sessionId, messages: restoredMessages }));
+      dispatch(
+        hydrateSessionMessages({ sessionId, messages: restoredMessages }),
+      );
       return { restored: true, hasArchive: true, latestVersion };
     } catch (error) {
-      console.error("Failed to rehydrate session archive", { sessionId, error });
+      console.error("Failed to rehydrate session archive", {
+        sessionId,
+        error,
+      });
       return { restored: false, hasArchive: true, latestVersion };
     }
   };
 
-const buildRecoveredName = (sessionId: string, uploadedAtMs: number, providedName?: string | null) => {
+const buildRecoveredName = (
+  sessionId: string,
+  uploadedAtMs: number,
+  providedName?: string | null,
+) => {
   if (providedName && providedName.trim().length > 0) {
     return providedName.trim();
   }
@@ -173,113 +193,162 @@ const buildRecoveredName = (sessionId: string, uploadedAtMs: number, providedNam
 /**
  * Discover remote sessions during startup and queue rehydration jobs for each one.
  */
-export const bootstrapSessionsFromStorage = (): AppThunk<Promise<void>> => async (dispatch, getState) => {
-  const state = getState();
-  const accessToken = state.auth.accessToken;
-  if (!accessToken?.trim()) {
-    return;
-  }
-
-  let files: FileAttachment[];
-  try {
-    const result = await listSessionFiles({ accessToken });
-    files = result.files;
-    if (result.deletedSessionIds.length) {
-      result.deletedSessionIds.forEach((sessionId) => {
-        if (sessionId) {
-          void dispatch(applyRemoteSessionDeletion(sessionId, { silent: true }));
-        }
-      });
-    }
-  } catch (error) {
-    console.error("Failed to enumerate remote session files", error);
-    dispatch(addToast({
-      message: i18n.t("playground:errors.sessionFilesLoadFailed", { defaultValue: "Could not load session files. Please refresh the page." }),
-      isError: true,
-    }));
-    return;
-  }
-
-  if (!files.length) {
-    return;
-  }
-
-  const grouped = new Map<string, { files: FileAttachment[]; earliestTimestamp: number; latestTimestamp: number; sessionName?: string | null }>();
-  for (const file of files) {
-    const sessionId = file.sessionId ?? undefined;
-    if (!sessionId) {
-      continue;
-    }
-    const record = grouped.get(sessionId) ?? { files: [], earliestTimestamp: Infinity, latestTimestamp: 0, sessionName: file.sessionName };
-    record.files.push(file);
-    const createdAtMs = file.uploadedAt ? Date.parse(file.uploadedAt) : Number.NaN;
-    if (Number.isFinite(createdAtMs) && createdAtMs > 0) {
-      record.earliestTimestamp = Math.min(record.earliestTimestamp, createdAtMs);
-    }
-    const timestampSource = file.lastUpdated || file.uploadedAt;
-    const uploadedAtMs = timestampSource ? Date.parse(timestampSource) : Number.NaN;
-    if (Number.isFinite(uploadedAtMs) && uploadedAtMs > record.latestTimestamp) {
-      record.latestTimestamp = uploadedAtMs;
-      if (file.sessionName) {
-        record.sessionName = file.sessionName;
-      }
-    }
-    if (!record.sessionName && file.sessionName) {
-      record.sessionName = file.sessionName;
-    }
-    grouped.set(sessionId, record);
-  }
-
-  if (!grouped.size) {
-    return;
-  }
-
-  //new session = fetched sessions from blob storage
-  //existing sessions = cached from local store
-  const existingSessions = new Map(state.sessions.sessions.map((session) => [session.id, session]));
-  const newSessions: Session[] = [];
-
-  grouped.forEach((value, sessionId) => {
-    if (value.files.length === 0) {
+export const bootstrapSessionsFromStorage =
+  (): AppThunk<Promise<void>> => async (dispatch, getState) => {
+    const state = getState();
+    const accessToken = state.auth.accessToken;
+    if (!accessToken?.trim()) {
       return;
     }
-    dispatch(setSessionFiles({ sessionId, files: value.files }));
-    const existing = existingSessions.get(sessionId);
-    const trimmedRemoteName = value.sessionName?.trim();
-    if (existing) {
-      dispatch(updateSessionActivity({ id: sessionId, updatedAt: value.latestTimestamp }));
-      if (trimmedRemoteName && trimmedRemoteName.length && existing.name !== trimmedRemoteName) {
-        // Align any locally cached session titles with the latest metadata recovered from blob storage.
-        dispatch(
-          renameSession({
-            id: sessionId,
-            name: trimmedRemoteName,
+
+    let files: FileAttachment[];
+    try {
+      const result = await listSessionFiles({ accessToken });
+      files = result.files;
+      if (result.deletedSessionIds.length) {
+        result.deletedSessionIds.forEach((sessionId) => {
+          if (sessionId) {
+            void dispatch(
+              applyRemoteSessionDeletion(sessionId, { silent: true }),
+            );
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Failed to enumerate remote session files", error);
+      dispatch(
+        addToast({
+          message: i18n.t("playground:errors.sessionFilesLoadFailed", {
+            defaultValue:
+              "Could not load session files. Please refresh the page.",
           }),
+          isError: true,
+        }),
+      );
+      return;
+    }
+
+    if (!files.length) {
+      return;
+    }
+
+    const grouped = new Map<
+      string,
+      {
+        files: FileAttachment[];
+        earliestTimestamp: number;
+        latestTimestamp: number;
+        sessionName?: string | null;
+      }
+    >();
+    for (const file of files) {
+      const sessionId = file.sessionId ?? undefined;
+      if (!sessionId) {
+        continue;
+      }
+      const record = grouped.get(sessionId) ?? {
+        files: [],
+        earliestTimestamp: Infinity,
+        latestTimestamp: 0,
+        sessionName: file.sessionName,
+      };
+      record.files.push(file);
+      const createdAtMs = file.uploadedAt
+        ? Date.parse(file.uploadedAt)
+        : Number.NaN;
+      if (Number.isFinite(createdAtMs) && createdAtMs > 0) {
+        record.earliestTimestamp = Math.min(
+          record.earliestTimestamp,
+          createdAtMs,
         );
       }
+      const timestampSource = file.lastUpdated || file.uploadedAt;
+      const uploadedAtMs = timestampSource
+        ? Date.parse(timestampSource)
+        : Number.NaN;
+      if (
+        Number.isFinite(uploadedAtMs) &&
+        uploadedAtMs > record.latestTimestamp
+      ) {
+        record.latestTimestamp = uploadedAtMs;
+        if (file.sessionName) {
+          record.sessionName = file.sessionName;
+        }
+      }
+      if (!record.sessionName && file.sessionName) {
+        record.sessionName = file.sessionName;
+      }
+      grouped.set(sessionId, record);
+    }
+
+    if (!grouped.size) {
       return;
     }
 
-    const updatedAt = Number.isFinite(value.latestTimestamp) && value.latestTimestamp > 0
-      ? value.latestTimestamp
-      : Date.now();
-    const createdAt = Number.isFinite(value.earliestTimestamp) ? value.earliestTimestamp : updatedAt;
-    newSessions.push({
-      id: sessionId,
-      name: buildRecoveredName(sessionId, createdAt, trimmedRemoteName ?? value.sessionName),
-      createdAt,
-      updatedAt,
-      isNewChat: false,
+    //new session = fetched sessions from blob storage
+    //existing sessions = cached from local store
+    const existingSessions = new Map(
+      state.sessions.sessions.map((session) => [session.id, session]),
+    );
+    const newSessions: Session[] = [];
+
+    grouped.forEach((value, sessionId) => {
+      if (value.files.length === 0) {
+        return;
+      }
+      dispatch(setSessionFiles({ sessionId, files: value.files }));
+      const existing = existingSessions.get(sessionId);
+      const trimmedRemoteName = value.sessionName?.trim();
+      if (existing) {
+        dispatch(
+          updateSessionActivity({
+            id: sessionId,
+            updatedAt: value.latestTimestamp,
+          }),
+        );
+        if (
+          trimmedRemoteName &&
+          trimmedRemoteName.length &&
+          existing.name !== trimmedRemoteName
+        ) {
+          // Align any locally cached session titles with the latest metadata recovered from blob storage.
+          dispatch(
+            renameSession({
+              id: sessionId,
+              name: trimmedRemoteName,
+            }),
+          );
+        }
+        return;
+      }
+
+      const updatedAt =
+        Number.isFinite(value.latestTimestamp) && value.latestTimestamp > 0
+          ? value.latestTimestamp
+          : Date.now();
+      const createdAt = Number.isFinite(value.earliestTimestamp)
+        ? value.earliestTimestamp
+        : updatedAt;
+      newSessions.push({
+        id: sessionId,
+        name: buildRecoveredName(
+          sessionId,
+          createdAt,
+          trimmedRemoteName ?? value.sessionName,
+        ),
+        createdAt,
+        updatedAt,
+        isNewChat: false,
+      });
     });
-  });
 
-  if (!newSessions.length) {
-    return;
-  }
+    if (!newSessions.length) {
+      return;
+    }
 
-  newSessions.sort((a, b) => a.createdAt - b.createdAt);
-  newSessions.forEach((session) => dispatch(addSession(session)));
-  // Do not auto-activate the newest recovered session — the app always opens
-  // a fresh empty conversation (see NewConversationOnOpen), and remote bootstrap
-  // should only populate the sidebar, not override the current session.
-};
+    newSessions.sort((a, b) => a.createdAt - b.createdAt);
+    newSessions.forEach((session) => dispatch(addSession(session)));
+    // Do not auto-activate the newest recovered session — the app always opens
+    // a fresh empty conversation (see NewConversationOnOpen), and remote bootstrap
+    // should only populate the sidebar, not override the current session.
+  };

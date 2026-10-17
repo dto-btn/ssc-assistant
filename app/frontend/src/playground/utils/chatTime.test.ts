@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { formatConversationBucket, formatConversationTimestamp } from "./chatTime";
+import {
+  formatConversationBucket,
+  formatConversationTimestamp,
+} from "./chatTime";
 
 const NOW = new Date(2026, 8, 9, 14, 30);
 
@@ -9,17 +12,28 @@ const daysBefore = (days: number, hour = 14, minute = 30) =>
 
 describe("formatConversationTimestamp", () => {
   it("omits the year for timestamps in the current year", () => {
-    expect(formatConversationTimestamp(NOW, NOW)).toBe(new Intl.DateTimeFormat(undefined, {
-      month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
-    }).format(NOW));
+    expect(formatConversationTimestamp(NOW, NOW)).toBe(
+      new Intl.DateTimeFormat(undefined, {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      }).format(NOW),
+    );
   });
 
   it("includes the year for timestamps outside the current year", () => {
     for (const year of [2025, 2027]) {
       const date = new Date(year, 8, 9, 14, 30);
-      expect(formatConversationTimestamp(date.getTime(), NOW)).toBe(new Intl.DateTimeFormat(undefined, {
-        year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
-      }).format(date));
+      expect(formatConversationTimestamp(date.getTime(), NOW)).toBe(
+        new Intl.DateTimeFormat(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        }).format(date),
+      );
     }
   });
 });
@@ -33,27 +47,39 @@ describe("formatConversationBucket", () => {
 
   it("buckets the previous calendar day as Yesterday", () => {
     expect(formatConversationBucket(daysBefore(1), NOW)).toBe("Yesterday");
-    expect(formatConversationBucket(daysBefore(1, 0, 0), NOW)).toBe("Yesterday");
-    expect(formatConversationBucket(daysBefore(1, 23, 59), NOW)).toBe("Yesterday");
+    expect(formatConversationBucket(daysBefore(1, 0, 0), NOW)).toBe(
+      "Yesterday",
+    );
+    expect(formatConversationBucket(daysBefore(1, 23, 59), NOW)).toBe(
+      "Yesterday",
+    );
   });
 
   it("uses calendar days, not elapsed hours, at the midnight boundary", () => {
     const justBeforeMidnight = new Date(2026, 8, 8, 23, 59);
     const justAfterMidnight = new Date(2026, 8, 9, 0, 1);
 
-    expect(formatConversationBucket(justBeforeMidnight, justAfterMidnight)).toBe("Yesterday");
-    expect(formatConversationBucket(justAfterMidnight, new Date(2026, 8, 9, 23, 59))).toBe("Today");
+    expect(
+      formatConversationBucket(justBeforeMidnight, justAfterMidnight),
+    ).toBe("Yesterday");
+    expect(
+      formatConversationBucket(justAfterMidnight, new Date(2026, 8, 9, 23, 59)),
+    ).toBe("Today");
   });
 
   it("buckets 2 through 7 days back as Last 7 days", () => {
     for (const days of [2, 3, 5, 6, 7]) {
-      expect(formatConversationBucket(daysBefore(days), NOW)).toBe("Last 7 days");
+      expect(formatConversationBucket(daysBefore(days), NOW)).toBe(
+        "Last 7 days",
+      );
     }
   });
 
   it("buckets 8 through 30 days back as Last 30 days", () => {
     for (const days of [8, 15, 29, 30]) {
-      expect(formatConversationBucket(daysBefore(days), NOW)).toBe("Last 30 days");
+      expect(formatConversationBucket(daysBefore(days), NOW)).toBe(
+        "Last 30 days",
+      );
     }
   });
 
@@ -76,11 +102,15 @@ describe("formatConversationBucket", () => {
   });
 
   it("accepts epoch milliseconds and ISO strings", () => {
-    expect(formatConversationBucket(daysBefore(1).getTime(), NOW)).toBe("Yesterday");
-    expect(formatConversationBucket(daysBefore(3).toISOString(), NOW)).toBe("Last 7 days");
+    expect(formatConversationBucket(daysBefore(1).getTime(), NOW)).toBe(
+      "Yesterday",
+    );
+    expect(formatConversationBucket(daysBefore(3).toISOString(), NOW)).toBe(
+      "Last 7 days",
+    );
   });
 
-  it("falls back to Older for missing or unparseable values", () => {
+  it("falls back to Older for missing or unparsable values", () => {
     expect(formatConversationBucket(null, NOW)).toBe("Older");
     expect(formatConversationBucket(undefined, NOW)).toBe("Older");
     expect(formatConversationBucket("not a date", NOW)).toBe("Older");
@@ -89,21 +119,36 @@ describe("formatConversationBucket", () => {
 
   it("spans a month boundary without drifting", () => {
     const firstOfMonth = new Date(2026, 8, 1, 9, 0);
-    expect(formatConversationBucket(new Date(2026, 7, 31, 23, 0), firstOfMonth)).toBe("Yesterday");
-    expect(formatConversationBucket(new Date(2026, 7, 25, 9, 0), firstOfMonth)).toBe("Last 7 days");
+    expect(
+      formatConversationBucket(new Date(2026, 7, 31, 23, 0), firstOfMonth),
+    ).toBe("Yesterday");
+    expect(
+      formatConversationBucket(new Date(2026, 7, 25, 9, 0), firstOfMonth),
+    ).toBe("Last 7 days");
   });
 
   it("spans a year boundary without drifting", () => {
     const newYearsDay = new Date(2026, 0, 1, 9, 0);
-    expect(formatConversationBucket(new Date(2025, 11, 31, 23, 0), newYearsDay)).toBe("Yesterday");
-    expect(formatConversationBucket(new Date(2025, 11, 20, 9, 0), newYearsDay)).toBe("Last 30 days");
+    expect(
+      formatConversationBucket(new Date(2025, 11, 31, 23, 0), newYearsDay),
+    ).toBe("Yesterday");
+    expect(
+      formatConversationBucket(new Date(2025, 11, 20, 9, 0), newYearsDay),
+    ).toBe("Last 30 days");
   });
 
   it("counts calendar days across a DST transition", () => {
     const dayAfterSpringForward = new Date(2026, 2, 9, 10, 0);
-    expect(formatConversationBucket(new Date(2026, 2, 8, 10, 0), dayAfterSpringForward)).toBe("Yesterday");
+    expect(
+      formatConversationBucket(
+        new Date(2026, 2, 8, 10, 0),
+        dayAfterSpringForward,
+      ),
+    ).toBe("Yesterday");
 
     const dayAfterFallBack = new Date(2026, 10, 2, 10, 0);
-    expect(formatConversationBucket(new Date(2026, 10, 1, 10, 0), dayAfterFallBack)).toBe("Yesterday");
+    expect(
+      formatConversationBucket(new Date(2026, 10, 1, 10, 0), dayAfterFallBack),
+    ).toBe("Yesterday");
   });
 });

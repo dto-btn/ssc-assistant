@@ -27,7 +27,7 @@ export const selectSessionLastActivityById = createSelector(
     });
 
     return lastActivityById;
-  }
+  },
 );
 
 /**
@@ -38,8 +38,11 @@ export const selectSessionLastActivityById = createSelector(
  */
 export const selectSessionsNewestFirst = createSelector(
   [selectSessions, selectSessionLastActivityById],
-  (sessions: Session[], lastActivityById) => [...sessions].sort((a, b) => {
-    const activityDiff = (lastActivityById[b.id] ?? b.createdAt) - (lastActivityById[a.id] ?? a.createdAt);
-    return activityDiff || b.createdAt - a.createdAt;
-  })
+  (sessions: Session[], lastActivityById) =>
+    [...sessions].sort((a, b) => {
+      const activityDiff =
+        (lastActivityById[b.id] ?? b.createdAt) -
+        (lastActivityById[a.id] ?? a.createdAt);
+      return activityDiff || b.createdAt - a.createdAt;
+    }),
 );

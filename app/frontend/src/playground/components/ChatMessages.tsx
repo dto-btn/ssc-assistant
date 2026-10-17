@@ -162,7 +162,7 @@ const MarkdownLink: React.FC<React.ComponentPropsWithoutRef<"a">> = ({
   );
 };
 
-const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo(({
+const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo(function AssistantMessageBubble({
   message,
   pulseThisAssistantIcon,
   assistantStatusLabel,
@@ -179,7 +179,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
   remarkPlugins,
   rehypePlugins,
   resolvedAttachments,
-}) => {
+}) {
   const { t, i18n } = useTranslation("playground");
   const [isCitationDrawerOpen, setCitationDrawerOpen] = useState(false);
   const [activeCitationGroupUrl, setActiveCitationGroupUrl] = useState<
@@ -884,7 +884,7 @@ const resolveAttachmentsForMessage = (
   });
 };
 
-const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
+const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(function ChatMessageRow({
   message,
   timestampLabel,
   pulseThisAssistantIcon,
@@ -899,7 +899,7 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(({
   rehypePluginsWithMermaid,
   sessionId,
   sessionFilesByBlobName,
-}) => {
+}) {
   const { t } = useTranslation("playground");
   const [isHovering, setIsHovering] = useState(false);
 
