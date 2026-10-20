@@ -15,6 +15,31 @@ resource "azurerm_service_plan" "frontend" {
   os_type             = "Linux"
 }
 
+data "azuread_application" "frontend" {
+  count     = var.enable_auth ? 1 : 0
+  client_id = var.aad_client_id
+}
+
+resource "time_rotating" "frontend_secret" {
+  count         = var.enable_auth ? 1 : 0
+  rotation_days = 150
+}
+
+resource "azuread_application_password" "frontend" {
+  count             = var.enable_auth ? 1 : 0
+  application_id    = data.azuread_application.frontend[0].id
+  display_name      = "ssc-assistant-frontend-terraform-managed"
+  end_date          = timeadd(time_rotating.frontend_secret[0].rotation_rfc3339, "4320h")
+
+  rotate_when_changed = {
+    rotation = time_rotating.frontend_secret[0].rotation_rfc3339
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
 resource "azurerm_linux_web_app" "frontend" {
   name                = "${replace(var.project_name, "_", "-")}"
   resource_group_name = azurerm_resource_group.dev.name
@@ -42,17 +67,18 @@ resource "azurerm_linux_web_app" "frontend" {
     }
   }
 
-  app_settings = {
+  app_settings = merge({
     VITE_API_BACKEND         = "https://${replace(var.project_name, "_", "-")}-api.azurewebsites.net/"
     VITE_API_KEY             = var.vite_api_key
     VITE_SAS_TOKEN           = data.azurerm_storage_account_sas.blob_read_sas.sas
     VITE_BLOB_STORAGE_URL    = azurerm_storage_account.dev.primary_blob_endpoint
     WEBSITE_RUN_FROM_PACKAGE = "1"
-    MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = var.microsoft_provider_authentication_secret
     PORT = 8080
     WEBSITE_AUTH_AAD_ALLOWED_TENANTS = data.azurerm_client_config.current.tenant_id
     NODE_OPTIONS = "--max-http-header-size=32768"
-  }
+  }, var.enable_auth ? {
+    MICROSOFT_PROVIDER_AUTHENTICATION_SECRET = azuread_application_password.frontend[0].value
+  } : {})
 
   identity {
     type = "UserAssigned"

@@ -4,7 +4,14 @@ terraform {
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "~> 4.80.0"
-
+    }
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "~> 3.9.0"
+    }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.13.1"
     }
   }
 

@@ -41,12 +41,6 @@ variable "pfx_secret" {
     description = "the pfx secret for the private key"
 }
 
-# those 2 must be provided, along with the secret.. (microsoft_provider_authentication_secret)
-variable "microsoft_provider_authentication_secret" {
-    type        = string
-    sensitive   = true
-}
-
 variable "aad_client_id" {
     type = string
     default = "fa97a723-f604-438b-8bd6-06543065f6a9"

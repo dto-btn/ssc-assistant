@@ -41,12 +41,6 @@ variable "pfx_secret" {
     description = "the pfx secret for the private key. Required only on new deployment or recreate. See code for cmnt"
 }
 
-# those 2 must be provided, along with the secret.. (microsoft_provider_authentication_secret)
-variable "microsoft_provider_authentication_secret" {
-    type        = string
-    sensitive   = true
-}
-
 variable "vite_api_key" {
     type = string
     description = "the jwt token value used to communicate from the frontend to the ssc assistant api"
