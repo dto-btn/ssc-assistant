@@ -16,6 +16,7 @@ export interface FileAttachment {
   metadataType?: string
   sessionName?: string | null
   lastUpdated?: string | null
+  lastMessageAt?: string | null
 }
 
 /** Feedback types and form structure shared between the UI and backend for chat feedback submissions. */

@@ -25,6 +25,7 @@ export interface ChatArchiveOutboxItem extends BaseOutboxItem {
   sessionId: string;
   dataUrl: string; // data URL of archive JSON
   label?: string; // optional hint for filename
+  lastMessageAt?: string; // ISO timestamp of the newest message in the archive
 }
 
 export type OutboxItem = UserFileOutboxItem | ChatArchiveOutboxItem;
@@ -65,7 +66,10 @@ const outboxSlice = createSlice({
         metadata: action.payload.metadata,
       });
     },
-    addChatArchiveToOutbox: (state, action: PayloadAction<{ sessionId: string; dataUrl: string; label?: string }>) => {
+    addChatArchiveToOutbox: (
+      state,
+      action: PayloadAction<{ sessionId: string; dataUrl: string; label?: string; lastMessageAt?: string }>,
+    ) => {
       const existingIndex = state.items.findIndex(
         (item) => item.kind === "chat-archive" && item.sessionId === action.payload.sessionId,
       );
@@ -77,6 +81,7 @@ const outboxSlice = createSlice({
         sessionId: action.payload.sessionId,
         dataUrl: action.payload.dataUrl,
         label: action.payload.label,
+        lastMessageAt: action.payload.lastMessageAt,
       };
 
       if (existingIndex >= 0) {

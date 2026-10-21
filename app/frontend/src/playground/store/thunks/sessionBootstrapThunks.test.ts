@@ -59,6 +59,7 @@ describe("bootstrapSessionsFromStorage", () => {
           metadataType: "chat-archive",
           uploadedAt: "2026-05-07T10:00:00.000Z",
           lastUpdated: "2026-05-09T10:00:00.000Z",
+          lastMessageAt: "2026-05-09T09:59:00.000Z",
         },
         {
           blobName: "session-b.chat.json",
@@ -70,6 +71,7 @@ describe("bootstrapSessionsFromStorage", () => {
           metadataType: "chat-archive",
           uploadedAt: "2026-05-08T10:00:00.000Z",
           lastUpdated: "2026-05-08T10:00:00.000Z",
+          lastMessageAt: "2026-05-08T09:59:00.000Z",
         },
       ],
       deletedSessionIds: [],
@@ -89,7 +91,7 @@ describe("bootstrapSessionsFromStorage", () => {
       state.sessions.sessions.find((session) => session.id === "session-a"),
     ).toMatchObject({
       createdAt: Date.parse("2026-05-07T10:00:00.000Z"),
-      updatedAt: Date.parse("2026-05-09T10:00:00.000Z"),
+      updatedAt: Date.parse("2026-05-09T09:59:00.000Z"),
     });
     expect(
       selectSessionsNewestFirst(state as RootState).map(
@@ -118,6 +120,7 @@ describe("bootstrapSessionsFromStorage", () => {
           sessionId: "cached",
           uploadedAt: "2026-05-07T10:00:00.000Z",
           lastUpdated: "2026-05-09T10:00:00.000Z",
+          lastMessageAt: "2026-05-09T09:59:00.000Z",
         },
       ],
       deletedSessionIds: [],
@@ -128,9 +131,84 @@ describe("bootstrapSessionsFromStorage", () => {
 
     expect(store.getState().sessions.sessions[0]).toMatchObject({
       createdAt: 100,
-      updatedAt: Date.parse("2026-05-09T10:00:00.000Z"),
+      updatedAt: Date.parse("2026-05-09T09:59:00.000Z"),
     });
     expect(fetchFileDataUrlMock).not.toHaveBeenCalled();
+  });
+
+  it("orders by last message time so renaming an old chat does not make it recent", async () => {
+    const store = makeStore();
+    listSessionFilesMock.mockResolvedValue({
+      files: [
+        {
+          // Yesterday's chat renamed today: rename rewrites lastUpdated and
+          // triggers a re-archive, but lastMessageAt is unchanged.
+          blobName: "renamed.chat.json",
+          url: "/files/renamed.chat.json",
+          originalName: "renamed.chat.json",
+          sessionId: "renamed",
+          sessionName: "Renamed today",
+          category: "chat",
+          metadataType: "chat-archive",
+          uploadedAt: "2026-05-10T15:00:00.000Z",
+          lastUpdated: "2026-05-10T15:00:00.000Z",
+          lastMessageAt: "2026-05-09T09:00:00.000Z",
+        },
+        {
+          blobName: "active.chat.json",
+          url: "/files/active.chat.json",
+          originalName: "active.chat.json",
+          sessionId: "active",
+          sessionName: "Active today",
+          category: "chat",
+          metadataType: "chat-archive",
+          uploadedAt: "2026-05-10T08:00:00.000Z",
+          lastUpdated: "2026-05-10T08:00:00.000Z",
+          lastMessageAt: "2026-05-10T07:59:00.000Z",
+        },
+      ],
+      deletedSessionIds: [],
+      sessionDeleted: false,
+    });
+
+    await store.dispatch(bootstrapSessionsFromStorage() as never);
+
+    const state = store.getState() as RootState;
+    expect(selectSessionLastActivityById(state).renamed).toBe(
+      Date.parse("2026-05-09T09:00:00.000Z"),
+    );
+    expect(
+      selectSessionsNewestFirst(state).map((session) => session.id),
+    ).toEqual(["active", "renamed"]);
+    expect(
+      state.sessions.sessions.find((session) => session.id === "renamed")?.name,
+    ).toBe("Renamed today");
+  });
+
+  it("falls back to upload time, not rename-updated lastUpdated, for legacy archives", async () => {
+    const store = makeStore();
+    listSessionFilesMock.mockResolvedValue({
+      files: [
+        {
+          blobName: "legacy.chat.json",
+          url: "/files/legacy.chat.json",
+          originalName: "legacy.chat.json",
+          sessionId: "legacy",
+          category: "chat",
+          metadataType: "chat-archive",
+          uploadedAt: "2026-05-07T10:00:00.000Z",
+          lastUpdated: "2026-05-10T10:00:00.000Z",
+        },
+      ],
+      deletedSessionIds: [],
+      sessionDeleted: false,
+    });
+
+    await store.dispatch(bootstrapSessionsFromStorage() as never);
+
+    expect(store.getState().sessions.sessions[0].updatedAt).toBe(
+      Date.parse("2026-05-07T10:00:00.000Z"),
+    );
   });
 
   it("keeps activity monotonic across new messages, hydration, and stale metadata", () => {

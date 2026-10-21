@@ -1043,7 +1043,7 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(function ChatMe
 });
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
-  const { t } = useTranslation("playground");
+  const { t, i18n } = useTranslation("playground");
   const [mermaidCodeViewByMessageId, setMermaidCodeViewByMessageId] =
     useState<Record<string, boolean>>({});
   const assistantResponsePhase = useSelector(
@@ -1101,10 +1101,10 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
   const sessionFiles = useSelector(selectSessionFilesById(sessionId));
 
   const sessionFilesByBlobName = useMemo(
-    () => new Map(
+    () => new Map<string, FileAttachment>(
       sessionFiles
         .filter((file) => Boolean(file.blobName))
-        .map((file) => [file.blobName as string, file])
+        .map((file): [string, FileAttachment] => [file.blobName as string, file])
     ),
     [sessionFiles]
   );
@@ -1178,7 +1178,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({ sessionId }) => {
             <ChatMessageRow
               key={message.id}
               message={message}
-              timestampLabel={showTimestamp ? formatConversationTimestamp(message.timestamp) : undefined}
+              timestampLabel={showTimestamp ? formatConversationTimestamp(message.timestamp, undefined, i18n.language) : undefined}
               pulseThisAssistantIcon={pulseThisAssistantIcon}
               assistantStatusLabel={assistantStatusLabel}
               isPreStreamingPhase={isPreStreamingPhase}

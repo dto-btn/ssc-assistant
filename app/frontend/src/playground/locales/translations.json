@@ -151,6 +151,30 @@
     "en": "Waiting for AI response",
     "fr": "En attente d'une réponse de l'IA"
   },
+  "sidebar.lastActivity": {
+    "en": "Last activity: {{time}}",
+    "fr": "Dernière activité : {{time}}"
+  },
+  "sidebar.bucket.today": {
+    "en": "Today",
+    "fr": "Aujourd'hui"
+  },
+  "sidebar.bucket.yesterday": {
+    "en": "Yesterday",
+    "fr": "Hier"
+  },
+  "sidebar.bucket.last7Days": {
+    "en": "Last 7 days",
+    "fr": "7 derniers jours"
+  },
+  "sidebar.bucket.last30Days": {
+    "en": "Last 30 days",
+    "fr": "30 derniers jours"
+  },
+  "sidebar.bucket.older": {
+    "en": "Older",
+    "fr": "Plus ancien"
+  },
   "export.label": {
     "en": "Export",
     "fr": "Exporter"

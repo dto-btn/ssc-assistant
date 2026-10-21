@@ -8,6 +8,7 @@ vi.mock("react-use-measure", () => ({
   default: () => [vi.fn(), { height: 500 }],
 }));
 
+import i18n from "../../i18n";
 import SessionSidebar from "./SessionSidebar";
 import chatReducer from "../store/slices/chatSlice";
 import sessionReducer from "../store/slices/sessionSlice";
@@ -449,18 +450,100 @@ describe("SessionSidebar responsive behavior", () => {
 
     expect(document.getElementById("session-button-s1")).toHaveAttribute(
       "aria-describedby",
-      "session-waiting-status-s1"
+      "session-last-activity-s1 session-waiting-status-s1"
     );
     expect(document.getElementById("session-button-s1")).not.toHaveAttribute("aria-current");
     expect(document.getElementById("session-button-s2")).toHaveAttribute(
       "aria-describedby",
-      "session-waiting-status-s2"
+      "session-last-activity-s2 session-waiting-status-s2"
     );
     expect(document.getElementById("session-button-s2")).not.toHaveAttribute("aria-current");
-    expect(document.getElementById("session-button-s3")).not.toHaveAttribute("aria-describedby");
+    expect(document.getElementById("session-button-s3")).toHaveAttribute(
+      "aria-describedby",
+      "session-last-activity-s3"
+    );
     expect(document.getElementById("session-button-s3")).toHaveAttribute("aria-current", "page");
 
     expect(document.getElementById("session-waiting-status-s1")).toHaveTextContent("Waiting for AI response");
     expect(document.getElementById("session-waiting-status-s2")).toHaveTextContent("Waiting for AI response");
+  });
+
+  describe("date bucket headers", () => {
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const bucketState = (): TestStoreState => {
+      const now = Date.now();
+      return {
+        chat: {
+          messages: [],
+          isLoadingBySessionId: {},
+          assistantResponsePhaseBySessionId: {},
+          orchestratorInsightsBySessionId: {},
+        },
+        sessions: {
+          sessions: [
+            { id: "t1", name: "Today 1", createdAt: now - 1000, isNewChat: false },
+            { id: "t2", name: "Today 2", createdAt: now - 2000, isNewChat: false },
+            { id: "o1", name: "Old 1", createdAt: now - 60 * DAY_MS, isNewChat: false },
+          ],
+          currentSessionId: "t1",
+        },
+        ui: {
+          isSidebarCollapsed: false,
+          isMobileSidebarOpen: false,
+          isDeletingAllChats: false,
+          chatFeedbackModalState: { messageId: "m1", sessionId: "s1" },
+        },
+      };
+    };
+
+    it("renders bucket headings as separate, non-interactive rows", () => {
+      renderSidebar(false, bucketState());
+
+      const sessionList = screen.getByRole("list", { name: "Chats" });
+      // Headers are presentational, so only sessions are exposed as list items.
+      expect(within(sessionList).getAllByRole("listitem")).toHaveLength(3);
+      expect(within(sessionList).getAllByRole("heading").map((h) => h.textContent)).toEqual([
+        "Today",
+        "Older",
+      ]);
+
+      const todayHeader = screen.getByTestId("session-bucket-today");
+      const firstSession = document.getElementById("session-button-t1")!.closest("li")!;
+      expect(todayHeader).not.toContainElement(firstSession);
+      expect(within(firstSession).queryByRole("heading")).not.toBeInTheDocument();
+    });
+
+    it("skips headers during keyboard navigation", async () => {
+      const user = userEvent.setup();
+      const store = renderSidebar(false, bucketState());
+
+      const sessionList = screen.getByRole("list", { name: "Chats" });
+      sessionList.focus();
+      // t1 -> t2 -> o1 crosses the "Older" header without landing on it.
+      await user.keyboard("{ArrowDown}{ArrowDown}{Enter}");
+
+      await waitFor(() => {
+        expect(store.getState().sessions.currentSessionId).toBe("o1");
+      });
+    });
+
+    it("translates bucket headings and last-activity text for French users", async () => {
+      await act(async () => {
+        await i18n.changeLanguage("fr");
+      });
+      try {
+        renderSidebar(false, bucketState());
+
+        expect(screen.getByRole("heading", { name: "Aujourd'hui" })).toBeInTheDocument();
+        expect(screen.getByRole("heading", { name: "Plus ancien" })).toBeInTheDocument();
+        expect(document.getElementById("session-last-activity-t1")?.textContent).toMatch(
+          /^Dernière activité : /,
+        );
+      } finally {
+        await act(async () => {
+          await i18n.changeLanguage("en");
+        });
+      }
+    });
   });
 });

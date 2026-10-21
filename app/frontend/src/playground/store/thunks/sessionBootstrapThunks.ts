@@ -232,12 +232,19 @@ export const bootstrapSessionsFromStorage =
       return;
     }
 
+    const parseTimestamp = (value?: string | null): number => {
+      const parsed = value ? Date.parse(value) : Number.NaN;
+      return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+    };
+
     const grouped = new Map<
       string,
       {
         files: FileAttachment[];
         earliestTimestamp: number;
-        latestTimestamp: number;
+        latestModifiedTimestamp: number;
+        lastMessageTimestamp: number;
+        latestUploadTimestamp: number;
         sessionName?: string | null;
       }
     >();
@@ -249,28 +256,24 @@ export const bootstrapSessionsFromStorage =
       const record = grouped.get(sessionId) ?? {
         files: [],
         earliestTimestamp: Infinity,
-        latestTimestamp: 0,
+        latestModifiedTimestamp: 0,
+        lastMessageTimestamp: 0,
+        latestUploadTimestamp: 0,
         sessionName: file.sessionName,
       };
       record.files.push(file);
-      const createdAtMs = file.uploadedAt
-        ? Date.parse(file.uploadedAt)
-        : Number.NaN;
-      if (Number.isFinite(createdAtMs) && createdAtMs > 0) {
-        record.earliestTimestamp = Math.min(
-          record.earliestTimestamp,
-          createdAtMs,
-        );
+      const uploadedAtMs = parseTimestamp(file.uploadedAt);
+      if (uploadedAtMs > 0) {
+        record.earliestTimestamp = Math.min(record.earliestTimestamp, uploadedAtMs);
+        record.latestUploadTimestamp = Math.max(record.latestUploadTimestamp, uploadedAtMs);
       }
-      const timestampSource = file.lastUpdated || file.uploadedAt;
-      const uploadedAtMs = timestampSource
-        ? Date.parse(timestampSource)
-        : Number.NaN;
-      if (
-        Number.isFinite(uploadedAtMs) &&
-        uploadedAtMs > record.latestTimestamp
-      ) {
-        record.latestTimestamp = uploadedAtMs;
+      record.lastMessageTimestamp = Math.max(
+        record.lastMessageTimestamp,
+        parseTimestamp(file.lastMessageAt),
+      );
+      const modifiedAtMs = parseTimestamp(file.lastUpdated || file.uploadedAt);
+      if (modifiedAtMs > record.latestModifiedTimestamp) {
+        record.latestModifiedTimestamp = modifiedAtMs;
         if (file.sessionName) {
           record.sessionName = file.sessionName;
         }
@@ -299,13 +302,20 @@ export const bootstrapSessionsFromStorage =
       dispatch(setSessionFiles({ sessionId, files: value.files }));
       const existing = existingSessions.get(sessionId);
       const trimmedRemoteName = value.sessionName?.trim();
+
+      const activityTimestamp =
+        value.lastMessageTimestamp > 0
+          ? value.lastMessageTimestamp
+          : value.latestUploadTimestamp;
       if (existing) {
-        dispatch(
-          updateSessionActivity({
-            id: sessionId,
-            updatedAt: value.latestTimestamp,
-          }),
-        );
+        if (activityTimestamp > 0) {
+          dispatch(
+            updateSessionActivity({
+              id: sessionId,
+              updatedAt: activityTimestamp,
+            }),
+          );
+        }
         if (
           trimmedRemoteName &&
           trimmedRemoteName.length &&
@@ -322,12 +332,9 @@ export const bootstrapSessionsFromStorage =
         return;
       }
 
-      const updatedAt =
-        Number.isFinite(value.latestTimestamp) && value.latestTimestamp > 0
-          ? value.latestTimestamp
-          : Date.now();
+      const updatedAt = activityTimestamp > 0 ? activityTimestamp : Date.now();
       const createdAt = Number.isFinite(value.earliestTimestamp)
-        ? value.earliestTimestamp
+        ? Math.min(value.earliestTimestamp, updatedAt)
         : updatedAt;
       newSessions.push({
         id: sessionId,
