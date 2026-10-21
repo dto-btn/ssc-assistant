@@ -256,7 +256,7 @@ describe("SessionSidebar responsive behavior", () => {
     });
 
     const sessionList = screen.getByRole("list", { name: "Chats" });
-    expect(within(sessionList).getAllByRole("listitem")).toHaveLength(2);
+    expect(within(sessionList).getAllByRole("listitem")).toHaveLength(3);
   });
 
   it("supports keyboard navigation and selection across the virtualized list", async () => {
@@ -500,15 +500,22 @@ describe("SessionSidebar responsive behavior", () => {
       renderSidebar(false, bucketState());
 
       const sessionList = screen.getByRole("list", { name: "Chats" });
-      // Headers are presentational, so only sessions are exposed as list items.
-      expect(within(sessionList).getAllByRole("listitem")).toHaveLength(3);
+      expect(within(sessionList).getAllByRole("listitem")).toHaveLength(5);
       expect(within(sessionList).getAllByRole("heading").map((h) => h.textContent)).toEqual([
         "Today",
         "Older",
       ]);
 
       const todayHeader = screen.getByTestId("session-bucket-today");
+      expect(todayHeader).toHaveRole("listitem");
+      expect(todayHeader).not.toHaveAttribute("tabindex");
+      expect(todayHeader).not.toHaveAttribute("aria-current");
+      expect(todayHeader.parentElement).toBe(sessionList);
+      expect(todayHeader).toHaveAttribute("aria-posinset", "1");
+      expect(todayHeader).toHaveAttribute("aria-setsize", "5");
       const firstSession = document.getElementById("session-button-t1")!.closest("li")!;
+      expect(firstSession).toHaveAttribute("aria-posinset", "2");
+      expect(firstSession).toHaveAttribute("aria-setsize", "5");
       expect(todayHeader).not.toContainElement(firstSession);
       expect(within(firstSession).queryByRole("heading")).not.toBeInTheDocument();
     });

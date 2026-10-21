@@ -320,7 +320,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
     }
   }, [activeIndex, activateSession, sessionsNewestFirst]);
 
-  const chatItemRender = useCallback(({ index, style }: RowComponentProps) => {
+  const chatItemRender = useCallback(({ ariaAttributes, index, style }: RowComponentProps) => {
     const row = rows[index];
     if (!row) {
       return null;
@@ -330,7 +330,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
       return (
         <Box
           component="li"
-          role="presentation"
+          {...ariaAttributes}
           data-testid={`session-bucket-${row.bucket}`}
           style={style}
           sx={{
@@ -368,6 +368,7 @@ const SessionSidebar: React.FC<SessionSidebarProps> = ({ isMobile }) => {
 
     return (
       <ListItem
+        {...ariaAttributes}
         key={session.id}
         component="li"
         disablePadding

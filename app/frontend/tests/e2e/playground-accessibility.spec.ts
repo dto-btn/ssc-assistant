@@ -23,6 +23,37 @@ test('passes automated accessibility checks for shell and active chat states', a
   await expectNoAxeViolations(playground.page, 'active playground chat');
 });
 
+test('preserves list semantics with separate date-group headers', async ({ playground, mockPlayground }) => {
+  const timestamp = Date.now() - 60 * 24 * 60 * 60 * 1000;
+  for (const sessionId of ['older-chat-a', 'older-chat-b']) {
+    mockPlayground.seedArchivedSession({
+      sessionId,
+      sessionName: sessionId,
+      uploadedAt: new Date(timestamp).toISOString(),
+      messages: [{
+        id: `${sessionId}-message`,
+        role: 'assistant',
+        content: `Archived response for ${sessionId}.`,
+        timestamp,
+      }],
+    });
+  }
+
+  await playground.goto();
+  await playground.openSessionNavigation();
+  const list = playground.page.getByRole('list', { name: 'Chats', exact: true });
+  await expect(list.getByRole('heading', { name: 'Today', exact: true })).toBeVisible();
+  await expect(list.getByRole('heading', { name: 'Older', exact: true })).toBeVisible();
+  for (const bucket of ['today', 'older']) {
+    const header = list.getByTestId(`session-bucket-${bucket}`);
+    await expect(header).toHaveRole('listitem');
+    await expect(header).not.toHaveAttribute('tabindex');
+    await expect(header.getByRole('button')).toHaveCount(0);
+  }
+  await expect(list.locator(':scope > li[role="listitem"]')).toHaveCount(5);
+  await expectNoAxeViolations(playground.page, 'sidebar with multiple date groups');
+});
+
 /**
  * Verify that users can create and send a chat using only keyboard traversal.
  */
