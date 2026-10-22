@@ -43,7 +43,7 @@ locals {
       user_principal_name = "zbigniew.rakowski@ssc-spc.gc.ca"
       dev = true
     },
-       {
+    {
       name = "dev-lau"
       user_principal_name = "lauren.hong2@ssc-spc.gc.ca"
       dev = true
