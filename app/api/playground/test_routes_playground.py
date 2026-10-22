@@ -445,6 +445,45 @@ def test_rename_session_updates_metadata(monkeypatch, api_headers, test_client):
     assert container.get_blob(other_session.name).metadata["sessionname"] == "Another"
 
 
+def test_rename_session_preserves_last_message_timestamp(monkeypatch, api_headers, test_client):
+    container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
+    archive = FakeBlob(
+        "user-123/session-1.chat.json",
+        {
+            "sessionid": "session-1",
+            "sessionname": "Old",
+            "type": "chat-archive",
+            "category": "chat",
+            "uploadedat": "2023-01-01T00:00:00Z",
+            "lastupdated": "2023-01-01T00:00:00Z",
+            "lastmessageat": "2022-12-31T23:59:00.000Z",
+            "deleted": "false",
+        },
+        b"{}",
+        "application/json",
+    )
+    container.add_blob(archive)
+    _set_mock_clients(monkeypatch, container)
+
+    rename_response = test_client.post(
+        "/api/playground/sessions/session-1/rename",
+        headers=api_headers,
+        json={"name": "Renamed Session"},
+    )
+    assert rename_response.status_code == 200
+
+    response = test_client.get(
+        "/api/playground/files-for-session",
+        query_string={"sessionId": "session-1"},
+        headers=api_headers,
+    )
+
+    assert response.status_code == 200
+    file_payload = response.get_json()["files"][0]
+    assert file_payload["lastMessageAt"] == "2022-12-31T23:59:00.000Z"
+    assert file_payload["lastUpdated"] != "2023-01-01T00:00:00Z"
+
+
 def test_rename_session_missing_returns_404(monkeypatch, api_headers, test_client):
     container = FakeContainerClient("https://example.com/assistant-chat-files-v2")
     _set_mock_clients(monkeypatch, container)

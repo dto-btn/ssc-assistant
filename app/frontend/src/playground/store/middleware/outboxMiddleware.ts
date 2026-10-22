@@ -64,6 +64,7 @@ async function flushItem(
           sessionid: item.sessionId,
           sessionname: sessionRecord?.name,
           lastupdated: new Date().toISOString(),
+          lastmessageat: item.lastMessageAt,
         },
       });
       store.dispatch(markSessionSynced({ sessionId: item.sessionId }));

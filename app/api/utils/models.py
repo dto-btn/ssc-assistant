@@ -120,6 +120,7 @@ class PlaygroundFileMetadata:
     metadataType: Optional[str] = None
     sessionName: Optional[str] = None
     lastUpdated: Optional[str] = None
+    lastMessageAt: Optional[str] = None
 
 
 @dataclass

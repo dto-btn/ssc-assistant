@@ -523,6 +523,7 @@ def files_for_session(query: PlaygroundSessionFilesQuery):
                     "metadataType": meta.get("type"),
                     "sessionName": _decode_metadata_value(meta.get("sessionname")),
                     "lastUpdated": meta.get("lastupdated"),
+                    "lastMessageAt": meta.get("lastmessageat"),
                 }
             )
         response: Dict[str, Any] = {"files": files}
@@ -688,6 +689,7 @@ def upload_file(upload_request: PlaygroundUploadRequest):
         "category": safe_category,
         "metadataType": metadata.get("type"),
         "sessionName": metadata.get("sessionname"),
+        "lastMessageAt": metadata.get("lastmessageat"),
     }
     return {"file": file_payload, "message": "Uploaded"}
 

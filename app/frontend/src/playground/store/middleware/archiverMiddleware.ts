@@ -60,6 +60,11 @@ function scheduleArchive(sessionId: string, store: PlaygroundStoreApi) {
   }, IDLE_MS_BEFORE_ARCHIVE);
 }
 
+const toIsoTimestamp = (value: number | undefined): string | undefined =>
+  typeof value === "number" && Number.isFinite(value) && value > 0
+    ? new Date(value).toISOString()
+    : undefined;
+
 /**
  * Serialize a session transcript and ship it to blob storage, falling back to
  * the local outbox when offline or unauthenticated.
@@ -110,9 +115,15 @@ async function doArchive(sessionId: string, store: PlaygroundStoreApi) {
   const payload = "data:application/json;base64," + btoa(unescape(encodeURIComponent(JSON.stringify(archiveDoc))));
   const archiveFileName = `${sessionId}.chat.json`;
   const lastUpdatedIso = new Date().toISOString();
+  const lastMessageAtIso = toIsoTimestamp(lastMessage?.timestamp);
 
   const queueArchive = () =>
-    store.dispatch(addChatArchiveToOutbox({ sessionId, dataUrl: payload, label: archiveFileName }));
+    store.dispatch(addChatArchiveToOutbox({
+      sessionId,
+      dataUrl: payload,
+      label: archiveFileName,
+      lastMessageAt: lastMessageAtIso,
+    }));
 
   if (!accessToken) {
     queueArchive();
@@ -133,6 +144,7 @@ async function doArchive(sessionId: string, store: PlaygroundStoreApi) {
         sessionid: sessionId,
         sessionname: sessionRecord?.name,
         lastupdated: lastUpdatedIso,
+        lastmessageat: lastMessageAtIso,
       },
     });
   } catch (error) {
