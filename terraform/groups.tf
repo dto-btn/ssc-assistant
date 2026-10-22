@@ -58,11 +58,11 @@ locals {
       dev = true
     },
     {
-      name = "dev-zed"
+      name                = "dev-zed"
       user_principal_name = "zbigniew.rakowski@ssc-spc.gc.ca"
     },
     {
-      name = "dev-lau"
+      name                = "dev-lau"
       user_principal_name = "lauren.hong2@ssc-spc.gc.ca"
     },
   ]
