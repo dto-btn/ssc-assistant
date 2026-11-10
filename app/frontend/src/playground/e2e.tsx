@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { CssBaseline } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
+import { BrowserRouter } from "react-router";
 
 import "../i18n";
 import "../index.css";
@@ -23,7 +24,9 @@ root.render(
       <CssBaseline />
       <AppErrorBoundary>
         <PlaygroundProviders>
-          <PlaygroundE2ERoot />
+          <BrowserRouter>
+            <PlaygroundE2ERoot />
+          </BrowserRouter>
         </PlaygroundProviders>
       </AppErrorBoundary>
     </ThemeProvider>

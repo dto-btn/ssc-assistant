@@ -16,7 +16,7 @@ import { bookReservation } from "../../api/api";
 import { UserContext } from "../../stores/UserContext";
 import { DeleteConversationConfirmation } from "../../components/DeleteConversationConfirmation";
 import { useLocation } from "react-router";
-import { ParsedSuggestionContext, SuggestionContext } from "../../routes/SuggestCallbackRoute";
+import type { ParsedSuggestionContext, SuggestionContext } from "../../api/suggestionContext.models";
 import { useAppStore } from "../../stores/AppStore";
 import Typography from "@mui/material/Typography";
 import { SNACKBAR_DEBOUNCE_KEYS, LEFT_MENU_WIDTH } from "../../constants";
@@ -362,7 +362,7 @@ const MainScreen = () => {
   // userData is now provided by App via context; no local fetch here
 
   const parsedSuggestionContext: ParsedSuggestionContext | null =
-    location.state;
+    location.state?.suggestionHandoff ?? location.state;
   const processedSuggestionRef = useRef<string | null>(null);
   useEffect(() => {
     // on initial load of page, if state is not null, log the state
@@ -444,26 +444,30 @@ const MainScreen = () => {
           console.error("ERROR: parsedSuggestionContext", msg);
         };
         switch (parsedSuggestionContext.errorReason) {
+          case "redirect_because_context_missing":
+            showError(t("playground:suggestion.errors.missing"));
+            break;
           case "redirect_because_context_validation_failed":
             showError(
-              "The suggestion context was in an unknown format. Your suggestions have not been loaded."
+              t("playground:suggestion.errors.validation")
             );
             break;
           case "redirect_because_server_returned_success_false":
             showError(
-              "The server returned an error while parsing the suggestion context. Your suggestions have not been loaded."
+              t("playground:suggestion.errors.server")
             );
             break;
           case "redirect_with_unknown_error":
           default:
             showError(
-              "An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded."
+              t("playground:suggestion.errors.unknown")
             );
         }
       }
     }
   }, [
     parsedSuggestionContext,
+    t,
     showSnackbar,
     chatHistoriesDescriptions,
     chatService,

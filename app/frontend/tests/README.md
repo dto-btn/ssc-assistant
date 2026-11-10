@@ -8,6 +8,7 @@ This directory currently documents the Playwright end-to-end coverage for the pl
 - `e2e/playground-shell.spec.ts`: verifies the playground shell renders, a new chat can be created, and the desktop sidebar toggle works.
 - `e2e/playground-chat.spec.ts`: verifies typed prompts, suggestion-card prompts, regenerate, copy, feedback, and stop-generation behavior.
 - `e2e/playground-session.spec.ts`: verifies archived session rehydration, rename/delete flows, and attachment handling for supported and unsupported files.
+- `e2e/playground-suggestion.spec.ts`: verifies the unchanged suggestion callback URL, imported session title and citations, refresh deduplication, French answers, error notifications, and follow-up messaging.
 - `e2e/playground-mobile.spec.ts`: verifies the mobile session drawer flow and session switching on narrow viewports.
 
 ## Shared Test Infrastructure

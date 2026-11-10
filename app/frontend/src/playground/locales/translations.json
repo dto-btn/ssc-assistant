@@ -1,4 +1,24 @@
 {
+  "suggestion.errors.missing": {
+    "en": "The suggestion link is missing its identifier. Your suggestions have not been loaded.",
+    "fr": "L'identifiant est absent du lien de suggestion. Vos suggestions n'ont pas été chargées."
+  },
+  "suggestion.errors.server": {
+    "en": "The server returned an error while loading the suggestion. Your suggestions have not been loaded.",
+    "fr": "Le serveur a renvoyé une erreur lors du chargement de la suggestion. Vos suggestions n'ont pas été chargées."
+  },
+  "suggestion.errors.validation": {
+    "en": "The suggestion context was in an unknown format. Your suggestions have not been loaded.",
+    "fr": "Le contexte de suggestion était dans un format inconnu. Vos suggestions n'ont pas été chargées."
+  },
+  "suggestion.errors.unknown": {
+    "en": "An unknown error occurred while loading the suggestion. Your suggestions have not been loaded.",
+    "fr": "Une erreur inconnue s'est produite lors du chargement de la suggestion. Vos suggestions n'ont pas été chargées."
+  },
+  "suggestion.errors.save": {
+    "en": "Your suggestion is open, but could not be saved on this device. It may be lost if you refresh the page.",
+    "fr": "Votre suggestion est ouverte, mais n'a pas pu être enregistrée sur cet appareil. Elle pourrait être perdue si vous actualisez la page."
+  },
   "page.title": {
     "en": "SSC Assistant Playground",
     "fr": "Bac à sable de l'Assistant SPC"

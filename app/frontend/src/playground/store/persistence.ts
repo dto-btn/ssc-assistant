@@ -58,13 +58,17 @@ const isPersistableMessage = (message: unknown): message is Record<string, unkno
   );
 };
 
-const trimMessagesForPersistence = (messages: unknown): unknown[] => {
+const trimMessagesForPersistence = (
+  messages: unknown,
+  importedSessionIds: Set<string>,
+): unknown[] => {
   if (
     Array.isArray(messages)
     && messages.length <= MAX_PERSISTED_MESSAGES
     && messages.every(
       (message) => isPersistableMessage(message)
-        && (message as Record<string, any>).content.length <= MAX_PERSISTED_CONTENT_CHARS
+        && (importedSessionIds.has(String(message.sessionId))
+          || String(message.content).length <= MAX_PERSISTED_CONTENT_CHARS)
     )
   ) {
     return messages;
@@ -76,7 +80,9 @@ const trimMessagesForPersistence = (messages: unknown): unknown[] => {
   return recent.map((entry) => {
     const record = entry as Record<string, unknown>;
     const content = typeof record.content === "string"
-      ? record.content.slice(0, MAX_PERSISTED_CONTENT_CHARS)
+      ? importedSessionIds.has(String(record.sessionId))
+        ? record.content
+        : record.content.slice(0, MAX_PERSISTED_CONTENT_CHARS)
       : "";
 
     return {
@@ -133,6 +139,16 @@ const migratePersistedState = (parsed: PersistedState): PersistedState => {
 export function createPersistableState(state: unknown): PersistedState {
   const source = asRecord(state);
   const nextState: PersistedState = {};
+  const sessions = asRecord(source.sessions).sessions;
+  const importedSessionIds = new Set<string>();
+  if (Array.isArray(sessions)) {
+    sessions.forEach((value: unknown) => {
+      const session = asRecord(value);
+      if (typeof session.id === "string" && typeof session.suggestionHandoffId === "string") {
+        importedSessionIds.add(session.id);
+      }
+    });
+  }
 
   PERSISTED_SLICE_KEYS.forEach((key: PersistedSliceKey) => {
     if (!(key in source)) {
@@ -142,7 +158,7 @@ export function createPersistableState(state: unknown): PersistedState {
     if (key === "chat") {
       const chat = asRecord(source.chat);
       const nextChat: Record<string, unknown> = {
-        messages: trimMessagesForPersistence(chat.messages),
+        messages: trimMessagesForPersistence(chat.messages, importedSessionIds),
       };
 
       if (
@@ -233,8 +249,10 @@ export function shouldPersistAction(actionType: string | undefined): boolean {
 export function saveChatState(state: unknown) {
   try {
     localStorage.setItem(CHAT_KEY, JSON.stringify(createPersistableState(state)));
-  } catch {
-    // ignore persistence errors (quota/unavailable)
+    return true;
+  } catch (error) {
+    console.error("Could not save playground conversations", error);
+    return false;
   }
 }
 

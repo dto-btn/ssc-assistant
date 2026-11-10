@@ -97,7 +97,53 @@ This would be the call back used, with the ID from above result, to reach SSCA S
 
 * http://localhost:8080/suggest-callback?suggestionContextId=4c279c1f-ca32-48ab-895f-d6b5beec7f41
 
-Or via `curl`: 
+### Playground hand-off
+
+The external URL remains `/suggest-callback?suggestionContextId=<uuid>`.
+MySSC++ does not need to change its links. The callback validates the saved API
+response before handing it to the chat through navigation state.
+
+With `VITE_PLAYGROUND_ON=true`, the callback opens `/playground`. Otherwise it
+continues to open legacy chat at `/`. The playground also consumes the same
+hand-off when it is mounted at `/` during the main-chat cutover; keep the callback
+and `/playground` routes registered during that rollout.
+
+A successful hand-off creates a new sidebar conversation named after the original
+question, containing the question, saved answer, and native citation chips/drawer.
+It does not generate another answer or reuse an existing empty draft. The answer's
+`language` selects the playground's English or French interface. Existing
+conversations are preserved.
+
+The completed conversation is saved immediately to local storage and submitted
+to the existing archive/outbox mechanism. Navigation state is replaced with only
+the imported session ID, so refreshing restores that conversation without fetching
+or importing the answer again. A separate visit to the callback intentionally
+creates another conversation, even for the same question.
+
+Missing identifiers, API failures (`success: false`), invalid response shapes, and
+network/unknown failures display persistent errors in the selected interface
+language (English or French). Local-save failures also display an explicit warning.
+
+#### Validation
+
+From `app/frontend`, run the suggestion model, callback integration, import thunk,
+and session bootstrap tests with Vitest. Browser coverage is in
+`tests/e2e/playground-suggestion.spec.ts`; it uses the standard authenticated test
+entrypoint and mocked saved API responses at the unchanged callback URL.
+See `app/frontend/tests/README.md` for Playwright setup.
+
+Before deploying, also verify a real saved suggestion in dev/staging:
+
+1. Create a suggestion using the authenticated POST example above and copy its ID.
+2. Sign in to SSC Assistant and open `/suggest-callback?suggestionContextId=<id>`.
+3. Check the original question, answer, title, citations, and answer language.
+4. Refresh immediately; confirm the conversation remains and is not duplicated.
+5. Send a follow-up question and confirm normal chat still works.
+6. Repeat in French and verify each error case with controlled API responses.
+
+### Fetching a saved suggestion directly
+
+Via `curl`:
 
 ```bash
 curl --location 'http://localhost:5001/api/1.0/suggest?suggestionContextId=4c279c1f-ca32-48ab-895f-d6b5beec7f41' \

@@ -2,6 +2,8 @@ import React from "react";
 import { useAppDispatch } from "../store/hooks";
 import { setAccessToken } from "../store/slices/authSlice";
 import { PlaygroundShell } from "../components/PlaygroundRoot";
+import { Route, Routes } from "react-router";
+import { SuggestCallbackRoute } from "../../routes/SuggestCallbackRoute";
 
 const e2eAccessToken = String(import.meta.env.VITE_E2E_ACCESS_TOKEN || "").trim();
 
@@ -21,7 +23,12 @@ const PlaygroundE2ERoot: React.FC = () => {
     );
   }, [dispatch]);
 
-  return <PlaygroundShell />;
+  return (
+    <Routes>
+      <Route path="/suggest-callback" element={<SuggestCallbackRoute />} />
+      <Route path="*" element={<PlaygroundShell />} />
+    </Routes>
+  );
 };
 
 export default PlaygroundE2ERoot;

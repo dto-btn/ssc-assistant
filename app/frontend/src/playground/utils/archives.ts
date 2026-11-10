@@ -202,6 +202,7 @@ export function normalizeArchiveMessage(candidate: unknown, sessionId: string): 
     timestamp,
     attachments,
     citations,
+    showAllCitations: record.showAllCitations === true ? true : undefined,
     mcpAttribution,
     brArtifacts,
   };

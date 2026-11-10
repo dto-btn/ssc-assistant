@@ -5,6 +5,18 @@ import { normalizeArchiveMessage } from "./archives";
  * Regression tests for archive restoration edge-cases around MCP attribution payloads.
  */
 describe("normalizeArchiveMessage", () => {
+  it("preserves suggestion citation display settings and sources", () => {
+    const citations = [{ title: "Source", url: "https://example.com/source" }];
+    expect(normalizeArchiveMessage({
+      id: "suggestion",
+      role: "assistant",
+      content: "Saved answer",
+      timestamp: 1,
+      showAllCitations: true,
+      citations,
+    }, "session")).toMatchObject({ showAllCitations: true, citations });
+  });
+
   it("preserves valid mcpAttribution from archived assistant messages", () => {
     const restored = normalizeArchiveMessage(
       {
