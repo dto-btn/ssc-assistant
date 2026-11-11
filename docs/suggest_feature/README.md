@@ -123,6 +123,9 @@ creates another conversation, even for the same question.
 Missing identifiers, API failures (`success: false`), invalid response shapes, and
 network/unknown failures display persistent errors in the selected interface
 language (English or French). Local-save failures also display an explicit warning.
+Language changes are saved in the shared language-preference cookie, so opening
+the callback through a full-page navigation preserves the selected interface
+language even when the link is missing its suggestion identifier.
 
 #### Validation
 

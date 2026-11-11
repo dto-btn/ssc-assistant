@@ -28,6 +28,12 @@ const frTranslations = extractLanguageData(translations, 'fr');
 const enPGT = extractLanguageData(pgTrans, 'en');
 const frPGT = extractLanguageData(pgTrans, 'fr');
 
+i18n.on('languageChanged', (language: string) => {
+  Cookies.set("lang_setting", language, {
+    expires: 30,
+    path: "/",
+  });
+});
 
 i18n.use(initReactI18next).init({
   fallbackLng: 'en',

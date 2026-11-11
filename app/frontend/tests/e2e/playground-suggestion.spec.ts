@@ -95,10 +95,45 @@ for (const kind of ["missing", "server", "validation", "network"]) {
           json: kind === "server" ? { success: false } : { success: true },
         });
       }
+
     });
     await page.goto(kind === "missing"
       ? "/suggest-callback"
       : "/suggest-callback?suggestionContextId=error-suggestion");
     await expect(page.getByRole("alert")).toContainText("Your suggestions have not been loaded.");
+  });
+}
+
+for (const kind of ["missing", "legacy-context", "server", "validation", "network"]) {
+  test(`preserves French after full navigation to a ${kind} callback error`, async ({ page }) => {
+    await page.getByRole("button", { name: "Passer au français" }).click();
+    await expect(page.locator("html")).toHaveAttribute("lang", "fr");
+    await page.route("**/api/1.0/suggest?**", async (route) => {
+      if (kind === "network") {
+        await route.abort();
+      } else {
+        await route.fulfill({
+          json: kind === "server" ? { success: false } : { success: true },
+        });
+      }
+    });
+    const callback = kind === "missing"
+      ? "/suggest-callback"
+      : kind === "legacy-context"
+        ? "/suggest-callback?context=old-context"
+        : "/suggest-callback?suggestionContextId=error-suggestion";
+    await page.goto(callback);
+    await expect(page.locator("html")).toHaveAttribute("lang", "fr");
+    const error = kind === "missing" || kind === "legacy-context"
+      ? "L'identifiant est absent du lien de suggestion."
+      : kind === "server"
+        ? "Le serveur a renvoyé une erreur"
+        : kind === "validation"
+          ? "Le contexte de suggestion était dans un format inconnu."
+          : "Une erreur inconnue s'est produite";
+    await expect(page.getByRole("alert")).toContainText(error);
+    await expect(page.getByRole("alert")).toContainText("Vos suggestions n'ont pas été chargées.");
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("lang", "fr");
   });
 }
