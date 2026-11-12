@@ -2,7 +2,7 @@
 
 This directory currently documents the Playwright end-to-end coverage for the playground experience at `/playground`.
 
-## Current E2E Coverage
+## Current end-to-end coverage
 
 - `e2e/playground-accessibility.spec.ts`: verifies axe-based accessibility coverage, keyboard-only chat creation, and reflow checks at 320px plus a 200%-zoom-equivalent viewport.
 - `e2e/playground-shell.spec.ts`: verifies the playground shell renders, a new chat can be created, and the desktop sidebar toggle works.
@@ -21,7 +21,7 @@ This directory currently documents the Playwright end-to-end coverage for the pl
 
 Playwright uses a dedicated test entrypoint instead of branching through the normal runtime auth flow.
 
-- **Entrypoint**: `playground.e2e.html` renders the playground directly for the E2E harness.
+- **Entrypoint**: `playground.e2e.html` renders the playground directly for the end-to-end harness.
 - **Token**: Set `PLAYWRIGHT_E2E_ACCESS_TOKEN` before running Playwright. The config passes it through as `VITE_E2E_ACCESS_TOKEN` to seed the playground store.
 - **Scope**: This token path exists only in the Playwright entrypoint and does not change the normal MSAL-backed application flow.
 
