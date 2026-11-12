@@ -16,15 +16,17 @@ const context = {
 
 describe("suggestion context validation", () => {
   it("accepts successful saved API responses with additional fields", () => {
-    expect(SuggestionContextSchema.parse({ ...context, id: "saved-id" }))
-      .toEqual(context);
+    expect(
+      SuggestionContextSchema.parse({ ...context, id: "saved-id" }),
+    ).toEqual(context);
   });
 
   it.each([undefined, null, "not found"])(
     "accepts failure responses with reason %s",
     (reason) => {
-      expect(SuggestionContextSchema.safeParse({ success: false, reason }).success)
-        .toBe(true);
+      expect(
+        SuggestionContextSchema.safeParse({ success: false, reason }).success,
+      ).toBe(true);
     },
   );
 
@@ -39,15 +41,19 @@ describe("suggestion context validation", () => {
   });
 
   it("rejects malformed navigation hand-offs", () => {
-    expect(SuggestionHandoffSchema.safeParse({
-      handoffId: "handoff",
-      success: true,
-      context: { success: false },
-    }).success).toBe(false);
-    expect(SuggestionHandoffSchema.safeParse({
-      handoffId: "",
-      success: true,
-      context,
-    }).success).toBe(false);
+    expect(
+      SuggestionHandoffSchema.safeParse({
+        handoffId: "handoff",
+        success: true,
+        context: { success: false },
+      }).success,
+    ).toBe(false);
+    expect(
+      SuggestionHandoffSchema.safeParse({
+        handoffId: "",
+        success: true,
+        context,
+      }).success,
+    ).toBe(false);
   });
 });

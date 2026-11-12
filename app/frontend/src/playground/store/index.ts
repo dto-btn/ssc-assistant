@@ -21,7 +21,10 @@ import modelReducer from "./slices/modelSlice";
 import toastReducer from "./slices/toastSlice";
 import quotedReducer from "./slices/quotedSlice";
 import authReducer from "./slices/authSlice";
-import { archiverMiddleware, requestArchive } from "./middleware/archiverMiddleware";
+import {
+  archiverMiddleware,
+  requestArchive,
+} from "./middleware/archiverMiddleware";
 import { outboxMiddleware } from "./middleware/outboxMiddleware";
 import userReducer from "./slices/userSlice";
 import {
@@ -59,18 +62,23 @@ const preloadedState = loadChatState() as Partial<RootState>;
 
 let lastActionType: string | undefined;
 
-const persistenceTrackerMiddleware: Middleware<unknown, RootState> = () => (next) => (action) => {
-  const actionType = (action as { type?: unknown }).type;
-  lastActionType = typeof actionType === "string" ? actionType : undefined;
-  return next(action);
-};
+const persistenceTrackerMiddleware: Middleware<unknown, RootState> =
+  () => (next) => (action) => {
+    const actionType = (action as { type?: unknown }).type;
+    lastActionType = typeof actionType === "string" ? actionType : undefined;
+    return next(action);
+  };
 
 export const store = configureStore({
   reducer: rootReducer,
   preloadedState,
   middleware: (getDefaultMiddleware) =>
     // Persist chat archives and queued uploads by enriching the default stack.
-    getDefaultMiddleware().concat(persistenceTrackerMiddleware, archiverMiddleware, outboxMiddleware),
+    getDefaultMiddleware().concat(
+      persistenceTrackerMiddleware,
+      archiverMiddleware,
+      outboxMiddleware,
+    ),
 });
 
 const throttledSaveState = throttle((state: RootState) => {
@@ -96,15 +104,30 @@ store.subscribe(() => {
 });
 
 const initialStateSnapshot = store.getState();
-const sessionsNeedingArchive = Object.entries(initialStateSnapshot.sync?.byId ?? {})
-  .filter(([, entry]) => entry?.status === "pending" || entry?.status === "syncing" || entry?.status === "error")
+const sessionsNeedingArchive = Object.entries(
+  initialStateSnapshot.sync?.byId ?? {},
+)
+  .filter(
+    ([, entry]) =>
+      entry?.status === "pending" ||
+      entry?.status === "syncing" ||
+      entry?.status === "error",
+  )
   .map(([sessionId]) => sessionId)
-  .filter((sessionId) => !initialStateSnapshot.outbox.items.some((item) => item.kind === "chat-archive" && item.sessionId === sessionId));
+  .filter(
+    (sessionId) =>
+      !initialStateSnapshot.outbox.items.some(
+        (item) => item.kind === "chat-archive" && item.sessionId === sessionId,
+      ),
+  );
 
 if (sessionsNeedingArchive.length > 0) {
-  const defer = typeof queueMicrotask === "function"
-    ? queueMicrotask
-    : (cb: () => void) => { setTimeout(cb, 0); };
+  const defer =
+    typeof queueMicrotask === "function"
+      ? queueMicrotask
+      : (cb: () => void) => {
+          setTimeout(cb, 0);
+        };
 
   defer(() => {
     sessionsNeedingArchive.forEach((sessionId) => {
@@ -114,4 +137,9 @@ if (sessionsNeedingArchive.length > 0) {
 }
 
 export type AppDispatch = typeof store.dispatch;
-export type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, UnknownAction>;
+export type AppThunk<ReturnType = void> = ThunkAction<
+  ReturnType,
+  RootState,
+  unknown,
+  UnknownAction
+>;

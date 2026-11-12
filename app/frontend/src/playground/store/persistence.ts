@@ -41,20 +41,24 @@ const PERSISTED_ACTION_PREFIXES = [
 ] as const;
 
 const asRecord = (value: unknown): Record<string, unknown> =>
-  (value && typeof value === "object") ? (value as Record<string, unknown>) : {};
+  value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 
-const isPersistableMessage = (message: unknown): message is Record<string, unknown> => {
+const isPersistableMessage = (
+  message: unknown,
+): message is Record<string, unknown> => {
   if (!message || typeof message !== "object") {
     return false;
   }
 
   const record = message as Record<string, unknown>;
   return (
-    typeof record.id === "string"
-    && typeof record.sessionId === "string"
-    && (record.role === "user" || record.role === "assistant" || record.role === "system")
-    && typeof record.content === "string"
-    && typeof record.timestamp === "number"
+    typeof record.id === "string" &&
+    typeof record.sessionId === "string" &&
+    (record.role === "user" ||
+      record.role === "assistant" ||
+      record.role === "system") &&
+    typeof record.content === "string" &&
+    typeof record.timestamp === "number"
   );
 };
 
@@ -63,12 +67,13 @@ const trimMessagesForPersistence = (
   importedSessionIds: Set<string>,
 ): unknown[] => {
   if (
-    Array.isArray(messages)
-    && messages.length <= MAX_PERSISTED_MESSAGES
-    && messages.every(
-      (message) => isPersistableMessage(message)
-        && (importedSessionIds.has(String(message.sessionId))
-          || String(message.content).length <= MAX_PERSISTED_CONTENT_CHARS)
+    Array.isArray(messages) &&
+    messages.length <= MAX_PERSISTED_MESSAGES &&
+    messages.every(
+      (message) =>
+        isPersistableMessage(message) &&
+        (importedSessionIds.has(String(message.sessionId)) ||
+          String(message.content).length <= MAX_PERSISTED_CONTENT_CHARS),
     )
   ) {
     return messages;
@@ -79,11 +84,12 @@ const trimMessagesForPersistence = (
 
   return recent.map((entry) => {
     const record = entry as Record<string, unknown>;
-    const content = typeof record.content === "string"
-      ? importedSessionIds.has(String(record.sessionId))
-        ? record.content
-        : record.content.slice(0, MAX_PERSISTED_CONTENT_CHARS)
-      : "";
+    const content =
+      typeof record.content === "string"
+        ? importedSessionIds.has(String(record.sessionId))
+          ? record.content
+          : record.content.slice(0, MAX_PERSISTED_CONTENT_CHARS)
+        : "";
 
     return {
       ...record,
@@ -117,14 +123,17 @@ const migratePersistedState = (parsed: PersistedState): PersistedState => {
     // Response phase is transient runtime state and must not survive reloads.
     assistantResponsePhaseBySessionId: {},
     orchestratorInsightsBySessionId:
-      chat.orchestratorInsightsBySessionId && typeof chat.orchestratorInsightsBySessionId === "object"
+      chat.orchestratorInsightsBySessionId &&
+      typeof chat.orchestratorInsightsBySessionId === "object"
         ? chat.orchestratorInsightsBySessionId
         : {},
   };
 
   next.ui = {
     isSidebarCollapsed:
-      typeof ui.isSidebarCollapsed === "boolean" ? ui.isSidebarCollapsed : false,
+      typeof ui.isSidebarCollapsed === "boolean"
+        ? ui.isSidebarCollapsed
+        : false,
     // Always start closed on page load for mobile overlays.
     isMobileSidebarOpen: false,
     isDeletingAllChats: false,
@@ -144,7 +153,10 @@ export function createPersistableState(state: unknown): PersistedState {
   if (Array.isArray(sessions)) {
     sessions.forEach((value: unknown) => {
       const session = asRecord(value);
-      if (typeof session.id === "string" && typeof session.suggestionHandoffId === "string") {
+      if (
+        typeof session.id === "string" &&
+        typeof session.suggestionHandoffId === "string"
+      ) {
         importedSessionIds.add(session.id);
       }
     });
@@ -162,10 +174,11 @@ export function createPersistableState(state: unknown): PersistedState {
       };
 
       if (
-        chat.orchestratorInsightsBySessionId
-        && typeof chat.orchestratorInsightsBySessionId === "object"
+        chat.orchestratorInsightsBySessionId &&
+        typeof chat.orchestratorInsightsBySessionId === "object"
       ) {
-        nextChat.orchestratorInsightsBySessionId = chat.orchestratorInsightsBySessionId;
+        nextChat.orchestratorInsightsBySessionId =
+          chat.orchestratorInsightsBySessionId;
       }
 
       nextState.chat = {
@@ -178,7 +191,9 @@ export function createPersistableState(state: unknown): PersistedState {
       const ui = asRecord(source.ui);
       nextState.ui = {
         isSidebarCollapsed:
-          typeof ui.isSidebarCollapsed === "boolean" ? ui.isSidebarCollapsed : false,
+          typeof ui.isSidebarCollapsed === "boolean"
+            ? ui.isSidebarCollapsed
+            : false,
       };
       return;
     }
@@ -196,8 +211,11 @@ const hasPersistedChatChanged = (
   const previous = (previousChat as Record<string, unknown> | undefined) ?? {};
   const next = (nextChat as Record<string, unknown> | undefined) ?? {};
 
-  return previous.messages !== next.messages
-    || previous.orchestratorInsightsBySessionId !== next.orchestratorInsightsBySessionId;
+  return (
+    previous.messages !== next.messages ||
+    previous.orchestratorInsightsBySessionId !==
+      next.orchestratorInsightsBySessionId
+  );
 };
 
 const hasPersistedUiChanged = (
@@ -240,7 +258,9 @@ export function shouldPersistAction(actionType: string | undefined): boolean {
     return false;
   }
 
-  return PERSISTED_ACTION_PREFIXES.some((prefix) => actionType.startsWith(prefix));
+  return PERSISTED_ACTION_PREFIXES.some((prefix) =>
+    actionType.startsWith(prefix),
+  );
 }
 
 /**
@@ -248,7 +268,10 @@ export function shouldPersistAction(actionType: string | undefined): boolean {
  */
 export function saveChatState(state: unknown) {
   try {
-    localStorage.setItem(CHAT_KEY, JSON.stringify(createPersistableState(state)));
+    localStorage.setItem(
+      CHAT_KEY,
+      JSON.stringify(createPersistableState(state)),
+    );
     return true;
   } catch (error) {
     console.error("Could not save playground conversations", error);

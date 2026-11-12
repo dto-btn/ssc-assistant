@@ -7,14 +7,19 @@ import { normalizeArchiveMessage } from "./archives";
 describe("normalizeArchiveMessage", () => {
   it("preserves suggestion citation display settings and sources", () => {
     const citations = [{ title: "Source", url: "https://example.com/source" }];
-    expect(normalizeArchiveMessage({
-      id: "suggestion",
-      role: "assistant",
-      content: "Saved answer",
-      timestamp: 1,
-      showAllCitations: true,
-      citations,
-    }, "session")).toMatchObject({ showAllCitations: true, citations });
+    expect(
+      normalizeArchiveMessage(
+        {
+          id: "suggestion",
+          role: "assistant",
+          content: "Saved answer",
+          timestamp: 1,
+          showAllCitations: true,
+          citations,
+        },
+        "session",
+      ),
+    ).toMatchObject({ showAllCitations: true, citations });
   });
 
   it("preserves valid mcpAttribution from archived assistant messages", () => {
@@ -31,7 +36,10 @@ describe("normalizeArchiveMessage", () => {
           status: "done",
           statusMessage: "Completed",
           servers: [
-            { serverLabel: "geds-server", serverUrl: "https://example.com/geds" },
+            {
+              serverLabel: "geds-server",
+              serverUrl: "https://example.com/geds",
+            },
           ],
         },
       },

@@ -104,26 +104,35 @@ describe("bootstrapSessionsFromStorage", () => {
 
   it("preserves a conversation selected while remote recovery is in progress", async () => {
     const store = makeStore();
-    let resolveFiles!: (value: Awaited<ReturnType<typeof listSessionFiles>>) => void;
-    listSessionFilesMock.mockImplementation(() => new Promise((resolve) => {
-      resolveFiles = resolve;
-    }));
+    let resolveFiles!: (
+      value: Awaited<ReturnType<typeof listSessionFiles>>,
+    ) => void;
+    listSessionFilesMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveFiles = resolve;
+        }),
+    );
     const recovery = store.dispatch(bootstrapSessionsFromStorage() as never);
-    store.dispatch(addSession({
-      id: "imported",
-      name: "Original suggestion question",
-      createdAt: Date.now(),
-      isNewChat: false,
-      suggestionHandoffId: "handoff",
-    }));
+    store.dispatch(
+      addSession({
+        id: "imported",
+        name: "Original suggestion question",
+        createdAt: Date.now(),
+        isNewChat: false,
+        suggestionHandoffId: "handoff",
+      }),
+    );
     resolveFiles({
-      files: [{
-        blobName: "remote.chat.json",
-        url: "/files/remote.chat.json",
-        originalName: "remote.chat.json",
-        sessionId: "remote",
-        uploadedAt: "2026-05-07T10:00:00.000Z",
-      }],
+      files: [
+        {
+          blobName: "remote.chat.json",
+          url: "/files/remote.chat.json",
+          originalName: "remote.chat.json",
+          sessionId: "remote",
+          uploadedAt: "2026-05-07T10:00:00.000Z",
+        },
+      ],
       deletedSessionIds: [],
       sessionDeleted: false,
     });
