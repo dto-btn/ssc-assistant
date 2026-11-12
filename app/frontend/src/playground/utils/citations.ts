@@ -361,7 +361,7 @@ const buildCitationFromRecord = (
   const normalizedContent = (content || "").trim().toLowerCase();
   const looksLikeFile = Boolean(
     title &&
-    /(\.pdf$|\.docx?$|\.pptx?$|-pdf$|guide|manual|policy|framework|operating|process|standard)/i.test(
+    /(\.pdf$|\.docx?$|\.pptx?$|-(pdf|docx?)$|guide|manual|policy|framework|operating|process|standard)/i.test(
       title,
     ),
   );

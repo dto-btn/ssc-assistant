@@ -17,6 +17,26 @@ This directory currently documents the Playwright end-to-end coverage for the pl
 - `e2e/fixtures/playground.ts`: shared Playwright fixtures that wire the mock layer and page object into each test.
 - `e2e/pages/PlaygroundPage.ts`: page object used by the specs for common playground interactions.
 
+## PMCOE citation regression checks
+
+From `app/frontend`, run:
+
+```sh
+npx vitest run src/playground/utils/citations.test.ts src/playground/store/thunks/assistantThunks.test.ts
+```
+
+These tests cover PDF and DOCX source paths, inferred PMCOE paths, French DOCX
+language metadata, numbered links, DOCX slug titles, and preservation of source
+excerpts during answer rewriting. Slug titles are display metadata, not reliable
+blob filenames; use the returned `source_path` or original `file_name`.
+
+For a live DOCX source, inspect the MCP result's `file_name`, `source_path`, and
+`title`. Verify the numbered citation and its drawer link point to the actual
+`/<pmcoe-container>/<lang>/<file>.docx` blob and that the link downloads or opens
+the document. Check the response status and content type in browser developer
+tools if it fails. Word documents need not render inline like PDFs. Unit tests
+do not verify deployed search metadata, blob existence, or storage access.
+
 ## Auth Setup
 
 Playwright uses a dedicated test entrypoint instead of branching through the normal runtime auth flow.

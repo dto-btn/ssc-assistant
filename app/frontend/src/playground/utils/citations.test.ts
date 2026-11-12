@@ -413,86 +413,136 @@ describe("extractCitationsFromPayload", () => {
     expect(citations[0].title).toBe("management-operating-guide-en-pdf");
   });
 
-  it("extracts source_path + article/page metadata into rich citation details", () => {
-    const citations = extractCitationsFromPayload({
-      result: {
-        citations: [
-          {
-            file_name: "Project Management Operating Guide EN.pdf",
-            source_path:
-              "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
-            article:
-              "F.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
-            page_number: 71,
+  it.each(["pdf", "docx"])(
+    "extracts %s source_path + article/page metadata into rich citation details",
+    (extension) => {
+      const fileName = `Project Management Operating Guide EN.${extension}`;
+      const citations = extractCitationsFromPayload({
+        result: {
+          citations: [
+            {
+              file_name: fileName,
+              source_path: `/pmcoe-sept-2025/en/${fileName}`,
+              article:
+                "F.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
+              page_number: 71,
+            },
+          ],
+        },
+      });
+
+      expect(citations).toHaveLength(1);
+      expect(citations[0].title).toBe(fileName);
+      expect(citations[0].url).toBe(`/pmcoe-sept-2025/en/${fileName}`);
+      expect(citations[0].content).toContain("Page 71");
+      expect(citations[0].content).toContain("F.1 Enterprise Portfolio System");
+    },
+  );
+
+  it.each(["pdf", "docx"])(
+    "infers PMCOE %s source_path from file name when PMCOE routing is active",
+    (extension) => {
+      const fileName = `Project Management Operating Guide EN.${extension}`;
+      const citations = extractCitationsFromPayloadWithOptions(
+        {
+          type: "response.mcp_call.completed",
+          result: {
+            citations: [
+              {
+                file_name: fileName,
+                article:
+                  "F.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
+                page_number: 71,
+              },
+            ],
           },
-        ],
-      },
+        },
+        {
+          enablePmcoePathInference: true,
+          pmcoeContainer: "pmcoe-sept-2025",
+        },
+      );
+
+      expect(citations).toHaveLength(1);
+      expect(citations[0].title).toBe(fileName);
+      expect(citations[0].url).toBe(`/pmcoe-sept-2025/en/${fileName}`);
+      expect(citations[0].content).toContain("Page 71");
+    },
+  );
+
+  it("retains a DOCX slug title with a concrete source path and metadata-only content", () => {
+    const citations = extractCitationsFromPayload({
+      citations: [
+        {
+          title: "charter-en-docx",
+          source_path: "/pmcoe-sept-2025/en/Charter EN.docx",
+          content: "metadata",
+        },
+        {
+          title: "metadata",
+          source_path: "/pmcoe-sept-2025/en/metadata",
+          content: "metadata",
+        },
+      ],
     });
 
     expect(citations).toHaveLength(1);
-    expect(citations[0].title).toBe(
-      "Project Management Operating Guide EN.pdf",
+    expect(citations[0].title).toBe("charter-en-docx");
+    expect(citations[0].url).toBe("/pmcoe-sept-2025/en/Charter EN.docx");
+    const processed = processTextWithCitations("See [doc1].", citations);
+    expect(processed.processedText).toBe(
+      "See [1](</pmcoe-sept-2025/en/Charter%20EN.docx>).",
     );
-    expect(citations[0].url).toBe(
-      "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
-    );
-    expect(citations[0].content).toContain("Page 71");
-    expect(citations[0].content).toContain("F.1 Enterprise Portfolio System");
+    expect(processed.citedCitations).toEqual(citations);
+    expect(processed.citationNumberMapping).toEqual({ 1: 1 });
   });
 
-  it("infers PMCOE source_path from file name when PMCOE routing is active", () => {
+  it("infers a French DOCX path using language metadata and the configured container", () => {
     const citations = extractCitationsFromPayloadWithOptions(
       {
-        type: "response.mcp_call.completed",
-        result: {
-          citations: [
-            {
-              file_name: "Project Management Operating Guide EN.pdf",
-              article:
-                "F.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
-              page_number: 71,
-            },
-          ],
-        },
+        citations: [
+          {
+            file_name: "PMCOE Réalisation.docx",
+            language: "fr",
+          },
+        ],
       },
       {
         enablePmcoePathInference: true,
-        pmcoeContainer: "pmcoe-sept-2025",
+        pmcoeContainer: "pmcoe-latest",
+        preferredLanguage: "en",
       },
     );
 
     expect(citations).toHaveLength(1);
-    expect(citations[0].title).toBe(
-      "Project Management Operating Guide EN.pdf",
-    );
-    expect(citations[0].url).toBe(
-      "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
-    );
-    expect(citations[0].content).toContain("Page 71");
+    expect(citations[0].url).toBe("/pmcoe-latest/fr/PMCOE Réalisation.docx");
   });
 
-  it("does not infer PMCOE paths when PMCOE routing is not active", () => {
-    const citations = extractCitationsFromPayloadWithOptions(
-      {
-        type: "response.mcp_call.completed",
-        result: {
-          citations: [
-            {
-              file_name: "Project Management Operating Guide EN.pdf",
-              article:
-                "F.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
-              page_number: 71,
-            },
-          ],
+  it.each(["pdf", "docx"])(
+    "does not infer PMCOE %s paths when PMCOE routing is not active",
+    (extension) => {
+      const citations = extractCitationsFromPayloadWithOptions(
+        {
+          type: "response.mcp_call.completed",
+          result: {
+            citations: [
+              {
+                file_name: `Project Management Operating Guide EN.${extension}`,
+                article:
+                  "F.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
+                page_number: 71,
+              },
+            ],
+          },
         },
-      },
-      {
-        enablePmcoePathInference: false,
-      },
-    );
+        {
+          enablePmcoePathInference: false,
+        },
+      );
 
-    expect(citations).toEqual([]);
-  });
+      expect(citations).toEqual([]);
+    },
+  );
 });
 
 describe("mergeCitations", () => {
