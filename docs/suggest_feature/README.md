@@ -17,11 +17,21 @@ Use this token for the `X-API-Token` value.
 
 ## Testing the suggest endpoint: 
 
+Set `SSC_API_KEY` in your local shell to the API access token generated above.
+The curl examples below expand this environment variable; do not commit its value.
+In Bash, you can enter it without saving the token in shell history:
+
+```bash
+read -r -s -p 'API access token: ' SSC_API_KEY
+printf '\n'
+export SSC_API_KEY
+```
+
 ### Non-streaming
 
 ```bash
 curl --location 'http://localhost:5001/api/1.0/suggest' \
---header 'x-api-key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzdWdnZXN0Il19.Nob_YD12KG3OQklU6l1swqQJsVZc62bGOX053LzNk78' \
+--header "x-api-key: ${SSC_API_KEY}" \
 --header 'Authorization: Bearer dummy' \
 --header 'Content-Type: application/json' \
 --data '{
@@ -41,7 +51,7 @@ The last line is the complete response object (same shape as the non-streaming r
 
 ```bash
 curl --location 'http://localhost:5001/api/1.0/suggest?stream=true' \
---header 'x-api-key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzdWdnZXN0Il19.Nob_YD12KG3OQklU6l1swqQJsVZc62bGOX053LzNk78' \
+--header "x-api-key: ${SSC_API_KEY}" \
 --header 'Authorization: Bearer dummy' \
 --header 'Content-Type: application/json' \
 --data '{
@@ -150,6 +160,6 @@ Via `curl`:
 
 ```bash
 curl --location 'http://localhost:5001/api/1.0/suggest?suggestionContextId=4c279c1f-ca32-48ab-895f-d6b5beec7f41' \
---header 'x-api-key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzdWdnZXN0Il19.Nob_YD12KG3OQklU6l1swqQJsVZc62bGOX053LzNk78' \
+--header "x-api-key: ${SSC_API_KEY}" \
 --header 'Authorization: Bearer dummy'
 ```
