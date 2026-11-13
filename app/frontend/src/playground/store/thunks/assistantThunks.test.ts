@@ -1123,92 +1123,77 @@ describe("sendAssistantMessage auto-rename", () => {
     ]);
   });
 
-  it.each(["pdf", "docx"])(
-    "preserves multiple excerpts from the same harvested PMCOE %s source during rewrite",
-    async (extension) => {
-      const fileName = `Project Management Operating Guide EN.${extension}`;
-      const sourceUrl = `/pmcoe-sept-2025/en/${fileName}`;
-      createCompletionMock
-        .mockResolvedValueOnce({
-          fullText: "Follow the operating guide.",
-          completed: true,
-          provider: "azure-openai",
-          citations: [
-            {
-              title: fileName,
-              url: `local-citation://project-management-operating-guide-en-${extension}-abc123`,
-            },
-          ],
-        })
-        .mockResolvedValueOnce({
-          fullText: "Follow the operating guide.",
-          completed: true,
-          provider: "azure-openai",
-          citations: [
-            {
-              title: fileName,
-              url: sourceUrl,
-              content:
-                "Page 10\nGate reviews track readiness, risks, and required approvals.",
-            },
-            {
-              title: fileName,
-              url: sourceUrl,
-              content:
-                "Page 11\nProject teams should keep schedule, cost, and artefact updates current before each gate.",
-            },
-          ],
-        })
-        .mockResolvedValueOnce({
-          fullText:
-            "Track readiness, approvals, and project updates through each gate.",
-          completed: true,
-          provider: "azure-openai",
-          citations: [],
-        });
-
-      const store = makeStore({
-        isNewChat: false,
-        mcpServers: [policyServer],
+  it.each(["pdf", "docx"])("preserves multiple excerpts from the same harvested PMCOE %s source during rewrite", async (extension) => {
+    const fileName = `Project Management Operating Guide EN.${extension}`;
+    const sourceUrl = `/pmcoe-sept-2025/en/${fileName}`;
+    createCompletionMock
+      .mockResolvedValueOnce({
+        fullText: "Follow the operating guide.",
+        completed: true,
+        provider: "azure-openai",
+        citations: [
+          {
+            title: fileName,
+            url: `local-citation://project-management-operating-guide-en-${extension}-abc123`,
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        fullText: "Follow the operating guide.",
+        completed: true,
+        provider: "azure-openai",
+        citations: [
+          {
+            title: fileName,
+            url: sourceUrl,
+            content: "Page 10\nGate reviews track readiness, risks, and required approvals.",
+          },
+          {
+            title: fileName,
+            url: sourceUrl,
+            content: "Page 11\nProject teams should keep schedule, cost, and artefact updates current before each gate.",
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        fullText: "Track readiness, approvals, and project updates through each gate.",
+        completed: true,
+        provider: "azure-openai",
+        citations: [],
       });
 
-      await store.dispatch(
-        sendAssistantMessage({
-          sessionId: "session-1",
-          content:
-            "How do I track the progress of my project through the gates?",
-        }) as any,
-      );
+    const store = makeStore({
+      isNewChat: false,
+      mcpServers: [policyServer],
+    });
 
-      expect(createCompletionMock).toHaveBeenCalledTimes(3);
+    await store.dispatch(
+      sendAssistantMessage({
+        sessionId: "session-1",
+        content: "How do I track the progress of my project through the gates?",
+      }) as any,
+    );
 
-      const rewriteRequest = createCompletionMock.mock.calls[2][0];
-      expect(rewriteRequest.messages[1].content).toContain(
-        "Gate reviews track readiness, risks, and required approvals.",
-      );
-      expect(rewriteRequest.messages[1].content).toContain(
-        "Project teams should keep schedule, cost, and artefact updates current before each gate.",
-      );
+    expect(createCompletionMock).toHaveBeenCalledTimes(3);
 
-      const assistantMessage = store
-        .getState()
-        .chat.messages.find((message: any) => message.role === "assistant");
-      expect(assistantMessage?.citations).toEqual([
-        {
-          title: fileName,
-          url: sourceUrl,
-          content:
-            "Page 10\nGate reviews track readiness, risks, and required approvals.",
-        },
-        {
-          title: fileName,
-          url: sourceUrl,
-          content:
-            "Page 11\nProject teams should keep schedule, cost, and artefact updates current before each gate.",
-        },
-      ]);
-    },
-  );
+    const rewriteRequest = createCompletionMock.mock.calls[2][0];
+    expect(rewriteRequest.messages[1].content).toContain("Gate reviews track readiness, risks, and required approvals.");
+    expect(rewriteRequest.messages[1].content).toContain("Project teams should keep schedule, cost, and artefact updates current before each gate.");
+
+    const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
+    expect(assistantMessage?.citations).toEqual([
+      {
+        title: fileName,
+        url: sourceUrl,
+        content: "Page 10\nGate reviews track readiness, risks, and required approvals.",
+      },
+      {
+        title: fileName,
+        url: sourceUrl,
+        content: "Page 11\nProject teams should keep schedule, cost, and artefact updates current before each gate.",
+      },
+    ]);
+  });
 
   it("extracts BR rows from get_br_page results payloads", async () => {
     createCompletionMock.mockResolvedValueOnce({

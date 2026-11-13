@@ -78,8 +78,7 @@ export interface OrchestratorRecommendation {
  * Lifecycle updates emitted while the orchestrator is classifying/routing.
  */
 export interface OrchestratorProgressUpdate {
-  status:
-    "connecting" | "connected" | "classifying" | "routing" | "done" | "error";
+  status: "connecting" | "connected" | "classifying" | "routing" | "done" | "error";
   message: string;
   timestamp: string;
   transport?: "streamable-http";
@@ -109,21 +108,14 @@ export interface OrchestratorInsights {
   error?: string;
 }
 
-export type AssistantResponsePhase =
-  "idle" | "waiting-first-token" | "drafting" | "streaming";
+export type AssistantResponsePhase = "idle" | "waiting-first-token" | "drafting" | "streaming";
 
 interface ChatState {
   messages: Message[];
   isLoadingBySessionId: Record<string, boolean>;
-  assistantResponsePhaseBySessionId: Record<
-    string,
-    AssistantResponsePhase | undefined
-  >;
+  assistantResponsePhaseBySessionId: Record<string, AssistantResponsePhase | undefined>;
   // Keyed by session id so each tab/session can show independent routing state.
-  orchestratorInsightsBySessionId: Record<
-    string,
-    OrchestratorInsights | undefined
-  >;
+  orchestratorInsightsBySessionId: Record<string, OrchestratorInsights | undefined>;
 }
 
 const ensureOrchestratorInsightsMap = (
@@ -146,10 +138,7 @@ const chatSlice = createSlice({
   name: "chat",
   initialState,
   reducers: {
-    addMessage: (
-      state,
-      action: PayloadAction<Omit<Message, "id" | "timestamp">>,
-    ) => {
+    addMessage: (state, action: PayloadAction<Omit<Message, "id" | "timestamp">>) => {
       state.messages.push({
         ...action.payload,
         id: uuidv4(),
@@ -157,13 +146,11 @@ const chatSlice = createSlice({
       });
     },
     deleteMessage: (state, action: PayloadAction<string>) => {
-      state.messages = state.messages.filter(
-        (message) => message.id !== action.payload,
-      );
+      state.messages = state.messages.filter((message) => message.id !== action.payload);
     },
     clearSessionMessages: (state, action: PayloadAction<string>) => {
       state.messages = state.messages.filter(
-        (message) => message.sessionId !== action.payload,
+        (message) => message.sessionId !== action.payload
       );
       delete state.isLoadingBySessionId[action.payload];
     },
@@ -172,17 +159,9 @@ const chatSlice = createSlice({
       state.orchestratorInsightsBySessionId = {};
       state.isLoadingBySessionId = {};
     },
-    updateMessageContent: (
-      state,
-      action: PayloadAction<{
-        messageId: string;
-        content: string;
-        citations?: Citation[];
-        isError?: boolean;
-      }>,
-    ) => {
+    updateMessageContent: (state, action: PayloadAction<{ messageId: string; content: string; citations?: Citation[]; isError?: boolean }>) => {
       const { messageId, content, citations, isError } = action.payload;
-      const message = state.messages.find((msg) => msg.id === messageId);
+      const message = state.messages.find(msg => msg.id === messageId);
       if (message) {
         message.content = content;
         if (citations !== undefined) {
@@ -195,10 +174,7 @@ const chatSlice = createSlice({
     },
     setMessageAttribution: (
       state,
-      action: PayloadAction<{
-        messageId: string;
-        attribution: MessageMcpAttribution | undefined;
-      }>,
+      action: PayloadAction<{ messageId: string; attribution: MessageMcpAttribution | undefined }>,
     ) => {
       const { messageId, attribution } = action.payload;
       const message = state.messages.find((msg) => msg.id === messageId);
@@ -208,10 +184,7 @@ const chatSlice = createSlice({
     },
     setMessageBrArtifacts: (
       state,
-      action: PayloadAction<{
-        messageId: string;
-        brArtifacts: PlaygroundBrArtifacts | undefined;
-      }>,
+      action: PayloadAction<{ messageId: string; brArtifacts: PlaygroundBrArtifacts | undefined }>,
     ) => {
       const { messageId, brArtifacts } = action.payload;
       const message = state.messages.find((msg) => msg.id === messageId);
@@ -222,10 +195,7 @@ const chatSlice = createSlice({
     },
     setMessageFeedback: (
       state,
-      action: PayloadAction<{
-        messageId: string;
-        feedback: "liked" | "disliked" | undefined;
-      }>,
+      action: PayloadAction<{ messageId: string; feedback: "liked" | "disliked" | undefined }>,
     ) => {
       const { messageId, feedback } = action.payload;
       const message = state.messages.find((msg) => msg.id === messageId);
@@ -246,10 +216,7 @@ const chatSlice = createSlice({
     },
     setAssistantResponsePhase: (
       state,
-      action: PayloadAction<{
-        sessionId: string;
-        phase: AssistantResponsePhase;
-      }>,
+      action: PayloadAction<{ sessionId: string; phase: AssistantResponsePhase }>,
     ) => {
       const { sessionId, phase } = action.payload;
       state.assistantResponsePhaseBySessionId[sessionId] = phase;
@@ -259,10 +226,7 @@ const chatSlice = createSlice({
     },
     setOrchestratorInsights: (
       state,
-      action: PayloadAction<{
-        sessionId: string;
-        insights: OrchestratorInsights | null;
-      }>,
+      action: PayloadAction<{ sessionId: string; insights: OrchestratorInsights | null }>
     ) => {
       const { sessionId, insights } = action.payload;
       const insightsBySessionId = ensureOrchestratorInsightsMap(state);
@@ -283,9 +247,7 @@ const chatSlice = createSlice({
       action: PayloadAction<{ sessionId: string; messages: Message[] }>,
     ) => {
       const { sessionId, messages } = action.payload;
-      const remaining = state.messages.filter(
-        (message) => message.sessionId !== sessionId,
-      );
+      const remaining = state.messages.filter((message) => message.sessionId !== sessionId);
       const sorted = [...messages].sort((a, b) => a.timestamp - b.timestamp);
       state.messages = [...remaining, ...sorted];
     },

@@ -31,12 +31,9 @@ const DOC_REFERENCE_REGEX = /\[doc(\d+)\]/g;
 const DOC_REFERENCE_TEST_REGEX = /\[doc(\d+)\]/;
 const EXPLICIT_CITATION_LINK_REGEX = /\[(\d+)\]\((<[^>\n]+>|[^)\s]+)\)/g;
 import { LOCAL_CITATION_PREFIX } from "../constants/patterns";
-const DEFAULT_PMCOE_CONTAINER =
-  String(import.meta.env.VITE_PMCOE_CONTAINER || "pmcoe-sept-2025").trim() ||
-  "pmcoe-sept-2025";
+const DEFAULT_PMCOE_CONTAINER = String(import.meta.env.VITE_PMCOE_CONTAINER || "pmcoe-sept-2025").trim() || "pmcoe-sept-2025";
 const PMCOE_FILE_EXTENSION_PATTERN = /\.(pdf|docx?|pptx?|xlsx?|txt|md)$/i;
-const PMCOE_HINT_PATTERN =
-  /\b(pmcoe|pmli|project manager-led initiatives?|project management|operating guide|gate(?: review| governance)?|opmca|pgof|pcra|task financial authorization|execution stage|realization plan|enterprise portfolio system|eps)\b/i;
+const PMCOE_HINT_PATTERN = /\b(pmcoe|pmli|project manager-led initiatives?|project management|operating guide|gate(?: review| governance)?|opmca|pgof|pcra|task financial authorization|execution stage|realization plan|enterprise portfolio system|eps)\b/i;
 
 type IndexedCitation = {
   citation: Citation;
@@ -87,10 +84,10 @@ const looksLikeUrlOrPath = (value: string): boolean => {
   }
 
   return (
-    /^https?:\/\//i.test(trimmed) ||
-    trimmed.startsWith("/") ||
-    /\.(pdf|docx?|pptx?|xlsx?|txt|md)([#?].*)?$/i.test(trimmed) ||
-    /[\\/]/.test(trimmed)
+    /^https?:\/\//i.test(trimmed)
+    || trimmed.startsWith("/")
+    || /\.(pdf|docx?|pptx?|xlsx?|txt|md)([#?].*)?$/i.test(trimmed)
+    || /[\\/]/.test(trimmed)
   );
 };
 
@@ -116,9 +113,9 @@ const normalizeCitationUrl = (rawUrl: string): string => {
   }
 
   if (
-    /^https?:\/\//i.test(trimmed) ||
-    trimmed.startsWith("/") ||
-    /^[a-z][a-z0-9+.-]*:/i.test(trimmed)
+    /^https?:\/\//i.test(trimmed)
+    || trimmed.startsWith("/")
+    || /^[a-z][a-z0-9+.-]*:/i.test(trimmed)
   ) {
     return trimmed;
   }
@@ -126,10 +123,7 @@ const normalizeCitationUrl = (rawUrl: string): string => {
   return `/${trimmed.replace(/^\/+/, "")}`;
 };
 
-const inferPmcoeLanguage = (
-  value: string,
-  preferredLanguage?: "en" | "fr",
-): "en" | "fr" => {
+const inferPmcoeLanguage = (value: string, preferredLanguage?: "en" | "fr"): "en" | "fr" => {
   if (/(^|[\s._-])(fr|fra|french|francais|français)([\s._-]|$)/i.test(value)) {
     return "fr";
   }
@@ -169,17 +163,9 @@ const inferPmcoeCitationUrl = (
     fileName,
     title,
     content,
-    toStringFromKeys(record, [
-      "tool_name",
-      "toolName",
-      "index_name",
-      "indexName",
-      "collection",
-    ]),
+    toStringFromKeys(record, ["tool_name", "toolName", "index_name", "indexName", "collection"]),
   ]
-    .filter((value): value is string =>
-      Boolean(value && value.trim().length > 0),
-    )
+    .filter((value): value is string => Boolean(value && value.trim().length > 0))
     .join(" ");
 
   if (!PMCOE_HINT_PATTERN.test(hintText)) {
@@ -187,34 +173,20 @@ const inferPmcoeCitationUrl = (
   }
 
   const langHint = [
-    toStringFromKeys(record, [
-      "lang",
-      "language",
-      "locale",
-      "document_language",
-      "documentLanguage",
-    ]),
+    toStringFromKeys(record, ["lang", "language", "locale", "document_language", "documentLanguage"]),
     fileName,
   ]
-    .filter((value): value is string =>
-      Boolean(value && value.trim().length > 0),
-    )
+    .filter((value): value is string => Boolean(value && value.trim().length > 0))
     .join(" ");
 
-  const pmcoeContainer =
-    (options.pmcoeContainer || DEFAULT_PMCOE_CONTAINER).trim() ||
-    DEFAULT_PMCOE_CONTAINER;
+  const pmcoeContainer = (options.pmcoeContainer || DEFAULT_PMCOE_CONTAINER).trim() || DEFAULT_PMCOE_CONTAINER;
   const language = inferPmcoeLanguage(langHint, options.preferredLanguage);
-  return normalizeCitationUrl(
-    `/${pmcoeContainer}/${language}/${fileName.replace(/^\/+/, "")}`,
-  );
+  return normalizeCitationUrl(`/${pmcoeContainer}/${language}/${fileName.replace(/^\/+/, "")}`);
 };
 
 // Providers and MCP tools use different source field names; collapse them
 // into one normalized URL/path so downstream rendering stays provider-agnostic.
-const resolveCitationUrl = (
-  record: Record<string, unknown>,
-): string | undefined => {
+const resolveCitationUrl = (record: Record<string, unknown>): string | undefined => {
   const strictCandidate = toStringFromKeys(record, [
     "url",
     "source_url",
@@ -231,17 +203,8 @@ const resolveCitationUrl = (
     "fileUrl",
   ]);
 
-  const looseCandidate = toStringFromKeys(record, [
-    "source",
-    "document",
-    "uri",
-    "file",
-  ]);
-  const candidate =
-    strictCandidate ||
-    (looseCandidate && looksLikeUrlOrPath(looseCandidate)
-      ? looseCandidate
-      : undefined);
+  const looseCandidate = toStringFromKeys(record, ["source", "document", "uri", "file"]);
+  const candidate = strictCandidate || (looseCandidate && looksLikeUrlOrPath(looseCandidate) ? looseCandidate : undefined);
 
   if (!candidate) {
     return undefined;
@@ -272,9 +235,7 @@ const isDisplayableCitationUrl = (url: string | undefined): boolean => {
   return !trimmed.toLowerCase().startsWith(LOCAL_CITATION_PREFIX);
 };
 
-const getRenderableCitationEntries = (
-  citations: Citation[],
-): IndexedCitation[] => {
+const getRenderableCitationEntries = (citations: Citation[]): IndexedCitation[] => {
   return citations
     .map((citation, index) => ({ citation, citationIndex: index + 1 }))
     .filter(({ citation }) => isDisplayableCitationUrl(citation.url));
@@ -326,27 +287,20 @@ const buildCitationFromRecord = (
   ]);
 
   const pageNumber =
-    tryParseFiniteNumber(record.page_number) ??
-    tryParseFiniteNumber(record.pageNumber) ??
-    tryParseFiniteNumber(record.page);
+    tryParseFiniteNumber(record.page_number)
+    ?? tryParseFiniteNumber(record.pageNumber)
+    ?? tryParseFiniteNumber(record.page);
 
   const content = baseContent
-    ? pageNumber && !/\bpage\s+\d+\b/i.test(baseContent)
+    ? (pageNumber && !/\bpage\s+\d+\b/i.test(baseContent)
       ? `Page ${pageNumber}\n${baseContent}`
-      : baseContent
+      : baseContent)
     : undefined;
 
-  const resolvedUrl =
-    resolveCitationUrl(record) ||
-    inferPmcoeCitationUrl(record, title, content, options);
+  const resolvedUrl = resolveCitationUrl(record) || inferPmcoeCitationUrl(record, title, content, options);
 
   const isTypedCitation = type === "url_citation" || type === "citation";
-  const isCitationLike =
-    isTypedCitation ||
-    inCitationContext ||
-    Boolean(title) ||
-    Boolean(content) ||
-    Boolean(resolvedUrl);
+  const isCitationLike = isTypedCitation || inCitationContext || Boolean(title) || Boolean(content) || Boolean(resolvedUrl);
   if (!isCitationLike) {
     return undefined;
   }
@@ -359,19 +313,10 @@ const buildCitationFromRecord = (
 
   const normalizedTitle = (title || "").trim().toLowerCase();
   const normalizedContent = (content || "").trim().toLowerCase();
-  const looksLikeFile = Boolean(
-    title &&
-    /(\.pdf$|\.docx?$|\.pptx?$|-(pdf|docx?)$|guide|manual|policy|framework|operating|process|standard)/i.test(
-      title,
-    ),
-  );
+  const looksLikeFile = Boolean(title && /(\.pdf$|\.docx?$|\.pptx?$|-(pdf|docx?)$|guide|manual|policy|framework|operating|process|standard)/i.test(title));
   const hasMeaningfulExcerpt = Boolean(content && content.trim().length >= 35);
-  const isMetadataNoiseTitle =
-    /^(query|doc[\s_]?id|id|score|metadata|filter|filters|source id)$/i.test(
-      normalizedTitle,
-    );
-  const isMetadataNoiseContent =
-    /^(query|doc[\s_]?id|id|score|metadata)$/i.test(normalizedContent);
+  const isMetadataNoiseTitle = /^(query|doc[\s_]?id|id|score|metadata|filter|filters|source id)$/i.test(normalizedTitle);
+  const isMetadataNoiseContent = /^(query|doc[\s_]?id|id|score|metadata)$/i.test(normalizedContent);
 
   if (isMetadataNoiseTitle && !hasMeaningfulExcerpt) {
     return undefined;
@@ -381,19 +326,19 @@ const buildCitationFromRecord = (
   }
 
   const startIndex =
-    tryParseFiniteNumber(record.start_index) ??
-    tryParseFiniteNumber(record.startIndex) ??
-    tryParseFiniteNumber(record.char_start) ??
-    tryParseFiniteNumber(record.charStart) ??
-    tryParseFiniteNumber(record.offset_start) ??
-    tryParseFiniteNumber(record.offsetStart);
+    tryParseFiniteNumber(record.start_index)
+    ?? tryParseFiniteNumber(record.startIndex)
+    ?? tryParseFiniteNumber(record.char_start)
+    ?? tryParseFiniteNumber(record.charStart)
+    ?? tryParseFiniteNumber(record.offset_start)
+    ?? tryParseFiniteNumber(record.offsetStart);
   const endIndex =
-    tryParseFiniteNumber(record.end_index) ??
-    tryParseFiniteNumber(record.endIndex) ??
-    tryParseFiniteNumber(record.char_end) ??
-    tryParseFiniteNumber(record.charEnd) ??
-    tryParseFiniteNumber(record.offset_end) ??
-    tryParseFiniteNumber(record.offsetEnd);
+    tryParseFiniteNumber(record.end_index)
+    ?? tryParseFiniteNumber(record.endIndex)
+    ?? tryParseFiniteNumber(record.char_end)
+    ?? tryParseFiniteNumber(record.charEnd)
+    ?? tryParseFiniteNumber(record.offset_end)
+    ?? tryParseFiniteNumber(record.offsetEnd);
 
   return {
     title: title || resolvedUrl,
@@ -408,10 +353,7 @@ const buildCitationFromRecord = (
  * When providers omit annotation offsets, approximate the citation anchor from
  * the excerpt/title so inline numbering lands near the referenced sentence.
  */
-const inferCitationEndIndex = (
-  text: string,
-  citation: Citation,
-): number | undefined => {
+const inferCitationEndIndex = (text: string, citation: Citation): number | undefined => {
   if (isFiniteNumber(citation.endIndex)) {
     return citation.endIndex;
   }
@@ -479,11 +421,7 @@ const BARE_URL_REGEX = /\b(?:https?:\/\/|mailto:)[^\s<]+/gi;
 const isEscapedCharacter = (text: string, index: number): boolean => {
   let backslashCount = 0;
 
-  for (
-    let cursor = index - 1;
-    cursor >= 0 && text[cursor] === "\\";
-    cursor -= 1
-  ) {
+  for (let cursor = index - 1; cursor >= 0 && text[cursor] === "\\"; cursor -= 1) {
     backslashCount += 1;
   }
 
@@ -561,14 +499,10 @@ const overlapsProtectedRange = (
   end: number,
   protectedRanges: ProtectedMarkdownRange[],
 ): boolean => {
-  return protectedRanges.some(
-    (range) => start < range.end && end > range.start,
-  );
+  return protectedRanges.some((range) => start < range.end && end > range.start);
 };
 
-const collectProtectedMarkdownRanges = (
-  text: string,
-): ProtectedMarkdownRange[] => {
+const collectProtectedMarkdownRanges = (text: string): ProtectedMarkdownRange[] => {
   const ranges: ProtectedMarkdownRange[] = [];
 
   for (let index = 0; index < text.length; index += 1) {
@@ -594,12 +528,9 @@ const collectProtectedMarkdownRanges = (
       continue;
     }
 
-    const rangeStart =
-      index > 0 &&
-      text[index - 1] === "!" &&
-      !isEscapedCharacter(text, index - 1)
-        ? index - 1
-        : index;
+    const rangeStart = index > 0 && text[index - 1] === "!" && !isEscapedCharacter(text, index - 1)
+      ? index - 1
+      : index;
     const labelEnd = findMatchingDelimiter(text, index, "[", "]");
     if (labelEnd === undefined) {
       continue;
@@ -607,12 +538,7 @@ const collectProtectedMarkdownRanges = (
 
     const nextChar = text[labelEnd + 1];
     if (nextChar === "(") {
-      const destinationEnd = findMatchingDelimiter(
-        text,
-        labelEnd + 1,
-        "(",
-        ")",
-      );
+      const destinationEnd = findMatchingDelimiter(text, labelEnd + 1, "(", ")");
       if (destinationEnd !== undefined) {
         ranges.push({
           start: rangeStart,
@@ -676,7 +602,9 @@ const resolveSafeInsertionIndex = (
 };
 
 const cleanupCitationSpacing = (text: string): string => {
-  return text.replace(/\s+([,.;!?])/g, "$1").replace(/ {2,}/g, " ");
+  return text
+    .replace(/\s+([,.;!?])/g, "$1")
+    .replace(/ {2,}/g, " ");
 };
 
 const normalizeExplicitCitationHref = (rawHref: string): string => {
@@ -755,8 +683,7 @@ const processExplicitCitationLinks = (
       urlsMatch(link.url, citation.url),
     );
     const fallbackIndex = remainingLinks.findIndex(() => true);
-    const resolvedIndex =
-      matchingLinkIndex >= 0 ? matchingLinkIndex : fallbackIndex;
+    const resolvedIndex = matchingLinkIndex >= 0 ? matchingLinkIndex : fallbackIndex;
 
     if (resolvedIndex < 0) {
       return;
@@ -792,13 +719,9 @@ const insertMarkersBySentence = (
     }
 
     const basePosition = sentenceEnds[idx] ?? text.length;
-    const insertAt = Math.min(
-      processedText.length,
-      Math.max(0, basePosition + offset),
-    );
+    const insertAt = Math.min(processedText.length, Math.max(0, basePosition + offset));
     const previousChar = insertAt > 0 ? processedText[insertAt - 1] : "";
-    const nextChar =
-      insertAt < processedText.length ? processedText[insertAt] : "";
+    const nextChar = insertAt < processedText.length ? processedText[insertAt] : "";
     const leadingSpace = previousChar && /\s/.test(previousChar) ? "" : " ";
     const trailingSpace = nextChar && !/\s/.test(nextChar) ? " " : "";
     const marker = `${leadingSpace}[${displayNumber}](<${encodeURI(citation.url)}>)${trailingSpace}`;
@@ -824,10 +747,7 @@ const citationKey = (citation: Citation): string => {
  * Merge citation lists, deduplicate semantically identical entries, and keep a
  * stable order for rendering and grouping.
  */
-export const mergeCitations = (
-  base: Citation[],
-  incoming: Citation[],
-): Citation[] => {
+export const mergeCitations = (base: Citation[], incoming: Citation[]): Citation[] => {
   const merged = new Map<string, Citation>();
 
   [...base, ...incoming].forEach((citation) => {
@@ -891,18 +811,13 @@ export const extractCitationsFromPayloadWithOptions = (
       }
       visited.add(parsedObject);
 
-      const citation = buildCitationFromRecord(
-        parsedObject,
-        inCitationContext,
-        options,
-      );
+      const citation = buildCitationFromRecord(parsedObject, inCitationContext, options);
       if (citation) {
         found.push(citation);
       }
 
       Object.entries(parsedObject).forEach(([key, child]) => {
-        const childContext =
-          inCitationContext || key.toLowerCase().includes("citation");
+        const childContext = inCitationContext || key.toLowerCase().includes("citation");
         if (typeof child === "string") {
           // Providers and MCP tools sometimes JSON-stringify nested objects,
           // so parse those before recursing deeper.
@@ -953,29 +868,19 @@ export const safeDecodeUri = (url: string): string => {
 const buildDocMarkerCitationMap = (
   text: string,
   citations: Citation[],
-): {
-  citationNumberMapping: Record<number, number>;
-  citedCitations: Citation[];
-} => {
+): { citationNumberMapping: Record<number, number>; citedCitations: Citation[] } => {
   const citationNumberMapping: Record<number, number> = {};
 
   citations.forEach((citation, index) => {
     const docNumber = index + 1;
-    if (
-      isDisplayableCitationUrl(citation.url) &&
-      text.includes(`[doc${docNumber}]`)
-    ) {
-      citationNumberMapping[docNumber] =
-        Object.keys(citationNumberMapping).length + 1;
+    if (isDisplayableCitationUrl(citation.url) && text.includes(`[doc${docNumber}]`)) {
+      citationNumberMapping[docNumber] = Object.keys(citationNumberMapping).length + 1;
     }
   });
 
   const citedCitations = citations.filter((citation, index) => {
     const docNumber = index + 1;
-    return (
-      isDisplayableCitationUrl(citation.url) &&
-      citationNumberMapping[docNumber] !== undefined
-    );
+    return isDisplayableCitationUrl(citation.url) && citationNumberMapping[docNumber] !== undefined;
   });
 
   return { citationNumberMapping, citedCitations };
@@ -1038,25 +943,15 @@ const processAnnotationReferences = (
         return resolveSafeInsertionIndex(inferredEndIndex, protectedRanges);
       })(),
     }))
-    .filter(
-      (
-        entry,
-      ): entry is {
-        citation: Citation;
-        citationIndex: number;
-        endIndex: number;
-      } => isFiniteNumber(entry.endIndex),
+    .filter((entry): entry is { citation: Citation; citationIndex: number; endIndex: number } =>
+      isFiniteNumber(entry.endIndex),
     )
     .filter((entry) => entry.endIndex >= 0 && entry.endIndex <= text.length)
     .sort((a, b) => b.endIndex - a.endIndex);
 
   if (!annotations.length) {
     return {
-      processedText: insertMarkersBySentence(
-        text,
-        renderableEntries,
-        citationNumberMapping,
-      ),
+      processedText: insertMarkersBySentence(text, renderableEntries, citationNumberMapping),
       citedCitations: renderableEntries.map(({ citation }) => citation),
       citationNumberMapping,
     };
@@ -1108,11 +1003,7 @@ export const processTextWithCitations = (
       text,
       citations,
     );
-    const processedText = replaceDocReferences(
-      text,
-      citations,
-      citationNumberMapping,
-    );
+    const processedText = replaceDocReferences(text, citations, citationNumberMapping);
 
     return {
       processedText,
@@ -1143,8 +1034,7 @@ export const groupCitationsByUrl = (
   const entries = includeUnreferenced
     ? allCitations.filter((citation) => isDisplayableCitationUrl(citation.url))
     : citedCitations;
-  let nextDisplayNumber =
-    Math.max(0, ...Object.values(citationNumberMapping)) + 1;
+  let nextDisplayNumber = Math.max(0, ...Object.values(citationNumberMapping)) + 1;
 
   entries.forEach((citation) => {
     const normalizedUrl = safeDecodeUri(citation.url);
@@ -1152,8 +1042,8 @@ export const groupCitationsByUrl = (
     const fullIndex = allCitations.findIndex((entry) => entry === citation);
     const docNumber = fullIndex >= 0 ? fullIndex + 1 : undefined;
     const displayNumber = docNumber
-      ? (citationNumberMapping[docNumber] ??
-        (includeUnreferenced ? nextDisplayNumber++ : Number.MAX_SAFE_INTEGER))
+      ? citationNumberMapping[docNumber]
+        ?? (includeUnreferenced ? nextDisplayNumber++ : Number.MAX_SAFE_INTEGER)
       : Number.MAX_SAFE_INTEGER;
 
     if (!existing) {
@@ -1172,9 +1062,7 @@ export const groupCitationsByUrl = (
     }
   });
 
-  return Array.from(groups.values()).sort(
-    (a, b) => a.displayNumber - b.displayNumber,
-  );
+  return Array.from(groups.values()).sort((a, b) => a.displayNumber - b.displayNumber);
 };
 
 /**

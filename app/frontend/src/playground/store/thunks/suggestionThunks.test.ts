@@ -23,17 +23,13 @@ describe("importSuggestion", () => {
 
   it("creates a new selected, titled conversation without reusing drafts", () => {
     const store = configureStore({ reducer: rootReducer });
-    store.dispatch(
-      addSession({
-        id: "existing-draft",
-        name: "Draft",
-        createdAt: 1,
-        isNewChat: true,
-      }),
-    );
-    const sessionId = store.dispatch(
-      importSuggestion({ handoffId: "first", context }),
-    );
+    store.dispatch(addSession({
+      id: "existing-draft",
+      name: "Draft",
+      createdAt: 1,
+      isNewChat: true,
+    }));
+    const sessionId = store.dispatch(importSuggestion({ handoffId: "first", context }));
     const state = store.getState();
     expect(state.sessions.sessions).toHaveLength(2);
     expect(state.sessions.currentSessionId).toBe(sessionId);
@@ -61,16 +57,10 @@ describe("importSuggestion", () => {
 
   it("imports a hand-off once, but allows separate visits with the same question", () => {
     const store = configureStore({ reducer: rootReducer });
-    const first = store.dispatch(
-      importSuggestion({ handoffId: "first", context }),
-    );
-    expect(
-      store.dispatch(importSuggestion({ handoffId: "first", context })),
-    ).toBe(first);
+    const first = store.dispatch(importSuggestion({ handoffId: "first", context }));
+    expect(store.dispatch(importSuggestion({ handoffId: "first", context }))).toBe(first);
     expect(store.getState().chat.messages).toHaveLength(2);
-    const second = store.dispatch(
-      importSuggestion({ handoffId: "second", context }),
-    );
+    const second = store.dispatch(importSuggestion({ handoffId: "second", context }));
     expect(second).not.toBe(first);
     expect(store.getState().sessions.sessions).toHaveLength(2);
     expect(store.getState().chat.messages).toHaveLength(4);
@@ -97,16 +87,12 @@ describe("importSuggestion", () => {
       original_query: "q".repeat(20_001),
       content: "a".repeat(25_000),
     };
-    store.dispatch(
-      importSuggestion({ handoffId: "long", context: longContext }),
-    );
+    store.dispatch(importSuggestion({ handoffId: "long", context: longContext }));
     expect(loadChatState()).toMatchObject({
-      chat: {
-        messages: [
-          { content: longContext.original_query },
-          { content: longContext.content, citations: context.citations },
-        ],
-      },
+      chat: { messages: [
+        { content: longContext.original_query },
+        { content: longContext.content, citations: context.citations },
+      ] },
     });
   });
 });

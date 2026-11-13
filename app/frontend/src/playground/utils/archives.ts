@@ -14,12 +14,12 @@ const isKnownProgressStatus = (
   value: unknown,
 ): value is OrchestratorProgressUpdate["status"] => {
   return (
-    value === "connecting" ||
-    value === "connected" ||
-    value === "classifying" ||
-    value === "routing" ||
-    value === "done" ||
-    value === "error"
+    value === "connecting"
+    || value === "connected"
+    || value === "classifying"
+    || value === "routing"
+    || value === "done"
+    || value === "error"
   );
 };
 
@@ -31,8 +31,9 @@ const normalizeMcpAttributionServer = (
   }
 
   const record = candidate as Record<string, unknown>;
-  const serverLabel =
-    typeof record.serverLabel === "string" ? record.serverLabel.trim() : "";
+  const serverLabel = typeof record.serverLabel === "string"
+    ? record.serverLabel.trim()
+    : "";
 
   if (!serverLabel) {
     return null;
@@ -40,8 +41,7 @@ const normalizeMcpAttributionServer = (
 
   return {
     serverLabel,
-    serverUrl:
-      typeof record.serverUrl === "string" ? record.serverUrl : undefined,
+    serverUrl: typeof record.serverUrl === "string" ? record.serverUrl : undefined,
   };
 };
 
@@ -57,17 +57,14 @@ const normalizeMessageMcpAttribution = (
     return undefined;
   }
 
-  const generatedAt =
-    typeof record.generatedAt === "string"
-      ? record.generatedAt
-      : new Date().toISOString();
+  const generatedAt = typeof record.generatedAt === "string"
+    ? record.generatedAt
+    : new Date().toISOString();
 
   const servers = Array.isArray(record.servers)
     ? record.servers
         .map(normalizeMcpAttributionServer)
-        .filter(
-          (server): server is MessageMcpAttributionServer => server !== null,
-        )
+        .filter((server): server is MessageMcpAttributionServer => server !== null)
     : [];
 
   if (servers.length === 0) {
@@ -79,10 +76,7 @@ const normalizeMessageMcpAttribution = (
     generatedAt,
     category: typeof record.category === "string" ? record.category : undefined,
     status: isKnownProgressStatus(record.status) ? record.status : undefined,
-    statusMessage:
-      typeof record.statusMessage === "string"
-        ? record.statusMessage
-        : undefined,
+    statusMessage: typeof record.statusMessage === "string" ? record.statusMessage : undefined,
     servers,
   };
 };
@@ -106,9 +100,7 @@ export function isChatArchiveAttachment(file: FileAttachment): boolean {
 /**
  * Selects the newest archive candidate based on metadata timestamps.
  */
-export function pickLatestArchive(
-  files?: FileAttachment[] | null,
-): FileAttachment | undefined {
+export function pickLatestArchive(files?: FileAttachment[] | null): FileAttachment | undefined {
   if (!Array.isArray(files) || files.length === 0) {
     return undefined;
   }
@@ -138,10 +130,7 @@ export function decodeArchiveDataUrl(dataUrl: string): string {
 /**
  * Normalizes heterogeneous archive message payloads into the canonical chat shape.
  */
-export function normalizeArchiveMessage(
-  candidate: unknown,
-  sessionId: string,
-): Message | null {
+export function normalizeArchiveMessage(candidate: unknown, sessionId: string): Message | null {
   if (!candidate || typeof candidate !== "object") {
     return null;
   }
@@ -152,11 +141,7 @@ export function normalizeArchiveMessage(
   // Accept common legacy aliases so old archives remain restorable.
   if (rawRole === "assistant" || rawRole === "system") {
     role = rawRole;
-  } else if (
-    rawRole === "user" ||
-    rawRole === "human" ||
-    rawRole === "client"
-  ) {
+  } else if (rawRole === "user" || rawRole === "human" || rawRole === "client") {
     role = "user";
   } else if (rawRole === "bot" || rawRole === "assistant_bot") {
     role = "assistant";
@@ -172,8 +157,7 @@ export function normalizeArchiveMessage(
     typeof record.message === "string" ? record.message : undefined,
   ];
   const content = possibleContent.find(
-    (value): value is string =>
-      typeof value === "string" && value.trim().length > 0,
+    (value): value is string => typeof value === "string" && value.trim().length > 0,
   );
   if (!content) {
     return null;
@@ -194,8 +178,8 @@ export function normalizeArchiveMessage(
     typeof record.id === "string" && record.id
       ? record.id
       : typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-        ? crypto.randomUUID()
-        : `restored-${sessionId}-${timestamp}-${Math.random().toString(36).slice(2)}`;
+      ? crypto.randomUUID()
+      : `restored-${sessionId}-${timestamp}-${Math.random().toString(36).slice(2)}`;
 
   const attachments = Array.isArray(record.attachments)
     ? (record.attachments as Message["attachments"])
@@ -206,9 +190,7 @@ export function normalizeArchiveMessage(
   const mcpAttribution = normalizeMessageMcpAttribution(record.mcpAttribution);
 
   const brArtifacts =
-    record.brArtifacts &&
-    typeof record.brArtifacts === "object" &&
-    !Array.isArray(record.brArtifacts)
+    record.brArtifacts && typeof record.brArtifacts === "object" && !Array.isArray(record.brArtifacts)
       ? (record.brArtifacts as Message["brArtifacts"])
       : undefined;
 

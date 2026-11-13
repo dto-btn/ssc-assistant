@@ -23,12 +23,8 @@ describe("processTextWithCitations", () => {
       citations,
     );
 
-    expect(result.processedText).toContain(
-      "[1](<https://example.com/doc%20one>)",
-    );
-    expect(result.processedText).toContain(
-      "[2](<https://example.com/doc-three>)",
-    );
+    expect(result.processedText).toContain("[1](<https://example.com/doc%20one>)");
+    expect(result.processedText).toContain("[2](<https://example.com/doc-three>)");
     expect(result.processedText).not.toContain("[doc1]");
     expect(result.citedCitations).toEqual([citations[0], citations[2]]);
     expect(result.citationNumberMapping).toEqual({ 1: 1, 3: 2 });
@@ -51,12 +47,8 @@ describe("processTextWithCitations", () => {
 
     const result = processTextWithCitations(text, citations);
 
-    expect(result.processedText).toContain(
-      "[1](<https://example.com/source-a>)",
-    );
-    expect(result.processedText).toContain(
-      "[2](<https://example.com/source-b>)",
-    );
+    expect(result.processedText).toContain("[1](<https://example.com/source-a>)");
+    expect(result.processedText).toContain("[2](<https://example.com/source-b>)");
     expect(result.citedCitations).toEqual(citations);
     expect(result.citationNumberMapping).toEqual({ 1: 1, 2: 2 });
   });
@@ -84,8 +76,7 @@ describe("processTextWithCitations", () => {
   });
 
   it("uses sentence-level inline insertion when no positions can be inferred", () => {
-    const text =
-      "EPS helps project governance. It supports planning and delivery.";
+    const text = "EPS helps project governance. It supports planning and delivery.";
     const citations: Citation[] = [
       { title: "EPS Guide.pdf", url: "/pmcoe/en/eps-guide.pdf" },
       { title: "Delivery Manual.pdf", url: "/pmcoe/en/delivery-manual.pdf" },
@@ -93,12 +84,8 @@ describe("processTextWithCitations", () => {
 
     const result = processTextWithCitations(text, citations);
 
-    expect(result.processedText).toContain(
-      "governance. [1](</pmcoe/en/eps-guide.pdf>)",
-    );
-    expect(result.processedText).toContain(
-      "delivery. [2](</pmcoe/en/delivery-manual.pdf>)",
-    );
+    expect(result.processedText).toContain("governance. [1](</pmcoe/en/eps-guide.pdf>)");
+    expect(result.processedText).toContain("delivery. [2](</pmcoe/en/delivery-manual.pdf>)");
     expect(result.processedText).not.toContain("\n\n[1]");
   });
 
@@ -142,8 +129,7 @@ describe("processTextWithCitations", () => {
   });
 
   it("preserves explicit numeric citation markdown links without inserting duplicate markers", () => {
-    const text =
-      "Please review [1](https://example.com/shared.pdf) and [2](https://example.com/shared.pdf).";
+    const text = "Please review [1](https://example.com/shared.pdf) and [2](https://example.com/shared.pdf).";
     const citations: Citation[] = [
       {
         title: "Shared Source.pdf",
@@ -193,21 +179,14 @@ describe("groupCitationsByUrl", () => {
     ];
     const processed = processTextWithCitations("Answer [doc1].", citations);
     const groups = groupCitationsByUrl(
-      processed.citedCitations,
-      citations,
-      processed.citationNumberMapping,
-      true,
+      processed.citedCitations, citations, processed.citationNumberMapping, true,
     );
     expect(groups).toHaveLength(2);
     expect(groups.map((group) => group.displayNumber)).toEqual([1, 2]);
     expect(groups[1].citations).toHaveLength(2);
-    expect(
-      groupCitationsByUrl(
-        processed.citedCitations,
-        citations,
-        processed.citationNumberMapping,
-      ),
-    ).toHaveLength(1);
+    expect(groupCitationsByUrl(
+      processed.citedCitations, citations, processed.citationNumberMapping,
+    )).toHaveLength(1);
   });
 
   it("shows all sources for suggestion answers without doc markers", () => {
@@ -215,18 +194,10 @@ describe("groupCitationsByUrl", () => {
       { title: "First", url: "https://example.com/first" },
       { title: "Second", url: "https://example.com/second" },
     ];
-    const processed = processTextWithCitations(
-      "Answer without markers.",
-      citations,
-    );
-    expect(
-      groupCitationsByUrl(
-        processed.citedCitations,
-        citations,
-        processed.citationNumberMapping,
-        true,
-      ).map((group) => group.displayNumber),
-    ).toEqual([1, 2]);
+    const processed = processTextWithCitations("Answer without markers.", citations);
+    expect(groupCitationsByUrl(
+      processed.citedCitations, citations, processed.citationNumberMapping, true,
+    ).map((group) => group.displayNumber)).toEqual([1, 2]);
     expect(groupCitationsByUrl([], [], {}, true)).toEqual([]);
   });
 
@@ -413,62 +384,54 @@ describe("extractCitationsFromPayload", () => {
     expect(citations[0].title).toBe("management-operating-guide-en-pdf");
   });
 
-  it.each(["pdf", "docx"])(
-    "extracts %s source_path + article/page metadata into rich citation details",
-    (extension) => {
-      const fileName = `Project Management Operating Guide EN.${extension}`;
-      const citations = extractCitationsFromPayload({
+  it.each(["pdf", "docx"])("extracts %s source_path + article/page metadata into rich citation details", (extension) => {
+    const fileName = `Project Management Operating Guide EN.${extension}`;
+    const citations = extractCitationsFromPayload({
+      result: {
+        citations: [
+          {
+            file_name: fileName,
+            source_path: `/pmcoe-sept-2025/en/${fileName}`,
+            article: "F.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
+            page_number: 71,
+          },
+        ],
+      },
+    });
+
+    expect(citations).toHaveLength(1);
+    expect(citations[0].title).toBe(fileName);
+    expect(citations[0].url).toBe(`/pmcoe-sept-2025/en/${fileName}`);
+    expect(citations[0].content).toContain("Page 71");
+    expect(citations[0].content).toContain("F.1 Enterprise Portfolio System");
+  });
+
+  it.each(["pdf", "docx"])("infers PMCOE %s source_path from file name when PMCOE routing is active", (extension) => {
+    const fileName = `Project Management Operating Guide EN.${extension}`;
+    const citations = extractCitationsFromPayloadWithOptions(
+      {
+        type: "response.mcp_call.completed",
         result: {
           citations: [
             {
               file_name: fileName,
-              source_path: `/pmcoe-sept-2025/en/${fileName}`,
-              article:
-                "F.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
+              article: "F.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
               page_number: 71,
             },
           ],
         },
-      });
+      },
+      {
+        enablePmcoePathInference: true,
+        pmcoeContainer: "pmcoe-sept-2025",
+      },
+    );
 
-      expect(citations).toHaveLength(1);
-      expect(citations[0].title).toBe(fileName);
-      expect(citations[0].url).toBe(`/pmcoe-sept-2025/en/${fileName}`);
-      expect(citations[0].content).toContain("Page 71");
-      expect(citations[0].content).toContain("F.1 Enterprise Portfolio System");
-    },
-  );
-
-  it.each(["pdf", "docx"])(
-    "infers PMCOE %s source_path from file name when PMCOE routing is active",
-    (extension) => {
-      const fileName = `Project Management Operating Guide EN.${extension}`;
-      const citations = extractCitationsFromPayloadWithOptions(
-        {
-          type: "response.mcp_call.completed",
-          result: {
-            citations: [
-              {
-                file_name: fileName,
-                article:
-                  "F.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
-                page_number: 71,
-              },
-            ],
-          },
-        },
-        {
-          enablePmcoePathInference: true,
-          pmcoeContainer: "pmcoe-sept-2025",
-        },
-      );
-
-      expect(citations).toHaveLength(1);
-      expect(citations[0].title).toBe(fileName);
-      expect(citations[0].url).toBe(`/pmcoe-sept-2025/en/${fileName}`);
-      expect(citations[0].content).toContain("Page 71");
-    },
-  );
+    expect(citations).toHaveLength(1);
+    expect(citations[0].title).toBe(fileName);
+    expect(citations[0].url).toBe(`/pmcoe-sept-2025/en/${fileName}`);
+    expect(citations[0].content).toContain("Page 71");
+  });
 
   it("retains a DOCX slug title with a concrete source path and metadata-only content", () => {
     const citations = extractCitationsFromPayload({
@@ -518,31 +481,27 @@ describe("extractCitationsFromPayload", () => {
     expect(citations[0].url).toBe("/pmcoe-latest/fr/PMCOE Réalisation.docx");
   });
 
-  it.each(["pdf", "docx"])(
-    "does not infer PMCOE %s paths when PMCOE routing is not active",
-    (extension) => {
-      const citations = extractCitationsFromPayloadWithOptions(
-        {
-          type: "response.mcp_call.completed",
-          result: {
-            citations: [
-              {
-                file_name: `Project Management Operating Guide EN.${extension}`,
-                article:
-                  "F.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
-                page_number: 71,
-              },
-            ],
-          },
+  it.each(["pdf", "docx"])("does not infer PMCOE %s paths when PMCOE routing is not active", (extension) => {
+    const citations = extractCitationsFromPayloadWithOptions(
+      {
+        type: "response.mcp_call.completed",
+        result: {
+          citations: [
+            {
+              file_name: `Project Management Operating Guide EN.${extension}`,
+              article: "F.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
+              page_number: 71,
+            },
+          ],
         },
-        {
-          enablePmcoePathInference: false,
-        },
-      );
+      },
+      {
+        enablePmcoePathInference: false,
+      },
+    );
 
-      expect(citations).toEqual([]);
-    },
-  );
+    expect(citations).toEqual([]);
+  });
 });
 
 describe("mergeCitations", () => {

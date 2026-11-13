@@ -27,58 +27,35 @@ test.beforeEach(async ({ page, playground }) => {
 });
 
 test("imports a callback into the sidebar, renders citations, and survives refresh once", async ({
-  page,
-  playground,
-  mockPlayground,
+  page, playground, mockPlayground,
 }) => {
   let requests = 0;
   await page.route("**/api/1.0/suggest?**", async (route) => {
     requests += 1;
     await route.fulfill({ json: suggestion });
   });
-  await page.goto(
-    "/suggest-callback?suggestionContextId=4c279c1f-ca32-48ab-895f-d6b5beec7f41",
-  );
+  await page.goto("/suggest-callback?suggestionContextId=4c279c1f-ca32-48ab-895f-d6b5beec7f41");
   await expect(page.getByRole("log")).toContainText(suggestion.original_query);
-  await expect(page.getByRole("log")).toContainText(
-    "The saved suggestion answer",
-  );
-  await expect(
-    page.getByRole("button", {
-      name: /Open citation details for Saved source/,
-    }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", {
-      name: /Open citation details for Additional source/,
-    }),
-  ).toBeVisible();
-  await page
-    .getByRole("button", { name: /Open citation details for Saved source/ })
-    .click();
+  await expect(page.getByRole("log")).toContainText("The saved suggestion answer");
+  await expect(page.getByRole("button", { name: /Open citation details for Saved source/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Open citation details for Additional source/ })).toBeVisible();
+  await page.getByRole("button", { name: /Open citation details for Saved source/ }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.keyboard.press("Escape");
 
   await playground.openSessionNavigation();
-  await expect(
-    page.getByRole("button", { name: suggestion.original_query }),
-  ).toBeVisible();
+  await expect(page.getByRole("button", { name: suggestion.original_query })).toBeVisible();
   await playground.selectSession(suggestion.original_query);
 
   const initialRequestCount = requests;
   await page.reload();
-  await expect(page.getByRole("log")).toContainText(
-    "The saved suggestion answer",
-  );
+  await expect(page.getByRole("log")).toContainText("The saved suggestion answer");
   expect(requests).toBe(initialRequestCount);
   const imported = await page.evaluate(() => {
-    const state = JSON.parse(
-      localStorage.getItem("playground_chat_state") || "{}",
-    );
+    const state = JSON.parse(localStorage.getItem("playground_chat_state") || "{}");
     return {
       sessions: state.sessions.sessions.filter(
-        (session: { suggestionHandoffId?: string }) =>
-          session.suggestionHandoffId,
+        (session: { suggestionHandoffId?: string }) => session.suggestionHandoffId,
       ).length,
       messages: state.chat.messages.length,
     };
@@ -102,14 +79,10 @@ test("opens French answers in French", async ({ page }) => {
   });
   await page.goto("/suggest-callback?suggestionContextId=french-suggestion");
   await expect(page.locator("html")).toHaveAttribute("lang", "fr");
-  await expect(page.getByRole("log")).toContainText(
-    "Voici la réponse enregistrée",
-  );
+  await expect(page.getByRole("log")).toContainText("Voici la réponse enregistrée");
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("lang", "fr");
-  await expect(page.getByRole("log")).toContainText(
-    "Voici la réponse enregistrée",
-  );
+  await expect(page.getByRole("log")).toContainText("Voici la réponse enregistrée");
 });
 
 for (const kind of ["missing", "server", "validation", "network"]) {
@@ -122,28 +95,17 @@ for (const kind of ["missing", "server", "validation", "network"]) {
           json: kind === "server" ? { success: false } : { success: true },
         });
       }
+
     });
-    await page.goto(
-      kind === "missing"
-        ? "/suggest-callback"
-        : "/suggest-callback?suggestionContextId=error-suggestion",
-    );
-    await expect(page.getByRole("alert")).toContainText(
-      "Your suggestions have not been loaded.",
-    );
+    await page.goto(kind === "missing"
+      ? "/suggest-callback"
+      : "/suggest-callback?suggestionContextId=error-suggestion");
+    await expect(page.getByRole("alert")).toContainText("Your suggestions have not been loaded.");
   });
 }
 
-for (const kind of [
-  "missing",
-  "legacy-context",
-  "server",
-  "validation",
-  "network",
-]) {
-  test(`preserves French after full navigation to a ${kind} callback error`, async ({
-    page,
-  }) => {
+for (const kind of ["missing", "legacy-context", "server", "validation", "network"]) {
+  test(`preserves French after full navigation to a ${kind} callback error`, async ({ page }) => {
     await page.getByRole("button", { name: "Passer au français" }).click();
     await expect(page.locator("html")).toHaveAttribute("lang", "fr");
     await page.route("**/api/1.0/suggest?**", async (route) => {
@@ -155,26 +117,22 @@ for (const kind of [
         });
       }
     });
-    const callback =
-      kind === "missing"
-        ? "/suggest-callback"
-        : kind === "legacy-context"
-          ? "/suggest-callback?context=old-context"
-          : "/suggest-callback?suggestionContextId=error-suggestion";
+    const callback = kind === "missing"
+      ? "/suggest-callback"
+      : kind === "legacy-context"
+        ? "/suggest-callback?context=old-context"
+        : "/suggest-callback?suggestionContextId=error-suggestion";
     await page.goto(callback);
     await expect(page.locator("html")).toHaveAttribute("lang", "fr");
-    const error =
-      kind === "missing" || kind === "legacy-context"
-        ? "L'identifiant est absent du lien de suggestion."
-        : kind === "server"
-          ? "Le serveur a renvoyé une erreur"
-          : kind === "validation"
-            ? "Le contexte de suggestion était dans un format inconnu."
-            : "Une erreur inconnue s'est produite";
+    const error = kind === "missing" || kind === "legacy-context"
+      ? "L'identifiant est absent du lien de suggestion."
+      : kind === "server"
+        ? "Le serveur a renvoyé une erreur"
+        : kind === "validation"
+          ? "Le contexte de suggestion était dans un format inconnu."
+          : "Une erreur inconnue s'est produite";
     await expect(page.getByRole("alert")).toContainText(error);
-    await expect(page.getByRole("alert")).toContainText(
-      "Vos suggestions n'ont pas été chargées.",
-    );
+    await expect(page.getByRole("alert")).toContainText("Vos suggestions n'ont pas été chargées.");
     await page.reload();
     await expect(page.locator("html")).toHaveAttribute("lang", "fr");
   });
