@@ -1028,16 +1028,22 @@ export const groupCitationsByUrl = (
   citedCitations: Citation[],
   allCitations: Citation[],
   citationNumberMapping: Record<number, number>,
+  includeUnreferenced = false,
 ): GroupedCitation[] => {
   const groups = new Map<string, GroupedCitation>();
+  const entries = includeUnreferenced
+    ? allCitations.filter((citation) => isDisplayableCitationUrl(citation.url))
+    : citedCitations;
+  let nextDisplayNumber = Math.max(0, ...Object.values(citationNumberMapping)) + 1;
 
-  citedCitations.forEach((citation) => {
+  entries.forEach((citation) => {
     const normalizedUrl = safeDecodeUri(citation.url);
     const existing = groups.get(normalizedUrl);
     const fullIndex = allCitations.findIndex((entry) => entry === citation);
     const docNumber = fullIndex >= 0 ? fullIndex + 1 : undefined;
     const displayNumber = docNumber
-      ? citationNumberMapping[docNumber] ?? Number.MAX_SAFE_INTEGER
+      ? citationNumberMapping[docNumber]
+        ?? (includeUnreferenced ? nextDisplayNumber++ : Number.MAX_SAFE_INTEGER)
       : Number.MAX_SAFE_INTEGER;
 
     if (!existing) {
