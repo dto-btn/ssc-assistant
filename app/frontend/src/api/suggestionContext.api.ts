@@ -1,8 +1,8 @@
-import { get } from "./api-utils";
+import { get } from "./api-utils"
 
 type GetSuggestionContext = {
-  suggestionContextId: string;
-};
+    suggestionContextId: string;
+}
 
 export const getSuggestionContext = async ({
   suggestionContextId,

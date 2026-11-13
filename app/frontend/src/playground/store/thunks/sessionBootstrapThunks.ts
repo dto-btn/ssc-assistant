@@ -264,14 +264,8 @@ export const bootstrapSessionsFromStorage =
       record.files.push(file);
       const uploadedAtMs = parseTimestamp(file.uploadedAt);
       if (uploadedAtMs > 0) {
-        record.earliestTimestamp = Math.min(
-          record.earliestTimestamp,
-          uploadedAtMs,
-        );
-        record.latestUploadTimestamp = Math.max(
-          record.latestUploadTimestamp,
-          uploadedAtMs,
-        );
+        record.earliestTimestamp = Math.min(record.earliestTimestamp, uploadedAtMs);
+        record.latestUploadTimestamp = Math.max(record.latestUploadTimestamp, uploadedAtMs);
       }
       record.lastMessageTimestamp = Math.max(
         record.lastMessageTimestamp,

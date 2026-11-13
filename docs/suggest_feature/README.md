@@ -64,8 +64,7 @@ curl --location 'http://localhost:5001/api/1.0/suggest?stream=true' \
 ```
 
 Streaming response example (each line is a JSON object):
-
-```text
+```
 {"content": "SSC's content "}
 {"content": "management system "}
 {"content": "is Drupal 9..."}
@@ -74,30 +73,31 @@ Streaming response example (each line is a JSON object):
 
 ## Example response
 
+
 ```json
 {
-  "citations": [
-    {
-      "title": "Welcome to SSC+",
-      "url": "https://plus.ssc-spc.gc.ca/en/news/articles/25-01-2022/welcome-ssc"
-    },
-    {
-      "title": "MySSC+ and Content Transition",
-      "url": "https://plus.ssc-spc.gc.ca/en/news/blogs/development/30-03-2022/myssc-and-content-transition"
-    },
-    {
-      "title": "SSC Artificial Intelligence: A Way Forward",
-      "url": "https://plus.ssc-spc.gc.ca/en/page/ssc-artificial-intelligence-way-forward"
-    }
-  ],
-  "content": "SSC's content management system is Drupal 9, which is part of the upgraded web platform for the new SSC+ intranet. This system aims to improve how web content is published and managed, enhance user experience, and provide better search engine functionalities [doc1].",
-  "id": "4c279c1f-ca32-48ab-895f-d6b5beec7f41",
-  "language": "en",
-  "original_query": "What is SSC's content management system?",
-  "reason": null,
-  "requester": "mysscplus",
-  "success": true,
-  "timestamp": "2026-06-15T10:01:26.461Z"
+    "citations": [
+        {
+            "title": "Welcome to SSC+",
+            "url": "https://plus.ssc-spc.gc.ca/en/news/articles/25-01-2022/welcome-ssc"
+        },
+        {
+            "title": "MySSC+ and Content Transition",
+            "url": "https://plus.ssc-spc.gc.ca/en/news/blogs/development/30-03-2022/myssc-and-content-transition"
+        },
+        {
+            "title": "SSC Artificial Intelligence: A Way Forward",
+            "url": "https://plus.ssc-spc.gc.ca/en/page/ssc-artificial-intelligence-way-forward"
+        }
+    ],
+    "content": "SSC's content management system is Drupal 9, which is part of the upgraded web platform for the new SSC+ intranet. This system aims to improve how web content is published and managed, enhance user experience, and provide better search engine functionalities [doc1].",
+    "id": "4c279c1f-ca32-48ab-895f-d6b5beec7f41",
+    "language": "en",
+    "original_query": "What is SSC's content management system?",
+    "reason": null,
+    "requester": "mysscplus",
+    "success": true,
+    "timestamp": "2026-06-15T10:01:26.461Z"
 }
 ```
 
@@ -105,7 +105,7 @@ Streaming response example (each line is a JSON object):
 
 This would be the call back used, with the ID from above result, to reach SSCA Suggest presentation page.
 
-- <http://localhost:8080/suggest-callback?suggestionContextId=4c279c1f-ca32-48ab-895f-d6b5beec7f41>
+* http://localhost:8080/suggest-callback?suggestionContextId=4c279c1f-ca32-48ab-895f-d6b5beec7f41
 
 ### Playground hand-off
 

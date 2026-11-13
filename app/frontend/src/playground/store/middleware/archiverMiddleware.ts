@@ -10,26 +10,14 @@ import {
   markSessionError,
 } from "../slices/syncSlice";
 import { isRetriableUploadError, uploadEncodedFile } from "../../api/storage";
-import {
-  clearAllSessions,
-  removeSession,
-  renameSession,
-} from "../slices/sessionSlice";
-import {
-  rehydrateSessionFromArchive,
-  SessionRehydrationResult,
-} from "../thunks/sessionBootstrapThunks";
-import {
-  selectHasMessagesForSession,
-  selectMessagesForSession,
-} from "../selectors/chatSelectors";
+import { clearAllSessions, removeSession, renameSession } from "../slices/sessionSlice";
+import { rehydrateSessionFromArchive, SessionRehydrationResult } from "../thunks/sessionBootstrapThunks";
+import { selectHasMessagesForSession, selectMessagesForSession } from "../selectors/chatSelectors";
 
 /**
  * External trigger used by UI/actions that want to force an immediate archive run.
  */
-export const requestArchive = createAction<{ sessionId: string }>(
-  "archiver/requestArchive",
-);
+export const requestArchive = createAction<{ sessionId: string }>("archiver/requestArchive");
 
 // Archiver policy
 const MAX_MESSAGES_BEFORE_ARCHIVE = 25; // archive when many messages accumulate
@@ -84,16 +72,12 @@ const toIsoTimestamp = (value: number | undefined): string | undefined =>
 async function doArchive(sessionId: string, store: PlaygroundStoreApi) {
   const state = store.getState();
   const accessToken = state.auth?.accessToken ?? null;
-  const sessionRecord = state.sessions.sessions.find(
-    (session) => session.id === sessionId,
-  );
+  const sessionRecord = state.sessions.sessions.find((session) => session.id === sessionId);
 
   const messages = selectMessagesForSession(state, sessionId);
   const hasQueuedArchive = store
     .getState()
-    .outbox.items.some(
-      (item) => item.kind === "chat-archive" && item.sessionId === sessionId,
-    );
+    .outbox.items.some((item) => item.kind === "chat-archive" && item.sessionId === sessionId);
 
   if (messages.length === 0) {
     if (!hasQueuedArchive) {
@@ -116,38 +100,31 @@ async function doArchive(sessionId: string, store: PlaygroundStoreApi) {
     sessionId,
     archivedAt: new Date().toISOString(),
     count: messages.length,
-    messages: messages.map(
-      (m) =>
-        ({
-          id: m.id,
-          role: m.role,
-          content: m.content,
-          timestamp: m.timestamp,
-          citations: m.citations,
-          showAllCitations: m.showAllCitations,
-          attachments: m.attachments,
-          mcpAttribution: m.mcpAttribution,
-          brArtifacts: m.brArtifacts,
-        }) satisfies Partial<Message>,
-    ),
+    messages: messages.map((m) => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+      timestamp: m.timestamp,
+      citations: m.citations,
+      showAllCitations: m.showAllCitations,
+      attachments: m.attachments,
+      mcpAttribution: m.mcpAttribution,
+      brArtifacts: m.brArtifacts,
+    } satisfies Partial<Message>)),
   };
 
-  const payload =
-    "data:application/json;base64," +
-    btoa(unescape(encodeURIComponent(JSON.stringify(archiveDoc))));
+  const payload = "data:application/json;base64," + btoa(unescape(encodeURIComponent(JSON.stringify(archiveDoc))));
   const archiveFileName = `${sessionId}.chat.json`;
   const lastUpdatedIso = new Date().toISOString();
   const lastMessageAtIso = toIsoTimestamp(lastMessage?.timestamp);
 
   const queueArchive = () =>
-    store.dispatch(
-      addChatArchiveToOutbox({
-        sessionId,
-        dataUrl: payload,
-        label: archiveFileName,
-        lastMessageAt: lastMessageAtIso,
-      }),
-    );
+    store.dispatch(addChatArchiveToOutbox({
+      sessionId,
+      dataUrl: payload,
+      label: archiveFileName,
+      lastMessageAt: lastMessageAtIso,
+    }));
 
   if (!accessToken) {
     queueArchive();
@@ -179,7 +156,7 @@ async function doArchive(sessionId: string, store: PlaygroundStoreApi) {
       markSessionError({
         sessionId,
         error: error instanceof Error ? error.message : undefined,
-      }),
+      })
     );
     lastArchivedSignature[sessionId] = signature;
     throw error;
@@ -191,11 +168,7 @@ async function doArchive(sessionId: string, store: PlaygroundStoreApi) {
 /**
  * Redux middleware that watches chat activity and persists transcripts opportunistically.
  */
-export const archiverMiddleware: Middleware<
-  unknown,
-  RootState,
-  PlaygroundDispatch
-> = (store) => (next) => (action) => {
+export const archiverMiddleware: Middleware<unknown, RootState, PlaygroundDispatch> = (store) => (next) => (action) => {
   const result = next(action);
 
   if (addMessage.match(action)) {
@@ -210,18 +183,14 @@ export const archiverMiddleware: Middleware<
 
     // Threshold-based immediate archive
     if (messages.length >= MAX_MESSAGES_BEFORE_ARCHIVE) {
-      doArchive(sessionId, store).catch(() => {
-        /* swallow errors to avoid disrupting UI */
-      });
+      doArchive(sessionId, store).catch(() => {/* swallow errors to avoid disrupting UI */});
     }
   }
 
   if (requestArchive.match(action)) {
     const { sessionId } = action.payload;
     store.dispatch(markSessionDirty({ sessionId }));
-    doArchive(sessionId, store).catch(() => {
-      /* swallow errors to avoid disrupting UI */
-    });
+    doArchive(sessionId, store).catch(() => {/* swallow errors to avoid disrupting UI */});
   }
 
   if (renameSession.match(action)) {
