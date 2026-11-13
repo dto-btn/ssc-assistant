@@ -2,12 +2,13 @@
 
 This directory currently documents the Playwright end-to-end coverage for the playground experience at `/playground`.
 
-## Current E2E Coverage
+## Current end-to-end coverage
 
 - `e2e/playground-accessibility.spec.ts`: verifies axe-based accessibility coverage, keyboard-only chat creation, and reflow checks at 320px plus a 200%-zoom-equivalent viewport.
 - `e2e/playground-shell.spec.ts`: verifies the playground shell renders, a new chat can be created, and the desktop sidebar toggle works.
 - `e2e/playground-chat.spec.ts`: verifies typed prompts, suggestion-card prompts, regenerate, copy, feedback, and stop-generation behavior.
 - `e2e/playground-session.spec.ts`: verifies archived session rehydration, rename/delete flows, and attachment handling for supported and unsupported files.
+- `e2e/playground-suggestion.spec.ts`: verifies the unchanged suggestion callback URL, imported session title and citations, refresh deduplication, French answers, error notifications, and follow-up messaging.
 - `e2e/playground-mobile.spec.ts`: verifies the mobile session drawer flow and session switching on narrow viewports.
 
 ## Shared Test Infrastructure
@@ -16,11 +17,31 @@ This directory currently documents the Playwright end-to-end coverage for the pl
 - `e2e/fixtures/playground.ts`: shared Playwright fixtures that wire the mock layer and page object into each test.
 - `e2e/pages/PlaygroundPage.ts`: page object used by the specs for common playground interactions.
 
+## PMCOE citation regression checks
+
+From `app/frontend`, run:
+
+```sh
+npx vitest run src/playground/utils/citations.test.ts src/playground/store/thunks/assistantThunks.test.ts
+```
+
+These tests cover PDF and DOCX source paths, inferred PMCOE paths, French DOCX
+language metadata, numbered links, DOCX slug titles, and preservation of source
+excerpts during answer rewriting. Slug titles are display metadata, not reliable
+blob filenames; use the returned `source_path` or original `file_name`.
+
+For a live DOCX source, inspect the MCP result's `file_name`, `source_path`, and
+`title`. Verify the numbered citation and its drawer link point to the actual
+`/<pmcoe-container>/<lang>/<file>.docx` blob and that the link downloads or opens
+the document. Check the response status and content type in browser developer
+tools if it fails. Word documents need not render inline like PDFs. Unit tests
+do not verify deployed search metadata, blob existence, or storage access.
+
 ## Auth Setup
 
 Playwright uses a dedicated test entrypoint instead of branching through the normal runtime auth flow.
 
-- **Entrypoint**: `playground.e2e.html` renders the playground directly for the E2E harness.
+- **Entrypoint**: `playground.e2e.html` renders the playground directly for the end-to-end harness.
 - **Token**: Set `PLAYWRIGHT_E2E_ACCESS_TOKEN` before running Playwright. The config passes it through as `VITE_E2E_ACCESS_TOKEN` to seed the playground store.
 - **Scope**: This token path exists only in the Playwright entrypoint and does not change the normal MSAL-backed application flow.
 

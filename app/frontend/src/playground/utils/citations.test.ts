@@ -171,6 +171,36 @@ describe("processTextWithCitations", () => {
 });
 
 describe("groupCitationsByUrl", () => {
+  it("includes unreferenced suggestion sources without changing ordinary chat behavior", () => {
+    const citations = [
+      { title: "Referenced", url: "https://example.com/first" },
+      { title: "Additional", url: "https://example.com/extra" },
+      { title: "Duplicate", url: "https://example.com/extra" },
+    ];
+    const processed = processTextWithCitations("Answer [doc1].", citations);
+    const groups = groupCitationsByUrl(
+      processed.citedCitations, citations, processed.citationNumberMapping, true,
+    );
+    expect(groups).toHaveLength(2);
+    expect(groups.map((group) => group.displayNumber)).toEqual([1, 2]);
+    expect(groups[1].citations).toHaveLength(2);
+    expect(groupCitationsByUrl(
+      processed.citedCitations, citations, processed.citationNumberMapping,
+    )).toHaveLength(1);
+  });
+
+  it("shows all sources for suggestion answers without doc markers", () => {
+    const citations = [
+      { title: "First", url: "https://example.com/first" },
+      { title: "Second", url: "https://example.com/second" },
+    ];
+    const processed = processTextWithCitations("Answer without markers.", citations);
+    expect(groupCitationsByUrl(
+      processed.citedCitations, citations, processed.citationNumberMapping, true,
+    ).map((group) => group.displayNumber)).toEqual([1, 2]);
+    expect(groupCitationsByUrl([], [], {}, true)).toEqual([]);
+  });
+
   it("groups duplicate urls and keeps the smallest display number", () => {
     const citationA1: Citation = {
       title: "Policy A",
@@ -354,13 +384,14 @@ describe("extractCitationsFromPayload", () => {
     expect(citations[0].title).toBe("management-operating-guide-en-pdf");
   });
 
-  it("extracts source_path + article/page metadata into rich citation details", () => {
+  it.each(["pdf", "docx"])("extracts %s source_path + article/page metadata into rich citation details", (extension) => {
+    const fileName = `Project Management Operating Guide EN.${extension}`;
     const citations = extractCitationsFromPayload({
       result: {
         citations: [
           {
-            file_name: "Project Management Operating Guide EN.pdf",
-            source_path: "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
+            file_name: fileName,
+            source_path: `/pmcoe-sept-2025/en/${fileName}`,
             article: "F.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
             page_number: 71,
           },
@@ -369,20 +400,21 @@ describe("extractCitationsFromPayload", () => {
     });
 
     expect(citations).toHaveLength(1);
-    expect(citations[0].title).toBe("Project Management Operating Guide EN.pdf");
-    expect(citations[0].url).toBe("/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf");
+    expect(citations[0].title).toBe(fileName);
+    expect(citations[0].url).toBe(`/pmcoe-sept-2025/en/${fileName}`);
     expect(citations[0].content).toContain("Page 71");
     expect(citations[0].content).toContain("F.1 Enterprise Portfolio System");
   });
 
-  it("infers PMCOE source_path from file name when PMCOE routing is active", () => {
+  it.each(["pdf", "docx"])("infers PMCOE %s source_path from file name when PMCOE routing is active", (extension) => {
+    const fileName = `Project Management Operating Guide EN.${extension}`;
     const citations = extractCitationsFromPayloadWithOptions(
       {
         type: "response.mcp_call.completed",
         result: {
           citations: [
             {
-              file_name: "Project Management Operating Guide EN.pdf",
+              file_name: fileName,
               article: "F.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
               page_number: 71,
             },
@@ -396,19 +428,67 @@ describe("extractCitationsFromPayload", () => {
     );
 
     expect(citations).toHaveLength(1);
-    expect(citations[0].title).toBe("Project Management Operating Guide EN.pdf");
-    expect(citations[0].url).toBe("/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf");
+    expect(citations[0].title).toBe(fileName);
+    expect(citations[0].url).toBe(`/pmcoe-sept-2025/en/${fileName}`);
     expect(citations[0].content).toContain("Page 71");
   });
 
-  it("does not infer PMCOE paths when PMCOE routing is not active", () => {
+  it("retains a DOCX slug title with a concrete source path and metadata-only content", () => {
+    const citations = extractCitationsFromPayload({
+      citations: [
+        {
+          title: "charter-en-docx",
+          source_path: "/pmcoe-sept-2025/en/Charter EN.docx",
+          content: "metadata",
+        },
+        {
+          title: "metadata",
+          source_path: "/pmcoe-sept-2025/en/metadata",
+          content: "metadata",
+        },
+      ],
+    });
+
+    expect(citations).toHaveLength(1);
+    expect(citations[0].title).toBe("charter-en-docx");
+    expect(citations[0].url).toBe("/pmcoe-sept-2025/en/Charter EN.docx");
+    const processed = processTextWithCitations("See [doc1].", citations);
+    expect(processed.processedText).toBe(
+      "See [1](</pmcoe-sept-2025/en/Charter%20EN.docx>).",
+    );
+    expect(processed.citedCitations).toEqual(citations);
+    expect(processed.citationNumberMapping).toEqual({ 1: 1 });
+  });
+
+  it("infers a French DOCX path using language metadata and the configured container", () => {
+    const citations = extractCitationsFromPayloadWithOptions(
+      {
+        citations: [
+          {
+            file_name: "PMCOE Réalisation.docx",
+            language: "fr",
+          },
+        ],
+      },
+      {
+        enablePmcoePathInference: true,
+        pmcoeContainer: "pmcoe-latest",
+        preferredLanguage: "en",
+      },
+    );
+
+    expect(citations).toHaveLength(1);
+    expect(citations[0].url).toBe("/pmcoe-latest/fr/PMCOE Réalisation.docx");
+  });
+
+  it.each(["pdf", "docx"])("does not infer PMCOE %s paths when PMCOE routing is not active", (extension) => {
     const citations = extractCitationsFromPayloadWithOptions(
       {
         type: "response.mcp_call.completed",
         result: {
           citations: [
             {
-              file_name: "Project Management Operating Guide EN.pdf",
+              file_name: `Project Management Operating Guide EN.${extension}`,
               article: "F.1 Enterprise Portfolio System (EPS) is SSC's system of record.",
               page_number: 71,
             },

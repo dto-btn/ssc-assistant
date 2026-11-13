@@ -200,9 +200,10 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
       groupCitationsByUrl(
         processedContent.citedCitations,
         allCitations,
-        processedContent.citationNumberMapping
+        processedContent.citationNumberMapping,
+        message.showAllCitations,
       ),
-    [processedContent, allCitations]
+    [processedContent, allCitations, message.showAllCitations]
   );
 
   const brData = useMemo(() => {

@@ -15,6 +15,8 @@ export interface Session {
   updatedAt?: number;
   staticTools?: string[];
   isNewChat: boolean;
+  suggestionHandoffId?: string;
+  language?: "en" | "fr";
 }
 
 interface SessionsState {
@@ -37,6 +39,16 @@ const sessionSlice = createSlice({
         updatedAt: action.payload.updatedAt ?? action.payload.createdAt,
       });
       state.currentSessionId = action.payload.id;
+    },
+    addRecoveredSessions: (state, action: PayloadAction<Session[]>) => {
+      action.payload.forEach((session) => {
+        if (!state.sessions.some((existing) => existing.id === session.id)) {
+          state.sessions.push({
+            ...session,
+            updatedAt: session.updatedAt ?? session.createdAt,
+          });
+        }
+      });
     },
     updateSessionActivity: (
       state,
@@ -129,6 +141,7 @@ const sessionSlice = createSlice({
 
 export const {
   addSession,
+  addRecoveredSessions,
   updateSessionActivity,
   removeSession,
   clearAllSessions,

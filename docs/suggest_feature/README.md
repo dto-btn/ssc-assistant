@@ -5,7 +5,7 @@ This documents the `/api/suggest` endpoints created mainly for **MySSC+** Drupal
 ## Pre-requisites
 
 For development and testing this API endpoint you will need to have an API access token (different than the Oauth token)
-that has the `suggest` role attached to it, here is how to create one for testing purpose (update the secret for whatever you use locally): 
+that has the `suggest` role attached to it, here is how to create one for testing purpose (update the secret for whatever you use locally):
 
 ```python
 import jwt
@@ -15,13 +15,23 @@ print(encoded_jwt)
 
 Use this token for the `X-API-Token` value.
 
-## Testing the suggest endpoint: 
+## Testing the suggest endpoint
+
+Set `SSC_API_KEY` in your local shell to the API access token generated above.
+The cURL examples below expand this environment variable; do not commit its value.
+In Bash, you can enter it without saving the token in shell history:
+
+```bash
+read -r -s -p 'API access token: ' SSC_API_KEY
+printf '\n'
+export SSC_API_KEY
+```
 
 ### Non-streaming
 
 ```bash
 curl --location 'http://localhost:5001/api/1.0/suggest' \
---header 'x-api-key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzdWdnZXN0Il19.Nob_YD12KG3OQklU6l1swqQJsVZc62bGOX053LzNk78' \
+--header "x-api-key: ${SSC_API_KEY}" \
 --header 'Authorization: Bearer dummy' \
 --header 'Content-Type: application/json' \
 --data '{
@@ -41,7 +51,7 @@ The last line is the complete response object (same shape as the non-streaming r
 
 ```bash
 curl --location 'http://localhost:5001/api/1.0/suggest?stream=true' \
---header 'x-api-key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzdWdnZXN0Il19.Nob_YD12KG3OQklU6l1swqQJsVZc62bGOX053LzNk78' \
+--header "x-api-key: ${SSC_API_KEY}" \
 --header 'Authorization: Bearer dummy' \
 --header 'Content-Type: application/json' \
 --data '{
@@ -97,10 +107,59 @@ This would be the call back used, with the ID from above result, to reach SSCA S
 
 * http://localhost:8080/suggest-callback?suggestionContextId=4c279c1f-ca32-48ab-895f-d6b5beec7f41
 
-Or via `curl`: 
+### Playground hand-off
+
+The external URL remains `/suggest-callback?suggestionContextId=<uuid>`.
+MySSC++ does not need to change its links. The callback validates the saved API
+response before handing it to the chat through navigation state.
+
+With `VITE_PLAYGROUND_ON=true`, the callback opens `/playground`. Otherwise it
+continues to open legacy chat at `/`. The playground also consumes the same
+hand-off when it is mounted at `/` during the main-chat cutover; keep the callback
+and `/playground` routes registered during that rollout.
+
+A successful hand-off creates a new sidebar conversation named after the original
+question, containing the question, saved answer, and native citation chips/drawer.
+It does not generate another answer or reuse an existing empty draft. The answer's
+`language` selects the playground's English or French interface. Existing
+conversations are preserved.
+
+The completed conversation is saved immediately to `localStorage` and submitted
+to the existing archive/outbox mechanism. Navigation state is replaced with only
+the imported session ID, so refreshing restores that conversation without fetching
+or importing the answer again. A separate visit to the callback intentionally
+creates another conversation, even for the same question.
+
+Missing identifiers, API failures (`success: false`), invalid response shapes, and
+network/unknown failures display persistent errors in the selected interface
+language (English or French). Local-save failures also display an explicit warning.
+Language changes are saved in the shared language-preference cookie, so opening
+the callback through a full-page navigation preserves the selected interface
+language even when the link is missing its suggestion identifier.
+
+#### Validation
+
+From `app/frontend`, run the suggestion model, callback integration, import thunk,
+and session bootstrap tests with Vitest. Browser coverage is in
+`tests/e2e/playground-suggestion.spec.ts`; it uses the standard authenticated test
+entrypoint and mocked saved API responses at the unchanged callback URL.
+See `app/frontend/tests/README.md` for Playwright setup.
+
+Before deploying, also verify a real saved suggestion in dev/staging:
+
+1. Create a suggestion using the authenticated POST example above and copy its ID.
+2. Sign in to SSC Assistant and open `/suggest-callback?suggestionContextId=<id>`.
+3. Check the original question, answer, title, citations, and answer language.
+4. Refresh immediately; confirm the conversation remains and is not duplicated.
+5. Send a follow-up question and confirm normal chat still works.
+6. Repeat in French and verify each error case with controlled API responses.
+
+### Fetching a saved suggestion directly
+
+Via `curl`:
 
 ```bash
 curl --location 'http://localhost:5001/api/1.0/suggest?suggestionContextId=4c279c1f-ca32-48ab-895f-d6b5beec7f41' \
---header 'x-api-key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlcyI6WyJzdWdnZXN0Il19.Nob_YD12KG3OQklU6l1swqQJsVZc62bGOX053LzNk78' \
+--header "x-api-key: ${SSC_API_KEY}" \
 --header 'Authorization: Bearer dummy'
 ```

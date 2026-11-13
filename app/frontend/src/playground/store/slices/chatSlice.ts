@@ -33,6 +33,7 @@ export interface Message {
   timestamp: number;
   attachments?: FileAttachment[];
   citations?: Citation[];
+  showAllCitations?: boolean;
   mcpAttribution?: MessageMcpAttribution;
   brArtifacts?: PlaygroundBrArtifacts;
   /**
