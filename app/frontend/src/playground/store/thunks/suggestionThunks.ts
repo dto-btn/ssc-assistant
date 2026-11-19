@@ -8,6 +8,8 @@ import { saveChatState } from "../persistence";
 import { addToast } from "../slices/toastSlice";
 import i18n from "../../../i18n";
 
+const MAX_SESSION_NAME = 80;
+
 export const importSuggestion = ({
   handoffId,
   context,
@@ -24,9 +26,12 @@ export const importSuggestion = ({
   }
 
   const sessionId = uuidv4();
+  const name = context.original_query.length > MAX_SESSION_NAME
+    ? `${context.original_query.slice(0, MAX_SESSION_NAME - 1).replace(/[\uD800-\uDBFF]$/, "").trimEnd()}…`
+    : context.original_query;
   dispatch(addSession({
     id: sessionId,
-    name: context.original_query,
+    name,
     createdAt: Date.now(),
     isNewChat: false,
     staticTools: [],

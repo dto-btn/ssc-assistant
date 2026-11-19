@@ -67,6 +67,28 @@ describe("importSuggestion", () => {
     expect(store.getState().chat.messages).toHaveLength(4);
   });
 
+  it.each([
+    { query: "q".repeat(80), name: "q".repeat(80) },
+    { query: "q".repeat(81), name: `${"q".repeat(79)}…` },
+    { query: `${"q".repeat(77)}  rest`, name: `${"q".repeat(77)}…` },
+    { query: `${"q".repeat(78)}😀rest`, name: `${"q".repeat(78)}…` },
+  ])("limits the session name while keeping the full question", ({ query, name }) => {
+    const store = configureStore({ reducer: rootReducer });
+    const sessionId = store.dispatch(importSuggestion({
+      handoffId: "long-name",
+      context: { ...context, original_query: query },
+    }));
+
+    expect(store.getState().sessions.sessions[0].name).toBe(name);
+    expect(loadChatState()).toMatchObject({
+      sessions: { sessions: [{ id: sessionId, name }] },
+      chat: { messages: [
+        { sessionId, role: "user", content: query },
+        { sessionId, role: "assistant", content: context.content },
+      ] },
+    });
+  });
+
   it("surfaces persistence failures in the answer's language", () => {
     const store = configureStore({ reducer: rootReducer });
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
