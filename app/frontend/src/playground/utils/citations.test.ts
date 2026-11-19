@@ -189,6 +189,42 @@ describe("groupCitationsByUrl", () => {
     )).toHaveLength(1);
   });
 
+  it("numbers distinct unreferenced sources consecutively when duplicates occur in the middle", () => {
+    const citations = [
+      { title: "Referenced", url: "https://example.com/first" },
+      { title: "Extra", url: "https://example.com/extra" },
+      { title: "Duplicate", url: "https://example.com/extra" },
+      { title: "Last", url: "https://example.com/last" },
+    ];
+    const processed = processTextWithCitations("Answer [doc1].", citations);
+    const groups = groupCitationsByUrl(
+      processed.citedCitations, citations, processed.citationNumberMapping, true,
+    );
+
+    expect(groups.map((group) => group.displayNumber)).toEqual([1, 2, 3]);
+    expect(groups.map((group) => group.citations.length)).toEqual([1, 2, 1]);
+  });
+
+  it("does not reserve an unreferenced number for a source cited by a later duplicate", () => {
+    const citations = [
+      { title: "Early duplicate", url: "https://example.com/first" },
+      { title: "Extra", url: "https://example.com/extra" },
+      { title: "Referenced", url: "https://example.com/first" },
+      { title: "Last", url: "https://example.com/last" },
+    ];
+    const processed = processTextWithCitations("Answer [doc3].", citations);
+    const groups = groupCitationsByUrl(
+      processed.citedCitations, citations, processed.citationNumberMapping, true,
+    );
+
+    expect(groups.map((group) => group.displayNumber)).toEqual([1, 2, 3]);
+    expect(groups.map((group) => group.url)).toEqual([
+      "https://example.com/first",
+      "https://example.com/extra",
+      "https://example.com/last",
+    ]);
+  });
+
   it("shows all sources for suggestion answers without doc markers", () => {
     const citations = [
       { title: "First", url: "https://example.com/first" },

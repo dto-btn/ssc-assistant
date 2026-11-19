@@ -1034,16 +1034,13 @@ export const groupCitationsByUrl = (
   const entries = includeUnreferenced
     ? allCitations.filter((citation) => isDisplayableCitationUrl(citation.url))
     : citedCitations;
-  let nextDisplayNumber = Math.max(0, ...Object.values(citationNumberMapping)) + 1;
-
   entries.forEach((citation) => {
     const normalizedUrl = safeDecodeUri(citation.url);
     const existing = groups.get(normalizedUrl);
     const fullIndex = allCitations.findIndex((entry) => entry === citation);
     const docNumber = fullIndex >= 0 ? fullIndex + 1 : undefined;
     const displayNumber = docNumber
-      ? citationNumberMapping[docNumber]
-        ?? (includeUnreferenced ? nextDisplayNumber++ : Number.MAX_SAFE_INTEGER)
+      ? citationNumberMapping[docNumber] ?? Number.MAX_SAFE_INTEGER
       : Number.MAX_SAFE_INTEGER;
 
     if (!existing) {
@@ -1061,6 +1058,15 @@ export const groupCitationsByUrl = (
       existing.displayNumber = displayNumber;
     }
   });
+
+  if (includeUnreferenced) {
+    let nextDisplayNumber = Math.max(0, ...Object.values(citationNumberMapping)) + 1;
+    groups.forEach((group) => {
+      if (group.displayNumber === Number.MAX_SAFE_INTEGER) {
+        group.displayNumber = nextDisplayNumber++;
+      }
+    });
+  }
 
   return Array.from(groups.values()).sort((a, b) => a.displayNumber - b.displayNumber);
 };
