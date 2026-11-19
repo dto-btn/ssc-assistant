@@ -1,7 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { rootReducer } from "..";
-import { importSuggestion } from "./suggestionThunks";
+import { ensureCurrentSession, importSuggestion, restoreSuggestionSession } from "./suggestionThunks";
 import { addSession } from "../slices/sessionSlice";
 import { addMessage } from "../slices/chatSlice";
 import { loadChatState, saveChatState } from "../persistence";
@@ -40,6 +40,7 @@ describe("importSuggestion", () => {
       language: "fr",
       suggestionHandoffId: "first",
     });
+
     expect(state.chat.messages).toMatchObject([
       { sessionId, role: "user", content: context.original_query },
       {
@@ -121,6 +122,66 @@ describe("importSuggestion", () => {
         { content: "q".repeat(20_000) },
         { content: "a".repeat(20_000) },
       ] },
+    });
+  });
+
+  describe("suggestion session selection", () => {
+    it("restores an existing session and returns its language", () => {
+      const store = configureStore({ reducer: rootReducer });
+      store.dispatch(addSession({
+        id: "imported", name: "Imported", createdAt: 1, isNewChat: false, language: "fr",
+      }));
+      store.dispatch(addSession({ id: "other", name: "Other", createdAt: 2, isNewChat: false }));
+
+      expect(store.dispatch(restoreSuggestionSession("imported"))).toBe("fr");
+      expect(store.getState().sessions.currentSessionId).toBe("imported");
+      expect(store.getState().sessions.sessions).toHaveLength(2);
+    });
+
+    it("reuses a draft when the restored session is missing", () => {
+      const store = configureStore({ reducer: rootReducer });
+      store.dispatch(addSession({ id: "draft", name: "Draft", createdAt: 1, isNewChat: true }));
+      store.dispatch(addSession({ id: "other", name: "Other", createdAt: 2, isNewChat: false }));
+
+      expect(store.dispatch(restoreSuggestionSession("missing"))).toBeUndefined();
+      expect(store.getState().sessions.currentSessionId).toBe("draft");
+      expect(store.getState().sessions.sessions).toHaveLength(2);
+    });
+
+    it("keeps a restored session without a saved language", () => {
+      const store = configureStore({ reducer: rootReducer });
+      store.dispatch(addSession({ id: "existing", name: "Existing", createdAt: 1, isNewChat: false }));
+
+      expect(store.dispatch(restoreSuggestionSession("existing"))).toBeUndefined();
+      expect(store.getState().sessions.currentSessionId).toBe("existing");
+      expect(store.getState().sessions.sessions).toHaveLength(1);
+    });
+
+    it("starts a draft when no restored session was specified", () => {
+      const store = configureStore({ reducer: rootReducer });
+      expect(store.dispatch(restoreSuggestionSession(undefined))).toBeUndefined();
+      expect(store.getState().sessions.sessions).toHaveLength(1);
+      expect(store.getState().sessions.sessions[0].isNewChat).toBe(true);
+    });
+
+    it("creates a draft when no session is current", () => {
+      const store = configureStore({ reducer: rootReducer });
+      store.dispatch(ensureCurrentSession());
+
+      expect(store.getState().sessions.sessions).toHaveLength(1);
+      expect(store.getState().sessions.sessions[0]).toMatchObject({
+        id: store.getState().sessions.currentSessionId,
+        isNewChat: true,
+      });
+    });
+
+    it("keeps the current session on a failed hand-off", () => {
+      const store = configureStore({ reducer: rootReducer });
+      store.dispatch(addSession({ id: "existing", name: "Existing", createdAt: 1, isNewChat: false }));
+      store.dispatch(ensureCurrentSession());
+
+      expect(store.getState().sessions.currentSessionId).toBe("existing");
+      expect(store.getState().sessions.sessions).toHaveLength(1);
     });
   });
 });

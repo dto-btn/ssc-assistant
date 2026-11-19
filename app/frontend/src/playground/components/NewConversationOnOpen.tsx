@@ -8,9 +8,11 @@ import {
 } from "../../api/suggestionContext.models";
 import { useAppDispatch } from "../store/hooks";
 import { addToast } from "../store/slices/toastSlice";
-import { setCurrentSession } from "../store/slices/sessionSlice";
-import { startNewSession } from "../store/thunks/sessionThunks";
-import { importSuggestion } from "../store/thunks/suggestionThunks";
+import {
+  ensureCurrentSession,
+  importSuggestion,
+  restoreSuggestionSession,
+} from "../store/thunks/suggestionThunks";
 
 const errorKeys: Record<SuggestionErrorReason, string> = {
   redirect_because_context_missing: "suggestion.errors.missing",
@@ -47,17 +49,10 @@ const NewConversationOnOpen = () => {
     if (!Object.hasOwn(state, "suggestionHandoff")) {
       if (!initialized.current) {
         initialized.current = true;
-        const restoredLanguage = dispatch((innerDispatch, getState) => {
-          const session = getState().sessions.sessions.find(
-            (entry) => entry.id === state.suggestionSessionId,
-          );
-          if (session) {
-            innerDispatch(setCurrentSession(session.id));
-            return session.language;
-          }
-          innerDispatch(startNewSession());
-          return undefined;
-        });
+        const sessionId = typeof state.suggestionSessionId === "string"
+          ? state.suggestionSessionId
+          : undefined;
+        const restoredLanguage = dispatch(restoreSuggestionSession(sessionId));
         if (restoredLanguage) changeLanguage(restoredLanguage);
       }
       return;
@@ -87,11 +82,7 @@ const NewConversationOnOpen = () => {
         ? errorKeys[parsed.data.errorReason]
         : "suggestion.errors.validation";
       dispatch(addToast({ message: t(errorKey), severity: "error" }));
-      dispatch((innerDispatch, getState) => {
-        if (!getState().sessions.currentSessionId) {
-          innerDispatch(startNewSession());
-        }
-      });
+      dispatch(ensureCurrentSession());
     }
 
     navigate(

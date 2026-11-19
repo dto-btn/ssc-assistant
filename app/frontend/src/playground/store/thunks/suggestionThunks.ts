@@ -6,9 +6,28 @@ import { addSession, setCurrentSession } from "../slices/sessionSlice";
 import { requestArchive } from "../middleware/archiverMiddleware";
 import { saveChatState } from "../persistence";
 import { addToast } from "../slices/toastSlice";
+import { startNewSession } from "./sessionThunks";
 import i18n from "../../../i18n";
 
 const MAX_SESSION_NAME = 80;
+
+export const restoreSuggestionSession = (
+  sessionId: string | undefined,
+): AppThunk<"en" | "fr" | undefined> => (dispatch, getState) => {
+  const session = getState().sessions.sessions.find((entry) => entry.id === sessionId);
+  if (session) {
+    dispatch(setCurrentSession(session.id));
+    return session.language;
+  }
+  dispatch(startNewSession());
+  return undefined;
+};
+
+export const ensureCurrentSession = (): AppThunk<void> => (dispatch, getState) => {
+  if (!getState().sessions.currentSessionId) {
+    dispatch(startNewSession());
+  }
+};
 
 export const importSuggestion = ({
   handoffId,
