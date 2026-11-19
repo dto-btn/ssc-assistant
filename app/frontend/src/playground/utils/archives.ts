@@ -203,6 +203,7 @@ export function normalizeArchiveMessage(candidate: unknown, sessionId: string): 
     attachments,
     citations,
     showAllCitations: record.showAllCitations === true ? true : undefined,
+    preserveFullContent: record.preserveFullContent === true ? true : undefined,
     mcpAttribution,
     brArtifacts,
   };

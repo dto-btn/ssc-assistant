@@ -107,6 +107,7 @@ async function doArchive(sessionId: string, store: PlaygroundStoreApi) {
       timestamp: m.timestamp,
       citations: m.citations,
       showAllCitations: m.showAllCitations,
+      preserveFullContent: m.preserveFullContent,
       attachments: m.attachments,
       mcpAttribution: m.mcpAttribution,
       brArtifacts: m.brArtifacts,

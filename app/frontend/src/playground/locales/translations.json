@@ -19,6 +19,14 @@
     "en": "Your suggestion is open, but could not be saved on this device. It may be lost if you refresh the page.",
     "fr": "Votre suggestion est ouverte, mais n'a pas pu être enregistrée sur cet appareil. Elle pourrait être perdue si vous actualisez la page."
   },
+  "persistence.shortened": {
+    "en": "Some imported suggestion text was shortened in the copy saved on this device. The open conversation is unchanged.",
+    "fr": "Une partie du texte des suggestions importées a été abrégée dans la copie enregistrée sur cet appareil. La conversation ouverte reste inchangée."
+  },
+  "persistence.failed": {
+    "en": "Your latest conversation changes could not be saved on this device. They may be lost if you refresh the page.",
+    "fr": "Les dernières modifications de vos conversations n'ont pas pu être enregistrées sur cet appareil. Elles pourraient être perdues si vous actualisez la page."
+  },
   "page.title": {
     "en": "SSC Assistant Playground",
     "fr": "Bac à sable de l'Assistant SPC"

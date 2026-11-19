@@ -27,7 +27,6 @@ import userReducer from "./slices/userSlice";
 import {
   createPersistableState,
   hasPersistableStateChanged,
-  saveChatState,
   loadChatState,
   shouldPersistAction,
 } from "./persistence";
@@ -35,6 +34,7 @@ import outboxReducer from "./slices/outboxSlice";
 import sessionFilesReducer from "./slices/sessionFilesSlice";
 import syncReducer from "./slices/syncSlice";
 import uiReducer from "./slices/uiSlice";
+import { persistPlaygroundState } from "./thunks/persistenceThunks";
 
 export const rootReducer = combineReducers({
   chat: chatReducer,
@@ -73,8 +73,8 @@ export const store = configureStore({
     getDefaultMiddleware().concat(persistenceTrackerMiddleware, archiverMiddleware, outboxMiddleware),
 });
 
-const throttledSaveState = throttle((state: RootState) => {
-  saveChatState(state);
+const throttledSaveState = throttle(() => {
+  store.dispatch(persistPlaygroundState());
 }, 2000);
 
 let lastPersistedState = createPersistableState(store.getState());
@@ -92,7 +92,7 @@ store.subscribe(() => {
   }
 
   lastPersistedState = nextPersistedState;
-  throttledSaveState(state);
+  throttledSaveState();
 });
 
 const initialStateSnapshot = store.getState();

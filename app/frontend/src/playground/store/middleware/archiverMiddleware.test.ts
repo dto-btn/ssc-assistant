@@ -9,7 +9,7 @@ vi.mock("../../api/storage", () => ({
 }));
 
 import { uploadEncodedFile } from "../../api/storage";
-import { archiverMiddleware } from "./archiverMiddleware";
+import { archiverMiddleware, requestArchive } from "./archiverMiddleware";
 import chatReducer, { addMessage } from "../slices/chatSlice";
 import sessionsReducer, { addSession, renameSession } from "../slices/sessionSlice";
 import outboxReducer from "../slices/outboxSlice";
@@ -75,5 +75,23 @@ describe("archiverMiddleware last-message metadata", () => {
       lastMessageAt: new Date(MESSAGE_TIME).toISOString(),
     });
     expect(uploadMock).not.toHaveBeenCalled();
+  });
+
+  it("archives the full-content marker only for marked messages", async () => {
+    const store = makeStore("token");
+    const sessionId = "imported-archive";
+    store.dispatch(addSession({ id: sessionId, name: "Imported", createdAt: MESSAGE_TIME, isNewChat: false }));
+    store.dispatch(addMessage({ sessionId, role: "assistant", content: "Imported", preserveFullContent: true }));
+    store.dispatch(addMessage({ sessionId, role: "user", content: "Follow-up" }));
+    store.dispatch(requestArchive({ sessionId }));
+    await vi.waitFor(() => expect(uploadMock).toHaveBeenCalledTimes(1));
+
+    const dataUrl = uploadMock.mock.calls[0][0].encodedFile;
+    const archive = JSON.parse(atob(dataUrl.split(",")[1]));
+    expect(archive.messages).toMatchObject([
+      { content: "Imported", preserveFullContent: true },
+      { content: "Follow-up" },
+    ]);
+    expect(archive.messages[1]).not.toHaveProperty("preserveFullContent");
   });
 });

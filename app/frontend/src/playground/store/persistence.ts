@@ -9,6 +9,8 @@
 const CHAT_KEY = "playground_chat_state";
 const MAX_PERSISTED_MESSAGES = 250;
 const MAX_PERSISTED_CONTENT_CHARS = 20_000;
+const MAX_PERSISTED_IMPORTED_CONTENT_CHARS = 100_000;
+let lastSaveFailed = false;
 
 type PersistedState = Record<string, unknown>;
 
@@ -43,7 +45,9 @@ const PERSISTED_ACTION_PREFIXES = [
 const asRecord = (value: unknown): Record<string, unknown> =>
   (value && typeof value === "object") ? (value as Record<string, unknown>) : {};
 
-const isPersistableMessage = (message: unknown): message is Record<string, unknown> => {
+type PersistableMessage = Record<string, unknown> & { content: string };
+
+const isPersistableMessage = (message: unknown): message is PersistableMessage => {
   if (!message || typeof message !== "object") {
     return false;
   }
@@ -60,15 +64,18 @@ const isPersistableMessage = (message: unknown): message is Record<string, unkno
 
 const trimMessagesForPersistence = (
   messages: unknown,
-  importedSessionIds: Set<string>,
-): unknown[] => {
+  importedContentLimit: number,
+  onImportedContentTrimmed?: () => void,
+): PersistableMessage[] => {
+  const contentLimit = (message: PersistableMessage) =>
+    message.preserveFullContent === true ? importedContentLimit : MAX_PERSISTED_CONTENT_CHARS;
+
   if (
     Array.isArray(messages)
     && messages.length <= MAX_PERSISTED_MESSAGES
     && messages.every(
       (message) => isPersistableMessage(message)
-        && (importedSessionIds.has(String(message.sessionId))
-          || String(message.content).length <= MAX_PERSISTED_CONTENT_CHARS)
+        && message.content.length <= contentLimit(message)
     )
   ) {
     return messages;
@@ -77,25 +84,18 @@ const trimMessagesForPersistence = (
   const normalized = normalizePersistedMessages(messages);
   const recent = normalized.slice(-MAX_PERSISTED_MESSAGES);
 
-  return recent.map((entry) => {
-    const record = entry as Record<string, unknown>;
-    const content = typeof record.content === "string"
-      ? importedSessionIds.has(String(record.sessionId))
-        ? record.content
-        : record.content.slice(0, MAX_PERSISTED_CONTENT_CHARS)
-      : "";
-
-    return {
-      ...record,
-      content,
-    };
+  return recent.map((message) => {
+    const limit = contentLimit(message);
+    if (message.content.length <= limit) return message;
+    if (message.preserveFullContent === true) onImportedContentTrimmed?.();
+    return { ...message, content: message.content.slice(0, limit) };
   });
 };
 
 /**
  * Drops malformed persisted message entries so hydration cannot crash reducers.
  */
-const normalizePersistedMessages = (messages: unknown): unknown[] => {
+const normalizePersistedMessages = (messages: unknown): PersistableMessage[] => {
   if (!Array.isArray(messages)) {
     return [];
   }
@@ -137,19 +137,16 @@ const migratePersistedState = (parsed: PersistedState): PersistedState => {
  * Persists redux state to localStorage while excluding sensitive auth data.
  */
 export function createPersistableState(state: unknown): PersistedState {
+  return projectPersistableState(state, MAX_PERSISTED_IMPORTED_CONTENT_CHARS);
+}
+
+function projectPersistableState(
+  state: unknown,
+  importedContentLimit: number,
+  onImportedContentTrimmed?: () => void,
+): PersistedState {
   const source = asRecord(state);
   const nextState: PersistedState = {};
-  const sessions = asRecord(source.sessions).sessions;
-  const importedSessionIds = new Set<string>();
-  if (Array.isArray(sessions)) {
-    sessions.forEach((value: unknown) => {
-      const session = asRecord(value);
-      if (typeof session.id === "string" && typeof session.suggestionHandoffId === "string") {
-        importedSessionIds.add(session.id);
-      }
-    });
-  }
-
   PERSISTED_SLICE_KEYS.forEach((key: PersistedSliceKey) => {
     if (!(key in source)) {
       return;
@@ -158,7 +155,7 @@ export function createPersistableState(state: unknown): PersistedState {
     if (key === "chat") {
       const chat = asRecord(source.chat);
       const nextChat: Record<string, unknown> = {
-        messages: trimMessagesForPersistence(chat.messages, importedSessionIds),
+        messages: trimMessagesForPersistence(chat.messages, importedContentLimit, onImportedContentTrimmed),
       };
 
       if (
@@ -181,6 +178,28 @@ export function createPersistableState(state: unknown): PersistedState {
           typeof ui.isSidebarCollapsed === "boolean" ? ui.isSidebarCollapsed : false,
       };
       return;
+    }
+
+    if (key === "sessions") {
+      const slice = asRecord(source.sessions);
+      const currentSessions = slice.sessions;
+      if (Array.isArray(currentSessions)) {
+        const sessions = currentSessions.map((entry: unknown) => {
+          const session = asRecord(entry);
+          // Imported titles repeat the original question in the persisted snapshot.
+          if (typeof session.suggestionHandoffId === "string"
+            && typeof session.name === "string"
+            && session.name.length > importedContentLimit) {
+            onImportedContentTrimmed?.();
+            return { ...session, name: session.name.slice(0, importedContentLimit) };
+          }
+          return entry;
+        });
+        if (sessions.some((session, index) => session !== currentSessions[index])) {
+          nextState.sessions = { ...slice, sessions };
+          return;
+        }
+      }
     }
 
     nextState[key] = source[key];
@@ -243,16 +262,45 @@ export function shouldPersistAction(actionType: string | undefined): boolean {
   return PERSISTED_ACTION_PREFIXES.some((prefix) => actionType.startsWith(prefix));
 }
 
-/**
- * Persists a pre-projected durable playground state snapshot.
- */
-export function saveChatState(state: unknown) {
-  try {
-    localStorage.setItem(CHAT_KEY, JSON.stringify(createPersistableState(state)));
-    return true;
-  } catch (error) {
+export type ChatSaveResult = "saved" | "shortened" | "failed";
+
+const saveSucceeded = (shortened: boolean): ChatSaveResult => {
+  lastSaveFailed = false;
+  return shortened ? "shortened" : "saved";
+};
+
+const saveFailed = (error: unknown): ChatSaveResult => {
+  if (!lastSaveFailed) {
     console.error("Could not save playground conversations", error);
-    return false;
+  }
+  lastSaveFailed = true;
+  return "failed";
+};
+
+export function saveChatState(state: unknown): ChatSaveResult {
+  let shortened = false;
+  try {
+    const snapshot = projectPersistableState(state, MAX_PERSISTED_IMPORTED_CONTENT_CHARS, () => {
+      shortened = true;
+    });
+    localStorage.setItem(CHAT_KEY, JSON.stringify(snapshot));
+    return saveSucceeded(shortened);
+  } catch (error) {
+    if (!(error instanceof DOMException) || error.name !== "QuotaExceededError") {
+      return saveFailed(error);
+    }
+
+    shortened = false;
+    try {
+      const compact = projectPersistableState(state, MAX_PERSISTED_CONTENT_CHARS, () => {
+        shortened = true;
+      });
+      if (!shortened) return saveFailed(error);
+      localStorage.setItem(CHAT_KEY, JSON.stringify(compact));
+      return saveSucceeded(true);
+    } catch (retryError) {
+      return saveFailed(retryError);
+    }
   }
 }
 

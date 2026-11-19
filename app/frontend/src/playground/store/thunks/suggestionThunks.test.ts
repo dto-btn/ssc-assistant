@@ -3,7 +3,8 @@ import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { rootReducer } from "..";
 import { importSuggestion } from "./suggestionThunks";
 import { addSession } from "../slices/sessionSlice";
-import { loadChatState } from "../persistence";
+import { addMessage } from "../slices/chatSlice";
+import { loadChatState, saveChatState } from "../persistence";
 import type { SuggestionContextSuccess } from "../../../api/suggestionContext.models";
 import i18n from "../../../i18n";
 
@@ -87,12 +88,38 @@ describe("importSuggestion", () => {
       original_query: "q".repeat(20_001),
       content: "a".repeat(25_000),
     };
-    store.dispatch(importSuggestion({ handoffId: "long", context: longContext }));
+    const sessionId = store.dispatch(importSuggestion({ handoffId: "long", context: longContext }));
+    store.dispatch(addMessage({ sessionId, role: "user", content: "q".repeat(20_001) }));
+    store.dispatch(addMessage({ sessionId, role: "assistant", content: "a".repeat(25_000) }));
+    expect(saveChatState(store.getState())).toBe("saved");
     expect(loadChatState()).toMatchObject({
       chat: { messages: [
-        { content: longContext.original_query },
-        { content: longContext.content, citations: context.citations },
+        { content: longContext.original_query, preserveFullContent: true },
+        { content: longContext.content, citations: context.citations, preserveFullContent: true },
+        { content: "q".repeat(20_000) },
+        { content: "a".repeat(20_000) },
       ] },
     });
+  });
+
+  it("caps oversized imports only in the saved copy and warns about the truncation", () => {
+    const store = configureStore({ reducer: rootReducer });
+    const original_query = "q".repeat(100_001);
+    const content = "a".repeat(100_001);
+    store.dispatch(importSuggestion({ handoffId: "long", context: { ...context, original_query, content } }));
+
+    expect(store.getState().chat.messages.map((message) => message.content)).toEqual([original_query, content]);
+    expect(store.getState().sessions.sessions[0].name).toBe(original_query);
+    expect(loadChatState()).toMatchObject({
+      sessions: { sessions: [{ name: original_query.slice(0, 100_000) }] },
+      chat: { messages: [
+        { content: original_query.slice(0, 100_000) },
+        { content: content.slice(0, 100_000), citations: context.citations },
+      ] },
+    });
+    expect(store.getState().toast.toasts).toMatchObject([{
+      severity: "warning",
+      message: i18n.t("playground:persistence.shortened", { lng: "fr" }),
+    }]);
   });
 });

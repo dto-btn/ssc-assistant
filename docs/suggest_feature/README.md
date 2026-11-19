@@ -124,11 +124,19 @@ It does not generate another answer or reuse an existing empty draft. The answer
 `language` selects the playground's English or French interface. Existing
 conversations are preserved.
 
-The completed conversation is saved immediately to `localStorage` and submitted
-to the existing archive/outbox mechanism. Navigation state is replaced with only
-the imported session ID, so refreshing restores that conversation without fetching
-or importing the answer again. A separate visit to the callback intentionally
-creates another conversation, even for the same question.
+The completed conversation is submitted to the existing archive/outbox mechanism,
+and the app immediately attempts to save it to `localStorage`. The local copy caps
+the imported question, answer, and title at 100,000 characters each. Follow-up
+messages use the normal 20,000-character cap. If the browser rejects the save
+because of its storage quota, the app retries once with imported text capped at
+20,000 characters when that makes the snapshot smaller. The open conversation and
+its citations are not changed by trimming the local copy. The app warns if
+imported text was shortened or the save still fails.
+
+Navigation state is replaced with only the imported session ID, so refreshing
+restores the saved conversation without fetching or importing the answer again.
+A separate visit to the callback intentionally creates another conversation, even
+for the same question.
 
 Missing identifiers, API failures (`success: false`), invalid response shapes, and
 network/unknown failures display persistent errors in the selected interface

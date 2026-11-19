@@ -34,6 +34,7 @@ export interface Message {
   attachments?: FileAttachment[];
   citations?: Citation[];
   showAllCitations?: boolean;
+  preserveFullContent?: boolean;
   mcpAttribution?: MessageMcpAttribution;
   brArtifacts?: PlaygroundBrArtifacts;
   /**

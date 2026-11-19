@@ -4,9 +4,7 @@ import type { AppThunk } from "..";
 import { addMessage } from "../slices/chatSlice";
 import { addSession, setCurrentSession } from "../slices/sessionSlice";
 import { requestArchive } from "../middleware/archiverMiddleware";
-import { saveChatState } from "../persistence";
-import { addToast } from "../slices/toastSlice";
-import i18n from "../../../i18n";
+import { persistPlaygroundState } from "./persistenceThunks";
 
 export const importSuggestion = ({
   handoffId,
@@ -37,6 +35,7 @@ export const importSuggestion = ({
     sessionId,
     role: "user",
     content: context.original_query,
+    preserveFullContent: true,
   }));
   dispatch(addMessage({
     sessionId,
@@ -44,17 +43,11 @@ export const importSuggestion = ({
     content: context.content,
     citations: context.citations,
     showAllCitations: true,
+    preserveFullContent: true,
   }));
   dispatch(requestArchive({ sessionId }));
 
   // Persist the completed transcript before its navigation payload is consumed.
-  if (!saveChatState(getState())) {
-    dispatch(addToast({
-      message: i18n.t("playground:suggestion.errors.save", {
-        lng: context.language,
-      }),
-      severity: "error",
-    }));
-  }
+  dispatch(persistPlaygroundState(context.language));
   return sessionId;
 };
