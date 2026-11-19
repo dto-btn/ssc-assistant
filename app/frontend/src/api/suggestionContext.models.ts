@@ -1,5 +1,14 @@
 import z from "zod";
 
+const SafeCitationUrl = z.string().refine(
+    (url) => {
+        if (/[\u0000-\u001f\u007f\\]/.test(url)) return false;
+        if (url.startsWith("/") && !url.startsWith("//")) return true;
+        return /^https?:\/\//i.test(url) && z.string().url().safeParse(url).success;
+    },
+    { message: "Citation URL must be http(s) or app-relative" },
+);
+
 export const SuggestionContextSuccessSchema = z.object({
     success: z.literal(true),
     language: z.enum(["en", "fr"]),
@@ -10,7 +19,7 @@ export const SuggestionContextSuccessSchema = z.object({
     citations: z.array(
         z.object({
             title: z.string(),
-            url: z.string()
+            url: SafeCitationUrl
         })
     )
 });

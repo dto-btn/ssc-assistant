@@ -38,6 +38,35 @@ describe("suggestion context validation", () => {
     expect(SuggestionContextSchema.safeParse(value).success).toBe(false);
   });
 
+  it.each([
+    "https://example.com/source",
+    "HTTP://example.com/source",
+    "/pmcoe/source",
+  ])("accepts safe citation URL %s", (url) => {
+    expect(SuggestionContextSchema.safeParse({
+      ...context,
+      citations: [{ title: "Source", url }],
+    }).success).toBe(true);
+  });
+
+  it.each([
+    "javascript:alert(1)",
+    "JaVaScRiPt:alert(1)",
+    "java\tscript:alert(1)",
+    "data:text/html,hello",
+    "//example.com/source",
+    "/\\example.com/source",
+    "https://",
+  ])("rejects unsafe citation URL %s", (url) => {
+    const unsafeContext = { ...context, citations: [{ title: "Source", url }] };
+    expect(SuggestionContextSchema.safeParse(unsafeContext).success).toBe(false);
+    expect(SuggestionHandoffSchema.safeParse({
+      handoffId: "handoff",
+      success: true,
+      context: unsafeContext,
+    }).success).toBe(false);
+  });
+
   it("rejects malformed navigation hand-offs", () => {
     expect(SuggestionHandoffSchema.safeParse({
       handoffId: "handoff",
