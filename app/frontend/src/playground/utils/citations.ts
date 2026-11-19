@@ -313,7 +313,7 @@ const buildCitationFromRecord = (
 
   const normalizedTitle = (title || "").trim().toLowerCase();
   const normalizedContent = (content || "").trim().toLowerCase();
-  const looksLikeFile = Boolean(title && /(\.pdf$|\.docx?$|\.pptx?$|-pdf$|guide|manual|policy|framework|operating|process|standard)/i.test(title));
+  const looksLikeFile = Boolean(title && /(\.pdf$|\.docx?$|\.pptx?$|-(pdf|docx?)$|guide|manual|policy|framework|operating|process|standard)/i.test(title));
   const hasMeaningfulExcerpt = Boolean(content && content.trim().length >= 35);
   const isMetadataNoiseTitle = /^(query|doc[\s_]?id|id|score|metadata|filter|filters|source id)$/i.test(normalizedTitle);
   const isMetadataNoiseContent = /^(query|doc[\s_]?id|id|score|metadata)$/i.test(normalizedContent);
@@ -1028,16 +1028,22 @@ export const groupCitationsByUrl = (
   citedCitations: Citation[],
   allCitations: Citation[],
   citationNumberMapping: Record<number, number>,
+  includeUnreferenced = false,
 ): GroupedCitation[] => {
   const groups = new Map<string, GroupedCitation>();
+  const entries = includeUnreferenced
+    ? allCitations.filter((citation) => isDisplayableCitationUrl(citation.url))
+    : citedCitations;
+  let nextDisplayNumber = Math.max(0, ...Object.values(citationNumberMapping)) + 1;
 
-  citedCitations.forEach((citation) => {
+  entries.forEach((citation) => {
     const normalizedUrl = safeDecodeUri(citation.url);
     const existing = groups.get(normalizedUrl);
     const fullIndex = allCitations.findIndex((entry) => entry === citation);
     const docNumber = fullIndex >= 0 ? fullIndex + 1 : undefined;
     const displayNumber = docNumber
-      ? citationNumberMapping[docNumber] ?? Number.MAX_SAFE_INTEGER
+      ? citationNumberMapping[docNumber]
+        ?? (includeUnreferenced ? nextDisplayNumber++ : Number.MAX_SAFE_INTEGER)
       : Number.MAX_SAFE_INTEGER;
 
     if (!existing) {

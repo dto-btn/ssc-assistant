@@ -1123,7 +1123,9 @@ describe("sendAssistantMessage auto-rename", () => {
     ]);
   });
 
-  it("preserves multiple excerpts from the same harvested PMCOE source during rewrite", async () => {
+  it.each(["pdf", "docx"])("preserves multiple excerpts from the same harvested PMCOE %s source during rewrite", async (extension) => {
+    const fileName = `Project Management Operating Guide EN.${extension}`;
+    const sourceUrl = `/pmcoe-sept-2025/en/${fileName}`;
     createCompletionMock
       .mockResolvedValueOnce({
         fullText: "Follow the operating guide.",
@@ -1131,8 +1133,8 @@ describe("sendAssistantMessage auto-rename", () => {
         provider: "azure-openai",
         citations: [
           {
-            title: "Project Management Operating Guide EN.pdf",
-            url: "local-citation://project-management-operating-guide-en-pdf-abc123",
+            title: fileName,
+            url: `local-citation://project-management-operating-guide-en-${extension}-abc123`,
           },
         ],
       })
@@ -1142,13 +1144,13 @@ describe("sendAssistantMessage auto-rename", () => {
         provider: "azure-openai",
         citations: [
           {
-            title: "Project Management Operating Guide EN.pdf",
-            url: "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
+            title: fileName,
+            url: sourceUrl,
             content: "Page 10\nGate reviews track readiness, risks, and required approvals.",
           },
           {
-            title: "Project Management Operating Guide EN.pdf",
-            url: "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
+            title: fileName,
+            url: sourceUrl,
             content: "Page 11\nProject teams should keep schedule, cost, and artefact updates current before each gate.",
           },
         ],
@@ -1181,13 +1183,13 @@ describe("sendAssistantMessage auto-rename", () => {
     const assistantMessage = store.getState().chat.messages.find((message: any) => message.role === "assistant");
     expect(assistantMessage?.citations).toEqual([
       {
-        title: "Project Management Operating Guide EN.pdf",
-        url: "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
+        title: fileName,
+        url: sourceUrl,
         content: "Page 10\nGate reviews track readiness, risks, and required approvals.",
       },
       {
-        title: "Project Management Operating Guide EN.pdf",
-        url: "/pmcoe-sept-2025/en/Project Management Operating Guide EN.pdf",
+        title: fileName,
+        url: sourceUrl,
         content: "Page 11\nProject teams should keep schedule, cost, and artefact updates current before each gate.",
       },
     ]);
