@@ -75,6 +75,10 @@ const NewConversationOnOpen = () => {
       remainingState.suggestionSessionId = dispatch(
         importSuggestion({ handoffId, context }),
       );
+      dispatch(addToast({
+        message: t("suggestion.opened", { lng: context.language }),
+        severity: "info",
+      }));
     } else {
       if (!parsed.success) {
         console.error("Suggestion hand-off failed validation", parsed.error.issues);

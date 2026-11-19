@@ -53,6 +53,7 @@ const ToastContainer: React.FC = () => {
           <Alert
             onClose={() => dispatch(removeToast(toast.id))}
             severity={getSeverity(toast)}
+            role={getSeverity(toast) === "info" ? "status" : "alert"}
             sx={{ width: "100%" }}
           >
             {toast.message}

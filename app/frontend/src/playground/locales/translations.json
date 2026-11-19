@@ -1,4 +1,12 @@
 {
+  "suggestion.loading": {
+    "en": "Loading suggestion.",
+    "fr": "Chargement de la suggestion."
+  },
+  "suggestion.opened": {
+    "en": "Suggestion opened in a conversation.",
+    "fr": "Suggestion ouverte dans une conversation."
+  },
   "suggestion.errors.missing": {
     "en": "The suggestion link is missing its identifier. Your suggestions have not been loaded.",
     "fr": "L'identifiant est absent du lien de suggestion. Vos suggestions n'ont pas été chargées."

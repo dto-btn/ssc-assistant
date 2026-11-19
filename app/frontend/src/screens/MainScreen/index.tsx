@@ -435,6 +435,11 @@ const MainScreen = () => {
           ...chatHistoriesDescriptions,
           parsedSuggestionContext.context.original_query,
         ]);
+        showSnackbar(
+          t("playground:suggestion.opened", { lng: parsedSuggestionContext.context.language }),
+          undefined,
+          "info",
+        );
       } else {
         const showError = (msg: string) => {
           showSnackbar(

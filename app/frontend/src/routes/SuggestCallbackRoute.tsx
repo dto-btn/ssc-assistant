@@ -1,4 +1,7 @@
 import { useEffect } from "react";
+import { Box } from "@mui/material";
+import { visuallyHidden } from "@mui/utils";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
 import { v4 as uuidv4 } from "uuid";
 import { getSuggestionContext } from "../api/suggestionContext.api";
@@ -8,6 +11,7 @@ import {
 } from "../api/suggestionContext.models";
 
 export const SuggestCallbackRoute = () => {
+  const { t } = useTranslation("playground");
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const suggestionContextId = searchParams.get("suggestionContextId");
@@ -105,5 +109,5 @@ export const SuggestCallbackRoute = () => {
     };
   }, [suggestionContextId, navigate]);
 
-  return null;
+  return <Box role="status" aria-live="polite" sx={visuallyHidden}>{t("suggestion.loading")}</Box>;
 };

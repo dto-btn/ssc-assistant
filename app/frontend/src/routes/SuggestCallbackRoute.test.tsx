@@ -92,6 +92,16 @@ describe("suggest callback to playground", () => {
       }),
     ));
 
+  it.each(["en", "fr"])("announces loading in %s while the request is pending", async (language) => {
+    await i18n.changeLanguage(language);
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => {})));
+    setup();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      i18n.t("playground:suggestion.loading", { lng: language }),
+    );
+    expect(screen.getByRole("status")).toHaveAttribute("aria-live", "polite");
+  });
+
   it("imports, renders native citations, and consumes state once under Strict Mode", async () => {
     respondWith(context);
     const { store, rerender } = setup();
@@ -101,6 +111,9 @@ describe("suggest callback to playground", () => {
     expect(screen.getByRole("button", { name: /Additional source/ })).toBeVisible();
     expect(store.getState().sessions.sessions).toHaveLength(2);
     expect(store.getState().chat.messages).toHaveLength(2);
+    expect(screen.getByText(i18n.t("playground:suggestion.opened", { lng: "en" }))
+      .closest('[role="status"]')).toBeInTheDocument();
+    expect(store.getState().toast.toasts).toHaveLength(1);
     await waitFor(() => {
       expect(screen.getByTestId("location")).not.toHaveTextContent("suggestionHandoff");
     });
@@ -124,6 +137,8 @@ describe("suggest callback to playground", () => {
     await screen.findByText(/^The saved answer/, {}, { timeout: 5000 });
     expect(i18n.language).toBe("fr");
     expect(screen.getByRole("button", { name: /First source/ })).toBeVisible();
+    expect(screen.getByText(i18n.t("playground:suggestion.opened", { lng: "fr" }))
+      .closest('[role="status"]')).toBeInTheDocument();
   });
 
   for (const language of ["en", "fr"]) {
