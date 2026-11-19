@@ -97,7 +97,7 @@ Streaming response example (each line is a JSON object):
     "reason": null,
     "requester": "mysscplus",
     "success": true,
-    "timestamp": "2026-06-15T10:01:26.461Z"
+    "timestamp": "2026-11-09T12:00:00.123Z"
 }
 ```
 
@@ -155,6 +155,9 @@ Before deploying, also verify a real saved suggestion in dev/staging:
 6. Repeat in French and verify each error case with controlled API responses.
 
 ### Fetching a saved suggestion directly
+
+The GET response uses the `timestamp` format shown above: ISO 8601 in UTC,
+with millisecond precision and a trailing `Z`.
 
 Via `curl`:
 

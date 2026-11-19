@@ -1,3 +1,5 @@
+from datetime import timezone
+
 from src.db.sql_entities import SuggestionContextSqlEntity
 from src.service.suggestion_service_types import (
     SuggestionCitation,
@@ -11,12 +13,19 @@ class SuggestionContextDaoMapper:
     def from_sql(
         sql_entity: SuggestionContextSqlEntity,
     ) -> SuggestionContextWithSuggestionsAndId:
+        created_at = sql_entity.created_at
+        # The timezone-less SQL column stores UTC timestamps.
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+        else:
+            created_at = created_at.astimezone(timezone.utc)
+
         return SuggestionContextWithSuggestionsAndId(
             id=sql_entity.id,
             success=True,  # we never save a suggestion that was not successful
             language=sql_entity.language,
             original_query=sql_entity.original_query,
-            timestamp=sql_entity.created_at,
+            timestamp=created_at.isoformat(timespec="milliseconds").replace("+00:00", "Z"),
             requester=sql_entity.requester,
             content=sql_entity.content,
             citations=[
