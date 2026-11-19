@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   createPersistableState,
@@ -15,6 +15,7 @@ describe("playground persistence migration", () => {
   beforeEach(() => {
     localStorage.clear();
   });
+  afterEach(() => vi.restoreAllMocks());
 
   it("hydrates sidebar collapse preference and resets transient mobile drawer state", () => {
     localStorage.setItem(
@@ -124,6 +125,29 @@ describe("playground persistence migration", () => {
     const persisted = JSON.parse(localStorage.getItem("playground_chat_state") || "{}");
 
     expect(persisted.chat).toEqual({ messages: [] });
+  });
+
+  it("logs once per consecutive sequence of failed saves", () => {
+    const error = new DOMException("Quota exceeded", "QuotaExceededError");
+    let failing = true;
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      if (failing) throw error;
+    });
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const state = { chat: { messages: [] } };
+
+    expect(saveChatState(state)).toBe(false);
+    expect(saveChatState(state)).toBe(false);
+    expect(log).toHaveBeenCalledTimes(1);
+    expect(log).toHaveBeenCalledWith("Could not save playground conversations", error);
+
+    failing = false;
+    expect(saveChatState(state)).toBe(true);
+    failing = true;
+    expect(saveChatState(state)).toBe(false);
+    expect(log).toHaveBeenCalledTimes(2);
+    failing = false;
+    expect(saveChatState(state)).toBe(true);
   });
 
   it("applies the normal limit to unmarked messages in legacy imported sessions", () => {

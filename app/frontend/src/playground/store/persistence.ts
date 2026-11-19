@@ -9,6 +9,7 @@
 const CHAT_KEY = "playground_chat_state";
 const MAX_PERSISTED_MESSAGES = 250;
 const MAX_PERSISTED_CONTENT_CHARS = 20_000;
+let lastSaveFailed = false;
 
 type PersistedState = Record<string, unknown>;
 
@@ -235,9 +236,13 @@ export function shouldPersistAction(actionType: string | undefined): boolean {
 export function saveChatState(state: unknown) {
   try {
     localStorage.setItem(CHAT_KEY, JSON.stringify(createPersistableState(state)));
+    lastSaveFailed = false;
     return true;
   } catch (error) {
-    console.error("Could not save playground conversations", error);
+    if (!lastSaveFailed) {
+      console.error("Could not save playground conversations", error);
+    }
+    lastSaveFailed = true;
     return false;
   }
 }
