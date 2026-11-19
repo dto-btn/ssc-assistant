@@ -199,6 +199,7 @@ export function normalizeArchiveMessage(candidate: unknown, sessionId: string): 
     sessionId,
     role,
     content,
+    language: record.language === "en" || record.language === "fr" ? record.language : undefined,
     timestamp,
     attachments,
     citations,

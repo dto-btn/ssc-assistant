@@ -66,7 +66,8 @@ test("imports a callback into the sidebar, renders citations, and survives refre
   await expect(page.getByRole("log")).toContainText("Follow-up response.");
 });
 
-test("opens French answers in French", async ({ page }) => {
+test("keeps the interface language while marking French answers across reloads", async ({ page }) => {
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await page.route("**/api/1.0/suggest?**", async (route) => {
     await route.fulfill({
       json: {
@@ -78,11 +79,29 @@ test("opens French answers in French", async ({ page }) => {
     });
   });
   await page.goto("/suggest-callback?suggestionContextId=french-suggestion");
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.getByRole("log").locator('[lang="fr"]')).toContainText("Voici la réponse enregistrée");
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.getByRole("log").locator('[lang="fr"]')).toContainText("Voici la réponse enregistrée");
+});
+
+test("keeps a chosen French preference when importing an English answer", async ({ page }) => {
+  await page.getByRole("button", { name: "Passer au français" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "fr");
-  await expect(page.getByRole("log")).toContainText("Voici la réponse enregistrée");
+  await page.route("**/api/1.0/suggest?**", async (route) => {
+    await route.fulfill({ json: suggestion });
+  });
+  await page.goto("/suggest-callback?suggestionContextId=english-suggestion");
+  await expect(page.locator("html")).toHaveAttribute("lang", "fr");
+  await expect(page.getByRole("log").locator('[lang="en"]')).toContainText("The saved suggestion answer");
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("lang", "fr");
-  await expect(page.getByRole("log")).toContainText("Voici la réponse enregistrée");
+  await expect(page.getByRole("log").locator('[lang="en"]')).toContainText("The saved suggestion answer");
+  await page.getByRole("button", { name: "Switch to English" }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
 });
 
 for (const kind of ["missing", "server", "validation", "network"]) {

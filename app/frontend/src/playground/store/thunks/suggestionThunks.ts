@@ -67,6 +67,7 @@ export const importSuggestion = ({
     sessionId,
     role: "assistant",
     content: context.content,
+    language: context.language,
     citations: context.citations,
     showAllCitations: true,
     preserveFullContent: true,
@@ -76,9 +77,7 @@ export const importSuggestion = ({
   // Persist the completed transcript before its navigation payload is consumed.
   if (!saveChatState(getState())) {
     dispatch(addToast({
-      message: i18n.t("playground:suggestion.errors.save", {
-        lng: context.language,
-      }),
+      message: i18n.t("playground:suggestion.errors.save"),
       severity: "error",
     }));
   }

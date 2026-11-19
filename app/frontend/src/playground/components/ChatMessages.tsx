@@ -181,6 +181,13 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
   resolvedAttachments,
 }) {
   const { t, i18n } = useTranslation("playground");
+  const legacySuggestionLanguage = useSelector((state: RootState) => {
+    if (message.language || !message.showAllCitations) return undefined;
+    const session = state.sessions.sessions.find((entry) => entry.id === message.sessionId);
+    return session?.suggestionHandoffId ? session.language : undefined;
+  });
+  const contentLanguage = message.language ?? legacySuggestionLanguage;
+  const interfaceLanguage = i18n.resolvedLanguage ?? i18n.language;
   const [isCitationDrawerOpen, setCitationDrawerOpen] = useState(false);
   const [activeCitationGroupUrl, setActiveCitationGroupUrl] = useState<
     string | undefined
@@ -613,6 +620,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
             <Link
               component="button"
               type="button"
+              lang={interfaceLanguage}
               underline="always"
               aria-label={t("citations.inline.openNumber", {
                 defaultValue: "Open citation {{number}} details",
@@ -645,7 +653,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
         return <MarkdownLink {...props}>{children}</MarkdownLink>;
       },
       code: ({ ...props }) => (
-        <MarkdownCodeBlock {...(props as MarkdownCodeBlockProps)} />
+        <MarkdownCodeBlock {...(props as MarkdownCodeBlockProps)} contentLanguage={contentLanguage} />
       ),
       th: ({ children, ...props }: React.ComponentPropsWithoutRef<"th">) => (
         <th scope="col" {...props}>
@@ -653,7 +661,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
         </th>
       ),
     }),
-    [getCitationGroupByNumber, getCitationGroupByUrl, openCitationGroup, t]
+    [contentLanguage, getCitationGroupByNumber, getCitationGroupByUrl, interfaceLanguage, openCitationGroup, t]
   );
 
   return (
@@ -741,7 +749,7 @@ const AssistantMessageBubble: React.FC<AssistantMessageBubbleProps> = React.memo
                 </Box>
               )}
               {!shouldHideAssistantMarkdownForBrTable && (
-                <Box sx={ASSISTANT_MARKDOWN_SX}>
+                <Box lang={contentLanguage} sx={ASSISTANT_MARKDOWN_SX}>
                   <MarkdownHooks
                     components={markdownComponents}
                     remarkPlugins={remarkPlugins}

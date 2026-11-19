@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 
 export interface MarkdownCodeBlockProps extends React.ComponentPropsWithoutRef<"code"> {
   inline?: boolean;
+  contentLanguage?: string;
 }
 
 const extractNodeText = (node: React.ReactNode): string => {
@@ -22,11 +23,13 @@ const extractNodeText = (node: React.ReactNode): string => {
 
 const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
   inline,
+  contentLanguage,
   className,
   children,
   ...rest
 }) => {
-  const { t } = useTranslation("playground");
+  const { t, i18n } = useTranslation("playground");
+  const interfaceLanguage = i18n?.resolvedLanguage ?? i18n?.language;
   const [isCopied, setIsCopied] = useState(false);
   const codeText = useMemo(() => extractNodeText(children).replace(/\n$/, ""), [children]);
   const isLikelyBlockCode = Boolean(className?.includes("language-")) || codeText.includes("\n");
@@ -61,6 +64,7 @@ const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
       <Tooltip title={isCopied ? t("assistant.copied") : t("assistant.copy.code")}>
         <IconButton
           size="small"
+          lang={interfaceLanguage}
           aria-label={t("assistant.copy.code")}
           onClick={handleCopyCode}
           sx={{
@@ -78,12 +82,13 @@ const MarkdownCodeBlock: React.FC<MarkdownCodeBlockProps> = ({
         </IconButton>
       </Tooltip>
       <pre
+        lang={interfaceLanguage}
         style={{ margin: 0 }}
         role="region"
         tabIndex={0}
         aria-label={t("assistant.code.scrollRegion")}
       >
-        <code className={className} {...rest}>
+        <code className={className} {...rest} lang={contentLanguage ?? rest.lang}>
           {children}
         </code>
       </pre>

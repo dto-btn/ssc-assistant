@@ -121,8 +121,8 @@ and `/playground` routes registered during that rollout.
 A successful hand-off creates a new sidebar conversation named after the original
 question, containing the question, saved answer, and native citation chips/drawer.
 It does not generate another answer or reuse an existing empty draft. The answer's
-`language` selects the playground's English or French interface. Existing
-conversations are preserved.
+`language` marks its content for assistive technology without changing the user's
+interface language preference. Existing conversations are preserved.
 
 The completed conversation is saved immediately to `localStorage` and submitted
 to the existing archive/outbox mechanism. Navigation state is replaced with only

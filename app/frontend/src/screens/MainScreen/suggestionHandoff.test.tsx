@@ -114,4 +114,17 @@ describe("legacy suggestion hand-off", () => {
     expect(useChatStore.getState().chatHistoriesDescriptions).toHaveLength(3);
     expect(showSnackbar).toHaveBeenCalledTimes(2);
   });
+
+  it("retains the answer language on an imported completion", () => {
+    setup({ suggestionHandoff: { ...handoff("french"), context: { ...context, language: "fr" } } });
+    expect(useChatStore.getState().getCurrentChatHistory().chatItems[1]).toMatchObject({
+      language: "fr",
+      message: { content: expect.stringContaining(context.content) },
+    });
+    expect(showSnackbar).toHaveBeenCalledWith(
+      i18n.t("playground:suggestion.opened"),
+      undefined,
+      "info",
+    );
+  });
 });

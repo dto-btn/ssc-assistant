@@ -43,6 +43,7 @@ import BusinessRequestMetadata from "./BusinessRequests/BusinessRequestMetadata"
 
 interface AssistantBubbleProps {
   text: string;
+  language?: "en" | "fr";
   isLoading: boolean;
   context?: Context | null;
   toolsInfo?: ToolInfo[];
@@ -66,6 +67,7 @@ function DraggablePaperComponent(props: PaperProps) {
 
 export const AssistantBubble = ({
   text,
+  language,
   isLoading,
   context,
   toolsInfo,
@@ -485,27 +487,29 @@ export const AssistantBubble = ({
                   {t("aria.assistant.message")}
                 </Typography>{" "}
                 {/* Hidden div for screen reader */}
-                <MarkdownHooks
-                  components={components}
-                  rehypePlugins={[
-                    rehypeHighlight,
-                    rehypeMathjax,
-                    [
-                      rehypeMermaid,
-                      {
-                        // Ensure the fallback actually renders
-                        errorFallback: () => <div>Invalid diagram format!</div>,
-                      },
-                    ],
-                  ]}
-                  remarkPlugins={[remarkGfm]}
-                >
-                  {isLoading
-                    ? `${text.replace(/\[doc(\d+)\]/g, "")}_`
-                    : processedContent.processedText !== ""
-                      ? processedContent.processedText
-                      : text}
-                </MarkdownHooks>
+                <Box lang={language}>
+                  <MarkdownHooks
+                    components={components}
+                    rehypePlugins={[
+                      rehypeHighlight,
+                      rehypeMathjax,
+                      [
+                        rehypeMermaid,
+                        {
+                          // Ensure the fallback actually renders
+                          errorFallback: () => <div>Invalid diagram format!</div>,
+                        },
+                      ],
+                    ]}
+                    remarkPlugins={[remarkGfm]}
+                  >
+                    {isLoading
+                      ? `${text.replace(/\[doc(\d+)\]/g, "")}_`
+                      : processedContent.processedText !== ""
+                        ? processedContent.processedText
+                        : text}
+                  </MarkdownHooks>
+                </Box>
               </TextComponentsBox>
             </MainContentWrapper>
 

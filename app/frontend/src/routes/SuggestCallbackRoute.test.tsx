@@ -13,6 +13,7 @@ import { useAppSelector } from "../playground/store/hooks";
 import { addSession } from "../playground/store/slices/sessionSlice";
 import { loadChatState } from "../playground/store/persistence";
 import { getSuggestionContext } from "../api/suggestionContext.api";
+import Cookies from "js-cookie";
 import i18n from "../i18n";
 
 const context = {
@@ -131,35 +132,27 @@ describe("suggest callback to playground", () => {
     expect(store.getState().chat.messages).toHaveLength(2);
   });
 
-  it("respects the French answer language", async () => {
-    respondWith({ ...context, language: "fr" });
-    setup();
-    await screen.findByText(/^The saved answer/, {}, { timeout: 5000 });
-    expect(i18n.language).toBe("fr");
-    expect(screen.getByRole("button", { name: /First source/ })).toBeVisible();
-    expect(screen.getByText(i18n.t("playground:suggestion.opened", { lng: "fr" }))
-      .closest('[role="status"]')).toBeInTheDocument();
-  });
-
   it.each([
     ["en", "fr"],
     ["fr", "en"],
-  ])("reports a language-switch failure in the current %s interface", async (currentLanguage, targetLanguage) => {
+  ])("preserves the %s interface and marks an imported %s answer", async (currentLanguage, targetLanguage) => {
     await i18n.changeLanguage(currentLanguage);
-    const error = new Error("Language switch failed");
-    vi.spyOn(i18n, "changeLanguage").mockRejectedValue(error);
     respondWith({ ...context, language: targetLanguage });
     const { store } = setup();
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      i18n.t("playground:suggestion.errors.language", { lng: currentLanguage }),
-    );
-    expect(console.error).toHaveBeenCalledWith("Could not set suggestion language", error);
+    const answer = await screen.findByText(/^The saved answer/, {}, { timeout: 5000 });
+    expect(answer.closest(`[lang="${targetLanguage}"]`)).toBeInTheDocument();
+    expect(screen.getByRole("button", {
+      name: i18n.t("playground:citations.inline.openNumber", { lng: currentLanguage, number: 1 }),
+    })).toHaveAttribute("lang", currentLanguage);
+    expect(i18n.language).toBe(currentLanguage);
+    expect(Cookies.get("lang_setting")).toBe(currentLanguage);
+    expect(screen.getByText(i18n.t("playground:suggestion.opened", { lng: currentLanguage }))
+      .closest('[role="status"]')).toBeInTheDocument();
     expect(store.getState().chat.messages).toMatchObject([
       { role: "user", content: context.original_query },
-      { role: "assistant", content: context.content },
+      { role: "assistant", content: context.content, language: targetLanguage },
     ]);
-    expect(store.getState().sessions.sessions).toHaveLength(2);
   });
 
   for (const language of ["en", "fr"]) {
@@ -201,7 +194,7 @@ describe("suggest callback to playground", () => {
   });
 
   it("restores an imported session after reload without another API request", async () => {
-    respondWith(context);
+    respondWith({ ...context, language: "fr" });
     const { store, unmount } = setup();
     await screen.findByText(/^The saved answer/, {}, { timeout: 5000 });
     const sessionId = store.getState().sessions.currentSessionId;
@@ -224,6 +217,9 @@ describe("suggest callback to playground", () => {
     await screen.findByText(/^The saved answer/, {}, { timeout: 5000 });
     expect(reloadedStore.getState().sessions.currentSessionId).toBe(sessionId);
     expect(reloadedStore.getState().chat.messages).toHaveLength(2);
+    expect(screen.getByText(/^The saved answer/).closest('[lang="fr"]')).toBeInTheDocument();
+    expect(i18n.language).toBe("en");
+    expect(Cookies.get("lang_setting")).toBe("en");
     expect(fetch).not.toHaveBeenCalled();
   });
 

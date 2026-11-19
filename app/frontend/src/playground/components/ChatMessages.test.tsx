@@ -157,6 +157,28 @@ function renderMessages(sessionId: string, preloadedState: TestStoreState) {
 }
 
 describe("ChatMessages", () => {
+  it("marks older imported answers without applying their language to follow-ups", async () => {
+    renderMessages("s1", {
+      sessions: {
+        sessions: [{ id: "s1", name: "Imported", createdAt: 1, isNewChat: false, suggestionHandoffId: "h1", language: "fr" }],
+        currentSessionId: "s1",
+      },
+      chat: {
+        messages: [
+          { id: "a1", sessionId: "s1", role: "assistant", content: "Ancienne réponse.", timestamp: 1, showAllCitations: true },
+          { id: "a2", sessionId: "s1", role: "assistant", content: "Follow-up response.", timestamp: 2 },
+        ],
+        isLoadingBySessionId: {},
+        assistantResponsePhaseBySessionId: {},
+        orchestratorInsightsBySessionId: {},
+      },
+      sessionFiles: { bySessionId: {} },
+    });
+
+    expect((await screen.findByText("Ancienne réponse.")).closest('[lang="fr"]')).toBeInTheDocument();
+    expect((await screen.findByText("Follow-up response.")).closest('[lang="fr"]')).toBeNull();
+  });
+
   it("renders localized query status chips and infers French fallback filters", async () => {
     mockLanguage = "fr";
 

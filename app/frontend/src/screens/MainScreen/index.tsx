@@ -408,6 +408,7 @@ const MainScreen = () => {
             content: parsedSuggestionContext.context.original_query,
           },
           {
+            language: parsedSuggestionContext.context.language,
             message: {
               role: "assistant",
               content: conversationString,
@@ -426,7 +427,7 @@ const MainScreen = () => {
         parsedSuggestionContext.context.original_query,
       ]);
       showSnackbar(
-        t("playground:suggestion.opened", { lng: parsedSuggestionContext.context.language }),
+        t("playground:suggestion.opened"),
         undefined,
         "info",
       );

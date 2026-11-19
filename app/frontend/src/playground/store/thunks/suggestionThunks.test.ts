@@ -47,6 +47,7 @@ describe("importSuggestion", () => {
         sessionId,
         role: "assistant",
         content: context.content,
+        language: "fr",
         citations: context.citations,
         showAllCitations: true,
       },
@@ -90,7 +91,7 @@ describe("importSuggestion", () => {
     });
   });
 
-  it("surfaces persistence failures in the answer's language", () => {
+  it("surfaces persistence failures in the interface language", () => {
     const store = configureStore({ reducer: rootReducer });
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new DOMException("Quota exceeded", "QuotaExceededError");
@@ -99,7 +100,7 @@ describe("importSuggestion", () => {
     store.dispatch(importSuggestion({ handoffId: "first", context }));
     expect(store.getState().toast.toasts[0]).toMatchObject({
       severity: "error",
-      message: i18n.t("playground:suggestion.errors.save", { lng: "fr" }),
+      message: i18n.t("playground:suggestion.errors.save"),
     });
     expect(store.getState().chat.messages).toHaveLength(2);
   });

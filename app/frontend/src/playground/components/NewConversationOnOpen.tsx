@@ -25,7 +25,7 @@ const NewConversationOnOpen = () => {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation("playground");
+  const { t } = useTranslation("playground");
   const processedKeys = useRef(new Set<string>());
   const initialized = useRef(false);
 
@@ -36,24 +36,13 @@ const NewConversationOnOpen = () => {
     const stateResult = z.record(z.unknown()).safeParse(location.state);
     const state = stateResult.success ? stateResult.data : {};
 
-    const changeLanguage = (language: "en" | "fr") => {
-      void i18n.changeLanguage(language).catch((error: unknown) => {
-        console.error("Could not set suggestion language", error);
-        dispatch(addToast({
-          message: t("suggestion.errors.language"),
-          severity: "error",
-        }));
-      });
-    };
-
     if (!Object.hasOwn(state, "suggestionHandoff")) {
       if (!initialized.current) {
         initialized.current = true;
         const sessionId = typeof state.suggestionSessionId === "string"
           ? state.suggestionSessionId
           : undefined;
-        const restoredLanguage = dispatch(restoreSuggestionSession(sessionId));
-        if (restoredLanguage) changeLanguage(restoredLanguage);
+        dispatch(restoreSuggestionSession(sessionId));
       }
       return;
     }
@@ -66,12 +55,11 @@ const NewConversationOnOpen = () => {
 
     if (parsed.success && parsed.data.success) {
       const { handoffId, context } = parsed.data;
-      changeLanguage(context.language);
       remainingState.suggestionSessionId = dispatch(
         importSuggestion({ handoffId, context }),
       );
       dispatch(addToast({
-        message: t("suggestion.opened", { lng: context.language }),
+        message: t("suggestion.opened"),
         severity: "info",
       }));
     } else {
@@ -92,7 +80,7 @@ const NewConversationOnOpen = () => {
         state: Object.keys(remainingState).length ? remainingState : null,
       },
     );
-  }, [dispatch, location, navigate, t, i18n]);
+  }, [dispatch, location, navigate, t]);
 
   return null;
 };

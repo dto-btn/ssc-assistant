@@ -104,6 +104,7 @@ async function doArchive(sessionId: string, store: PlaygroundStoreApi) {
       id: m.id,
       role: m.role,
       content: m.content,
+      language: m.language,
       timestamp: m.timestamp,
       citations: m.citations,
       showAllCitations: m.showAllCitations,
