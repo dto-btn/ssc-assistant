@@ -23,6 +23,10 @@
     "en": "An unknown error occurred while loading the suggestion. Your suggestions have not been loaded.",
     "fr": "Une erreur inconnue s'est produite lors du chargement de la suggestion. Vos suggestions n'ont pas été chargées."
   },
+  "suggestion.errors.language": {
+    "en": "The suggestion was loaded, but the display language could not be changed.",
+    "fr": "La suggestion a été chargée, mais la langue d'affichage n'a pas pu être changée."
+  },
   "suggestion.errors.save": {
     "en": "Your suggestion is open, but could not be saved on this device. It may be lost if you refresh the page.",
     "fr": "Votre suggestion est ouverte, mais n'a pas pu être enregistrée sur cet appareil. Elle pourrait être perdue si vous actualisez la page."

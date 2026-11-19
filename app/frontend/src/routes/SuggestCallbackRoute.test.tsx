@@ -141,6 +141,27 @@ describe("suggest callback to playground", () => {
       .closest('[role="status"]')).toBeInTheDocument();
   });
 
+  it.each([
+    ["en", "fr"],
+    ["fr", "en"],
+  ])("reports a language-switch failure in the current %s interface", async (currentLanguage, targetLanguage) => {
+    await i18n.changeLanguage(currentLanguage);
+    const error = new Error("Language switch failed");
+    vi.spyOn(i18n, "changeLanguage").mockRejectedValue(error);
+    respondWith({ ...context, language: targetLanguage });
+    const { store } = setup();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      i18n.t("playground:suggestion.errors.language", { lng: currentLanguage }),
+    );
+    expect(console.error).toHaveBeenCalledWith("Could not set suggestion language", error);
+    expect(store.getState().chat.messages).toMatchObject([
+      { role: "user", content: context.original_query },
+      { role: "assistant", content: context.content },
+    ]);
+    expect(store.getState().sessions.sessions).toHaveLength(2);
+  });
+
   for (const language of ["en", "fr"]) {
     it.each([
       ["missing", "suggestion.errors.missing"],

@@ -40,7 +40,7 @@ const NewConversationOnOpen = () => {
       void i18n.changeLanguage(language).catch((error: unknown) => {
         console.error("Could not set suggestion language", error);
         dispatch(addToast({
-          message: t("suggestion.errors.unknown"),
+          message: t("suggestion.errors.language"),
           severity: "error",
         }));
       });
