@@ -30,9 +30,12 @@ export interface Message {
   sessionId: string;
   role: "user" | "assistant" | "system";
   content: string;
+  language?: "en" | "fr";
   timestamp: number;
   attachments?: FileAttachment[];
   citations?: Citation[];
+  showAllCitations?: boolean;
+  preserveFullContent?: boolean;
   mcpAttribution?: MessageMcpAttribution;
   brArtifacts?: PlaygroundBrArtifacts;
   /**

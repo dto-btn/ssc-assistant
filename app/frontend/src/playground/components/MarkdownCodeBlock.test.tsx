@@ -6,6 +6,7 @@ import MarkdownCodeBlock from "./MarkdownCodeBlock";
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string) => key,
+    i18n: { language: "en" },
   }),
 }));
 
@@ -32,5 +33,18 @@ describe("MarkdownCodeBlock", () => {
 
     expect(screen.queryByLabelText("assistant.code.scrollRegion")).not.toBeInTheDocument();
     expect(screen.getByText("const total = 42").tagName).toBe("CODE");
+  });
+
+  it("uses the interface language for controls and the answer language for code", () => {
+    render(
+      <MarkdownCodeBlock className="language-ts" contentLanguage="fr">
+        {"// Bonjour\n"}
+      </MarkdownCodeBlock>
+    );
+
+    expect(screen.getByLabelText("assistant.copy.code")).toHaveAttribute("lang", "en");
+    const region = screen.getByLabelText("assistant.code.scrollRegion");
+    expect(region).toHaveAttribute("lang", "en");
+    expect(region.querySelector("code")).toHaveAttribute("lang", "fr");
   });
 });

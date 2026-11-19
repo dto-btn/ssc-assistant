@@ -36,7 +36,7 @@ import sessionFilesReducer from "./slices/sessionFilesSlice";
 import syncReducer from "./slices/syncSlice";
 import uiReducer from "./slices/uiSlice";
 
-const rootReducer = combineReducers({
+export const rootReducer = combineReducers({
   chat: chatReducer,
   sessions: sessionReducer,
   tools: toolReducer,

@@ -1,13 +1,15 @@
 import { get } from "./api-utils"
-import { SuggestionContextResponseModel } from "./suggestionContext.models";
 
 type GetSuggestionContext = {
     suggestionContextId: string;
 }
-export const getSuggestionContext = async (props: GetSuggestionContext): Promise<SuggestionContextResponseModel> => {
-    const report = await get({
-        url: "/api/1.0/suggest?suggestionContextId=" + props.suggestionContextId
-    });
 
-    return report;
-}
+export const getSuggestionContext = async ({
+  suggestionContextId,
+}: GetSuggestionContext): Promise<unknown> => {
+  const params = new URLSearchParams({ suggestionContextId });
+
+  return get({
+    url: `/api/1.0/suggest?${params.toString()}`,
+  });
+};
