@@ -58,16 +58,13 @@ const isPersistableMessage = (message: unknown): message is Record<string, unkno
   );
 };
 
-const trimMessagesForPersistence = (
-  messages: unknown,
-  importedSessionIds: Set<string>,
-): unknown[] => {
+const trimMessagesForPersistence = (messages: unknown): unknown[] => {
   if (
     Array.isArray(messages)
     && messages.length <= MAX_PERSISTED_MESSAGES
     && messages.every(
       (message) => isPersistableMessage(message)
-        && (importedSessionIds.has(String(message.sessionId))
+        && (message.preserveFullContent === true
           || String(message.content).length <= MAX_PERSISTED_CONTENT_CHARS)
     )
   ) {
@@ -80,7 +77,7 @@ const trimMessagesForPersistence = (
   return recent.map((entry) => {
     const record = entry as Record<string, unknown>;
     const content = typeof record.content === "string"
-      ? importedSessionIds.has(String(record.sessionId))
+      ? record.preserveFullContent === true
         ? record.content
         : record.content.slice(0, MAX_PERSISTED_CONTENT_CHARS)
       : "";
@@ -139,17 +136,6 @@ const migratePersistedState = (parsed: PersistedState): PersistedState => {
 export function createPersistableState(state: unknown): PersistedState {
   const source = asRecord(state);
   const nextState: PersistedState = {};
-  const sessions = asRecord(source.sessions).sessions;
-  const importedSessionIds = new Set<string>();
-  if (Array.isArray(sessions)) {
-    sessions.forEach((value: unknown) => {
-      const session = asRecord(value);
-      if (typeof session.id === "string" && typeof session.suggestionHandoffId === "string") {
-        importedSessionIds.add(session.id);
-      }
-    });
-  }
-
   PERSISTED_SLICE_KEYS.forEach((key: PersistedSliceKey) => {
     if (!(key in source)) {
       return;
@@ -158,7 +144,7 @@ export function createPersistableState(state: unknown): PersistedState {
     if (key === "chat") {
       const chat = asRecord(source.chat);
       const nextChat: Record<string, unknown> = {
-        messages: trimMessagesForPersistence(chat.messages, importedSessionIds),
+        messages: trimMessagesForPersistence(chat.messages),
       };
 
       if (

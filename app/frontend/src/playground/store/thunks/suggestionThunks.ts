@@ -37,6 +37,7 @@ export const importSuggestion = ({
     sessionId,
     role: "user",
     content: context.original_query,
+    preserveFullContent: true,
   }));
   dispatch(addMessage({
     sessionId,
@@ -44,6 +45,7 @@ export const importSuggestion = ({
     content: context.content,
     citations: context.citations,
     showAllCitations: true,
+    preserveFullContent: true,
   }));
   dispatch(requestArchive({ sessionId }));
 

@@ -13,8 +13,9 @@ describe("normalizeArchiveMessage", () => {
       content: "Saved answer",
       timestamp: 1,
       showAllCitations: true,
+      preserveFullContent: true,
       citations,
-    }, "session")).toMatchObject({ showAllCitations: true, citations });
+    }, "session")).toMatchObject({ showAllCitations: true, preserveFullContent: true, citations });
   });
 
   it("preserves valid mcpAttribution from archived assistant messages", () => {

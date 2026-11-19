@@ -126,6 +126,25 @@ describe("playground persistence migration", () => {
     expect(persisted.chat).toEqual({ messages: [] });
   });
 
+  it("applies the normal limit to unmarked messages in legacy imported sessions", () => {
+    const content = "x".repeat(20_001);
+    const message = {
+      id: "m1",
+      sessionId: "s1",
+      role: "assistant",
+      content,
+      timestamp: 1,
+    };
+    saveChatState({
+      sessions: { sessions: [{ id: "s1", suggestionHandoffId: "handoff" }] },
+      chat: { messages: [message] },
+    });
+
+    expect(loadChatState()).toMatchObject({
+      chat: { messages: [{ ...message, content: content.slice(0, 20_000) }] },
+    });
+  });
+
   it("detects when only transient slices changed so persistence can be skipped", () => {
     const previous = createPersistableState({
       chat: { messages: [] },
