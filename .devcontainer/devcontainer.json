@@ -1,10 +1,11 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// https://containers.dev/implementors/json_reference/
 {
   "name": "ssc-assistant-dev",
   "build": {
     "dockerfile": "Dockerfile"
   },
+  "overrideFeatureInstallOrder": [
+    "ghcr.io/gccloudone-aurora-collab/devcontainer-features/enhanced-custom-root-ca"
+  ],
   "features": {
     "ghcr.io/devcontainers/features/azure-cli:1": {
       "version": "latest"
@@ -19,6 +20,12 @@
       "version": "1.9.5",
       "tflint": "latest",
       "terragrunt": "latest"
+    },
+    "ghcr.io/devcontainers-community/npm-features/prettier:1": {},
+    "ghcr.io/gccloudone-aurora-collab/devcontainer-features/enhanced-custom-root-ca:4": {
+      "sources": "https://raw.githubusercontent.com/gccloudone-aurora-collab/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt",
+      "fingerprints": "FE:E0:9E:77:43:BF:D4:3E:D7:D4:D3:ED:50:6C:C7:9D:2D:90:70:FF:A9:29:91:16:87:D4:27:33:70:BE:A3:06",
+      "allowInsecureDownload": true
     }
   },
   "customizations": {
