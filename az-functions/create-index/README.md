@@ -11,6 +11,8 @@ pip install -r requirements.txt
 
 The Function App runtime is pinned to Python 3.12 in Terraform, so use the same version locally when validating dependency upgrades.
 
+On the first search index build in each Python worker, the app downloads NLTK's `stopwords` and `punkt_tab` into a private temporary directory. If outbound downloads from the NLTK data repository are blocked, preinstall both packages in a trusted directory and point `NLTK_DATA` to it.
+
 Create a `.env` file and populate it with the necessary keys: 
 
 ```
