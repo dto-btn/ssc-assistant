@@ -1,7 +1,7 @@
 {
   "page.title": {
-    "en": "SSC Assistant Playground",
-    "fr": "Bac à sable de l'Assistant SPC"
+    "en": "DTO Assistant Playground",
+    "fr": "Bac à sable de l'Assistant DTO"
   },
   "select.or.create.session": {
     "en": "Select or create a chat session to begin.",
@@ -228,8 +228,8 @@
     "fr": "Qu’est-ce que l’ECGPO et pourquoi est-ce important ?"
   },
   "suggestions.pmcoe.q4": {
-    "en": "What types of documents and/or templates are available in the SSC PGoF and how can we use them?",
-    "fr": "Quels types de documents et/ou modèles sont disponibles dans le SSC CFGP et comment les utiliser ?"
+    "en": "What documents and templates are available in the Project Governance Framework, and how can we use them?",
+    "fr": "Quels documents et modèles sont disponibles dans le cadre de gouvernance des projets et comment les utiliser?"
   },
   "suggestions.pmcoe.q5": {
     "en": "What is the purpose of the OPMCA?",
@@ -468,8 +468,8 @@
     "fr": "AVERTISSEMENT"
   },
   "disclaimer.modal.assistant.body": {
-    "en": "The SSC Assistant is in pilot phase and uses Azure OpenAI. Answers may be incorrect even if they seem reliable. Just like humans, AI can make mistakes. Your feedback is important to help us improve the tool.",
-    "fr": "L’Assistant de SPC est en phase pilote et utilise Azure OpenAI. Les réponses peuvent être inexactes même si elles semblent fiables. Comme les humains, l’IA peut faire des erreurs. Vos commentaires sont importants pour nous aider à améliorer l’outil."
+    "en": "DTO Assistant is in pilot phase and uses Azure OpenAI. Answers may be incorrect even if they seem reliable. Just like humans, AI can make mistakes. Your feedback is important to help us improve the tool.",
+    "fr": "L’Assistant DTO est en phase pilote et utilise Azure OpenAI. Les réponses peuvent être inexactes même si elles semblent fiables. Comme les humains, l’IA peut faire des erreurs. Vos commentaires sont importants pour nous aider à améliorer l’outil."
   },
   "disclaimer.modal.assistant.strong": {
     "en": "DO NOT SEND ANY PROTECTED INFORMATION IN THE CHATBOT.",
@@ -680,8 +680,8 @@
     "fr": "Votre message"
   },
   "message.label.assistant": {
-    "en": "SSC Assistant's response",
-    "fr": "Réponse de l'assistant SSC"
+    "en": "DTO Assistant's response",
+    "fr": "Réponse de l'Assistant DTO"
   },
   "chat.feedback.title": {
     "en": "Response Feedback",
@@ -689,7 +689,7 @@
   },
   "chat.feedback.subtitle": {
     "en": "We value your feedback and use it to improve SSCA. What would you like to do?",
-    "fr": "Vos commentaires nous aident à améliorer l'assistant SPC. Que souhaitez-vous faire ?"
+    "fr": "Vos commentaires nous aident à améliorer l'Assistant DTO. Que souhaitez-vous faire ?"
   },
   "chat.feedback.report.issue": {
     "en": "Report an Issue",
@@ -737,7 +737,7 @@
   },
   "chat.feedback.suggestion.detail.subtitle": {
     "en": "Share your suggestion to help us improve SSCA.",
-    "fr": "Partagez votre suggestion pour nous aider à améliorer l'assistant SPC."
+    "fr": "Partagez votre suggestion pour nous aider à améliorer l'Assistant DTO."
   },
   "chat.feedback.suggestion.note.label": {
     "en": "Suggestion",

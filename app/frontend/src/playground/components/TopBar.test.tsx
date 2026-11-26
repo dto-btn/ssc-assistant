@@ -14,7 +14,7 @@ const mockChangeLanguage = vi.fn();
 vi.mock("react-i18next", () => {
   return {
     useTranslation: vi.fn(() => ({
-      t: (key: string) => (key === "title" ? "SSC Assistant" : key),
+      t: (key: string) => (key === "title" ? "DTO Assistant" : key),
       i18n: {
         language: 'en',
         changeLanguage: mockChangeLanguage,
@@ -67,13 +67,13 @@ function renderTopBar(
 describe("TopBar", () => {
   /**
    * Test that the TopBar renders the essential branding elements:
-   * - App Title (SSC Assistant)
+   * - App title (DTO Assistant)
    * - Logo (with correct alt text)
    * - Development Banner (if configured)
    */
   it("renders branding and title", () => {
     renderTopBar(true);
-    expect(screen.getByText("SSC Assistant")).toBeInTheDocument();
+    expect(screen.getByText("DTO Assistant")).toBeInTheDocument();
     expect(screen.getByAltText("logo.alt")).toBeInTheDocument();
     expect(screen.getByTestId("dev-banner")).toBeInTheDocument();
   });
@@ -178,7 +178,7 @@ describe("TopBar", () => {
   it("should have correct aria-label for language toggle when language is fr", async () => {
     mockChangeLanguage.mockReset();
     vi.mocked(useTranslation).mockReturnValue({
-      t: (key: string) => (key === "title" ? "SSC Assistant" : key),
+      t: (key: string) => (key === "title" ? "DTO Assistant" : key),
       i18n: {
         language: 'fr',
         changeLanguage: mockChangeLanguage,

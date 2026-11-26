@@ -252,15 +252,12 @@ class SuggestionApiRequest:
     query: str
     opts: Dict[str, Any]
 
-class AzureCognitiveSearchDataSourceConfig(BaseModel):
+class SearchSourceConfig(BaseModel):
     """
-    Configuration for Azure Cognitive Search data source used in OpenAI chat completions
+    Configuration for retrieving grounding passages from Azure AI Search.
     """
     index_name: str = Field(..., description="The name of the Azure Cognitive Search index")
     embedding_model: str = Field(..., description="The embedding model deployment name to use for vector search")
-    top_n_documents: int = Field(default=3, description="The number of top documents to return from the index")
-    use_language_filter: bool = Field(default=False,
-                                      description="Whether to apply language filtering to search results")
-    lang_filter: str = Field(default="", description="Language filter for search results (e.g., 'en', 'fr')")
-    query_type: str = Field(default="vector_simple_hybrid",
-                           description="The type of query to perform on the search index, eg. 'vector_semantic_hybrid' or 'vector_simple_hybrid'")
+    top_n_documents: int = Field(default=3, ge=1, le=50)
+    use_language_filter: bool = False
+    query_type: Literal["vector_simple_hybrid", "vector_semantic_hybrid"] = "vector_simple_hybrid"

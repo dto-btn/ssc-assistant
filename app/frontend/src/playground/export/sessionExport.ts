@@ -821,7 +821,7 @@ export const downloadSessionExportPdf = async (
   const pdfDoc = await PDFDocument.create();
   const writer = await createPdfTextWriter(pdfDoc);
 
-  writer.writeLine(`SSC Assistant Export: ${document.session.name}`, { bold: true, size: 14 });
+  writer.writeLine(`DTO Assistant Export: ${document.session.name}`, { bold: true, size: 14 });
   writer.writeLine(`Session ID: ${document.session.id}`);
   writer.writeLine(`Exported at: ${new Date(document.exportedAt).toLocaleString()}`);
   writer.addGap(10);
@@ -1074,7 +1074,7 @@ export const downloadSessionExportWord = async (
   const documentChildren: Array<Paragraph | Table> = [
     new Paragraph({
       heading: HeadingLevel.TITLE,
-      children: [new TextRun(`SSC Assistant Export: ${document.session.name}`)],
+      children: [new TextRun(`DTO Assistant Export: ${document.session.name}`)],
     }),
     new Paragraph({ children: [new TextRun(`Session ID: ${document.session.id}`)] }),
     new Paragraph({ children: [new TextRun(`Exported at: ${new Date(document.exportedAt).toLocaleString()}`)] }),

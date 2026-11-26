@@ -10,4 +10,6 @@ llama-index==0.14.16
 llama-index-llms-azure-openai==0.4.2
 llama-index-embeddings-azure-openai==0.4.1
 llama-index-vector-stores-azureaisearch==0.4.5
-azure-search-documents==11.6.0b4
+nltk==3.10.4
+# This preview includes both BinaryQuantizationCompression and the SearchAlias API.
+azure-search-documents==11.6.0b12

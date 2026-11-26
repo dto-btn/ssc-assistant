@@ -3,6 +3,8 @@ import logging
 import os
 from functools import lru_cache
 import re
+from tempfile import TemporaryDirectory
+from threading import Lock
 import time
 from typing import Any
 
@@ -40,6 +42,38 @@ openai_model: str = os.getenv("OPENAI_MODEL", "gpt-4o")
 embedding_model: str = "text-embedding-ada-002"
 container_name = "sscplus-index-data"
 TIMESTAMPED_INDEX_NAME_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}$")
+_nltk_cache: TemporaryDirectory[str] | None = None
+_nltk_cache_lock = Lock()
+
+
+def _prepare_nltk_cache() -> None:
+    global _nltk_cache
+    with _nltk_cache_lock:
+        if os.environ.get("NLTK_DATA"):
+            return
+
+        from nltk import download
+        from nltk.data import find, path
+
+        # NLTK refuses the bundled cache when Azure deploys it group-writable.
+        cache = TemporaryDirectory(prefix="ssc-index-nltk-")
+        try:
+            if not download(
+                ["stopwords", "punkt_tab"],
+                download_dir=cache.name,
+                quiet=True,
+                raise_on_error=True,
+            ):
+                raise RuntimeError("Could not download NLTK stopwords and punkt_tab.")
+            find("corpora/stopwords/english", paths=[cache.name])
+            find("tokenizers/punkt_tab/english/", paths=[cache.name])
+        except (LookupError, OSError, RuntimeError, ValueError):
+            cache.cleanup()
+            raise
+
+        _nltk_cache = cache
+        path.insert(0, cache.name)
+        os.environ["NLTK_DATA"] = cache.name
 
 
 @lru_cache(maxsize=1)
@@ -154,6 +188,15 @@ def _get_cleanup_candidates(index_names, retained_index_count: int):
 
 @build_index_bp.orchestration_trigger(context_name="context")
 def build_search_index(context: df.DurableOrchestrationContext):
+    result = yield context.call_activity("populate_search_index", {})
+    return result
+
+
+@build_index_bp.activity_trigger(input_name="payload")
+def populate_search_index(payload):
+    _ = payload
+    _prepare_nltk_cache()
+
     # Import heavy llama_index modules lazily so function discovery can complete at startup.
     from llama_index.core import Document, StorageContext, VectorStoreIndex
     from llama_index.core.settings import Settings
@@ -196,8 +239,7 @@ def build_search_index(context: df.DurableOrchestrationContext):
         # https://learn.microsoft.com/en-us/azure/search/index-add-language-analyzers#how-to-specify-a-language-analyzer
     )
 
-    pages_path = f"{index_data_path}/pages"
-    pages = yield context.call_activity("get_pages_as_json", pages_path)
+    pages = _get_pages_as_json(f"{index_data_path}/pages")
 
     documents = []
     for page in pages:
@@ -256,9 +298,7 @@ def cleanup_old_search_indexes(context: df.DurableOrchestrationContext):
     return cleanup_summary
 
 
-#Activity
-@build_index_bp.activity_trigger(input_name="path")
-def get_pages_as_json(path: str):
+def _get_pages_as_json(path: str):
     pages = []
 
     container_client = _get_blob_service_client().get_container_client(container_name)

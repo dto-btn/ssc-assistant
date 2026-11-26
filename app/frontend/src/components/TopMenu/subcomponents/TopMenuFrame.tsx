@@ -71,7 +71,7 @@ export const TopMenuFrame: FC<TopMenuProps> = ({
                 width: "35px",
                 height: "auto",
               }}
-              alt="logo of SSC"
+              alt={t("logo.alt")}
             />
             <Typography
               variant="h1"

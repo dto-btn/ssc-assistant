@@ -43,6 +43,7 @@ from utils.openai import (
     chat_with_data,
     convert_chat_with_data_response,
 )
+from utils.search import SearchRetrievalError
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -50,6 +51,11 @@ logger.setLevel(logging.DEBUG)
 api_v1 = APIBlueprint("api_v1", __name__)
 
 _BOUNDARY = "GPT-Interaction"
+
+
+@api_v1.errorhandler(SearchRetrievalError)
+def handle_search_retrieval_error(error: SearchRetrievalError):
+    return jsonify({"message": str(error)}), 502
 
 
 @api_v1.post("/completion/chat")
@@ -115,8 +121,10 @@ def completion_chat(message_request: MessageRequest):
         )
         thread.start()
 
-        completion: ChatCompletion = chat_with_data(message_request)  # type: ignore
-        completion_response = convert_chat_with_data_response(completion, message_request.lang)
+        tools_info, completion, retrieval_context = chat_with_data(message_request)
+        completion_response = convert_chat_with_data_response(
+            completion, message_request.lang, tools_info, retrieval_context
+        )
 
         thread = threading.Thread(
             target=store_completion, args=(completion_response, convo_uuid, user)
@@ -166,10 +174,12 @@ def completion_chat_stream(message_request: MessageRequest):
     )
     thread.start()
     try:
-        tools_info, completion = chat_with_data(message_request, stream=True)
+        tools_info, completion, retrieval_context = chat_with_data(message_request, stream=True)
 
         if isinstance(completion, ChatCompletion):
-            completion_response = convert_chat_with_data_response(completion, message_request.lang)
+            completion_response = convert_chat_with_data_response(
+                completion, message_request.lang, tools_info, retrieval_context
+            )
             thread = threading.Thread(
                 target=store_completion, args=(completion_response, convo_uuid, user)
             )
@@ -212,7 +222,8 @@ def completion_chat_stream(message_request: MessageRequest):
             yield f"\r\n--{_BOUNDARY}\r\n"
             yield "Content-Type: application/json\r\n\r\n"
             response = build_completion_response(
-                content=content_txt, chat_completion_dict=context, tools_info=tools_info, lang=message_request.lang
+                content=content_txt, chat_completion_dict=context, tools_info=tools_info,
+                lang=message_request.lang, retrieval_context=retrieval_context,
             )
             thread = threading.Thread(
                 target=store_completion, args=(response, convo_uuid, user)
@@ -486,18 +497,21 @@ def suggestion(suggestion_request: SuggestionApiRequest):
             return jsonify(result), 400
 
         message_request = result
-        _, completion = chat_with_data(message_request, stream=True)
+        _, completion, retrieval_context = chat_with_data(message_request, stream=True)
 
         if isinstance(completion, ChatCompletion):
-            completion_response = convert_chat_with_data_response(completion, message_request.lang)
+            completion_response = convert_chat_with_data_response(
+                completion, message_request.lang, retrieval_context=retrieval_context
+            )
             content = completion_response.message.content or ""
             response = suggestion_service.build_suggestion_from_streamed_content(
                 content=content,
                 context_dict=None,
                 opts=suggestion_request.opts,
                 query=suggestion_request.query,
+                retrieval_context=completion_response.message.context,
             )
-            return jsonify(response)
+            return Response(json.dumps(response) + "\n", content_type="application/x-ndjson")
 
         def generate():
             context = None
@@ -516,6 +530,7 @@ def suggestion(suggestion_request: SuggestionApiRequest):
                 context_dict=context,
                 opts=suggestion_request.opts,
                 query=suggestion_request.query,
+                retrieval_context=retrieval_context,
             )
             yield json.dumps(response, default=lambda o: o.__dict__) + "\n"
 

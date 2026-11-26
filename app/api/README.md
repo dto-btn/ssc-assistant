@@ -6,6 +6,12 @@ This api is exposed to the frontend and other teams (MySSC Plus).
 
 To run the application simply do `cd app/api` then `flask --debug run --port=5001`
 
+## Grounded search
+
+The API embeds the search query with Azure OpenAI, sends a hybrid query directly to Azure AI Search, and passes the retrieved passages to Azure OpenAI for a cited answer. It uses the existing `AZURE_SEARCH_SERVICE_ENDPOINT` and `AZURE_SEARCH_ADMIN_KEY` settings. The API host must be able to reach Azure AI Search directly and its Azure identity must have access to the configured embedding deployments.
+
+MySSC+ uses `AZURE_SEARCH_INDEX_NAME` (default: `current`) and the existing 1,536-dimensional `embedding` field. PMCoE and Telecom resolve their search fields from the live index schema; PMCoE also requires a default or unique semantic configuration. Check all three indexes in staging with known English/French queries where applicable, including that answer citations resolve to the original document. An upstream retrieval error returns HTTP 502 instead of an ungrounded answer.
+
 ## generating new keys
 
 [Documentation on how to generate a new key](https://pyjwt.readthedocs.io/en/stable/)

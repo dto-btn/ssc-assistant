@@ -86,7 +86,7 @@ def mock_chat_with_data(monkeypatch: MonkeyPatch):
         ],
     )
 
-    mock_func.return_value = (None, chat_completion)
+    mock_func.return_value = ([], chat_completion, None)
     monkeypatch.setattr("src.service.suggestion_service.chat_with_data", mock_func)
     return mock_func
 
@@ -415,8 +415,9 @@ def test_returns_internal_error_if_chat_with_data_response_is_not_chat_completio
     ctx: LocalTestContext, mock_chat_with_data: MagicMock
 ):
     mock_chat_with_data.return_value = (
-        None,
+        [],
         "a string is not a ChatCompletion object.",
+        None,
     )
     response = ctx["suggestion_service"].suggest(
         "cool",
