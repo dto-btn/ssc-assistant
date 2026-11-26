@@ -1,5 +1,5 @@
 # https://hub.docker.com/r/microsoft/devcontainers
-FROM mcr.microsoft.com/devcontainers/python:3.13.14
+FROM mcr.microsoft.com/devcontainers/python:3.13
 
 WORKDIR /workspace
 

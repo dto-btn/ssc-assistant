@@ -1,0 +1,45 @@
+{
+  "features": {
+    "ghcr.io/devcontainers-community/npm-features/prettier:1": {
+      "version": "1.1.0",
+      "resolved": "ghcr.io/devcontainers-community/npm-features/prettier@sha256:41aca434d43373d78b276d3cd89ecdce960e0b618ff0ee59f2ecee0810dbabe9",
+      "integrity": "sha256:41aca434d43373d78b276d3cd89ecdce960e0b618ff0ee59f2ecee0810dbabe9",
+      "dependsOn": [
+        "ghcr.io/devcontainers/features/node"
+      ]
+    },
+    "ghcr.io/devcontainers/features/azure-cli:1": {
+      "version": "1.3.0",
+      "resolved": "ghcr.io/devcontainers/features/azure-cli@sha256:d98f1066c077be0fa9d115b718f458bd803e415181b4a96f82a6f5d9f77241ac",
+      "integrity": "sha256:d98f1066c077be0fa9d115b718f458bd803e415181b4a96f82a6f5d9f77241ac"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "1.1.3",
+      "resolved": "ghcr.io/devcontainers/features/github-cli@sha256:bd7ab48a832228f633239277552c30b353867fef2e5b037e064b4e64f0b843f2",
+      "integrity": "sha256:bd7ab48a832228f633239277552c30b353867fef2e5b037e064b4e64f0b843f2"
+    },
+    "ghcr.io/devcontainers/features/node": {
+      "version": "2.1.2",
+      "resolved": "ghcr.io/devcontainers/features/node@sha256:20ac718cc67e7999a9d3fbb8387f1a3a5d53ecbd41fe7c075ebadb8e9b431b17",
+      "integrity": "sha256:20ac718cc67e7999a9d3fbb8387f1a3a5d53ecbd41fe7c075ebadb8e9b431b17"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "1.7.1",
+      "resolved": "ghcr.io/devcontainers/features/node@sha256:8c0de46939b61958041700ee89e3493f3b2e4131a06dc46b4d9423427d06e5f6",
+      "integrity": "sha256:8c0de46939b61958041700ee89e3493f3b2e4131a06dc46b4d9423427d06e5f6"
+    },
+    "ghcr.io/devcontainers/features/terraform:1": {
+      "version": "1.5.1",
+      "resolved": "ghcr.io/devcontainers/features/terraform@sha256:bc1c2b37b85835269260a71914cfc70a6ca2e3d6f601f9a1769386f6f4e63390",
+      "integrity": "sha256:bc1c2b37b85835269260a71914cfc70a6ca2e3d6f601f9a1769386f6f4e63390",
+      "dependsOn": [
+        "ghcr.io/devcontainers/features/github-cli:1"
+      ]
+    },
+    "ghcr.io/gccloudone-aurora-collab/devcontainer-features/enhanced-custom-root-ca:4": {
+      "version": "4.0.2",
+      "resolved": "ghcr.io/gccloudone-aurora-collab/devcontainer-features/enhanced-custom-root-ca@sha256:84d03284fc3248220d9004ebd9dc3f94c774f74c94183bb6f1ab8470faec5474",
+      "integrity": "sha256:84d03284fc3248220d9004ebd9dc3f94c774f74c94183bb6f1ab8470faec5474"
+    }
+  }
+}
