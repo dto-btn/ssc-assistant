@@ -15,6 +15,7 @@ from src.service.suggestion_service_types import (
 )
 from utils.manage_message import SUGGEST_SYSTEM_PROMPT_EN, SUGGEST_SYSTEM_PROMPT_FR
 from utils.models import (
+    Context,
     Message,
     MessageRequest,
     SuggestionCitationApiResponse,
@@ -100,7 +101,8 @@ class SuggestionService:
         return message_request
 
     def build_suggestion_from_streamed_content(
-        self, content: str, context_dict: dict | None, opts: SuggestRequestOpts, query: str
+        self, content: str, context_dict: dict | None, opts: SuggestRequestOpts, query: str,
+        retrieval_context: Context | None = None,
     ) -> SuggestionContext:
         """
         After streaming is complete, build the final SuggestionContext from the accumulated content.
@@ -111,6 +113,7 @@ class SuggestionService:
             content=content,
             chat_completion_dict=context_dict,
             lang=opts["language"],
+            retrieval_context=retrieval_context,
         )
 
         if getattr(completion_response.message, "context", None) is None:
@@ -289,7 +292,7 @@ class SuggestionService:
             ]
 
         # Do inference
-        _, completion = chat_with_data(message_request)
+        tools_info, completion, retrieval_context = chat_with_data(message_request)
         if not isinstance(completion, ChatCompletion):
             return {
                 "success": False,
@@ -297,7 +300,9 @@ class SuggestionService:
             }
 
         # # Convert ChatCompletion to Completion
-        completion_response = convert_chat_with_data_response(completion, message_request.lang)
+        completion_response = convert_chat_with_data_response(
+            completion, message_request.lang, tools_info, retrieval_context
+        )
 
         # Generate list of citations, for later use
         if getattr(completion_response.message, "context", None) is None:

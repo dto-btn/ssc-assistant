@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional, Tuple
+from typing import List
 
 from openai.types.chat import (ChatCompletionAssistantMessageParam,
                                ChatCompletionMessageParam,
@@ -10,8 +10,7 @@ from tools.bits.bits_prompts import (BITS_SYSTEM_PROMPT_EN,
 from tools.pmcoe.pmcoe_prompts import (PMCOE_SYSTEM_PROMPT_EN,
                                        PMCOE_SYSTEM_PROMPT_FR)
 from utils.attachment_mapper import map_attachments
-from utils.models import AzureCognitiveSearchDataSourceConfig, MessageRequest
-from typing import List, Optional, Tuple
+from utils.models import MessageRequest
 
 logger = logging.getLogger(__name__)
 
@@ -223,7 +222,7 @@ def generate_system_prompt(message_request: MessageRequest) -> ChatCompletionSys
     return ChatCompletionSystemMessageParam(content=system_msg, role='system')
 
 
-def load_messages(message_request: MessageRequest, token_limit: int = GPT4O_TOKEN_LIMIT) -> Tuple[List[ChatCompletionMessageParam], Optional[AzureCognitiveSearchDataSourceConfig]]:
+def load_messages(message_request: MessageRequest, token_limit: int = GPT4O_TOKEN_LIMIT) -> List[ChatCompletionMessageParam]:
     """
     Main method responsible for loading in the messages sent to the API and making sure they are converted in something
     suitable to send to the (Azure) OpenAI API.
