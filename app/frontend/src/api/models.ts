@@ -29,6 +29,7 @@ interface Message {
 
 interface Completion {
   message: Message;
+  language?: "en" | "fr";
   completion_tokens?: number | null;
   prompt_tokens?: number | null;
   total_tokens?: number | null;

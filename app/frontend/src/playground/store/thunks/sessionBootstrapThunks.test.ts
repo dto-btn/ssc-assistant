@@ -83,7 +83,7 @@ describe("bootstrapSessionsFromStorage", () => {
     const state = store.getState();
 
     expect(state.sessions.sessions).toHaveLength(2);
-    expect(state.sessions.currentSessionId).toBe("session-b");
+    expect(state.sessions.currentSessionId).toBeNull();
     expect(state.sessionFiles.bySessionId["session-a"]).toHaveLength(1);
     expect(state.sessionFiles.bySessionId["session-b"]).toHaveLength(1);
     expect(state.chat.messages).toEqual([]);
@@ -99,6 +99,36 @@ describe("bootstrapSessionsFromStorage", () => {
       ),
     ).toEqual(["session-a", "session-b"]);
     expect(fetchFileDataUrlMock).not.toHaveBeenCalled();
+  });
+
+  it("preserves a conversation selected while remote recovery is in progress", async () => {
+    const store = makeStore();
+    let resolveFiles!: (value: Awaited<ReturnType<typeof listSessionFiles>>) => void;
+    listSessionFilesMock.mockImplementation(() => new Promise((resolve) => {
+      resolveFiles = resolve;
+    }));
+    const recovery = store.dispatch(bootstrapSessionsFromStorage() as never);
+    store.dispatch(addSession({
+      id: "imported",
+      name: "Original suggestion question",
+      createdAt: Date.now(),
+      isNewChat: false,
+      suggestionHandoffId: "handoff",
+    }));
+    resolveFiles({
+      files: [{
+        blobName: "remote.chat.json",
+        url: "/files/remote.chat.json",
+        originalName: "remote.chat.json",
+        sessionId: "remote",
+        uploadedAt: "2026-05-07T10:00:00.000Z",
+      }],
+      deletedSessionIds: [],
+      sessionDeleted: false,
+    });
+    await recovery;
+    expect(store.getState().sessions.currentSessionId).toBe("imported");
+    expect(store.getState().sessions.sessions).toHaveLength(2);
   });
 
   it("refreshes cached session activity without changing its creation time or downloading messages", async () => {

@@ -252,6 +252,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                       }}>
                         <AssistantBubble
                           text={chatItem.message.content}
+                          language={chatItem.language}
                           isLoading={
                             index === chatHistory.chatItems.length - 1 && isLoading
                           }
@@ -277,6 +278,7 @@ const ChatMessagesContainer = (props: ChatMessagesContainerProps) => {
                       }>
                       <AssistantBubble
                         text={chatItem.message.content}
+                        language={chatItem.language}
                         isLoading={
                           index === chatHistory.chatItems.length - 1 && isLoading
                         }

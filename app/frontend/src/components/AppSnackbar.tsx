@@ -46,6 +46,7 @@ export const AppSnackbars = () => {
                                 appStore.snackbars._hide(datum.id)
                             }}
                             severity={datum.severity}
+                            role={datum.severity === "info" ? "status" : "alert"}
                             variant="filled"
                             sx={{ width: '100%' }}
                         >

@@ -5,6 +5,26 @@ import { normalizeArchiveMessage } from "./archives";
  * Regression tests for archive restoration edge-cases around MCP attribution payloads.
  */
 describe("normalizeArchiveMessage", () => {
+  it("preserves suggestion citation display settings and sources", () => {
+    const citations = [{ title: "Source", url: "https://example.com/source" }];
+    expect(normalizeArchiveMessage({
+      id: "suggestion",
+      role: "assistant",
+      content: "Saved answer",
+      language: "fr",
+      timestamp: 1,
+      showAllCitations: true,
+      preserveFullContent: true,
+      citations,
+    }, "session")).toMatchObject({ showAllCitations: true, preserveFullContent: true, language: "fr", citations });
+  });
+
+  it("does not restore an unsupported message language", () => {
+    expect(normalizeArchiveMessage({
+      id: "suggestion", role: "assistant", content: "Answer", timestamp: 1, language: "invalid",
+    }, "session")?.language).toBeUndefined();
+  });
+
   it("preserves valid mcpAttribution from archived assistant messages", () => {
     const restored = normalizeArchiveMessage(
       {

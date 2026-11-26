@@ -16,7 +16,8 @@ import { bookReservation } from "../../api/api";
 import { UserContext } from "../../stores/UserContext";
 import { DeleteConversationConfirmation } from "../../components/DeleteConversationConfirmation";
 import { useLocation } from "react-router";
-import { ParsedSuggestionContext, SuggestionContext } from "../../routes/SuggestCallbackRoute";
+import { SuggestionHandoffSchema } from "../../api/suggestionContext.models";
+import { z } from "zod";
 import { useAppStore } from "../../stores/AppStore";
 import Typography from "@mui/material/Typography";
 import { SNACKBAR_DEBOUNCE_KEYS, LEFT_MENU_WIDTH } from "../../constants";
@@ -361,109 +362,108 @@ const MainScreen = () => {
 
   // userData is now provided by App via context; no local fetch here
 
-  const parsedSuggestionContext: ParsedSuggestionContext | null =
-    location.state;
-  const processedSuggestionRef = useRef<string | null>(null);
+  const processedSuggestionRef = useRef(new Set<string>());
+  const invalidSuggestionLocationsRef = useRef(new Set<string>());
   useEffect(() => {
-    // on initial load of page, if state is not null, log the state
-    if (parsedSuggestionContext) {
-      let uniqueKey: string;
-      if (parsedSuggestionContext.success) {
-        const ctx = parsedSuggestionContext.context;
-        if (ctx && ctx.success) {
-          type SuggestionContextSuccess = Extract<SuggestionContext, { success: true }>;
-          uniqueKey = (ctx as SuggestionContextSuccess).original_query;
-        } else {
-          uniqueKey = "context-success-but-no-original-query";
-        }
-      } else {
-        uniqueKey = `error-${parsedSuggestionContext.errorReason}`;
+    const stateResult = z.record(z.unknown()).safeParse(location.state);
+    if (!stateResult.success || !Object.hasOwn(stateResult.data, "suggestionHandoff")) {
+      return;
+    }
+
+    const parsed = SuggestionHandoffSchema.safeParse(stateResult.data.suggestionHandoff);
+    if (!parsed.success) {
+      if (!invalidSuggestionLocationsRef.current.has(location.key)) {
+        invalidSuggestionLocationsRef.current.add(location.key);
+        console.error("Suggestion hand-off failed validation", parsed.error.issues);
+        showSnackbar(t("playground:suggestion.errors.validation"), SNACKBAR_DEBOUNCE_KEYS.SUGGEST_CONTEXT_ERROR);
       }
-      if (processedSuggestionRef.current === uniqueKey) {
-        return; // already handled this context
-      }
-      processedSuggestionRef.current = uniqueKey;
-      if (parsedSuggestionContext.success) {
-        if (!parsedSuggestionContext.context.success) {
-          // this should never happen
-          alert(
-            "An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded."
-          );
-          console.error(
-            "ERROR: parsedSuggestionContext:",
-            parsedSuggestionContext
-          );
-          return;
-        }
-        // TODO: create a new conversation with the context.
-        let conversationString = "";
-        conversationString += parsedSuggestionContext.context.content;
-        conversationString += "\n\n";
-        conversationString += parsedSuggestionContext.context.citations
-          .flatMap((citation) => {
-            return `
+      return;
+    }
+
+    const parsedSuggestionContext = parsed.data;
+    if (processedSuggestionRef.current.has(parsedSuggestionContext.handoffId)) {
+      return;
+    }
+    processedSuggestionRef.current.add(parsedSuggestionContext.handoffId);
+    if (parsedSuggestionContext.success) {
+      let conversationString = "";
+      conversationString += parsedSuggestionContext.context.content;
+      conversationString += "\n\n";
+      conversationString += parsedSuggestionContext.context.citations
+        .flatMap((citation) => {
+          return `
 #### ${citation.title} [link](${citation.url})
 
 `;
-          })
-          .join("\n\n");
+        })
+        .join("\n\n");
 
-        // now create a new conversation with the context
-        const newChatIndex = chatHistoriesDescriptions.length;
-        chatService.setCurrentChatIndex(newChatIndex);
-        const newChatHistory: ChatHistory = {
-          chatItems: [
-            {
-              role: "user",
-              content: parsedSuggestionContext.context.original_query,
+      // now create a new conversation with the context
+      const newChatIndex = chatHistoriesDescriptions.length;
+      chatService.setCurrentChatIndex(newChatIndex);
+      const newChatHistory: ChatHistory = {
+        chatItems: [
+          {
+            role: "user",
+            content: parsedSuggestionContext.context.original_query,
+          },
+          {
+            language: parsedSuggestionContext.context.language,
+            message: {
+              role: "assistant",
+              content: conversationString,
             },
-            {
-              message: {
-                role: "assistant",
-                content: conversationString,
-              },
-            },
-          ],
-          description: parsedSuggestionContext.context.original_query,
-          uuid: uuidv4(),
-          model: getDefaultModel(),
-          isTopicSet: true, // Set to true since we have a topic
-          staticTools: [],
-        };
-        setCurrentChatHistory(newChatHistory);
-        setChatHistoriesDescriptions([
-          ...chatHistoriesDescriptions,
-          parsedSuggestionContext.context.original_query,
-        ]);
-      } else {
-        const showError = (msg: string) => {
-          showSnackbar(
-            msg,
-            SNACKBAR_DEBOUNCE_KEYS.SUGGEST_CONTEXT_ERROR
+          },
+        ],
+        description: parsedSuggestionContext.context.original_query,
+        uuid: uuidv4(),
+        model: getDefaultModel(),
+        isTopicSet: true, // Set to true since we have a topic
+        staticTools: [],
+      };
+      setCurrentChatHistory(newChatHistory);
+      setChatHistoriesDescriptions([
+        ...chatHistoriesDescriptions,
+        parsedSuggestionContext.context.original_query,
+      ]);
+      showSnackbar(
+        t("playground:suggestion.opened"),
+        undefined,
+        "info",
+      );
+    } else {
+      const showError = (msg: string) => {
+        showSnackbar(
+          msg,
+          SNACKBAR_DEBOUNCE_KEYS.SUGGEST_CONTEXT_ERROR
+        );
+        console.error("ERROR: parsedSuggestionContext", msg);
+      };
+      switch (parsedSuggestionContext.errorReason) {
+        case "redirect_because_context_missing":
+          showError(t("playground:suggestion.errors.missing"));
+          break;
+        case "redirect_because_context_validation_failed":
+          showError(
+            t("playground:suggestion.errors.validation")
           );
-          console.error("ERROR: parsedSuggestionContext", msg);
-        };
-        switch (parsedSuggestionContext.errorReason) {
-          case "redirect_because_context_validation_failed":
-            showError(
-              "The suggestion context was in an unknown format. Your suggestions have not been loaded."
-            );
-            break;
-          case "redirect_because_server_returned_success_false":
-            showError(
-              "The server returned an error while parsing the suggestion context. Your suggestions have not been loaded."
-            );
-            break;
-          case "redirect_with_unknown_error":
-          default:
-            showError(
-              "An unknown error occurred while parsing the suggestion context. Your suggestions have not been loaded."
-            );
-        }
+          break;
+        case "redirect_because_server_returned_success_false":
+          showError(
+            t("playground:suggestion.errors.server")
+          );
+          break;
+        case "redirect_with_unknown_error":
+        default:
+          showError(
+            t("playground:suggestion.errors.unknown")
+          );
       }
     }
   }, [
-    parsedSuggestionContext,
+    location.state,
+    location.key,
+    t,
     showSnackbar,
     chatHistoriesDescriptions,
     chatService,
