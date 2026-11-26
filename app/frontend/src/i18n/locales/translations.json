@@ -16,8 +16,8 @@
         "fr": "Comment puis-je vous aider?"
     },
     "how.can.i.help.submessage": {
-        "en": "Hey there! 🌟 I'm your AI buddy, always ready to help! Have HR questions, need SSC info, or some policy guidance? I'm on it! I can also crunch data, jazz up your drafts, or take your outline and turn it into something awesome for you to review. And that's just the beginning... Let's make magic together! ✨",
-        "fr": "Salut! 🌟 Je suis votre ami IA, toujours prêt à aider! Vous avez des questions sur les RH, besoin d'informations sur SPC ou des conseils sur les politiques? Je suis là pour ça! Je peux aussi analyser des données, embellir vos brouillons, ou prendre votre plan et le transformer en quelque chose d'incroyable à revoir. Et ce n'est que le début... Faisons de la magie ensemble! ✨"
+        "en": "Hey there! 🌟 I'm your AI buddy, always ready to help! Have HR questions, need Digital Transformation Canada info, or some policy guidance? I'm on it! I can also crunch data, jazz up your drafts, or take your outline and turn it into something awesome for you to review. And that's just the beginning... Let's make magic together! ✨",
+        "fr": "Salut! 🌟 Je suis votre ami IA, toujours prêt à aider! Vous avez des questions sur les RH, besoin d'informations sur Transformation numérique Canada ou des conseils sur les politiques? Je suis là pour ça! Je peux aussi analyser des données, embellir vos brouillons, ou prendre votre plan et le transformer en quelque chose d'incroyable à revoir. Et ce n'est que le début... Faisons de la magie ensemble! ✨"
     },
     "chat.with.gpt": {
         "en": "Chat with GPT and:",
@@ -224,24 +224,24 @@
         "fr": "N'ENVOYEZ PAS D'INFORMATIONS CONFIDENTIELLES DANS LE CHATBOT."
     },
     "disclaimer.desc": {
-        "en": "The SSC Assistant is in pilot phase and uses Azure OpenAI. Answers may be incorrect even if they seem reliable. Just like humans, AI can make mistakes. Your feedback is important to help us improve the tool.",
-        "fr": "L’assistant SPC est en phase pilote et utilise l’IA d’Azure OpenAI. Les réponses peuvent être incorrectes même si elles semblent fiables. Tout comme les humains, l’IA peut commettre des erreurs. Votre avis est important pour nous aider à améliorer l’outil."
+        "en": "DTO Assistant is in pilot phase and uses Azure OpenAI. Answers may be incorrect even if they seem reliable. Just like humans, AI can make mistakes. Your feedback is important to help us improve the tool.",
+        "fr": "L’Assistant DTO est en phase pilote et utilise l’IA d’Azure OpenAI. Les réponses peuvent être incorrectes même si elles semblent fiables. Tout comme les humains, l’IA peut commettre des erreurs. Votre avis est important pour nous aider à améliorer l’outil."
     },
     "supporting": {
         "en": "Supporting content",
         "fr": "Contenu de soutien"
     },
     "welcome.prompt.system": {
-        "en": "You are an AI assistant for SSC that creates greeting messages. When greeting users, follow these instructions:\n- Start with a welcoming sentence using the user's name.\n- Include an wave or smile emoji in the message.\n- Keep the greeting brief.\n- Mention that you provide assistance with **general knowledge**, employee information via **GEDS**, and corporate **SSC (Shared Services Canada)** information through the **MySSC+ intranet**.\n- Do not include time-specific greetings or signatures.\n- Use a friendly and professional tone.\nGenerate a greeting message based on these rules. If the words above are in bold characters, ensure the same style in applied to these words your answers.",
-        "fr": "Vous êtes un assistant IA pour SPC qui crée des messages de bienvenue. Lors de l'accueil des utilisateurs, suivez ces instructions :\n- Commencez par une phrase de bienvenue en utilisant le nom de l'utilisateur.\n- Incluez un emoji de salutation ou un sourire dans le message.\n- Gardez la salutation brève.\n- Mentionnez que vous fournissez de l'aide en **connaissance générale**, des informations sur les employés via **SAGE**, et des informations corporatives **SPC (Services partagés Canada)** à travers l'intranet **MonSPC+**.\n- N'incluez pas de salutations spécifiques au moment de la journée ni de signatures.\n- Utilisez un ton amical et professionnel.\nGénérez un message de salutation basé sur ces règles. Si les mots ci-dessus sont en gras, assurez-vous que le même style est utilisé dans vos réponses."
+        "en": "You are DTO Assistant, an AI assistant for Digital Transformation Canada (DTC) that creates greeting messages. When greeting users, follow these instructions:\n- Start with a welcoming sentence using the user's name.\n- Include a wave or smile emoji in the message.\n- Keep the greeting brief.\n- Mention that you provide assistance with **general knowledge**, employee information via **GEDS**, and corporate information about **Digital Transformation Canada** through the **MySSC+ intranet**.\n- Do not include time-specific greetings or signatures.\n- Use a friendly and professional tone.\nGenerate a greeting message based on these rules. Preserve the bold formatting in your answer.",
+        "fr": "Vous êtes l'Assistant DTO, un assistant IA pour Transformation numérique Canada (TNC) qui crée des messages de bienvenue. Lors de l'accueil des utilisateurs, suivez ces instructions :\n- Commencez par une phrase de bienvenue en utilisant le nom de l'utilisateur.\n- Incluez un emoji de salutation ou un sourire dans le message.\n- Gardez la salutation brève.\n- Mentionnez que vous fournissez de l'aide en **culture générale**, des renseignements sur les employés via **SAGE** et de l'information organisationnelle sur **Transformation numérique Canada** par l'intranet **MonSPC+**.\n- N'incluez pas de salutations spécifiques au moment de la journée ni de signatures.\n- Utilisez un ton amical et professionnel.\nGénérez un message de salutation basé sur ces règles. Conservez la mise en gras dans votre réponse."
     },
     "aria.alert.message": {
         "en": "Alert message: ",
         "fr": "Message d'alerte"
     },
     "welcome": {
-        "en": "Welcome to the SSC Assistant",
-        "fr": "Bienvenue à l'Assistant SPC"
+        "en": "Welcome to DTO Assistant",
+        "fr": "Bienvenue dans l'Assistant DTO"
     },
     "feedback": {
         "en": "Feedback",
@@ -296,8 +296,8 @@
         "fr": "Message (optionnel)"
     },
     "example1": {
-        "en": "What records management system does SSC use?",
-        "fr": "Quel est le système de gestion de l’information utilisé par SPC?"
+        "en": "What records management system does Digital Transformation Canada use?",
+        "fr": "Quel est le système de gestion de l’information utilisé par Transformation numérique Canada?"
     },
     "gpt-ex2-s": {
         "en": "Page summarization",
@@ -328,8 +328,8 @@
         "fr": "Cacher les profils"
     },
     "example3": {
-        "en": "What are the steps to hire a new employee at SSC?",
-        "fr": "Quelles sont les étapes à suivre pour embaucher un nouvel employé à SPC?"
+        "en": "What are the steps to hire a new employee at Digital Transformation Canada?",
+        "fr": "Quelles sont les étapes à suivre pour embaucher un nouvel employé à Transformation numérique Canada?"
     },
     "login": {
         "en": "Login",
@@ -344,8 +344,8 @@
         "fr": "Copié!"
     },
     "default.welcome.msg": {
-        "en": "Hello! I am your SSC Assistant how may I help you today?",
-        "fr": "Bonjour! Je suis votre assistant SSC, comment puis-je vous aider aujourd'hui ?"
+        "en": "Hello! I'm DTO Assistant. How can I help you today?",
+        "fr": "Bonjour! Je suis l'Assistant DTO. Comment puis-je vous aider aujourd'hui?"
     },
     "menu.desc2": {
         "en": "Change Temperature value:",
@@ -460,8 +460,12 @@
         "fr": "Mode de réponse"
     },
     "title": {
-        "en": "SSC Assistant",
-        "fr": "Assistant SPC"
+        "en": "DTO Assistant",
+        "fr": "Assistant DTO"
+    },
+    "logo.alt": {
+        "en": "DTO Assistant logo",
+        "fr": "Logo de l'Assistant DTO"
     },
     "chat.with.gpt.tools": {
         "en": "Tools (GEDS, etc.)",
@@ -960,8 +964,8 @@
         "fr": "Qu’est-ce que l’ECGPO et pourquoi est-ce important ?"
     },
     "suggestions.pmcoe.q4": {
-        "en": "What types of documents and/or templates are available in the SSC PGoF and how can we use them?",
-        "fr": "Quels types de documents et/ou modèles sont disponibles dans le SSC CFGP et comment les utiliser ?"
+        "en": "What documents and templates are available in the Project Governance Framework, and how can we use them?",
+        "fr": "Quels documents et modèles sont disponibles dans le cadre de gouvernance des projets et comment les utiliser?"
     },
     "suggestions.pmcoe.q5": {
         "en": "What is the purpose of the OPMCA?",

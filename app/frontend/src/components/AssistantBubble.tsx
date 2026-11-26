@@ -476,7 +476,7 @@ export const AssistantBubble = ({
                     height: "auto",
                     cursor: "pointer",
                   }}
-                  alt="logo of SSC"
+                  alt={t("logo.alt")}
                 />
                 {/* <AutoAwesome sx={{ color: "primary.main", fontSize: 24 }} /> */}
               </IconWrapper>

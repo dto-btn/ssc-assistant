@@ -23,7 +23,7 @@ PMCOE_CONTAINER = os.getenv("PMCOE_CONTAINER", "pmcoe-sept-2025")
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "The question that relates to anything related to project managment or gate templates within SSC",
+                        "description": "The question about project management or gate templates at Digital Transformation Canada",
                     }
                 },
             },

@@ -200,7 +200,7 @@ test('chat messages have accessible sender labels', async ({ playground, mockPla
 
   // The assistant message <li> should carry the assistant sender aria-label.
   await expect(
-    playground.page.locator("li[aria-label=\"SSC Assistant's response\"]"),
+    playground.page.locator("li[aria-label=\"DTO Assistant's response\"]"),
   ).toHaveCount(1);
 });
 

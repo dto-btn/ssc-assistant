@@ -952,7 +952,7 @@ const ChatMessageRow: React.FC<ChatMessageRowProps> = React.memo(function ChatMe
       aria-label={
         isUserMessage
           ? t("message.label.user", { defaultValue: "Your message" })
-          : t("message.label.assistant", { defaultValue: "SSC Assistant's response" })
+          : t("message.label.assistant", { defaultValue: "DTO Assistant's response" })
       }
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}

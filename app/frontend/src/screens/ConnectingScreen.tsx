@@ -4,8 +4,10 @@ import { useMsalAuthentication } from "@azure/msal-react";
 import { userRead } from "../authConfig";
 import { InteractionType } from "@azure/msal-browser";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 const ConnectingScreen = () => {
+    const { t } = useTranslation();
     const { login, error } = useMsalAuthentication(InteractionType.Silent, userRead);
 
     useEffect(() => {
@@ -18,7 +20,7 @@ const ConnectingScreen = () => {
     return (
         <ConnectingScreenView>
             <ConnectingContainer>
-                <Logo src={logo} alt="logo of SSC" />
+                <Logo src={logo} alt={t("logo.alt")} />
                 <ConnectingTextWrapper>
                     <ConnectingText variant="h6" align="left">En cours de connection...</ConnectingText>
                     <ConnectingText variant="h6" align="left">Connecting...</ConnectingText>

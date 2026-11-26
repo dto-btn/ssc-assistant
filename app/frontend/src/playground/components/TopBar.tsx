@@ -120,7 +120,7 @@ const TopBar: React.FC<TopBarProps> = ({
               width: "32px",
               height: "auto",
             }}
-            alt={t("logo.alt", { ns: "translations", defaultValue: "SSC Logo" })}
+            alt={t("logo.alt", { ns: "translations", defaultValue: "DTO Assistant logo" })}
           />
           {/* WCAG 1.3.1 — ChatArea renders the page h1 (empty-state heading).
               This label is a persistent app title for visual context only. */}

@@ -11,13 +11,13 @@ logger.setLevel(logging.DEBUG)
     "type": "function",
     "function": {
         "name": "telecom",
-        "description": "The documents contain processes, service controls, and contextual information relating to the use and provisioning of mobile telephone services for Shared Services Canada and their Partner clients.",
+        "description": "The documents contain processes, service controls, and contextual information relating to the use and provisioning of mobile telephone services for Digital Transformation Canada and its partner clients.",
         "parameters": {
             "type": "object",
             "properties": {
                 "query": {
                     "type": "string",
-                    "description": "The question that relates to anything related to telecomunication within SSC"
+                    "description": "The telecommunications question about Digital Transformation Canada"
                 }
             }
         }

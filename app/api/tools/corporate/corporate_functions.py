@@ -17,13 +17,13 @@ index_name: str = os.getenv("AZURE_SEARCH_INDEX_NAME", "current")
         "type": "function",
         "function": {
             "name": "intranet_question",
-            "description": "Answers questions that are related to Shared Services Canada (SSC) / Services Partagés Canada (SPC) or any corporate questions related to the intranet website (MySSC+/MonSPC+) or anything that could be found on it. It could be accomodations, finance, workplace tools, HR information, anything an employee could need as information in a day to day job.",
+            "description": "Answers corporate questions about Digital Transformation Canada (DTC) / Transformation numérique Canada (TNC), including leadership and the CEO (PDG), and topics covered by the MySSC+/MonSPC+ intranet, such as accommodations, finance, workplace tools, and HR. Use this tool for historical SSC/SPC references in the intranet as well.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "The question that relates to anything corporate or SSC",
+                        "description": "The corporate or intranet question about Digital Transformation Canada",
                     }
                 },
             },

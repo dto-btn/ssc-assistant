@@ -48,7 +48,7 @@ const LoginPage = ({ open, setOpen }: { open: boolean, setOpen: React.Dispatch<R
         }}
       >
         <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
-          <img src={logo} style={logoStyle} alt="logo of SSC" />
+          <img src={logo} style={logoStyle} alt={t("logo.alt")} />
           <Button id="language-toggle-button" onClick={() => { appStore.languageService.changeLanguage() }}>
             {t("langlink")}
           </Button>
